@@ -11,6 +11,7 @@ from context_ir.types import (
     EditSupportScores,
     MissEvidence,
     MissKind,
+    OptimizationResult,
     RecompileResult,
     SymbolGraph,
     SymbolKind,
@@ -175,6 +176,37 @@ def test_recompile_result() -> None:
     assert recompile.budget_delta == 20
     assert len(recompile.new_units_added) == 1
     assert isinstance(recompile, CompileResult)
+
+
+def test_optimization_result() -> None:
+    """OptimizationResult can be constructed with all fields."""
+    trace_entry = CompileTraceEntry(
+        unit_id="fn_1",
+        edit_score=0.8,
+        support_score=0.3,
+        chosen_tier=ViewTier.FULL,
+        marginal_utility=0.5,
+        token_cost=10,
+    )
+    warning = CompileWarning(
+        kind=WarningKind.HIGH_RISK_OMISSION,
+        unit_id="fn_2",
+        message="High-risk omission detected",
+        confidence=0.9,
+    )
+    result = OptimizationResult(
+        tier_assignments={"fn_1": ViewTier.FULL},
+        trace=[trace_entry],
+        warnings=[warning],
+        omitted_frontier=["fn_3"],
+        confidence=0.85,
+        total_tokens=100,
+        budget=200,
+    )
+    assert result.confidence == 0.85
+    assert result.total_tokens <= result.budget
+    assert result.tier_assignments["fn_1"] == ViewTier.FULL
+    assert len(result.omitted_frontier) == 1
 
 
 def test_all_enum_values_accessible() -> None:

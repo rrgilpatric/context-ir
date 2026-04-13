@@ -186,6 +186,29 @@ class CompileResult:
 
 
 # ---------------------------------------------------------------------------
+# Optimization result
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class OptimizationResult:
+    """Output of the budget optimizer.
+
+    Contains the packing decision (which symbols at which tiers),
+    the compile trace, warnings, and metadata for the compiler to
+    assemble into a CompileResult.
+    """
+
+    tier_assignments: dict[str, ViewTier]
+    trace: list[CompileTraceEntry]
+    warnings: list[CompileWarning]
+    omitted_frontier: list[str]
+    confidence: float
+    total_tokens: int
+    budget: int
+
+
+# ---------------------------------------------------------------------------
 # Miss detection and recompilation
 # ---------------------------------------------------------------------------
 
