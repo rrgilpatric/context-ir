@@ -23,3 +23,19 @@
 - 9 smoke tests, all passing
 - Noted finding: SymbolKind missing FILE/MODULE container kinds (deferred to Slice 1)
 - Acceptance status: first-pass
+
+## 2026-04-13 -- Slice 1: Symbol Graph Parser
+
+- Created tree-sitter-based parser (src/context_ir/parser.py)
+- Added FILE and MODULE to SymbolKind enum (resolved container node question)
+- Decision: container nodes as additional enum values, not a separate type. Keeps graph homogeneous -- all nodes are SymbolNode.
+- Parser extracts FUNCTION, CLASS, METHOD, CONSTANT, IMPORT nodes with DEFINES, CALLS, IMPORTS edges
+- Cross-file import resolution via best-effort Python path matching
+- Node ID convention established: file:<path>, module:<path>, <path>::<name>
+- Added tree-sitter and tree-sitter-python as runtime dependencies
+- Test fixtures: 4-file sample Python package in tests/fixtures/sample_repo/
+- 14 new parser tests (23 total), all passing
+- Review finding: dead code (_extract_imported_names never called) removed in correction pass
+- Accepted gap: REFERENCES edges not implemented (deferred to Slice 3 evaluation, Ryan sign-off given)
+- Accepted gap: relative imports, aliased imports, multi-line imports have limited resolution (best-effort scope)
+- Acceptance status: 1 correction

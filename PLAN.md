@@ -51,11 +51,12 @@ One recompile path. Miss triggers: solver requests symbol absent from pack, stac
 
 ## Current Phase
 
-Ready for Slice 1.
+Ready for Slice 2.
 
 ## What Is Complete
 
 - [x] Slice 0: Project bootstrap (first-pass, accepted)
+- [x] Slice 1: Symbol graph parser with tree-sitter (1 correction, accepted)
 
 ## What Is In Progress
 
@@ -63,16 +64,15 @@ Ready for Slice 1.
 
 ## What Is Next (Backlog)
 
-1. Symbol graph parser (tree-sitter integration, symbol nodes, relationship edges)
-2. View renderers (all 5 tiers, with dependency-preserving source slice as key deliverable)
-3. Scoring engine (p_edit, p_support, feature extraction, embeddings)
-4. Budget optimizer (greedy with dependency closure, trace generation, warnings)
-5. Compile contract (end-to-end compile with language-to-state intent parsing)
-6. Diagnose + recompile contracts (miss detection, targeted recompilation)
-7. MCP server (thin wrapper over three contracts)
-8. Eval harness (SWE-bench Mini setup, baselines, metrics framework)
-9. Eval runs + analysis (frozen-input comparison, ablations, budget curves)
-10. Writeup + repo polish (README, results, public presentation)
+1. View renderers (all 5 tiers, with dependency-preserving source slice as key deliverable)
+2. Scoring engine (p_edit, p_support, feature extraction, embeddings). Note: evaluate whether REFERENCES edges are needed for scoring quality. If so, add basic constant/variable reference extraction to the parser as part of this slice.
+3. Budget optimizer (greedy with dependency closure, trace generation, warnings)
+4. Compile contract (end-to-end compile with language-to-state intent parsing)
+5. Diagnose + recompile contracts (miss detection, targeted recompilation)
+6. MCP server (thin wrapper over three contracts)
+7. Eval harness (SWE-bench Mini setup, baselines, metrics framework)
+8. Eval runs + analysis (frozen-input comparison, ablations, budget curves)
+9. Writeup + repo polish (README, results, public presentation)
 
 ## What Is Deferred
 
@@ -85,3 +85,6 @@ Ready for Slice 1.
 
 - The frozen spec above (locked after 3 rounds of research and adversarial review)
 - Operating model (AGENTS.md, adapted from proven WoW)
+- Container node decision: FILE and MODULE as SymbolKind enum values (not a separate type)
+- Parser edge types: DEFINES, CALLS, IMPORTS cover Slice 1 scope. REFERENCES deferred to Slice 3 evaluation.
+- Node ID convention: file:<path>, module:<path>, <path>::<name> pattern
