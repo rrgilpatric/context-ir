@@ -1,0 +1,35 @@
+[project]
+name = "context-ir"
+version = "0.1.0"
+description = "A budgeted context compiler for long-horizon coding agents"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pytest>=8.0.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+mypy_path = "src"
+packages = ["context_ir"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
