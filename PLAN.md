@@ -51,12 +51,13 @@ One recompile path. Miss triggers: solver requests symbol absent from pack, stac
 
 ## Current Phase
 
-Ready for Slice 2.
+Ready for Slice 3.
 
 ## What Is Complete
 
 - [x] Slice 0: Project bootstrap (first-pass, accepted)
 - [x] Slice 1: Symbol graph parser with tree-sitter (1 correction, accepted)
+- [x] Slice 2: View renderers, all 5 tiers (first-pass, accepted)
 
 ## What Is In Progress
 
@@ -88,3 +89,6 @@ Ready for Slice 2.
 - Container node decision: FILE and MODULE as SymbolKind enum values (not a separate type)
 - Parser edge types: DEFINES, CALLS, IMPORTS cover Slice 1 scope. REFERENCES deferred to Slice 3 evaluation.
 - Node ID convention: file:<path>, module:<path>, <path>::<name> pattern
+- View tier API: render(node_id, tier, graph, repo_root) -> UnitView
+- Token estimation: character-based approximation (1 token per ~4 chars), swappable later
+- SLICE tier scope: same-file dependencies only. Cross-file context is the optimizer's job (dependency closure).

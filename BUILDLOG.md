@@ -39,3 +39,14 @@
 - Accepted gap: REFERENCES edges not implemented (deferred to Slice 3 evaluation, Ryan sign-off given)
 - Accepted gap: relative imports, aliased imports, multi-line imports have limited resolution (best-effort scope)
 - Acceptance status: 1 correction
+
+## 2026-04-13 -- Slice 2: View Renderers
+
+- Created 5-tier view renderer (src/context_ir/renderer.py)
+- OMIT: reference ID. SUMMARY: signature + docstring + structural counts. STUB: signature with ... body. SLICE: source + same-file imports, constants, called function stubs. FULL: exact source from disk.
+- SLICE tier (key deliverable) uses graph edges (CALLS, DEFINES) and text-matching heuristic for import relevance
+- Token estimation: max(1, len(text) // 4). Isolated in estimate_tokens() for later replacement.
+- tree-sitter reused for robust signature extraction (multiline, decorated definitions)
+- 18 new tests (41 total), all passing
+- Execution chat reported mypy errors but verification showed clean pass in project venv (reporting discrepancy, not a code issue)
+- Acceptance status: first-pass
