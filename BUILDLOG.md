@@ -50,3 +50,18 @@
 - 18 new tests (41 total), all passing
 - Execution chat reported mypy errors but verification showed clean pass in project venv (reporting discrepancy, not a code issue)
 - Acceptance status: first-pass
+
+## 2026-04-13 -- Slice 3: Scoring Engine
+
+- Created scoring engine (src/context_ir/scorer.py) with score_graph() public API
+- 9-step pipeline: query term extraction, symbol text profiles, lexical scoring, structural priors, semantic similarity, weighted combination, graph propagation, container node scoring, normalization
+- Lexical features: name match (exact/substring), path match (with dotted-path normalization), content match (query terms in source)
+- Structural priors: test file p_support boost + p_edit penalty, config file boost, entry point boost, kind-based base probabilities
+- Semantic similarity: sentence-transformers (all-MiniLM-L6-v2), lazy loaded, injectable embed_fn for testing
+- Graph propagation: 2 iterations, 0.3 decay. CALLS/IMPORTS -> p_support on target. DEFINES -> p_edit upward to parent.
+- Container scoring: FILE/MODULE get max of children's scores
+- Feature weights: lexical 40%/30%, structural 10%/20%, semantic 50%/50% (edit/support). Weights sum to 1.0.
+- Design decision: REFERENCES edges evaluated and determined not needed. CALLS + IMPORTS + DEFINES provide sufficient propagation signal.
+- sentence-transformers 5.x ships type stubs, so no type: ignore[import-untyped] needed
+- 14 new tests (55 total), all passing. Real model integration test runs in ~3.6s.
+- Acceptance status: first-pass

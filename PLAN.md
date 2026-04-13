@@ -51,13 +51,14 @@ One recompile path. Miss triggers: solver requests symbol absent from pack, stac
 
 ## Current Phase
 
-Ready for Slice 3.
+Ready for Slice 4.
 
 ## What Is Complete
 
 - [x] Slice 0: Project bootstrap (first-pass, accepted)
 - [x] Slice 1: Symbol graph parser with tree-sitter (1 correction, accepted)
 - [x] Slice 2: View renderers, all 5 tiers (first-pass, accepted)
+- [x] Slice 3: Scoring engine with embeddings (first-pass, accepted)
 
 ## What Is In Progress
 
@@ -67,7 +68,7 @@ Ready for Slice 3.
 
 1. View renderers (all 5 tiers, with dependency-preserving source slice as key deliverable)
 2. Scoring engine (p_edit, p_support, feature extraction, embeddings). Note: evaluate whether REFERENCES edges are needed for scoring quality. If so, add basic constant/variable reference extraction to the parser as part of this slice.
-3. Budget optimizer (greedy with dependency closure, trace generation, warnings)
+3. ~~Scoring engine~~ (complete)
 4. Compile contract (end-to-end compile with language-to-state intent parsing)
 5. Diagnose + recompile contracts (miss detection, targeted recompilation)
 6. MCP server (thin wrapper over three contracts)
@@ -92,3 +93,7 @@ Ready for Slice 3.
 - View tier API: render(node_id, tier, graph, repo_root) -> UnitView
 - Token estimation: character-based approximation (1 token per ~4 chars), swappable later
 - SLICE tier scope: same-file dependencies only. Cross-file context is the optimizer's job (dependency closure).
+- Scoring API: score_graph(query, graph, repo_root, embed_fn?) -> dict[str, EditSupportScores]
+- Feature weights are hardcoded, tunable via eval (Slice 9)
+- REFERENCES edges: evaluated and determined not needed for initial scoring. CALLS + IMPORTS + DEFINES sufficient.
+- Embedding backend: sentence-transformers with all-MiniLM-L6-v2, lazy loaded. Swappable via embed_fn parameter.
