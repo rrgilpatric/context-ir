@@ -80,3 +80,15 @@
 - Execution chat fixed: prerequisite ordering bug (multi-pass), confidence formula (actual max tier, not always FULL)
 - 14 new tests + 1 smoke test (70 total), all passing
 - Acceptance status: first-pass
+
+## 2026-04-13 -- Slice 5: Compile Contract
+
+- Created compiler module (src/context_ir/compiler.py) with compile() public API
+- Orchestrates full pipeline: parse -> score -> optimize -> render -> assemble
+- Document format: metadata header, file-grouped sections (alphabetical), symbols ordered by start_line, tier labels ([FULL], [SLICE], [STUB], [SUMMARY], [OMIT]), omitted section at end
+- Optional pre-parsed graph parameter (skips re-parsing)
+- Optional embed_fn pass-through to scorer
+- First of three frozen-spec contracts (compile, diagnose, recompile)
+- 12 new integration tests (82 total), all passing
+- Execution chat reported mypy errors but verification showed clean pass in project venv (same pattern as Slice 2)
+- Acceptance status: first-pass

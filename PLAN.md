@@ -51,7 +51,7 @@ One recompile path. Miss triggers: solver requests symbol absent from pack, stac
 
 ## Current Phase
 
-Ready for Slice 5.
+Ready for Slice 6.
 
 ## What Is Complete
 
@@ -60,6 +60,7 @@ Ready for Slice 5.
 - [x] Slice 2: View renderers, all 5 tiers (first-pass, accepted)
 - [x] Slice 3: Scoring engine with embeddings (first-pass, accepted)
 - [x] Slice 4: Budget optimizer with dependency closure (first-pass, accepted)
+- [x] Slice 5: Compile contract (first-pass, accepted)
 
 ## What Is In Progress
 
@@ -71,7 +72,7 @@ Ready for Slice 5.
 2. Scoring engine (p_edit, p_support, feature extraction, embeddings). Note: evaluate whether REFERENCES edges are needed for scoring quality. If so, add basic constant/variable reference extraction to the parser as part of this slice.
 3. ~~Scoring engine~~ (complete)
 4. ~~Budget optimizer~~ (complete)
-5. Diagnose + recompile contracts (miss detection, targeted recompilation)
+5. ~~Compile contract~~ (complete)
 6. MCP server (thin wrapper over three contracts)
 7. Eval harness (SWE-bench Mini setup, baselines, metrics framework)
 8. Eval runs + analysis (frozen-input comparison, ablations, budget curves)
@@ -103,3 +104,6 @@ Ready for Slice 5.
 - Tier value tables: STUB is optimal for support-heavy symbols (support_value=0.8), SLICE/FULL for edit targets
 - Dependency closure: one-hop, CALLS-only, minimum STUB tier. Can exceed budget (mandatory).
 - Confidence formula: achieved utility / max possible utility (using actual max tier per symbol, not always FULL)
+- Compile API: compile(query, repo_root, budget, embed_fn?, graph?) -> CompileResult
+- Document format: header with metadata, file-grouped sections with tier labels, omitted section
+- Compile is stateless: parses fresh unless graph is provided. No internal caching.

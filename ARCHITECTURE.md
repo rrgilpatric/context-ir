@@ -2,7 +2,7 @@
 
 ## Status
 
-Budget optimizer complete. Compile contract next.
+Compile contract complete. Diagnose + recompile next.
 
 ## Components
 
@@ -88,6 +88,28 @@ Key insight: STUB is optimal for support-heavy symbols (highest support_value). 
 
 **Packing exclusions:** FILE, MODULE, IMPORT nodes are not packed. Imports are included in SLICE-tier renders. File/module context is the compiler's responsibility.
 
+### Compiler (src/context_ir/compiler.py)
+
+End-to-end compile contract. First of the three frozen-spec contracts.
+
+- **compile(query, repo_root, budget, embed_fn?, graph?)** -- orchestrates parse -> score -> optimize -> render -> assemble
+
+**Pipeline:**
+1. Parse repository (or use provided graph)
+2. Score all nodes via score_graph
+3. Optimize packing via optimize
+4. Render each packed symbol at its assigned tier
+5. Assemble rendered views into a formatted document
+6. Return CompileResult
+
+**Document format:**
+- Header: query, budget usage, confidence, symbol counts
+- Body: file-grouped sections (alphabetical), symbols ordered by start_line within each file
+- Each symbol: `### <name> [<TIER>]` followed by rendered content
+- Omitted section at end listing excluded symbol IDs
+
+**Stateless:** Parses fresh on each call unless a pre-parsed graph is provided. No internal caching.
+
 ## Source Layout
 
 ```
@@ -98,12 +120,14 @@ src/context_ir/
     renderer.py       # 5-tier view renderer
     scorer.py         # Scoring engine (p_edit, p_support)
     optimizer.py      # Budget optimizer (greedy, dependency closure)
+    compiler.py       # Compile contract (end-to-end orchestration)
 tests/
     test_smoke.py     # Smoke tests for type definitions
     test_parser.py    # Parser unit and integration tests
     test_renderer.py  # Renderer unit and integration tests
     test_scorer.py    # Scorer unit and integration tests
     test_optimizer.py # Optimizer unit and integration tests
+    test_compiler.py  # Compiler integration tests
     fixtures/
         sample_repo/  # 4-file Python package for testing
 ```
@@ -129,3 +153,7 @@ tests/
 9. **Multi-pass greedy selection (Slice 4).** A single-pass greedy can miss upgrade opportunities when a high-efficiency step (e.g., STUB->SLICE) is sorted before its prerequisite (excluded->OMIT). Multi-pass iterates until no new steps are applied. At most 5 passes (one per tier level). Terminates because each pass can only upgrade, never downgrade.
 
 10. **Confidence uses actual max utility (Slice 4).** The confidence formula computes max utility per symbol across all tiers, not assuming FULL is always best. For support-heavy symbols, STUB (support_value=0.8) beats FULL (support_value=0.3). This prevents artificially deflated confidence scores.
+
+11. **Compile function naming (Slice 5).** Named `compile` to match the frozen spec and CompileResult type. Shadows Python's built-in `compile`. Users can access the built-in via `builtins.compile` or import from the module directly: `from context_ir.compiler import compile`.
+
+12. **Stateless compilation (Slice 5).** compile() has no internal state or caching. It parses the repo fresh on each call unless a pre-parsed graph is provided. This simplifies reasoning and testing. Persistent caching (e.g., graph reuse across MCP tool calls) is the server's responsibility, not the compiler's.
