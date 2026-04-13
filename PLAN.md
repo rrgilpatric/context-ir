@@ -51,15 +51,15 @@ One recompile path. Miss triggers: solver requests symbol absent from pack, stac
 
 ## Current Phase
 
-Bootstrap (Slice 0).
+Ready for Slice 1.
 
 ## What Is Complete
 
-(Nothing yet.)
+- [x] Slice 0: Project bootstrap (first-pass, accepted)
 
 ## What Is In Progress
 
-- [ ] Slice 0: Project bootstrap
+(Nothing currently in progress.)
 
 ## What Is Next (Backlog)
 

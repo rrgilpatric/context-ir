@@ -9,3 +9,17 @@
 - Frozen spec locked. Build order: compiler core first, MCP wrapper later.
 - Tech stack: Python 3.11+, ruff, mypy strict, pytest
 - Acceptance status: spec accepted after adversarial review convergence
+
+## 2026-04-13 -- Slice 0: Project Bootstrap
+
+- Initialized Python project with pyproject.toml (Python 3.11+, src layout, setuptools)
+- Created adapted AGENTS.md from personal website WoW reference
+- Created PLAN.md with frozen spec and full backlog
+- Created BUILDLOG.md with genesis entry
+- Created ARCHITECTURE.md stub with planned components
+- Created README.md with thesis, contracts, setup instructions
+- Created CI pipeline (GitHub Actions: ruff, mypy, pytest across Python 3.11/3.12/3.13)
+- Core type definitions: 17 types (6 enums + 11 dataclasses) in src/context_ir/types.py
+- 9 smoke tests, all passing
+- Noted finding: SymbolKind missing FILE/MODULE container kinds (deferred to Slice 1)
+- Acceptance status: first-pass
