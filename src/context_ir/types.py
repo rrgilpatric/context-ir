@@ -23,6 +23,8 @@ class SymbolKind(Enum):
     METHOD = "method"
     CONSTANT = "constant"
     IMPORT = "import"
+    FILE = "file"
+    MODULE = "module"
 
 
 class EdgeKind(Enum):

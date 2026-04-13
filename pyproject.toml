@@ -3,6 +3,10 @@ name = "context-ir"
 version = "0.1.0"
 description = "A budgeted context compiler for long-horizon coding agents"
 requires-python = ">=3.11"
+dependencies = [
+    "tree-sitter>=0.23.0",
+    "tree-sitter-python>=0.23.0",
+]
 
 [build-system]
 requires = ["setuptools>=68.0"]

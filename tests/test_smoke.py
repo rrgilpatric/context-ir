@@ -179,7 +179,7 @@ def test_recompile_result() -> None:
 
 def test_all_enum_values_accessible() -> None:
     """All enum types have the expected members."""
-    assert len(SymbolKind) == 5
+    assert len(SymbolKind) == 7
     assert len(EdgeKind) == 4
     assert len(ViewTier) == 5
     assert len(DowngradeReason) == 4
