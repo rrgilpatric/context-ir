@@ -65,3 +65,18 @@
 - sentence-transformers 5.x ships type stubs, so no type: ignore[import-untyped] needed
 - 14 new tests (55 total), all passing. Real model integration test runs in ~3.6s.
 - Acceptance status: first-pass
+
+## 2026-04-13 -- Slice 4: Budget Optimizer
+
+- Created budget optimizer (src/context_ir/optimizer.py) with optimize() public API
+- Added OptimizationResult dataclass to types.py
+- Greedy algorithm: marginal utility per token, sorted by efficiency, multi-pass to handle prerequisite ordering of upgrade steps
+- Tier value tables: OMIT(0.0/0.1), SUMMARY(0.1/0.5), STUB(0.3/0.8), SLICE(0.9/0.25), FULL(1.0/0.3) for edit/support
+- Dependency closure: one-hop CALLS edges, ensures targets at minimum STUB. Can exceed budget.
+- Warning generation: HIGH_RISK_OMISSION (p_edit > 0.5, excluded), BUDGET_FORCED_DOWNGRADE (p_edit > 0.3, at STUB or below), UNRESOLVED_SYMBOL_FRONTIER (non-packable targets of edges from packed symbols)
+- Trace: one CompileTraceEntry per packable symbol with downgrade reasons (DEPENDENCY_ONLY, LOW_RELEVANCE, BUDGET_PRESSURE)
+- Confidence: achieved utility / max possible utility across all tiers (not always FULL, since STUB is optimal for support-heavy symbols)
+- Packs FUNCTION, CLASS, METHOD, CONSTANT only. FILE, MODULE, IMPORT excluded from packing.
+- Execution chat fixed: prerequisite ordering bug (multi-pass), confidence formula (actual max tier, not always FULL)
+- 14 new tests + 1 smoke test (70 total), all passing
+- Acceptance status: first-pass

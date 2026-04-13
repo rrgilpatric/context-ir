@@ -51,7 +51,7 @@ One recompile path. Miss triggers: solver requests symbol absent from pack, stac
 
 ## Current Phase
 
-Ready for Slice 4.
+Ready for Slice 5.
 
 ## What Is Complete
 
@@ -59,6 +59,7 @@ Ready for Slice 4.
 - [x] Slice 1: Symbol graph parser with tree-sitter (1 correction, accepted)
 - [x] Slice 2: View renderers, all 5 tiers (first-pass, accepted)
 - [x] Slice 3: Scoring engine with embeddings (first-pass, accepted)
+- [x] Slice 4: Budget optimizer with dependency closure (first-pass, accepted)
 
 ## What Is In Progress
 
@@ -69,7 +70,7 @@ Ready for Slice 4.
 1. View renderers (all 5 tiers, with dependency-preserving source slice as key deliverable)
 2. Scoring engine (p_edit, p_support, feature extraction, embeddings). Note: evaluate whether REFERENCES edges are needed for scoring quality. If so, add basic constant/variable reference extraction to the parser as part of this slice.
 3. ~~Scoring engine~~ (complete)
-4. Compile contract (end-to-end compile with language-to-state intent parsing)
+4. ~~Budget optimizer~~ (complete)
 5. Diagnose + recompile contracts (miss detection, targeted recompilation)
 6. MCP server (thin wrapper over three contracts)
 7. Eval harness (SWE-bench Mini setup, baselines, metrics framework)
@@ -97,3 +98,8 @@ Ready for Slice 4.
 - Feature weights are hardcoded, tunable via eval (Slice 9)
 - REFERENCES edges: evaluated and determined not needed for initial scoring. CALLS + IMPORTS + DEFINES sufficient.
 - Embedding backend: sentence-transformers with all-MiniLM-L6-v2, lazy loaded. Swappable via embed_fn parameter.
+- Optimizer API: optimize(scores, graph, budget, repo_root) -> OptimizationResult
+- Greedy marginal utility algorithm with multi-pass prerequisite handling
+- Tier value tables: STUB is optimal for support-heavy symbols (support_value=0.8), SLICE/FULL for edit targets
+- Dependency closure: one-hop, CALLS-only, minimum STUB tier. Can exceed budget (mandatory).
+- Confidence formula: achieved utility / max possible utility (using actual max tier per symbol, not always FULL)

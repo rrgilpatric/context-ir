@@ -2,7 +2,7 @@
 
 ## Status
 
-Scoring engine complete. Budget optimizer next.
+Budget optimizer complete. Compile contract next.
 
 ## Components
 
@@ -66,6 +66,28 @@ Computes p_edit and p_support for every node in a SymbolGraph given a natural la
 
 **Feature weights:** Hardcoded at module level (W_LEX_EDIT, W_STRUCT_EDIT, W_SEM_EDIT, etc.). Tunable via eval in Slice 9.
 
+### Budget Optimizer (src/context_ir/optimizer.py)
+
+Decides which symbols to include and at what ViewTier given a token budget.
+
+- **optimize(scores, graph, budget, repo_root)** -- single entry point, returns OptimizationResult
+
+**Algorithm: greedy marginal utility per token**
+1. Filter to packable nodes (FUNCTION, CLASS, METHOD, CONSTANT)
+2. Pre-render all nodes at all tiers to get token costs
+3. Build upgrade steps: each consecutive tier pair (excluded->OMIT, OMIT->SUMMARY, ..., SLICE->FULL) with marginal utility and token delta
+4. Sort steps by efficiency (marginal_utility / token_delta), descending
+5. Multi-pass greedy selection: apply eligible steps until budget exhausted. Multi-pass handles prerequisite ordering (a STUB->SLICE step may sort before the excluded->OMIT step it depends on).
+6. Dependency closure: ensure CALLS targets of packed symbols are at minimum STUB
+7. Generate trace, warnings, omitted frontier, confidence
+
+**Tier value tables (edit_value / support_value):**
+- OMIT: 0.0 / 0.1 -- SUMMARY: 0.1 / 0.5 -- STUB: 0.3 / 0.8 -- SLICE: 0.9 / 0.25 -- FULL: 1.0 / 0.3
+
+Key insight: STUB is optimal for support-heavy symbols (highest support_value). SLICE/FULL are optimal for edit targets. The greedy algorithm naturally assigns the right tier based on p_edit/p_support balance.
+
+**Packing exclusions:** FILE, MODULE, IMPORT nodes are not packed. Imports are included in SLICE-tier renders. File/module context is the compiler's responsibility.
+
 ## Source Layout
 
 ```
@@ -75,11 +97,13 @@ src/context_ir/
     parser.py         # tree-sitter-based symbol graph parser
     renderer.py       # 5-tier view renderer
     scorer.py         # Scoring engine (p_edit, p_support)
+    optimizer.py      # Budget optimizer (greedy, dependency closure)
 tests/
     test_smoke.py     # Smoke tests for type definitions
     test_parser.py    # Parser unit and integration tests
     test_renderer.py  # Renderer unit and integration tests
     test_scorer.py    # Scorer unit and integration tests
+    test_optimizer.py # Optimizer unit and integration tests
     fixtures/
         sample_repo/  # 4-file Python package for testing
 ```
@@ -99,3 +123,9 @@ tests/
 6. **REFERENCES edges not needed for scoring (Slice 3).** Evaluated during Slice 3 planning. CALLS + IMPORTS + DEFINES edges provide sufficient signal for graph propagation. Constants mentioned by name in the query are caught by lexical matching. Revisit only if eval shows gaps.
 
 7. **Injectable embedding function (Slice 3).** score_graph accepts an optional embed_fn parameter. Default uses sentence-transformers (lazy loaded). Tests inject a constant embedder returning identical vectors, which zeros out the semantic signal and isolates lexical/structural/propagation behavior. This pattern keeps the test suite fast (~0.04s without model loading) while still supporting real-model integration testing.
+
+8. **Packable node kinds (Slice 4).** The optimizer only packs FUNCTION, CLASS, METHOD, CONSTANT. FILE, MODULE, and IMPORT nodes are structural and excluded from packing. Imports are already included in SLICE-tier renders. File/module context is added by the compiler.
+
+9. **Multi-pass greedy selection (Slice 4).** A single-pass greedy can miss upgrade opportunities when a high-efficiency step (e.g., STUB->SLICE) is sorted before its prerequisite (excluded->OMIT). Multi-pass iterates until no new steps are applied. At most 5 passes (one per tier level). Terminates because each pass can only upgrade, never downgrade.
+
+10. **Confidence uses actual max utility (Slice 4).** The confidence formula computes max utility per symbol across all tiers, not assuming FULL is always best. For support-heavy symbols, STUB (support_value=0.8) beats FULL (support_value=0.3). This prevents artificially deflated confidence scores.
