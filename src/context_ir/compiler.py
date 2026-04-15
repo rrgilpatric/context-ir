@@ -16,6 +16,7 @@ from context_ir.parser import parse_repository
 from context_ir.renderer import render
 from context_ir.scorer import score_graph
 from context_ir.types import (
+    CompileContext,
     CompileResult,
     SymbolGraph,
     UnitView,
@@ -167,4 +168,5 @@ def compile(
         confidence=opt.confidence,
         total_tokens=opt.total_tokens,
         budget=budget,
+        compile_context=CompileContext(query=query, repo_root=repo_root),
     )

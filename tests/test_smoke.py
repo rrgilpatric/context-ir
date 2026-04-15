@@ -1,6 +1,9 @@
 """Smoke test: verify core types are importable and constructible."""
 
+from pathlib import Path
+
 from context_ir.types import (
+    CompileContext,
     CompileResult,
     CompileTraceEntry,
     CompileWarning,
@@ -132,6 +135,30 @@ def test_compile_result() -> None:
     )
     assert result.confidence == 0.85
     assert result.total_tokens <= result.budget
+
+
+def test_compile_context_construction() -> None:
+    """CompileContext carries query and repo_root for recompilation."""
+    ctx = CompileContext(query="test query", repo_root=Path("/tmp"))
+    assert ctx.query == "test query"
+    assert ctx.repo_root == Path("/tmp")
+
+
+def test_compile_result_with_context() -> None:
+    """CompileResult carries compile_context when provided."""
+    ctx = CompileContext(query="test", repo_root=Path("/tmp"))
+    result = CompileResult(
+        document="compiled output",
+        trace=[],
+        warnings=[],
+        omitted_frontier=[],
+        confidence=0.85,
+        total_tokens=100,
+        budget=200,
+        compile_context=ctx,
+    )
+    assert result.compile_context is ctx
+    assert result.compile_context.query == "test"
 
 
 def test_miss_evidence_and_diagnostics() -> None:

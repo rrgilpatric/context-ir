@@ -9,7 +9,10 @@ dependencies needed to understand the target symbol.
 
 from __future__ import annotations
 
-import re
+import io
+import keyword
+import token
+import tokenize
 from pathlib import Path
 
 import tree_sitter as ts
@@ -532,6 +535,7 @@ def _find_relevant_imports(
     repo_root: Path,
 ) -> list[str]:
     """Find import statements from the same file that the source references."""
+    referenced_names = _extract_executable_names(source)
     results: list[str] = []
     for node in same_file_nodes:
         if node.kind != SymbolKind.IMPORT:
@@ -541,7 +545,7 @@ def _find_relevant_imports(
             continue
         names = _extract_import_names(imp_source.strip())
         for name in names:
-            if re.search(r"\b" + re.escape(name) + r"\b", source):
+            if name in referenced_names:
                 results.append(imp_source.strip())
                 break
     return results
@@ -578,15 +582,30 @@ def _find_relevant_constants(
     repo_root: Path,
 ) -> list[str]:
     """Find constants from the same file that the source references."""
+    referenced_names = _extract_executable_names(source)
     results: list[str] = []
     for node in same_file_nodes:
         if node.kind != SymbolKind.CONSTANT:
             continue
-        if re.search(r"\b" + re.escape(node.name) + r"\b", source):
+        if node.name in referenced_names:
             const_source = _read_node_source(node, repo_root)
             if const_source is not None:
                 results.append(const_source.strip())
     return results
+
+
+def _extract_executable_names(source: str) -> set[str]:
+    """Extract identifier tokens while ignoring comments and string literals."""
+    names: set[str] = set()
+    try:
+        tokens = tokenize.generate_tokens(io.StringIO(source).readline)
+    except (IndentationError, tokenize.TokenError):
+        return names
+
+    for tok in tokens:
+        if tok.type == token.NAME and not keyword.iskeyword(tok.string):
+            names.add(tok.string)
+    return names
 
 
 def _find_called_stubs(

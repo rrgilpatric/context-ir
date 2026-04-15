@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Symbol graph
@@ -168,6 +169,24 @@ class CompileWarning:
 
 
 # ---------------------------------------------------------------------------
+# Compile context (state carrier for recompilation)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class CompileContext:
+    """State carried on a CompileResult for future recompilation.
+
+    Stores the durable inputs needed to rerun the compile pipeline
+    so that recompile() can operate from the prior compile artifact
+    alone plus miss evidence and a budget delta.
+    """
+
+    query: str
+    repo_root: Path
+
+
+# ---------------------------------------------------------------------------
 # Compile result
 # ---------------------------------------------------------------------------
 
@@ -183,6 +202,7 @@ class CompileResult:
     confidence: float
     total_tokens: int
     budget: int
+    compile_context: CompileContext | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -241,9 +261,11 @@ class DiagnosticResult:
 
 @dataclass
 class RecompileResult(CompileResult):
-    """Output of recompile(previous_trace, new_evidence, delta_budget).
+    """Output of recompile(previous_result, new_evidence, delta_budget).
 
     Extends CompileResult with recompilation-specific fields.
+    previous_trace is convenience metadata; the primary contract
+    boundary is previous_result (a CompileResult carrying CompileContext).
     """
 
     previous_trace: list[CompileTraceEntry] = field(default_factory=list)

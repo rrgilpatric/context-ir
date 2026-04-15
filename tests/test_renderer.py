@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -81,6 +82,14 @@ def test_summary_file(graph: SymbolGraph) -> None:
     assert "constant" in view.content
 
 
+def test_summary_module(graph: SymbolGraph) -> None:
+    """SUMMARY for a MODULE includes the package name and file count."""
+    view = render("module:mypackage", ViewTier.SUMMARY, graph, FIXTURES)
+    assert view.tier == ViewTier.SUMMARY
+    assert "mypackage/" in view.content
+    assert "3 files" in view.content
+
+
 # ---------------------------------------------------------------------------
 # STUB tier
 # ---------------------------------------------------------------------------
@@ -120,6 +129,23 @@ def test_stub_method(graph: SymbolGraph) -> None:
     assert "self.name" not in view.content
 
 
+def test_stub_file_concatenates_top_level_symbol_stubs(graph: SymbolGraph) -> None:
+    """STUB for a FILE concatenates top-level symbol stubs in source order."""
+    view = render("file:mypackage/models.py", ViewTier.STUB, graph, FIXTURES)
+    assert view.tier == ViewTier.STUB
+    assert "import os" in view.content
+    assert "MAX_NAME_LENGTH = 128" in view.content
+    assert "class User:" in view.content
+    assert "def validate_name(name: str) -> bool: ..." in view.content
+
+
+def test_stub_module_lists_package_files(graph: SymbolGraph) -> None:
+    """STUB for a MODULE lists files inside the package."""
+    view = render("module:mypackage", ViewTier.STUB, graph, FIXTURES)
+    assert view.tier == ViewTier.STUB
+    assert view.content.splitlines() == ["__init__.py", "models.py", "utils.py"]
+
+
 # ---------------------------------------------------------------------------
 # FULL tier
 # ---------------------------------------------------------------------------
@@ -148,6 +174,14 @@ def test_full_file(graph: SymbolGraph) -> None:
     assert view.content == expected
 
 
+def test_full_module_returns_init_source(graph: SymbolGraph) -> None:
+    """FULL for a MODULE returns the package __init__.py source."""
+    view = render("module:mypackage", ViewTier.FULL, graph, FIXTURES)
+    assert view.tier == ViewTier.FULL
+    expected = (FIXTURES / "mypackage" / "__init__.py").read_text()
+    assert view.content == expected
+
+
 # ---------------------------------------------------------------------------
 # SLICE tier
 # ---------------------------------------------------------------------------
@@ -164,6 +198,30 @@ def test_slice_includes_called_function_stubs(graph: SymbolGraph) -> None:
     assert "# Source" in view.content
     assert "def validate_name" in view.content
     assert "name.strip()" in view.content
+
+
+def test_slice_includes_same_class_attribute_helper_stub(tmp_path: Path) -> None:
+    """SLICE should preserve same-class helper methods called via self.<name>()."""
+    worker_file = tmp_path / "worker.py"
+    worker_file.write_text(
+        textwrap.dedent(
+            """
+            class Worker:
+                def run(self) -> int:
+                    return self.helper()
+
+                def helper(self) -> int:
+                    return 7
+            """
+        ).lstrip()
+    )
+
+    graph = parse_repository(tmp_path)
+    view = render("worker.py::Worker.run", ViewTier.SLICE, graph, tmp_path)
+
+    assert "# Referenced signatures" in view.content
+    assert "def helper(self) -> int: ..." in view.content
+    assert "return self.helper()" in view.content
 
 
 def test_slice_includes_referenced_constants(graph: SymbolGraph) -> None:
@@ -190,6 +248,58 @@ def test_slice_omits_unrelated_symbols(graph: SymbolGraph) -> None:
     assert "DEFAULT_ROLE" not in view.content
     assert "class User" not in view.content
     assert "import os" not in view.content
+
+
+def test_slice_ignores_import_names_in_docstrings_strings_and_comments(
+    tmp_path: Path,
+) -> None:
+    """SLICE import relevance should ignore non-executable text mentions."""
+    probe_file = tmp_path / "describe.py"
+    probe_file.write_text(
+        textwrap.dedent(
+            '''
+            import math
+
+            def describe() -> str:
+                """math is only mentioned in this docstring."""
+                note = "math appears in this string too"
+                # math appears in this comment as well
+                return note
+            '''
+        ).lstrip()
+    )
+
+    graph = parse_repository(tmp_path)
+    view = render("describe.py::describe", ViewTier.SLICE, graph, tmp_path)
+
+    assert "# Imports" not in view.content
+    assert "import math" not in view.content
+
+
+def test_slice_ignores_constant_names_in_docstrings_strings_and_comments(
+    tmp_path: Path,
+) -> None:
+    """SLICE constant relevance should ignore non-executable text mentions."""
+    probe_file = tmp_path / "describe.py"
+    probe_file.write_text(
+        textwrap.dedent(
+            '''
+            TOKEN = "real"
+
+            def describe() -> str:
+                """TOKEN is only mentioned in this docstring."""
+                note = "TOKEN appears in this string too"
+                # TOKEN appears in this comment as well
+                return note
+            '''
+        ).lstrip()
+    )
+
+    graph = parse_repository(tmp_path)
+    view = render("describe.py::describe", ViewTier.SLICE, graph, tmp_path)
+
+    assert "# Constants" not in view.content
+    assert 'TOKEN = "real"' not in view.content
 
 
 # ---------------------------------------------------------------------------

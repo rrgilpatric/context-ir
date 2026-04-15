@@ -2,158 +2,202 @@
 
 ## Status
 
-Compile contract complete. Diagnose + recompile next.
+Semantic-first re-baselining. This document is the current architectural authority.
 
-## Components
+The April 13 frozen spec is retired and superseded. Existing runtime modules under `src/context_ir/` still largely reflect the retired symbol-graph-first build and must be treated as implementation history until they are replaced slice by slice.
 
-### Symbol Graph Parser (src/context_ir/parser.py)
+## System Goal
 
-Builds a SymbolGraph from a Python codebase using tree-sitter.
+Context IR is a semantically grounded Python context compiler for coding agents. The system should compile the smallest trustworthy working set for the next decision by:
 
-- **parse_repository(root)** -- walks a directory, creates MODULE/FILE nodes, parses each .py file, merges results, resolves cross-file imports
-- **parse_file(file_path, repo_root)** -- parses one .py file, extracts all symbol nodes and intra-file edges
+1. analyzing a supported static Python subset into a `SemanticProgram`
+2. deriving proved dependencies plus an explicit unknown frontier
+3. applying ranking and budget optimization on top of that semantic substrate
+4. compiling context artifacts that surface both evidence and uncertainty
 
-**Node types extracted:** FILE, MODULE, FUNCTION, CLASS, METHOD, CONSTANT, IMPORT
+## Public Low-Level Contract
 
-**Edge types extracted:** DEFINES (containment), CALLS (function calls, intra-file), IMPORTS (cross-file, best-effort)
+`analyze_repository(repo_root) -> SemanticProgram`
 
-**Node ID convention:**
-- FILE: file:<relative_path>
-- MODULE: module:<relative_path>
-- FUNCTION/CLASS/CONSTANT: <relative_path>::<name>
-- METHOD: <relative_path>::<class>.<method>
-- IMPORT: <relative_path>::import:<line>
+This is the public low-level contract that higher layers build on. Ranking, optimization, compilation, and any future MCP surface must not claim stronger semantic knowledge than this API can actually prove.
 
-**Cross-file resolution:** best-effort matching of Python dotted import paths to files and symbols in the graph. External imports (stdlib, third-party) produce IMPORT nodes but no IMPORTS edges.
+`SemanticProgram` is the durable semantic product of repository analysis. At minimum it must carry:
 
-**Known limitations:** CALLS edges cover simple identifier calls only (not attribute calls like obj.method()). Relative imports, aliased imports, and multi-line imports have limited resolution. REFERENCES edges not yet implemented.
+- source inventory for the supported Python files under analysis
+- syntax facts needed for semantic interpretation
+- stable symbol identities and source spans
+- scope and binding information
+- resolved references and object-level facts within the supported subset
+- semantic dependency edges with proof source or derivation reason
+- explicit unknown or unsupported findings when proof is unavailable
+- enough normalized structure for downstream rendering, ranking, optimization, and diagnostics
 
-### View Renderers (src/context_ir/renderer.py)
+## Supported Static Subset
 
-Renders any SymbolNode at a chosen ViewTier, returning a UnitView with content and estimated token cost.
+The first rebaseline targets a narrow, explicit Python subset. The analyzer is allowed to prove facts only inside this subset.
 
-- **render(node_id, tier, graph, repo_root)** -- single entry point, dispatches by tier
-- **estimate_tokens(text)** -- character-based approximation (1 token per ~4 chars), swappable
+### In Scope First
 
-**Tier behavior:**
-- OMIT: `[ref: <node_id>]`
-- SUMMARY: signature + docstring first line (callables), header + method count (classes), source line (constants/imports), symbol count (files)
-- STUB: `signature: ...` (callables), class header + method stubs (classes), concatenated stubs (files)
-- SLICE: symbol source + same-file imports, constants, and called function stubs. Uses CALLS edges for function stubs, word-boundary regex for import/constant relevance. Cross-file dependencies are NOT included (handled by optimizer dependency closure).
-- FULL: exact source between start_line/end_line. Entire file for FILE nodes. __init__.py or file listing for MODULE nodes.
+- repository Python modules and files
+- module imports that can be resolved statically inside the repository
+- module-level bindings and constants
+- function, async function, class, and method definitions
+- lexical scopes at module, class, and function level
+- name binding and reference resolution that can be proven from syntax plus supported imports
+- class decorator support for `@dataclass` only, interpreted narrowly and explicitly
 
-**Known limitations:** Import relevance uses text-matching heuristic (could false-positive on string literals). Token estimation is approximate. Multiline signatures collapsed to single line.
+### `@dataclass` Scope
 
-### Scoring Engine (src/context_ir/scorer.py)
+The first supported decorator set includes `@dataclass` only.
 
-Computes p_edit and p_support for every node in a SymbolGraph given a natural language query.
+- Supported when the decorator resolves to `dataclasses.dataclass`
+- Supported only as a class-level fact, not as a general decorator framework
+- Intended initial semantic effect: record dataclass field facts derived from annotated class attributes and treat generated constructor-like behavior as supported only to the extent it is explicitly modeled
+- Aliases, wrapper decorators, and mixed decorator stacks are unknown unless later slices add proof rules
 
-- **score_graph(query, graph, repo_root, embed_fn?)** -- single entry point, returns dict[str, EditSupportScores]
-- **estimate_tokens(text)** lives in renderer.py (not scorer.py)
+### Unknown Without Proof
 
-**9-step pipeline:**
-1. Query term extraction (snake_case/CamelCase splitting, dedup)
-2. Symbol text profiles for embedding (name + path + signature + docstring)
-3. Lexical scoring (name/path/content match)
-4. Structural priors (test files, configs, entry points, symbol kind)
-5. Semantic similarity (sentence-transformers, cosine similarity)
-6. Weighted combination (lexical 40/30%, structural 10/20%, semantic 50/50%)
-7. Graph propagation (2 iterations, 0.3 decay over CALLS/IMPORTS/DEFINES)
-8. Container node scoring (FILE/MODULE = max of children)
-9. Normalize and clamp to [0.0, 1.0]
+When a fact cannot be proven statically inside the supported subset, the system must mark it as unknown or unsupported instead of guessing. Examples include:
 
-**Embedding:** sentence-transformers with all-MiniLM-L6-v2. Lazy loaded on first call. Injectable embed_fn parameter for testing and alternative backends.
+- dynamic imports and reflective module loading
+- `exec`, `eval`, monkey patching, and runtime code generation
+- decorators other than the explicitly supported set
+- metaclass behavior, runtime attribute injection, and dynamic `__getattr__` patterns
+- star imports or alias chains that cannot be resolved with proof
+- semantic dependency claims inferred only from ranking heuristics
 
-**Feature weights:** Hardcoded at module level (W_LEX_EDIT, W_STRUCT_EDIT, W_SEM_EDIT, etc.). Tunable via eval in Slice 9.
+Unknown handling is part of the architecture, not a temporary omission.
 
-### Budget Optimizer (src/context_ir/optimizer.py)
+## Mandatory Component Model
 
-Decides which symbols to include and at what ViewTier given a token budget.
+The architecture is built in this order. Higher layers depend on lower layers being truthful.
 
-- **optimize(scores, graph, budget, repo_root)** -- single entry point, returns OptimizationResult
+### 1. Syntax Extraction
 
-**Algorithm: greedy marginal utility per token**
-1. Filter to packable nodes (FUNCTION, CLASS, METHOD, CONSTANT)
-2. Pre-render all nodes at all tiers to get token costs
-3. Build upgrade steps: each consecutive tier pair (excluded->OMIT, OMIT->SUMMARY, ..., SLICE->FULL) with marginal utility and token delta
-4. Sort steps by efficiency (marginal_utility / token_delta), descending
-5. Multi-pass greedy selection: apply eligible steps until budget exhausted. Multi-pass handles prerequisite ordering (a STUB->SLICE step may sort before the excluded->OMIT step it depends on).
-6. Dependency closure: ensure CALLS targets of packed symbols are at minimum STUB
-7. Generate trace, warnings, omitted frontier, confidence
+Responsibility:
+- read Python source files
+- produce syntax facts and spans for supported constructs
+- preserve enough structure for later semantic analysis without inventing meaning
 
-**Tier value tables (edit_value / support_value):**
-- OMIT: 0.0 / 0.1 -- SUMMARY: 0.1 / 0.5 -- STUB: 0.3 / 0.8 -- SLICE: 0.9 / 0.25 -- FULL: 1.0 / 0.3
+Output:
+- syntax-oriented repository facts that feed `SemanticProgram`
 
-Key insight: STUB is optimal for support-heavy symbols (highest support_value). SLICE/FULL are optimal for edit targets. The greedy algorithm naturally assigns the right tier based on p_edit/p_support balance.
+### 2. Semantic Analysis
 
-**Packing exclusions:** FILE, MODULE, IMPORT nodes are not packed. Imports are included in SLICE-tier renders. File/module context is the compiler's responsibility.
+Semantic analysis is mandatory. The retired symbol graph is not an acceptable substitute.
 
-### Compiler (src/context_ir/compiler.py)
+#### Binder and Scope Model
 
-End-to-end compile contract. First of the three frozen-spec contracts.
+Responsibility:
+- establish module, class, and function scopes
+- assign bindings for definitions and imports
+- represent visibility and shadowing rules that can be proven in the supported subset
 
-- **compile(query, repo_root, budget, embed_fn?, graph?)** -- orchestrates parse -> score -> optimize -> render -> assemble
+Output:
+- scope graph or equivalent binding model inside `SemanticProgram`
 
-**Pipeline:**
-1. Parse repository (or use provided graph)
-2. Score all nodes via score_graph
-3. Optimize packing via optimize
-4. Render each packed symbol at its assigned tier
-5. Assemble rendered views into a formatted document
-6. Return CompileResult
+#### Resolver and Object Model
 
-**Document format:**
-- Header: query, budget usage, confidence, symbol counts
-- Body: file-grouped sections (alphabetical), symbols ordered by start_line within each file
-- Each symbol: `### <name> [<TIER>]` followed by rendered content
-- Omitted section at end listing excluded symbol IDs
+Responsibility:
+- resolve references against the binder output
+- attach object-level meaning to supported symbols
+- track imports, aliases, dataclass facts, and other explicitly modeled constructs
 
-**Stateless:** Parses fresh on each call unless a pre-parsed graph is provided. No internal caching.
+Output:
+- resolved references, symbol identities, and object facts inside `SemanticProgram`
 
-## Source Layout
+### 3. Dependency and Frontier Derivation
 
-```
-src/context_ir/
-    __init__.py       # Package init, re-exports public API
-    types.py          # Core type definitions (dataclasses, enums)
-    parser.py         # tree-sitter-based symbol graph parser
-    renderer.py       # 5-tier view renderer
-    scorer.py         # Scoring engine (p_edit, p_support)
-    optimizer.py      # Budget optimizer (greedy, dependency closure)
-    compiler.py       # Compile contract (end-to-end orchestration)
-tests/
-    test_smoke.py     # Smoke tests for type definitions
-    test_parser.py    # Parser unit and integration tests
-    test_renderer.py  # Renderer unit and integration tests
-    test_scorer.py    # Scorer unit and integration tests
-    test_optimizer.py # Optimizer unit and integration tests
-    test_compiler.py  # Compiler integration tests
-    fixtures/
-        sample_repo/  # 4-file Python package for testing
-```
+Responsibility:
+- derive semantic dependency edges from resolved program facts
+- distinguish proved dependencies from unresolved frontier uncertainty
+- expose where the analyzer ran out of proof
 
-## Key Design Decisions
+Policy:
+- dependency claims must come from syntax plus semantic analysis
+- ranking heuristics may prioritize selection but may not fabricate semantic dependency claims
 
-1. **Container nodes as enum values (Slice 1).** FILE and MODULE are values in the SymbolKind enum, not a separate type. This keeps the graph homogeneous -- all nodes are SymbolNode, simplifying traversal and downstream processing. FILE nodes have start_line=1, end_line=last line. MODULE nodes have start_line=0, end_line=0.
+Output:
+- semantic dependency graph
+- frontier or unknown set for unresolved but relevant areas
 
-2. **DEFINES for containment (Slice 1).** The DEFINES edge kind covers both "file defines function" and "class defines method." Combined with parent_id on SymbolNode for O(1) parent lookup. No separate CONTAINS edge needed.
+### 4. Rendering / Representation Policy
 
-3. **Best-effort cross-file resolution (Slice 1).** Import resolution matches Python dotted paths to graph nodes. Unresolvable imports (external, relative, aliased) are silently skipped rather than failing. Correctness can be improved incrementally.
+Responsibility:
+- define how semantic units can be represented at different densities
+- preserve provenance from `SemanticProgram`
+- expose uncertainty clearly when representation depends on incomplete proof
 
-4. **Same-file scope for SLICE tier (Slice 2).** The SLICE tier includes only same-file dependencies (imports, constants, called function stubs). Cross-file context is the budget optimizer's responsibility via dependency closure. This keeps individual SLICE views bounded and predictable in token cost.
+Current authority:
+- multi-tier representation remains in scope
+- the exact tier count and semantics are not frozen during the rebaseline
+- the prior 5-tier scheme is historical only and not current authority
 
-5. **Token estimation as swappable heuristic (Slice 2).** estimate_tokens() uses len(text) // 4. Isolated in a single function so it can be replaced with tiktoken or a model-specific tokenizer when eval accuracy demands it.
+### 5. Ranking
 
-6. **REFERENCES edges not needed for scoring (Slice 3).** Evaluated during Slice 3 planning. CALLS + IMPORTS + DEFINES edges provide sufficient signal for graph propagation. Constants mentioned by name in the query are caught by lexical matching. Revisit only if eval shows gaps.
+Responsibility:
+- prioritize which proved units and frontier items matter most for a task
+- combine task signals with semantic structure, not replace it
 
-7. **Injectable embedding function (Slice 3).** score_graph accepts an optional embed_fn parameter. Default uses sentence-transformers (lazy loaded). Tests inject a constant embedder returning identical vectors, which zeros out the semantic signal and isolates lexical/structural/propagation behavior. This pattern keeps the test suite fast (~0.04s without model loading) while still supporting real-model integration testing.
+Policy:
+- `p_edit` and `p_support` may remain as internal ranking policy
+- they are not the public thesis of the project
+- they can rank among proved candidates and frontier items, but they cannot create semantic facts
 
-8. **Packable node kinds (Slice 4).** The optimizer only packs FUNCTION, CLASS, METHOD, CONSTANT. FILE, MODULE, and IMPORT nodes are structural and excluded from packing. Imports are already included in SLICE-tier renders. File/module context is added by the compiler.
+### 6. Optimization
 
-9. **Multi-pass greedy selection (Slice 4).** A single-pass greedy can miss upgrade opportunities when a high-efficiency step (e.g., STUB->SLICE) is sorted before its prerequisite (excluded->OMIT). Multi-pass iterates until no new steps are applied. At most 5 passes (one per tier level). Terminates because each pass can only upgrade, never downgrade.
+Responsibility:
+- choose a budget-feasible set of rendered units
+- reason about tradeoffs, coverage, and downgrade decisions
+- respect semantic dependency requirements and uncertainty surfacing
 
-10. **Confidence uses actual max utility (Slice 4).** The confidence formula computes max utility per symbol across all tiers, not assuming FULL is always best. For support-heavy symbols, STUB (support_value=0.8) beats FULL (support_value=0.3). This prevents artificially deflated confidence scores.
+Output:
+- optimized selection plan with traceable reasons
 
-11. **Compile function naming (Slice 5).** Named `compile` to match the frozen spec and CompileResult type. Shadows Python's built-in `compile`. Users can access the built-in via `builtins.compile` or import from the module directly: `from context_ir.compiler import compile`.
+### 7. Compilation
 
-12. **Stateless compilation (Slice 5).** compile() has no internal state or caching. It parses the repo fresh on each call unless a pre-parsed graph is provided. This simplifies reasoning and testing. Persistent caching (e.g., graph reuse across MCP tool calls) is the server's responsibility, not the compiler's.
+Responsibility:
+- assemble selected rendered units into a context artifact
+- include trace, warnings, and uncertainty signals derived from the semantic layer
+- avoid overclaiming completeness when frontier uncertainty remains
+
+Policy:
+- compile behavior is downstream of `SemanticProgram`
+- no compile contract is authoritative unless it matches the semantic substrate beneath it
+
+### 8. Diagnose / Recompile
+
+Responsibility:
+- interpret miss evidence against the compiled artifact and semantic trace
+- identify which misses came from unsupported proof, missing frontier expansion, or ranking/optimization choices
+- rebuild context without pretending the original semantic analysis knew more than it did
+
+Current authority:
+- diagnose and `recompile` are required architectural layers
+- the public `recompile` contract is not frozen yet
+- the old `recompile` hold is now part of the historical evidence trail, not the main control problem
+
+## Planned Boundaries
+
+Exact file names may change during the rebaseline, but the logical boundaries are:
+
+- semantic contracts and shared dataclasses
+- syntax extraction
+- binder and scope model
+- resolver and object model
+- semantic dependency/frontier derivation
+- rendering policy
+- ranking policy
+- optimization
+- compilation
+- diagnose/recompile
+
+## Retired Non-Authoritative Descriptions
+
+These ideas remain historical only and must not be treated as current authority:
+
+- the old symbol-graph-first pipeline as the core architectural substrate
+- the exact 5-tier renderer semantics as if already frozen
+- heuristic graph propagation as a substitute for semantic dependency proof
+- framing `p_edit` / `p_support` as the public thesis of the project
+- treating the prior `recompile` contract dispute as the main gating issue ahead of semantic re-baselining
