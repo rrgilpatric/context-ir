@@ -2,6 +2,93 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-16 -- Deterministic Provider/Baseline Infrastructure
+
+- Added deterministic internal eval provider infrastructure after 1 correction
+- Added `src/context_ir/eval_providers.py` with:
+  - typed provider request, config, metadata, and result dataclasses
+  - shared token estimator `max(1, (len(text) + 3) // 4)`
+  - deterministic lexical tokenization and lexical file scoring
+  - whole-file budget-aware packing for baseline providers
+  - Context IR provider delegation through `compile_repository_context(...)` with `embed_fn=None`
+  - deterministic `lexical_top_k_files`, `import_neighborhood_files`, and diagnostic `file_order_floor` providers
+- Added `tests/test_eval_providers.py` covering token estimation, lexical tokenization, lexical ordering, zero-match behavior, header-aware budget packing, import-neighborhood seed/import behavior, star-import warning behavior, missing/external import handling, diagnostic baseline marking, Context IR facade delegation, no-oracle provider inputs, and internal-only scope boundaries
+- Control review initially found one metadata-contract issue:
+  - Context IR provider output collapsed selection trace and warnings too aggressively for the later scoring slice
+- Correction pass added structured Context IR metadata:
+  - `EvalSelectedUnit`
+  - `EvalProviderWarning`
+  - `EvalProviderMetadata.selected_units`
+  - `EvalProviderMetadata.warning_details`
+- Context IR provider output now preserves:
+  - selected unit `unit_id`, `detail`, `token_count`, `basis`
+  - selected unit `reason`, `edit_score`, and `support_score`
+  - warning `code`, `unit_id`, and `message`
+- `EvalProviderResult` now rejects lossy mismatches between convenience tuples and the structured Context IR metadata
+- Validation confirmed after correction:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v -m "not slow"` with 243 passed and 1 deselected
+- Metric scoring, raw result ledgers, reports, and public-claim updates remain deferred
+- Acceptance status: 1 correction
+
+## 2026-04-15 -- Eval Oracle Foundation
+
+- Added the deterministic eval oracle foundation after 1 correction
+- Added `src/context_ir/eval_oracles.py` as an internal module with:
+  - typed dataclasses for eval tasks, selectors, resolved selector records, and setup results
+  - JSON task loading
+  - generated runtime-ID field rejection
+  - strict unknown-field rejection for task records and selector records
+  - selector resolution through `analyze_repository(...)`
+  - loud unresolved and ambiguous selector setup failures
+- Added durable smoke eval assets under `evals/`:
+  - `evals/fixtures/oracle_smoke/main.py`
+  - `evals/fixtures/oracle_smoke/pkg/__init__.py`
+  - `evals/fixtures/oracle_smoke/pkg/helpers.py`
+  - `evals/tasks/oracle_smoke.json`
+- Added `tests/test_eval_oracles.py` covering typed loading, generated-ID rejection, unknown-field rejection, deterministic symbol/frontier/unsupported selector resolution, analyzer usage, unresolved and ambiguous failure paths, no mutation, and no public/package/provider/baseline/scoring/report expansion
+- Control review initially found one schema-strictness issue: unknown task and selector fields were silently accepted
+- Correction pass added allowed-field validation and tests for unknown top-level, symbol, frontier, and unsupported selector fields
+- Validation confirmed after correction:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v -m "not slow"` with 229 passed and 1 deselected
+- Provider adapters, baseline providers, metric scoring, raw result output, reports, and public-claim updates remain deferred
+- Acceptance status: 1 correction
+
+## 2026-04-15 -- Deterministic Fixture-Level Eval Design
+
+- Accepted the read-only deterministic fixture-level eval design slice after 2 corrections
+- The accepted design answers the evidence-building question: whether Context IR produces higher-quality context packs than simple deterministic retrieval baselines under fixed budgets on repo-controlled coding-agent fixtures
+- Correction 1 froze:
+  - deterministic `lexical_top_k_files` and `import_neighborhood_files` baseline algorithms
+  - shared token estimator and whole-document budget accounting
+  - credited-relevant-token, noise, coverage, representation, and uncertainty metric rules
+  - success, failure, negative-evidence, and no-public-claim gates
+  - uncertainty scoring policy requiring selected document, selected trace, omitted surface, or optimization-warning evidence rather than dormant facade metadata
+- Correction 2 replaced generated unit-ID oracles with stable selector-based task records resolved at run time through `analyze_repository(...)`
+- The accepted next implementation slice is narrowed to the eval oracle foundation:
+  - eval asset layout
+  - task schema or strict loader
+  - selector resolver
+  - tiny fixtures/task records
+  - tests proving symbol, frontier, and unsupported selectors resolve deterministically
+  - tests proving unresolved or ambiguous selectors fail setup loudly
+- Provider adapters, baseline providers, metric scoring, raw JSONL output, reports, and public-claim updates remain deferred until the oracle foundation is accepted
+- No files were changed by the execution research lane; control-lane continuity was updated after acceptance
+- Acceptance status: 2 corrections
+
+## 2026-04-15 -- Release Sequencing
+
+- Released the accepted semantic-first baseline to `origin/main`
+- Current released commit verified locally: `9abc57c Rebaseline Context IR around semantic analysis`
+- Local `main` has no ahead/behind marker relative to `origin/main`
+- Release state now distinguishes the accepted/pushed semantic baseline from the next evidence-building phase
+- Acceptance status: first-pass
+
 ## 2026-04-15 -- README / Public-Claim Sync
 
 - Updated `README.md` to match the accepted semantic-first public surface and `EVAL.md` claim boundaries

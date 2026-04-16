@@ -1,0 +1,43 @@
+{
+  "task_id": "oracle_smoke",
+  "fixture_id": "oracle_smoke",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.run",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the smoke oracle."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.helpers.helper",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Imported support function used by main.run."
+    },
+    {
+      "kind": "frontier",
+      "file_path": "main.py",
+      "access_text": "missing_call",
+      "context": "call",
+      "reason_code": "unresolved_name",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main.run",
+      "source_snippet": "missing_call()",
+      "rationale": "Unresolved call frontier expected from the fixture."
+    },
+    {
+      "kind": "unsupported",
+      "file_path": "main.py",
+      "construct_text": "from pkg.helpers import *",
+      "reason_code": "star_import",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main",
+      "source_snippet": "from pkg.helpers import *",
+      "rationale": "Unsupported star import expected from the fixture."
+    }
+  ]
+}

@@ -26,7 +26,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Final-phase integration after accepted README / public-claim sync.
+Evidence-building phase after the accepted and released semantic-first baseline.
 
 ## What Is Complete
 
@@ -51,11 +51,15 @@ Final-phase integration after accepted README / public-claim sync.
 - [x] Minimal MCP wrapper accepted first-pass after dependency/protocol authorization
 - [x] Eval methodology and evidence baseline accepted first-pass
 - [x] README / public-claim sync accepted first-pass
+- [x] Release sequencing completed to `origin/main` at `9abc57c`
+- [x] Deterministic fixture-level eval design accepted after 2 corrections
+- [x] Eval oracle foundation accepted after 1 correction
+- [x] Deterministic provider/baseline infrastructure accepted after 1 correction
 
 ## What Is In Progress
 
 - No implementation slice is currently in flight
-- Control-lane continuity has been resynced through the accepted README / public-claim sync slice
+- Control-lane continuity has been resynced through the accepted provider/baseline infrastructure slice
 - Core semantic-first rebuild is accepted through the planned architecture layers
 - The public low-level semantic analysis API now exists
 - The package root now points users at the semantic-first public surface
@@ -63,7 +67,9 @@ Final-phase integration after accepted README / public-claim sync.
 - A minimal stdio MCP wrapper now exists over the accepted facade
 - `EVAL.md` now defines allowed claims, unsupported claims, and future eval gates
 - README now matches the accepted semantic-first public surface and evidence boundaries
-- Higher-layer implementation remains paused until the next slice is issued
+- Eval oracle assets now use stable selectors resolved through `analyze_repository(...)`, not generated unit IDs
+- Deterministic Context IR and file-baseline providers now exist with structured trace metadata for later scoring
+- The next evidence-building implementation slice is not issued yet and requires explicit control-lane authorization
 
 ## Rebaseline Slice Order
 
@@ -84,15 +90,18 @@ Final-phase integration after accepted README / public-claim sync.
 15. MCP wrapper decision and implementation -- accepted first-pass after dependency/protocol authorization
 16. Eval methodology and evidence baseline -- accepted first-pass
 17. README / public-claim sync -- accepted first-pass
-18. Release sequencing -- next authorized control step
+18. Release sequencing -- completed to `origin/main` at `9abc57c`
+19. Deterministic fixture-level eval design -- accepted after 2 corrections
+20. Eval oracle foundation -- accepted after 1 correction
+21. Deterministic provider/baseline infrastructure -- accepted after 1 correction
 
 ## What Is Next
 
-1. Run release sequencing for the accepted workspace: final validation, inspect/stage intended files, commit, and push only with explicit human authorization
-2. Keep final-phase work grounded in `analyze_repository(repo_root) -> SemanticProgram` and the accepted MCP/facade surfaces instead of the retired graph-first stack
-3. Treat deterministic fixture-level eval design as a separate later evidence-building slice
+1. Shape and issue the next eval implementation slice only after explicit authorization
+2. The next likely slice should add deterministic metric scoring over the accepted oracle and provider outputs, without raw ledgers, reports, or public claims unless explicitly scoped
+3. Keep raw result ledgers, Markdown reports, and public-claim updates out of the next metric-scoring slice unless separately authorized
 4. Keep benchmark, performance, and portfolio claims paused unless backed by `EVAL.md`-compatible evidence
-5. Do not reopen accepted semantic core contracts while shifting through final integration
+5. Do not reopen accepted semantic core contracts while shifting into evidence-building work
 
 ## What Is Deferred
 
@@ -100,6 +109,7 @@ Final-phase integration after accepted README / public-claim sync.
 - Broader decorator and metaprogramming support beyond the initial explicit subset
 - Production packaging and distribution polish
 - Portfolio or benchmark claims beyond what the rebaseline can prove
+- Raw ledgers, reports, and public claim updates until deterministic scoring and result-contract slices are accepted
 
 ## Historical Notes
 
