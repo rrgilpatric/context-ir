@@ -2,6 +2,32 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-16 -- Deterministic Raw Result Record Core
+
+- Added deterministic per-run raw eval result records after 1 correction
+- Added `src/context_ir/eval_results.py` with:
+  - typed JSON-safe dataclasses for fixture hashes, provider config and metadata, resolved selector evidence, metric outputs, and full raw run records
+  - `build_eval_run_record(setup, result, metrics, ...) -> EvalRunRecord`
+  - `eval_run_record_to_json(record) -> dict[str, object]`
+  - `append_eval_run_record_jsonl(path, record) -> None`
+- The raw-record contract now preserves:
+  - fixture file hashes keyed by sorted repo-relative paths
+  - provider config, selected files, selected unit IDs, omitted unit IDs, and warnings
+  - structured provider metadata needed by later ledger and report slices
+  - resolved oracle selector evidence with original selectors, resolved unit IDs, file paths, and spans
+  - full deterministic metric outputs from the accepted scoring layer
+- Added `tests/test_eval_results.py` covering deterministic JSON-safe record creation, resolved selector preservation, structured provider metadata preservation, deterministic fixture hashing, compact one-object-per-line JSONL appends, repeated append preservation, non-mutation, and internal-only scope boundaries
+- Control review initially found one reproducibility issue:
+  - fixture hashes were computed from decoded text and re-encoded bytes rather than raw on-disk bytes
+- Correction pass updated fixture hashing to use raw file bytes and added a CRLF regression test proving the recorded hash matches on-disk bytes rather than normalized text
+- Validation confirmed after correction:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v -m "not slow"` with 263 passed and 1 deselected
+- Multi-run orchestration, Markdown summaries, category rollups, public-claim gating, and docs updates remain deferred
+- Acceptance status: 1 correction
+
 ## 2026-04-16 -- Deterministic Metric Scoring Core
 
 - Added deterministic per-run eval scoring first-pass
