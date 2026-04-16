@@ -55,11 +55,12 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
+- [x] Deterministic metric scoring core accepted first-pass
 
 ## What Is In Progress
 
 - No implementation slice is currently in flight
-- Control-lane continuity has been resynced through the accepted provider/baseline infrastructure slice
+- Control-lane continuity has been resynced through the accepted metric-scoring slice
 - Core semantic-first rebuild is accepted through the planned architecture layers
 - The public low-level semantic analysis API now exists
 - The package root now points users at the semantic-first public surface
@@ -69,6 +70,7 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 - README now matches the accepted semantic-first public surface and evidence boundaries
 - Eval oracle assets now use stable selectors resolved through `analyze_repository(...)`, not generated unit IDs
 - Deterministic Context IR and file-baseline providers now exist with structured trace metadata for later scoring
+- Deterministic per-run scoring now exists over accepted oracle and provider outputs
 - The next evidence-building implementation slice is not issued yet and requires explicit control-lane authorization
 
 ## Rebaseline Slice Order
@@ -94,12 +96,13 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 19. Deterministic fixture-level eval design -- accepted after 2 corrections
 20. Eval oracle foundation -- accepted after 1 correction
 21. Deterministic provider/baseline infrastructure -- accepted after 1 correction
+22. Deterministic metric scoring core -- accepted first-pass
 
 ## What Is Next
 
 1. Shape and issue the next eval implementation slice only after explicit authorization
-2. The next likely slice should add deterministic metric scoring over the accepted oracle and provider outputs, without raw ledgers, reports, or public claims unless explicitly scoped
-3. Keep raw result ledgers, Markdown reports, and public-claim updates out of the next metric-scoring slice unless separately authorized
+2. The next likely slice should add deterministic per-run result artifacts on top of the accepted scoring contract, such as raw ledger rows or a minimal run-record contract, without public claims unless explicitly scoped
+3. Keep Markdown reports and public-claim updates out of the next result-artifact slice unless separately authorized
 4. Keep benchmark, performance, and portfolio claims paused unless backed by `EVAL.md`-compatible evidence
 5. Do not reopen accepted semantic core contracts while shifting into evidence-building work
 
@@ -109,7 +112,7 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 - Broader decorator and metaprogramming support beyond the initial explicit subset
 - Production packaging and distribution polish
 - Portfolio or benchmark claims beyond what the rebaseline can prove
-- Raw ledgers, reports, and public claim updates until deterministic scoring and result-contract slices are accepted
+- Markdown reports and public claim updates until deterministic result-ledger and summary-contract slices are accepted
 
 ## Historical Notes
 

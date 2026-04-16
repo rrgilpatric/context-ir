@@ -2,6 +2,36 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-16 -- Deterministic Metric Scoring Core
+
+- Added deterministic per-run eval scoring first-pass
+- Added `src/context_ir/eval_metrics.py` with `score_eval_run(setup, result) -> EvalRunMetrics`
+- The scorer now computes deterministic per-run outputs over accepted oracle and provider inputs:
+  - budget compliance
+  - edit coverage
+  - support coverage
+  - representation adequacy
+  - uncertainty honesty
+  - credited relevant tokens
+  - noise tokens, noise ratio, and noise efficiency
+  - aggregate score with weight renormalization when support or uncertainty components are absent
+- The scorer uses the accepted deterministic rules for:
+  - detail-rank adequacy across `identity`, `summary`, and `source`
+  - Context IR structured trace matching
+  - whole-file baseline source adequacy
+  - selected and omitted uncertainty honesty credit
+  - exact source-span token credit
+  - overlap merging for source-span credits
+- Added `tests/test_eval_metrics.py` covering detail-rank behavior, source-level baseline adequacy, `None` handling for support and uncertainty components, selected and omitted uncertainty credit, exact-span token credit, overlapping-span merge behavior, non-mutation, and internal-only scope boundaries
+- Control review found no issues
+- Validation confirmed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v -m "not slow"` with 254 passed and 1 deselected
+- Raw ledgers, reports, run-matrix execution, and public-claim updates remain deferred
+- Acceptance status: first-pass
+
 ## 2026-04-16 -- Deterministic Provider/Baseline Infrastructure
 
 - Added deterministic internal eval provider infrastructure after 1 correction
