@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_smoke_matrix",
+  "cases": [
+    {
+      "case_id": "smoke_core_baselines",
+      "task_path": "evals/tasks/oracle_smoke.json",
+      "query": "Fix missing_call in run without breaking helper usage",
+      "budgets": [200, 120],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}

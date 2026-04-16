@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-16 -- Deterministic Multi-Run Ledger Production
+
+- Added deterministic multi-run eval ledger orchestration first-pass
+- Added `src/context_ir/eval_runs.py` with:
+  - strict run-spec loading for deterministic task x provider x budget execution
+  - repo-relative task-path resolution
+  - deterministic provider dispatch over accepted internal provider names
+  - one oracle setup resolution per case
+  - deterministic run-id construction
+  - orchestration that executes providers, scores runs, builds raw records, and appends compact JSONL ledger rows
+- Added durable run-spec asset:
+  - `evals/run_specs/oracle_smoke_matrix.json`
+- Added `tests/test_eval_runs.py` covering:
+  - typed run-spec loading
+  - unknown top-level and case-field rejection
+  - unknown provider-name rejection
+  - empty case-list and non-positive-budget rejection
+  - provider-dispatch coverage for accepted internal names
+  - one raw record per task x provider x budget combination
+  - deterministic case/provider/budget execution order
+  - oracle setup reuse once per case
+  - non-mutation of loaded specs and resolved setups
+  - internal-only scope boundaries with no report/public-surface creep
+- Validation confirmed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v -m "not slow"` with 275 passed and 1 deselected
+- Markdown reports, category rollups, public-claim gating, CLI, and docs updates remain deferred
+- Acceptance status: first-pass
+
 ## 2026-04-16 -- Deterministic Raw Result Record Core
 
 - Added deterministic per-run raw eval result records after 1 correction

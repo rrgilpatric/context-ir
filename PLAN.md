@@ -57,11 +57,12 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
 - [x] Deterministic metric scoring core accepted first-pass
 - [x] Deterministic raw result record core accepted after 1 correction
+- [x] Deterministic multi-run ledger production accepted first-pass
 
 ## What Is In Progress
 
 - No implementation slice is currently in flight
-- Control-lane continuity has been resynced through the accepted raw-result slice
+- Control-lane continuity has been resynced through the accepted multi-run ledger slice
 - Core semantic-first rebuild is accepted through the planned architecture layers
 - The public low-level semantic analysis API now exists
 - The package root now points users at the semantic-first public surface
@@ -73,6 +74,7 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 - Deterministic Context IR and file-baseline providers now exist with structured trace metadata for later scoring
 - Deterministic per-run scoring now exists over accepted oracle and provider outputs
 - Deterministic per-run raw eval records and JSONL append support now exist over accepted oracle, provider, and metric outputs
+- Deterministic multi-run ledger orchestration now exists over accepted run specs, oracle setup, providers, scoring, and raw-record writing
 - The next evidence-building implementation slice is not issued yet and requires explicit control-lane authorization
 
 ## Rebaseline Slice Order
@@ -100,12 +102,13 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 21. Deterministic provider/baseline infrastructure -- accepted after 1 correction
 22. Deterministic metric scoring core -- accepted first-pass
 23. Deterministic raw result record core -- accepted after 1 correction
+24. Deterministic multi-run ledger production -- accepted first-pass
 
 ## What Is Next
 
 1. Shape and issue the next eval implementation slice only after explicit authorization
-2. The next likely slice should add deterministic multi-run ledger production over task x provider x budget inputs using the accepted raw-record contract, without inventing new scoring or report semantics
-3. Keep Markdown reports and public-claim updates out of the next ledger-production slice unless separately authorized
+2. The next likely slice should add deterministic summary and rollup rendering over the accepted raw JSONL ledger without changing oracle, provider, metric, or raw-record contracts
+3. Keep public-claim updates out of the next summary/report slice unless separately authorized
 4. Keep benchmark, performance, and portfolio claims paused unless backed by `EVAL.md`-compatible evidence
 5. Do not reopen accepted semantic core contracts while shifting into evidence-building work
 
@@ -115,7 +118,7 @@ Evidence-building phase after the accepted and released semantic-first baseline.
 - Broader decorator and metaprogramming support beyond the initial explicit subset
 - Production packaging and distribution polish
 - Portfolio or benchmark claims beyond what the rebaseline can prove
-- Markdown reports and public claim updates until deterministic multi-run ledger and summary-contract slices are accepted
+- Public claim updates until deterministic summary/rendering and evidence-gating slices are accepted
 
 ## Historical Notes
 
