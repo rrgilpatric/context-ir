@@ -114,11 +114,11 @@ def test_render_semantic_unit_renders_proven_symbol_across_detail_levels(
     assert "qualified_name: pkg.models.User" in identity.content
     assert f"unit_id: {user_symbol_id}" in identity.content
 
-    assert "supported_decorators: dataclass" in summary.content
-    assert "dataclass_support: dataclasses.dataclass" in summary.content
-    assert "dataclass_fields: name: str; age: int = 0" in summary.content
-    assert "file: pkg/models.py" in summary.content
-    assert "proof_status: proven" in summary.content
+    assert summary.content.startswith("proven summary: class pkg.models.User @ ")
+    assert "decorators: dataclass" in summary.content
+    assert "dataclass: dataclasses.dataclass" in summary.content
+    assert "fields: name: str; age: int = 0" in summary.content
+    assert "pkg/models.py:3:1-6:16" in summary.content
 
     assert source.kind is RenderedUnitKind.PROVEN_SYMBOL
     assert source.content == _source_text_for_site(
@@ -155,8 +155,7 @@ def test_render_semantic_unit_renders_unresolved_frontier_with_explicit_uncertai
 
     assert identity.kind is RenderedUnitKind.UNRESOLVED_FRONTIER
     assert identity.provenance == unresolved.site
-    assert "text: missing_call" in identity.content
-    assert "kind: unresolved_frontier" in identity.content
+    assert identity.content == "unresolved: missing_call @ main.py:2:4"
 
     assert "proof_status: unknown" in summary.content
     assert "reason_code: unresolved_name" in summary.content

@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_signal_smoke_c_matrix",
+  "cases": [
+    {
+      "case_id": "signal_handoff_baselines",
+      "task_path": "evals/tasks/oracle_signal_smoke_c.json",
+      "query": "Fix missing handoff note while keeping owner alias and route summary aligned",
+      "budgets": [240, 200],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}

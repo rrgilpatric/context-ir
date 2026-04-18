@@ -128,29 +128,23 @@ def _render_symbol(
 
     if detail is RenderDetail.SUMMARY:
         lines = [
-            "proven symbol summary",
-            f"kind: {symbol.kind.value}",
-            f"qualified_name: {symbol.qualified_name}",
-            f"unit_id: {symbol.symbol_id}",
-            f"file: {symbol.definition_site.file_path}",
-            f"span: {_format_span(symbol.definition_site.span)}",
-            f"proof_status: {ProofStatus.PROVEN.value}",
+            (
+                f"proven summary: {symbol.kind.value} {symbol.qualified_name} @ "
+                f"{_format_site(symbol.definition_site)}"
+            )
         ]
         if symbol.supported_decorators:
             lines.append(
-                "supported_decorators: "
-                + ", ".join(
-                    decorator.value for decorator in symbol.supported_decorators
-                )
+                "decorators: "
+                + ",".join(decorator.value for decorator in symbol.supported_decorators)
             )
         if dataclass_facts.model is not None:
             lines.append(
-                "dataclass_support: "
-                + dataclass_facts.model.decorator_target_qualified_name
+                "dataclass: " + dataclass_facts.model.decorator_target_qualified_name
             )
         if dataclass_facts.fields:
             lines.append(
-                "dataclass_fields: "
+                "fields: "
                 + "; ".join(
                     _format_dataclass_field(field) for field in dataclass_facts.fields
                 )
@@ -179,15 +173,8 @@ def _render_symbol(
 def _render_unresolved(access: UnresolvedAccess, detail: RenderDetail) -> str:
     """Render one unresolved frontier item without overclaiming proof."""
     if detail is RenderDetail.IDENTITY:
-        return _join_lines(
-            (
-                "unresolved frontier item",
-                f"unit_id: {access.access_id}",
-                f"text: {access.access_text}",
-                f"kind: {RenderedUnitKind.UNRESOLVED_FRONTIER.value}",
-                f"file: {access.site.file_path}",
-                f"span: {_format_span(access.site.span)}",
-            )
+        return (
+            f"unresolved: {access.access_text} @ {_format_identity_site(access.site)}"
         )
 
     lines = [
@@ -306,6 +293,17 @@ def _unsupported_by_id(program: SemanticProgram) -> dict[str, UnsupportedConstru
 def _format_span(span: SourceSpan) -> str:
     """Return a compact human-readable span string."""
     return f"{span.start_line}:{span.start_column}-{span.end_line}:{span.end_column}"
+
+
+def _format_site(site: SourceSite) -> str:
+    """Return a stable site marker with the full source span."""
+    return f"{site.file_path}:{_format_span(site.span)}"
+
+
+def _format_identity_site(site: SourceSite) -> str:
+    """Return a concise site marker for identity-only uncertainty surfaces."""
+    span = site.span
+    return f"{site.file_path}:{span.start_line}:{span.start_column}"
 
 
 def _join_lines(lines: list[str] | tuple[str, ...]) -> str:

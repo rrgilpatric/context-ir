@@ -1,0 +1,51 @@
+{
+  "task_id": "oracle_signal_smoke",
+  "fixture_id": "oracle_signal_smoke",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.run_signal_smoke",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the tighter signal smoke fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.planner.build_execution_plan",
+      "role": "support",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Planner support function needed to inspect execution-plan construction."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.presenter.render_patch_preview",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Preview renderer support function needed to preserve output formatting."
+    },
+    {
+      "kind": "frontier",
+      "file_path": "main.py",
+      "access_text": "record_missing_step",
+      "context": "call",
+      "reason_code": "unresolved_name",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main.run_signal_smoke",
+      "source_snippet": "record_missing_step(plan)",
+      "rationale": "Unresolved call frontier expected from the signal smoke edit target."
+    },
+    {
+      "kind": "unsupported",
+      "file_path": "main.py",
+      "construct_text": "from pkg.presenter import *",
+      "reason_code": "star_import",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main",
+      "source_snippet": "from pkg.presenter import *",
+      "rationale": "Unsupported star import retained for deterministic oracle coverage."
+    }
+  ]
+}

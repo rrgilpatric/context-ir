@@ -1,0 +1,49 @@
+{
+  "task_id": "oracle_signal_smoke_c",
+  "fixture_id": "oracle_signal_smoke_c",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.run_signal_smoke_c",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the third tightened signal smoke fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.router.build_handoff_route",
+      "role": "support",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Routing support function needed to inspect owner handoff assembly."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.registry.resolve_owner_alias",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Owner-alias support function needed to preserve handoff routing semantics."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.summary.render_route_summary",
+      "role": "support",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Route-summary support function needed to preserve final output structure."
+    },
+    {
+      "kind": "frontier",
+      "file_path": "pkg/router.py",
+      "access_text": "handoff_tracker.record_missing_note",
+      "context": "call",
+      "reason_code": "unresolved_attribute",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "pkg.router.build_handoff_route",
+      "source_snippet": "handoff_tracker.record_missing_note(route)",
+      "rationale": "Unresolved routing-note frontier retained for deterministic uncertainty coverage."
+    }
+  ]
+}

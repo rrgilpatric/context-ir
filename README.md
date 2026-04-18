@@ -9,7 +9,7 @@ unsupported frontier, and uses that semantic substrate to rank, optimize, and
 compile budgeted context. The repository also includes a minimal MCP stdio
 wrapper around the compile facade.
 
-Context IR does not currently make production-readiness, benchmark,
+Context IR does not currently make production-readiness, external benchmark,
 resolve-rate, token-savings, latency, SWE-bench, or multi-language claims.
 
 ## Current Status
@@ -25,7 +25,9 @@ The tested local baseline is implemented through:
 The accepted semantic-first layers include analyzer orchestration, rendering,
 scoring, optimization, compilation, diagnose/recompile contracts, the
 tool-facing facade, and the minimal MCP compile tool. They are covered by local
-tests and quality gates, not by benchmark evidence.
+tests and quality gates. The repo also includes deterministic internal eval
+infrastructure and a current four-asset signal evidence surface documented in
+`EVAL.md`; those artifacts are internal evidence, not external benchmark proof.
 
 ## Supported Subset and Limits
 
@@ -138,16 +140,35 @@ The project depends on the Python MCP SDK through `mcp>=1.27.0` in
 `EVAL.md` defines what the repository currently proves and what remains future
 work.
 
-Current evidence is limited to:
+Current evidence includes:
 
 - unit and integration tests in `tests/`
 - local quality gates for lint, format, strict typing, and non-slow tests
 - local MCP SDK registration and invocation for the minimal compile wrapper
+- deterministic internal eval summary, report, pipeline, manifest, and bundle
+  artifacts over raw JSONL ledgers
+- four accepted methodology-tightened signal assets:
+  `oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`, and
+  `oracle_signal_smoke_d`
+- a current quad matrix over 4 tasks x 2 budgets x 3 providers
+- within that fixed internal matrix, `context_ir` wins all 8/8 task-budget
+  rows; provider-average aggregate scores are
+  `0.9599139230003012` for `context_ir`,
+  `0.6228480543023547` for `import_neighborhood_files`, and
+  `0.6065653086866415` for `lexical_top_k_files`
 
-The project currently makes no SWE-bench, benchmark improvement, resolve-rate,
-production-readiness, performance, token-savings, cost-reduction, or
-multi-language claims. Stronger public claims require the future eval gates and
-raw evidence described in `EVAL.md`.
+Earlier signal pair/triple matrices remain historical internal evidence, but
+the current top surface is the four-asset quad matrix documented in `EVAL.md`.
+That surface is broader than the previous public summary, but it is still not
+uniformly clean: `oracle_signal_smoke_b` at budget `200` still records honest
+`budget_pressure`, and
+`def:pkg/digest.py:pkg.digest.render_assignment_digest` can remain omitted under
+that tight budget.
+
+The project currently makes no SWE-bench, external benchmark improvement,
+resolve-rate, production-readiness, performance, token-savings, cost-reduction,
+or multi-language claims. Stronger public claims require the future eval gates
+and raw evidence described in `EVAL.md`.
 
 ## Legacy API Note
 

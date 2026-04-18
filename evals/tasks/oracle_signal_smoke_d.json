@@ -1,0 +1,41 @@
+{
+  "task_id": "oracle_signal_smoke_d",
+  "fixture_id": "oracle_signal_smoke_d",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.service.EnvelopeCompiler.compile_digest",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "method",
+      "rationale": "Primary method edit target for the broader fourth smoke asset."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.base.LayoutBase",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "class",
+      "rationale": "Inherited base-class support keeps the formatter surface visible."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.models.ReviewEnvelope",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "class",
+      "rationale": "Dataclass-backed review envelope keeps class-oriented support in scope."
+    },
+    {
+      "kind": "frontier",
+      "file_path": "pkg/service.py",
+      "access_text": "note_registry.record_missing_digest",
+      "context": "call",
+      "reason_code": "unresolved_attribute",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "pkg.service.EnvelopeCompiler.compile_digest",
+      "source_snippet": "note_registry.record_missing_digest(digest)",
+      "rationale": "Unresolved note-registry call frontier retained for deterministic uncertainty coverage."
+    }
+  ]
+}

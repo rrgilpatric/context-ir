@@ -1,0 +1,49 @@
+{
+  "task_id": "oracle_signal_smoke_b",
+  "fixture_id": "oracle_signal_smoke_b",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.run_signal_smoke_b",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the second tightened signal smoke fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.collector.collect_signal_rows",
+      "role": "support",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Collector support function needed to inspect signal-row assembly."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.labels.build_priority_labels",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Priority-label support function needed to verify label alignment."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.digest.render_assignment_digest",
+      "role": "support",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Digest renderer support function needed to preserve assignment output structure."
+    },
+    {
+      "kind": "frontier",
+      "file_path": "main.py",
+      "access_text": "gap_registry.record_assignment_note",
+      "context": "call",
+      "reason_code": "unresolved_attribute",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main.run_signal_smoke_b",
+      "source_snippet": "gap_registry.record_assignment_note(digest)",
+      "rationale": "Unresolved attribute call frontier retained for deterministic uncertainty coverage."
+    }
+  ]
+}

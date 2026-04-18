@@ -67,8 +67,15 @@ def _compile_budget_honest_artifact(
     budget: int,
 ) -> tuple[SemanticOptimizationResult, dict[str, RenderedUnit], str]:
     """Reserve document-assembly overhead before returning a compiled artifact."""
-    unit_budget = budget
-    while True:
+    max_unit_budget = _initial_unit_budget(query=query, scoring=scoring, budget=budget)
+    best_fit: tuple[SemanticOptimizationResult, dict[str, RenderedUnit], str] | None = (
+        None
+    )
+    low = 0
+    high = max_unit_budget
+
+    while low <= high:
+        unit_budget = (low + high) // 2
         raw_optimization = optimize_semantic_units(program, scoring, unit_budget)
         optimization = _with_compile_budget(raw_optimization, budget)
         rendered_units = _render_selected_units(program, optimization)
@@ -79,12 +86,37 @@ def _compile_budget_honest_artifact(
         )
         document_tokens = _estimate_document_tokens(document)
         if document_tokens <= budget:
-            return optimization, rendered_units, document
-        if not raw_optimization.selections:
-            raise ValueError("budget is too small for the compiled document envelope")
+            best_fit = (optimization, rendered_units, document)
+            low = unit_budget + 1
+            continue
+        high = unit_budget - 1
 
-        assembly_overhead = document_tokens - raw_optimization.total_tokens
-        unit_budget = max(0, budget - assembly_overhead)
+    if best_fit is not None:
+        return best_fit
+    raise ValueError("budget is too small for the compiled document envelope")
+
+
+def _initial_unit_budget(
+    *,
+    query: str,
+    scoring: SemanticScoringResult,
+    budget: int,
+) -> int:
+    """Reserve the minimum compile envelope before selecting semantic units."""
+    empty_optimization = SemanticOptimizationResult(
+        selections=(),
+        omitted_unit_ids=tuple(sorted(scoring.scores)),
+        warnings=(),
+        total_tokens=0,
+        budget=budget,
+        confidence=0.0,
+    )
+    empty_document = _assemble_document(
+        query=query,
+        optimization=empty_optimization,
+        rendered_units={},
+    )
+    return max(0, budget - _estimate_document_tokens(empty_document))
 
 
 def _with_compile_budget(
@@ -140,36 +172,18 @@ def _assemble_document(
     rendered_units: dict[str, RenderedUnit],
 ) -> str:
     """Assemble the selected semantic units into a stable compiled document."""
-    lines = [
-        "# Semantic Context",
-        f"query: {query or '<empty>'}",
-        f"selected_unit_tokens: {optimization.total_tokens}/{optimization.budget}",
-        f"confidence: {optimization.confidence:.2f}",
-        f"selected_units: {len(optimization.selections)}",
-        f"omitted_units: {len(optimization.omitted_unit_ids)}",
-    ]
-    if optimization.warnings:
-        lines.append(f"warnings: {len(optimization.warnings)}")
+    del query
+    lines = ["# Context"]
 
     grouped_records = _group_records_by_file(optimization.selections, rendered_units)
-    for file_path, records in grouped_records:
-        lines.extend(("", f"## {file_path}"))
-        for selection, rendered in records:
-            lines.extend(
-                (
-                    "",
-                    (
-                        f"[{selection.detail}] {selection.unit_id} | "
-                        f"{selection.basis.value}"
-                    ),
-                    rendered.content,
-                )
-            )
-
-    if optimization.omitted_unit_ids:
-        lines.extend(
-            ("", "## Omitted", _omitted_surface(optimization.omitted_unit_ids))
-        )
+    for file_index, (file_path, records) in enumerate(grouped_records):
+        lines.append(file_path)
+        for record_index, (_selection, rendered) in enumerate(records):
+            if record_index > 0:
+                lines.append("")
+            lines.append(rendered.content)
+        if file_index < len(grouped_records) - 1:
+            lines.append("")
 
     return "\n".join(lines)
 
@@ -200,15 +214,6 @@ def _group_records_by_file(
         )
         ordered_groups.append((file_path, records))
     return ordered_groups
-
-
-def _omitted_surface(omitted_unit_ids: tuple[str, ...]) -> str:
-    """Return a concise omitted-unit surface for the compiled document."""
-    preview = ", ".join(omitted_unit_ids[:5])
-    if len(omitted_unit_ids) <= 5:
-        return f"unit_ids: {preview}"
-    remaining = len(omitted_unit_ids) - 5
-    return f"unit_ids: {preview}, ... (+{remaining} more)"
 
 
 def _estimate_document_tokens(document: str) -> int:

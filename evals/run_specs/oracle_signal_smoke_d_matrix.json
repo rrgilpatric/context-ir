@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_signal_smoke_d_matrix",
+  "cases": [
+    {
+      "case_id": "signal_method_baselines",
+      "task_path": "evals/tasks/oracle_signal_smoke_d.json",
+      "query": "Fix missing digest note while keeping inherited formatter, review envelope, and presenter aligned",
+      "budgets": [240, 200],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}

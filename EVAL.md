@@ -6,7 +6,9 @@ This file records what the repository currently proves, what it only quality-gat
 
 ## Current Evidence Status
 
-The current semantic-first baseline is supported by repo-local tests and accepted BUILDLOG entries through the minimal MCP wrapper slice.
+The current semantic-first baseline is supported by repo-local tests and
+accepted BUILDLOG entries through the deterministic internal eval harness and
+the current four-asset signal quad matrix.
 
 Proven by current unit and integration tests:
 
@@ -20,6 +22,26 @@ Proven by current unit and integration tests:
 - Package-root exports are quarantined to semantic-first contracts; retired graph-first APIs remain directly importable only by explicit legacy module paths.
 - `context_ir.tool_facade.compile_repository_context(...)` delegates to the accepted analyzer and semantic compiler, preserves uncertainty, diagnostics, selection trace, omitted units, and budget totals, and avoids retired graph-first APIs in tested cases.
 - A minimal MCP wrapper exists over the tool facade with exactly one registered tool, `compile_repository_context`, JSON-safe serialization, invalid-budget handling, optional document omission, and tested local SDK invocation.
+- Deterministic internal eval infrastructure exists end to end through typed
+  summary, report, pipeline, manifest, and bundle artifacts over reproducible
+  run specs and JSONL ledgers.
+- Accepted methodology-tightened signal assets now include
+  `oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`, and
+  `oracle_signal_smoke_d`.
+- The accepted current broader evidence surface is a quad matrix over 4 tasks x
+  2 budgets x 3 providers. Within that fixed internal matrix, `context_ir`
+  wins all 8/8 task-budget rows.
+- Provider-average aggregate scores for the accepted quad matrix are:
+  `context_ir = 0.9599139230003012`,
+  `import_neighborhood_files = 0.6228480543023547`, and
+  `lexical_top_k_files = 0.6065653086866415`.
+- The earlier accepted triple matrix over `oracle_signal_smoke`,
+  `oracle_signal_smoke_b`, and `oracle_signal_smoke_c` remains historical prior
+  internal evidence, but it is not the current top surface.
+- The quad matrix is not uniformly clean: `oracle_signal_smoke_b` at budget
+  `200` still records honest `budget_pressure`, and the omitted support unit
+  can still be
+  `def:pkg/digest.py:pkg.digest.render_assignment_digest`.
 
 Validated by local quality gates, not by benchmark evidence:
 
@@ -30,13 +52,20 @@ Validated by local quality gates, not by benchmark evidence:
   - `.venv/bin/python -m mypy --strict src/`
   - `.venv/bin/python -m pytest tests/ -v -m "not slow"`
 - These gates establish lint, formatting, type, and regression-test health. They do not establish benchmark effectiveness, production readiness, external protocol completeness, or SWE-bench relevance.
+- These gates are complementary to the deterministic internal eval harness.
+  They do not turn the internal quad matrix into an external benchmark,
+  production-readiness proof, external protocol completeness claim, or
+  SWE-bench result.
 
 Architecturally intended but not yet evaluated:
 
-- Fixture-level behavioral evals that score compile output against deterministic task expectations.
-- Budget-curve measurements across fixed task sets.
-- Baseline comparisons against alternative context-selection strategies.
-- SWE-bench-style methodology, after local fixture evals exist.
+- Broader task sets beyond the current four accepted signal assets.
+- Wider budget-curve measurements beyond the current fixed `200` and `240`
+  budgets.
+- Additional baseline comparisons beyond the current lexical and
+  import-neighborhood providers.
+- SWE-bench-style or other external-benchmark methodology, after the internal
+  fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
 
 ## Evidence Categories
@@ -44,8 +73,17 @@ Architecturally intended but not yet evaluated:
 - Unit/integration tests: pytest coverage in `tests/` for semantic contracts, parser, binder, resolver, dependency/frontier, renderer, scorer, optimizer, compiler, diagnose/recompile, analyzer, public API, tool facade, and MCP wrapper behavior.
 - Static quality gates: ruff lint, ruff format check, mypy strict, and non-slow pytest suite.
 - Protocol smoke tests: current MCP evidence is limited to local SDK registration and local tool invocation in `tests/test_mcp_server.py`.
-- Fixture-level behavioral evals: not implemented yet. Existing fixtures support tests, not an eval harness with scoring criteria.
-- Benchmark/effectiveness evals: not implemented yet. No benchmark task set, baseline, metric, seed policy, or raw result ledger exists.
+- Deterministic internal eval artifacts: raw JSONL ledger rows, typed summary
+  loading and aggregation, Markdown report generation, pipeline composition,
+  manifest generation, and nested bundle output are all present and tested.
+- Current internal evidence surface: four methodology-tightened signal assets
+  run as a 4 task x 2 budget x 3 provider quad matrix.
+- Historical prior surface: the accepted pair/triple signal matrices remain
+  useful historical internal evidence, but they are not the current top
+  surface.
+- External benchmark surfaces: still absent. The repo does not yet carry
+  SWE-bench or other external benchmark task sets, public benchmark reporting,
+  or public benchmark ledgers.
 - Portfolio/public claims: must be limited to claims backed by the categories above.
 
 ## Supported Claims Today
@@ -64,13 +102,24 @@ The following claims are allowed because current repo artifacts support them:
 - The package root exposes semantic-first contracts and `analyze_repository(...)`, while retired graph-first APIs are quarantined from root exports.
 - A typed tool-facing facade exists for semantic repository compile requests.
 - A minimal MCP wrapper exists over the semantic compile facade with one tested compile tool.
+- A deterministic internal eval harness exists through summary, report,
+  pipeline, manifest, and bundle artifacts over fixed run specs and JSONL
+  ledgers.
+- The current top internal evidence surface is the four-asset signal quad
+  matrix over `oracle_signal_smoke`, `oracle_signal_smoke_b`,
+  `oracle_signal_smoke_c`, and `oracle_signal_smoke_d`.
+- Within that fixed quad matrix only, `context_ir` is the sole winner on all
+  8/8 task-budget rows and has the top provider-average aggregate score.
+- The current internal evidence surface includes an explicit tight-budget
+  blemish: `oracle_signal_smoke_b / 200` still records `budget_pressure`, and
+  `def:pkg/digest.py:pkg.digest.render_assignment_digest` can remain omitted.
 
 ## Unsupported Claims Today
 
 The following claims are not currently allowed:
 
 - No SWE-bench, SWE-bench Mini, SWE-bench Verified, or SWE-bench-style improvement claims.
-- No benchmark improvement claims of any kind.
+- No external benchmark improvement claims of any kind.
 - No resolve-rate, edit-success-rate, retrieval-quality, area-under-budget-curve, or task-win-rate claims.
 - No production-readiness claims.
 - No multi-language claims.
@@ -85,11 +134,16 @@ The following claims are not currently allowed:
 
 Next smallest eval slices:
 
-1. Deterministic fixture-level behavioral eval: define a tiny fixed repository fixture set, task prompts, expected semantic units, expected uncertainty surfaces, and pass/fail scoring for compile output.
-2. Budget-curve harness design: specify budgets, output metrics, raw-result format, and how omitted uncertainty and dependency coverage are counted.
-3. Baseline comparison design: define simple baselines, such as whole-file inclusion, lexical matching, or package-local inclusion, before comparing Context IR output.
-4. Raw result ledger: add a reproducible location and schema for eval runs before any public quantitative claim is made.
-5. SWE-bench-style methodology: design only after fixture-level evals exist and have stable pass conditions.
+1. Expand beyond the current four accepted signal assets only when new tasks and
+   claim boundaries are validated.
+2. Broaden budget coverage beyond the current fixed `200` and `240` budgets
+   with explicit raw-result storage and pass conditions.
+3. Add further baseline families only if they can be introduced without
+   weakening determinism or claim discipline.
+4. Design external benchmark methodology only after the internal fixture
+   surfaces are intentionally broadened and stabilized.
+5. Add performance, token, or latency measurement only if raw measurements and
+   environment notes are committed alongside them.
 
 These are planned slices, not completed eval evidence.
 

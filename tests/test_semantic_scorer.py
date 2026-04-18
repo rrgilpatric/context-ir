@@ -93,6 +93,8 @@ def test_score_semantic_units_returns_complete_separate_result_without_mutation(
         *(construct.construct_id for construct in program.unsupported_constructs),
     }
     assert set(result.scores) == expected_unit_ids
+    assert all(score.p_edit == 0.0 for score in result.scores.values())
+    assert all(score.p_support == 0.0 for score in result.scores.values())
     assert result.scores is not program.resolved_symbols
     assert program.resolved_symbols == resolved_symbols_before
     assert program.bindings == bindings_before
@@ -279,8 +281,141 @@ def test_score_semantic_units_returns_bounded_defaults_for_empty_query(
         *(construct.construct_id for construct in program.unsupported_constructs),
     }
     assert set(result.scores) == expected_unit_ids
-    assert all(score.p_edit == 0.0 for score in result.scores.values())
-    assert all(score.p_support == 0.0 for score in result.scores.values())
+
+
+def test_score_semantic_units_uses_scope_body_signal_for_behavioral_queries(
+    tmp_path: Path,
+) -> None:
+    """Behavioral queries can rank the owning function above its helpers."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "planner.py").write_text(
+        textwrap.dedent(
+            """
+            def build_execution_plan(query: str) -> list[str]:
+                return [query, "draft execution plan", "confirm preview"]
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (pkg / "presenter.py").write_text(
+        textwrap.dedent(
+            """
+            def render_patch_preview(plan: list[str]) -> str:
+                return "patch preview: " + " | ".join(plan)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.planner import build_execution_plan
+            from pkg.presenter import render_patch_preview
+
+            def run_signal_smoke(query: str) -> str:
+                plan = build_execution_plan(query)
+                preview = render_patch_preview(plan)
+                record_missing_step(plan)
+                return preview
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    run_id = _definition_id_for(program, "main.run_signal_smoke")
+    planner_id = _definition_id_for(program, "pkg.planner.build_execution_plan")
+    presenter_id = _definition_id_for(program, "pkg.presenter.render_patch_preview")
+
+    result = score_semantic_units(
+        program,
+        "Fix missing step while keeping execution plan preview aligned",
+    )
+
+    assert result.scores[run_id].p_edit > 0.40
+    assert result.scores[run_id].p_edit > result.scores[planner_id].p_edit
+    assert result.scores[planner_id].p_edit > result.scores[presenter_id].p_edit
+
+
+def test_score_semantic_units_boosts_orchestrating_symbol_across_relevant_dependencies(
+    tmp_path: Path,
+) -> None:
+    """Multi-step coordination can outrank the shallowest single helper surface."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "collector.py").write_text(
+        textwrap.dedent(
+            """
+            def collect_signal_rows(query: str) -> list[str]:
+                cleaned_query = query.strip() or "signal digest"
+                return [
+                    f"assignment signal for {cleaned_query}",
+                    "priority labels stay deterministic",
+                    "digest note stays visible",
+                ]
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (pkg / "digest.py").write_text(
+        textwrap.dedent(
+            """
+            def render_assignment_digest(rows: list[str], labels: list[str]) -> str:
+                row_text = " / ".join(rows)
+                label_text = ", ".join(labels)
+                return f"assignment digest: {row_text} [{label_text}]"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (pkg / "labels.py").write_text(
+        textwrap.dedent(
+            """
+            def build_priority_labels(rows: list[str]) -> list[str]:
+                return [f"priority:{index + 1}" for index, _ in enumerate(rows)]
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.collector import collect_signal_rows
+            from pkg.digest import render_assignment_digest
+            from pkg.labels import build_priority_labels
+
+            def run_signal_smoke_b(query: str) -> str:
+                rows = collect_signal_rows(query)
+                labels = build_priority_labels(rows)
+                digest = render_assignment_digest(rows, labels)
+                gap_registry.record_assignment_note(digest)
+                return digest
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    run_id = _definition_id_for(program, "main.run_signal_smoke_b")
+    collector_id = _definition_id_for(program, "pkg.collector.collect_signal_rows")
+    digest_id = _definition_id_for(program, "pkg.digest.render_assignment_digest")
+    labels_id = _definition_id_for(program, "pkg.labels.build_priority_labels")
+
+    result = score_semantic_units(
+        program,
+        (
+            "Fix missing assignment note while keeping signal digest and priority "
+            "labels aligned"
+        ),
+    )
+
+    assert result.scores[run_id].p_edit > 0.36
+    assert result.scores[run_id].p_edit > result.scores[collector_id].p_edit
+    assert result.scores[digest_id].p_edit > 0.20
+    assert result.scores[labels_id].p_edit > 0.15
 
 
 def test_score_semantic_units_keeps_all_scores_within_probability_bounds(

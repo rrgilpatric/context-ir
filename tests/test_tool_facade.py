@@ -203,8 +203,9 @@ def test_compile_repository_context_exposes_uncertainty_and_unsupported_construc
         and construct.reason_code is UnresolvedReasonCode.STAR_IMPORT
         for construct in response.unsupported_constructs
     )
-    assert "unresolved frontier item" in response.compile_result.document
-    assert "proof_status: unsupported" in response.compile_result.document
+    assert "unresolved:" in response.compile_result.document
+    assert "unsupported construct" in response.compile_result.document
+    assert "text: from pkg.helpers import *" in response.compile_result.document
 
 
 def test_compile_repository_context_preserves_parse_error_truthfulness(

@@ -70,6 +70,30 @@ def _write_sample_program(tmp_path: Path) -> None:
     )
 
 
+def _write_shallow_upgrade_program(tmp_path: Path) -> None:
+    """Write a fixture where helper starts shallow and can later upgrade."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def helper() -> None:
+                first_step = "collect"
+                second_step = "preview"
+                if first_step == second_step:
+                    raise RuntimeError(second_step)
+                return None
+
+            def extra() -> None:
+                return None
+
+            def run() -> None:
+                helper()
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
 def _write_nested_path_program(tmp_path: Path) -> None:
     """Write a semantic fixture with a nested module for path grounding tests."""
     package_dir = tmp_path / "pkg"
@@ -275,9 +299,9 @@ def test_diagnose_semantic_miss_distinguishes_omitted_too_shallow_and_sufficient
     tmp_path: Path,
 ) -> None:
     """Diagnosis distinguishes omitted units, shallow units, and surfaced ones."""
-    _write_sample_program(tmp_path)
+    _write_shallow_upgrade_program(tmp_path)
     program = _semantic_program(tmp_path)
-    tight_result = compile_semantic_context(program, "run", budget=160)
+    tight_result = compile_semantic_context(program, "run", budget=200)
     helper_id = _definition_id_for(program, "main.helper")
     extra_id = _definition_id_for(program, "main.extra")
     missing_call_id = _frontier_id_for(program, "missing_call")
@@ -321,15 +345,15 @@ def test_diagnose_semantic_miss_distinguishes_omitted_too_shallow_and_sufficient
         program,
     )
 
-    assert helper_selection.detail == RenderDetail.IDENTITY.value
-    assert helper_diagnostic.too_shallow_unit_ids == (helper_id,)
-    assert "too shallow" in helper_diagnostic.reason
+    assert helper_selection.detail == RenderDetail.SOURCE.value
+    assert helper_diagnostic.sufficiently_represented_unit_ids == (helper_id,)
+    assert "sufficiently represented" in helper_diagnostic.reason
     assert extra_diagnostic.omitted_unit_ids == (extra_id,)
     assert "omitted due to budget pressure" in extra_diagnostic.reason
-    assert missing_call_diagnostic.omitted_unit_ids == (missing_call_id,)
-    assert "not surfaced" in missing_call_diagnostic.reason
-    assert surfaced_diagnostic.sufficiently_represented_unit_ids == (missing_call_id,)
-    assert "already sufficiently represented" in surfaced_diagnostic.reason
+    assert missing_call_diagnostic.too_shallow_unit_ids == (missing_call_id,)
+    assert "too shallow" in missing_call_diagnostic.reason
+    assert surfaced_diagnostic.too_shallow_unit_ids == (missing_call_id,)
+    assert "too shallow" in surfaced_diagnostic.reason
 
 
 def test_diagnose_semantic_miss_recommends_grounded_units_and_dependencies(
@@ -449,11 +473,11 @@ def test_recompile_semantic_context_adds_newly_selected_units_within_budget(
     assert result.compile_result.total_tokens <= result.compile_result.budget
 
 
-def test_recompile_semantic_context_can_upgrade_selected_units_to_richer_detail(
+def test_recompile_semantic_context_keeps_source_detail_when_grounded(
     tmp_path: Path,
 ) -> None:
-    """Recompile can upgrade a grounded unit from shallow detail to richer detail."""
-    _write_sample_program(tmp_path)
+    """Recompile does not invent upgrades when the grounded unit is already source."""
+    _write_shallow_upgrade_program(tmp_path)
     program = _semantic_program(tmp_path)
     previous_result = compile_semantic_context(program, "run", budget=160)
     helper_id = _definition_id_for(program, "main.helper")
@@ -478,8 +502,8 @@ def test_recompile_semantic_context_can_upgrade_selected_units_to_richer_detail(
         if selection.unit_id == helper_id
     )
 
-    assert previous_detail == RenderDetail.IDENTITY.value
-    assert helper_id in result.upgraded_unit_ids
+    assert previous_detail == RenderDetail.SOURCE.value
+    assert result.upgraded_unit_ids == ()
     assert upgraded_detail == RenderDetail.SOURCE.value
     assert result.compile_result.total_tokens <= result.compile_result.budget
 

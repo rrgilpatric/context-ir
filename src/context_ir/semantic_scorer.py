@@ -13,7 +13,12 @@ from context_ir.semantic_renderer import (
     RenderedUnitKind,
     render_semantic_unit,
 )
-from context_ir.semantic_types import SemanticDependency, SemanticProgram
+from context_ir.semantic_types import (
+    ResolvedSymbol,
+    ResolvedSymbolKind,
+    SemanticDependency,
+    SemanticProgram,
+)
 
 EmbeddingFunction: TypeAlias = Callable[[list[str]], list[list[float]]]
 
@@ -22,8 +27,47 @@ _CAMEL_CASE_RE = re.compile(r"[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z]?[a-z]+|[0-9]+")
 _DIRECT_SUPPORT_WEIGHT = 0.30
 _SEMANTIC_EDIT_WEIGHT = 0.20
 _SEMANTIC_SUPPORT_WEIGHT = 0.20
+_MIN_RELEVANCE = 0.05
 _DEPENDENCY_SUPPORT_WEIGHT = 0.50
 _UNCERTAINTY_SCOPE_SUPPORT_WEIGHT = 0.40
+_ORCHESTRATION_EDIT_WEIGHT = 0.12
+_ORCHESTRATION_MIN_DEPENDENCIES = 2
+_ORCHESTRATION_RELEVANCE_THRESHOLD = 0.15
+_BODY_SIGNAL_OVERLAP_WEIGHT = 0.55
+_BODY_SIGNAL_BIGRAM_WEIGHT = 0.15
+_NON_SIGNAL_QUERY_TERMS = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "by",
+        "change",
+        "fix",
+        "for",
+        "from",
+        "in",
+        "keep",
+        "keeping",
+        "modify",
+        "of",
+        "on",
+        "or",
+        "the",
+        "to",
+        "update",
+        "while",
+        "with",
+        "without",
+    }
+)
+_BODY_SIGNAL_KINDS = frozenset(
+    {
+        ResolvedSymbolKind.FUNCTION,
+        ResolvedSymbolKind.ASYNC_FUNCTION,
+        ResolvedSymbolKind.CLASS,
+        ResolvedSymbolKind.METHOD,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -72,6 +116,7 @@ class _CandidateProfile:
     file_path: str
     scope_id: str | None
     searchable_text: str
+    body_text: str | None
 
 
 def score_semantic_units(
@@ -86,6 +131,10 @@ def score_semantic_units(
         query=query,
         candidates=candidates,
         embed_fn=embed_fn,
+    )
+    direct_scores = _apply_orchestration_edit_signal(
+        scores=direct_scores,
+        dependencies=program.proven_dependencies,
     )
     final_scores = dict(direct_scores)
     final_scores = _apply_dependency_support(
@@ -107,6 +156,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
 
     for unit_id, symbol in sorted(program.resolved_symbols.items()):
         summary = render_semantic_unit(program, unit_id, RenderDetail.SUMMARY)
+        body_text = _body_text_for_symbol(program, unit_id, symbol)
         candidates.append(
             _CandidateProfile(
                 unit_id=unit_id,
@@ -119,6 +169,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                     symbol.definition_site.file_path,
                     summary.content,
                 ),
+                body_text=body_text,
             )
         )
 
@@ -139,6 +190,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                     access.detail,
                     summary.content,
                 ),
+                body_text=None,
             )
         )
 
@@ -165,6 +217,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                     construct.detail,
                     summary.content,
                 ),
+                body_text=None,
             )
         )
 
@@ -255,6 +308,7 @@ def _lexical_relevance(
     primary_terms = frozenset(_extract_terms(candidate.primary_text))
     searchable_terms = frozenset(_extract_terms(candidate.searchable_text))
     path_terms = frozenset(_extract_terms(candidate.file_path))
+    focus_terms = _focus_terms(query_terms)
     normalized_primary = _normalize_text(candidate.primary_text)
     normalized_searchable = _normalize_text(candidate.searchable_text)
 
@@ -269,13 +323,25 @@ def _lexical_relevance(
     primary_overlap = _term_overlap(query_terms, primary_terms)
     searchable_overlap = _term_overlap(query_terms, searchable_terms)
     path_overlap = _term_overlap(query_terms, path_terms)
-
-    return _clamp_probability(
+    lexical_score = _clamp_probability(
         primary_phrase * 0.45
         + searchable_phrase * 0.15
         + primary_overlap * 0.25
         + searchable_overlap * 0.10
         + path_overlap * 0.05
+    )
+    if candidate.body_text is None:
+        return lexical_score
+
+    body_terms = _extract_terms(candidate.body_text)
+    if not body_terms:
+        return lexical_score
+
+    return _clamp_probability(
+        lexical_score
+        + _term_overlap(focus_terms, frozenset(body_terms))
+        * _BODY_SIGNAL_OVERLAP_WEIGHT
+        + _ngram_overlap(focus_terms, body_terms, n=2) * _BODY_SIGNAL_BIGRAM_WEIGHT
     )
 
 
@@ -300,6 +366,47 @@ def _apply_dependency_support(
             p_edit=target_score.p_edit,
             p_support=_merge_support(target_score.p_support, boost),
         )
+    return updated_scores
+
+
+def _apply_orchestration_edit_signal(
+    *,
+    scores: dict[str, SemanticUnitScore],
+    dependencies: list[SemanticDependency],
+) -> dict[str, SemanticUnitScore]:
+    """Boost edit likelihood for symbols coordinating multiple relevant targets."""
+    dependency_relevance: dict[str, dict[str, float]] = {}
+    for dependency in dependencies:
+        source_score = scores.get(dependency.source_symbol_id)
+        target_score = scores.get(dependency.target_symbol_id)
+        if source_score is None or target_score is None:
+            continue
+        if source_score.p_edit < _MIN_RELEVANCE:
+            continue
+
+        strongest_target_relevance = max(target_score.p_edit, target_score.p_support)
+        if strongest_target_relevance < _ORCHESTRATION_RELEVANCE_THRESHOLD:
+            continue
+
+        dependency_relevance.setdefault(dependency.source_symbol_id, {})[
+            dependency.target_symbol_id
+        ] = strongest_target_relevance
+
+    updated_scores = dict(scores)
+    for source_symbol_id, target_relevance in dependency_relevance.items():
+        if len(target_relevance) < _ORCHESTRATION_MIN_DEPENDENCIES:
+            continue
+
+        source_score = updated_scores[source_symbol_id]
+        boost = (
+            sum(target_relevance.values()) / len(target_relevance)
+        ) * _ORCHESTRATION_EDIT_WEIGHT
+        updated_scores[source_symbol_id] = SemanticUnitScore(
+            unit_id=source_score.unit_id,
+            p_edit=_clamp_probability(source_score.p_edit + boost),
+            p_support=source_score.p_support,
+        )
+
     return updated_scores
 
 
@@ -379,6 +486,51 @@ def _extract_terms(text: str) -> tuple[str, ...]:
             seen.add(normalized)
             terms.append(normalized)
     return tuple(terms)
+
+
+def _focus_terms(query_terms: tuple[str, ...]) -> tuple[str, ...]:
+    """Return query terms with common instruction glue removed."""
+    focused_terms = tuple(
+        term for term in query_terms if term not in _NON_SIGNAL_QUERY_TERMS
+    )
+    if focused_terms:
+        return focused_terms
+    return query_terms
+
+
+def _ngram_overlap(
+    query_terms: tuple[str, ...],
+    candidate_terms: tuple[str, ...],
+    *,
+    n: int,
+) -> float:
+    """Return the fraction of query n-grams that appear in ``candidate_terms``."""
+    if len(query_terms) < n or len(candidate_terms) < n:
+        return 0.0
+
+    query_ngrams = {
+        tuple(query_terms[index : index + n])
+        for index in range(len(query_terms) - n + 1)
+    }
+    if not query_ngrams:
+        return 0.0
+
+    candidate_ngrams = {
+        tuple(candidate_terms[index : index + n])
+        for index in range(len(candidate_terms) - n + 1)
+    }
+    return len(query_ngrams & candidate_ngrams) / len(query_ngrams)
+
+
+def _body_text_for_symbol(
+    program: SemanticProgram,
+    unit_id: str,
+    symbol: ResolvedSymbol,
+) -> str | None:
+    """Return source-backed body text for scope-defining symbols only."""
+    if symbol.kind not in _BODY_SIGNAL_KINDS:
+        return None
+    return render_semantic_unit(program, unit_id, RenderDetail.SOURCE).content
 
 
 def _join_searchable_text(*parts: str | None) -> str:
