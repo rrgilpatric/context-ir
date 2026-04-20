@@ -42,6 +42,13 @@ Proven by current unit and integration tests:
   `200` still records honest `budget_pressure`, and the omitted support unit
   can still be
   `def:pkg/digest.py:pkg.digest.render_assignment_digest`.
+- This quad matrix is the completed phase 0 internal evidence surface and
+  regression anchor for the post-milestone program. It is not external
+  benchmark proof.
+- The post-milestone roadmap introduces capability tier planning for
+  statically proved, runtime-backed, heuristic/frontier, and
+  unsupported/opaque surfaces, but current evidence still proves only the
+  accepted phase 0 semantic-first behavior.
 
 Validated by local quality gates, not by benchmark evidence:
 
@@ -129,25 +136,36 @@ The following claims are not currently allowed:
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
 - No performance, latency, token-savings, or cost-reduction claims without measured data.
 - No claim that README or portfolio positioning has been fully synchronized with the accepted final-phase state.
+- No claim that hybrid static + runtime analysis is implemented today.
+- No capability tier claim beyond the accepted phase 0 static-proof baseline plus explicit uncertainty handling.
+- No claim that runtime-backed, heuristic/frontier, or unsupported/opaque surfaces have benchmarked coverage or production-grade handling.
 
 ## Future Eval Plan
 
-Next smallest eval slices:
+Next smallest eval slices for the post-milestone program:
 
-1. Expand beyond the current four accepted signal assets only when new tasks and
-   claim boundaries are validated.
-2. Broaden budget coverage beyond the current fixed `200` and `240` budgets
-   with explicit raw-result storage and pass conditions.
-3. Add further baseline families only if they can be introduced without
-   weakening determinism or claim discipline.
-4. Design external benchmark methodology only after the internal fixture
-   surfaces are intentionally broadened and stabilized.
-5. Add performance, token, or latency measurement only if raw measurements and
-   environment notes are committed alongside them.
+1. Define eval semantics for each capability tier and keep capability tier
+   scoring separate from representation-tier rendering choices.
+2. Add hybrid static + runtime analysis evidence only through reproducible
+   runtime-backed fixtures, probes, and raw evidence storage.
+3. Broaden task, budget, and baseline coverage only after the tiered internal
+   eval model is stable and claim-bounded.
+4. Publish external benchmark methodology only after the internal tiered
+   surfaces are stable enough to support reproducible public comparisons and
+   raw result release.
+5. Add production-maturity evidence only through packaging, compatibility,
+   interoperability, error handling, CI/release, and observability artifacts.
 
 These are planned slices, not completed eval evidence.
 
 ## Acceptance Criteria for Future Public Claims
+
+Capability-tier or hybrid-analysis claims require:
+
+- A declared capability tier for each reported unit or aggregate.
+- Separate accounting for statically proved, runtime-backed, heuristic/frontier, and unsupported/opaque surfaces.
+- Raw evidence artifacts that preserve provenance rather than collapsing all tiers into one score.
+- Reproducible runtime-backed methodology, including environment notes and probe inputs, for any runtime-backed claim.
 
 Benchmark claims require:
 
@@ -157,6 +175,7 @@ Benchmark claims require:
 - Seed, model, environment, and control-condition recording where applicable.
 - Raw result files plus summarized metrics.
 - A reviewable method for failed, skipped, or inconclusive cases.
+- Publicly reviewable methodology and raw results before any external benchmark leadership wording.
 
 MCP claims beyond the current minimal wrapper require:
 
@@ -175,9 +194,11 @@ Performance or budget-efficiency claims require:
 Production-readiness claims require:
 
 - Packaging and startup documentation.
-- Operational error handling expectations.
 - Compatibility matrix for supported Python and MCP environments.
+- Interoperability evidence for claimed client or transport surfaces.
+- Operational error handling expectations.
 - CI or release evidence that matches the claim.
+- Observability evidence that matches the claim.
 
 Portfolio or README claims require:
 

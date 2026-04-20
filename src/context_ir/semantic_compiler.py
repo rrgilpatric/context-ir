@@ -145,6 +145,7 @@ def _copy_warnings(
             code=warning.code,
             message=warning.message,
             unit_id=warning.unit_id,
+            trace_summary=warning.trace_summary,
         )
         for warning in warnings
     )

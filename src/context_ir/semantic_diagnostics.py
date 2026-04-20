@@ -15,13 +15,20 @@ from context_ir.semantic_scorer import (
     score_semantic_units,
 )
 from context_ir.semantic_types import (
+    CapabilityTier,
     ResolvedSymbol,
     SemanticCompileResult,
+    SemanticDiagnosticBoundary,
+    SemanticDiagnosticBoundaryKind,
     SemanticDiagnosticResult,
+    SemanticDiagnosticUnitStatus,
     SemanticMissEvidence,
     SemanticMissKind,
+    SemanticOptimizationWarning,
     SemanticProgram,
     SemanticRecompileResult,
+    SemanticSelectionRecord,
+    SemanticUnitTraceSummary,
     UnresolvedAccess,
     UnsupportedConstruct,
 )
@@ -39,6 +46,10 @@ _DETAIL_RANK: dict[str, int] = {
 }
 _DIRECT_MISS_EDIT_BOOST = 0.95
 _DIRECT_MISS_SUPPORT_FLOOR = 0.60
+_BOUNDARY_SURFACE_EDIT_BOOST = 0.12
+_BOUNDARY_SURFACE_SUPPORT_FLOOR = 0.25
+_ATTACHED_RUNTIME_BOUNDARY_EDIT_BOOST = 0.25
+_ATTACHED_RUNTIME_BOUNDARY_SUPPORT_FLOOR = 0.45
 _EXPANSION_SUPPORT_BOOST = 0.65
 
 
@@ -87,37 +98,48 @@ def diagnose_semantic_miss(
         selection.unit_id: selection.detail
         for selection in previous_result.optimization.selections
     }
-    omitted_unit_ids: list[str] = []
-    too_shallow_unit_ids: list[str] = []
-    sufficiently_represented_unit_ids: list[str] = []
-    for unit_id in grounded_unit_ids:
-        previous_detail = previous_detail_by_unit_id.get(unit_id)
-        if previous_detail is None:
-            omitted_unit_ids.append(unit_id)
-            continue
-        if _detail_rank(previous_detail) < _required_detail_rank(unit_records[unit_id]):
-            too_shallow_unit_ids.append(unit_id)
-            continue
-        sufficiently_represented_unit_ids.append(unit_id)
+    trace_summary_by_unit_id = _trace_summary_by_unit_id(previous_result)
+    boundary_classifications = tuple(
+        _diagnostic_boundary(
+            unit_id=unit_id,
+            previous_detail=previous_detail_by_unit_id.get(unit_id),
+            unit_record=unit_records[unit_id],
+            trace_summary=trace_summary_by_unit_id.get(unit_id),
+        )
+        for unit_id in grounded_unit_ids
+    )
+    omitted_unit_ids = tuple(
+        boundary.unit_id
+        for boundary in boundary_classifications
+        if boundary.status is SemanticDiagnosticUnitStatus.OMITTED
+    )
+    too_shallow_unit_ids = tuple(
+        boundary.unit_id
+        for boundary in boundary_classifications
+        if boundary.status is SemanticDiagnosticUnitStatus.TOO_SHALLOW
+    )
+    sufficiently_represented_unit_ids = tuple(
+        boundary.unit_id
+        for boundary in boundary_classifications
+        if boundary.status is SemanticDiagnosticUnitStatus.SUFFICIENTLY_REPRESENTED
+    )
 
     recommended_expansions = _recommended_expansions(
-        actionable_unit_ids=[*omitted_unit_ids, *too_shallow_unit_ids],
+        boundary_classifications=boundary_classifications,
         program=program,
         unit_records=unit_records,
     )
     return SemanticDiagnosticResult(
         grounded_unit_ids=grounded_unit_ids,
-        omitted_unit_ids=tuple(omitted_unit_ids),
-        too_shallow_unit_ids=tuple(too_shallow_unit_ids),
-        sufficiently_represented_unit_ids=tuple(sufficiently_represented_unit_ids),
+        omitted_unit_ids=omitted_unit_ids,
+        too_shallow_unit_ids=too_shallow_unit_ids,
+        sufficiently_represented_unit_ids=sufficiently_represented_unit_ids,
         recommended_expansions=recommended_expansions,
         reason=_diagnostic_reason(
             grounded_unit_ids=grounded_unit_ids,
-            omitted_unit_ids=tuple(omitted_unit_ids),
-            too_shallow_unit_ids=tuple(too_shallow_unit_ids),
-            sufficiently_represented_unit_ids=tuple(sufficiently_represented_unit_ids),
-            unit_records=unit_records,
+            boundary_classifications=boundary_classifications,
         ),
+        boundary_classifications=boundary_classifications,
     )
 
 
@@ -371,11 +393,131 @@ def _is_absolute_path(normalized_path: str) -> bool:
     )
 
 
-def _required_detail_rank(record: _UnitRecord) -> int:
-    """Return the minimum detail rank that counts as sufficient."""
-    if record.category is _UnitCategory.PROVEN_SYMBOL:
+def _trace_summary_by_unit_id(
+    previous_result: SemanticCompileResult,
+) -> dict[str, SemanticUnitTraceSummary]:
+    """Return the best available trace summary for each prior unit."""
+    summaries: dict[str, SemanticUnitTraceSummary] = {}
+    summaries.update(_warning_trace_summaries(previous_result.optimization.warnings))
+    summaries.update(
+        _selection_trace_summaries(previous_result.optimization.selections)
+    )
+    return summaries
+
+
+def _selection_trace_summaries(
+    selections: tuple[SemanticSelectionRecord, ...],
+) -> dict[str, SemanticUnitTraceSummary]:
+    """Index selection trace summaries by unit ID."""
+    return {
+        selection.unit_id: selection.trace_summary
+        for selection in selections
+        if selection.trace_summary is not None
+    }
+
+
+def _warning_trace_summaries(
+    warnings: tuple[SemanticOptimizationWarning, ...],
+) -> dict[str, SemanticUnitTraceSummary]:
+    """Index warning trace summaries by unit ID."""
+    return {
+        warning.unit_id: warning.trace_summary
+        for warning in warnings
+        if warning.unit_id is not None and warning.trace_summary is not None
+    }
+
+
+def _diagnostic_boundary(
+    *,
+    unit_id: str,
+    previous_detail: str | None,
+    unit_record: _UnitRecord,
+    trace_summary: SemanticUnitTraceSummary | None,
+) -> SemanticDiagnosticBoundary:
+    """Classify one grounded unit by tier boundary and surfaced depth."""
+    primary_capability_tier = _primary_capability_tier(
+        unit_record=unit_record,
+        trace_summary=trace_summary,
+    )
+    has_attached_runtime_provenance = (
+        trace_summary.has_attached_runtime_provenance
+        if trace_summary is not None
+        else False
+    )
+    boundary_kind = _boundary_kind(
+        primary_capability_tier=primary_capability_tier,
+        has_attached_runtime_provenance=has_attached_runtime_provenance,
+    )
+    if previous_detail is None:
+        status = SemanticDiagnosticUnitStatus.OMITTED
+    elif _detail_rank(previous_detail) < _required_detail_rank(boundary_kind):
+        status = SemanticDiagnosticUnitStatus.TOO_SHALLOW
+    else:
+        status = SemanticDiagnosticUnitStatus.SUFFICIENTLY_REPRESENTED
+    return SemanticDiagnosticBoundary(
+        unit_id=unit_id,
+        status=status,
+        boundary_kind=boundary_kind,
+        primary_capability_tier=primary_capability_tier,
+        has_attached_runtime_provenance=has_attached_runtime_provenance,
+        trace_summary=trace_summary,
+    )
+
+
+def _primary_capability_tier(
+    *,
+    unit_record: _UnitRecord,
+    trace_summary: SemanticUnitTraceSummary | None,
+) -> CapabilityTier:
+    """Return the accepted primary capability tier for one diagnostic unit."""
+    if trace_summary is not None:
+        return trace_summary.primary_capability_tier
+    if unit_record.category is _UnitCategory.PROVEN_SYMBOL:
+        return CapabilityTier.STATICALLY_PROVED
+    if unit_record.category is _UnitCategory.UNRESOLVED_FRONTIER:
+        return CapabilityTier.HEURISTIC_FRONTIER
+    return CapabilityTier.UNSUPPORTED_OPAQUE
+
+
+def _boundary_kind(
+    *,
+    primary_capability_tier: CapabilityTier,
+    has_attached_runtime_provenance: bool,
+) -> SemanticDiagnosticBoundaryKind:
+    """Return the typed boundary kind for one grounded diagnostic unit."""
+    if primary_capability_tier is CapabilityTier.STATICALLY_PROVED:
+        return SemanticDiagnosticBoundaryKind.STATICALLY_PROVED
+    if primary_capability_tier is CapabilityTier.HEURISTIC_FRONTIER:
+        return (
+            SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_WITH_ATTACHED_RUNTIME_SUPPORT
+            if has_attached_runtime_provenance
+            else (
+                SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_MISSING_RUNTIME_SUPPORT
+            )
+        )
+    if primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE:
+        return (
+            SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+            if has_attached_runtime_provenance
+            else (
+                SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+            )
+        )
+    raise ValueError(
+        "diagnostic boundary classification requires a non-runtime primary tier"
+    )
+
+
+def _required_detail_rank(boundary_kind: SemanticDiagnosticBoundaryKind) -> int:
+    """Return the minimum surfaced detail that counts as sufficient."""
+    if boundary_kind is SemanticDiagnosticBoundaryKind.STATICALLY_PROVED:
         return _detail_rank(RenderDetail.SOURCE.value)
-    return _detail_rank(RenderDetail.SUMMARY.value)
+    if boundary_kind in {
+        SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_WITH_ATTACHED_RUNTIME_SUPPORT,
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT,
+    }:
+        return _detail_rank(RenderDetail.SUMMARY.value)
+    return _detail_rank(RenderDetail.IDENTITY.value)
 
 
 def _detail_rank(detail: str) -> int:
@@ -385,18 +527,23 @@ def _detail_rank(detail: str) -> int:
 
 def _recommended_expansions(
     *,
-    actionable_unit_ids: list[str],
+    boundary_classifications: tuple[SemanticDiagnosticBoundary, ...],
     program: SemanticProgram,
     unit_records: dict[str, _UnitRecord],
 ) -> tuple[str, ...]:
     """Return narrowly justified expansion targets from accepted semantic facts."""
-    expansions: list[str] = list(actionable_unit_ids)
-    for unit_id in actionable_unit_ids:
-        record = unit_records[unit_id]
+    expansions: list[str] = []
+    for boundary in boundary_classifications:
+        if boundary.status is SemanticDiagnosticUnitStatus.SUFFICIENTLY_REPRESENTED:
+            continue
+        expansions.append(boundary.unit_id)
+        if boundary.primary_capability_tier is not CapabilityTier.STATICALLY_PROVED:
+            continue
+        record = unit_records[boundary.unit_id]
         if record.category is not _UnitCategory.PROVEN_SYMBOL:
             continue
         for dependency in program.proven_dependencies:
-            if dependency.source_symbol_id != unit_id:
+            if dependency.source_symbol_id != boundary.unit_id:
                 continue
             if dependency.target_symbol_id not in program.resolved_symbols:
                 continue
@@ -407,41 +554,141 @@ def _recommended_expansions(
 def _diagnostic_reason(
     *,
     grounded_unit_ids: tuple[str, ...],
-    omitted_unit_ids: tuple[str, ...],
-    too_shallow_unit_ids: tuple[str, ...],
-    sufficiently_represented_unit_ids: tuple[str, ...],
-    unit_records: dict[str, _UnitRecord],
+    boundary_classifications: tuple[SemanticDiagnosticBoundary, ...],
 ) -> str:
     """Build a conservative explanation of why the miss happened."""
     segments = [f"Grounded {len(grounded_unit_ids)} semantic unit(s)."]
-    if omitted_unit_ids:
-        uncertainty_omissions = sum(
-            1
-            for unit_id in omitted_unit_ids
-            if unit_records[unit_id].category is not _UnitCategory.PROVEN_SYMBOL
+    segments.extend(
+        _reason_segments_for_status(
+            boundary_classifications,
+            status=SemanticDiagnosticUnitStatus.OMITTED,
         )
-        proven_omissions = len(omitted_unit_ids) - uncertainty_omissions
-        if proven_omissions:
-            segments.append(
-                f"{proven_omissions} grounded unit(s) were omitted due to "
-                "budget pressure."
-            )
-        if uncertainty_omissions:
-            segments.append(
-                f"{uncertainty_omissions} unresolved or unsupported unit(s) "
-                "were not surfaced."
-            )
-    if too_shallow_unit_ids:
-        segments.append(
-            f"{len(too_shallow_unit_ids)} grounded unit(s) were present but "
-            "too shallow."
+    )
+    segments.extend(
+        _reason_segments_for_status(
+            boundary_classifications,
+            status=SemanticDiagnosticUnitStatus.TOO_SHALLOW,
         )
-    if sufficiently_represented_unit_ids:
-        segments.append(
-            f"{len(sufficiently_represented_unit_ids)} grounded unit(s) were "
-            "already sufficiently represented."
+    )
+    segments.extend(
+        _reason_segments_for_status(
+            boundary_classifications,
+            status=SemanticDiagnosticUnitStatus.SUFFICIENTLY_REPRESENTED,
         )
+    )
     return " ".join(segments)
+
+
+def _reason_segments_for_status(
+    boundary_classifications: tuple[SemanticDiagnosticBoundary, ...],
+    *,
+    status: SemanticDiagnosticUnitStatus,
+) -> list[str]:
+    """Build grouped reason segments for one diagnostic status bucket."""
+    counts = {
+        boundary_kind: sum(
+            1
+            for boundary in boundary_classifications
+            if boundary.status is status and boundary.boundary_kind is boundary_kind
+        )
+        for boundary_kind in SemanticDiagnosticBoundaryKind
+    }
+    static_proved = counts[SemanticDiagnosticBoundaryKind.STATICALLY_PROVED]
+    frontier_missing_runtime = counts[
+        SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_MISSING_RUNTIME_SUPPORT
+    ]
+    frontier_with_runtime = counts[
+        SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_WITH_ATTACHED_RUNTIME_SUPPORT
+    ]
+    unsupported_missing_runtime = counts[
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+    ]
+    unsupported_with_runtime = counts[
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    ]
+    segments: list[str] = []
+    if status is SemanticDiagnosticUnitStatus.OMITTED:
+        if static_proved:
+            segments.append(
+                f"{static_proved} "
+                "statically proved unit(s) were omitted due to budget pressure."
+            )
+        if frontier_missing_runtime:
+            segments.append(
+                f"{frontier_missing_runtime} "
+                "heuristic frontier unit(s) were omitted; they remain non-proof "
+                "boundary work without attached runtime-backed support."
+            )
+        if frontier_with_runtime:
+            segments.append(
+                f"{frontier_with_runtime} "
+                "heuristic frontier unit(s) with attached runtime-backed "
+                "provenance were omitted."
+            )
+        if unsupported_missing_runtime:
+            segments.append(
+                f"{unsupported_missing_runtime} "
+                "unsupported/opaque unit(s) were omitted; they remain boundary "
+                "work without attached runtime-backed support."
+            )
+        if unsupported_with_runtime:
+            segments.append(
+                f"{unsupported_with_runtime} "
+                "unsupported/opaque unit(s) with attached runtime-backed "
+                "provenance were omitted."
+            )
+        return segments
+
+    if status is SemanticDiagnosticUnitStatus.TOO_SHALLOW:
+        if static_proved:
+            segments.append(
+                f"{static_proved} "
+                "statically proved unit(s) were present but too shallow."
+            )
+        if frontier_with_runtime:
+            segments.append(
+                f"{frontier_with_runtime} "
+                "heuristic frontier unit(s) carried attached runtime-backed "
+                "provenance but were still too shallow."
+            )
+        if unsupported_with_runtime:
+            segments.append(
+                f"{unsupported_with_runtime} "
+                "unsupported/opaque unit(s) carried attached runtime-backed "
+                "provenance but were still too shallow."
+            )
+        return segments
+
+    if static_proved:
+        segments.append(
+            f"{static_proved} "
+            "statically proved unit(s) were already sufficiently represented."
+        )
+    if frontier_missing_runtime:
+        segments.append(
+            f"{frontier_missing_runtime} "
+            "heuristic frontier unit(s) were already surfaced as non-proof "
+            "boundary work without attached runtime-backed support."
+        )
+    if frontier_with_runtime:
+        segments.append(
+            f"{frontier_with_runtime} "
+            "heuristic frontier unit(s) were already surfaced with attached "
+            "runtime-backed provenance."
+        )
+    if unsupported_missing_runtime:
+        segments.append(
+            f"{unsupported_missing_runtime} "
+            "unsupported/opaque unit(s) were already surfaced as boundary work "
+            "without attached runtime-backed support."
+        )
+    if unsupported_with_runtime:
+        segments.append(
+            f"{unsupported_with_runtime} "
+            "unsupported/opaque unit(s) were already surfaced with attached "
+            "runtime-backed provenance."
+        )
+    return segments
 
 
 def _boost_scoring(
@@ -457,18 +704,54 @@ def _boost_scoring(
         )
         for unit_id, score in scoring.scores.items()
     }
-    actionable_unit_ids = set(diagnostic.omitted_unit_ids) | set(
-        diagnostic.too_shallow_unit_ids
-    )
-    for unit_id in actionable_unit_ids:
-        score = boosted_scores.get(unit_id)
-        if score is None:
-            continue
-        boosted_scores[unit_id] = SemanticUnitScore(
-            unit_id=score.unit_id,
-            p_edit=max(score.p_edit, _DIRECT_MISS_EDIT_BOOST),
-            p_support=max(score.p_support, _DIRECT_MISS_SUPPORT_FLOOR),
+    if diagnostic.boundary_classifications:
+        sufficient_status = SemanticDiagnosticUnitStatus.SUFFICIENTLY_REPRESENTED
+        actionable_unit_ids = {
+            boundary.unit_id
+            for boundary in diagnostic.boundary_classifications
+            if boundary.status is not sufficient_status
+        }
+        for boundary in diagnostic.boundary_classifications:
+            if boundary.status is sufficient_status:
+                continue
+            score = boosted_scores.get(boundary.unit_id)
+            if score is None:
+                continue
+            if boundary.primary_capability_tier is CapabilityTier.STATICALLY_PROVED:
+                boosted_scores[boundary.unit_id] = SemanticUnitScore(
+                    unit_id=score.unit_id,
+                    p_edit=max(score.p_edit, _DIRECT_MISS_EDIT_BOOST),
+                    p_support=max(score.p_support, _DIRECT_MISS_SUPPORT_FLOOR),
+                )
+                continue
+            edit_floor = (
+                _ATTACHED_RUNTIME_BOUNDARY_EDIT_BOOST
+                if boundary.has_attached_runtime_provenance
+                else _BOUNDARY_SURFACE_EDIT_BOOST
+            )
+            support_floor = (
+                _ATTACHED_RUNTIME_BOUNDARY_SUPPORT_FLOOR
+                if boundary.has_attached_runtime_provenance
+                else _BOUNDARY_SURFACE_SUPPORT_FLOOR
+            )
+            boosted_scores[boundary.unit_id] = SemanticUnitScore(
+                unit_id=score.unit_id,
+                p_edit=max(score.p_edit, edit_floor),
+                p_support=max(score.p_support, support_floor),
+            )
+    else:
+        actionable_unit_ids = set(diagnostic.omitted_unit_ids) | set(
+            diagnostic.too_shallow_unit_ids
         )
+        for unit_id in actionable_unit_ids:
+            score = boosted_scores.get(unit_id)
+            if score is None:
+                continue
+            boosted_scores[unit_id] = SemanticUnitScore(
+                unit_id=score.unit_id,
+                p_edit=max(score.p_edit, _DIRECT_MISS_EDIT_BOOST),
+                p_support=max(score.p_support, _DIRECT_MISS_SUPPORT_FLOOR),
+            )
 
     for unit_id in diagnostic.recommended_expansions:
         if unit_id in actionable_unit_ids:

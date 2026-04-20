@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import textwrap
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+import context_ir.semantic_compiler as semantic_compiler
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
@@ -19,8 +21,22 @@ from context_ir.semantic_scorer import (
     score_semantic_units,
 )
 from context_ir.semantic_types import (
+    CapabilityTier,
+    EvidenceOriginKind,
+    ReplayStatus,
+    RepositorySnapshotBasis,
+    RuntimeAttachmentLink,
+    SelectionBasis,
     SemanticCompileResult,
+    SemanticOptimizationResult,
+    SemanticOptimizationWarning,
+    SemanticOptimizationWarningCode,
     SemanticProgram,
+    SemanticProvenanceRecord,
+    SemanticSelectionRecord,
+    SemanticSubjectKind,
+    SemanticUnitTraceSummary,
+    SourceSite,
 )
 
 
@@ -44,6 +60,36 @@ def _definition_id_for(program: SemanticProgram, qualified_name: str) -> str:
 def _estimate_tokens(text: str) -> int:
     """Mirror compile-level token estimation for assembled documents."""
     return max(1, (len(text) + 3) // 4)
+
+
+def _runtime_backed_record(
+    *,
+    record_id: str,
+    subject_kind: SemanticSubjectKind,
+    subject_id: str,
+    site: SourceSite,
+) -> SemanticProvenanceRecord:
+    """Create one admissible runtime-backed provenance record for tests."""
+    return SemanticProvenanceRecord(
+        record_id=record_id,
+        subject_kind=subject_kind,
+        subject_id=subject_id,
+        capability_tier=CapabilityTier.RUNTIME_BACKED,
+        evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+        origin_detail="probe:test-runtime",
+        replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{record_id}",
+                attachment_role="trace",
+            ),
+        ),
+        subject_sites=(site,),
+    )
 
 
 def test_compile_semantic_context_returns_separate_result_without_mutation(
@@ -103,6 +149,181 @@ def test_compile_semantic_context_returns_separate_result_without_mutation(
     assert program.unsupported_constructs == unsupported_before
     assert program.diagnostics == diagnostics_before
     assert dict(scoring.scores) == scores_before
+
+
+def test_compile_semantic_context_carries_tier_aware_selection_traces(
+    tmp_path: Path,
+) -> None:
+    """Compile results preserve tier-aware selection trace summaries."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "helpers.py").write_text(
+        "def helper() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.helpers import *
+            from pkg.helpers import helper
+
+            def run() -> None:
+                helper()
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = _semantic_program(tmp_path)
+    run_id = _definition_id_for(base_program, "main.run")
+    frontier_id = next(
+        access.access_id
+        for access in base_program.unresolved_frontier
+        if access.enclosing_scope_id == run_id
+    )
+    star_import_id = next(
+        construct.construct_id
+        for construct in base_program.unsupported_constructs
+        if construct.construct_text == "from pkg.helpers import *"
+    )
+    program = replace(
+        base_program,
+        provenance_records=[
+            _runtime_backed_record(
+                record_id="prov:symbol:runtime:run",
+                subject_kind=SemanticSubjectKind.SYMBOL,
+                subject_id=run_id,
+                site=base_program.resolved_symbols[run_id].definition_site,
+            ),
+            _runtime_backed_record(
+                record_id="prov:frontier:runtime:missing",
+                subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+                subject_id=frontier_id,
+                site=next(
+                    access.site
+                    for access in base_program.unresolved_frontier
+                    if access.access_id == frontier_id
+                ),
+            ),
+            _runtime_backed_record(
+                record_id="prov:unsupported:runtime:star",
+                subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+                subject_id=star_import_id,
+                site=next(
+                    construct.site
+                    for construct in base_program.unsupported_constructs
+                    if construct.construct_id == star_import_id
+                ),
+            ),
+        ],
+    )
+    scoring = SemanticScoringResult(
+        query="run missing call star import helper",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    0.70
+                    if unit_id == run_id
+                    else 0.46
+                    if unit_id == frontier_id
+                    else 0.42
+                    if unit_id == star_import_id
+                    else 0.08
+                ),
+                p_support=0.0,
+            )
+            for unit_id in {
+                *program.resolved_symbols.keys(),
+                *(access.access_id for access in program.unresolved_frontier),
+                *(
+                    construct.construct_id
+                    for construct in program.unsupported_constructs
+                ),
+            }
+        },
+    )
+
+    result = compile_semantic_context(
+        program,
+        "run missing call star import helper",
+        budget=400,
+        scoring=scoring,
+    )
+    selections = {
+        selection.unit_id: selection for selection in result.optimization.selections
+    }
+
+    assert selections[run_id].trace_summary is not None
+    assert selections[run_id].trace_summary == SemanticUnitTraceSummary(
+        subject_id=run_id,
+        subject_kind=SemanticSubjectKind.SYMBOL,
+        primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+        primary_evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+        primary_replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+        attached_runtime_provenance_record_ids=("prov:symbol:runtime:run",),
+    )
+    assert selections[frontier_id].trace_summary is not None
+    assert selections[frontier_id].trace_summary == SemanticUnitTraceSummary(
+        subject_id=frontier_id,
+        subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+        primary_capability_tier=CapabilityTier.HEURISTIC_FRONTIER,
+        primary_evidence_origin=EvidenceOriginKind.HEURISTIC_RULE,
+        primary_replay_status=ReplayStatus.NON_PROOF_HEURISTIC,
+        attached_runtime_provenance_record_ids=("prov:frontier:runtime:missing",),
+    )
+    assert selections[star_import_id].trace_summary is not None
+    assert selections[star_import_id].trace_summary == SemanticUnitTraceSummary(
+        subject_id=star_import_id,
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+        primary_evidence_origin=EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+        primary_replay_status=ReplayStatus.OPAQUE_BOUNDARY,
+        attached_runtime_provenance_record_ids=("prov:unsupported:runtime:star",),
+    )
+
+
+def test_compile_budget_normalization_preserves_warning_trace_summary() -> None:
+    """Compiler budget normalization keeps warning summaries intact."""
+    trace_summary = SemanticUnitTraceSummary(
+        subject_id="frontier:missing",
+        subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+        primary_capability_tier=CapabilityTier.HEURISTIC_FRONTIER,
+        primary_evidence_origin=EvidenceOriginKind.HEURISTIC_RULE,
+        primary_replay_status=ReplayStatus.NON_PROOF_HEURISTIC,
+        attached_runtime_provenance_record_ids=("prov:frontier:runtime:missing",),
+    )
+    selection = SemanticSelectionRecord(
+        unit_id="unit:selected",
+        detail="identity",
+        token_count=4,
+        basis=SelectionBasis.HEURISTIC_CANDIDATE,
+        reason="selected for query",
+        edit_score=0.2,
+        support_score=0.0,
+    )
+    warning = SemanticOptimizationWarning(
+        code=SemanticOptimizationWarningCode.OMITTED_UNCERTAINTY,
+        message="uncertainty omitted by budget",
+        unit_id="frontier:missing",
+        trace_summary=trace_summary,
+    )
+    optimization = SemanticOptimizationResult(
+        selections=(selection,),
+        omitted_unit_ids=("frontier:missing",),
+        warnings=(warning,),
+        total_tokens=4,
+        budget=12,
+        confidence=0.4,
+    )
+
+    normalized = semantic_compiler._with_compile_budget(optimization, budget=32)
+
+    assert normalized.budget == 32
+    assert normalized.warnings[0] is not warning
+    assert normalized.warnings[0].trace_summary == trace_summary
 
 
 def test_compile_semantic_context_renders_proven_and_uncertain_units_truthfully(

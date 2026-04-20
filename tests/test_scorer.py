@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+import context_ir.scorer as scorer_module
 from context_ir.parser import parse_repository
 from context_ir.scorer import _cosine_similarity, score_graph
 from context_ir.types import (
@@ -29,6 +30,19 @@ FIXTURES = Path(__file__).parent / "fixtures" / "sample_repo"
 def _constant_embed(texts: list[str]) -> list[list[float]]:
     """Returns identical vectors so embeddings contribute zero signal."""
     return [[0.5] * 64 for _ in texts]
+
+
+def _cached_default_model_or_skip() -> object:
+    """Return the cached default embedding model or skip offline-only runs."""
+    from sentence_transformers import SentenceTransformer
+
+    try:
+        return SentenceTransformer("all-MiniLM-L6-v2", local_files_only=True)
+    except OSError as error:
+        pytest.skip(
+            "default embedding integration requires a locally cached "
+            f"all-MiniLM-L6-v2 model: {error}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +255,13 @@ def test_embed_fn_is_called() -> None:
 def test_default_embed_integration() -> None:
     """Real sentence-transformers model produces valid scores."""
     graph = parse_repository(FIXTURES)
-    scores = score_graph("fix the validate_name function", graph, FIXTURES)
+    cached_model = _cached_default_model_or_skip()
+    previous_model = scorer_module._model
+    scorer_module._model = cached_model
+    try:
+        scores = score_graph("fix the validate_name function", graph, FIXTURES)
+    finally:
+        scorer_module._model = previous_model
     assert len(scores) == len(graph.nodes)
     for s in scores.values():
         assert 0.0 <= s.p_edit <= 1.0

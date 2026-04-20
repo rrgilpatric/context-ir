@@ -235,7 +235,7 @@ def test_score_semantic_units_uses_relevant_scope_support_for_uncertainty_items(
 
             def run() -> None:
                 missing_call()
-                pkg.helpers.helper()
+                pkg.helpers.helper.extra()
             """
         ).lstrip(),
         encoding="utf-8",
@@ -244,7 +244,7 @@ def test_score_semantic_units_uses_relevant_scope_support_for_uncertainty_items(
     program = _semantic_program(tmp_path)
     run_id = _definition_id_for(program, "main.run")
     unresolved_id = _unresolved_id_for(program, "missing_call")
-    unsupported_id = _unsupported_id_for(program, "pkg.helpers.helper")
+    unsupported_id = _unsupported_id_for(program, "pkg.helpers.helper.extra")
 
     result = score_semantic_units(program, "run")
 

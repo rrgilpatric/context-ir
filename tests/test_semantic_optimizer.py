@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import textwrap
+from dataclasses import replace
 from pathlib import Path
 
+import context_ir.runtime_acquisition as runtime_acquisition
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
@@ -17,10 +19,19 @@ from context_ir.semantic_scorer import (
     score_semantic_units,
 )
 from context_ir.semantic_types import (
+    CapabilityTier,
+    EvidenceOriginKind,
+    ReplayStatus,
+    RepositorySnapshotBasis,
+    RuntimeAttachmentLink,
     SelectionBasis,
     SemanticOptimizationResult,
+    SemanticOptimizationWarningCode,
     SemanticProgram,
+    SemanticProvenanceRecord,
     SemanticSelectionRecord,
+    SemanticSubjectKind,
+    SourceSite,
 )
 
 
@@ -55,6 +66,65 @@ def _selection_by_unit_id(
 ) -> dict[str, SemanticSelectionRecord]:
     """Index selected units by stable unit ID."""
     return {selection.unit_id: selection for selection in result.selections}
+
+
+def _runtime_backed_record(
+    *,
+    record_id: str,
+    subject_kind: SemanticSubjectKind,
+    subject_id: str,
+    site: SourceSite,
+) -> SemanticProvenanceRecord:
+    """Create one admissible runtime-backed provenance record for tests."""
+    return SemanticProvenanceRecord(
+        record_id=record_id,
+        subject_kind=subject_kind,
+        subject_id=subject_id,
+        capability_tier=CapabilityTier.RUNTIME_BACKED,
+        evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+        origin_detail="probe:test-runtime",
+        replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{record_id}",
+                attachment_role="trace",
+            ),
+        ),
+        subject_sites=(site,),
+    )
+
+
+def _dynamic_import_runtime_observation(
+    site: SourceSite,
+) -> runtime_acquisition.DynamicImportRuntimeObservation:
+    """Create one admissible dynamic-import runtime observation for optimizer tests."""
+    return runtime_acquisition.DynamicImportRuntimeObservation(
+        site=site,
+        probe_identifier="probe:dynamic-import",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="imported_module",
+                value="pkg.dynamic",
+            ),
+        ),
+    )
 
 
 def test_optimize_semantic_units_returns_separate_result_without_mutation(
@@ -110,6 +180,205 @@ def test_optimize_semantic_units_returns_separate_result_without_mutation(
     assert program.unsupported_constructs == unsupported_before
     assert program.diagnostics == diagnostics_before
     assert dict(scoring.scores) == scores_before
+
+
+def test_optimize_semantic_units_emits_tier_aware_trace_summaries(
+    tmp_path: Path,
+) -> None:
+    """Selections and warnings carry typed tier/provenance summaries."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "helpers.py").write_text(
+        "def helper() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.helpers import *
+            from pkg.helpers import helper
+
+            def run() -> None:
+                helper()
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = _semantic_program(tmp_path)
+    run_id = _definition_id_for(base_program, "main.run")
+    frontier_id = next(
+        access.access_id
+        for access in base_program.unresolved_frontier
+        if access.enclosing_scope_id == run_id
+    )
+    star_import_id = next(
+        construct.construct_id
+        for construct in base_program.unsupported_constructs
+        if construct.construct_text == "from pkg.helpers import *"
+    )
+    program = replace(
+        base_program,
+        provenance_records=[
+            _runtime_backed_record(
+                record_id="prov:symbol:runtime:run",
+                subject_kind=SemanticSubjectKind.SYMBOL,
+                subject_id=run_id,
+                site=base_program.resolved_symbols[run_id].definition_site,
+            ),
+            _runtime_backed_record(
+                record_id="prov:frontier:runtime:missing",
+                subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+                subject_id=frontier_id,
+                site=next(
+                    access.site
+                    for access in base_program.unresolved_frontier
+                    if access.access_id == frontier_id
+                ),
+            ),
+            _runtime_backed_record(
+                record_id="prov:unsupported:runtime:star",
+                subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+                subject_id=star_import_id,
+                site=next(
+                    construct.site
+                    for construct in base_program.unsupported_constructs
+                    if construct.construct_id == star_import_id
+                ),
+            ),
+        ],
+    )
+    scoring = SemanticScoringResult(
+        query="run missing call star import helper",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    0.70
+                    if unit_id == run_id
+                    else 0.46
+                    if unit_id == frontier_id
+                    else 0.42
+                    if unit_id == star_import_id
+                    else 0.08
+                ),
+                p_support=0.0,
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+
+    roomy_result = optimize_semantic_units(program, scoring, budget=400)
+    roomy_selections = _selection_by_unit_id(roomy_result)
+    run_trace = roomy_selections[run_id].trace_summary
+    frontier_trace = roomy_selections[frontier_id].trace_summary
+    unsupported_trace = roomy_selections[star_import_id].trace_summary
+
+    assert run_trace is not None
+    assert run_trace.subject_kind is SemanticSubjectKind.SYMBOL
+    assert run_trace.primary_capability_tier is CapabilityTier.STATICALLY_PROVED
+    assert (
+        run_trace.primary_evidence_origin is EvidenceOriginKind.STATIC_DERIVATION_RULE
+    )
+    assert run_trace.primary_replay_status is ReplayStatus.DETERMINISTIC_STATIC
+    assert run_trace.attached_runtime_provenance_record_ids == (
+        "prov:symbol:runtime:run",
+    )
+    assert run_trace.has_attached_runtime_provenance is True
+
+    assert frontier_trace is not None
+    assert frontier_trace.subject_kind is SemanticSubjectKind.FRONTIER_ITEM
+    assert frontier_trace.primary_capability_tier is CapabilityTier.HEURISTIC_FRONTIER
+    assert frontier_trace.primary_evidence_origin is EvidenceOriginKind.HEURISTIC_RULE
+    assert frontier_trace.primary_replay_status is ReplayStatus.NON_PROOF_HEURISTIC
+    assert frontier_trace.attached_runtime_provenance_record_ids == (
+        "prov:frontier:runtime:missing",
+    )
+
+    assert unsupported_trace is not None
+    assert unsupported_trace.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert (
+        unsupported_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    )
+    assert (
+        unsupported_trace.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported_trace.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported_trace.attached_runtime_provenance_record_ids == (
+        "prov:unsupported:runtime:star",
+    )
+
+    tight_result = optimize_semantic_units(program, scoring, budget=0)
+    warnings_by_unit_id = {
+        warning.unit_id: warning for warning in tight_result.warnings if warning.unit_id
+    }
+
+    assert warnings_by_unit_id[run_id].code is (
+        SemanticOptimizationWarningCode.OMITTED_DIRECT_CANDIDATE
+    )
+    assert warnings_by_unit_id[run_id].trace_summary == run_trace
+    assert warnings_by_unit_id[frontier_id].code is (
+        SemanticOptimizationWarningCode.OMITTED_UNCERTAINTY
+    )
+    assert warnings_by_unit_id[frontier_id].trace_summary == frontier_trace
+    assert warnings_by_unit_id[star_import_id].code is (
+        SemanticOptimizationWarningCode.OMITTED_UNCERTAINTY
+    )
+    assert warnings_by_unit_id[star_import_id].trace_summary == unsupported_trace
+
+
+def test_optimize_semantic_units_keeps_importlib_dynamic_import_primary_unsupported(
+    tmp_path: Path,
+) -> None:
+    """Attached importlib runtime support stays additive on unsupported units."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = _semantic_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "importlib.import_module(name)"
+    )
+    program = runtime_acquisition.attach_dynamic_import_runtime_provenance(
+        base_program,
+        [_dynamic_import_runtime_observation(construct.site)],
+    )
+    [record] = program.provenance_records
+    scoring = SemanticScoringResult(
+        query="dynamic import",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=0.95 if unit_id == construct.construct_id else 0.01,
+                p_support=0.0,
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=400)
+    trace = _selection_by_unit_id(result)[construct.construct_id].trace_summary
+
+    assert trace is not None
+    assert trace.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert trace.primary_evidence_origin is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    assert trace.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert trace.attached_runtime_provenance_record_ids == (record.record_id,)
+    assert trace.has_attached_runtime_provenance is True
 
 
 def test_optimize_semantic_units_uses_compact_summary_and_cheaper_source_when_available(

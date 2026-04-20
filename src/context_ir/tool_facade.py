@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias, TypedDict
 
 from context_ir.analyzer import analyze_repository
 from context_ir.semantic_compiler import compile_semantic_context
@@ -20,7 +20,24 @@ from context_ir.semantic_types import (
     UnsupportedConstruct,
 )
 
+if TYPE_CHECKING:
+    from context_ir.runtime_acquisition import (
+        DynamicImportRuntimeObservation,
+        GetattrRuntimeObservation,
+        HasattrRuntimeObservation,
+        VarsRuntimeObservation,
+    )
+
 EmbeddingFunction: TypeAlias = Callable[[list[str]], list[list[float]]]
+
+
+class _AnalyzeRepositoryKwargs(TypedDict, total=False):
+    """Optional runtime-observation kwargs accepted by ``analyze_repository``."""
+
+    dynamic_import_runtime_observations: Sequence[DynamicImportRuntimeObservation]
+    getattr_runtime_observations: Sequence[GetattrRuntimeObservation]
+    hasattr_runtime_observations: Sequence[HasattrRuntimeObservation]
+    vars_runtime_observations: Sequence[VarsRuntimeObservation]
 
 
 @dataclass(frozen=True)
@@ -31,6 +48,12 @@ class SemanticContextRequest:
     query: str
     budget: int
     embed_fn: EmbeddingFunction | None = None
+    dynamic_import_runtime_observations: (
+        Sequence[DynamicImportRuntimeObservation] | None
+    ) = None
+    hasattr_runtime_observations: Sequence[HasattrRuntimeObservation] | None = None
+    getattr_runtime_observations: Sequence[GetattrRuntimeObservation] | None = None
+    vars_runtime_observations: Sequence[VarsRuntimeObservation] | None = None
 
 
 @dataclass(frozen=True)
@@ -75,7 +98,27 @@ def compile_repository_context(
     request: SemanticContextRequest,
 ) -> SemanticContextResponse:
     """Analyze a repository and compile a semantic context response."""
-    program = analyze_repository(request.repo_root)
+    dynamic_import_runtime_observations = request.dynamic_import_runtime_observations
+    hasattr_runtime_observations = request.hasattr_runtime_observations
+    getattr_runtime_observations = request.getattr_runtime_observations
+    vars_runtime_observations = request.vars_runtime_observations
+
+    analyze_kwargs: _AnalyzeRepositoryKwargs = {}
+    if dynamic_import_runtime_observations is not None:
+        analyze_kwargs["dynamic_import_runtime_observations"] = (
+            dynamic_import_runtime_observations
+        )
+    if hasattr_runtime_observations is not None:
+        analyze_kwargs["hasattr_runtime_observations"] = hasattr_runtime_observations
+    if getattr_runtime_observations is not None:
+        analyze_kwargs["getattr_runtime_observations"] = getattr_runtime_observations
+    if vars_runtime_observations is not None:
+        analyze_kwargs["vars_runtime_observations"] = vars_runtime_observations
+
+    if analyze_kwargs:
+        program = analyze_repository(request.repo_root, **analyze_kwargs)
+    else:
+        program = analyze_repository(request.repo_root)
     compile_result = compile_semantic_context(
         program,
         request.query,

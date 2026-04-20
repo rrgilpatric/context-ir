@@ -243,6 +243,89 @@ def test_extract_syntax_preserves_relative_and_star_import_surfaces(
     )
 
 
+def test_extract_syntax_retains_metaclass_keyword_surface(
+    tmp_path: Path,
+) -> None:
+    """Class ``metaclass=...`` syntax stays explicit instead of being dropped."""
+    example_py = tmp_path / "example.py"
+    example_py.write_text(
+        textwrap.dedent(
+            """
+            class Base:
+                pass
+
+            class Example(Base, metaclass=Meta):
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    syntax = extract_syntax(tmp_path)
+    example_definition = next(
+        definition
+        for definition in syntax.definitions
+        if definition.qualified_name == "example.Example"
+    )
+    base_expressions = [
+        base_expression
+        for base_expression in syntax.base_expressions
+        if base_expression.owner_definition_id == example_definition.definition_id
+    ]
+    metaclass_keywords = [
+        metaclass_keyword
+        for metaclass_keyword in syntax.metaclass_keywords
+        if metaclass_keyword.owner_definition_id == example_definition.definition_id
+    ]
+
+    assert [
+        base_expression.expression_text for base_expression in base_expressions
+    ] == ["Base"]
+    assert len(metaclass_keywords) == 1
+    assert metaclass_keywords[0].keyword_text == "metaclass=Meta"
+    assert metaclass_keywords[0].site.file_path == "example.py"
+    assert metaclass_keywords[0].site.snippet == "metaclass=Meta"
+
+
+def test_extract_syntax_preserves_declared_base_expression_order_for_resolver_contract(
+    tmp_path: Path,
+) -> None:
+    """Base-expression facts stay ordered for resolver ancestry indexing."""
+    example_py = tmp_path / "example.py"
+    example_py.write_text(
+        textwrap.dedent(
+            """
+            class ZBase:
+                pass
+
+            class ABase:
+                pass
+
+            class MBase:
+                pass
+
+            class Example(ZBase, ABase, MBase, metaclass=Meta):
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    syntax = extract_syntax(tmp_path)
+    example_definition = next(
+        definition
+        for definition in syntax.definitions
+        if definition.qualified_name == "example.Example"
+    )
+    base_expressions = [
+        base_expression.expression_text
+        for base_expression in syntax.base_expressions
+        if base_expression.owner_definition_id == example_definition.definition_id
+    ]
+
+    assert base_expressions == ["ZBase", "ABase", "MBase"]
+
+
 def test_extract_syntax_preserves_nested_import_scope_ownership(
     tmp_path: Path,
 ) -> None:

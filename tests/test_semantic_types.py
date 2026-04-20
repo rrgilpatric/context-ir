@@ -2,11 +2,28 @@
 
 from pathlib import Path
 
+import pytest
+
 import context_ir
 from context_ir import (
+    CapabilityTier,
+    DownstreamVisibility,
+    EvidenceOriginKind,
+    ReplayStatus,
+    RepositorySnapshotBasis,
+    RuntimeAttachmentLink,
     SelectionBasis,
     SelectionDirective,
+    SemanticDiagnosticBoundary,
+    SemanticDiagnosticBoundaryKind,
+    SemanticDiagnosticUnitStatus,
+    SemanticOptimizationWarning,
+    SemanticOptimizationWarningCode,
     SemanticProgram,
+    SemanticProvenanceRecord,
+    SemanticSelectionRecord,
+    SemanticSubjectKind,
+    SemanticUnitTraceSummary,
     SourceSite,
     SourceSpan,
     SupportedDecorator,
@@ -62,20 +79,34 @@ def test_public_semantic_contracts_are_constructible() -> None:
     assert program.supported_subset.supported_decorators == (
         SupportedDecorator.DATACLASS,
     )
+    assert program.syntax.metaclass_keywords == []
     assert program.resolved_imports == []
     assert program.dataclass_models == []
     assert program.dataclass_fields == []
     assert program.proven_dependencies == []
     assert program.unresolved_frontier == []
+    assert program.provenance_records == []
 
 
 def test_package_root_exports_semantic_baseline_surface() -> None:
     """The package root exposes the semantic-first baseline symbols."""
     expected_public_names = {
+        "CapabilityTier",
+        "DownstreamVisibility",
+        "EvidenceOriginKind",
+        "ReplayStatus",
+        "RepositorySnapshotBasis",
         "SelectionBasis",
         "SelectionDirective",
+        "SemanticDiagnosticBoundary",
+        "SemanticDiagnosticBoundaryKind",
+        "SemanticDiagnosticUnitStatus",
+        "SemanticProvenanceRecord",
         "SemanticDependency",
         "SemanticProgram",
+        "SemanticSubjectKind",
+        "SemanticUnitTraceSummary",
+        "RuntimeAttachmentLink",
         "SourceSite",
         "SourceSpan",
         "SupportedDecorator",
@@ -228,9 +259,351 @@ def test_supported_subset_boundary_surfaces_unknown_handling() -> None:
     boundary = SupportedSubsetBoundary()
 
     assert SupportedDecorator.DATACLASS in boundary.supported_decorators
+    assert (
+        UnresolvedReasonCode.UNSUPPORTED_ATTRIBUTE_ACCESS
+        in boundary.unknown_without_proof
+    )
+    assert UnresolvedReasonCode.REFLECTIVE_BUILTIN in boundary.unknown_without_proof
     assert UnresolvedReasonCode.STAR_IMPORT in boundary.unknown_without_proof
     assert UnresolvedReasonCode.OPAQUE_DECORATOR in boundary.unknown_without_proof
     assert boundary.subset_name == "python-static-core-v1"
+
+
+def test_semantic_program_accepts_explicit_provenance_records() -> None:
+    """The widened semantic contract can carry later tier provenance records."""
+    syntax = SyntaxProgram(repo_root=Path("/tmp/repo"))
+    runtime_snapshot = RepositorySnapshotBasis(
+        snapshot_kind="git_commit",
+        snapshot_id="abc123def456",
+    )
+    runtime_attachments = (
+        RuntimeAttachmentLink(
+            attachment_id="attachment:runner:stdout",
+            attachment_role="stdout",
+            description="probe stdout",
+        ),
+        RuntimeAttachmentLink(
+            attachment_id="attachment:runner:trace",
+            attachment_role="trace",
+            description="probe event trace",
+        ),
+    )
+    records = [
+        SemanticProvenanceRecord(
+            record_id="prov:symbol:static:1",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            subject_id="def:pkg.models:User",
+            capability_tier=CapabilityTier.STATICALLY_PROVED,
+            evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+            origin_detail="call_resolution",
+            replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+            subject_sites=(make_site("site:def:user"),),
+            evidence_sites=(make_site("site:def:user:evidence"),),
+        ),
+        SemanticProvenanceRecord(
+            record_id="prov:symbol:runtime:1",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            subject_id="sym:pkg.service:Runner",
+            capability_tier=CapabilityTier.RUNTIME_BACKED,
+            evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+            origin_detail="probe:runner:init",
+            replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+            repository_snapshot_basis=runtime_snapshot,
+            attachment_links=runtime_attachments,
+            subject_sites=(make_site("site:runner"),),
+            evidence_sites=(make_site("site:runner:probe"),),
+        ),
+        SemanticProvenanceRecord(
+            record_id="prov:frontier:1",
+            subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+            subject_id="frontier:call:1",
+            capability_tier=CapabilityTier.HEURISTIC_FRONTIER,
+            evidence_origin=EvidenceOriginKind.HEURISTIC_RULE,
+            origin_detail="frontier_ranker_v1",
+            replay_status=ReplayStatus.NON_PROOF_HEURISTIC,
+            subject_sites=(make_site("site:frontier"),),
+            evidence_sites=(make_site("site:frontier:evidence"),),
+            downstream_visibility=(
+                DownstreamVisibility.COMPILE,
+                DownstreamVisibility.DIAGNOSE,
+            ),
+        ),
+        SemanticProvenanceRecord(
+            record_id="prov:unsupported:1",
+            subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+            subject_id="unsupported:exec:1",
+            capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            evidence_origin=EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+            origin_detail="exec_or_eval",
+            replay_status=ReplayStatus.OPAQUE_BOUNDARY,
+            subject_sites=(make_site("site:unsupported"),),
+            evidence_sites=(make_site("site:unsupported:evidence"),),
+        ),
+    ]
+    program = SemanticProgram(
+        repo_root=Path("/tmp/repo"),
+        syntax=syntax,
+        provenance_records=records,
+    )
+
+    assert program.provenance_records == records
+    assert program.provenance_records[1].repository_snapshot_basis == runtime_snapshot
+    assert program.provenance_records[1].attachment_links == runtime_attachments
+    assert {record.capability_tier for record in records} == {
+        CapabilityTier.STATICALLY_PROVED,
+        CapabilityTier.RUNTIME_BACKED,
+        CapabilityTier.HEURISTIC_FRONTIER,
+        CapabilityTier.UNSUPPORTED_OPAQUE,
+    }
+
+
+def test_selection_and_warning_trace_summary_stays_typed_and_aligned() -> None:
+    """Selection and warning traces can carry explicit tier-aware summaries."""
+    trace_summary = SemanticUnitTraceSummary(
+        subject_id="def:pkg.models:User",
+        subject_kind=SemanticSubjectKind.SYMBOL,
+        primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+        primary_evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+        primary_replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+        attached_runtime_provenance_record_ids=("prov:symbol:runtime:1",),
+    )
+    selection = SemanticSelectionRecord(
+        unit_id="def:pkg.models:User",
+        detail="summary",
+        token_count=12,
+        basis=SelectionBasis.HEURISTIC_CANDIDATE,
+        reason="selected for query",
+        edit_score=0.6,
+        support_score=0.3,
+        trace_summary=trace_summary,
+    )
+    warning = SemanticOptimizationWarning(
+        code=SemanticOptimizationWarningCode.BUDGET_PRESSURE,
+        message="selected with downgraded detail",
+        unit_id="def:pkg.models:User",
+        trace_summary=trace_summary,
+    )
+
+    assert selection.trace_summary == trace_summary
+    assert warning.trace_summary == trace_summary
+    assert trace_summary.has_attached_runtime_provenance is True
+
+
+@pytest.mark.parametrize(
+    ("primary_evidence_origin", "primary_replay_status"),
+    [
+        (
+            EvidenceOriginKind.HEURISTIC_RULE,
+            ReplayStatus.DETERMINISTIC_STATIC,
+        ),
+        (
+            EvidenceOriginKind.STATIC_DERIVATION_RULE,
+            ReplayStatus.NON_PROOF_HEURISTIC,
+        ),
+    ],
+)
+def test_semantic_unit_trace_summary_rejects_misaligned_primary_contract_values(
+    primary_evidence_origin: EvidenceOriginKind,
+    primary_replay_status: ReplayStatus,
+) -> None:
+    """Trace summaries must honor the same tier-origin-replay mapping as records."""
+    with pytest.raises(ValueError, match="primary_capability_tier contract"):
+        SemanticUnitTraceSummary(
+            subject_id="def:pkg.models:User",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+            primary_evidence_origin=primary_evidence_origin,
+            primary_replay_status=primary_replay_status,
+        )
+
+
+def test_trace_summary_rejects_invalid_subject_kind_primary_tier() -> None:
+    """Trace summaries reject subject-kind and primary-tier mismatches."""
+    with pytest.raises(ValueError, match="primary_capability_tier contract"):
+        SemanticUnitTraceSummary(
+            subject_id="frontier:call:invalid",
+            subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+            primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+            primary_evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+            primary_replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+        )
+
+
+def test_semantic_unit_trace_summary_keeps_runtime_provenance_additive() -> None:
+    """Runtime-backed record IDs stay additive instead of becoming primary truth."""
+    trace_summary = SemanticUnitTraceSummary(
+        subject_id="def:pkg.models:User",
+        subject_kind=SemanticSubjectKind.SYMBOL,
+        primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+        primary_evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+        primary_replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+        attached_runtime_provenance_record_ids=("prov:symbol:runtime:1",),
+    )
+
+    assert trace_summary.has_attached_runtime_provenance is True
+
+    with pytest.raises(ValueError, match="may not be runtime-backed"):
+        SemanticUnitTraceSummary(
+            subject_id="def:pkg.models:User",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            primary_capability_tier=CapabilityTier.RUNTIME_BACKED,
+            primary_evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+            primary_replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+            attached_runtime_provenance_record_ids=("prov:symbol:runtime:1",),
+        )
+
+
+def test_semantic_diagnostic_boundaries_stay_typed_and_aligned() -> None:
+    """Diagnostic boundary records expose typed tier/runtime classifications."""
+    trace_summary = SemanticUnitTraceSummary(
+        subject_id="frontier:call:1",
+        subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+        primary_capability_tier=CapabilityTier.HEURISTIC_FRONTIER,
+        primary_evidence_origin=EvidenceOriginKind.HEURISTIC_RULE,
+        primary_replay_status=ReplayStatus.NON_PROOF_HEURISTIC,
+        attached_runtime_provenance_record_ids=("prov:frontier:runtime:1",),
+    )
+    boundary = SemanticDiagnosticBoundary(
+        unit_id="frontier:call:1",
+        status=SemanticDiagnosticUnitStatus.TOO_SHALLOW,
+        boundary_kind=(
+            SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_WITH_ATTACHED_RUNTIME_SUPPORT
+        ),
+        primary_capability_tier=CapabilityTier.HEURISTIC_FRONTIER,
+        has_attached_runtime_provenance=True,
+        trace_summary=trace_summary,
+    )
+    result = context_ir.SemanticDiagnosticResult(
+        grounded_unit_ids=("frontier:call:1",),
+        omitted_unit_ids=(),
+        too_shallow_unit_ids=("frontier:call:1",),
+        sufficiently_represented_unit_ids=(),
+        recommended_expansions=("frontier:call:1",),
+        reason="Frontier runtime-supported boundary was too shallow.",
+        boundary_classifications=(boundary,),
+    )
+
+    assert result.boundary_classifications == (boundary,)
+    assert boundary.needs_runtime_backed_support is False
+
+
+def test_semantic_provenance_record_rejects_misaligned_contract_values() -> None:
+    """Tier, replay, and subject-kind invariants stay explicit in the schema."""
+    with pytest.raises(ValueError, match="capability_tier contract"):
+        SemanticProvenanceRecord(
+            record_id="prov:frontier:invalid",
+            subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+            subject_id="frontier:call:invalid",
+            capability_tier=CapabilityTier.STATICALLY_PROVED,
+            evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+            origin_detail="call_resolution",
+            replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+            subject_sites=(make_site("site:frontier:invalid"),),
+        )
+
+
+@pytest.mark.parametrize(
+    ("subject_kind", "subject_id"),
+    [
+        (
+            SemanticSubjectKind.FRONTIER_ITEM,
+            "frontier:call:runtime",
+        ),
+        (
+            SemanticSubjectKind.UNSUPPORTED_FINDING,
+            "unsupported:exec:runtime",
+        ),
+    ],
+)
+def test_runtime_backed_provenance_accepts_frontier_and_unsupported_subjects(
+    subject_kind: SemanticSubjectKind,
+    subject_id: str,
+) -> None:
+    """Runtime-backed provenance may attach to frontier and unsupported subjects."""
+    record = SemanticProvenanceRecord(
+        record_id=f"prov:{subject_kind.value}:runtime",
+        subject_kind=subject_kind,
+        subject_id=subject_id,
+        capability_tier=CapabilityTier.RUNTIME_BACKED,
+        evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+        origin_detail="probe:runtime:subject",
+        replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{subject_kind.value}:stdout",
+                attachment_role="stdout",
+            ),
+        ),
+        subject_sites=(make_site(f"site:{subject_kind.value}:subject"),),
+    )
+
+    assert record.subject_kind is subject_kind
+    assert record.subject_id == subject_id
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+
+
+def test_runtime_backed_provenance_requires_snapshot_basis_and_attachments() -> None:
+    """Runtime-backed records must carry admissibility metadata."""
+    runtime_attachment = RuntimeAttachmentLink(
+        attachment_id="attachment:runtime:stdout",
+        attachment_role="stdout",
+    )
+    runtime_snapshot = RepositorySnapshotBasis(
+        snapshot_kind="git_commit",
+        snapshot_id="abc123def456",
+        is_dirty_worktree=True,
+    )
+
+    with pytest.raises(ValueError, match="repository_snapshot_basis"):
+        SemanticProvenanceRecord(
+            record_id="prov:runtime:missing-snapshot",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            subject_id="sym:pkg.runtime:Runner",
+            capability_tier=CapabilityTier.RUNTIME_BACKED,
+            evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+            origin_detail="probe:runner:init",
+            replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+            attachment_links=(runtime_attachment,),
+            evidence_sites=(make_site("site:runtime:probe"),),
+        )
+
+    with pytest.raises(ValueError, match="attachment_links"):
+        SemanticProvenanceRecord(
+            record_id="prov:runtime:missing-attachment",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            subject_id="sym:pkg.runtime:Runner",
+            capability_tier=CapabilityTier.RUNTIME_BACKED,
+            evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+            origin_detail="probe:runner:init",
+            replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+            repository_snapshot_basis=runtime_snapshot,
+            evidence_sites=(make_site("site:runtime:probe"),),
+        )
+
+
+def test_non_runtime_provenance_rejects_runtime_only_metadata() -> None:
+    """Non-runtime tiers may not carry runtime-backed admissibility metadata."""
+    runtime_snapshot = RepositorySnapshotBasis(
+        snapshot_kind="git_commit",
+        snapshot_id="abc123def456",
+    )
+
+    with pytest.raises(ValueError, match="only valid for runtime-backed provenance"):
+        SemanticProvenanceRecord(
+            record_id="prov:static:runtime-only-metadata",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            subject_id="def:pkg.models:User",
+            capability_tier=CapabilityTier.STATICALLY_PROVED,
+            evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+            origin_detail="call_resolution",
+            replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+            repository_snapshot_basis=runtime_snapshot,
+            subject_sites=(make_site("site:def:user"),),
+        )
 
 
 def test_syntax_program_diagnostics_surface_parse_failures() -> None:

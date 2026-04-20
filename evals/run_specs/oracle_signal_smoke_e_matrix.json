@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_signal_smoke_e_matrix",
+  "cases": [
+    {
+      "case_id": "signal_member_baselines",
+      "task_path": "evals/tasks/oracle_signal_smoke_e.json",
+      "query": "Fix missing member note while keeping owner label and report aligned",
+      "budgets": [240, 200],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}

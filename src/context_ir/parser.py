@@ -29,6 +29,7 @@ from context_ir.semantic_types import (
     DefinitionKind,
     ImportFact,
     ImportKind,
+    MetaclassKeywordFact,
     ParameterFact,
     ParameterKind,
     RawDefinitionFact,
@@ -347,6 +348,7 @@ class _SyntaxCollector(ast.NodeVisitor):
         self._program.definitions.append(definition)
         self._record_decorators(definition_id, node.decorator_list)
         self._record_base_expressions(definition_id, node.bases)
+        self._record_metaclass_keywords(definition_id, node.keywords)
 
         for decorator in node.decorator_list:
             self.visit(decorator)
@@ -668,6 +670,37 @@ class _SyntaxCollector(ast.NodeVisitor):
                     owner_definition_id=owner_definition_id,
                     site=self._site_for_node(base_expression, base_expression_id),
                     expression_text=ast.unparse(base_expression),
+                )
+            )
+
+    def _record_metaclass_keywords(
+        self,
+        owner_definition_id: str,
+        keywords: list[ast.keyword],
+    ) -> None:
+        """Append syntax facts for preserved ``metaclass=...`` keyword surfaces."""
+        metaclass_index = 0
+        for keyword in keywords:
+            if keyword.arg != "metaclass":
+                continue
+            metaclass_index += 1
+            metaclass_keyword_id = self._fact_id(
+                prefix="metaclass",
+                node=keyword,
+                suffix=f"{owner_definition_id}:{metaclass_index}",
+            )
+            site = self._site_for_node(keyword, metaclass_keyword_id)
+            keyword_text = ast.get_source_segment(self._source_text, keyword)
+            if keyword_text is None:
+                keyword_text = site.snippet
+            if keyword_text is None:
+                keyword_text = _expression_text(keyword.value) or "metaclass"
+            self._program.metaclass_keywords.append(
+                MetaclassKeywordFact(
+                    metaclass_keyword_id=metaclass_keyword_id,
+                    owner_definition_id=owner_definition_id,
+                    site=site,
+                    keyword_text=keyword_text,
                 )
             )
 

@@ -1,0 +1,41 @@
+{
+  "task_id": "oracle_signal_smoke_e",
+  "fixture_id": "oracle_signal_smoke_e",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.service.MemberSignalCompiler.compile_member_digest",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "method",
+      "rationale": "Primary edit target for the member-heavy internal smoke fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.service.MemberSignalCompiler.resolve_owner_alias",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "method",
+      "rationale": "Same-class self-call helper keeps the narrow method-proof surface anchored."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "pkg.labels.build_member_label",
+      "role": "support",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Import-rooted module/member chain target keeps the shallow member proof surface visible."
+    },
+    {
+      "kind": "frontier",
+      "file_path": "pkg/service.py",
+      "access_text": "pkg_alias.labels.build_member_label",
+      "context": "call",
+      "reason_code": "alias_chain",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "pkg.service.MemberSignalCompiler.compile_member_digest",
+      "source_snippet": "pkg_alias.labels.build_member_label(owner_alias)",
+      "rationale": "Assignment-rooted shallow alias call stays an honest ALIAS_CHAIN boundary."
+    }
+  ]
+}

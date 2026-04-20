@@ -4,6 +4,10 @@
 
 Semantic-first re-baselining. This document is the current architectural authority.
 
+The accepted semantic-first / deterministic-evidence / reviewer-stack milestone is the completed phase 0 foundation. It remains the only implemented architectural authority for current claims, regression anchors, and reviewer-facing surfaces.
+
+The next program reopens selected boundaries to pursue broad Python repo coverage through hybrid static + runtime analysis with explicit capability tiers. Until those later slices land, phase 0 remains the sole implemented truth.
+
 The April 13 frozen spec is retired and superseded. Existing runtime modules under `src/context_ir/` still largely reflect the retired symbol-graph-first build and must be treated as implementation history until they are replaced slice by slice.
 
 ## System Goal
@@ -14,6 +18,24 @@ Context IR is a semantically grounded Python context compiler for coding agents.
 2. deriving proved dependencies plus an explicit unknown frontier
 3. applying ranking and budget optimization on top of that semantic substrate
 4. compiling context artifacts that surface both evidence and uncertainty
+
+## Phase 0 Authority and Reopened Boundaries
+
+Closed current authority:
+
+- `analyze_repository(repo_root) -> SemanticProgram` remains the phase 0 low-level contract and current regression anchor
+- the accepted quad matrix remains the top internal evidence surface for the completed milestone
+- the accepted `oracle_signal_smoke_b / 200` `budget_pressure` limitation remains an explicit tight-budget truth
+- current README, claim, and portfolio artifacts stay derivative of this phase 0 authority
+
+Reopened for the post-milestone program:
+
+- the exact shape of `SemanticProgram` once hybrid static + runtime analysis is introduced
+- supported-subset policy as it evolves into explicit capability tier handling
+- dependency, frontier, and uncertainty modeling for mixed static/runtime evidence
+- renderer, compiler, diagnose, and recompile contracts for tier-aware output
+- ranking and optimization policy for mixed-evidence selection
+- MCP and product boundaries for later production-facing work
 
 ## Public Low-Level Contract
 
@@ -31,6 +53,103 @@ This is the public low-level contract that higher layers build on. Ranking, opti
 - semantic dependency edges with proof source or derivation reason
 - explicit unknown or unsupported findings when proof is unavailable
 - enough normalized structure for downstream rendering, ranking, optimization, and diagnostics
+
+This remains the authoritative phase 0 contract. Later slices may widen it, but only if the widened contract preserves provenance and keeps new evidence classes separate from static proof.
+
+## Capability-Tier Target Model
+
+The future program is organized around capability tier boundaries, not around rendering density.
+
+- statically proved: facts established from the accepted static semantic pipeline inside the supported subset
+- runtime-backed: future repository-backed facts supported by reproducible runtime evidence or probes
+- heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
+- unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
+
+Representation tiers remain a separate concern:
+
+- a capability tier describes proof strength and provenance
+- representation tiers describe how a selected unit is rendered for consumption
+- a richer representation tier must not upgrade a unit from heuristic/frontier to runtime-backed or from runtime-backed to statically proved
+
+## Phase-1 Capability-Tier Contract
+
+Phase 1 is a contract-definition step, not an implementation claim. It freezes the meaning of each capability tier and the provenance invariants that later code slices must preserve.
+
+### Tier Semantics and Admissible Evidence
+
+- statically proved units may be emitted only when the accepted static semantic pipeline can trace the fact to supported syntax, binding, resolution, and dependency derivation inside the repository
+- runtime-backed units may be emitted only when a reproducible repository-backed probe or observation produces evidence linked to a concrete repository subject, stable probe identity, and replay contract
+- heuristic/frontier units may surface candidates, ranking hints, or incomplete dependency leads, but they cannot satisfy proof obligations, erase unknowns, or be counted as runtime-backed
+- unsupported/opaque units mark boundaries the system cannot presently justify; they must remain explicit in artifacts and diagnostics instead of being dropped
+
+Runtime-backed evidence is additive provenance, not a substitute for static proof. It may justify observed behavior that phase 0 could not prove statically, but it must never relabel an unresolved static surface as statically proved.
+
+### Runtime-Backed Admissibility Boundary
+
+A future runtime-backed record is admissible only when all of the following hold:
+
+- repository linkage: the observation attaches to a concrete repository subject such as a symbol, source span, dependency edge, frontier item, or unsupported finding; a free-floating claim that "the program did X" is insufficient
+- stable probe identity: the record names the specific probe or observation contract that produced it, including a stable probe identifier and probe-contract revision
+- replay contract: the record carries enough information to rerun the same observation against the same repository state, including the repository snapshot basis, target selector or entry surface, material probe inputs, and material runtime assumptions
+- reproducible outcome: rerunning the same replay contract against the same repository state is expected to reproduce the same normalized observation; one-off manual success is not admissible proof
+- provenance attachment: the observation can attach to the widened provenance schema without mutating phase 0 static facts in place; runtime-backed evidence is recorded as separate tiered support, not as a silent upgrade of static proof
+
+Minimum attachable runtime-backed record, even if field names differ:
+
+- subject locator: stable identity for the repository-backed subject plus source path/span or equivalent repository locator
+- claim kind: what the observation is asserting, such as a dependency, resolution, behavior, or boundary fact
+- probe identity: stable probe identifier plus probe-contract revision
+- repository snapshot basis: the repository state the observation was taken from, such as a commit SHA or equivalent workspace snapshot identifier
+- replay inputs: the target selector, probe parameters, and normalization rules required to reproduce the observation
+- runtime assumptions: only the interpreter, dependency, or environment constraints that materially affect replay or interpretation
+- observation payload: the normalized evidence payload or durable artifact reference that downstream layers can cite without reconstructing the probe
+- attachment target: whether the record introduces a runtime-backed fact, corroborates an existing subject with separate runtime-backed provenance, or records a runtime-backed boundary condition
+
+Explicitly non-admissible for runtime-backed admission:
+
+- manual notes, screenshots, console snippets, or copied logs that are not tied to a stable probe identity and replay contract
+- observations that cannot be linked back to a concrete repository subject and repository snapshot basis
+- one-off runs whose outcome depends on unrecorded machine state, hidden setup, mutable external services, or other unreplayable conditions
+- probe crashes, timeouts, setup failures, or missing-environment results treated as if they were positive runtime-backed proof; those may justify unsupported/opaque or acquisition-gap reporting, but not runtime-backed admission
+- heuristic inferences drawn from repeated co-occurrence, frequency, or ranking usefulness without a replayed observation
+- observations gathered from modified code, monkey patches, or ad hoc instrumentation that are not themselves represented in the recorded repository snapshot basis
+
+Attachment rules for the widened provenance boundary:
+
+- static and runtime evidence may point at the same subject, but they remain separate provenance entries with distinct capability tiers and evidence origins
+- a runtime-backed record may justify a new dependency edge or subject record only if that edge or subject is itself marked runtime-backed and carries its own replay metadata
+- lack of admissible runtime evidence does not erase frontier or unsupported status; it leaves the subject in its prior non-proof state
+- compile, ranking, and diagnose layers may consume admissible runtime-backed records later, but they must not infer missing replay metadata or probe identity after the fact
+
+### Future `SemanticProgram` Provenance Boundary
+
+Later code may widen `SemanticProgram`, but the widened contract must preserve the phase 0 static layer as-is and add provenance-bearing records rather than replacing existing proof classes.
+
+Minimum future contract shape, even if field names differ:
+
+- subject identity for each symbol, dependency edge, frontier item, or unsupported finding
+- source spans or repository locations for the subject and its supporting evidence
+- repository snapshot basis for any runtime-backed supporting evidence
+- capability tier for every downstream-visible record: statically proved, runtime-backed, heuristic/frontier, or unsupported/opaque
+- evidence origin for every downstream-visible record: static derivation rule, runtime probe identity, heuristic rule, or unsupported-reason code
+- replay status for every downstream-visible record: deterministic static, reproducible runtime, non-proof heuristic, or opaque boundary
+- attachment target or equivalent linkage showing which semantic record the evidence supports
+- downstream visibility signals needed by rendering, compile, and diagnose so later stages preserve provenance instead of reconstructing it heuristically
+
+Policy constraints on the widened boundary:
+
+- phase 0 static facts remain authoritative and must not be downgraded or silently remapped
+- runtime-backed records may add new justified observations, but they must remain distinguishable from statically proved facts in the same `SemanticProgram`
+- heuristic/frontier material may guide acquisition or selection, but it remains non-proof even when repeatedly useful
+- unsupported/opaque records remain first-class because absence of proof is itself part of the contract
+
+### Compile and Diagnose Preservation Rules
+
+- compile may assemble mixed-tier artifacts, but every selected unit and every warning path must retain capability tier and evidence origin in traceable form
+- compile must not merge statically proved and runtime-backed units into one unlabeled proof bucket
+- ranking and optimization may compare units across tiers for budget decisions, but traces must show whether a loss came from budget pressure, lack of proof, or lack of runtime evidence
+- diagnose must classify misses and gaps by tier boundary: missing static proof, missing runtime-backed evidence, heuristic/frontier under-selection, or unsupported/opaque boundary
+- recompile may request more frontier expansion or runtime evidence acquisition, but it must not rewrite prior results as if proof already existed
 
 ## Supported Static Subset
 
@@ -121,6 +240,10 @@ Output:
 - semantic dependency graph
 - frontier or unknown set for unresolved but relevant areas
 
+Future reopening:
+- the hybrid static + runtime analysis program may add runtime-backed dependency evidence
+- any such widening must preserve a visible separation between statically proved, runtime-backed, heuristic/frontier, and unsupported/opaque surfaces
+
 ### 4. Rendering / Representation Policy
 
 Responsibility:
@@ -132,6 +255,7 @@ Current authority:
 - multi-tier representation remains in scope
 - the exact tier count and semantics are not frozen during the rebaseline
 - the prior 5-tier scheme is historical only and not current authority
+- representation tiers are not the same as capability tiers and must not be used as a proxy for proof strength
 
 ### 5. Ranking
 
@@ -143,6 +267,7 @@ Policy:
 - `p_edit` and `p_support` may remain as internal ranking policy
 - they are not the public thesis of the project
 - they can rank among proved candidates and frontier items, but they cannot create semantic facts
+- future mixed-evidence ranking may compare statically proved, runtime-backed, and heuristic/frontier units, but it must preserve those boundaries in traces and outputs
 
 ### 6. Optimization
 
@@ -154,6 +279,10 @@ Responsibility:
 Output:
 - optimized selection plan with traceable reasons
 
+Future reopening:
+- optimization may later become tier-aware across statically proved, runtime-backed, heuristic/frontier, and unsupported/opaque surfaces
+- budget tradeoffs must not collapse those tiers into one undifferentiated score
+
 ### 7. Compilation
 
 Responsibility:
@@ -164,6 +293,7 @@ Responsibility:
 Policy:
 - compile behavior is downstream of `SemanticProgram`
 - no compile contract is authoritative unless it matches the semantic substrate beneath it
+- future compiled artifacts may mix statically proved and runtime-backed material, but the artifact must keep capability tier provenance explicit
 
 ### 8. Diagnose / Recompile
 
@@ -176,6 +306,7 @@ Current authority:
 - diagnose and `recompile` are required architectural layers
 - the public `recompile` contract is not frozen yet
 - the old `recompile` hold is now part of the historical evidence trail, not the main control problem
+- future diagnose behavior may distinguish static-proof misses, runtime-backed misses, heuristic/frontier misses, and unsupported/opaque misses, but current claims stop at phase 0 behavior
 
 ## Planned Boundaries
 
@@ -186,6 +317,7 @@ Exact file names may change during the rebaseline, but the logical boundaries ar
 - binder and scope model
 - resolver and object model
 - semantic dependency/frontier derivation
+- runtime-backed evidence acquisition boundary
 - rendering policy
 - ranking policy
 - optimization

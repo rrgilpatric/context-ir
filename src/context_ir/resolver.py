@@ -7,6 +7,7 @@ import keyword
 from dataclasses import dataclass, replace
 
 from context_ir.semantic_types import (
+    AttributeSiteFact,
     BindingFact,
     BindingKind,
     CallSiteFact,
@@ -17,6 +18,8 @@ from context_ir.semantic_types import (
     ImportFact,
     ImportKind,
     ImportTargetKind,
+    ParameterFact,
+    ParameterKind,
     RawDefinitionFact,
     ReferenceContext,
     ResolvedImport,
@@ -56,14 +59,17 @@ class _SimpleNameExpression:
 
 
 @dataclass(frozen=True)
-class _DirectAttributeExpression:
-    """Supported direct ``name.attribute`` reference surface."""
+class _AttributeChainExpression:
+    """Supported dotted reference surface with up to two attribute hops."""
 
-    base_name: str
-    attribute_name: str
+    root_name: str
+    attribute_names: tuple[str, ...]
 
 
-_SupportedExpression = _SimpleNameExpression | _DirectAttributeExpression
+_SupportedExpression = _SimpleNameExpression | _AttributeChainExpression
+_OrderedClassDefinitionIds = tuple[str, ...]
+_OrderedBranchClassDefinitionIds = tuple[_OrderedClassDefinitionIds, ...]
+_DirectProvenBaseClassIdsByClassId = dict[str, _OrderedClassDefinitionIds]
 
 
 @dataclass(frozen=True)
@@ -79,6 +85,13 @@ class _RepositoryIndex:
     scope_kinds: dict[str, DefinitionKind]
     binding_by_symbol_id: dict[str, BindingFact]
     bindings_by_scope: dict[str, list[BindingFact]]
+    parameters_by_owner_definition_id: dict[str, tuple[ParameterFact, ...]]
+    methods_by_class_and_name: dict[tuple[str, str], tuple[RawDefinitionFact, ...]]
+    unique_methods_by_class_and_name: dict[tuple[str, str], RawDefinitionFact]
+    class_attributes_by_class_and_name: dict[tuple[str, str], tuple[BindingFact, ...]]
+    unique_class_attributes_by_class_and_name: dict[tuple[str, str], BindingFact]
+    class_ids_with_getattribute_method: frozenset[str]
+    decorated_definition_ids: frozenset[str]
 
 
 def resolve_semantics(program: SemanticProgram) -> SemanticProgram:
@@ -154,6 +167,42 @@ def _build_repository_index(program: SemanticProgram) -> _RepositoryIndex:
     bindings_by_scope: dict[str, list[BindingFact]] = {}
     for binding in program.bindings:
         bindings_by_scope.setdefault(binding.scope_id, []).append(binding)
+    parameters_by_owner_definition_id: dict[str, list[ParameterFact]] = {}
+    for parameter in program.syntax.parameters:
+        if parameter.owner_definition_id not in definitions_by_id:
+            continue
+        parameters_by_owner_definition_id.setdefault(
+            parameter.owner_definition_id,
+            [],
+        ).append(parameter)
+    methods_by_class_and_name: dict[tuple[str, str], list[RawDefinitionFact]] = {}
+    class_attributes_by_class_and_name: dict[tuple[str, str], list[BindingFact]] = {}
+    class_ids_with_getattribute_method: set[str] = set()
+    for definition in definitions_by_id.values():
+        if definition.kind is not DefinitionKind.METHOD:
+            continue
+        parent_definition_id = definition.parent_definition_id
+        if parent_definition_id is None:
+            continue
+        if definition.name == "__getattribute__":
+            class_ids_with_getattribute_method.add(parent_definition_id)
+        methods_by_class_and_name.setdefault(
+            (parent_definition_id, definition.name),
+            [],
+        ).append(definition)
+    for binding in program.bindings:
+        if binding.binding_kind is not BindingKind.CLASS_ATTRIBUTE:
+            continue
+        class_definition = definitions_by_id.get(binding.scope_id)
+        if (
+            class_definition is None
+            or class_definition.kind is not DefinitionKind.CLASS
+        ):
+            continue
+        class_attributes_by_class_and_name.setdefault(
+            (binding.scope_id, binding.name),
+            [],
+        ).append(binding)
 
     return _RepositoryIndex(
         blocked_file_ids=blocked_file_ids,
@@ -171,6 +220,42 @@ def _build_repository_index(program: SemanticProgram) -> _RepositoryIndex:
         },
         binding_by_symbol_id=binding_by_symbol_id,
         bindings_by_scope=bindings_by_scope,
+        parameters_by_owner_definition_id={
+            owner_definition_id: tuple(owner_parameters)
+            for owner_definition_id, owner_parameters in (
+                parameters_by_owner_definition_id.items()
+            )
+        },
+        methods_by_class_and_name={
+            method_key: tuple(method_definitions)
+            for method_key, method_definitions in methods_by_class_and_name.items()
+        },
+        unique_methods_by_class_and_name={
+            method_key: method_definitions[0]
+            for method_key, method_definitions in methods_by_class_and_name.items()
+            if len(method_definitions) == 1
+        },
+        class_attributes_by_class_and_name={
+            attribute_key: tuple(attribute_bindings)
+            for attribute_key, attribute_bindings in (
+                class_attributes_by_class_and_name.items()
+            )
+        },
+        unique_class_attributes_by_class_and_name={
+            attribute_key: attribute_bindings[0]
+            for attribute_key, attribute_bindings in (
+                class_attributes_by_class_and_name.items()
+            )
+            if len(attribute_bindings) == 1
+        },
+        class_ids_with_getattribute_method=frozenset(
+            class_ids_with_getattribute_method
+        ),
+        decorated_definition_ids=frozenset(
+            decorator.owner_definition_id
+            for decorator in program.syntax.decorators
+            if decorator.owner_definition_id in definitions_by_id
+        ),
     )
 
 
@@ -343,7 +428,7 @@ def _resolve_references(
     index: _RepositoryIndex,
     resolved_imports_by_binding_symbol_id: dict[str, ResolvedImport],
 ) -> list[ResolvedReference]:
-    """Resolve supported decorator, base, and call reference surfaces."""
+    """Resolve supported decorator, base, call, and narrow attribute surfaces."""
     resolved_references: list[ResolvedReference] = []
 
     for decorator in program.syntax.decorators:
@@ -357,6 +442,56 @@ def _resolve_references(
         )
         if resolved_reference is not None:
             resolved_references.append(resolved_reference)
+
+    (
+        base_class_references,
+        direct_proven_base_class_ids_by_class_id,
+    ) = _resolve_base_class_references(
+        program=program,
+        index=index,
+        resolved_imports_by_binding_symbol_id=resolved_imports_by_binding_symbol_id,
+    )
+    resolved_references.extend(base_class_references)
+
+    for call_site in program.syntax.call_sites:
+        if call_site.site.file_path not in _valid_file_paths(index):
+            continue
+        resolved_reference = _resolve_call_reference(
+            call_site=call_site,
+            index=index,
+            program=program,
+            resolved_imports_by_binding_symbol_id=resolved_imports_by_binding_symbol_id,
+            direct_proven_base_class_ids_by_class_id=direct_proven_base_class_ids_by_class_id,
+        )
+        if resolved_reference is not None:
+            resolved_references.append(resolved_reference)
+
+    for attribute_site in program.syntax.attribute_sites:
+        if (
+            attribute_site.context is not ReferenceContext.ATTRIBUTE_ACCESS
+            or attribute_site.site.file_path not in _valid_file_paths(index)
+        ):
+            continue
+        resolved_reference = _resolve_attribute_reference(
+            attribute_site=attribute_site,
+            index=index,
+            direct_proven_base_class_ids_by_class_id=direct_proven_base_class_ids_by_class_id,
+        )
+        if resolved_reference is not None:
+            resolved_references.append(resolved_reference)
+
+    return resolved_references
+
+
+def _resolve_base_class_references(
+    *,
+    program: SemanticProgram,
+    index: _RepositoryIndex,
+    resolved_imports_by_binding_symbol_id: dict[str, ResolvedImport],
+) -> tuple[list[ResolvedReference], _DirectProvenBaseClassIdsByClassId]:
+    """Resolve base references and preserve proven direct-base declaration order."""
+    resolved_references: list[ResolvedReference] = []
+    mutable_direct_proven_base_class_ids_by_class_id: dict[str, list[str]] = {}
 
     for base_expression in program.syntax.base_expressions:
         owner_definition = index.definitions_by_id.get(
@@ -376,25 +511,35 @@ def _resolve_references(
             program=program,
             index=index,
             resolved_imports_by_binding_symbol_id=resolved_imports_by_binding_symbol_id,
+            direct_proven_base_class_ids_by_class_id={},
             require_repository_symbol=False,
             excluded_definition_symbol_id=owner_definition.definition_id,
         )
-        if resolved_reference is not None:
-            resolved_references.append(resolved_reference)
-
-    for call_site in program.syntax.call_sites:
-        if call_site.site.file_path not in _valid_file_paths(index):
+        if resolved_reference is None:
             continue
-        resolved_reference = _resolve_call_reference(
-            call_site=call_site,
-            index=index,
-            program=program,
-            resolved_imports_by_binding_symbol_id=resolved_imports_by_binding_symbol_id,
+        resolved_references.append(resolved_reference)
+        target_definition = index.definitions_by_id.get(
+            resolved_reference.resolved_symbol_id
         )
-        if resolved_reference is not None:
-            resolved_references.append(resolved_reference)
+        if (
+            target_definition is None
+            or target_definition.kind is not DefinitionKind.CLASS
+        ):
+            continue
+        mutable_direct_proven_base_class_ids_by_class_id.setdefault(
+            owner_definition.definition_id,
+            [],
+        ).append(resolved_reference.resolved_symbol_id)
 
-    return resolved_references
+    return (
+        resolved_references,
+        {
+            class_definition_id: tuple(base_class_ids)
+            for class_definition_id, base_class_ids in (
+                mutable_direct_proven_base_class_ids_by_class_id.items()
+            )
+        },
+    )
 
 
 def _resolve_decorator_reference(
@@ -420,6 +565,7 @@ def _resolve_decorator_reference(
         program=program,
         index=index,
         resolved_imports_by_binding_symbol_id=resolved_imports_by_binding_symbol_id,
+        direct_proven_base_class_ids_by_class_id={},
         require_repository_symbol=False,
         excluded_definition_symbol_id=owner_definition.definition_id,
     )
@@ -431,6 +577,7 @@ def _resolve_call_reference(
     index: _RepositoryIndex,
     program: SemanticProgram,
     resolved_imports_by_binding_symbol_id: dict[str, ResolvedImport],
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
 ) -> ResolvedReference | None:
     """Resolve one supported call-site callee when it targets a repository symbol."""
     return _resolve_expression_reference(
@@ -442,8 +589,51 @@ def _resolve_call_reference(
         program=program,
         index=index,
         resolved_imports_by_binding_symbol_id=resolved_imports_by_binding_symbol_id,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
         require_repository_symbol=True,
         excluded_definition_symbol_id=None,
+    )
+
+
+def _resolve_attribute_reference(
+    *,
+    attribute_site: AttributeSiteFact,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> ResolvedReference | None:
+    """Resolve one narrow same-class ``self.<name>`` attribute-read site."""
+    if attribute_site.base_text != "self":
+        return None
+    binding = _lookup_visible_binding(
+        name="self",
+        scope_id=attribute_site.enclosing_scope_id,
+        site=attribute_site.site,
+        index=index,
+        excluded_definition_symbol_id=None,
+    )
+    if binding is None:
+        return None
+    resolved_symbol_id = _resolve_same_class_self_attribute_symbol_id(
+        base_binding=binding,
+        attribute_name=attribute_site.attribute_name,
+        scope_id=attribute_site.enclosing_scope_id,
+        context=attribute_site.context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if resolved_symbol_id is None:
+        return None
+    return ResolvedReference(
+        reference_id=f"reference:{attribute_site.attribute_site_id}",
+        site=attribute_site.site,
+        name=f"{attribute_site.base_text}.{attribute_site.attribute_name}",
+        context=attribute_site.context,
+        resolved_symbol_id=resolved_symbol_id,
+        enclosing_scope_id=attribute_site.enclosing_scope_id,
     )
 
 
@@ -457,6 +647,7 @@ def _resolve_expression_reference(
     program: SemanticProgram,
     index: _RepositoryIndex,
     resolved_imports_by_binding_symbol_id: dict[str, ResolvedImport],
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
     require_repository_symbol: bool,
     excluded_definition_symbol_id: str | None,
 ) -> ResolvedReference | None:
@@ -493,17 +684,154 @@ def _resolve_expression_reference(
         )
 
     binding = _lookup_visible_binding(
-        name=expression.base_name,
+        name=expression.root_name,
         scope_id=scope_id,
         site=site,
         index=index,
         excluded_definition_symbol_id=excluded_definition_symbol_id,
     )
-    if binding is None or binding.binding_kind is not BindingKind.IMPORT:
+    if binding is None:
         return None
-    resolved_symbol_id = _resolve_direct_attribute_symbol_id(
+    same_class_self_target_symbol_id = None
+    if len(expression.attribute_names) == 1:
+        same_class_self_target_symbol_id = _resolve_same_class_self_call_symbol_id(
+            base_binding=binding,
+            attribute_name=expression.attribute_names[0],
+            scope_id=scope_id,
+            context=context,
+            index=index,
+            direct_proven_base_class_ids_by_class_id=(
+                direct_proven_base_class_ids_by_class_id
+            ),
+        )
+    if same_class_self_target_symbol_id is not None:
+        return ResolvedReference(
+            reference_id=reference_id,
+            site=site,
+            name=expression_text,
+            context=context,
+            resolved_symbol_id=same_class_self_target_symbol_id,
+            enclosing_scope_id=scope_id,
+        )
+    direct_base_self_target_symbol_id = None
+    if len(expression.attribute_names) == 1:
+        direct_base_self_target_symbol_id = _resolve_direct_base_self_call_symbol_id(
+            base_binding=binding,
+            attribute_name=expression.attribute_names[0],
+            scope_id=scope_id,
+            context=context,
+            index=index,
+            direct_proven_base_class_ids_by_class_id=(
+                direct_proven_base_class_ids_by_class_id
+            ),
+        )
+    if direct_base_self_target_symbol_id is not None:
+        return ResolvedReference(
+            reference_id=reference_id,
+            site=site,
+            name=expression_text,
+            context=context,
+            resolved_symbol_id=direct_base_self_target_symbol_id,
+            enclosing_scope_id=scope_id,
+        )
+    linear_transitive_self_target_symbol_id = None
+    if len(expression.attribute_names) == 1:
+        linear_transitive_self_target_symbol_id = (
+            _resolve_linear_transitive_self_call_symbol_id(
+                base_binding=binding,
+                attribute_name=expression.attribute_names[0],
+                scope_id=scope_id,
+                context=context,
+                index=index,
+                direct_proven_base_class_ids_by_class_id=(
+                    direct_proven_base_class_ids_by_class_id
+                ),
+            )
+        )
+    if linear_transitive_self_target_symbol_id is not None:
+        return ResolvedReference(
+            reference_id=reference_id,
+            site=site,
+            name=expression_text,
+            context=context,
+            resolved_symbol_id=linear_transitive_self_target_symbol_id,
+            enclosing_scope_id=scope_id,
+        )
+    branched_self_target_symbol_id = None
+    if len(expression.attribute_names) == 1:
+        branched_self_target_symbol_id = (
+            _resolve_declared_order_branched_self_call_symbol_id(
+                base_binding=binding,
+                attribute_name=expression.attribute_names[0],
+                scope_id=scope_id,
+                context=context,
+                index=index,
+                direct_proven_base_class_ids_by_class_id=(
+                    direct_proven_base_class_ids_by_class_id
+                ),
+            )
+        )
+    if branched_self_target_symbol_id is not None:
+        return ResolvedReference(
+            reference_id=reference_id,
+            site=site,
+            name=expression_text,
+            context=context,
+            resolved_symbol_id=branched_self_target_symbol_id,
+            enclosing_scope_id=scope_id,
+        )
+    overlapping_self_target_symbol_id = None
+    if len(expression.attribute_names) == 1:
+        overlapping_self_target_symbol_id = (
+            _resolve_first_owner_overlapping_self_call_symbol_id(
+                base_binding=binding,
+                attribute_name=expression.attribute_names[0],
+                scope_id=scope_id,
+                context=context,
+                index=index,
+                direct_proven_base_class_ids_by_class_id=(
+                    direct_proven_base_class_ids_by_class_id
+                ),
+            )
+        )
+    if overlapping_self_target_symbol_id is not None:
+        return ResolvedReference(
+            reference_id=reference_id,
+            site=site,
+            name=expression_text,
+            context=context,
+            resolved_symbol_id=overlapping_self_target_symbol_id,
+            enclosing_scope_id=scope_id,
+        )
+    transitive_self_target_symbol_id = None
+    if len(expression.attribute_names) == 1:
+        transitive_self_target_symbol_id = (
+            _resolve_transitive_sole_provider_self_call_symbol_id(
+                base_binding=binding,
+                attribute_name=expression.attribute_names[0],
+                scope_id=scope_id,
+                context=context,
+                index=index,
+                direct_proven_base_class_ids_by_class_id=(
+                    direct_proven_base_class_ids_by_class_id
+                ),
+            )
+        )
+    if transitive_self_target_symbol_id is not None:
+        return ResolvedReference(
+            reference_id=reference_id,
+            site=site,
+            name=expression_text,
+            context=context,
+            resolved_symbol_id=transitive_self_target_symbol_id,
+            enclosing_scope_id=scope_id,
+        )
+    if binding.binding_kind is not BindingKind.IMPORT:
+        return None
+    resolved_symbol_id = _resolve_import_rooted_attribute_chain_symbol_id(
         base_binding=binding,
-        attribute_name=expression.attribute_name,
+        attribute_names=expression.attribute_names,
+        program=program,
         resolved_imports_by_binding_symbol_id=resolved_imports_by_binding_symbol_id,
         index=index,
         require_repository_symbol=require_repository_symbol,
@@ -517,6 +845,789 @@ def _resolve_expression_reference(
         context=context,
         resolved_symbol_id=resolved_symbol_id,
         enclosing_scope_id=scope_id,
+    )
+
+
+def _resolve_same_class_self_attribute_symbol_id(
+    *,
+    base_binding: BindingFact,
+    attribute_name: str,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return a same-class class-attribute target for narrow ``self.attr`` proof."""
+    class_definition_id = _narrow_self_attribute_owner_class_id(
+        base_binding=base_binding,
+        scope_id=scope_id,
+        context=context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if class_definition_id is None:
+        return None
+    target_attribute_binding = _resolve_unique_class_attribute_binding(
+        class_definition_id=class_definition_id,
+        attribute_name=attribute_name,
+        index=index,
+    )
+    if target_attribute_binding is None:
+        return None
+    return target_attribute_binding.symbol_id
+
+
+def _resolve_same_class_self_call_symbol_id(
+    *,
+    base_binding: BindingFact,
+    attribute_name: str,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return a same-class method target for narrow ``self.foo()`` call proof."""
+    class_definition_id = _narrow_self_call_owner_class_id(
+        base_binding=base_binding,
+        scope_id=scope_id,
+        context=context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if class_definition_id is None:
+        return None
+    target_method = _resolve_unique_owned_undecorated_method_definition(
+        class_definition_id=class_definition_id,
+        attribute_name=attribute_name,
+        index=index,
+    )
+    if target_method is None:
+        return None
+    return target_method.definition_id
+
+
+def _resolve_direct_base_self_call_symbol_id(
+    *,
+    base_binding: BindingFact,
+    attribute_name: str,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return a direct-base method target for narrow inherited ``self.foo()`` proof."""
+    if attribute_name in {"__getattr__", "__getattribute__"}:
+        return None
+    class_definition_id = _narrow_self_call_owner_class_id(
+        base_binding=base_binding,
+        scope_id=scope_id,
+        context=context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if class_definition_id is None:
+        return None
+    if (
+        _latest_class_namespace_binding(
+            class_definition_id=class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        is not None
+    ):
+        return None
+
+    direct_base_class_definition_ids = direct_proven_base_class_ids_by_class_id.get(
+        class_definition_id,
+        (),
+    )
+    if len(direct_base_class_definition_ids) != 1:
+        return None
+    direct_base_class_definition_id = direct_base_class_definition_ids[0]
+    latest_base_namespace_binding = _latest_class_namespace_binding(
+        class_definition_id=direct_base_class_definition_id,
+        attribute_name=attribute_name,
+        index=index,
+    )
+    if latest_base_namespace_binding is None:
+        return None
+    base_target_method = _resolve_unique_owned_undecorated_method_definition(
+        class_definition_id=direct_base_class_definition_id,
+        attribute_name=attribute_name,
+        index=index,
+    )
+    if base_target_method is None:
+        return None
+    return base_target_method.definition_id
+
+
+def _resolve_transitive_sole_provider_self_call_symbol_id(
+    *,
+    base_binding: BindingFact,
+    attribute_name: str,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return one transitive sole-provider target for narrow inherited calls."""
+    if attribute_name in {"__getattr__", "__getattribute__"}:
+        return None
+    class_definition_id = _narrow_self_call_owner_class_id(
+        base_binding=base_binding,
+        scope_id=scope_id,
+        context=context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if class_definition_id is None:
+        return None
+    if (
+        _latest_class_namespace_binding(
+            class_definition_id=class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        is not None
+    ):
+        return None
+
+    direct_base_class_definition_ids = direct_proven_base_class_ids_by_class_id.get(
+        class_definition_id,
+        (),
+    )
+    if len(direct_base_class_definition_ids) > 1 and (
+        not _direct_base_branches_are_individually_linear(
+            direct_base_class_definition_ids=direct_base_class_definition_ids,
+            direct_proven_base_class_ids_by_class_id=(
+                direct_proven_base_class_ids_by_class_id
+            ),
+        )
+    ):
+        return None
+    for base_class_definition_id in direct_base_class_definition_ids:
+        if (
+            _latest_class_namespace_binding(
+                class_definition_id=base_class_definition_id,
+                attribute_name=attribute_name,
+                index=index,
+            )
+            is not None
+        ):
+            return None
+
+    matching_target_method: RawDefinitionFact | None = None
+    for ancestor_class_definition_id in _transitively_proven_ancestor_class_ids(
+        class_definition_id=class_definition_id,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    ):
+        if ancestor_class_definition_id in direct_base_class_definition_ids:
+            continue
+        latest_ancestor_namespace_binding = _latest_class_namespace_binding(
+            class_definition_id=ancestor_class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        if latest_ancestor_namespace_binding is None:
+            continue
+        ancestor_target_method = _resolve_unique_owned_undecorated_method_definition(
+            class_definition_id=ancestor_class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        if ancestor_target_method is None:
+            return None
+        if matching_target_method is not None:
+            return None
+        matching_target_method = ancestor_target_method
+    if matching_target_method is None:
+        return None
+    return matching_target_method.definition_id
+
+
+def _resolve_linear_transitive_self_call_symbol_id(
+    *,
+    base_binding: BindingFact,
+    attribute_name: str,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return the first eligible transitive owner on one unique proven chain."""
+    if attribute_name in {"__getattr__", "__getattribute__"}:
+        return None
+    class_definition_id = _narrow_self_call_owner_class_id(
+        base_binding=base_binding,
+        scope_id=scope_id,
+        context=context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if class_definition_id is None:
+        return None
+    if (
+        _latest_class_namespace_binding(
+            class_definition_id=class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        is not None
+    ):
+        return None
+
+    current_class_definition_id = _resolve_unique_proven_base_class_id(
+        class_definition_id=class_definition_id,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if current_class_definition_id is None:
+        return None
+    direct_base_class_definition_id = current_class_definition_id
+
+    while True:
+        latest_namespace_binding = _latest_class_namespace_binding(
+            class_definition_id=current_class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        if latest_namespace_binding is not None:
+            if current_class_definition_id == direct_base_class_definition_id:
+                return None
+            target_method = _resolve_unique_owned_undecorated_method_definition(
+                class_definition_id=current_class_definition_id,
+                attribute_name=attribute_name,
+                index=index,
+            )
+            if target_method is None:
+                return None
+            return target_method.definition_id
+
+        next_class_definition_id = _resolve_unique_proven_base_class_id(
+            class_definition_id=current_class_definition_id,
+            direct_proven_base_class_ids_by_class_id=(
+                direct_proven_base_class_ids_by_class_id
+            ),
+        )
+        if next_class_definition_id is None:
+            return None
+        current_class_definition_id = next_class_definition_id
+
+
+def _resolve_declared_order_branched_self_call_symbol_id(
+    *,
+    base_binding: BindingFact,
+    attribute_name: str,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return the earliest eligible owner across linear declared-order branches."""
+    if attribute_name in {"__getattr__", "__getattribute__"}:
+        return None
+    class_definition_id = _narrow_self_call_owner_class_id(
+        base_binding=base_binding,
+        scope_id=scope_id,
+        context=context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if class_definition_id is None:
+        return None
+    if (
+        _latest_class_namespace_binding(
+            class_definition_id=class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        is not None
+    ):
+        return None
+
+    direct_base_class_definition_ids = direct_proven_base_class_ids_by_class_id.get(
+        class_definition_id,
+        (),
+    )
+    if len(direct_base_class_definition_ids) < 2:
+        return None
+    ordered_branch_class_definition_ids = (
+        _ordered_linear_disjoint_branch_class_definition_ids(
+            direct_base_class_definition_ids=direct_base_class_definition_ids,
+            direct_proven_base_class_ids_by_class_id=(
+                direct_proven_base_class_ids_by_class_id
+            ),
+        )
+    )
+    if ordered_branch_class_definition_ids is None:
+        return None
+
+    for branch_class_definition_ids in ordered_branch_class_definition_ids:
+        for branch_class_definition_id in branch_class_definition_ids:
+            latest_namespace_binding = _latest_class_namespace_binding(
+                class_definition_id=branch_class_definition_id,
+                attribute_name=attribute_name,
+                index=index,
+            )
+            if latest_namespace_binding is None:
+                continue
+            target_method = _resolve_unique_owned_undecorated_method_definition(
+                class_definition_id=branch_class_definition_id,
+                attribute_name=attribute_name,
+                index=index,
+            )
+            if target_method is None:
+                return None
+            return target_method.definition_id
+    return None
+
+
+def _resolve_first_owner_overlapping_self_call_symbol_id(
+    *,
+    base_binding: BindingFact,
+    attribute_name: str,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return the first eligible exclusive-branch owner before a shared tail."""
+    if attribute_name in {"__getattr__", "__getattribute__"}:
+        return None
+    class_definition_id = _narrow_self_call_owner_class_id(
+        base_binding=base_binding,
+        scope_id=scope_id,
+        context=context,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if class_definition_id is None:
+        return None
+    if (
+        _latest_class_namespace_binding(
+            class_definition_id=class_definition_id,
+            attribute_name=attribute_name,
+            index=index,
+        )
+        is not None
+    ):
+        return None
+
+    direct_base_class_definition_ids = direct_proven_base_class_ids_by_class_id.get(
+        class_definition_id,
+        (),
+    )
+    if len(direct_base_class_definition_ids) < 2:
+        return None
+    ordered_branch_class_definition_ids = _ordered_linear_branch_class_definition_ids(
+        direct_base_class_definition_ids=direct_base_class_definition_ids,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if ordered_branch_class_definition_ids is None:
+        return None
+    shared_tail_class_definition_ids = _shared_branch_tail_class_definition_ids(
+        ordered_branch_class_definition_ids=ordered_branch_class_definition_ids
+    )
+    if not shared_tail_class_definition_ids:
+        return None
+
+    shared_tail_length = len(shared_tail_class_definition_ids)
+    for branch_class_definition_ids in ordered_branch_class_definition_ids:
+        exclusive_branch_class_definition_ids = branch_class_definition_ids[
+            :-shared_tail_length
+        ]
+        for branch_class_definition_id in exclusive_branch_class_definition_ids:
+            latest_namespace_binding = _latest_class_namespace_binding(
+                class_definition_id=branch_class_definition_id,
+                attribute_name=attribute_name,
+                index=index,
+            )
+            if latest_namespace_binding is None:
+                continue
+            target_method = _resolve_unique_owned_undecorated_method_definition(
+                class_definition_id=branch_class_definition_id,
+                attribute_name=attribute_name,
+                index=index,
+            )
+            if target_method is None:
+                return None
+            return target_method.definition_id
+
+    return None
+
+
+def _narrow_self_attribute_owner_class_id(
+    *,
+    base_binding: BindingFact,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return the owning class for one eligible narrow ``self.attr`` read."""
+    if context is not ReferenceContext.ATTRIBUTE_ACCESS:
+        return None
+    if base_binding.binding_kind is not BindingKind.PARAMETER:
+        return None
+    method_definition = index.definitions_by_id.get(scope_id)
+    if method_definition is None or method_definition.kind is not DefinitionKind.METHOD:
+        return None
+    if scope_id in index.decorated_definition_ids:
+        return None
+    if not _is_canonical_self_parameter(
+        parameter_symbol_id=base_binding.symbol_id,
+        method_definition_id=method_definition.definition_id,
+        index=index,
+    ):
+        return None
+    class_definition_id = method_definition.parent_definition_id
+    if class_definition_id is None:
+        return None
+    if class_definition_id in index.class_ids_with_getattribute_method:
+        return None
+    if _has_transitively_proven_ancestor_with_getattribute(
+        class_definition_id=class_definition_id,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    ):
+        return None
+    return class_definition_id
+
+
+def _narrow_self_call_owner_class_id(
+    *,
+    base_binding: BindingFact,
+    scope_id: str,
+    context: ReferenceContext,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return the owning class for one eligible narrow ``self.foo()`` call."""
+    if context is not ReferenceContext.CALL:
+        return None
+    if base_binding.binding_kind is not BindingKind.PARAMETER:
+        return None
+    method_definition = index.definitions_by_id.get(scope_id)
+    if method_definition is None or method_definition.kind is not DefinitionKind.METHOD:
+        return None
+    if scope_id in index.decorated_definition_ids:
+        return None
+    if not _is_canonical_self_parameter(
+        parameter_symbol_id=base_binding.symbol_id,
+        method_definition_id=method_definition.definition_id,
+        index=index,
+    ):
+        return None
+    class_definition_id = method_definition.parent_definition_id
+    if class_definition_id is None:
+        return None
+    if class_definition_id in index.class_ids_with_getattribute_method:
+        return None
+    if _has_transitively_proven_ancestor_with_getattribute(
+        class_definition_id=class_definition_id,
+        index=index,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    ):
+        return None
+    return class_definition_id
+
+
+def _resolve_unique_class_attribute_binding(
+    *,
+    class_definition_id: str,
+    attribute_name: str,
+    index: _RepositoryIndex,
+) -> BindingFact | None:
+    """Return the unique same-class class attribute if it still owns the name."""
+    target_attribute_binding = index.unique_class_attributes_by_class_and_name.get(
+        (class_definition_id, attribute_name)
+    )
+    if target_attribute_binding is None:
+        return None
+    latest_class_namespace_binding = _latest_class_namespace_binding(
+        class_definition_id=class_definition_id,
+        attribute_name=attribute_name,
+        index=index,
+    )
+    if (
+        latest_class_namespace_binding is None
+        or latest_class_namespace_binding.binding_kind
+        is not BindingKind.CLASS_ATTRIBUTE
+        or latest_class_namespace_binding.symbol_id
+        != target_attribute_binding.symbol_id
+    ):
+        return None
+    return target_attribute_binding
+
+
+def _resolve_unique_owned_undecorated_method_definition(
+    *,
+    class_definition_id: str,
+    attribute_name: str,
+    index: _RepositoryIndex,
+) -> RawDefinitionFact | None:
+    """Return the unique undecorated method if it still owns the class name."""
+    target_method = _resolve_unique_undecorated_method_definition(
+        class_definition_id=class_definition_id,
+        attribute_name=attribute_name,
+        index=index,
+    )
+    if target_method is None:
+        return None
+    latest_class_namespace_binding = _latest_class_namespace_binding(
+        class_definition_id=class_definition_id,
+        attribute_name=attribute_name,
+        index=index,
+    )
+    if (
+        latest_class_namespace_binding is None
+        or latest_class_namespace_binding.binding_kind is not BindingKind.DEFINITION
+        or latest_class_namespace_binding.symbol_id != target_method.definition_id
+    ):
+        return None
+    return target_method
+
+
+def _latest_class_namespace_binding(
+    *,
+    class_definition_id: str,
+    attribute_name: str,
+    index: _RepositoryIndex,
+) -> BindingFact | None:
+    """Return the final class-scope binding for one name after class-body execution."""
+    for binding in reversed(index.bindings_by_scope.get(class_definition_id, [])):
+        if binding.name == attribute_name:
+            return binding
+    return None
+
+
+def _resolve_unique_undecorated_method_definition(
+    *,
+    class_definition_id: str,
+    attribute_name: str,
+    index: _RepositoryIndex,
+) -> RawDefinitionFact | None:
+    """Return the unique undecorated method with ``attribute_name``, if any."""
+    target_method = index.unique_methods_by_class_and_name.get(
+        (class_definition_id, attribute_name)
+    )
+    if (
+        target_method is None
+        or target_method.definition_id in index.decorated_definition_ids
+    ):
+        return None
+    return target_method
+
+
+def _has_transitively_proven_ancestor_with_getattribute(
+    *,
+    class_definition_id: str,
+    index: _RepositoryIndex,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> bool:
+    """Return whether any proven ancestor defines ``__getattribute__``."""
+    return any(
+        ancestor_class_definition_id in index.class_ids_with_getattribute_method
+        for ancestor_class_definition_id in _transitively_proven_ancestor_class_ids(
+            class_definition_id=class_definition_id,
+            direct_proven_base_class_ids_by_class_id=(
+                direct_proven_base_class_ids_by_class_id
+            ),
+        )
+    )
+
+
+def _transitively_proven_ancestor_class_ids(
+    *,
+    class_definition_id: str,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> tuple[str, ...]:
+    """Return the repository-class ancestor closure for one proven class."""
+    pending_class_definition_ids = list(
+        reversed(
+            direct_proven_base_class_ids_by_class_id.get(
+                class_definition_id,
+                (),
+            )
+        )
+    )
+    seen_class_definition_ids: set[str] = set()
+    ordered_ancestor_class_definition_ids: list[str] = []
+    while pending_class_definition_ids:
+        candidate_class_definition_id = pending_class_definition_ids.pop()
+        if candidate_class_definition_id in seen_class_definition_ids:
+            continue
+        seen_class_definition_ids.add(candidate_class_definition_id)
+        ordered_ancestor_class_definition_ids.append(candidate_class_definition_id)
+        pending_class_definition_ids.extend(
+            reversed(
+                direct_proven_base_class_ids_by_class_id.get(
+                    candidate_class_definition_id,
+                    (),
+                )
+            )
+        )
+    return tuple(ordered_ancestor_class_definition_ids)
+
+
+def _resolve_unique_proven_base_class_id(
+    *,
+    class_definition_id: str,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> str | None:
+    """Return one proven base only when the next hop is unbranched."""
+    direct_base_class_definition_ids = direct_proven_base_class_ids_by_class_id.get(
+        class_definition_id,
+        (),
+    )
+    if len(direct_base_class_definition_ids) != 1:
+        return None
+    return direct_base_class_definition_ids[0]
+
+
+def _direct_base_branches_are_individually_linear(
+    *,
+    direct_base_class_definition_ids: _OrderedClassDefinitionIds,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> bool:
+    """Return whether each direct-base branch stays on one proven class chain."""
+    for direct_base_class_definition_id in direct_base_class_definition_ids:
+        seen_branch_class_definition_ids: set[str] = set()
+        current_class_definition_id = direct_base_class_definition_id
+        while True:
+            if current_class_definition_id in seen_branch_class_definition_ids:
+                return False
+            seen_branch_class_definition_ids.add(current_class_definition_id)
+            next_class_definition_ids = direct_proven_base_class_ids_by_class_id.get(
+                current_class_definition_id,
+                (),
+            )
+            if not next_class_definition_ids:
+                break
+            if len(next_class_definition_ids) != 1:
+                return False
+            current_class_definition_id = next_class_definition_ids[0]
+    return True
+
+
+def _ordered_linear_disjoint_branch_class_definition_ids(
+    *,
+    direct_base_class_definition_ids: _OrderedClassDefinitionIds,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> tuple[_OrderedClassDefinitionIds, ...] | None:
+    """Return direct-base branch chains only when they stay linear and disjoint."""
+    ordered_branch_class_definition_ids = _ordered_linear_branch_class_definition_ids(
+        direct_base_class_definition_ids=direct_base_class_definition_ids,
+        direct_proven_base_class_ids_by_class_id=(
+            direct_proven_base_class_ids_by_class_id
+        ),
+    )
+    if ordered_branch_class_definition_ids is None:
+        return None
+    seen_branch_class_definition_ids: set[str] = set()
+    for branch_class_definition_ids in ordered_branch_class_definition_ids:
+        for current_class_definition_id in branch_class_definition_ids:
+            if current_class_definition_id in seen_branch_class_definition_ids:
+                return None
+            seen_branch_class_definition_ids.add(current_class_definition_id)
+    return ordered_branch_class_definition_ids
+
+
+def _ordered_linear_branch_class_definition_ids(
+    *,
+    direct_base_class_definition_ids: _OrderedClassDefinitionIds,
+    direct_proven_base_class_ids_by_class_id: _DirectProvenBaseClassIdsByClassId,
+) -> _OrderedBranchClassDefinitionIds | None:
+    """Return direct-base branch chains only when each branch stays linear."""
+    ordered_branch_class_definition_ids: list[_OrderedClassDefinitionIds] = []
+    for direct_base_class_definition_id in direct_base_class_definition_ids:
+        branch_class_definition_ids: list[str] = []
+        current_class_definition_id = direct_base_class_definition_id
+        seen_branch_class_definition_ids: set[str] = set()
+        while True:
+            if current_class_definition_id in seen_branch_class_definition_ids:
+                return None
+            seen_branch_class_definition_ids.add(current_class_definition_id)
+            branch_class_definition_ids.append(current_class_definition_id)
+            next_class_definition_ids = direct_proven_base_class_ids_by_class_id.get(
+                current_class_definition_id,
+                (),
+            )
+            if not next_class_definition_ids:
+                break
+            if len(next_class_definition_ids) != 1:
+                return None
+            current_class_definition_id = next_class_definition_ids[0]
+        ordered_branch_class_definition_ids.append(tuple(branch_class_definition_ids))
+    return tuple(ordered_branch_class_definition_ids)
+
+
+def _shared_branch_tail_class_definition_ids(
+    *,
+    ordered_branch_class_definition_ids: _OrderedBranchClassDefinitionIds,
+) -> _OrderedClassDefinitionIds:
+    """Return the shared tail across linear branches in declared-order layout."""
+    shared_tail_reversed: list[str] = []
+    reversed_branch_class_definition_ids = [
+        tuple(reversed(branch_class_definition_ids))
+        for branch_class_definition_ids in ordered_branch_class_definition_ids
+    ]
+    for candidate_tail_class_definition_ids in zip(
+        *reversed_branch_class_definition_ids,
+        strict=False,
+    ):
+        shared_class_definition_id = candidate_tail_class_definition_ids[0]
+        if any(
+            candidate_class_definition_id != shared_class_definition_id
+            for candidate_class_definition_id in candidate_tail_class_definition_ids[1:]
+        ):
+            break
+        shared_tail_reversed.append(shared_class_definition_id)
+    return tuple(reversed(shared_tail_reversed))
+
+
+def _is_canonical_self_parameter(
+    *,
+    parameter_symbol_id: str,
+    method_definition_id: str,
+    index: _RepositoryIndex,
+) -> bool:
+    """Return whether ``parameter_symbol_id`` is the canonical first ``self``."""
+    parameters = index.parameters_by_owner_definition_id.get(method_definition_id)
+    if not parameters:
+        return False
+    first_parameter = min(parameters, key=lambda parameter: parameter.ordinal)
+    return (
+        first_parameter.parameter_id == parameter_symbol_id
+        and first_parameter.name == "self"
+        and first_parameter.kind
+        in {
+            ParameterKind.POSITIONAL_ONLY,
+            ParameterKind.POSITIONAL_OR_KEYWORD,
+        }
     )
 
 
@@ -624,23 +1735,33 @@ def _resolve_simple_binding_symbol_id(
     return binding.symbol_id
 
 
-def _resolve_direct_attribute_symbol_id(
+def _resolve_import_rooted_attribute_chain_symbol_id(
     *,
     base_binding: BindingFact,
-    attribute_name: str,
+    attribute_names: tuple[str, ...],
+    program: SemanticProgram,
     resolved_imports_by_binding_symbol_id: dict[str, ResolvedImport],
     index: _RepositoryIndex,
     require_repository_symbol: bool,
 ) -> str | None:
-    """Return the symbol targeted by a direct module-alias attribute reference."""
+    """Return the target for a narrow import-rooted attribute chain, if proven."""
     resolved_import = resolved_imports_by_binding_symbol_id.get(base_binding.symbol_id)
     if resolved_import is None:
         return None
 
+    if not attribute_names:
+        return None
+
     if resolved_import.target_kind is ImportTargetKind.MODULE:
-        candidate_qualified_name = (
-            f"{resolved_import.target_qualified_name}.{attribute_name}"
-        )
+        module_qualified_name = resolved_import.target_qualified_name
+        for attribute_name in attribute_names[:-1]:
+            candidate_module_qualified_name = (
+                f"{module_qualified_name}.{attribute_name}"
+            )
+            if candidate_module_qualified_name not in index.module_symbol_ids_by_name:
+                return None
+            module_qualified_name = candidate_module_qualified_name
+        candidate_qualified_name = f"{module_qualified_name}.{attribute_names[-1]}"
         target_definition = index.unique_definitions_by_qualified_name.get(
             candidate_qualified_name
         )
@@ -648,13 +1769,22 @@ def _resolve_direct_attribute_symbol_id(
             target_definition is not None
             and target_definition.kind is not DefinitionKind.MODULE
         ):
+            if require_repository_symbol:
+                target_symbol = program.resolved_symbols.get(
+                    target_definition.definition_id
+                )
+                if (
+                    target_symbol is None
+                    or target_symbol.kind not in _CALLABLE_SYMBOL_KINDS
+                ):
+                    return None
             return target_definition.definition_id
 
     if (
         not require_repository_symbol
         and resolved_import.target_kind is ImportTargetKind.EXTERNAL
         and resolved_import.target_qualified_name == "dataclasses"
-        and attribute_name == "dataclass"
+        and attribute_names == ("dataclass",)
     ):
         return base_binding.symbol_id
     return None
@@ -775,7 +1905,7 @@ def _decorator_proves_dataclass(
         )
 
     binding = _lookup_visible_binding(
-        name=expression.base_name,
+        name=expression.root_name,
         scope_id=evaluation_scope_id,
         site=decorator.site,
         index=index,
@@ -788,7 +1918,7 @@ def _decorator_proves_dataclass(
         resolved_import is not None
         and resolved_import.target_kind is ImportTargetKind.EXTERNAL
         and resolved_import.target_qualified_name == "dataclasses"
-        and expression.attribute_name == "dataclass"
+        and expression.attribute_names == ("dataclass",)
     )
 
 
@@ -825,7 +1955,7 @@ def _collect_dataclass_fields(
 
 
 def _parse_supported_expression(expression_text: str) -> _SupportedExpression | None:
-    """Parse one supported simple-name or direct-attribute expression."""
+    """Parse one supported simple-name or narrow dotted-chain expression."""
     try:
         expression = ast.parse(expression_text, mode="eval").body
     except SyntaxError:
@@ -833,15 +1963,23 @@ def _parse_supported_expression(expression_text: str) -> _SupportedExpression | 
 
     if isinstance(expression, ast.Name) and _is_simple_identifier(expression.id):
         return _SimpleNameExpression(name=expression.id)
+    attribute_names: list[str] = []
+    current_expression: ast.expr = expression
+    while isinstance(current_expression, ast.Attribute):
+        if not _is_simple_identifier(current_expression.attr):
+            return None
+        attribute_names.append(current_expression.attr)
+        if len(attribute_names) > 2:
+            return None
+        current_expression = current_expression.value
     if (
-        isinstance(expression, ast.Attribute)
-        and isinstance(expression.value, ast.Name)
-        and _is_simple_identifier(expression.value.id)
-        and _is_simple_identifier(expression.attr)
+        attribute_names
+        and isinstance(current_expression, ast.Name)
+        and _is_simple_identifier(current_expression.id)
     ):
-        return _DirectAttributeExpression(
-            base_name=expression.value.id,
-            attribute_name=expression.attr,
+        return _AttributeChainExpression(
+            root_name=current_expression.id,
+            attribute_names=tuple(reversed(attribute_names)),
         )
     return None
 

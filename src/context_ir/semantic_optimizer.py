@@ -12,12 +12,19 @@ from context_ir.semantic_renderer import (
 )
 from context_ir.semantic_scorer import SemanticScoringResult, SemanticUnitScore
 from context_ir.semantic_types import (
+    CapabilityTier,
+    DownstreamVisibility,
+    EvidenceOriginKind,
+    ReplayStatus,
     SelectionBasis,
     SemanticOptimizationResult,
     SemanticOptimizationWarning,
     SemanticOptimizationWarningCode,
     SemanticProgram,
+    SemanticProvenanceRecord,
     SemanticSelectionRecord,
+    SemanticSubjectKind,
+    SemanticUnitTraceSummary,
     SourceSite,
 )
 
@@ -63,6 +70,38 @@ class _SemanticCandidate:
     incoming_dependency_sources: tuple[str, ...]
     outgoing_dependency_targets: tuple[str, ...]
     enclosing_scope_id: str | None
+    trace_summary: SemanticUnitTraceSummary
+
+
+_PRIMARY_TRACE_DEFAULTS: dict[
+    SemanticSubjectKind, tuple[CapabilityTier, EvidenceOriginKind, ReplayStatus]
+] = {
+    SemanticSubjectKind.SYMBOL: (
+        CapabilityTier.STATICALLY_PROVED,
+        EvidenceOriginKind.STATIC_DERIVATION_RULE,
+        ReplayStatus.DETERMINISTIC_STATIC,
+    ),
+    SemanticSubjectKind.DEPENDENCY: (
+        CapabilityTier.STATICALLY_PROVED,
+        EvidenceOriginKind.STATIC_DERIVATION_RULE,
+        ReplayStatus.DETERMINISTIC_STATIC,
+    ),
+    SemanticSubjectKind.FRONTIER_ITEM: (
+        CapabilityTier.HEURISTIC_FRONTIER,
+        EvidenceOriginKind.HEURISTIC_RULE,
+        ReplayStatus.NON_PROOF_HEURISTIC,
+    ),
+    SemanticSubjectKind.UNSUPPORTED_FINDING: (
+        CapabilityTier.UNSUPPORTED_OPAQUE,
+        EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+        ReplayStatus.OPAQUE_BOUNDARY,
+    ),
+}
+_SUBJECT_KIND_BY_RENDERED_UNIT: dict[RenderedUnitKind, SemanticSubjectKind] = {
+    RenderedUnitKind.PROVEN_SYMBOL: SemanticSubjectKind.SYMBOL,
+    RenderedUnitKind.UNRESOLVED_FRONTIER: SemanticSubjectKind.FRONTIER_ITEM,
+    RenderedUnitKind.UNSUPPORTED_CONSTRUCT: SemanticSubjectKind.UNSUPPORTED_FINDING,
+}
 
 
 def optimize_semantic_units(
@@ -258,12 +297,14 @@ def _build_candidates(
     outgoing_dependency_targets = _outgoing_dependency_targets(program)
     enclosing_scope_ids = _enclosing_scope_ids(program)
     file_scope_ids = _file_scope_ids(program)
+    trace_summaries = _trace_summaries_by_subject(program)
     candidates: list[_SemanticCandidate] = []
 
     for unit_id in renderable_unit_ids:
         identity = render_semantic_unit(program, unit_id, RenderDetail.IDENTITY)
         summary = render_semantic_unit(program, unit_id, RenderDetail.SUMMARY)
         source = render_semantic_unit(program, unit_id, RenderDetail.SOURCE)
+        subject_kind = _SUBJECT_KIND_BY_RENDERED_UNIT[identity.kind]
         renders = {
             RenderDetail.IDENTITY: identity,
             RenderDetail.SUMMARY: summary,
@@ -284,10 +325,91 @@ def _build_candidates(
                     unit_id, ()
                 ),
                 enclosing_scope_id=enclosing_scope_ids.get(unit_id),
+                trace_summary=trace_summaries[(subject_kind, unit_id)],
             )
         )
 
     return candidates
+
+
+def _trace_summaries_by_subject(
+    program: SemanticProgram,
+) -> dict[tuple[SemanticSubjectKind, str], SemanticUnitTraceSummary]:
+    """Build deterministic compile-visible trace summaries for renderable units."""
+    records_by_subject: dict[
+        tuple[SemanticSubjectKind, str], list[SemanticProvenanceRecord]
+    ] = {}
+    for record in program.provenance_records:
+        if DownstreamVisibility.COMPILE not in record.downstream_visibility:
+            continue
+        records_by_subject.setdefault(
+            (record.subject_kind, record.subject_id), []
+        ).append(record)
+
+    summaries: dict[tuple[SemanticSubjectKind, str], SemanticUnitTraceSummary] = {}
+    subject_keys = [
+        *(
+            (SemanticSubjectKind.SYMBOL, symbol_id)
+            for symbol_id in program.resolved_symbols
+        ),
+        *(
+            (SemanticSubjectKind.FRONTIER_ITEM, access.access_id)
+            for access in program.unresolved_frontier
+        ),
+        *(
+            (SemanticSubjectKind.UNSUPPORTED_FINDING, construct.construct_id)
+            for construct in program.unsupported_constructs
+        ),
+    ]
+    for subject_kind, subject_id in subject_keys:
+        key = (subject_kind, subject_id)
+        summaries[key] = _trace_summary_for_subject(
+            subject_kind=subject_kind,
+            subject_id=subject_id,
+            records=records_by_subject.get(key, ()),
+        )
+    return summaries
+
+
+def _trace_summary_for_subject(
+    *,
+    subject_kind: SemanticSubjectKind,
+    subject_id: str,
+    records: list[SemanticProvenanceRecord] | tuple[SemanticProvenanceRecord, ...],
+) -> SemanticUnitTraceSummary:
+    """Summarize primary subject truth plus additive runtime-backed support."""
+    ordered_records = tuple(sorted(records, key=lambda record: record.record_id))
+    primary_record = next(
+        (
+            record
+            for record in ordered_records
+            if record.capability_tier is not CapabilityTier.RUNTIME_BACKED
+        ),
+        None,
+    )
+    if primary_record is None:
+        (
+            primary_capability_tier,
+            primary_evidence_origin,
+            primary_replay_status,
+        ) = _PRIMARY_TRACE_DEFAULTS[subject_kind]
+    else:
+        primary_capability_tier = primary_record.capability_tier
+        primary_evidence_origin = primary_record.evidence_origin
+        primary_replay_status = primary_record.replay_status
+
+    return SemanticUnitTraceSummary(
+        subject_id=subject_id,
+        subject_kind=subject_kind,
+        primary_capability_tier=primary_capability_tier,
+        primary_evidence_origin=primary_evidence_origin,
+        primary_replay_status=primary_replay_status,
+        attached_runtime_provenance_record_ids=tuple(
+            record.record_id
+            for record in ordered_records
+            if record.capability_tier is CapabilityTier.RUNTIME_BACKED
+        ),
+    )
 
 
 def _renderable_unit_ids(program: SemanticProgram) -> list[str]:
@@ -830,6 +952,7 @@ def _selection_record(
         reason=reason,
         edit_score=candidate.score.p_edit,
         support_score=candidate.score.p_support,
+        trace_summary=candidate.trace_summary,
     )
 
 
@@ -982,6 +1105,7 @@ def _build_warnings(
                         f"{preferred_detail.value} to {selection.detail} under budget "
                         "pressure"
                     ),
+                    trace_summary=candidate.trace_summary,
                 )
             )
             continue
@@ -1001,6 +1125,7 @@ def _build_warnings(
                         f"support units under budget pressure: "
                         f"{', '.join(sorted(omitted_support_ids))}"
                     ),
+                    trace_summary=candidate.trace_summary,
                 )
             )
 
@@ -1015,6 +1140,7 @@ def _build_warnings(
                         f"{unit_id} was omitted despite strong direct relevance "
                         f"(p_edit={candidate.score.p_edit:.2f})"
                     ),
+                    trace_summary=candidate.trace_summary,
                 )
             )
             continue
@@ -1035,6 +1161,7 @@ def _build_warnings(
                         f"{unit_id} was omitted even though it carried relevant "
                         "uncertainty under the current budget"
                     ),
+                    trace_summary=candidate.trace_summary,
                 )
             )
 

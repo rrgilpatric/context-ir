@@ -131,6 +131,7 @@ class UnresolvedReasonCode(Enum):
 
     UNRESOLVED_NAME = "unresolved_name"
     UNRESOLVED_ATTRIBUTE = "unresolved_attribute"
+    UNSUPPORTED_ATTRIBUTE_ACCESS = "unsupported_attribute_access"
     DYNAMIC_IMPORT = "dynamic_import"
     STAR_IMPORT = "star_import"
     ALIAS_CHAIN = "alias_chain"
@@ -140,6 +141,7 @@ class UnresolvedReasonCode(Enum):
     UNSUPPORTED_CALL_TARGET = "unsupported_call_target"
     METACLASS_BEHAVIOR = "metaclass_behavior"
     RUNTIME_MUTATION = "runtime_mutation"
+    REFLECTIVE_BUILTIN = "reflective_builtin"
     EXEC_OR_EVAL = "exec_or_eval"
 
 
@@ -155,6 +157,156 @@ class SyntaxDiagnosticCode(Enum):
     """Stable syntax-layer diagnostics emitted during syntax extraction."""
 
     PARSE_ERROR = "parse_error"
+
+
+class CapabilityTier(Enum):
+    """Capability-tier contract categories for downstream-visible records."""
+
+    STATICALLY_PROVED = "statically_proved"
+    RUNTIME_BACKED = "runtime_backed"
+    HEURISTIC_FRONTIER = "heuristic/frontier"
+    UNSUPPORTED_OPAQUE = "unsupported/opaque"
+
+
+class EvidenceOriginKind(Enum):
+    """High-level origin categories for provenance-bearing semantic records."""
+
+    STATIC_DERIVATION_RULE = "static_derivation_rule"
+    RUNTIME_PROBE_IDENTITY = "runtime_probe_identity"
+    HEURISTIC_RULE = "heuristic_rule"
+    UNSUPPORTED_REASON_CODE = "unsupported_reason_code"
+
+
+class ReplayStatus(Enum):
+    """Replayability contract for one provenance-bearing semantic record."""
+
+    DETERMINISTIC_STATIC = "deterministic_static"
+    REPRODUCIBLE_RUNTIME = "reproducible_runtime"
+    NON_PROOF_HEURISTIC = "non_proof_heuristic"
+    OPAQUE_BOUNDARY = "opaque_boundary"
+
+
+class DownstreamVisibility(Enum):
+    """Downstream surfaces that must preserve semantic provenance explicitly."""
+
+    RENDER = "render"
+    COMPILE = "compile"
+    DIAGNOSE = "diagnose"
+
+
+class SemanticSubjectKind(Enum):
+    """Kinds of downstream-visible semantic subjects tracked by provenance."""
+
+    SYMBOL = "symbol"
+    DEPENDENCY = "dependency"
+    FRONTIER_ITEM = "frontier_item"
+    UNSUPPORTED_FINDING = "unsupported_finding"
+
+
+@dataclass(frozen=True)
+class RepositorySnapshotBasis:
+    """Repository snapshot basis required for admissible runtime-backed evidence."""
+
+    snapshot_kind: str
+    snapshot_id: str
+    is_dirty_worktree: bool = False
+
+    def __post_init__(self) -> None:
+        """Reject incomplete snapshot basis metadata."""
+        if not self.snapshot_kind.strip():
+            raise ValueError("snapshot_kind must be non-empty")
+        if not self.snapshot_id.strip():
+            raise ValueError("snapshot_id must be non-empty")
+
+
+@dataclass(frozen=True)
+class RuntimeAttachmentLink:
+    """Stable linkage from runtime-backed provenance to attached evidence."""
+
+    attachment_id: str
+    attachment_role: str
+    description: str | None = None
+
+    def __post_init__(self) -> None:
+        """Reject incomplete runtime attachment linkage metadata."""
+        if not self.attachment_id.strip():
+            raise ValueError("attachment_id must be non-empty")
+        if not self.attachment_role.strip():
+            raise ValueError("attachment_role must be non-empty")
+
+
+_CAPABILITY_TIER_INVARIANTS: dict[
+    CapabilityTier, tuple[EvidenceOriginKind, ReplayStatus]
+] = {
+    CapabilityTier.STATICALLY_PROVED: (
+        EvidenceOriginKind.STATIC_DERIVATION_RULE,
+        ReplayStatus.DETERMINISTIC_STATIC,
+    ),
+    CapabilityTier.RUNTIME_BACKED: (
+        EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+        ReplayStatus.REPRODUCIBLE_RUNTIME,
+    ),
+    CapabilityTier.HEURISTIC_FRONTIER: (
+        EvidenceOriginKind.HEURISTIC_RULE,
+        ReplayStatus.NON_PROOF_HEURISTIC,
+    ),
+    CapabilityTier.UNSUPPORTED_OPAQUE: (
+        EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+        ReplayStatus.OPAQUE_BOUNDARY,
+    ),
+}
+
+_SUBJECT_KIND_CAPABILITY_TIERS: dict[
+    SemanticSubjectKind, tuple[CapabilityTier, ...]
+] = {
+    SemanticSubjectKind.FRONTIER_ITEM: (
+        CapabilityTier.HEURISTIC_FRONTIER,
+        CapabilityTier.RUNTIME_BACKED,
+    ),
+    SemanticSubjectKind.UNSUPPORTED_FINDING: (
+        CapabilityTier.UNSUPPORTED_OPAQUE,
+        CapabilityTier.RUNTIME_BACKED,
+    ),
+}
+
+
+def _validate_capability_tier_contract(
+    *,
+    capability_tier: CapabilityTier,
+    evidence_origin: EvidenceOriginKind,
+    replay_status: ReplayStatus,
+    tier_field_name: str,
+    evidence_origin_field_name: str,
+    replay_status_field_name: str,
+) -> None:
+    """Enforce the accepted capability-tier origin/replay invariant mapping."""
+    expected_origin, expected_replay_status = _CAPABILITY_TIER_INVARIANTS[
+        capability_tier
+    ]
+    if evidence_origin is not expected_origin:
+        raise ValueError(
+            f"{evidence_origin_field_name} must match "
+            f"{tier_field_name} contract invariants"
+        )
+    if replay_status is not expected_replay_status:
+        raise ValueError(
+            f"{replay_status_field_name} must match "
+            f"{tier_field_name} contract invariants"
+        )
+
+
+def _validate_subject_kind_capability_tier(
+    *,
+    subject_kind: SemanticSubjectKind,
+    capability_tier: CapabilityTier,
+    tier_field_name: str,
+) -> None:
+    """Reject subject kinds paired with inadmissible capability tiers."""
+    allowed_tiers = _SUBJECT_KIND_CAPABILITY_TIERS.get(subject_kind)
+    if allowed_tiers is not None and capability_tier not in allowed_tiers:
+        raise ValueError(
+            f"subject_kind must use an admissible {tier_field_name} contract"
+        )
 
 
 class SelectionBasis(Enum):
@@ -236,6 +388,7 @@ class SupportedSubsetBoundary:
         ReferenceContext.DECORATOR,
     )
     unknown_without_proof: tuple[UnresolvedReasonCode, ...] = (
+        UnresolvedReasonCode.UNSUPPORTED_ATTRIBUTE_ACCESS,
         UnresolvedReasonCode.DYNAMIC_IMPORT,
         UnresolvedReasonCode.STAR_IMPORT,
         UnresolvedReasonCode.ALIAS_CHAIN,
@@ -245,6 +398,7 @@ class SupportedSubsetBoundary:
         UnresolvedReasonCode.UNSUPPORTED_CALL_TARGET,
         UnresolvedReasonCode.METACLASS_BEHAVIOR,
         UnresolvedReasonCode.RUNTIME_MUTATION,
+        UnresolvedReasonCode.REFLECTIVE_BUILTIN,
         UnresolvedReasonCode.EXEC_OR_EVAL,
     )
 
@@ -373,6 +527,25 @@ class BaseExpressionFact:
 
 
 @dataclass(frozen=True)
+class MetaclassKeywordFact:
+    """Syntax fact for one ``metaclass=...`` class keyword surface."""
+
+    metaclass_keyword_id: str
+    owner_definition_id: str
+    site: SourceSite
+    keyword_text: str
+
+    def __post_init__(self) -> None:
+        """Reject incomplete metaclass keyword surface facts."""
+        if not self.metaclass_keyword_id:
+            raise ValueError("metaclass_keyword_id must be non-empty")
+        if not self.owner_definition_id:
+            raise ValueError("owner_definition_id must be non-empty")
+        if not self.keyword_text.strip():
+            raise ValueError("keyword_text must be non-empty")
+
+
+@dataclass(frozen=True)
 class AssignmentFact:
     """Syntax fact for an assignment statement inside a scope."""
 
@@ -422,6 +595,7 @@ class SyntaxProgram:
     imports: list[ImportFact] = field(default_factory=list)
     decorators: list[DecoratorFact] = field(default_factory=list)
     base_expressions: list[BaseExpressionFact] = field(default_factory=list)
+    metaclass_keywords: list[MetaclassKeywordFact] = field(default_factory=list)
     assignments: list[AssignmentFact] = field(default_factory=list)
     call_sites: list[CallSiteFact] = field(default_factory=list)
     attribute_sites: list[AttributeSiteFact] = field(default_factory=list)
@@ -639,6 +813,126 @@ class ResolverDiagnostic:
 
 
 @dataclass(frozen=True)
+class SemanticProvenanceRecord:
+    """Capability-tier provenance attached to one downstream semantic subject."""
+
+    record_id: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    capability_tier: CapabilityTier
+    evidence_origin: EvidenceOriginKind
+    origin_detail: str
+    replay_status: ReplayStatus
+    repository_snapshot_basis: RepositorySnapshotBasis | None = None
+    attachment_links: tuple[RuntimeAttachmentLink, ...] = ()
+    subject_sites: tuple[SourceSite, ...] = ()
+    evidence_sites: tuple[SourceSite, ...] = ()
+    downstream_visibility: tuple[DownstreamVisibility, ...] = (
+        DownstreamVisibility.RENDER,
+        DownstreamVisibility.COMPILE,
+        DownstreamVisibility.DIAGNOSE,
+    )
+
+    def __post_init__(self) -> None:
+        """Keep provenance records aligned with the accepted tier contract."""
+        if not self.record_id:
+            raise ValueError("record_id must be non-empty")
+        if not self.subject_id:
+            raise ValueError("subject_id must be non-empty")
+        if not self.origin_detail.strip():
+            raise ValueError("origin_detail must be non-empty")
+        if not self.subject_sites and not self.evidence_sites:
+            raise ValueError(
+                "provenance records require subject_sites or evidence_sites"
+            )
+        if not self.downstream_visibility:
+            raise ValueError("downstream_visibility must be non-empty")
+        if len(self.downstream_visibility) != len(set(self.downstream_visibility)):
+            raise ValueError("downstream_visibility values must be unique")
+        attachment_ids = [link.attachment_id for link in self.attachment_links]
+        if len(attachment_ids) != len(set(attachment_ids)):
+            raise ValueError("attachment_links must have unique attachment_id values")
+
+        _validate_capability_tier_contract(
+            capability_tier=self.capability_tier,
+            evidence_origin=self.evidence_origin,
+            replay_status=self.replay_status,
+            tier_field_name="capability_tier",
+            evidence_origin_field_name="evidence_origin",
+            replay_status_field_name="replay_status",
+        )
+        _validate_subject_kind_capability_tier(
+            subject_kind=self.subject_kind,
+            capability_tier=self.capability_tier,
+            tier_field_name="capability_tier",
+        )
+
+        if self.capability_tier is CapabilityTier.RUNTIME_BACKED:
+            if self.repository_snapshot_basis is None:
+                raise ValueError(
+                    "runtime-backed provenance requires repository_snapshot_basis"
+                )
+            if not self.attachment_links:
+                raise ValueError("runtime-backed provenance requires attachment_links")
+            return
+
+        if self.repository_snapshot_basis is not None:
+            raise ValueError(
+                "repository_snapshot_basis is only valid for runtime-backed provenance"
+            )
+        if self.attachment_links:
+            raise ValueError(
+                "attachment_links are only valid for runtime-backed provenance"
+            )
+
+
+@dataclass(frozen=True)
+class SemanticUnitTraceSummary:
+    """Typed subject-tier summary carried through optimization traces."""
+
+    subject_id: str
+    subject_kind: SemanticSubjectKind
+    primary_capability_tier: CapabilityTier
+    primary_evidence_origin: EvidenceOriginKind
+    primary_replay_status: ReplayStatus
+    attached_runtime_provenance_record_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Reject incomplete or ambiguous trace-summary identities."""
+        if not self.subject_id:
+            raise ValueError("subject_id must be non-empty")
+        record_ids = list(self.attached_runtime_provenance_record_ids)
+        if any(not record_id for record_id in record_ids):
+            raise ValueError("attached_runtime_provenance_record_ids must be non-empty")
+        if len(record_ids) != len(set(record_ids)):
+            raise ValueError("attached_runtime_provenance_record_ids must be unique")
+        _validate_capability_tier_contract(
+            capability_tier=self.primary_capability_tier,
+            evidence_origin=self.primary_evidence_origin,
+            replay_status=self.primary_replay_status,
+            tier_field_name="primary_capability_tier",
+            evidence_origin_field_name="primary_evidence_origin",
+            replay_status_field_name="primary_replay_status",
+        )
+        _validate_subject_kind_capability_tier(
+            subject_kind=self.subject_kind,
+            capability_tier=self.primary_capability_tier,
+            tier_field_name="primary_capability_tier",
+        )
+        if self.primary_capability_tier is CapabilityTier.RUNTIME_BACKED:
+            raise ValueError(
+                "primary_capability_tier may not be runtime-backed; "
+                "use attached_runtime_provenance_record_ids for additive "
+                "runtime evidence"
+            )
+
+    @property
+    def has_attached_runtime_provenance(self) -> bool:
+        """Return whether runtime-backed provenance attaches additively."""
+        return bool(self.attached_runtime_provenance_record_ids)
+
+
+@dataclass(frozen=True)
 class SelectionDirective:
     """Downstream selection input kept separate from semantic proof types."""
 
@@ -669,6 +963,7 @@ class SemanticSelectionRecord:
     reason: str
     edit_score: float
     support_score: float
+    trace_summary: SemanticUnitTraceSummary | None = None
 
     def __post_init__(self) -> None:
         """Keep selected detail, cost, and scores concrete and bounded."""
@@ -684,6 +979,11 @@ class SemanticSelectionRecord:
             raise ValueError("edit_score must be within [0.0, 1.0]")
         if not 0.0 <= self.support_score <= 1.0:
             raise ValueError("support_score must be within [0.0, 1.0]")
+        if (
+            self.trace_summary is not None
+            and self.trace_summary.subject_id != self.unit_id
+        ):
+            raise ValueError("trace_summary.subject_id must match unit_id")
 
 
 @dataclass(frozen=True)
@@ -693,11 +993,20 @@ class SemanticOptimizationWarning:
     code: SemanticOptimizationWarningCode
     message: str
     unit_id: str | None = None
+    trace_summary: SemanticUnitTraceSummary | None = None
 
     def __post_init__(self) -> None:
         """Reject empty warning messages."""
         if not self.message:
             raise ValueError("message must be non-empty")
+        if self.unit_id == "":
+            raise ValueError("unit_id must be non-empty when provided")
+        if (
+            self.trace_summary is not None
+            and self.unit_id is not None
+            and self.trace_summary.subject_id != self.unit_id
+        ):
+            raise ValueError("trace_summary.subject_id must match unit_id")
 
 
 @dataclass(frozen=True)
@@ -786,6 +1095,115 @@ class SemanticMissEvidence:
             raise ValueError("evidence must be non-empty")
 
 
+class SemanticDiagnosticUnitStatus(Enum):
+    """Classification status for one grounded semantic unit during diagnosis."""
+
+    OMITTED = "omitted"
+    TOO_SHALLOW = "too_shallow"
+    SUFFICIENTLY_REPRESENTED = "sufficiently_represented"
+
+
+class SemanticDiagnosticBoundaryKind(Enum):
+    """Tier-aware boundary classification for one grounded semantic unit."""
+
+    STATICALLY_PROVED = "statically_proved"
+    HEURISTIC_FRONTIER_MISSING_RUNTIME_SUPPORT = (
+        "heuristic_frontier_missing_runtime_support"
+    )
+    HEURISTIC_FRONTIER_WITH_ATTACHED_RUNTIME_SUPPORT = (
+        "heuristic_frontier_with_attached_runtime_support"
+    )
+    UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT = (
+        "unsupported_opaque_missing_runtime_support"
+    )
+    UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT = (
+        "unsupported_opaque_with_attached_runtime_support"
+    )
+
+
+def _diagnostic_boundary_kind(
+    *,
+    primary_capability_tier: CapabilityTier,
+    has_attached_runtime_provenance: bool,
+) -> SemanticDiagnosticBoundaryKind:
+    """Return the explicit tier/runtime boundary kind for one unit."""
+    if primary_capability_tier is CapabilityTier.STATICALLY_PROVED:
+        return SemanticDiagnosticBoundaryKind.STATICALLY_PROVED
+    if primary_capability_tier is CapabilityTier.HEURISTIC_FRONTIER:
+        return (
+            SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_WITH_ATTACHED_RUNTIME_SUPPORT
+            if has_attached_runtime_provenance
+            else (
+                SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_MISSING_RUNTIME_SUPPORT
+            )
+        )
+    if primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE:
+        return (
+            SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+            if has_attached_runtime_provenance
+            else (
+                SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+            )
+        )
+    raise ValueError(
+        "primary_capability_tier must be statically proved, heuristic frontier, "
+        "or unsupported opaque for diagnosis"
+    )
+
+
+@dataclass(frozen=True)
+class SemanticDiagnosticBoundary:
+    """Typed tier-aware diagnosis for one grounded semantic unit."""
+
+    unit_id: str
+    status: SemanticDiagnosticUnitStatus
+    boundary_kind: SemanticDiagnosticBoundaryKind
+    primary_capability_tier: CapabilityTier
+    has_attached_runtime_provenance: bool
+    trace_summary: SemanticUnitTraceSummary | None = None
+
+    def __post_init__(self) -> None:
+        """Keep boundary classifications aligned with trace summaries."""
+        if not self.unit_id:
+            raise ValueError("unit_id must be non-empty")
+        expected_boundary_kind = _diagnostic_boundary_kind(
+            primary_capability_tier=self.primary_capability_tier,
+            has_attached_runtime_provenance=self.has_attached_runtime_provenance,
+        )
+        if self.boundary_kind is not expected_boundary_kind:
+            raise ValueError(
+                "boundary_kind must match primary_capability_tier and runtime support"
+            )
+        if self.trace_summary is None:
+            return
+        if self.trace_summary.subject_id != self.unit_id:
+            raise ValueError("trace_summary.subject_id must match unit_id")
+        if (
+            self.trace_summary.primary_capability_tier
+            is not self.primary_capability_tier
+        ):
+            raise ValueError(
+                "trace_summary.primary_capability_tier must match "
+                "primary_capability_tier"
+            )
+        if (
+            self.trace_summary.has_attached_runtime_provenance
+            is not self.has_attached_runtime_provenance
+        ):
+            raise ValueError(
+                "trace_summary runtime support must match "
+                "has_attached_runtime_provenance"
+            )
+
+    @property
+    def needs_runtime_backed_support(self) -> bool:
+        """Return whether the unit remains non-proof without runtime support."""
+        return (
+            self.primary_capability_tier is not CapabilityTier.STATICALLY_PROVED
+            and not self.has_attached_runtime_provenance
+        )
+
+
 @dataclass(frozen=True)
 class SemanticDiagnosticResult:
     """Conservative diagnosis of grounded semantic miss evidence."""
@@ -796,6 +1214,7 @@ class SemanticDiagnosticResult:
     sufficiently_represented_unit_ids: tuple[str, ...]
     recommended_expansions: tuple[str, ...]
     reason: str
+    boundary_classifications: tuple[SemanticDiagnosticBoundary, ...] = ()
 
     def __post_init__(self) -> None:
         """Keep grounded classifications disjoint and reasoned."""
@@ -821,6 +1240,28 @@ class SemanticDiagnosticResult:
             raise ValueError(
                 "grounded_unit_ids must equal the union of classified unit IDs"
             )
+        if not self.boundary_classifications:
+            return
+        boundary_unit_ids = tuple(
+            boundary.unit_id for boundary in self.boundary_classifications
+        )
+        if len(boundary_unit_ids) != len(set(boundary_unit_ids)):
+            raise ValueError("boundary_classifications must have unique unit_id values")
+        if set(boundary_unit_ids) != grounded:
+            raise ValueError(
+                "boundary_classifications must cover every grounded semantic unit"
+            )
+        for boundary in self.boundary_classifications:
+            if boundary.status is SemanticDiagnosticUnitStatus.OMITTED:
+                expected_ids = omitted
+            elif boundary.status is SemanticDiagnosticUnitStatus.TOO_SHALLOW:
+                expected_ids = too_shallow
+            else:
+                expected_ids = sufficient
+            if boundary.unit_id not in expected_ids:
+                raise ValueError(
+                    "boundary_classifications statuses must match classified unit IDs"
+                )
 
 
 @dataclass(frozen=True)
@@ -865,6 +1306,7 @@ class SemanticProgram:
     proven_dependencies: list[SemanticDependency] = field(default_factory=list)
     unresolved_frontier: list[UnresolvedAccess] = field(default_factory=list)
     unsupported_constructs: list[UnsupportedConstruct] = field(default_factory=list)
+    provenance_records: list[SemanticProvenanceRecord] = field(default_factory=list)
     diagnostics: list[ResolverDiagnostic] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -891,6 +1333,7 @@ __all__ = [
     "AssignmentFact",
     "AttributeSiteFact",
     "BaseExpressionFact",
+    "CapabilityTier",
     "BindingFact",
     "BindingKind",
     "CallSiteFact",
@@ -901,6 +1344,8 @@ __all__ = [
     "DefinitionKind",
     "DependencyProofKind",
     "DiagnosticSeverity",
+    "DownstreamVisibility",
+    "EvidenceOriginKind",
     "ImportFact",
     "ImportKind",
     "ImportTargetKind",
@@ -909,6 +1354,8 @@ __all__ = [
     "ProofStatus",
     "RawDefinitionFact",
     "ReferenceContext",
+    "RepositorySnapshotBasis",
+    "ReplayStatus",
     "ResolvedImport",
     "ResolvedReference",
     "ResolvedSymbol",
@@ -919,16 +1366,23 @@ __all__ = [
     "SemanticCompileContext",
     "SemanticCompileResult",
     "SemanticDependency",
+    "SemanticDiagnosticBoundary",
+    "SemanticDiagnosticBoundaryKind",
     "SemanticDiagnosticResult",
+    "SemanticDiagnosticUnitStatus",
     "SemanticDependencyKind",
     "SemanticMissEvidence",
     "SemanticMissKind",
     "SemanticOptimizationResult",
     "SemanticOptimizationWarning",
     "SemanticOptimizationWarningCode",
+    "SemanticProvenanceRecord",
     "SemanticProgram",
     "SemanticRecompileResult",
     "SemanticSelectionRecord",
+    "SemanticSubjectKind",
+    "SemanticUnitTraceSummary",
+    "RuntimeAttachmentLink",
     "SourceFileFact",
     "SourceSite",
     "SourceSpan",

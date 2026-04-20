@@ -10,11 +10,14 @@ import context_ir.compiler as legacy_compiler
 import context_ir.optimizer as legacy_optimizer
 import context_ir.parser as legacy_parser
 import context_ir.renderer as legacy_renderer
+import context_ir.runtime_acquisition as runtime_acquisition
 import context_ir.scorer as legacy_scorer
 import context_ir.semantic_types as semantic_types
 import context_ir.tool_facade as tool_facade
 from context_ir.semantic_types import (
     ReferenceContext,
+    RepositorySnapshotBasis,
+    RuntimeAttachmentLink,
     SelectionBasis,
     SemanticCompileContext,
     SemanticCompileResult,
@@ -23,6 +26,8 @@ from context_ir.semantic_types import (
     SemanticOptimizationWarningCode,
     SemanticProgram,
     SemanticSelectionRecord,
+    SourceSite,
+    SourceSpan,
     SyntaxDiagnosticCode,
     SyntaxProgram,
     UnresolvedReasonCode,
@@ -37,6 +42,208 @@ from context_ir.tool_facade import (
 def _estimate_tokens(text: str) -> int:
     """Mirror compile-level token estimation for assembled documents."""
     return max(1, (len(text) + 3) // 4)
+
+
+def _dynamic_import_runtime_observation() -> (
+    runtime_acquisition.DynamicImportRuntimeObservation
+):
+    """Create one admissible dynamic-import runtime observation for facade tests."""
+    return _dynamic_import_runtime_observation_for_site(
+        SourceSite(
+            site_id="site:main:dynamic-import",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=1,
+                start_column=0,
+                end_line=1,
+                end_column=32,
+            ),
+            snippet='importlib.import_module("pkg.dynamic")',
+        )
+    )
+
+
+def _dynamic_import_runtime_observation_for_site(
+    site: SourceSite,
+    *,
+    imported_module: str = "pkg.dynamic",
+) -> runtime_acquisition.DynamicImportRuntimeObservation:
+    """Create one admissible dynamic-import runtime observation for ``site``."""
+    return runtime_acquisition.DynamicImportRuntimeObservation(
+        site=site,
+        probe_identifier="probe:dynamic-import",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id="attachment:dynamic-import:trace",
+                attachment_role="trace",
+                description="dynamic import trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="imported_module",
+                value=imported_module,
+            ),
+        ),
+    )
+
+
+def _hasattr_runtime_observation() -> runtime_acquisition.HasattrRuntimeObservation:
+    """Create one admissible ``hasattr`` runtime observation for facade tests."""
+    return _hasattr_runtime_observation_for_site(
+        SourceSite(
+            site_id="site:main:hasattr",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=1,
+                start_column=0,
+                end_line=1,
+                end_column=18,
+            ),
+            snippet='hasattr(obj, "x")',
+        )
+    )
+
+
+def _hasattr_runtime_observation_for_site(
+    site: SourceSite,
+    *,
+    attribute_present: bool = True,
+) -> runtime_acquisition.HasattrRuntimeObservation:
+    """Create one admissible ``hasattr`` runtime observation for ``site``."""
+    return runtime_acquisition.HasattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:hasattr",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id="attachment:hasattr:trace",
+                attachment_role="trace",
+                description="hasattr trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="attribute_present",
+                value="true" if attribute_present else "false",
+            ),
+        ),
+    )
+
+
+def _getattr_runtime_observation() -> runtime_acquisition.GetattrRuntimeObservation:
+    """Create one admissible ``getattr`` runtime observation for facade tests."""
+    return _getattr_runtime_observation_for_site(
+        SourceSite(
+            site_id="site:main:getattr",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=1,
+                start_column=0,
+                end_line=1,
+                end_column=18,
+            ),
+            snippet='getattr(obj, "x")',
+        )
+    )
+
+
+def _getattr_runtime_observation_for_site(
+    site: SourceSite,
+    *,
+    lookup_outcome: str = "returned_value",
+) -> runtime_acquisition.GetattrRuntimeObservation:
+    """Create one admissible ``getattr`` runtime observation for ``site``."""
+    return runtime_acquisition.GetattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:getattr",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id="attachment:getattr:trace",
+                attachment_role="trace",
+                description="getattr trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value=lookup_outcome,
+            ),
+        ),
+    )
+
+
+def _vars_runtime_observation() -> runtime_acquisition.VarsRuntimeObservation:
+    """Create one admissible ``vars`` runtime observation for facade tests."""
+    return _vars_runtime_observation_for_site(
+        SourceSite(
+            site_id="site:main:vars",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=1,
+                start_column=0,
+                end_line=1,
+                end_column=9,
+            ),
+            snippet="vars(obj)",
+        )
+    )
+
+
+def _vars_runtime_observation_for_site(
+    site: SourceSite,
+    *,
+    lookup_outcome: str = "returned_namespace",
+) -> runtime_acquisition.VarsRuntimeObservation:
+    """Create one admissible ``vars`` runtime observation for ``site``."""
+    return runtime_acquisition.VarsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:vars",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id="attachment:vars:trace",
+                attachment_role="trace",
+                description="vars trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value=lookup_outcome,
+            ),
+        ),
+    )
 
 
 def test_compile_repository_context_returns_typed_response_for_simple_repo(
@@ -79,7 +286,7 @@ def test_compile_repository_context_uses_analyzer_and_semantic_compiler(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    """The facade delegates to accepted analyzer and semantic compiler APIs."""
+    """The facade keeps analyzer calls unchanged when runtime data is omitted."""
     calls: list[str] = []
     syntax = SyntaxProgram(repo_root=tmp_path)
     program = SemanticProgram(repo_root=tmp_path, syntax=syntax)
@@ -153,6 +360,517 @@ def test_compile_repository_context_uses_analyzer_and_semantic_compiler(
     assert response.optimization_warnings == (warning,)
     assert response.omitted_unit_ids == ("unit:two",)
     assert calls == [f"analyze:{tmp_path}", "compile:query:64"]
+
+
+def test_compile_repository_context_forwards_dynamic_import_runtime_observations(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade forwards accepted runtime observations to the analyzer seam."""
+    observation = _dynamic_import_runtime_observation()
+    syntax = SyntaxProgram(repo_root=tmp_path)
+    program = SemanticProgram(repo_root=tmp_path, syntax=syntax)
+    compile_result = SemanticCompileResult(
+        document="# Semantic Context\nruntime-backed",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(),
+            warnings=(),
+            total_tokens=0,
+            budget=64,
+            confidence=0.5,
+        ),
+        omitted_unit_ids=(),
+        total_tokens=8,
+        budget=64,
+        confidence=0.5,
+        compile_context=SemanticCompileContext(query="query"),
+    )
+    analyzer_calls: list[
+        tuple[
+            Path | str,
+            tuple[runtime_acquisition.DynamicImportRuntimeObservation, ...],
+        ]
+    ] = []
+
+    def fake_analyze(
+        repo_root: Path | str,
+        *,
+        dynamic_import_runtime_observations: tuple[
+            runtime_acquisition.DynamicImportRuntimeObservation, ...
+        ] = (),
+    ) -> SemanticProgram:
+        analyzer_calls.append((repo_root, dynamic_import_runtime_observations))
+        return program
+
+    def fake_compile(
+        received_program: SemanticProgram,
+        query: str,
+        budget: int,
+        *,
+        embed_fn: tool_facade.EmbeddingFunction | None = None,
+    ) -> SemanticCompileResult:
+        assert received_program is program
+        assert query == "query"
+        assert budget == 64
+        assert embed_fn is None
+        return compile_result
+
+    monkeypatch.setattr(tool_facade, "analyze_repository", fake_analyze)
+    monkeypatch.setattr(tool_facade, "compile_semantic_context", fake_compile)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="query",
+            budget=64,
+            dynamic_import_runtime_observations=(observation,),
+        )
+    )
+
+    assert response.program is program
+    assert response.compile_result is compile_result
+    assert analyzer_calls == [(tmp_path, (observation,))]
+
+
+def test_compile_repository_context_attaches_builtin_dynamic_import_runtime_provenance(
+    tmp_path: Path,
+) -> None:
+    """The facade preserves unsupported truth while attaching builtin import runtime."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(name: str) -> None:
+                __import__(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = context_ir.analyze_repository(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "__import__(name)"
+    )
+    observation = _dynamic_import_runtime_observation_for_site(construct.site)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="dynamic import",
+            budget=160,
+            dynamic_import_runtime_observations=(observation,),
+        )
+    )
+    expected_program = runtime_acquisition.attach_dynamic_import_runtime_provenance(
+        base_program,
+        [observation],
+    )
+
+    assert response.program == expected_program
+    assert response.unsupported_constructs == tuple(base_program.unsupported_constructs)
+    assert len(response.program.provenance_records) == 1
+    [record] = response.program.provenance_records
+    assert record.subject_kind is semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.subject_id == construct.construct_id
+
+
+def test_compile_repository_context_forwards_hasattr_runtime_observations(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade forwards bounded ``hasattr`` observations to the analyzer seam."""
+    observation = _hasattr_runtime_observation()
+    syntax = SyntaxProgram(repo_root=tmp_path)
+    program = SemanticProgram(repo_root=tmp_path, syntax=syntax)
+    compile_result = SemanticCompileResult(
+        document="# Semantic Context\nruntime-backed",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(),
+            warnings=(),
+            total_tokens=0,
+            budget=64,
+            confidence=0.5,
+        ),
+        omitted_unit_ids=(),
+        total_tokens=8,
+        budget=64,
+        confidence=0.5,
+        compile_context=SemanticCompileContext(query="query"),
+    )
+    analyzer_calls: list[
+        tuple[
+            Path | str,
+            tuple[runtime_acquisition.HasattrRuntimeObservation, ...],
+        ]
+    ] = []
+
+    def fake_analyze(
+        repo_root: Path | str,
+        *,
+        hasattr_runtime_observations: tuple[
+            runtime_acquisition.HasattrRuntimeObservation, ...
+        ] = (),
+    ) -> SemanticProgram:
+        analyzer_calls.append((repo_root, hasattr_runtime_observations))
+        return program
+
+    def fake_compile(
+        received_program: SemanticProgram,
+        query: str,
+        budget: int,
+        *,
+        embed_fn: tool_facade.EmbeddingFunction | None = None,
+    ) -> SemanticCompileResult:
+        assert received_program is program
+        assert query == "query"
+        assert budget == 64
+        assert embed_fn is None
+        return compile_result
+
+    monkeypatch.setattr(tool_facade, "analyze_repository", fake_analyze)
+    monkeypatch.setattr(tool_facade, "compile_semantic_context", fake_compile)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="query",
+            budget=64,
+            hasattr_runtime_observations=(observation,),
+        )
+    )
+
+    assert response.program is program
+    assert response.compile_result is compile_result
+    assert analyzer_calls == [(tmp_path, (observation,))]
+
+
+def test_compile_repository_context_attaches_hasattr_runtime_provenance(
+    tmp_path: Path,
+) -> None:
+    """The facade preserves unsupported truth while attaching ``hasattr`` runtime."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object, name: str) -> None:
+                hasattr(obj, name)
+                hasattr(obj)
+                vars(obj)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = context_ir.analyze_repository(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "hasattr(obj, name)"
+    )
+    observation = _hasattr_runtime_observation_for_site(construct.site)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="hasattr runtime",
+            budget=160,
+            hasattr_runtime_observations=(observation,),
+        )
+    )
+    expected_program = runtime_acquisition.attach_hasattr_runtime_provenance(
+        base_program,
+        [observation],
+    )
+
+    assert response.program == expected_program
+    assert response.unsupported_constructs == tuple(base_program.unsupported_constructs)
+    assert len(response.program.provenance_records) == 1
+    [record] = response.program.provenance_records
+    assert record.subject_kind is semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.subject_id == construct.construct_id
+
+
+def test_compile_repository_context_forwards_getattr_runtime_observations(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade forwards bounded ``getattr`` observations to the analyzer seam."""
+    observation = _getattr_runtime_observation()
+    syntax = SyntaxProgram(repo_root=tmp_path)
+    program = SemanticProgram(repo_root=tmp_path, syntax=syntax)
+    compile_result = SemanticCompileResult(
+        document="# Semantic Context\nruntime-backed",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(),
+            warnings=(),
+            total_tokens=0,
+            budget=64,
+            confidence=0.5,
+        ),
+        omitted_unit_ids=(),
+        total_tokens=8,
+        budget=64,
+        confidence=0.5,
+        compile_context=SemanticCompileContext(query="query"),
+    )
+    analyzer_calls: list[
+        tuple[
+            Path | str,
+            tuple[runtime_acquisition.GetattrRuntimeObservation, ...],
+        ]
+    ] = []
+
+    def fake_analyze(
+        repo_root: Path | str,
+        *,
+        getattr_runtime_observations: tuple[
+            runtime_acquisition.GetattrRuntimeObservation, ...
+        ] = (),
+    ) -> SemanticProgram:
+        analyzer_calls.append((repo_root, getattr_runtime_observations))
+        return program
+
+    def fake_compile(
+        received_program: SemanticProgram,
+        query: str,
+        budget: int,
+        *,
+        embed_fn: tool_facade.EmbeddingFunction | None = None,
+    ) -> SemanticCompileResult:
+        assert received_program is program
+        assert query == "query"
+        assert budget == 64
+        assert embed_fn is None
+        return compile_result
+
+    monkeypatch.setattr(tool_facade, "analyze_repository", fake_analyze)
+    monkeypatch.setattr(tool_facade, "compile_semantic_context", fake_compile)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="query",
+            budget=64,
+            getattr_runtime_observations=(observation,),
+        )
+    )
+
+    assert response.program is program
+    assert response.compile_result is compile_result
+    assert analyzer_calls == [(tmp_path, (observation,))]
+
+
+def test_compile_repository_context_attaches_getattr_runtime_provenance(
+    tmp_path: Path,
+) -> None:
+    """The facade preserves unsupported truth while attaching ``getattr`` runtime."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object, name: str, default: object) -> None:
+                getattr(obj, name)
+                getattr(obj, name, default)
+                getattr()
+                hasattr(obj, name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = context_ir.analyze_repository(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "getattr(obj, name, default)"
+    )
+    observation = _getattr_runtime_observation_for_site(
+        construct.site,
+        lookup_outcome="returned_default_value",
+    )
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="getattr runtime",
+            budget=160,
+            getattr_runtime_observations=(observation,),
+        )
+    )
+    expected_program = runtime_acquisition.attach_getattr_runtime_provenance(
+        base_program,
+        [observation],
+    )
+
+    assert response.program == expected_program
+    assert response.unsupported_constructs == tuple(base_program.unsupported_constructs)
+    assert len(response.program.provenance_records) == 1
+    [record] = response.program.provenance_records
+    assert record.subject_kind is semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.subject_id == construct.construct_id
+
+
+def test_compile_repository_context_forwards_vars_runtime_observations(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade forwards bounded ``vars`` observations to the analyzer seam."""
+    observation = _vars_runtime_observation()
+    syntax = SyntaxProgram(repo_root=tmp_path)
+    program = SemanticProgram(repo_root=tmp_path, syntax=syntax)
+    compile_result = SemanticCompileResult(
+        document="# Semantic Context\nruntime-backed",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(),
+            warnings=(),
+            total_tokens=0,
+            budget=64,
+            confidence=0.5,
+        ),
+        omitted_unit_ids=(),
+        total_tokens=8,
+        budget=64,
+        confidence=0.5,
+        compile_context=SemanticCompileContext(query="query"),
+    )
+    analyzer_calls: list[
+        tuple[
+            Path | str,
+            tuple[runtime_acquisition.VarsRuntimeObservation, ...],
+        ]
+    ] = []
+
+    def fake_analyze(
+        repo_root: Path | str,
+        *,
+        vars_runtime_observations: tuple[
+            runtime_acquisition.VarsRuntimeObservation, ...
+        ] = (),
+    ) -> SemanticProgram:
+        analyzer_calls.append((repo_root, vars_runtime_observations))
+        return program
+
+    def fake_compile(
+        received_program: SemanticProgram,
+        query: str,
+        budget: int,
+        *,
+        embed_fn: tool_facade.EmbeddingFunction | None = None,
+    ) -> SemanticCompileResult:
+        assert received_program is program
+        assert query == "query"
+        assert budget == 64
+        assert embed_fn is None
+        return compile_result
+
+    monkeypatch.setattr(tool_facade, "analyze_repository", fake_analyze)
+    monkeypatch.setattr(tool_facade, "compile_semantic_context", fake_compile)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="query",
+            budget=64,
+            vars_runtime_observations=(observation,),
+        )
+    )
+
+    assert response.program is program
+    assert response.compile_result is compile_result
+    assert analyzer_calls == [(tmp_path, (observation,))]
+
+
+def test_compile_repository_context_attaches_vars_runtime_provenance(
+    tmp_path: Path,
+) -> None:
+    """The facade preserves unsupported truth while attaching ``vars`` runtime."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object) -> None:
+                vars(obj)
+                vars()
+                dir(obj)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = context_ir.analyze_repository(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "vars(obj)"
+    )
+    observation = _vars_runtime_observation_for_site(construct.site)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="vars runtime",
+            budget=160,
+            vars_runtime_observations=(observation,),
+        )
+    )
+    expected_program = runtime_acquisition.attach_vars_runtime_provenance(
+        base_program,
+        [observation],
+    )
+
+    assert response.program == expected_program
+    assert response.unsupported_constructs == tuple(base_program.unsupported_constructs)
+    assert len(response.program.provenance_records) == 1
+    [record] = response.program.provenance_records
+    assert record.subject_kind is semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.subject_id == construct.construct_id
+
+
+def test_compile_repository_context_attaches_vars_runtime_provenance_for_zero_arg_vars(
+    tmp_path: Path,
+) -> None:
+    """The facade attaches runtime-backed proof for the bounded ``vars()`` branch."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object) -> None:
+                vars(obj)
+                vars()
+                dir(obj)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = context_ir.analyze_repository(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "vars()"
+    )
+    observation = _vars_runtime_observation_for_site(construct.site)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="vars runtime",
+            budget=160,
+            vars_runtime_observations=(observation,),
+        )
+    )
+    expected_program = runtime_acquisition.attach_vars_runtime_provenance(
+        base_program,
+        [observation],
+    )
+
+    assert response.program == expected_program
+    assert response.unsupported_constructs == tuple(base_program.unsupported_constructs)
+    assert len(response.program.provenance_records) == 1
+    [record] = response.program.provenance_records
+    assert record.subject_kind is semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.subject_id == construct.construct_id
 
 
 def test_compile_repository_context_exposes_uncertainty_and_unsupported_constructs(

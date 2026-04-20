@@ -5,6 +5,7 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
+import context_ir.runtime_acquisition as runtime_acquisition
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
@@ -16,11 +17,27 @@ from context_ir.semantic_diagnostics import (
 )
 from context_ir.semantic_renderer import RenderDetail
 from context_ir.semantic_types import (
+    CapabilityTier,
+    EvidenceOriginKind,
+    ReplayStatus,
+    RepositorySnapshotBasis,
+    RuntimeAttachmentLink,
+    SemanticCompileContext,
+    SemanticCompileResult,
+    SemanticDiagnosticBoundary,
+    SemanticDiagnosticBoundaryKind,
     SemanticDiagnosticResult,
+    SemanticDiagnosticUnitStatus,
     SemanticMissEvidence,
     SemanticMissKind,
+    SemanticOptimizationResult,
+    SemanticOptimizationWarning,
+    SemanticOptimizationWarningCode,
     SemanticProgram,
+    SemanticProvenanceRecord,
     SemanticRecompileResult,
+    SemanticSubjectKind,
+    SemanticUnitTraceSummary,
 )
 
 
@@ -47,6 +64,27 @@ def _frontier_id_for(program: SemanticProgram, access_text: str) -> str:
         access.access_id
         for access in program.unresolved_frontier
         if access.access_text == access_text
+    )
+
+
+def _unsupported_id_for(program: SemanticProgram, construct_text: str) -> str:
+    """Return the unsupported-construct ID for ``construct_text``."""
+    return next(
+        construct.construct_id
+        for construct in program.unsupported_constructs
+        if construct.construct_text == construct_text
+    )
+
+
+def _boundary_for(
+    result: SemanticDiagnosticResult,
+    unit_id: str,
+) -> SemanticDiagnosticBoundary:
+    """Return the diagnostic boundary classification for ``unit_id``."""
+    return next(
+        boundary
+        for boundary in result.boundary_classifications
+        if boundary.unit_id == unit_id
     )
 
 
@@ -107,6 +145,84 @@ def _write_nested_path_program(tmp_path: Path) -> None:
             """
         ).lstrip(),
         encoding="utf-8",
+    )
+
+
+def _write_unsupported_program(tmp_path: Path) -> None:
+    """Write a semantic fixture with one explicit unsupported construct."""
+    package_dir = tmp_path / "pkg"
+    package_dir.mkdir()
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "helpers.py").write_text(
+        "def helper() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        "from pkg.helpers import *\n",
+        encoding="utf-8",
+    )
+
+
+def _attach_frontier_runtime_provenance(
+    program: SemanticProgram,
+    frontier_id: str,
+) -> None:
+    """Attach one admissible runtime-backed provenance record to a frontier item."""
+    access = next(
+        candidate
+        for candidate in program.unresolved_frontier
+        if candidate.access_id == frontier_id
+    )
+    program.provenance_records.append(
+        SemanticProvenanceRecord(
+            record_id=f"prov:{frontier_id}:runtime",
+            subject_kind=SemanticSubjectKind.FRONTIER_ITEM,
+            subject_id=frontier_id,
+            capability_tier=CapabilityTier.RUNTIME_BACKED,
+            evidence_origin=EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+            origin_detail="probe:frontier:runtime",
+            replay_status=ReplayStatus.REPRODUCIBLE_RUNTIME,
+            repository_snapshot_basis=RepositorySnapshotBasis(
+                snapshot_kind="git_commit",
+                snapshot_id="abc123def456",
+            ),
+            attachment_links=(
+                RuntimeAttachmentLink(
+                    attachment_id=f"attachment:{frontier_id}:stdout",
+                    attachment_role="stdout",
+                ),
+            ),
+            subject_sites=(access.site,),
+        )
+    )
+
+
+def _dynamic_import_runtime_observation(
+    site,
+) -> runtime_acquisition.DynamicImportRuntimeObservation:
+    """Create one admissible dynamic-import observation for diagnostics tests."""
+    return runtime_acquisition.DynamicImportRuntimeObservation(
+        site=site,
+        probe_identifier="probe:dynamic-import",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="imported_module",
+                value="pkg.dynamic",
+            ),
+        ),
     )
 
 
@@ -298,7 +414,7 @@ def test_diagnose_semantic_miss_rejects_arbitrary_substring_path_evidence(
 def test_diagnose_semantic_miss_distinguishes_omitted_too_shallow_and_sufficient(
     tmp_path: Path,
 ) -> None:
-    """Diagnosis distinguishes omitted units, shallow units, and surfaced ones."""
+    """Diagnosis separates proof misses from surfaced non-proof boundary work."""
     _write_shallow_upgrade_program(tmp_path)
     program = _semantic_program(tmp_path)
     tight_result = compile_semantic_context(program, "run", budget=200)
@@ -344,16 +460,171 @@ def test_diagnose_semantic_miss_distinguishes_omitted_too_shallow_and_sufficient
         ),
         program,
     )
+    missing_call_boundary = _boundary_for(missing_call_diagnostic, missing_call_id)
+    surfaced_boundary = _boundary_for(surfaced_diagnostic, missing_call_id)
 
     assert helper_selection.detail == RenderDetail.SOURCE.value
     assert helper_diagnostic.sufficiently_represented_unit_ids == (helper_id,)
     assert "sufficiently represented" in helper_diagnostic.reason
     assert extra_diagnostic.omitted_unit_ids == (extra_id,)
     assert "omitted due to budget pressure" in extra_diagnostic.reason
-    assert missing_call_diagnostic.too_shallow_unit_ids == (missing_call_id,)
-    assert "too shallow" in missing_call_diagnostic.reason
-    assert surfaced_diagnostic.too_shallow_unit_ids == (missing_call_id,)
-    assert "too shallow" in surfaced_diagnostic.reason
+    assert missing_call_diagnostic.sufficiently_represented_unit_ids == (
+        missing_call_id,
+    )
+    assert missing_call_boundary.status is (
+        SemanticDiagnosticUnitStatus.SUFFICIENTLY_REPRESENTED
+    )
+    assert missing_call_boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_MISSING_RUNTIME_SUPPORT
+    )
+    assert missing_call_boundary.primary_capability_tier is (
+        CapabilityTier.HEURISTIC_FRONTIER
+    )
+    assert missing_call_boundary.has_attached_runtime_provenance is False
+    assert "non-proof boundary work without attached runtime-backed support" in (
+        missing_call_diagnostic.reason
+    )
+    assert surfaced_diagnostic.sufficiently_represented_unit_ids == (missing_call_id,)
+    assert surfaced_boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_MISSING_RUNTIME_SUPPORT
+    )
+
+
+def test_diagnose_semantic_miss_uses_warning_trace_summary_for_omitted_unsupported(
+    tmp_path: Path,
+) -> None:
+    """Warning trace summaries preserve attached runtime support additively."""
+    _write_unsupported_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    unsupported_id = _unsupported_id_for(program, "from pkg.helpers import *")
+    trace_summary = SemanticUnitTraceSummary(
+        subject_id=unsupported_id,
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+        primary_evidence_origin=EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+        primary_replay_status=ReplayStatus.OPAQUE_BOUNDARY,
+        attached_runtime_provenance_record_ids=("prov:unsupported:runtime:1",),
+    )
+    previous_result = SemanticCompileResult(
+        document="# Context",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(unsupported_id,),
+            warnings=(
+                SemanticOptimizationWarning(
+                    code=SemanticOptimizationWarningCode.OMITTED_UNCERTAINTY,
+                    message="unsupported boundary was omitted under budget pressure",
+                    unit_id=unsupported_id,
+                    trace_summary=trace_summary,
+                ),
+            ),
+            total_tokens=0,
+            budget=64,
+            confidence=0.0,
+        ),
+        omitted_unit_ids=(unsupported_id,),
+        total_tokens=2,
+        budget=64,
+        confidence=0.0,
+        compile_context=SemanticCompileContext(query="star import"),
+    )
+
+    result = diagnose_semantic_miss(
+        previous_result,
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="from pkg.helpers import *",
+        ),
+        program,
+    )
+    boundary = _boundary_for(result, unsupported_id)
+
+    assert result.omitted_unit_ids == (unsupported_id,)
+    assert boundary.status is SemanticDiagnosticUnitStatus.OMITTED
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert boundary.has_attached_runtime_provenance is True
+    assert boundary.trace_summary == trace_summary
+    assert "attached runtime-backed provenance were omitted" in result.reason
+
+
+def test_diagnose_semantic_miss_uses_additive_wording_for_importlib_runtime_support(
+    tmp_path: Path,
+) -> None:
+    """Importlib runtime-backed unsupported units stay additive in diagnostics."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = _semantic_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "importlib.import_module(name)"
+    )
+    program = runtime_acquisition.attach_dynamic_import_runtime_provenance(
+        base_program,
+        [_dynamic_import_runtime_observation(construct.site)],
+    )
+    [record] = program.provenance_records
+    trace_summary = SemanticUnitTraceSummary(
+        subject_id=construct.construct_id,
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+        primary_evidence_origin=EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+        primary_replay_status=ReplayStatus.OPAQUE_BOUNDARY,
+        attached_runtime_provenance_record_ids=(record.record_id,),
+    )
+    previous_result = SemanticCompileResult(
+        document="# Context",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(construct.construct_id,),
+            warnings=(
+                SemanticOptimizationWarning(
+                    code=SemanticOptimizationWarningCode.OMITTED_UNCERTAINTY,
+                    message="unsupported boundary was omitted under budget pressure",
+                    unit_id=construct.construct_id,
+                    trace_summary=trace_summary,
+                ),
+            ),
+            total_tokens=0,
+            budget=64,
+            confidence=0.0,
+        ),
+        omitted_unit_ids=(construct.construct_id,),
+        total_tokens=2,
+        budget=64,
+        confidence=0.0,
+        compile_context=SemanticCompileContext(query="dynamic import"),
+    )
+
+    result = diagnose_semantic_miss(
+        previous_result,
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="importlib.import_module(name)",
+        ),
+        program,
+    )
+    boundary = _boundary_for(result, construct.construct_id)
+
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.has_attached_runtime_provenance is True
+    assert boundary.trace_summary == trace_summary
+    assert "attached runtime-backed provenance were omitted" in result.reason
 
 
 def test_diagnose_semantic_miss_recommends_grounded_units_and_dependencies(
@@ -402,6 +673,86 @@ def test_diagnose_semantic_miss_returns_honest_result_for_ungrounded_evidence(
     assert result.too_shallow_unit_ids == ()
     assert result.recommended_expansions == ()
     assert "Could not ground" in result.reason
+
+
+def test_recompile_semantic_context_keeps_frontier_without_runtime_as_boundary_work(
+    tmp_path: Path,
+) -> None:
+    """A surfaced frontier without runtime support is not upgraded like proof."""
+    _write_sample_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    previous_result = compile_semantic_context(program, "run", budget=160)
+    frontier_id = _frontier_id_for(program, "missing_call")
+
+    result = recompile_semantic_context(
+        previous_result,
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="missing_call",
+        ),
+        delta_budget=80,
+        program=program,
+    )
+    boundary = _boundary_for(result.diagnostic, frontier_id)
+    frontier_detail = next(
+        selection.detail
+        for selection in result.compile_result.optimization.selections
+        if selection.unit_id == frontier_id
+    )
+
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_MISSING_RUNTIME_SUPPORT
+    )
+    assert result.diagnostic.too_shallow_unit_ids == ()
+    assert result.upgraded_unit_ids == ()
+    assert frontier_detail == RenderDetail.IDENTITY.value
+
+
+def test_recompile_semantic_context_uses_attached_runtime_additively_for_frontier(
+    tmp_path: Path,
+) -> None:
+    """Attached runtime support can deepen frontier context without rewriting tier."""
+    _write_sample_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    frontier_id = _frontier_id_for(program, "missing_call")
+    _attach_frontier_runtime_provenance(program, frontier_id)
+    previous_result = compile_semantic_context(program, "run", budget=160)
+
+    result = recompile_semantic_context(
+        previous_result,
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="missing_call",
+        ),
+        delta_budget=80,
+        program=program,
+    )
+    boundary = _boundary_for(result.diagnostic, frontier_id)
+    upgraded_detail = next(
+        selection.detail
+        for selection in result.compile_result.optimization.selections
+        if selection.unit_id == frontier_id
+    )
+    upgraded_trace = next(
+        selection.trace_summary
+        for selection in result.compile_result.optimization.selections
+        if selection.unit_id == frontier_id
+    )
+
+    assert boundary.status is SemanticDiagnosticUnitStatus.TOO_SHALLOW
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.HEURISTIC_FRONTIER_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.primary_capability_tier is CapabilityTier.HEURISTIC_FRONTIER
+    assert boundary.has_attached_runtime_provenance is True
+    assert frontier_id in result.upgraded_unit_ids
+    assert upgraded_detail in {
+        RenderDetail.SUMMARY.value,
+        RenderDetail.SOURCE.value,
+    }
+    assert upgraded_trace is not None
+    assert upgraded_trace.primary_capability_tier is CapabilityTier.HEURISTIC_FRONTIER
+    assert upgraded_trace.has_attached_runtime_provenance is True
 
 
 def test_recompile_semantic_context_returns_separate_result_without_mutation(
