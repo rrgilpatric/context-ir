@@ -13,6 +13,7 @@ from context_ir.semantic_types import (
     CallSiteFact,
     CapabilityTier,
     EvidenceOriginKind,
+    MetaclassKeywordFact,
     ReplayStatus,
     RepositorySnapshotBasis,
     RuntimeAttachmentLink,
@@ -152,8 +153,110 @@ class GetattrRuntimeObservation:
 
 
 @dataclass(frozen=True)
+class DirRuntimeObservation:
+    """Admissible runtime observation for one attachable ``dir`` boundary."""
+
+    site: SourceSite
+    probe_identifier: str
+    probe_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    attachment_links: tuple[RuntimeAttachmentLink, ...]
+    replay_target: str
+    replay_selector: str
+    replay_inputs: tuple[_RuntimeObservationField, ...] = ()
+    runtime_assumptions: tuple[_RuntimeObservationField, ...] = ()
+    normalized_payload: tuple[_RuntimeObservationField, ...] = ()
+    durable_payload_reference: str | None = None
+
+
+@dataclass(frozen=True)
 class VarsRuntimeObservation:
     """Admissible runtime observation for one attachable ``vars`` boundary."""
+
+    site: SourceSite
+    probe_identifier: str
+    probe_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    attachment_links: tuple[RuntimeAttachmentLink, ...]
+    replay_target: str
+    replay_selector: str
+    replay_inputs: tuple[_RuntimeObservationField, ...] = ()
+    runtime_assumptions: tuple[_RuntimeObservationField, ...] = ()
+    normalized_payload: tuple[_RuntimeObservationField, ...] = ()
+    durable_payload_reference: str | None = None
+
+
+@dataclass(frozen=True)
+class GlobalsRuntimeObservation:
+    """Admissible runtime observation for one attachable ``globals()`` boundary."""
+
+    site: SourceSite
+    probe_identifier: str
+    probe_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    attachment_links: tuple[RuntimeAttachmentLink, ...]
+    replay_target: str
+    replay_selector: str
+    replay_inputs: tuple[_RuntimeObservationField, ...] = ()
+    runtime_assumptions: tuple[_RuntimeObservationField, ...] = ()
+    normalized_payload: tuple[_RuntimeObservationField, ...] = ()
+    durable_payload_reference: str | None = None
+
+
+@dataclass(frozen=True)
+class LocalsRuntimeObservation:
+    """Admissible runtime observation for one attachable ``locals()`` boundary."""
+
+    site: SourceSite
+    probe_identifier: str
+    probe_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    attachment_links: tuple[RuntimeAttachmentLink, ...]
+    replay_target: str
+    replay_selector: str
+    replay_inputs: tuple[_RuntimeObservationField, ...] = ()
+    runtime_assumptions: tuple[_RuntimeObservationField, ...] = ()
+    normalized_payload: tuple[_RuntimeObservationField, ...] = ()
+    durable_payload_reference: str | None = None
+
+
+@dataclass(frozen=True)
+class SetattrRuntimeObservation:
+    """Admissible runtime observation for one attachable ``setattr`` boundary."""
+
+    site: SourceSite
+    probe_identifier: str
+    probe_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    attachment_links: tuple[RuntimeAttachmentLink, ...]
+    replay_target: str
+    replay_selector: str
+    replay_inputs: tuple[_RuntimeObservationField, ...] = ()
+    runtime_assumptions: tuple[_RuntimeObservationField, ...] = ()
+    normalized_payload: tuple[_RuntimeObservationField, ...] = ()
+    durable_payload_reference: str | None = None
+
+
+@dataclass(frozen=True)
+class DelattrRuntimeObservation:
+    """Admissible runtime observation for one attachable ``delattr`` boundary."""
+
+    site: SourceSite
+    probe_identifier: str
+    probe_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    attachment_links: tuple[RuntimeAttachmentLink, ...]
+    replay_target: str
+    replay_selector: str
+    replay_inputs: tuple[_RuntimeObservationField, ...] = ()
+    runtime_assumptions: tuple[_RuntimeObservationField, ...] = ()
+    normalized_payload: tuple[_RuntimeObservationField, ...] = ()
+    durable_payload_reference: str | None = None
+
+
+@dataclass(frozen=True)
+class MetaclassBehaviorRuntimeObservation:
+    """Admissible runtime observation for one attachable metaclass keyword site."""
 
     site: SourceSite
     probe_identifier: str
@@ -331,6 +434,168 @@ def attach_vars_runtime_provenance(
                 observation=observation,
             )
         )
+    if not matched_observations:
+        return program
+    return attach_runtime_observations(program, matched_observations)
+
+
+def attach_globals_runtime_provenance(
+    program: SemanticProgram,
+    observations: Sequence[GlobalsRuntimeObservation],
+) -> SemanticProgram:
+    """Attach runtime-backed provenance to eligible ``globals()`` boundaries."""
+    if not observations:
+        return program
+
+    eligible_constructs = _eligible_globals_constructs(program)
+    matched_observations = [
+        _runtime_observation_from_globals_observation(
+            construct=construct,
+            observation=observation,
+        )
+        for observation in observations
+        if (
+            construct := eligible_constructs.get(
+                _source_site_identity(observation.site)
+            )
+        )
+        is not None
+    ]
+    if not matched_observations:
+        return program
+    return attach_runtime_observations(program, matched_observations)
+
+
+def attach_setattr_runtime_provenance(
+    program: SemanticProgram,
+    observations: Sequence[SetattrRuntimeObservation],
+) -> SemanticProgram:
+    """Attach runtime-backed provenance to eligible ``setattr`` boundaries."""
+    if not observations:
+        return program
+
+    eligible_constructs = _eligible_setattr_constructs(program)
+    matched_observations = [
+        _runtime_observation_from_setattr_observation(
+            construct=construct,
+            observation=observation,
+        )
+        for observation in observations
+        if (
+            construct := eligible_constructs.get(
+                _source_site_identity(observation.site)
+            )
+        )
+        is not None
+    ]
+    if not matched_observations:
+        return program
+    return attach_runtime_observations(program, matched_observations)
+
+
+def attach_locals_runtime_provenance(
+    program: SemanticProgram,
+    observations: Sequence[LocalsRuntimeObservation],
+) -> SemanticProgram:
+    """Attach runtime-backed provenance to eligible ``locals()`` boundaries."""
+    if not observations:
+        return program
+
+    eligible_constructs = _eligible_locals_constructs(program)
+    matched_observations = [
+        _runtime_observation_from_locals_observation(
+            construct=construct,
+            observation=observation,
+        )
+        for observation in observations
+        if (
+            construct := eligible_constructs.get(
+                _source_site_identity(observation.site)
+            )
+        )
+        is not None
+    ]
+    if not matched_observations:
+        return program
+    return attach_runtime_observations(program, matched_observations)
+
+
+def attach_delattr_runtime_provenance(
+    program: SemanticProgram,
+    observations: Sequence[DelattrRuntimeObservation],
+) -> SemanticProgram:
+    """Attach runtime-backed provenance to eligible ``delattr`` boundaries."""
+    if not observations:
+        return program
+
+    eligible_constructs = _eligible_delattr_constructs(program)
+    matched_observations = [
+        _runtime_observation_from_delattr_observation(
+            construct=construct,
+            observation=observation,
+        )
+        for observation in observations
+        if (
+            construct := eligible_constructs.get(
+                _source_site_identity(observation.site)
+            )
+        )
+        is not None
+    ]
+    if not matched_observations:
+        return program
+    return attach_runtime_observations(program, matched_observations)
+
+
+def attach_dir_runtime_provenance(
+    program: SemanticProgram,
+    observations: Sequence[DirRuntimeObservation],
+) -> SemanticProgram:
+    """Attach runtime-backed provenance to eligible ``dir`` boundaries."""
+    if not observations:
+        return program
+
+    eligible_constructs = _eligible_dir_constructs(program)
+    matched_observations = [
+        _runtime_observation_from_dir_observation(
+            construct=construct,
+            observation=observation,
+        )
+        for observation in observations
+        if (
+            construct := eligible_constructs.get(
+                _source_site_identity(observation.site)
+            )
+        )
+        is not None
+    ]
+    if not matched_observations:
+        return program
+    return attach_runtime_observations(program, matched_observations)
+
+
+def attach_metaclass_behavior_runtime_provenance(
+    program: SemanticProgram,
+    observations: Sequence[MetaclassBehaviorRuntimeObservation],
+) -> SemanticProgram:
+    """Attach runtime-backed provenance to eligible metaclass keyword boundaries."""
+    if not observations:
+        return program
+
+    eligible_constructs = _eligible_metaclass_behavior_constructs(program)
+    matched_observations = [
+        _runtime_observation_from_metaclass_behavior_observation(
+            construct=construct,
+            observation=observation,
+        )
+        for observation in observations
+        if (
+            construct := eligible_constructs.get(
+                _source_site_identity(observation.site)
+            )
+        )
+        is not None
+    ]
     if not matched_observations:
         return program
     return attach_runtime_observations(program, matched_observations)
@@ -627,6 +892,169 @@ def _eligible_vars_constructs(
     return eligible_constructs
 
 
+def _eligible_globals_constructs(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], UnsupportedConstruct]:
+    """Index eligible ``globals()`` unsupported constructs by source site."""
+    call_sites_by_id = {
+        call_site.call_site_id: call_site for call_site in program.syntax.call_sites
+    }
+    eligible_constructs: dict[tuple[str, int, int, int, int], UnsupportedConstruct] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+            continue
+        call_site = _call_site_for_unsupported_construct(
+            construct=construct,
+            call_sites_by_id=call_sites_by_id,
+        )
+        if call_site is None or not _is_supported_globals_call_site(call_site):
+            continue
+        source_identity = _source_site_identity(construct.site)
+        if source_identity in eligible_constructs:
+            raise ValueError(
+                "multiple eligible globals constructs share the same source site"
+            )
+        eligible_constructs[source_identity] = construct
+    return eligible_constructs
+
+
+def _eligible_locals_constructs(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], UnsupportedConstruct]:
+    """Index eligible ``locals()`` unsupported constructs by source site."""
+    call_sites_by_id = {
+        call_site.call_site_id: call_site for call_site in program.syntax.call_sites
+    }
+    eligible_constructs: dict[tuple[str, int, int, int, int], UnsupportedConstruct] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+            continue
+        call_site = _call_site_for_unsupported_construct(
+            construct=construct,
+            call_sites_by_id=call_sites_by_id,
+        )
+        if call_site is None or not _is_supported_locals_call_site(call_site):
+            continue
+        source_identity = _source_site_identity(construct.site)
+        if source_identity in eligible_constructs:
+            raise ValueError(
+                "multiple eligible locals constructs share the same source site"
+            )
+        eligible_constructs[source_identity] = construct
+    return eligible_constructs
+
+
+def _eligible_delattr_constructs(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], UnsupportedConstruct]:
+    """Index eligible ``delattr(obj, name)`` constructs by source site."""
+    call_sites_by_id = {
+        call_site.call_site_id: call_site for call_site in program.syntax.call_sites
+    }
+    eligible_constructs: dict[tuple[str, int, int, int, int], UnsupportedConstruct] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+            continue
+        call_site = _call_site_for_unsupported_construct(
+            construct=construct,
+            call_sites_by_id=call_sites_by_id,
+        )
+        if call_site is None or not _is_supported_delattr_call_site(call_site):
+            continue
+        source_identity = _source_site_identity(construct.site)
+        if source_identity in eligible_constructs:
+            raise ValueError(
+                "multiple eligible delattr constructs share the same source site"
+            )
+        eligible_constructs[source_identity] = construct
+    return eligible_constructs
+
+
+def _eligible_setattr_constructs(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], UnsupportedConstruct]:
+    """Index eligible ``setattr(obj, name, value)`` constructs by source site."""
+    call_sites_by_id = {
+        call_site.call_site_id: call_site for call_site in program.syntax.call_sites
+    }
+    eligible_constructs: dict[tuple[str, int, int, int, int], UnsupportedConstruct] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+            continue
+        call_site = _call_site_for_unsupported_construct(
+            construct=construct,
+            call_sites_by_id=call_sites_by_id,
+        )
+        if call_site is None or not _is_supported_setattr_call_site(call_site):
+            continue
+        source_identity = _source_site_identity(construct.site)
+        if source_identity in eligible_constructs:
+            raise ValueError(
+                "multiple eligible setattr constructs share the same source site"
+            )
+        eligible_constructs[source_identity] = construct
+    return eligible_constructs
+
+
+def _eligible_dir_constructs(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], UnsupportedConstruct]:
+    """Index eligible ``dir`` unsupported constructs by source site."""
+    call_sites_by_id = {
+        call_site.call_site_id: call_site for call_site in program.syntax.call_sites
+    }
+    eligible_constructs: dict[tuple[str, int, int, int, int], UnsupportedConstruct] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.REFLECTIVE_BUILTIN:
+            continue
+        call_site = _call_site_for_unsupported_construct(
+            construct=construct,
+            call_sites_by_id=call_sites_by_id,
+        )
+        if call_site is None or not _is_supported_dir_call_site(call_site):
+            continue
+        source_identity = _source_site_identity(construct.site)
+        if source_identity in eligible_constructs:
+            raise ValueError(
+                "multiple eligible dir constructs share the same source site"
+            )
+        eligible_constructs[source_identity] = construct
+    return eligible_constructs
+
+
+def _eligible_metaclass_behavior_constructs(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], UnsupportedConstruct]:
+    """Index eligible metaclass keyword constructs by preserved keyword site."""
+    metaclass_keywords_by_id = {
+        metaclass_keyword.metaclass_keyword_id: metaclass_keyword
+        for metaclass_keyword in program.syntax.metaclass_keywords
+    }
+    eligible_constructs: dict[tuple[str, int, int, int, int], UnsupportedConstruct] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.METACLASS_BEHAVIOR:
+            continue
+        metaclass_keyword = _metaclass_keyword_for_unsupported_construct(
+            construct=construct,
+            metaclass_keywords_by_id=metaclass_keywords_by_id,
+        )
+        if metaclass_keyword is None:
+            continue
+        if construct.construct_text != metaclass_keyword.keyword_text:
+            continue
+        if _source_site_identity(construct.site) != _source_site_identity(
+            metaclass_keyword.site
+        ):
+            continue
+        source_identity = _source_site_identity(construct.site)
+        if source_identity in eligible_constructs:
+            raise ValueError(
+                "multiple eligible metaclass constructs share the same source site"
+            )
+        eligible_constructs[source_identity] = construct
+    return eligible_constructs
+
+
 def _call_site_for_unsupported_construct(
     *,
     construct: UnsupportedConstruct,
@@ -637,6 +1065,18 @@ def _call_site_for_unsupported_construct(
         return None
     call_site_id = construct.construct_id.removeprefix("unsupported:")
     return call_sites_by_id.get(call_site_id)
+
+
+def _metaclass_keyword_for_unsupported_construct(
+    *,
+    construct: UnsupportedConstruct,
+    metaclass_keywords_by_id: dict[str, MetaclassKeywordFact],
+) -> MetaclassKeywordFact | None:
+    """Return the originating metaclass keyword for one unsupported construct."""
+    if not construct.construct_id.startswith("unsupported:"):
+        return None
+    metaclass_keyword_id = construct.construct_id.removeprefix("unsupported:")
+    return metaclass_keywords_by_id.get(metaclass_keyword_id)
 
 
 def _is_supported_dynamic_import_call_site(callee_text: str) -> bool:
@@ -687,6 +1127,66 @@ def _is_supported_vars_call_site(call_site: CallSiteFact) -> bool:
     except SyntaxError:
         return False
     return isinstance(expression, ast.Name) and expression.id == "vars"
+
+
+def _is_supported_globals_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is the accepted attachable ``globals()`` form."""
+    if call_site.argument_count != 0:
+        return False
+
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    return isinstance(expression, ast.Name) and expression.id == "globals"
+
+
+def _is_supported_locals_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is the accepted attachable ``locals()`` form."""
+    if call_site.argument_count != 0:
+        return False
+
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    return isinstance(expression, ast.Name) and expression.id == "locals"
+
+
+def _is_supported_setattr_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is the accepted attachable ``setattr`` form."""
+    if call_site.argument_count != 3:
+        return False
+
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    return isinstance(expression, ast.Name) and expression.id == "setattr"
+
+
+def _is_supported_delattr_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is the accepted attachable ``delattr`` form."""
+    if call_site.argument_count != 2:
+        return False
+
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    return isinstance(expression, ast.Name) and expression.id == "delattr"
+
+
+def _is_supported_dir_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is an accepted attachable ``dir`` form."""
+    if call_site.argument_count not in {0, 1}:
+        return False
+
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    return isinstance(expression, ast.Name) and expression.id == "dir"
 
 
 def _attribute_chain_names(expression: ast.AST) -> tuple[str, ...] | None:
@@ -807,6 +1307,152 @@ def _runtime_observation_from_vars_observation(
     )
 
 
+def _runtime_observation_from_globals_observation(
+    *,
+    construct: UnsupportedConstruct,
+    observation: GlobalsRuntimeObservation,
+) -> _RuntimeObservation:
+    """Translate one matched ``globals()`` observation into the generic contract."""
+    _validate_globals_lookup_outcome(observation.normalized_payload)
+    return _RuntimeObservation(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=construct.construct_id,
+        outcome=_RuntimeObservationOutcome.OBSERVED,
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        attachment_links=observation.attachment_links,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=observation.replay_inputs,
+        runtime_assumptions=observation.runtime_assumptions,
+        normalized_payload=observation.normalized_payload,
+        durable_payload_reference=observation.durable_payload_reference,
+    )
+
+
+def _runtime_observation_from_locals_observation(
+    *,
+    construct: UnsupportedConstruct,
+    observation: LocalsRuntimeObservation,
+) -> _RuntimeObservation:
+    """Translate one matched ``locals()`` observation into the generic contract."""
+    _validate_locals_lookup_outcome(observation.normalized_payload)
+    return _RuntimeObservation(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=construct.construct_id,
+        outcome=_RuntimeObservationOutcome.OBSERVED,
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        attachment_links=observation.attachment_links,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=observation.replay_inputs,
+        runtime_assumptions=observation.runtime_assumptions,
+        normalized_payload=observation.normalized_payload,
+        durable_payload_reference=observation.durable_payload_reference,
+    )
+
+
+def _runtime_observation_from_delattr_observation(
+    *,
+    construct: UnsupportedConstruct,
+    observation: DelattrRuntimeObservation,
+) -> _RuntimeObservation:
+    """Translate one matched ``delattr`` observation into the generic contract."""
+    _validate_delattr_mutation_outcome(observation.normalized_payload)
+    return _RuntimeObservation(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=construct.construct_id,
+        outcome=_RuntimeObservationOutcome.OBSERVED,
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        attachment_links=observation.attachment_links,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=observation.replay_inputs,
+        runtime_assumptions=observation.runtime_assumptions,
+        normalized_payload=observation.normalized_payload,
+        durable_payload_reference=observation.durable_payload_reference,
+    )
+
+
+def _runtime_observation_from_setattr_observation(
+    *,
+    construct: UnsupportedConstruct,
+    observation: SetattrRuntimeObservation,
+) -> _RuntimeObservation:
+    """Translate one matched ``setattr`` observation into the generic contract."""
+    _validate_setattr_mutation_outcome(observation.normalized_payload)
+    _validate_setattr_durable_payload_reference(observation)
+    return _RuntimeObservation(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=construct.construct_id,
+        outcome=_RuntimeObservationOutcome.OBSERVED,
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        attachment_links=observation.attachment_links,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=observation.replay_inputs,
+        runtime_assumptions=observation.runtime_assumptions,
+        normalized_payload=observation.normalized_payload,
+        durable_payload_reference=observation.durable_payload_reference,
+    )
+
+
+def _runtime_observation_from_dir_observation(
+    *,
+    construct: UnsupportedConstruct,
+    observation: DirRuntimeObservation,
+) -> _RuntimeObservation:
+    """Translate one matched ``dir`` observation into the generic contract."""
+    _validate_dir_durable_payload_reference(observation)
+    return _RuntimeObservation(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=construct.construct_id,
+        outcome=_RuntimeObservationOutcome.OBSERVED,
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        attachment_links=observation.attachment_links,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=observation.replay_inputs,
+        runtime_assumptions=observation.runtime_assumptions,
+        normalized_payload=observation.normalized_payload,
+        durable_payload_reference=observation.durable_payload_reference,
+    )
+
+
+def _runtime_observation_from_metaclass_behavior_observation(
+    *,
+    construct: UnsupportedConstruct,
+    observation: MetaclassBehaviorRuntimeObservation,
+) -> _RuntimeObservation:
+    """Translate one matched metaclass observation into the generic contract."""
+    _validate_metaclass_behavior_class_creation_outcome(observation.normalized_payload)
+    _validate_metaclass_behavior_durable_payload_reference(observation)
+    return _RuntimeObservation(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=construct.construct_id,
+        outcome=_RuntimeObservationOutcome.OBSERVED,
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        attachment_links=observation.attachment_links,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=observation.replay_inputs,
+        runtime_assumptions=observation.runtime_assumptions,
+        normalized_payload=observation.normalized_payload,
+        durable_payload_reference=observation.durable_payload_reference,
+    )
+
+
 def _validate_getattr_lookup_outcome(
     normalized_payload: tuple[_RuntimeObservationField, ...],
     *,
@@ -868,6 +1514,138 @@ def _validate_vars_lookup_outcome(
         raise ValueError(
             "vars runtime observations require lookup_outcome to be "
             f"{allowed_outcomes_text}"
+        )
+
+
+def _validate_globals_lookup_outcome(
+    normalized_payload: tuple[_RuntimeObservationField, ...],
+) -> None:
+    """Require the bounded ``globals()`` runtime payload for this slice."""
+    payload = _normalized_field_mapping(
+        normalized_payload,
+        field_name="normalized_payload",
+    )
+    lookup_outcome = payload.get("lookup_outcome")
+    if lookup_outcome is None:
+        raise ValueError(
+            "globals runtime observations require normalized_payload.lookup_outcome"
+        )
+    if lookup_outcome != "returned_namespace":
+        raise ValueError(
+            "globals runtime observations require lookup_outcome to be "
+            "'returned_namespace'"
+        )
+
+
+def _validate_locals_lookup_outcome(
+    normalized_payload: tuple[_RuntimeObservationField, ...],
+) -> None:
+    """Require the bounded ``locals()`` runtime payload for this slice."""
+    payload = _normalized_field_mapping(
+        normalized_payload,
+        field_name="normalized_payload",
+    )
+    lookup_outcome = payload.get("lookup_outcome")
+    if lookup_outcome is None:
+        raise ValueError(
+            "locals runtime observations require normalized_payload.lookup_outcome"
+        )
+    if lookup_outcome != "returned_namespace":
+        raise ValueError(
+            "locals runtime observations require lookup_outcome to be "
+            "'returned_namespace'"
+        )
+
+
+def _validate_setattr_mutation_outcome(
+    normalized_payload: tuple[_RuntimeObservationField, ...],
+) -> None:
+    """Require the bounded ``setattr`` runtime payload for this slice."""
+    payload = _normalized_field_mapping(
+        normalized_payload,
+        field_name="normalized_payload",
+    )
+    mutation_outcome = payload.get("mutation_outcome")
+    if mutation_outcome is None:
+        raise ValueError(
+            "setattr runtime observations require normalized_payload.mutation_outcome"
+        )
+    if mutation_outcome != "returned_none":
+        raise ValueError(
+            "setattr runtime observations require mutation_outcome to be "
+            "'returned_none'"
+        )
+
+
+def _validate_setattr_durable_payload_reference(
+    observation: SetattrRuntimeObservation,
+) -> None:
+    """Require durable passed-value proof for the bounded ``setattr`` seam."""
+    durable_payload_reference = observation.durable_payload_reference
+    if durable_payload_reference is None or not durable_payload_reference.strip():
+        raise ValueError(
+            "setattr runtime observations require durable_payload_reference"
+        )
+
+
+def _validate_delattr_mutation_outcome(
+    normalized_payload: tuple[_RuntimeObservationField, ...],
+) -> None:
+    """Require the bounded ``delattr`` runtime payload for this slice."""
+    payload = _normalized_field_mapping(
+        normalized_payload,
+        field_name="normalized_payload",
+    )
+    mutation_outcome = payload.get("mutation_outcome")
+    if mutation_outcome is None:
+        raise ValueError(
+            "delattr runtime observations require normalized_payload.mutation_outcome"
+        )
+    if mutation_outcome != "deleted_attribute":
+        raise ValueError(
+            "delattr runtime observations require mutation_outcome to be "
+            "'deleted_attribute'"
+        )
+
+
+def _validate_dir_durable_payload_reference(
+    observation: DirRuntimeObservation,
+) -> None:
+    """Require durable directory-listing proof for the bounded ``dir`` seam."""
+    durable_payload_reference = observation.durable_payload_reference
+    if durable_payload_reference is None or not durable_payload_reference.strip():
+        raise ValueError("dir runtime observations require durable_payload_reference")
+
+
+def _validate_metaclass_behavior_class_creation_outcome(
+    normalized_payload: tuple[_RuntimeObservationField, ...],
+) -> None:
+    """Require the bounded metaclass runtime payload for this slice."""
+    payload = _normalized_field_mapping(
+        normalized_payload,
+        field_name="normalized_payload",
+    )
+    class_creation_outcome = payload.get("class_creation_outcome")
+    if class_creation_outcome is None:
+        raise ValueError(
+            "metaclass behavior runtime observations require "
+            "normalized_payload.class_creation_outcome"
+        )
+    if class_creation_outcome != "created_class":
+        raise ValueError(
+            "metaclass behavior runtime observations require "
+            "class_creation_outcome to be 'created_class'"
+        )
+
+
+def _validate_metaclass_behavior_durable_payload_reference(
+    observation: MetaclassBehaviorRuntimeObservation,
+) -> None:
+    """Require durable created-class proof for the bounded metaclass seam."""
+    durable_payload_reference = observation.durable_payload_reference
+    if durable_payload_reference is None or not durable_payload_reference.strip():
+        raise ValueError(
+            "metaclass behavior runtime observations require durable_payload_reference"
         )
 
 
@@ -972,13 +1750,25 @@ def _find_unsupported_construct(
 
 
 __all__ = [
+    "DelattrRuntimeObservation",
     "DynamicImportRuntimeObservation",
+    "DirRuntimeObservation",
     "GetattrRuntimeObservation",
+    "GlobalsRuntimeObservation",
     "HasattrRuntimeObservation",
+    "LocalsRuntimeObservation",
+    "MetaclassBehaviorRuntimeObservation",
+    "SetattrRuntimeObservation",
     "VarsRuntimeObservation",
+    "attach_delattr_runtime_provenance",
     "attach_dynamic_import_runtime_provenance",
+    "attach_dir_runtime_provenance",
     "attach_getattr_runtime_provenance",
+    "attach_globals_runtime_provenance",
     "attach_hasattr_runtime_provenance",
+    "attach_locals_runtime_provenance",
+    "attach_metaclass_behavior_runtime_provenance",
+    "attach_setattr_runtime_provenance",
     "attach_vars_runtime_provenance",
     "attach_runtime_observations",
 ]

@@ -22,9 +22,15 @@ from context_ir.semantic_types import (
 
 if TYPE_CHECKING:
     from context_ir.runtime_acquisition import (
+        DelattrRuntimeObservation,
+        DirRuntimeObservation,
         DynamicImportRuntimeObservation,
         GetattrRuntimeObservation,
+        GlobalsRuntimeObservation,
         HasattrRuntimeObservation,
+        LocalsRuntimeObservation,
+        MetaclassBehaviorRuntimeObservation,
+        SetattrRuntimeObservation,
         VarsRuntimeObservation,
     )
 
@@ -34,9 +40,17 @@ EmbeddingFunction: TypeAlias = Callable[[list[str]], list[list[float]]]
 class _AnalyzeRepositoryKwargs(TypedDict, total=False):
     """Optional runtime-observation kwargs accepted by ``analyze_repository``."""
 
+    delattr_runtime_observations: Sequence[DelattrRuntimeObservation]
     dynamic_import_runtime_observations: Sequence[DynamicImportRuntimeObservation]
+    dir_runtime_observations: Sequence[DirRuntimeObservation]
     getattr_runtime_observations: Sequence[GetattrRuntimeObservation]
+    globals_runtime_observations: Sequence[GlobalsRuntimeObservation]
     hasattr_runtime_observations: Sequence[HasattrRuntimeObservation]
+    locals_runtime_observations: Sequence[LocalsRuntimeObservation]
+    metaclass_behavior_runtime_observations: Sequence[
+        MetaclassBehaviorRuntimeObservation
+    ]
+    setattr_runtime_observations: Sequence[SetattrRuntimeObservation]
     vars_runtime_observations: Sequence[VarsRuntimeObservation]
 
 
@@ -54,6 +68,14 @@ class SemanticContextRequest:
     hasattr_runtime_observations: Sequence[HasattrRuntimeObservation] | None = None
     getattr_runtime_observations: Sequence[GetattrRuntimeObservation] | None = None
     vars_runtime_observations: Sequence[VarsRuntimeObservation] | None = None
+    globals_runtime_observations: Sequence[GlobalsRuntimeObservation] | None = None
+    locals_runtime_observations: Sequence[LocalsRuntimeObservation] | None = None
+    metaclass_behavior_runtime_observations: (
+        Sequence[MetaclassBehaviorRuntimeObservation] | None
+    ) = None
+    setattr_runtime_observations: Sequence[SetattrRuntimeObservation] | None = None
+    delattr_runtime_observations: Sequence[DelattrRuntimeObservation] | None = None
+    dir_runtime_observations: Sequence[DirRuntimeObservation] | None = None
 
 
 @dataclass(frozen=True)
@@ -102,8 +124,18 @@ def compile_repository_context(
     hasattr_runtime_observations = request.hasattr_runtime_observations
     getattr_runtime_observations = request.getattr_runtime_observations
     vars_runtime_observations = request.vars_runtime_observations
+    globals_runtime_observations = request.globals_runtime_observations
+    locals_runtime_observations = request.locals_runtime_observations
+    metaclass_behavior_runtime_observations = (
+        request.metaclass_behavior_runtime_observations
+    )
+    setattr_runtime_observations = request.setattr_runtime_observations
+    delattr_runtime_observations = request.delattr_runtime_observations
+    dir_runtime_observations = request.dir_runtime_observations
 
     analyze_kwargs: _AnalyzeRepositoryKwargs = {}
+    if delattr_runtime_observations is not None:
+        analyze_kwargs["delattr_runtime_observations"] = delattr_runtime_observations
     if dynamic_import_runtime_observations is not None:
         analyze_kwargs["dynamic_import_runtime_observations"] = (
             dynamic_import_runtime_observations
@@ -114,6 +146,18 @@ def compile_repository_context(
         analyze_kwargs["getattr_runtime_observations"] = getattr_runtime_observations
     if vars_runtime_observations is not None:
         analyze_kwargs["vars_runtime_observations"] = vars_runtime_observations
+    if globals_runtime_observations is not None:
+        analyze_kwargs["globals_runtime_observations"] = globals_runtime_observations
+    if locals_runtime_observations is not None:
+        analyze_kwargs["locals_runtime_observations"] = locals_runtime_observations
+    if metaclass_behavior_runtime_observations is not None:
+        analyze_kwargs["metaclass_behavior_runtime_observations"] = (
+            metaclass_behavior_runtime_observations
+        )
+    if setattr_runtime_observations is not None:
+        analyze_kwargs["setattr_runtime_observations"] = setattr_runtime_observations
+    if dir_runtime_observations is not None:
+        analyze_kwargs["dir_runtime_observations"] = dir_runtime_observations
 
     if analyze_kwargs:
         program = analyze_repository(request.repo_root, **analyze_kwargs)

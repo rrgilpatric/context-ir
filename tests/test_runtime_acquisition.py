@@ -194,6 +194,224 @@ def _vars_runtime_observation(
     )
 
 
+def _globals_runtime_observation(
+    site: SourceSite,
+    *,
+    lookup_outcome: str = "returned_namespace",
+) -> runtime_acquisition.GlobalsRuntimeObservation:
+    """Create one admissible ``globals()`` runtime observation for a source site."""
+    return runtime_acquisition.GlobalsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:globals",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="globals trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value=lookup_outcome,
+            ),
+        ),
+    )
+
+
+def _locals_runtime_observation(
+    site: SourceSite,
+    *,
+    lookup_outcome: str = "returned_namespace",
+) -> runtime_acquisition.LocalsRuntimeObservation:
+    """Create one admissible ``locals()`` runtime observation for a source site."""
+    return runtime_acquisition.LocalsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:locals",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="locals trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value=lookup_outcome,
+            ),
+        ),
+    )
+
+
+def _setattr_runtime_observation(
+    site: SourceSite,
+    *,
+    mutation_outcome: str = "returned_none",
+    durable_payload_reference: str | None = None,
+) -> runtime_acquisition.SetattrRuntimeObservation:
+    """Create one admissible ``setattr(obj, name, value)`` observation."""
+    durable_reference = durable_payload_reference
+    if durable_reference is None:
+        durable_reference = f"artifact://passed-value/{site.site_id}.json"
+    return runtime_acquisition.SetattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:setattr",
+        probe_contract_revision="2026-04-21.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="setattr trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value=mutation_outcome,
+            ),
+        ),
+        durable_payload_reference=durable_reference,
+    )
+
+
+def _delattr_runtime_observation(
+    site: SourceSite,
+    *,
+    mutation_outcome: str = "deleted_attribute",
+) -> runtime_acquisition.DelattrRuntimeObservation:
+    """Create one admissible ``delattr(obj, name)`` observation for a source site."""
+    return runtime_acquisition.DelattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:delattr",
+        probe_contract_revision="2026-04-21.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="delattr trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value=mutation_outcome,
+            ),
+        ),
+    )
+
+
+def _dir_runtime_observation(
+    site: SourceSite,
+    *,
+    listing_entry_count: int | None = 3,
+    durable_payload_reference: str | None = None,
+) -> runtime_acquisition.DirRuntimeObservation:
+    """Create one admissible ``dir(obj)`` runtime observation for a source site."""
+    durable_reference = durable_payload_reference
+    if durable_reference is None:
+        durable_reference = f"artifact://dir-listing/{site.site_id}.json"
+    normalized_payload: tuple[runtime_acquisition._RuntimeObservationField, ...]
+    if listing_entry_count is None:
+        normalized_payload = ()
+    else:
+        normalized_payload = (
+            runtime_acquisition._RuntimeObservationField(
+                key="listing_entry_count",
+                value=str(listing_entry_count),
+            ),
+        )
+    return runtime_acquisition.DirRuntimeObservation(
+        site=site,
+        probe_identifier="probe:dir",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="dir trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=normalized_payload,
+        durable_payload_reference=durable_reference,
+    )
+
+
+def _metaclass_behavior_runtime_observation(
+    site: SourceSite,
+    *,
+    class_creation_outcome: str = "created_class",
+    durable_payload_reference: str | None = None,
+) -> runtime_acquisition.MetaclassBehaviorRuntimeObservation:
+    """Create one admissible metaclass runtime observation for a source site."""
+    durable_reference = durable_payload_reference
+    if durable_reference is None:
+        durable_reference = f"artifact://metaclass-selection/{site.site_id}.json"
+    return runtime_acquisition.MetaclassBehaviorRuntimeObservation(
+        site=site,
+        probe_identifier="probe:metaclass-behavior",
+        probe_contract_revision="2026-04-21.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="metaclass trace",
+            ),
+        ),
+        replay_target="main.Example",
+        replay_selector="class:main.Example:metaclass",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="class_creation_outcome",
+                value=class_creation_outcome,
+            ),
+        ),
+        durable_payload_reference=durable_reference,
+    )
+
+
 def make_program(
     existing_records: list[SemanticProvenanceRecord] | None = None,
 ) -> SemanticProgram:
@@ -809,6 +1027,908 @@ def run(obj: object) -> None:
     }
 
 
+def test_attach_globals_runtime_provenance_targets_supported_globals_boundaries(
+    tmp_path: Path,
+) -> None:
+    """Only existing unshadowed simple-name ``globals()`` findings gain attachments."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str, value: object) -> None:
+    globals()
+    locals()
+    vars()
+    setattr(obj, name, value)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _globals_runtime_observation(construct.site)
+        for construct in program.unsupported_constructs
+    ]
+
+    updated_program = runtime_acquisition.attach_globals_runtime_provenance(
+        program,
+        observations,
+    )
+    constructs_by_text = {
+        construct.construct_text: construct
+        for construct in program.unsupported_constructs
+    }
+    attached_subject_ids = {
+        record.subject_id for record in updated_program.provenance_records
+    }
+
+    assert updated_program is not program
+    assert program.provenance_records == []
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert attached_subject_ids == {constructs_by_text["globals()"].construct_id}
+    assert constructs_by_text["locals()"].construct_id not in attached_subject_ids
+    assert constructs_by_text["vars()"].construct_id not in attached_subject_ids
+    assert (
+        constructs_by_text["setattr(obj, name, value)"].construct_id
+        not in attached_subject_ids
+    )
+
+    [record] = updated_program.provenance_records
+    assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert record.subject_sites == (constructs_by_text["globals()"].site,)
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "lookup_outcome": "returned_namespace"
+    }
+
+
+def test_attach_globals_runtime_provenance_allows_additional_payload_fields(
+    tmp_path: Path,
+) -> None:
+    """``globals()`` observations may carry extra payload beyond lookup outcome."""
+    (tmp_path / "main.py").write_text(
+        """
+def run() -> None:
+    globals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "globals()"
+    )
+    observation = replace(
+        _globals_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value="returned_namespace",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="namespace_entry_count",
+                value="4",
+            ),
+        ),
+    )
+
+    updated_program = runtime_acquisition.attach_globals_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    [record] = updated_program.provenance_records
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "lookup_outcome": "returned_namespace",
+        "namespace_entry_count": "4",
+    }
+
+
+def test_attach_globals_runtime_provenance_ignores_wrong_arity_forms(
+    tmp_path: Path,
+) -> None:
+    """Wrong-arity ``globals`` calls remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object) -> None:
+    globals(obj)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "globals(obj)"
+    )
+    observation = _globals_runtime_observation(construct.site)
+
+    updated_program = runtime_acquisition.attach_globals_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_globals_runtime_provenance_ignores_shadowed_names(
+    tmp_path: Path,
+) -> None:
+    """Shadowed ``globals`` names remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(loader) -> None:
+    globals = loader
+    globals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    call_site = next(
+        candidate
+        for candidate in program.syntax.call_sites
+        if candidate.callee_text == "globals"
+    )
+    observation = _globals_runtime_observation(call_site.site)
+
+    updated_program = runtime_acquisition.attach_globals_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_locals_runtime_provenance_targets_supported_locals_boundaries(
+    tmp_path: Path,
+) -> None:
+    """Only existing unshadowed simple-name ``locals()`` findings gain attachments."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str, value: object) -> None:
+    globals()
+    locals()
+    vars()
+    setattr(obj, name, value)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _locals_runtime_observation(construct.site)
+        for construct in program.unsupported_constructs
+    ]
+
+    updated_program = runtime_acquisition.attach_locals_runtime_provenance(
+        program,
+        observations,
+    )
+    constructs_by_text = {
+        construct.construct_text: construct
+        for construct in program.unsupported_constructs
+    }
+    attached_subject_ids = {
+        record.subject_id for record in updated_program.provenance_records
+    }
+
+    assert updated_program is not program
+    assert program.provenance_records == []
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert attached_subject_ids == {constructs_by_text["locals()"].construct_id}
+    assert constructs_by_text["globals()"].construct_id not in attached_subject_ids
+    assert constructs_by_text["vars()"].construct_id not in attached_subject_ids
+    assert (
+        constructs_by_text["setattr(obj, name, value)"].construct_id
+        not in attached_subject_ids
+    )
+
+    [record] = updated_program.provenance_records
+    assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert record.subject_sites == (constructs_by_text["locals()"].site,)
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "lookup_outcome": "returned_namespace"
+    }
+
+
+def test_attach_locals_runtime_provenance_ignores_wrong_arity_forms(
+    tmp_path: Path,
+) -> None:
+    """Wrong-arity ``locals`` calls remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object) -> None:
+    locals(obj)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "locals(obj)"
+    )
+    observation = _locals_runtime_observation(construct.site)
+
+    updated_program = runtime_acquisition.attach_locals_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_locals_runtime_provenance_ignores_shadowed_names(
+    tmp_path: Path,
+) -> None:
+    """Shadowed ``locals`` names remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(loader) -> None:
+    locals = loader
+    locals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    call_site = next(
+        candidate
+        for candidate in program.syntax.call_sites
+        if candidate.callee_text == "locals"
+    )
+    observation = _locals_runtime_observation(call_site.site)
+
+    updated_program = runtime_acquisition.attach_locals_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_setattr_runtime_provenance_targets_supported_setattr_boundaries(
+    tmp_path: Path,
+) -> None:
+    """Only existing unshadowed three-argument ``setattr`` findings gain attachments."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(
+    obj: object,
+    name: str,
+    value: object,
+    extra: object,
+) -> None:
+    setattr(obj, name, value)
+    setattr(obj, name)
+    setattr(obj, name, value, extra)
+    delattr(obj, name)
+    globals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _setattr_runtime_observation(construct.site)
+        for construct in program.unsupported_constructs
+    ]
+
+    updated_program = runtime_acquisition.attach_setattr_runtime_provenance(
+        program,
+        observations,
+    )
+    constructs_by_text = {
+        construct.construct_text: construct
+        for construct in program.unsupported_constructs
+    }
+    attached_subject_ids = {
+        record.subject_id for record in updated_program.provenance_records
+    }
+
+    assert updated_program is not program
+    assert program.provenance_records == []
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert attached_subject_ids == {
+        constructs_by_text["setattr(obj, name, value)"].construct_id
+    }
+    assert (
+        constructs_by_text["setattr(obj, name)"].construct_id
+        not in attached_subject_ids
+    )
+    assert (
+        constructs_by_text["setattr(obj, name, value, extra)"].construct_id
+        not in attached_subject_ids
+    )
+    assert (
+        constructs_by_text["delattr(obj, name)"].construct_id
+        not in attached_subject_ids
+    )
+    assert constructs_by_text["globals()"].construct_id not in attached_subject_ids
+
+    [record] = updated_program.provenance_records
+    assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert record.subject_sites == (
+        constructs_by_text["setattr(obj, name, value)"].site,
+    )
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {"mutation_outcome": "returned_none"}
+    assert (
+        origin_detail["durable_payload_reference"]
+        == _setattr_runtime_observation(
+            constructs_by_text["setattr(obj, name, value)"].site
+        ).durable_payload_reference
+    )
+
+
+def test_attach_setattr_runtime_provenance_allows_additional_payload_fields(
+    tmp_path: Path,
+) -> None:
+    """``setattr`` observations may carry extra payload beyond mutation outcome."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str, value: object) -> None:
+    setattr(obj, name, value)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "setattr(obj, name, value)"
+    )
+    observation = replace(
+        _setattr_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value="returned_none",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="value_argument_source",
+                value="call_argument",
+            ),
+        ),
+    )
+
+    updated_program = runtime_acquisition.attach_setattr_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    [record] = updated_program.provenance_records
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "mutation_outcome": "returned_none",
+        "value_argument_source": "call_argument",
+    }
+
+
+def test_attach_delattr_runtime_provenance_targets_supported_delattr_boundaries(
+    tmp_path: Path,
+) -> None:
+    """Only existing unshadowed two-argument ``delattr`` findings gain attachments."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str, value: object) -> None:
+    delattr(obj, name)
+    delattr(obj)
+    delattr()
+    setattr(obj, name, value)
+    globals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _delattr_runtime_observation(construct.site)
+        for construct in program.unsupported_constructs
+    ]
+
+    updated_program = runtime_acquisition.attach_delattr_runtime_provenance(
+        program,
+        observations,
+    )
+    constructs_by_text = {
+        construct.construct_text: construct
+        for construct in program.unsupported_constructs
+    }
+    attached_subject_ids = {
+        record.subject_id for record in updated_program.provenance_records
+    }
+
+    assert updated_program is not program
+    assert program.provenance_records == []
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert attached_subject_ids == {
+        constructs_by_text["delattr(obj, name)"].construct_id
+    }
+    assert constructs_by_text["delattr(obj)"].construct_id not in attached_subject_ids
+    assert constructs_by_text["delattr()"].construct_id not in attached_subject_ids
+    assert (
+        constructs_by_text["setattr(obj, name, value)"].construct_id
+        not in attached_subject_ids
+    )
+    assert constructs_by_text["globals()"].construct_id not in attached_subject_ids
+
+    [record] = updated_program.provenance_records
+    assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert record.subject_sites == (constructs_by_text["delattr(obj, name)"].site,)
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "mutation_outcome": "deleted_attribute"
+    }
+
+
+def test_attach_delattr_runtime_provenance_allows_additional_payload_fields(
+    tmp_path: Path,
+) -> None:
+    """``delattr`` observations may carry extra payload beyond mutation outcome."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str) -> None:
+    delattr(obj, name)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "delattr(obj, name)"
+    )
+    observation = replace(
+        _delattr_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value="deleted_attribute",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="attribute_name_source",
+                value="argument",
+            ),
+        ),
+    )
+
+    updated_program = runtime_acquisition.attach_delattr_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    [record] = updated_program.provenance_records
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "mutation_outcome": "deleted_attribute",
+        "attribute_name_source": "argument",
+    }
+
+
+def test_attach_dir_runtime_provenance_targets_supported_dir_boundaries(
+    tmp_path: Path,
+) -> None:
+    """Only existing unshadowed simple-name ``dir`` findings gain attachments."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object) -> None:
+    dir(obj)
+    dir()
+    vars(obj)
+    getattr(obj, "name")
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _dir_runtime_observation(
+            construct.site,
+            listing_entry_count=None if construct.construct_text == "dir()" else 3,
+        )
+        for construct in program.unsupported_constructs
+    ]
+
+    updated_program = runtime_acquisition.attach_dir_runtime_provenance(
+        program,
+        observations,
+    )
+    constructs_by_text = {
+        construct.construct_text: construct
+        for construct in program.unsupported_constructs
+    }
+    attached_subject_ids = {
+        record.subject_id for record in updated_program.provenance_records
+    }
+    records_by_subject_id = {
+        record.subject_id: record for record in updated_program.provenance_records
+    }
+
+    assert updated_program is not program
+    assert program.provenance_records == []
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert attached_subject_ids == {
+        constructs_by_text["dir(obj)"].construct_id,
+        constructs_by_text["dir()"].construct_id,
+    }
+    assert constructs_by_text["vars(obj)"].construct_id not in attached_subject_ids
+    assert (
+        constructs_by_text['getattr(obj, "name")'].construct_id
+        not in attached_subject_ids
+    )
+
+    one_arg_record = records_by_subject_id[constructs_by_text["dir(obj)"].construct_id]
+    assert one_arg_record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert one_arg_record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert one_arg_record.subject_sites == (constructs_by_text["dir(obj)"].site,)
+    one_arg_origin_detail = json.loads(one_arg_record.origin_detail)
+    assert one_arg_origin_detail["normalized_payload"] == {"listing_entry_count": "3"}
+    assert (
+        one_arg_origin_detail["durable_payload_reference"]
+        == _dir_runtime_observation(
+            constructs_by_text["dir(obj)"].site
+        ).durable_payload_reference
+    )
+
+    zero_arg_record = records_by_subject_id[constructs_by_text["dir()"].construct_id]
+    assert zero_arg_record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert zero_arg_record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert zero_arg_record.subject_sites == (constructs_by_text["dir()"].site,)
+    zero_arg_origin_detail = json.loads(zero_arg_record.origin_detail)
+    assert zero_arg_origin_detail["normalized_payload"] == {}
+    assert (
+        zero_arg_origin_detail["durable_payload_reference"]
+        == _dir_runtime_observation(
+            constructs_by_text["dir()"].site,
+            listing_entry_count=None,
+        ).durable_payload_reference
+    )
+
+
+def test_attach_dir_runtime_provenance_ignores_wrong_arity_forms(
+    tmp_path: Path,
+) -> None:
+    """Wrong-arity ``dir`` calls remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, extra: object) -> None:
+    dir(obj, extra)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "dir(obj, extra)"
+    )
+    observation = _dir_runtime_observation(construct.site)
+
+    updated_program = runtime_acquisition.attach_dir_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_dir_runtime_provenance_ignores_shadowed_names(
+    tmp_path: Path,
+) -> None:
+    """Shadowed ``dir`` names remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(loader, obj) -> None:
+    dir = loader
+    dir(obj)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    call_site = next(
+        candidate
+        for candidate in program.syntax.call_sites
+        if candidate.callee_text == "dir"
+    )
+    observation = _dir_runtime_observation(call_site.site)
+
+    updated_program = runtime_acquisition.attach_dir_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_metaclass_behavior_runtime_provenance_targets_keyword_site(
+    tmp_path: Path,
+) -> None:
+    """Only the preserved metaclass keyword site gains metaclass runtime proof."""
+    (tmp_path / "main.py").write_text(
+        """
+class Base:
+    pass
+
+class Meta(type):
+    pass
+
+class Holder:
+    Meta = Meta
+
+class Example(Base, metaclass=Holder.Meta):
+    pass
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _metaclass_behavior_runtime_observation(construct.site)
+        for construct in program.unsupported_constructs
+    ]
+
+    updated_program = runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+        program,
+        observations,
+    )
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "metaclass=Holder.Meta"
+    )
+
+    assert updated_program is not program
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert updated_program.unresolved_frontier == program.unresolved_frontier
+    assert len(updated_program.provenance_records) == 1
+    [record] = updated_program.provenance_records
+    assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert record.subject_id == construct.construct_id
+    assert record.subject_sites == (construct.site,)
+    assert any(
+        access.access_text == "Holder.Meta"
+        for access in updated_program.unresolved_frontier
+    )
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "class_creation_outcome": "created_class"
+    }
+    assert (
+        origin_detail["durable_payload_reference"]
+        == _metaclass_behavior_runtime_observation(
+            construct.site
+        ).durable_payload_reference
+    )
+
+
+def test_attach_metaclass_behavior_runtime_provenance_allows_additional_payload_fields(
+    tmp_path: Path,
+) -> None:
+    """Metaclass observations may carry additive normalized payload fields."""
+    (tmp_path / "main.py").write_text(
+        """
+class Base:
+    pass
+
+class Meta(type):
+    pass
+
+class Example(Base, metaclass=Meta):
+    pass
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "metaclass=Meta"
+    )
+    observation = replace(
+        _metaclass_behavior_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="class_creation_outcome",
+                value="created_class",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="created_class_qualified_name",
+                value="main.Example",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="selected_metaclass_qualified_name",
+                value="main.Meta",
+            ),
+        ),
+    )
+
+    updated_program = runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    [record] = updated_program.provenance_records
+    origin_detail = json.loads(record.origin_detail)
+    assert origin_detail["normalized_payload"] == {
+        "class_creation_outcome": "created_class",
+        "created_class_qualified_name": "main.Example",
+        "selected_metaclass_qualified_name": "main.Meta",
+    }
+
+
+def test_attach_metaclass_behavior_runtime_provenance_ignores_nested_attribute_sites(
+    tmp_path: Path,
+) -> None:
+    """Nested metaclass attribute sites remain outside the keyword-surface seam."""
+    (tmp_path / "main.py").write_text(
+        """
+class Base:
+    pass
+
+class Meta(type):
+    pass
+
+class Holder:
+    Meta = Meta
+
+class Example(Base, metaclass=Holder.Meta):
+    pass
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    attribute_site = next(
+        candidate.site
+        for candidate in program.syntax.attribute_sites
+        if candidate.base_text == "Holder" and candidate.attribute_name == "Meta"
+    )
+    observation = _metaclass_behavior_runtime_observation(attribute_site)
+
+    updated_program = runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_metaclass_behavior_runtime_provenance_rejects_non_created_class_outcome(
+    tmp_path: Path,
+) -> None:
+    """Metaclass observations must report the successful created-class outcome."""
+    (tmp_path / "main.py").write_text(
+        """
+class Base:
+    pass
+
+class Meta(type):
+    pass
+
+class Example(Base, metaclass=Meta):
+    pass
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "metaclass=Meta"
+    )
+    observation = _metaclass_behavior_runtime_observation(
+        construct.site,
+        class_creation_outcome="raised_type_error",
+    )
+
+    with pytest.raises(ValueError, match="created_class"):
+        runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_metaclass_behavior_runtime_provenance_rejects_missing_outcome_key(
+    tmp_path: Path,
+) -> None:
+    """Metaclass observations must keep the required discriminator key."""
+    (tmp_path / "main.py").write_text(
+        """
+class Base:
+    pass
+
+class Meta(type):
+    pass
+
+class Example(Base, metaclass=Meta):
+    pass
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "metaclass=Meta"
+    )
+    observation = replace(
+        _metaclass_behavior_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="selected_metaclass_qualified_name",
+                value="main.Meta",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="class_creation_outcome"):
+        runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_metaclass_behavior_runtime_provenance_rejects_missing_durable_artifact(
+    tmp_path: Path,
+) -> None:
+    """Metaclass observations must carry durable created-class proof."""
+    (tmp_path / "main.py").write_text(
+        """
+class Base:
+    pass
+
+class Meta(type):
+    pass
+
+class Example(Base, metaclass=Meta):
+    pass
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "metaclass=Meta"
+    )
+    observation = replace(
+        _metaclass_behavior_runtime_observation(construct.site),
+        durable_payload_reference=None,
+    )
+
+    with pytest.raises(ValueError, match="durable_payload_reference"):
+        runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
 def test_attach_getattr_runtime_provenance_rejects_non_lookup_outcome_payload(
     tmp_path: Path,
 ) -> None:
@@ -932,6 +2052,354 @@ def run() -> None:
 
     with pytest.raises(ValueError, match="returned_namespace"):
         runtime_acquisition.attach_vars_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_globals_runtime_provenance_rejects_invalid_lookup_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``globals()`` observations must claim the returned namespace branch."""
+    (tmp_path / "main.py").write_text(
+        """
+def run() -> None:
+    globals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "globals()"
+    )
+    observation = _globals_runtime_observation(
+        construct.site,
+        lookup_outcome="raised_type_error",
+    )
+
+    with pytest.raises(ValueError, match="returned_namespace"):
+        runtime_acquisition.attach_globals_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_globals_runtime_provenance_rejects_missing_lookup_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``globals()`` observations must keep the discriminator key."""
+    (tmp_path / "main.py").write_text(
+        """
+def run() -> None:
+    globals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "globals()"
+    )
+    observation = replace(
+        _globals_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="namespace_entry_count",
+                value="4",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="lookup_outcome"):
+        runtime_acquisition.attach_globals_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_locals_runtime_provenance_rejects_invalid_lookup_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``locals()`` observations must claim the returned namespace branch."""
+    (tmp_path / "main.py").write_text(
+        """
+def run() -> None:
+    locals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "locals()"
+    )
+    observation = _locals_runtime_observation(
+        construct.site,
+        lookup_outcome="raised_type_error",
+    )
+
+    with pytest.raises(ValueError, match="returned_namespace"):
+        runtime_acquisition.attach_locals_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_locals_runtime_provenance_rejects_missing_lookup_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``locals()`` observations must keep the discriminator key."""
+    (tmp_path / "main.py").write_text(
+        """
+def run() -> None:
+    locals()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "locals()"
+    )
+    observation = replace(
+        _locals_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="namespace_entry_count",
+                value="4",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="lookup_outcome"):
+        runtime_acquisition.attach_locals_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_setattr_runtime_provenance_rejects_invalid_mutation_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``setattr`` observations must claim the returned-``None`` outcome."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str, value: object) -> None:
+    setattr(obj, name, value)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "setattr(obj, name, value)"
+    )
+    observation = _setattr_runtime_observation(
+        construct.site,
+        mutation_outcome="raised_attribute_error",
+    )
+
+    with pytest.raises(ValueError, match="returned_none"):
+        runtime_acquisition.attach_setattr_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_setattr_runtime_provenance_rejects_missing_mutation_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``setattr`` observations must keep the discriminator key."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str, value: object) -> None:
+    setattr(obj, name, value)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "setattr(obj, name, value)"
+    )
+    observation = replace(
+        _setattr_runtime_observation(construct.site),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="attribute_name_source",
+                value="argument",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="mutation_outcome"):
+        runtime_acquisition.attach_setattr_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_setattr_runtime_provenance_rejects_missing_durable_payload_reference(
+    tmp_path: Path,
+) -> None:
+    """Matched ``setattr`` observations must carry durable passed-value proof."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str, value: object) -> None:
+    setattr(obj, name, value)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "setattr(obj, name, value)"
+    )
+    observation = replace(
+        _setattr_runtime_observation(construct.site),
+        durable_payload_reference=None,
+    )
+
+    with pytest.raises(ValueError, match="durable_payload_reference"):
+        runtime_acquisition.attach_setattr_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_setattr_runtime_provenance_ignores_shadowed_names(
+    tmp_path: Path,
+) -> None:
+    """Shadowed ``setattr`` names remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(loader, obj, name, value) -> None:
+    setattr = loader
+    setattr(obj, name, value)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    call_site = next(
+        candidate
+        for candidate in program.syntax.call_sites
+        if candidate.callee_text == "setattr"
+    )
+    observation = _setattr_runtime_observation(call_site.site)
+
+    updated_program = runtime_acquisition.attach_setattr_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_delattr_runtime_provenance_rejects_invalid_mutation_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``delattr`` observations must claim deleted-attribute outcome."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object, name: str) -> None:
+    delattr(obj, name)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "delattr(obj, name)"
+    )
+    observation = _delattr_runtime_observation(
+        construct.site,
+        mutation_outcome="raised_attribute_error",
+    )
+
+    with pytest.raises(ValueError, match="deleted_attribute"):
+        runtime_acquisition.attach_delattr_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_delattr_runtime_provenance_ignores_shadowed_names(
+    tmp_path: Path,
+) -> None:
+    """Shadowed ``delattr`` names remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def helper() -> None:
+    return None
+
+def run(loader) -> None:
+    delattr = loader
+    delattr()
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    call_site = next(
+        candidate
+        for candidate in program.syntax.call_sites
+        if candidate.callee_text == "delattr"
+    )
+    observation = _delattr_runtime_observation(call_site.site)
+
+    updated_program = runtime_acquisition.attach_delattr_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_dir_runtime_provenance_rejects_missing_durable_payload_reference(
+    tmp_path: Path,
+) -> None:
+    """Matched ``dir(obj)`` observations must carry durable listing proof."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(obj: object) -> None:
+    dir(obj)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "dir(obj)"
+    )
+    observation = replace(
+        _dir_runtime_observation(construct.site),
+        durable_payload_reference=None,
+    )
+
+    with pytest.raises(ValueError, match="durable_payload_reference"):
+        runtime_acquisition.attach_dir_runtime_provenance(
             program,
             [observation],
         )

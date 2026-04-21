@@ -160,6 +160,204 @@ def _vars_runtime_observation(
     )
 
 
+def _globals_runtime_observation(
+    site,
+    *,
+    lookup_outcome: str = "returned_namespace",
+) -> runtime_acquisition.GlobalsRuntimeObservation:
+    """Create one admissible ``globals()`` runtime observation for analyzer tests."""
+    return runtime_acquisition.GlobalsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:globals",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:globals:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value=lookup_outcome,
+            ),
+        ),
+    )
+
+
+def _locals_runtime_observation(
+    site,
+    *,
+    lookup_outcome: str = "returned_namespace",
+) -> runtime_acquisition.LocalsRuntimeObservation:
+    """Create one admissible ``locals()`` runtime observation for analyzer tests."""
+    return runtime_acquisition.LocalsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:locals",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:locals:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value=lookup_outcome,
+            ),
+        ),
+    )
+
+
+def _setattr_runtime_observation(
+    site,
+    *,
+    mutation_outcome: str = "returned_none",
+    durable_payload_reference: str | None = None,
+) -> runtime_acquisition.SetattrRuntimeObservation:
+    """Create one admissible ``setattr`` runtime observation for analyzer tests."""
+    durable_reference = durable_payload_reference
+    if durable_reference is None:
+        durable_reference = f"artifact://passed-value/{site.site_id}.json"
+    return runtime_acquisition.SetattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:setattr",
+        probe_contract_revision="2026-04-21.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:setattr:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value=mutation_outcome,
+            ),
+        ),
+        durable_payload_reference=durable_reference,
+    )
+
+
+def _delattr_runtime_observation(
+    site,
+    *,
+    mutation_outcome: str = "deleted_attribute",
+) -> runtime_acquisition.DelattrRuntimeObservation:
+    """Create one admissible ``delattr`` runtime observation for analyzer tests."""
+    return runtime_acquisition.DelattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:delattr",
+        probe_contract_revision="2026-04-21.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:delattr:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value=mutation_outcome,
+            ),
+        ),
+    )
+
+
+def _dir_runtime_observation(
+    site,
+    *,
+    listing_entry_count: int | None = 3,
+) -> runtime_acquisition.DirRuntimeObservation:
+    """Create one admissible ``dir(obj)`` runtime observation for analyzer tests."""
+    normalized_payload: tuple[runtime_acquisition._RuntimeObservationField, ...]
+    if listing_entry_count is None:
+        normalized_payload = ()
+    else:
+        normalized_payload = (
+            runtime_acquisition._RuntimeObservationField(
+                key="listing_entry_count",
+                value=str(listing_entry_count),
+            ),
+        )
+    return runtime_acquisition.DirRuntimeObservation(
+        site=site,
+        probe_identifier="probe:dir",
+        probe_contract_revision="2026-04-20.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:dir:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        normalized_payload=normalized_payload,
+        durable_payload_reference=f"artifact://dir-listing/{site.site_id}.json",
+    )
+
+
+def _metaclass_behavior_runtime_observation(
+    site,
+    *,
+    class_creation_outcome: str = "created_class",
+) -> runtime_acquisition.MetaclassBehaviorRuntimeObservation:
+    """Create one admissible metaclass runtime observation for analyzer tests."""
+    return runtime_acquisition.MetaclassBehaviorRuntimeObservation(
+        site=site,
+        probe_identifier="probe:metaclass-behavior",
+        probe_contract_revision="2026-04-21.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:metaclass:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.Example",
+        replay_selector="class:main.Example:metaclass",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="class_creation_outcome",
+                value=class_creation_outcome,
+            ),
+        ),
+        durable_payload_reference=f"artifact://metaclass-selection/{site.site_id}.json",
+    )
+
+
 def test_analyze_repository_matches_manual_pipeline(tmp_path: Path) -> None:
     """The analyzer is exactly the accepted semantic-first pipeline."""
     (tmp_path / "helpers.py").write_text(
@@ -576,3 +774,287 @@ def test_analyze_repository_attaches_vars_runtime_provenance_post_frontier(
         if construct.construct_text in {"vars(obj)", "vars()"}
     }
     assert len(analyzed_program.provenance_records) == 2
+
+
+def test_analyze_repository_attaches_globals_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded ``globals()`` runtime provenance post-frontier."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object) -> None:
+                globals()
+                locals()
+                vars()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _globals_runtime_observation(construct.site)
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        globals_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_globals_runtime_provenance(
+        manual_program,
+        observations,
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        next(
+            construct.construct_id
+            for construct in manual_program.unsupported_constructs
+            if construct.construct_text == "globals()"
+        )
+    }
+    assert len(analyzed_program.provenance_records) == 1
+
+
+def test_analyze_repository_attaches_locals_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded ``locals()`` runtime provenance post-frontier."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object) -> None:
+                globals()
+                locals()
+                vars()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _locals_runtime_observation(construct.site)
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        locals_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_locals_runtime_provenance(
+        manual_program,
+        observations,
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        next(
+            construct.construct_id
+            for construct in manual_program.unsupported_constructs
+            if construct.construct_text == "locals()"
+        )
+    }
+    assert len(analyzed_program.provenance_records) == 1
+
+
+def test_analyze_repository_attaches_setattr_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded ``setattr`` runtime provenance post-frontier."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object, name: str, value: object) -> None:
+                setattr(obj, name, value)
+                setattr(obj, name)
+                delattr(obj, name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _setattr_runtime_observation(construct.site)
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        setattr_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_setattr_runtime_provenance(
+        manual_program,
+        observations,
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        next(
+            construct.construct_id
+            for construct in manual_program.unsupported_constructs
+            if construct.construct_text == "setattr(obj, name, value)"
+        )
+    }
+    assert len(analyzed_program.provenance_records) == 1
+
+
+def test_analyze_repository_attaches_delattr_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded ``delattr`` runtime provenance post-frontier."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object, name: str, value: object) -> None:
+                delattr(obj, name)
+                delattr(obj)
+                setattr(obj, name, value)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _delattr_runtime_observation(construct.site)
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        delattr_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_delattr_runtime_provenance(
+        manual_program,
+        observations,
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        next(
+            construct.construct_id
+            for construct in manual_program.unsupported_constructs
+            if construct.construct_text == "delattr(obj, name)"
+        )
+    }
+    assert len(analyzed_program.provenance_records) == 1
+
+
+def test_analyze_repository_attaches_dir_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded ``dir`` runtime provenance post-frontier."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object) -> None:
+                dir(obj)
+                dir()
+                vars(obj)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _dir_runtime_observation(
+            construct.site,
+            listing_entry_count=None if construct.construct_text == "dir()" else 3,
+        )
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        dir_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_dir_runtime_provenance(
+        manual_program,
+        observations,
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        construct.construct_id
+        for construct in manual_program.unsupported_constructs
+        if construct.construct_text in {"dir(obj)", "dir()"}
+    }
+    assert len(analyzed_program.provenance_records) == 2
+
+
+def test_analyze_repository_attaches_metaclass_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded metaclass runtime provenance after static derivation."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class Base:
+                pass
+
+            class Meta(type):
+                pass
+
+            class Holder:
+                Meta = Meta
+
+            class Example(Base, metaclass=Holder.Meta):
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _metaclass_behavior_runtime_observation(construct.site)
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        metaclass_behavior_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+        manual_program,
+        observations,
+    )
+    construct = next(
+        candidate
+        for candidate in manual_program.unsupported_constructs
+        if candidate.construct_text == "metaclass=Holder.Meta"
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert analyzed_program.unresolved_frontier == manual_program.unresolved_frontier
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        construct.construct_id
+    }
+    assert any(
+        access.access_text == "Holder.Meta"
+        for access in analyzed_program.unresolved_frontier
+    )
+    assert len(analyzed_program.provenance_records) == 1

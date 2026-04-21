@@ -582,6 +582,7 @@ def test_derive_dependency_frontier_surfaces_reflective_builtin_boundaries(
                 vars(obj)
                 vars()
                 dir(obj)
+                dir()
             """
         ).lstrip(),
         encoding="utf-8",
@@ -608,6 +609,7 @@ def test_derive_dependency_frontier_surfaces_reflective_builtin_boundaries(
     assert unsupported_by_text["vars(obj)"] is UnresolvedReasonCode.REFLECTIVE_BUILTIN
     assert unsupported_by_text["vars()"] is UnresolvedReasonCode.REFLECTIVE_BUILTIN
     assert unsupported_by_text["dir(obj)"] is UnresolvedReasonCode.REFLECTIVE_BUILTIN
+    assert unsupported_by_text["dir()"] is UnresolvedReasonCode.REFLECTIVE_BUILTIN
     assert "getattr" not in unresolved_by_text
     assert "hasattr" not in unresolved_by_text
     assert "vars" not in unresolved_by_text
