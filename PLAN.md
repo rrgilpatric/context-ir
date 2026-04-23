@@ -38,9 +38,13 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The latest pushed code/test release unit is now the internal `DYNAMIC_IMPORT` provider/budget matrix expansion at `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`; that release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit. Continuity commits after `a605b22` and before `9a52b46` are docs-only unless explicitly identified as a code/test release unit, and they do not widen implementation, exposure, schema, scoring, or public-claim boundaries.
+Release authority is split deliberately. The latest pushed code/test release unit is the internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot at `90dcc15`. A docs-only continuity commit may exist after `90dcc15`; any such docs-only commit does not change code/test release authority or widen implementation, exposure, schema, scoring, or public-claim boundaries. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`; that release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit.
 
-The latest pushed implementation release `9a52b46` broadens the existing isolated internal `DYNAMIC_IMPORT` pilot into a 1 task x 2 budget x 3 provider internal matrix. This release passed release-unit audit, full regression, commit-gating review, local commit creation, and remote push. The implementation changes only `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json` and targeted tests, and it does not widen public claims, schema, scoring, winner selection, package-root exports, MCP, runtime acquisition, or source code.
+The latest pushed implementation release `90dcc15` adds one internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot. It passed corrected release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push. It does not widen public claims, schema, scoring, winner selection, package-root exports, MCP, analyzer, tool-facade, runtime acquisition, or other runtime-family boundaries.
+
+The prior pushed implementation release `9a52b46` broadens the existing isolated internal `DYNAMIC_IMPORT` pilot into a 1 task x 2 budget x 3 provider internal matrix. That release passed release-unit audit, full regression, commit-gating review, local commit creation, and remote push. The implementation changes only `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json` and targeted tests, and it does not widen public claims, schema, scoring, winner selection, package-root exports, MCP, runtime acquisition, or source code.
+
+This docs-only continuity sync records the pushed `90dcc15` release state and remains separate from the implementation release unit.
 
 ## What Is Complete
 
@@ -90,6 +94,14 @@ The latest pushed implementation release `9a52b46` broadens the existing isolate
 - [x] Release-unit audit for internal `DYNAMIC_IMPORT` provider/budget matrix expansion accepted first-pass
 - [x] Local commit creation for internal `DYNAMIC_IMPORT` provider/budget matrix expansion accepted first-pass at `9a52b46`
 - [x] Remote push for internal `DYNAMIC_IMPORT` provider/budget matrix expansion completed at `9a52b46`
+- [x] Execution-lane overreach continuity correction accepted first-pass
+- [x] Control review of `hasattr(obj, name)` runtime-backed eval pilot recommendation accepted first-pass
+- [x] Internal `hasattr(obj, name)` runtime-backed eval pilot implementation accepted first-pass as workspace-only state
+- [x] Payload-shape correction for internal `hasattr(obj, name)` runtime-backed eval pilot accepted first-pass
+- [x] Corrected release-unit audit for internal `hasattr(obj, name)` runtime-backed eval pilot accepted first-pass
+- [x] Full regression gate for internal `hasattr(obj, name)` runtime-backed eval pilot accepted first-pass
+- [x] Commit-gating review and local commit creation for internal `hasattr(obj, name)` runtime-backed eval pilot accepted first-pass at `90dcc15`
+- [x] Remote push for internal `hasattr(obj, name)` runtime-backed eval pilot completed at `90dcc15`
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
@@ -210,6 +222,35 @@ The latest pushed implementation release `9a52b46` broadens the existing isolate
 
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
+- Pushed implementation release `90dcc15` has passed corrected release-unit audit, full regression, commit-gating review, local commit creation, and remote push:
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_hasattr_probe/`
+  - `evals/tasks/oracle_signal_hasattr_probe.json`
+  - `evals/run_specs/oracle_signal_hasattr_probe_matrix.json`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_oracles.py`
+  - `tests/test_eval_providers.py`
+  - `tests/test_eval_runs.py`
+  - this release adds fixture-local `hasattr_runtime_observations` loading and Context IR provider pass-through via the existing tool facade seam
+  - the pilot is one task x one budget (`220`) x three providers (`context_ir`, `lexical_top_k_files`, `import_neighborhood_files`)
+  - the `hasattr(obj, name)` unsupported selector remains primary `unsupported/opaque`, with runtime-backed provenance only as additive attached evidence
+  - baselines expose no structured selected units or attached runtime provenance for this pilot
+  - package-root exports, public claims, MCP, analyzer, tool-facade, source runtime-acquisition semantics, scoring, winner selection, existing dynamic-import matrix boundaries, and schema version remain unchanged
+  - corrected release-unit audit, full regression, commit-gating review, and local commit creation have passed
+  - remote push has passed
+- The first read-only release-unit audit for the `hasattr` pilot found one P2 issue:
+  - `evals/fixtures/oracle_signal_hasattr_probe/eval_runtime_observations.json` uses `normalized_payload` fields `lookup_outcome=attribute_present` and `result=true`
+  - accepted `hasattr(obj, name)` runtime evidence uses the minimal boolean shape `attribute_present=true|false`
+  - narrow correction is accepted: the fixture now uses `attribute_present=true`, and `tests/test_eval_signal_hasattr_probe.py` asserts the exact loaded fixture payload
+  - corrected audit accepted the release unit with no findings
+  - full regression passed:
+    - `.venv/bin/python -m ruff check src/ tests/`
+    - `.venv/bin/python -m ruff format --check src/ tests/`
+    - `.venv/bin/python -m mypy --strict src/`
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    - pytest result: `549 passed`
+  - commit-gating review passed and pushed commit `90dcc15` contains only the implementation release unit
 - Pushed implementation release `9a52b46` has passed release-unit audit, full regression, commit-gating review, local commit creation, and remote push:
   - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
   - `tests/test_eval_signal_dynamic_import_probe.py`
@@ -225,20 +266,21 @@ The latest pushed implementation release `9a52b46` broadens the existing isolate
     - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v -m "not slow"`
   - commit-gating review found the implementation release unit is limited to the three authorized files and separable from continuity docs
   - pushed commit `9a52b46` contains only the three implementation files
-- Workspace-only accepted workflow/continuity state exists in:
+- Docs-only continuity sync records:
+  - the execution-lane overreach correction
+  - the control-reviewed `hasattr` pilot planning decision
+  - the `hasattr` implementation acceptance, correction, audit, regression, commit, and push
+  - the pushed `90dcc15` release state
+- Pushed workflow authority exists in:
   - `AGENTS.md`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `AGENTS.md` now codifies that slice acceptance is workspace-only by default, commits happen at coherent release-unit boundaries, and a release-unit audit is the default pre-commit quality gate
+  - `AGENTS.md` codifies that slice acceptance is workspace-only by default, commits happen at coherent release-unit boundaries, and a release-unit audit is the default pre-commit quality gate
 - Repo-backed and local release state is now explicit and complete:
-  - branch `main`
-  - local `HEAD` is `9a52b46`
-  - `origin/main` is `9a52b46`
-  - the accepted internal `DYNAMIC_IMPORT` provider/budget matrix expansion release unit is `9a52b46`
+  - latest pushed code/test release authority is `90dcc15`
+  - branch tip may be a later docs-only continuity commit after this sync
+  - the accepted internal `DYNAMIC_IMPORT` provider/budget matrix expansion release unit remains `9a52b46`
   - the accepted provider-scoped selected-unit capability-tier accounting release unit is `215b6bb`
   - the accepted capability-tier eval / evidence code/test/pilot release unit is `a605b22`
-  - the latest pushed code/test release authority is `9a52b46`
-  - docs-only continuity commits after `a605b22`, including pushed continuity through `17f91e7`, are not implementation release changes
+  - docs-only continuity commits after `a605b22`, including pushed continuity through `6435434` and this sync, are not implementation release changes
   - the previously accepted runtime-backed tranche at `cb1dc65` remains historical released state and must not be routed as workspace-only work
 - The prior capability-tier eval / evidence baseline remains repo-backed at `a605b22`:
   - accepted tier-aware eval storage-contract slice is released in:
@@ -297,7 +339,7 @@ The latest pushed implementation release `9a52b46` broadens the existing isolate
   - do not widen MCP runtime-observation exposure
   - keep public claim boundaries unchanged from the accepted internal-eval state
 - Further inherited-call reopening remains on explicit hold: no next implementation slice is authorized beyond the accepted first-exclusive-branch overlap reopening
-- Push for `a605b22` is complete; docs-only continuity pushes through `17f91e7` are complete; implementation push for `9a52b46` is complete
+- Push for `a605b22` is complete; docs-only continuity pushes through `6435434` are complete; implementation pushes for `9a52b46` and `90dcc15` are complete
 - The accepted post-release planning spike found no concrete defect requiring `a605b22` to be reopened
 - Provider-scoped selected-unit capability-tier accounting is released in:
   - `src/context_ir/eval_summary.py`
@@ -323,16 +365,20 @@ The latest pushed implementation release `9a52b46` broadens the existing isolate
 
 ## What Is Next
 
-1. Hold before any further push or new planning/implementation lane until Ryan explicitly authorizes it.
-2. Treat pushed commit `9a52b46` as the current code/test release authority:
+1. Hold before any new planning or implementation lane until Ryan explicitly authorizes the next movement.
+2. Keep the latest pushed code/test release authority pinned to `90dcc15` even if the branch tip advances by docs-only continuity commits.
+3. Treat pushed commit `90dcc15` as the current code/test release authority:
+   - internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot
+   - corrected release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push
+4. Treat pushed commit `9a52b46` as the prior internal dynamic-import matrix release authority:
    - internal `DYNAMIC_IMPORT` provider/budget matrix expansion
    - release-unit audit over the dynamic-import provider/budget matrix release unit
    - full regression gate, local commit creation, and remote push
-3. Treat pushed commit `215b6bb` as the prior provider-scoped accounting release authority:
+5. Treat pushed commit `215b6bb` as the prior provider-scoped accounting release authority:
    - provider-scoped selected-unit capability-tier accounting
    - full regression gate over the provider-scoped accounting slice
    - commit-gating and remote push of the provider-scoped accounting release unit
-4. Treat pushed commit `a605b22` as the prior capability-tier eval/evidence code/test/pilot release authority:
+6. Treat pushed commit `a605b22` as the prior capability-tier eval/evidence code/test/pilot release authority:
    - tier-aware eval storage-contract slice
    - isolated internal `DYNAMIC_IMPORT` eval pilot
    - accepted post-pilot planning spike that authorizes the tier-aware internal-accounting rollout boundary
@@ -342,7 +388,8 @@ The latest pushed implementation release `9a52b46` broadens the existing isolate
    - local commit creation for the coherent code/test/pilot release unit
    - remote push of the coherent code/test/pilot release unit
    - docs-only continuity sync in `PLAN.md` and `BUILDLOG.md`
-5. The next lane, if later authorized, must not reopen:
+7. The next lane, if later authorized, must not reopen:
+   - the accepted internal `hasattr(obj, name)` runtime-backed eval pilot release unit at `90dcc15`
    - the accepted code/test/pilot release unit at `a605b22`
    - the accepted provider-scoped accounting release unit at `215b6bb`
    - the accepted internal dynamic-import provider/budget matrix release unit at `9a52b46`
@@ -351,9 +398,9 @@ The latest pushed implementation release `9a52b46` broadens the existing isolate
    - MCP runtime-observation exposure
    - further inherited-call work
    - scoring, winner selection, raw schema, tasks, fixtures, providers, source code, docs, or runtime-acquisition breadth
-   - any run spec except the explicitly authorized internal `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json` evidence-broadening edit
-6. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
-7. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
+   - any run spec unless a later control-reviewed eval pilot explicitly authorizes it
+8. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
+9. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
 
 ## What Is Deferred
 

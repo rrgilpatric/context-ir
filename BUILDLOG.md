@@ -2,6 +2,309 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Docs-Only Continuity Sync
+
+- Reviewed the docs-only continuity diff after the internal `hasattr(obj, name)` runtime-backed eval pilot was pushed at `90dcc15`
+- Verified before docs-only commit creation:
+  - local `HEAD` `90dcc15`
+  - `origin/main` `90dcc15`
+  - only `PLAN.md` and `BUILDLOG.md` were modified
+  - `git diff --check -- PLAN.md BUILDLOG.md` passed
+- Continuity sync records:
+  - latest pushed code/test release authority is `90dcc15`
+  - prior implementation release authorities remain `9a52b46`, `215b6bb`, `a605b22`, and `cb1dc65`
+  - `90dcc15` passed corrected release-unit audit, full regression, commit-gating review, local commit creation, and remote push
+  - public claims, package-root exports, MCP exposure, analyzer/tool-facade/runtime-acquisition boundaries, scoring, winner selection, schema version, and other runtime-family boundaries remain unchanged
+- Acceptance decision:
+  - accept docs-only continuity sync first-pass
+  - commit and push only `PLAN.md` and `BUILDLOG.md`
+  - keep code/test release authority pinned to `90dcc15` after this docs-only branch-tip advancement
+  - hold before any new planning or implementation lane until Ryan explicitly authorizes the next movement
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Remote Push
+
+- Ryan explicitly authorized remote push of the already-created implementation commit `90dcc15`
+- Verified before push:
+  - branch `main`
+  - local `HEAD` `90dcc15`
+  - `origin/main` `6435434`
+  - local branch was ahead of `origin/main` by one commit
+  - only `PLAN.md` and `BUILDLOG.md` were dirty and excluded from the implementation push
+- Pushed implementation commit:
+  - `90dcc15 Add hasattr runtime eval pilot`
+- Post-push release state:
+  - local `HEAD` is `90dcc15`
+  - `origin/main` is `90dcc15`
+  - latest pushed code/test release authority is now `90dcc15`
+  - no implementation files are dirty
+  - only `PLAN.md` and `BUILDLOG.md` remain modified as workspace-only continuity state
+- Acceptance decision:
+  - accept the remote push first-pass
+  - next control action is a separate docs-only continuity sync for `PLAN.md` and `BUILDLOG.md`
+  - do not start a new planning or implementation lane until the continuity sync decision is resolved
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Audit, Regression, And Local Commit
+
+- Accepted the corrected read-only release-unit audit for the workspace-only internal `hasattr(obj, name)` runtime-backed eval pilot
+- Audit result:
+  - no findings
+  - prior payload-shape issue is closed
+  - no boundary widening found in package root, MCP, analyzer, tool facade, runtime acquisition, compiler, optimizer, public claims, README, architecture, provider algorithm version, schema version, scoring, or winner-selection surfaces
+  - release unit is separable from excluded `PLAN.md` and `BUILDLOG.md`
+- Full regression gate passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - result: passed
+  - `.venv/bin/python -m mypy --strict src/`
+  - result: `Success: no issues found in 31 source files`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - result: `549 passed`
+- Commit-gating review passed:
+  - staged release unit exactly:
+    - `src/context_ir/eval_oracles.py`
+    - `src/context_ir/eval_providers.py`
+    - `evals/fixtures/oracle_signal_hasattr_probe/eval_runtime_observations.json`
+    - `evals/fixtures/oracle_signal_hasattr_probe/main.py`
+    - `evals/tasks/oracle_signal_hasattr_probe.json`
+    - `evals/run_specs/oracle_signal_hasattr_probe_matrix.json`
+    - `tests/test_eval_signal_hasattr_probe.py`
+    - `tests/test_eval_oracles.py`
+    - `tests/test_eval_providers.py`
+    - `tests/test_eval_runs.py`
+  - excluded continuity files:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - `git diff --cached --check`
+  - result: passed
+  - out-of-scope public/runtime/source boundary diff check passed
+- Created local implementation commit:
+  - `90dcc15 Add hasattr runtime eval pilot`
+- Post-commit release state:
+  - local `HEAD` is `90dcc15`
+  - `origin/main` remains `6435434`
+  - latest pushed code/test release authority remains `9a52b46`
+  - latest local unpushed code/test release candidate is `90dcc15`
+  - no files are staged
+  - only `PLAN.md` and `BUILDLOG.md` remain modified as workspace-only continuity state
+- Acceptance decision:
+  - accept corrected audit, full regression gate, commit-gating review, and local commit creation first-pass
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Payload Correction Acceptance
+
+- Reviewed the narrow correction for the held `hasattr(obj, name)` eval fixture payload-shape audit finding
+- Correction result:
+  - `evals/fixtures/oracle_signal_hasattr_probe/eval_runtime_observations.json` now records the accepted minimal boolean payload shape `attribute_present=true`
+  - `tests/test_eval_signal_hasattr_probe.py` now loads the fixture through `load_fixture_hasattr_runtime_observations` and asserts the exact normalized payload tuple
+- Findings-first review result:
+  - no findings
+- Control-lane validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py -q`
+  - result: `52 passed`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py`
+  - result: passed
+  - `git diff --check -- evals/fixtures/oracle_signal_hasattr_probe/eval_runtime_observations.json tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py`
+  - result: passed
+  - `git diff --exit-code -- AGENTS.md README.md ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md src/context_ir/runtime_acquisition.py src/context_ir/analyzer.py src/context_ir/tool_facade.py src/context_ir/__init__.py src/context_ir/mcp_server.py src/context_ir/eval_metrics.py src/context_ir/eval_summary.py src/context_ir/eval_report.py src/context_ir/eval_pipeline.py src/context_ir/eval_bundle.py`
+  - result: passed
+- Acceptance decision:
+  - accept the correction first-pass
+  - close the known payload-shape audit finding in workspace authority
+  - the `hasattr` pilot release unit is still not audit-cleared because the corrected full release unit must go back through read-only release-unit audit before full regression or commit sequencing
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Release-Unit Audit Hold
+
+- Reviewed the dedicated read-only release-unit audit result for the workspace-only internal `hasattr(obj, name)` runtime-backed eval pilot implementation
+- Verified live release state remains:
+  - branch `main`
+  - local `HEAD` `6435434`
+  - `origin/main` `6435434`
+  - latest pushed code/test release authority remains `9a52b46`
+  - the `hasattr` pilot implementation remains workspace-only, uncommitted, and unpushed
+- Audit finding:
+  - `evals/fixtures/oracle_signal_hasattr_probe/eval_runtime_observations.json` lines 43-51 record `normalized_payload` as `lookup_outcome=attribute_present` plus `result=true`
+  - the accepted `hasattr(obj, name)` runtime seam uses the minimal boolean payload shape `attribute_present=true|false`
+  - the fixture payload therefore creates a second evidence shape without a source runtime-acquisition contract or assertion, even though provenance still attaches
+- Control decision:
+  - accept the audit finding
+  - hold the implementation release unit as needing correction
+  - do not advance to full regression, commit-gating, commit, or push
+  - issue one narrow correction prompt to align the fixture payload with the accepted boolean shape and add targeted coverage preventing future eval fixture drift
+- Acceptance status: held
+
+## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Implementation Acceptance
+
+- Reviewed the returned bounded implementation slice for the internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot
+- Verified live release state:
+  - branch `main`
+  - local `HEAD` `6435434`
+  - `origin/main` `6435434`
+  - latest branch tip `6435434` is docs-only continuity
+  - latest pushed code/test release authority remains `9a52b46`
+  - the `hasattr` pilot implementation is workspace-only, uncommitted, and unpushed
+- Proposed implementation release unit under review:
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_hasattr_probe/`
+  - `evals/tasks/oracle_signal_hasattr_probe.json`
+  - `evals/run_specs/oracle_signal_hasattr_probe_matrix.json`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_oracles.py`
+  - `tests/test_eval_providers.py`
+  - `tests/test_eval_runs.py`
+- Files explicitly excluded from the implementation release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Findings-first review result:
+  - no findings
+- Verified behavior:
+  - fixture-local `hasattr_runtime_observations` load through internal eval oracle/provider plumbing
+  - the pilot remains one task x one budget (`220`) x three providers (`context_ir`, `lexical_top_k_files`, `import_neighborhood_files`)
+  - the `hasattr(obj, name)` unsupported selector remains primary `unsupported/opaque`
+  - attached runtime provenance remains additive and does not become a primary selected-unit tier
+  - baselines continue to expose no structured selected units or attached runtime provenance for this pilot
+  - package-root exports, MCP exposure, public claims, analyzer, tool facade, source runtime-acquisition semantics, scoring, winner selection, schema version, provider algorithms, and the pushed `DYNAMIC_IMPORT` matrix release remain unchanged
+- Control-lane validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_signal_dynamic_import_probe.py -q`
+  - result: `81 passed`
+  - `.venv/bin/python -m ruff check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py`
+  - result: passed
+  - `.venv/bin/python -m mypy --strict src/context_ir/eval_oracles.py src/context_ir/eval_providers.py`
+  - result: passed
+  - `git diff --check -- src/context_ir/eval_oracles.py src/context_ir/eval_providers.py evals/fixtures/oracle_signal_hasattr_probe evals/tasks/oracle_signal_hasattr_probe.json evals/run_specs/oracle_signal_hasattr_probe_matrix.json tests/test_eval_signal_hasattr_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py`
+  - result: passed
+  - `git diff --exit-code -- AGENTS.md README.md ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md src/context_ir/runtime_acquisition.py src/context_ir/analyzer.py src/context_ir/tool_facade.py src/context_ir/__init__.py src/context_ir/mcp_server.py src/context_ir/eval_metrics.py src/context_ir/eval_summary.py src/context_ir/eval_report.py src/context_ir/eval_pipeline.py src/context_ir/eval_bundle.py`
+  - result: passed
+- Acceptance decision:
+  - accept the implementation first-pass as workspace-only state
+  - do not treat the slice as audit-cleared, regression-cleared, commit-ready, locally committed, or pushed
+  - next control action is a dedicated read-only release-unit audit over the proposed `hasattr` implementation release unit before any full-regression, commit-gating, commit, or push step
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Recommendation Control Review
+
+- Reviewed the non-authoritative execution-lane recommendation for the next internal runtime-backed eval pilot after the pushed `DYNAMIC_IMPORT` provider/budget matrix release at `9a52b46`
+- Verified live state:
+  - branch `main`
+  - local `HEAD` `6435434`
+  - `origin/main` `6435434`
+  - uncommitted files are limited to continuity corrections:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - latest pushed code/test release authority is `9a52b46`
+  - current branch tip `6435434` is docs-only continuity
+- Control review found no issues with the recommendation when narrowed to an internal eval pilot
+- Verified repo reality:
+  - `runtime_acquisition.py` already defines accepted additive runtime-backed attachment for `HasattrRuntimeObservation`
+  - `analyzer.py` already accepts `hasattr_runtime_observations` after static dependency/frontier derivation
+  - `tool_facade.py` already forwards `hasattr_runtime_observations` as the highest exposed hybrid entry point
+  - `dependency_frontier.py` already surfaces unshadowed `hasattr(obj, name)` calls as explicit `REFLECTIVE_BUILTIN` unsupported constructs
+  - `eval_oracles.py` and `eval_providers.py` currently load fixture-local dynamic-import observations only, so the next pilot needs narrow internal eval fixture loading for `hasattr_runtime_observations`
+- Control-lane validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_dependency_frontier.py -k "surfaces_reflective_builtin_boundaries" -q`
+  - result: `1 passed, 46 deselected`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_acquisition.py -k "hasattr_runtime_provenance_targets_supported_hasattr_boundaries" -q`
+  - result: `1 passed, 51 deselected`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_analyzer.py -k "attaches_hasattr_runtime_provenance_post_frontier" -q`
+  - result: `1 passed, 14 deselected`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_tool_facade.py -k "forwards_hasattr_runtime_observations or attaches_hasattr_runtime_provenance" -q`
+  - result: `2 passed, 26 deselected`
+  - `git diff --exit-code -- src pyproject.toml README.md ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md`
+  - result: passed
+- Accepted implementation boundary:
+  - add one internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot
+  - implementation may touch internal eval oracle/provider loading and targeted eval assets/tests
+  - keep package-root exports, public claims, MCP, analyzer, tool-facade, source runtime-acquisition semantics, scoring, winner selection, schema version, provider algorithms, and existing release units unchanged
+  - do not broaden to `getattr`, `vars`, `dir`, `globals`, `locals`, `setattr`, `delattr`, `RUNTIME_MUTATION`, `METACLASS_BEHAVIOR`, or another provider/budget matrix in the same slice
+- Alternatives considered:
+  - reject the recommendation solely because it came from the overreaching execution lane
+  - add another `DYNAMIC_IMPORT` eval expansion
+  - add a `getattr(...)` pilot first
+  - update public claims before additional internal evidence
+- Reasoning:
+  - the process defect was already corrected by demoting the recommendation pending control review
+  - after control review, `hasattr(obj, name)` is still the smallest second-family internal pilot because the runtime seam already exists and only internal eval ingestion is missing
+  - direct public-claim work remains premature because current claim boundaries still disallow broad dynamic-semantics and hybrid-analysis claims
+- Acceptance decision:
+  - accept the recommendation first-pass as a control-reviewed planning decision
+  - authorize one bounded implementation slice for the internal `hasattr(obj, name)` eval pilot
+  - keep the accepted `DYNAMIC_IMPORT` matrix release at `9a52b46` closed unless a later findings-based review proves a concrete defect
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Execution-Lane Overreach Review And Continuity Correction
+
+- Ryan reported that an execution lane was accidentally authorized to make control-lane decisions after the dynamic-import matrix release-unit audit
+- Verified live state:
+  - branch `main`
+  - local `HEAD` `6435434`
+  - `origin/main` `6435434`
+  - current uncommitted files are limited to:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - latest pushed code/test release authority is `9a52b46`
+  - latest branch tip `6435434` is docs-only continuity
+- Reviewed pushed commits caused by the accidental authorization:
+  - `9a52b46` contains only the accepted dynamic-import matrix implementation files
+  - `6435434` contains only `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`
+  - no source-code, public-claim, package-root, MCP, schema, scoring, winner-selection, runtime-acquisition, task-selector, fixture, provider-algorithm, or oracle widening was found in those pushed commits
+- Control finding:
+  - the pushed commits do not show a concrete product defect requiring revert
+  - the process defect is real: an execution lane made control-lane acceptance, release, push, and next-roadmap decisions
+  - the current uncommitted `hasattr(obj, name)` planning output was incorrectly written as accepted backlog truth and implementation authorization
+  - `PLAN.md` also blurred the current branch tip `6435434` with the latest code/test release unit `9a52b46`
+- Correction made:
+  - keep pushed commits `9a52b46` and `6435434` as repo-backed state rather than reverting absent a concrete defect
+  - correct `PLAN.md` so `6435434` is the current docs-only branch tip and `9a52b46` is the latest code/test release authority
+  - demote the execution-lane `hasattr(obj, name)` planning output to a non-authoritative recommendation pending control-lane review
+  - remove implementation authorization for the `hasattr` pilot from `PLAN.md`
+  - route next to findings-first control review of the non-authoritative recommendation before any implementation prompt
+- Acceptance decision:
+  - accept this continuity correction first-pass
+  - do not revert pushed commits without a concrete defect or explicit Ryan revert request
+  - do not issue a `hasattr` implementation prompt until the control lane reviews and accepts the recommendation
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Non-Authoritative Hasattr Runtime-Backed Eval Pilot Recommendation
+
+- This entry preserves the execution-lane planning output as non-authoritative input only
+- It was produced after Ryan accidentally authorized an execution lane to make control-lane decisions
+- It is not accepted backlog truth and does not authorize implementation
+- Reported recommendation:
+  - add one internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot
+  - reuse the existing accepted `HasattrRuntimeObservation`, analyzer, tool-facade, and additive runtime-provenance plumbing
+  - add only narrow fixture-local eval observation loading needed for `hasattr_runtime_observations`
+  - keep package-root exports, public claims, MCP, source runtime-acquisition semantics, scoring, winner selection, and existing dynamic-import matrix boundaries unchanged
+  - do not broaden to `getattr`, `vars`, `dir`, `globals`, `locals`, `setattr`, `delattr`, `METACLASS_BEHAVIOR`, `RUNTIME_MUTATION`, or another provider/budget matrix in the same slice
+- Reported inspection:
+  - `runtime_acquisition.py` already defines accepted additive runtime-backed attachment for `HasattrRuntimeObservation`
+  - `analyzer.py` already accepts `hasattr_runtime_observations` after static dependency/frontier derivation
+  - `tool_facade.py` already forwards `hasattr_runtime_observations` as the highest exposed hybrid entry point
+  - `dependency_frontier.py` already surfaces unshadowed `hasattr(obj, name)` calls as explicit `REFLECTIVE_BUILTIN` unsupported constructs
+  - the internal eval fixture loader currently auto-loads dynamic-import observations only
+- Reported targeted validation:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_dependency_frontier.py -k "surfaces_reflective_builtin_boundaries" -q`
+  - result: `1 passed, 46 deselected`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_acquisition.py -k "hasattr_runtime_provenance_targets_supported_hasattr_boundaries" -q`
+  - result: `1 passed, 51 deselected`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_analyzer.py -k "attaches_hasattr_runtime_provenance_post_frontier" -q`
+  - result: `1 passed, 14 deselected`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_tool_facade.py -k "forwards_hasattr_runtime_observations or attaches_hasattr_runtime_provenance" -q`
+  - result: `2 passed, 26 deselected`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dynamic_import_probe.py tests/test_eval_runs.py -q`
+  - result: `18 passed`
+- Hold decision:
+  - hold pending control-lane review against live repo reality, current holds, and claim boundaries
+- Acceptance status: held
+
 ## 2026-04-23 -- Docs-Only Continuity Sync After Dynamic-Import Matrix Push
 
 - Updated continuity after the internal `DYNAMIC_IMPORT` provider/budget matrix release was pushed at `9a52b46`
