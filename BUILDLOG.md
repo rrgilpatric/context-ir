@@ -2,6 +2,112 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Continuity Loop Correction And Next-Move Reset
+
+- Reviewed the self-invalidating continuity pattern created by writing `PLAN.md` and `BUILDLOG.md` as if they were still accepting or sequencing their own release unit
+- Control finding:
+  - continuity had drifted into transient workflow narration instead of stable post-action repo truth
+  - that wording would have forced another immediate continuity-only correction after commit and push
+- Corrected continuity policy in the active docs:
+  - remove "currently in progress" and "review/accept this continuity sync" wording from `PLAN.md`
+  - keep `3291268` as the latest pushed docs-only evidence/claim reconciliation commit
+  - keep `90dcc15` pinned as the latest pushed code/test release authority
+  - route `What Is Next` to one bounded north-star planning decision instead of further self-referential artifacting
+- Next control action after this continuity closeout:
+  - one bounded planning spike to decide whether the existing internal `hasattr(obj, name)` eval pilot should be broadened into a small provider/budget matrix before any new runtime family is opened
+- Acceptance decision:
+  - accept the continuity correction first-pass
+  - do not create another continuity loop by making the docs describe their own acceptance step
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Runtime-Backed Evidence Docs Continuity Sync
+
+- Updated `PLAN.md` and `BUILDLOG.md` after the pushed docs-only runtime-backed evidence/claim reconciliation commit `3291268`
+- Verified live state before this continuity update:
+  - branch `main`
+  - local `HEAD` `3291268`
+  - `origin/main` `3291268`
+  - worktree was clean before the continuity update
+  - latest pushed code/test release authority remains `90dcc15`
+- Continuity sync records:
+  - latest pushed docs-only evidence/claim reconciliation commit is `3291268`
+  - `3291268` updates only `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
+  - latest pushed code/test release authority remains `90dcc15`
+  - no implementation, exposure, schema, scoring, winner selection, package-root, MCP, or public-claim boundary was widened by `3291268`
+- Acceptance decision:
+  - accept this continuity sync first-pass
+  - keep latest pushed code/test release authority pinned to `90dcc15`
+  - route the next substantive move through a bounded planning decision rather than another continuity-only cycle
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Runtime-Backed Evidence Docs Remote Push
+
+- Ryan explicitly authorized remote push of the already-created docs-only commit `3291268`
+- Verified before push:
+  - branch `main`
+  - local `HEAD` `3291268`
+  - `origin/main` `7cb48bb`
+  - local branch was ahead of `origin/main` by one commit
+  - worktree was clean
+- Pushed docs-only commit:
+  - `3291268 Reconcile runtime-backed evidence docs`
+- Post-push release state:
+  - local `HEAD` is `3291268`
+  - `origin/main` is `3291268`
+  - latest pushed code/test release authority remains `90dcc15`
+  - latest pushed docs-only evidence/claim reconciliation commit is now `3291268`
+  - worktree remained clean before the later continuity update
+- Acceptance decision:
+  - accept the remote push first-pass
+  - next control action is a separate continuity sync for `PLAN.md` and `BUILDLOG.md`, followed by a bounded planning decision
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Runtime-Backed Evidence Docs Acceptance And Local Commit
+
+- Reviewed the returned docs-only runtime-backed evidence/claim reconciliation slice
+- Verified live review state:
+  - branch `main`
+  - local `HEAD` `7cb48bb`
+  - `origin/main` `7cb48bb`
+  - modified files were limited to:
+    - `ARCHITECTURE.md`
+    - `EVAL.md`
+    - `PUBLIC_CLAIMS.md`
+    - `README.md`
+- Findings-first review result:
+  - no findings
+- Control-lane validation passed:
+  - `git diff --check -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`
+  - `rg -n "runtime-backed|hybrid static|DYNAMIC_IMPORT|hasattr|capability-tier|SWE-bench|production|public claim|benchmark" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - `git diff --exit-code -- src tests evals AGENTS.md PLAN.md BUILDLOG.md`
+- Commit-gating review passed:
+  - exact docs-only release unit:
+    - `ARCHITECTURE.md`
+    - `EVAL.md`
+    - `PUBLIC_CLAIMS.md`
+    - `README.md`
+  - excluded from the release unit:
+    - `src/`
+    - `tests/`
+    - `evals/`
+    - `AGENTS.md`
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - `git diff --check -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`
+  - result: passed
+- Created local docs-only commit:
+  - `3291268 Reconcile runtime-backed evidence docs`
+- Post-commit release state:
+  - local `HEAD` is `3291268`
+  - `origin/main` remains `7cb48bb`
+  - latest pushed code/test release authority remains `90dcc15`
+  - no files were staged
+  - worktree was clean
+- Acceptance decision:
+  - accept the docs-only slice, commit-gating review, and local commit creation first-pass
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Hasattr Runtime-Backed Eval Pilot Docs-Only Continuity Sync
 
 - Reviewed the docs-only continuity diff after the internal `hasattr(obj, name)` runtime-backed eval pilot was pushed at `90dcc15`

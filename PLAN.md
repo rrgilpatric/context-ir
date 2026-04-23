@@ -38,13 +38,15 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The latest pushed code/test release unit is the internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot at `90dcc15`. A docs-only continuity commit may exist after `90dcc15`; any such docs-only commit does not change code/test release authority or widen implementation, exposure, schema, scoring, or public-claim boundaries. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`; that release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit.
+Release authority is split deliberately. The latest pushed code/test release unit is the internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot at `90dcc15`. The latest pushed docs-only evidence/claim reconciliation commit is `3291268`; it updates `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` so repo-facing evidence language matches the pushed internal runtime-backed eval state through `90dcc15`. Commit `3291268` does not change code/test release authority or widen implementation, exposure, schema, scoring, winner selection, package-root exports, MCP behavior, or public-claim boundaries. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`; that release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit.
 
 The latest pushed implementation release `90dcc15` adds one internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot. It passed corrected release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push. It does not widen public claims, schema, scoring, winner selection, package-root exports, MCP, analyzer, tool-facade, runtime acquisition, or other runtime-family boundaries.
 
 The prior pushed implementation release `9a52b46` broadens the existing isolated internal `DYNAMIC_IMPORT` pilot into a 1 task x 2 budget x 3 provider internal matrix. That release passed release-unit audit, full regression, commit-gating review, local commit creation, and remote push. The implementation changes only `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json` and targeted tests, and it does not widen public claims, schema, scoring, winner selection, package-root exports, MCP, runtime acquisition, or source code.
 
-This docs-only continuity sync records the pushed `90dcc15` release state and remains separate from the implementation release unit.
+The latest pushed docs-only evidence/claim reconciliation commit `3291268` passed docs-only review, commit-gating, local commit creation, and remote push. It remains separate from the code/test release authority at `90dcc15`.
+
+This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed `3291268` docs-only state while keeping the latest pushed code/test release authority pinned to `90dcc15`.
 
 ## What Is Complete
 
@@ -102,6 +104,9 @@ This docs-only continuity sync records the pushed `90dcc15` release state and re
 - [x] Full regression gate for internal `hasattr(obj, name)` runtime-backed eval pilot accepted first-pass
 - [x] Commit-gating review and local commit creation for internal `hasattr(obj, name)` runtime-backed eval pilot accepted first-pass at `90dcc15`
 - [x] Remote push for internal `hasattr(obj, name)` runtime-backed eval pilot completed at `90dcc15`
+- [x] Runtime-backed evidence/claim docs reconciliation accepted first-pass
+- [x] Commit-gating review and local commit creation for runtime-backed evidence/claim docs reconciliation accepted first-pass at `3291268`
+- [x] Remote push for runtime-backed evidence/claim docs reconciliation completed at `3291268`
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
@@ -271,16 +276,17 @@ This docs-only continuity sync records the pushed `90dcc15` release state and re
   - the control-reviewed `hasattr` pilot planning decision
   - the `hasattr` implementation acceptance, correction, audit, regression, commit, and push
   - the pushed `90dcc15` release state
+  - the pushed docs-only runtime-backed evidence/claim reconciliation commit `3291268`
 - Pushed workflow authority exists in:
   - `AGENTS.md`
   - `AGENTS.md` codifies that slice acceptance is workspace-only by default, commits happen at coherent release-unit boundaries, and a release-unit audit is the default pre-commit quality gate
 - Repo-backed and local release state is now explicit and complete:
   - latest pushed code/test release authority is `90dcc15`
-  - branch tip may be a later docs-only continuity commit after this sync
+  - latest pushed docs-only evidence/claim reconciliation commit is `3291268`
   - the accepted internal `DYNAMIC_IMPORT` provider/budget matrix expansion release unit remains `9a52b46`
   - the accepted provider-scoped selected-unit capability-tier accounting release unit is `215b6bb`
   - the accepted capability-tier eval / evidence code/test/pilot release unit is `a605b22`
-  - docs-only continuity commits after `a605b22`, including pushed continuity through `6435434` and this sync, are not implementation release changes
+  - docs-only continuity commits after `a605b22`, including pushed continuity through `6435434` and pushed evidence-doc reconciliation `3291268`, are not implementation release changes
   - the previously accepted runtime-backed tranche at `cb1dc65` remains historical released state and must not be routed as workspace-only work
 - The prior capability-tier eval / evidence baseline remains repo-backed at `a605b22`:
   - accepted tier-aware eval storage-contract slice is released in:
@@ -365,8 +371,10 @@ This docs-only continuity sync records the pushed `90dcc15` release state and re
 
 ## What Is Next
 
-1. Hold before any new planning or implementation lane until Ryan explicitly authorizes the next movement.
-2. Keep the latest pushed code/test release authority pinned to `90dcc15` even if the branch tip advances by docs-only continuity commits.
+1. Keep the latest pushed code/test release authority pinned to `90dcc15` even though the latest pushed branch tip is the docs-only evidence/claim reconciliation commit `3291268`.
+2. Treat pushed commit `3291268` as the latest docs-only evidence/claim reconciliation authority:
+   - it updates `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
+   - it does not widen code/test authority, public claims, package-root exports, MCP behavior, source boundaries, schema, scoring, or winner selection
 3. Treat pushed commit `90dcc15` as the current code/test release authority:
    - internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot
    - corrected release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push
@@ -388,7 +396,13 @@ This docs-only continuity sync records the pushed `90dcc15` release state and re
    - local commit creation for the coherent code/test/pilot release unit
    - remote push of the coherent code/test/pilot release unit
    - docs-only continuity sync in `PLAN.md` and `BUILDLOG.md`
-7. The next lane, if later authorized, must not reopen:
+7. The next recommended substantive move is one bounded planning spike to decide whether the existing internal `hasattr(obj, name)` eval pilot should be broadened into a small provider/budget matrix before any new runtime family is opened.
+8. That planning spike, if authorized, must:
+   - compare broadening the existing `hasattr(obj, name)` pilot against opening a new runtime family
+   - preserve the existing public-claim, package-root, MCP, schema, scoring, and winner-selection boundaries
+   - define one exact next implementation boundary rather than reopening the roadmap broadly
+9. The next lane, if later authorized, must not reopen:
+   - the accepted docs-only runtime-backed evidence/claim reconciliation commit at `3291268`
    - the accepted internal `hasattr(obj, name)` runtime-backed eval pilot release unit at `90dcc15`
    - the accepted code/test/pilot release unit at `a605b22`
    - the accepted provider-scoped accounting release unit at `215b6bb`
@@ -399,8 +413,8 @@ This docs-only continuity sync records the pushed `90dcc15` release state and re
    - further inherited-call work
    - scoring, winner selection, raw schema, tasks, fixtures, providers, source code, docs, or runtime-acquisition breadth
    - any run spec unless a later control-reviewed eval pilot explicitly authorizes it
-8. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
-9. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
+10. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
+11. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
 
 ## What Is Deferred
 
