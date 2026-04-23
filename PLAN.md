@@ -38,15 +38,11 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The latest pushed code/test release unit is the internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot at `90dcc15`. The latest pushed docs-only evidence/claim reconciliation commit is `3291268`; it updates `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` so repo-facing evidence language matches the pushed internal runtime-backed eval state through `90dcc15`. Commit `3291268` does not change code/test release authority or widen implementation, exposure, schema, scoring, winner selection, package-root exports, MCP behavior, or public-claim boundaries. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`; that release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit.
+Release authority is split deliberately. The latest pushed code/test release unit is `7d43302`, which adds a narrow internal eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` default-return branch pilot at `1 task x 1 budget x 3 providers` with budget `220` and providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. It keeps the defaulted `getattr(obj, name, default)` selector and selected unit primary `unsupported/opaque`, attaches runtime-backed provenance additively only, and leaves package-root exports, MCP behavior, analyzer, tool-facade, source runtime-acquisition semantics, schema, scoring, and winner selection unchanged. The same pushed release unit also reconciles `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` without widening public claims or product boundaries. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The latest pushed docs-only continuity/process-correction commit in the current release chain remains `8133e0a`; it corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The latest pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
 
-The latest pushed implementation release `90dcc15` adds one internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot. It passed corrected release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push. It does not widen public claims, schema, scoring, winner selection, package-root exports, MCP, analyzer, tool-facade, runtime acquisition, or other runtime-family boundaries.
+The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. Before the next commit/push tranche, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push.
 
-The prior pushed implementation release `9a52b46` broadens the existing isolated internal `DYNAMIC_IMPORT` pilot into a 1 task x 2 budget x 3 provider internal matrix. That release passed release-unit audit, full regression, commit-gating review, local commit creation, and remote push. The implementation changes only `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json` and targeted tests, and it does not widen public claims, schema, scoring, winner selection, package-root exports, MCP, runtime acquisition, or source code.
-
-The latest pushed docs-only evidence/claim reconciliation commit `3291268` passed docs-only review, commit-gating, local commit creation, and remote push. It remains separate from the code/test release authority at `90dcc15`.
-
-This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed `3291268` docs-only state while keeping the latest pushed code/test release authority pinned to `90dcc15`.
+The defaulted `getattr(obj, name, default)` tranche is now pushed to `origin/main` at `7d43302`. The dedicated read-only release-unit audit found no issues and is accepted first-pass. The full regression gate also passed first-pass. A commit-gating wording correction removed release-stale `workspace-only` wording from the release docs. Commit-gating, local commit creation, and remote push all passed first-pass. No implementation or planning slice is currently in flight.
 
 ## What Is Complete
 
@@ -107,6 +103,30 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
 - [x] Runtime-backed evidence/claim docs reconciliation accepted first-pass
 - [x] Commit-gating review and local commit creation for runtime-backed evidence/claim docs reconciliation accepted first-pass at `3291268`
 - [x] Remote push for runtime-backed evidence/claim docs reconciliation completed at `3291268`
+- [x] Continuity-loop correction and tranche-cadence reset accepted first-pass at `8133e0a`
+- [x] Post-`hasattr`-pilot matrix-broadening planning spike accepted first-pass
+- [x] Internal `hasattr(obj, name)` provider/budget matrix expansion accepted first-pass
+- [x] Full regression gate for internal `hasattr(obj, name)` provider/budget matrix expansion accepted first-pass
+- [x] Commit-gating review and local commit creation for internal `hasattr(obj, name)` provider/budget matrix expansion accepted first-pass at `762dd51`
+- [x] Remote push for internal `hasattr(obj, name)` provider/budget matrix expansion completed at `762dd51`
+- [x] Post-`762dd51` runtime-family planning spike accepted first-pass
+- [x] Internal `getattr(obj, name)` runtime-backed eval pilot implementation accepted after 1 correction as workspace-only tranche state
+- [x] Post-`getattr(obj, name)` same-tranche docs/evidence reconciliation decision accepted first-pass
+- [x] Same-tranche docs/evidence reconciliation for internal `getattr(obj, name)` tranche accepted first-pass
+- [x] Release-unit audit for internal `getattr(obj, name)` tranche accepted first-pass
+- [x] Full regression gate for internal `getattr(obj, name)` tranche accepted first-pass
+- [x] Commit-gating review and local commit creation for internal `getattr(obj, name)` tranche accepted first-pass at `c592dca`
+- [x] Remote push for internal `getattr(obj, name)` tranche completed at `c592dca`
+- [x] Post-`c592dca` defaulted `getattr(obj, name, default)` eval planning spike accepted first-pass
+- [x] `EVAL.md` authority correction accepted first-pass as workspace-only tranche state
+- [x] Internal defaulted `getattr(obj, name, default)` eval pilot implementation accepted first-pass as workspace-only tranche state
+- [x] Same-tranche docs/evidence reconciliation for defaulted `getattr(obj, name, default)` accepted first-pass as workspace-only tranche state
+- [x] Release-unit audit for defaulted `getattr(obj, name, default)` tranche accepted first-pass
+- [x] Full regression gate for defaulted `getattr(obj, name, default)` tranche accepted first-pass
+- [x] Release-doc wording correction for defaulted `getattr(obj, name, default)` accepted first-pass after human sign-off
+- [x] Commit-gating review for defaulted `getattr(obj, name, default)` tranche accepted first-pass
+- [x] Local commit creation for defaulted `getattr(obj, name, default)` tranche accepted first-pass at `7d43302`
+- [x] Remote push for defaulted `getattr(obj, name, default)` tranche completed at `7d43302`
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
@@ -227,7 +247,96 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
 
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
-- Pushed implementation release `90dcc15` has passed corrected release-unit audit, full regression, commit-gating review, local commit creation, and remote push:
+- No local unpushed code/test release candidate is currently ahead of `origin/main`
+- Pushed implementation release `7d43302` contains the accepted defaulted `getattr(obj, name, default)` tranche after pushed `c592dca`:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `evals/fixtures/oracle_signal_getattr_default_probe/`
+  - `evals/tasks/oracle_signal_getattr_default_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - `tests/test_eval_oracles.py`
+  - `tests/test_eval_providers.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - the accepted planning decision behind this tranche is to extend the eval layer, not the lower runtime layer, with one narrow defaulted `getattr(obj, name, default)` pilot
+  - the `EVAL.md` correction updates the evidence ledger so `c592dca` is the latest pushed code/test authority and the pushed `getattr(obj, name)` pilot is no longer described as workspace-only
+  - eval eligibility is widened only from simple-name `getattr` with `argument_count == 2` to include the simple-name defaulted form with `argument_count == 3`
+  - the new pilot remains exactly `1 task x 1 budget x 3 providers` with budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - this eval pilot covers only the default-return branch via `lookup_outcome=returned_default_value`
+  - the defaulted `getattr(obj, name, default)` selector and selected unit remain primary `unsupported/opaque`, with runtime-backed provenance attached additively only
+  - the docs/evidence reconciliation keeps the public-safe quad-matrix comparative surface unchanged and describes the defaulted `getattr(obj, name, default)` work only as narrow internal eval-only evidence
+  - targeted validation passed:
+    - `.venv/bin/python -m ruff check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py tests/test_eval_signal_getattr_default_probe.py`
+    - `.venv/bin/python -m ruff format --check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py tests/test_eval_signal_getattr_default_probe.py`
+    - `.venv/bin/python -m mypy --strict src/context_ir/eval_oracles.py src/context_ir/eval_providers.py`
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_oracles.py -k "getattr or dynamic_import or hasattr" -q`
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_providers.py -k "getattr or dynamic_import or hasattr" -q`
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_runs.py -k "getattr_default_probe or getattr_probe or dynamic_import_probe or hasattr_probe" -q`
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_probe.py -q`
+  - docs/evidence validation passed:
+    - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - release-unit audit passed with no findings
+  - full regression passed:
+    - `.venv/bin/python -m ruff check src/ tests/`
+    - `.venv/bin/python -m ruff format --check src/ tests/`
+    - `.venv/bin/python -m mypy --strict src/`
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    - pytest result: `567 passed`
+  - release-doc wording correction passed:
+    - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+    - no `workspace-only`, `workspace tranche`, or `accepted workspace` wording remains in the release docs
+  - commit-gating passed with no findings
+  - local commit creation passed at `7d43302`
+  - remote push completed at `7d43302`
+- Prior pushed implementation release `c592dca` remains the `getattr(obj, name)` release anchor:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/fixtures/oracle_signal_getattr_probe/`
+  - `evals/tasks/oracle_signal_getattr_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_oracles.py`
+  - `tests/test_eval_providers.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_signal_getattr_probe.py`
+  - it adds a narrow internal `REFLECTIVE_BUILTIN` / `getattr(obj, name)` eval pilot at `1 task x 1 budget x 3 providers`
+  - the budget is `220`
+  - providers are `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - eligibility is constrained to simple-name `getattr` with `argument_count == 2`
+  - the `getattr(obj, name)` unsupported selector and selected unit remain primary `unsupported/opaque`, with runtime-backed provenance attached additively only
+  - the same-tranche docs/evidence reconciliation updates `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to cover the accepted internal `getattr(obj, name)` pilot without widening public claims, package-root exports, MCP behavior, schema, scoring, or winner selection
+  - release-unit audit found no issues
+  - full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - pytest result: `558 passed`
+  - commit-gating review passed
+  - local commit creation passed at `c592dca`
+  - remote push completed at `c592dca`
+- The only current local workspace modifications should be:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Prior pushed implementation release `762dd51` remains the `hasattr(obj, name)` provider/budget matrix authority:
+  - `evals/run_specs/oracle_signal_hasattr_probe_matrix.json`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_runs.py`
+  - the `hasattr(obj, name)` internal pilot now runs `1 task x 2 budgets x 3 providers`
+  - the budgets are `220` and `100`
+  - `context_ir` still carries the intended `unsupported/opaque` selected unit with additive runtime provenance at both budgets
+  - both baselines remain structurally empty for this pilot, including the tighter `100` budget row
+  - summary/report-facing assertions still prove additive-only runtime provenance and no primary `runtime_backed` selected-unit tier
+  - the slice passed targeted validation, full regression, commit-gating review, local commit creation, and remote push
+  - it does not widen source boundaries, public claims, package-root exports, MCP behavior, schema, scoring, winner selection, tasks, or fixtures
+- Prior pushed implementation release `90dcc15` has passed corrected release-unit audit, full regression, commit-gating review, local commit creation, and remote push:
   - `src/context_ir/eval_oracles.py`
   - `src/context_ir/eval_providers.py`
   - `evals/fixtures/oracle_signal_hasattr_probe/`
@@ -277,16 +386,21 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
   - the `hasattr` implementation acceptance, correction, audit, regression, commit, and push
   - the pushed `90dcc15` release state
   - the pushed docs-only runtime-backed evidence/claim reconciliation commit `3291268`
+  - the pushed continuity/process correction commit `8133e0a`
+  - the pushed `762dd51` `hasattr` matrix expansion release state
 - Pushed workflow authority exists in:
   - `AGENTS.md`
   - `AGENTS.md` codifies that slice acceptance is workspace-only by default, commits happen at coherent release-unit boundaries, and a release-unit audit is the default pre-commit quality gate
 - Repo-backed and local release state is now explicit and complete:
-  - latest pushed code/test release authority is `90dcc15`
-  - latest pushed docs-only evidence/claim reconciliation commit is `3291268`
+  - latest pushed code/test release authority is `7d43302`
+  - latest pushed docs-only continuity/process correction commit in the current release chain is `8133e0a`
+  - latest pushed docs-only evidence/claim reconciliation commit remains `3291268`
+  - prior pushed `getattr(obj, name)` release authority remains `c592dca`
+  - prior pushed `hasattr` pilot release authority remains `90dcc15`
   - the accepted internal `DYNAMIC_IMPORT` provider/budget matrix expansion release unit remains `9a52b46`
   - the accepted provider-scoped selected-unit capability-tier accounting release unit is `215b6bb`
   - the accepted capability-tier eval / evidence code/test/pilot release unit is `a605b22`
-  - docs-only continuity commits after `a605b22`, including pushed continuity through `6435434` and pushed evidence-doc reconciliation `3291268`, are not implementation release changes
+  - docs-only continuity commits after `a605b22`, including pushed continuity through `6435434`, pushed evidence-doc reconciliation `3291268`, and pushed process correction `8133e0a`, are not implementation release changes
   - the previously accepted runtime-backed tranche at `cb1dc65` remains historical released state and must not be routed as workspace-only work
 - The prior capability-tier eval / evidence baseline remains repo-backed at `a605b22`:
   - accepted tier-aware eval storage-contract slice is released in:
@@ -345,7 +459,7 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
   - do not widen MCP runtime-observation exposure
   - keep public claim boundaries unchanged from the accepted internal-eval state
 - Further inherited-call reopening remains on explicit hold: no next implementation slice is authorized beyond the accepted first-exclusive-branch overlap reopening
-- Push for `a605b22` is complete; docs-only continuity pushes through `6435434` are complete; implementation pushes for `9a52b46` and `90dcc15` are complete
+- Push for `a605b22` is complete; docs-only continuity pushes through `6435434`, evidence-doc reconciliation `3291268`, and process correction `8133e0a` are complete; implementation pushes for `9a52b46`, `90dcc15`, and `762dd51` are complete
 - The accepted post-release planning spike found no concrete defect requiring `a605b22` to be reopened
 - Provider-scoped selected-unit capability-tier accounting is released in:
   - `src/context_ir/eval_summary.py`
@@ -371,22 +485,41 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
 
 ## What Is Next
 
-1. Keep the latest pushed code/test release authority pinned to `90dcc15` even though the latest pushed branch tip is the docs-only evidence/claim reconciliation commit `3291268`.
-2. Treat pushed commit `3291268` as the latest docs-only evidence/claim reconciliation authority:
+1. Keep the latest pushed code/test release authority pinned to `7d43302`.
+2. Treat pushed commit `8133e0a` as the latest pushed docs-only continuity/process-correction authority in the current release chain:
+   - it corrects the self-referential continuity loop
+   - it restores tranche-style release sequencing discipline
+   - it does not change code/test authority or widen product boundaries
+3. Treat pushed commit `3291268` as the latest docs-only evidence/claim reconciliation authority:
    - it updates `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
    - it does not widen code/test authority, public claims, package-root exports, MCP behavior, source boundaries, schema, scoring, or winner selection
-3. Treat pushed commit `90dcc15` as the current code/test release authority:
-   - internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed eval pilot
-   - corrected release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push
-4. Treat pushed commit `9a52b46` as the prior internal dynamic-import matrix release authority:
+4. Treat pushed commit `7d43302` as the current code/test release authority:
+   - narrow internal eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` default-return branch pilot
+   - `1 task x 1 budget x 3 providers` with budget `220`
+   - additive runtime provenance remains separate from primary `unsupported/opaque` truth
+   - same-tranche docs/evidence reconciliation in `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
+   - release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push completed
+5. Treat pushed commit `c592dca` as the prior `getattr(obj, name)` release authority:
+   - narrow internal `REFLECTIVE_BUILTIN` / `getattr(obj, name)` eval pilot
+   - `1 task x 1 budget x 3 providers` with budget `220`
+   - additive runtime provenance remains separate from primary `unsupported/opaque` truth
+   - same-tranche docs/evidence reconciliation in `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
+   - release-unit audit, full regression gate, commit-gating review, local commit creation, and remote push completed
+6. Treat pushed commit `762dd51` as the prior `hasattr(obj, name)` provider/budget matrix release authority:
+   - internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` provider/budget matrix expansion
+   - budgets `220` and `100`
+   - additive runtime provenance remains separate from primary truth
+   - full regression gate, commit-gating review, local commit creation, and remote push completed
+7. Treat pushed commit `90dcc15` as the prior narrow `hasattr(obj, name)` pilot release authority.
+8. Treat pushed commit `9a52b46` as the prior internal dynamic-import matrix release authority:
    - internal `DYNAMIC_IMPORT` provider/budget matrix expansion
    - release-unit audit over the dynamic-import provider/budget matrix release unit
    - full regression gate, local commit creation, and remote push
-5. Treat pushed commit `215b6bb` as the prior provider-scoped accounting release authority:
+9. Treat pushed commit `215b6bb` as the prior provider-scoped accounting release authority:
    - provider-scoped selected-unit capability-tier accounting
    - full regression gate over the provider-scoped accounting slice
    - commit-gating and remote push of the provider-scoped accounting release unit
-6. Treat pushed commit `a605b22` as the prior capability-tier eval/evidence code/test/pilot release authority:
+10. Treat pushed commit `a605b22` as the prior capability-tier eval/evidence code/test/pilot release authority:
    - tier-aware eval storage-contract slice
    - isolated internal `DYNAMIC_IMPORT` eval pilot
    - accepted post-pilot planning spike that authorizes the tier-aware internal-accounting rollout boundary
@@ -396,12 +529,36 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
    - local commit creation for the coherent code/test/pilot release unit
    - remote push of the coherent code/test/pilot release unit
    - docs-only continuity sync in `PLAN.md` and `BUILDLOG.md`
-7. The next recommended substantive move is one bounded planning spike to decide whether the existing internal `hasattr(obj, name)` eval pilot should be broadened into a small provider/budget matrix before any new runtime family is opened.
-8. That planning spike, if authorized, must:
-   - compare broadening the existing `hasattr(obj, name)` pilot against opening a new runtime family
-   - preserve the existing public-claim, package-root, MCP, schema, scoring, and winner-selection boundaries
-   - define one exact next implementation boundary rather than reopening the roadmap broadly
-9. The next lane, if later authorized, must not reopen:
+11. Treat the accepted post-`762dd51` planning decision as complete:
+   - the next smallest truthful move was to open a third internal runtime-backed eval family now
+   - the chosen family was `REFLECTIVE_BUILTIN` / `getattr(obj, name)`
+   - the resulting tranche is now implemented, docs/evidence-reconciled, audit-cleared, regression-cleared, commit-gating-cleared, committed locally, and pushed at `c592dca`
+12. Treat the accepted post-`c592dca` planning decision as complete:
+   - the next smallest truthful move is one eval-only pilot for defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)`
+   - prefer the default-return branch first
+   - do not broaden budgets or open a new runtime family first
+13. Treat pushed commit `7d43302` as the completed defaulted `getattr(obj, name, default)` release:
+   - one narrow `EVAL.md` authority correction to the pushed `c592dca` release state
+   - one narrow eval-only defaulted `getattr(obj, name, default)` pilot
+   - one same-tranche docs/evidence reconciliation in `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
+   - no lower-layer runtime-acquisition, analyzer, tool-facade, package-root, MCP, schema, scoring, or winner-selection widening
+14. Treat the release-unit audit over the accumulated workspace tranche as accepted first-pass with no findings.
+15. Treat the full regression gate, commit-gating review, local commit creation, and remote push as accepted first-pass.
+16. The next later substantive lane, if Ryan authorizes one, should be a bounded planning spike to choose the next internal eval/evidence move after pushed `7d43302`.
+17. Release sequencing going forward must follow the restored tranche cadence:
+   - accumulate multiple accepted slices locally until they form one coherent release unit or are just shy of becoming too large
+   - keep continuity synced in workspace during that accumulation
+   - run one dedicated findings-first deep release-unit audit over the whole accumulated diff before commit
+   - correct audit findings before final regression / commit-gating / commit / push
+   - do not return to per-slice commit/push churn without explicit reason and explicit Ryan sign-off
+18. The next lane, if later authorized, must not reopen:
+   - the accepted pushed `c592dca` `getattr(obj, name)` release unit
+   - the accepted pushed `7d43302` defaulted `getattr(obj, name, default)` release unit
+   - the accepted workspace-only `EVAL.md` authority correction
+   - the accepted workspace-only defaulted `getattr(obj, name, default)` eval pilot slice
+   - the accepted workspace-only same-tranche docs/evidence reconciliation slice
+   - the accepted `hasattr` provider/budget matrix release unit at `762dd51`
+   - the accepted docs-only continuity/process correction commit at `8133e0a`
    - the accepted docs-only runtime-backed evidence/claim reconciliation commit at `3291268`
    - the accepted internal `hasattr(obj, name)` runtime-backed eval pilot release unit at `90dcc15`
    - the accepted code/test/pilot release unit at `a605b22`
@@ -413,8 +570,8 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
    - further inherited-call work
    - scoring, winner selection, raw schema, tasks, fixtures, providers, source code, docs, or runtime-acquisition breadth
    - any run spec unless a later control-reviewed eval pilot explicitly authorizes it
-10. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
-11. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
+19. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
+20. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
 
 ## What Is Deferred
 
@@ -433,6 +590,11 @@ This docs-only continuity sync in `PLAN.md` and `BUILDLOG.md` records the pushed
 
 ## What Should Not Be Reopened
 
+- The accepted pushed `c592dca` `REFLECTIVE_BUILTIN` / `getattr(obj, name)` release unit unless a later findings-based review proves a concrete defect
+- The accepted pushed `7d43302` defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` release unit unless a later findings-based review proves a concrete defect
+- The accepted workspace-only `EVAL.md` authority correction unless a later findings-based review proves a concrete defect
+- The accepted workspace-only defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` eval pilot slice unless a later findings-based review proves a concrete defect
+- The accepted workspace-only same-tranche docs/evidence reconciliation for defaulted `getattr(obj, name, default)` unless a later findings-based review proves a concrete defect
 - The accepted bounded runtime-backed tranche work for `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, and `METACLASS_BEHAVIOR` unless a later findings-based review proves a concrete defect
 - The accepted tier-aware eval storage-contract slice unless a later findings-based review proves a concrete defect
 - The accepted isolated internal `DYNAMIC_IMPORT` eval pilot unless a later findings-based review proves a concrete defect
