@@ -30,7 +30,7 @@ HASATTR_PROBE_RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_hasattr_probe_matrix.json"
 )
 PROBE_BUDGETS = (220, 180)
-HASATTR_PROBE_BUDGETS = (220,)
+HASATTR_PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     CONTEXT_IR_PROVIDER,
     LEXICAL_TOP_K_FILES_PROVIDER,
@@ -444,42 +444,81 @@ def test_execute_eval_run_spec_populates_runtime_backed_fields_for_hasattr_probe
     parsed_records = _parsed_ledger_records(ledger_path)
     assert execution.record_count == len(PROBE_PROVIDERS) * len(HASATTR_PROBE_BUDGETS)
     assert len(parsed_records) == len(PROBE_PROVIDERS) * len(HASATTR_PROBE_BUDGETS)
+    assert {
+        (record["provider_name"], record["budget"]) for record in parsed_records
+    } == {
+        (provider_name, budget)
+        for provider_name in PROBE_PROVIDERS
+        for budget in HASATTR_PROBE_BUDGETS
+    }
 
     for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
-            parsed_records,
-            provider_name=provider_name,
-            budget=220,
-        )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+        for budget in HASATTR_PROBE_BUDGETS:
+            baseline_record = _record_for(
+                parsed_records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
 
-    record = _record_for(
+    record_220 = _record_for(
         parsed_records,
         provider_name=CONTEXT_IR_PROVIDER,
         budget=220,
     )
-    unsupported_selector = next(
+    unsupported_selector_220 = next(
         selector
-        for selector in cast(list[dict[str, object]], record["resolved_selectors"])
+        for selector in cast(list[dict[str, object]], record_220["resolved_selectors"])
         if selector["resolved_unit_id"] == "unsupported:call:main.py:2:11"
     )
-    unsupported_selected_unit = next(
+    unsupported_selected_unit_220 = next(
         unit
-        for unit in _selected_units(record)
+        for unit in _selected_units(record_220)
+        if unit["unit_id"] == "unsupported:call:main.py:2:11"
+    )
+    record_100 = _record_for(
+        parsed_records,
+        provider_name=CONTEXT_IR_PROVIDER,
+        budget=100,
+    )
+    unsupported_selector_100 = next(
+        selector
+        for selector in cast(list[dict[str, object]], record_100["resolved_selectors"])
+        if selector["resolved_unit_id"] == "unsupported:call:main.py:2:11"
+    )
+    unsupported_selected_unit_100 = next(
+        unit
+        for unit in _selected_units(record_100)
         if unit["unit_id"] == "unsupported:call:main.py:2:11"
     )
 
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == CONTEXT_IR_PROVIDER
-    assert record["budget"] == 220
-    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_selector["has_attached_runtime_provenance"] is True
-    assert unsupported_selected_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_selected_unit["has_attached_runtime_provenance"] is True
+    assert record_220["spec_version"] == "v1"
+    assert record_220["provider_name"] == CONTEXT_IR_PROVIDER
+    assert record_220["budget"] == 220
+    assert unsupported_selector_220["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selector_220["has_attached_runtime_provenance"] is True
+    assert (
+        unsupported_selected_unit_220["primary_capability_tier"] == "unsupported/opaque"
+    )
+    assert unsupported_selected_unit_220["has_attached_runtime_provenance"] is True
     assert cast(
         list[str],
-        unsupported_selected_unit["attached_runtime_provenance_record_ids"],
+        unsupported_selected_unit_220["attached_runtime_provenance_record_ids"],
+    )
+
+    assert record_100["spec_version"] == "v1"
+    assert record_100["provider_name"] == CONTEXT_IR_PROVIDER
+    assert record_100["budget"] == 100
+    assert unsupported_selector_100["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selector_100["has_attached_runtime_provenance"] is True
+    assert (
+        unsupported_selected_unit_100["primary_capability_tier"] == "unsupported/opaque"
+    )
+    assert unsupported_selected_unit_100["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        unsupported_selected_unit_100["attached_runtime_provenance_record_ids"],
     )
 
 

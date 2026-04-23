@@ -26,7 +26,7 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_hasattr_probe.json"
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_hasattr_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -151,30 +151,53 @@ def test_hasattr_probe_run_executes_with_runtime_backed_raw_fields(
     }
 
     for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
-            records,
-            provider_name=provider_name,
-            budget=220,
-        )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+        for budget in PROBE_BUDGETS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
 
-    record = _record_for(
+    record_220 = _record_for(
         records,
         provider_name=eval_providers.CONTEXT_IR_PROVIDER,
         budget=220,
     )
-    metrics = cast(dict[str, object], record["metrics"])
+    metrics_220 = cast(dict[str, object], record_220["metrics"])
+    unsupported_unit_220 = next(
+        unit
+        for unit in _selected_units(record_220)
+        if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+    )
+    record_100 = _record_for(
+        records,
+        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+        budget=100,
+    )
+    metrics_100 = cast(dict[str, object], record_100["metrics"])
     unsupported_unit = next(
         unit
-        for unit in _selected_units(record)
+        for unit in _selected_units(record_100)
         if unit["unit_id"] == UNSUPPORTED_UNIT_ID
     )
 
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert metrics["uncertainty_honesty"] == 1.0
+    assert record_220["spec_version"] == "v1"
+    assert record_220["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+    assert UNSUPPORTED_UNIT_ID in cast(list[str], record_220["selected_unit_ids"])
+    assert metrics_220["uncertainty_honesty"] == 1.0
+    assert unsupported_unit_220["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_unit_220["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        unsupported_unit_220["attached_runtime_provenance_record_ids"],
+    )
+
+    assert record_100["spec_version"] == "v1"
+    assert record_100["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+    assert UNSUPPORTED_UNIT_ID in cast(list[str], record_100["selected_unit_ids"])
+    assert metrics_100["uncertainty_honesty"] == 1.0
     assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
     assert unsupported_unit["has_attached_runtime_provenance"] is True
     assert cast(
@@ -225,10 +248,10 @@ def test_hasattr_probe_summary_surfaces_internal_capability_accounting(
     )
     report = eval_report.build_eval_report(ledger_path)
 
-    assert unsupported_selector_aggregate.selector_count == 3
-    assert unsupported_selector_aggregate.satisfied_count == 3
-    assert runtime_expectation_aggregate.selector_count == 3
-    assert runtime_expectation_aggregate.satisfied_count == 3
+    assert unsupported_selector_aggregate.selector_count == 6
+    assert unsupported_selector_aggregate.satisfied_count == 6
+    assert runtime_expectation_aggregate.selector_count == 6
+    assert runtime_expectation_aggregate.satisfied_count == 6
     assert tuple(
         (
             aggregate.primary_capability_tier,
@@ -237,11 +260,11 @@ def test_hasattr_probe_summary_surfaces_internal_capability_accounting(
         )
         for aggregate in summary.selected_unit_tier_aggregates
     ) == (
-        ("statically_proved", 2, 0),
-        ("unsupported/opaque", 1, 1),
+        ("statically_proved", 4, 0),
+        ("unsupported/opaque", 2, 2),
     )
-    assert unsupported_selected_unit_aggregate.selected_unit_count == 1
-    assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 1
+    assert unsupported_selected_unit_aggregate.selected_unit_count == 2
+    assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 2
     assert tuple(
         (
             aggregate.provider_name,
@@ -250,23 +273,23 @@ def test_hasattr_probe_summary_surfaces_internal_capability_accounting(
         )
         for aggregate in summary.provider_selected_unit_aggregates
     ) == (
-        (eval_providers.CONTEXT_IR_PROVIDER, 3, 1),
+        (eval_providers.CONTEXT_IR_PROVIDER, 6, 2),
         (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER, 0, 0),
         (eval_providers.LEXICAL_TOP_K_FILES_PROVIDER, 0, 0),
     )
-    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 1
+    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 2
     assert (
         provider_unsupported_selected_unit_aggregate.attached_runtime_provenance_count
-        == 1
+        == 2
     )
 
     assert report.markdown_report == rendered
     for markdown in (rendered, report.markdown_report):
         assert "## Capability-Tier Accounting" in markdown
         assert "### Selected Units by Provider" in markdown
-        assert "| yes | 3 | 3 |" in markdown
-        assert "| unsupported/opaque | 1 | 1 |" in markdown
-        assert "| context_ir | 3 | 1 |" in markdown
+        assert "| yes | 6 | 6 |" in markdown
+        assert "| unsupported/opaque | 2 | 2 |" in markdown
+        assert "| context_ir | 6 | 2 |" in markdown
         assert "| import_neighborhood_files | 0 | 0 |" in markdown
         assert "| lexical_top_k_files | 0 | 0 |" in markdown
         assert "| runtime_backed |" not in markdown
