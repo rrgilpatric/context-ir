@@ -30,9 +30,10 @@ infrastructure and a current four-asset signal evidence surface documented in
 `EVAL.md`; those artifacts are internal evidence, not external benchmark proof.
 `EVAL.md` also records narrow internal runtime-backed pilots for
 `DYNAMIC_IMPORT` and narrow `REFLECTIVE_BUILTIN` selectors exercised via
-`hasattr(obj, name)` and `getattr(obj, name)`. Those pilots do not widen the
-public supported subset, public API, MCP wrapper, or public benchmark claim
-boundary.
+`hasattr(obj, name)`, `getattr(obj, name)`, and the accepted narrow internal
+eval-only default-return branch of `getattr(obj, name, default)`. Those pilots
+do not widen the public supported subset, public API, MCP wrapper, or public
+benchmark claim boundary.
 
 ## Supported Subset and Limits
 
@@ -62,10 +63,10 @@ Unsupported limits include:
 
 The repo does contain narrow internal runtime-backed eval evidence for selected
 unsupported `DYNAMIC_IMPORT` cases and narrow `REFLECTIVE_BUILTIN` pilots over
-`hasattr(obj, name)` and `getattr(obj, name)` selectors. That evidence is
-additive internal provenance on otherwise unsupported/opaque selectors; it does
-not make broad dynamic imports or reflection part of the public supported
-subset.
+`hasattr(obj, name)`, `getattr(obj, name)`, and the eval-only default-return
+branch of `getattr(obj, name, default)` selectors. That evidence is additive
+internal provenance on otherwise unsupported/opaque selectors; it does not make
+broad dynamic imports or reflection part of the public supported subset.
 
 ## Python API
 
@@ -166,7 +167,8 @@ Current evidence includes:
 - capability-tier and provider-scoped selected-unit accounting in the internal
   eval evidence path
 - narrow internal runtime-backed pilots for `DYNAMIC_IMPORT` and
-  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and `getattr(obj, name)`
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and the
+  eval-only default-return branch of `getattr(obj, name, default)`
 - within that fixed internal matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,

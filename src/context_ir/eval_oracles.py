@@ -608,7 +608,7 @@ def _is_eligible_hasattr_call_site(call_site: CallSiteFact) -> bool:
 def _getattr_observation_site_index(
     program: SemanticProgram,
 ) -> dict[tuple[str, int, int, int, int], SourceSite]:
-    """Index eligible ``getattr(obj, name)`` source sites by file/span identity."""
+    """Index eligible ``getattr`` source sites by file/span identity."""
     call_sites_by_unsupported_id = {
         f"unsupported:{call_site.call_site_id}": call_site
         for call_site in program.syntax.call_sites
@@ -630,8 +630,8 @@ def _getattr_observation_site_index(
 
 
 def _is_eligible_getattr_call_site(call_site: CallSiteFact) -> bool:
-    """Return whether ``call_site`` is the fixture-loadable ``getattr`` form."""
-    if call_site.argument_count != 2:
+    """Return whether ``call_site`` is a fixture-loadable ``getattr`` form."""
+    if call_site.argument_count not in {2, 3}:
         return False
     try:
         expression = ast.parse(call_site.callee_text, mode="eval").body
