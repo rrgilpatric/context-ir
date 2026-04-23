@@ -45,6 +45,11 @@ def test_build_eval_report_creates_typed_artifact_from_smoke_ledger(
         report.summary
     )
     assert "## Capability-Tier Accounting" in report.markdown_report
+    assert "### Selected Units by Provider" in report.markdown_report
+    assert (
+        "### Selected Units by Provider and Actual Primary Tier"
+        in report.markdown_report
+    )
 
 
 def test_write_eval_report_markdown_writes_exact_artifact_markdown(

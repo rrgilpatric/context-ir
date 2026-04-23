@@ -162,6 +162,17 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
         for aggregate in summary.selected_unit_tier_aggregates
         if aggregate.primary_capability_tier == "unsupported/opaque"
     )
+    provider_selected_unit_aggregate = next(
+        aggregate
+        for aggregate in summary.provider_selected_unit_aggregates
+        if aggregate.provider_name == eval_providers.CONTEXT_IR_PROVIDER
+    )
+    provider_unsupported_selected_unit_aggregate = next(
+        aggregate
+        for aggregate in summary.provider_selected_unit_tier_aggregates
+        if aggregate.provider_name == eval_providers.CONTEXT_IR_PROVIDER
+        and aggregate.primary_capability_tier == "unsupported/opaque"
+    )
 
     assert unsupported_selector_aggregate.selector_count == 1
     assert unsupported_selector_aggregate.satisfied_count == 1
@@ -169,6 +180,16 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
     assert runtime_expectation_aggregate.satisfied_count == 1
     assert unsupported_selected_unit_aggregate.selected_unit_count == 1
     assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 1
+    assert provider_selected_unit_aggregate.selected_unit_count == 5
+    assert provider_selected_unit_aggregate.attached_runtime_provenance_count == 1
+    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 1
+    assert (
+        provider_unsupported_selected_unit_aggregate.attached_runtime_provenance_count
+        == 1
+    )
     assert "## Capability-Tier Accounting" in rendered
     assert "| yes | 1 | 1 |" in rendered
     assert "| unsupported/opaque | 1 | 1 |" in rendered
+    assert "| context_ir | 5 | 1 |" in rendered
+    assert "| context_ir | unsupported/opaque | 1 | 1 |" in rendered
+    assert "| runtime_backed |" not in rendered

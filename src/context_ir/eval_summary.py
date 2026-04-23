@@ -119,6 +119,25 @@ class EvalSelectedUnitTierAggregate:
 
 
 @dataclass(frozen=True)
+class EvalProviderSelectedUnitAggregate:
+    """Deterministic selected-unit counts grouped by provider."""
+
+    provider_name: str
+    selected_unit_count: int
+    attached_runtime_provenance_count: int
+
+
+@dataclass(frozen=True)
+class EvalProviderSelectedUnitTierAggregate:
+    """Deterministic selected-unit counts grouped by provider and primary tier."""
+
+    provider_name: str
+    primary_capability_tier: str
+    selected_unit_count: int
+    attached_runtime_provenance_count: int
+
+
+@dataclass(frozen=True)
 class EvalTaskBudgetProviderResult:
     """Provider comparison metrics for one task and budget slot."""
 
@@ -159,6 +178,10 @@ class EvalLedgerSummary:
         EvalSelectorRuntimeExpectationAggregate, ...
     ]
     selected_unit_tier_aggregates: tuple[EvalSelectedUnitTierAggregate, ...]
+    provider_selected_unit_aggregates: tuple[EvalProviderSelectedUnitAggregate, ...]
+    provider_selected_unit_tier_aggregates: tuple[
+        EvalProviderSelectedUnitTierAggregate, ...
+    ]
     task_budget_results: tuple[EvalTaskBudgetResult, ...]
     budget_violation_run_ids: tuple[str, ...]
 
@@ -218,9 +241,15 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
     selector_runtime_satisfied_counts: dict[bool, int] = {}
     selected_unit_tier_counts: dict[str, int] = {}
     selected_unit_runtime_counts: dict[str, int] = {}
+    provider_selected_unit_counts: dict[str, int] = {}
+    provider_selected_unit_runtime_counts: dict[str, int] = {}
+    provider_selected_unit_tier_counts: dict[tuple[str, str], int] = {}
+    provider_selected_unit_tier_runtime_counts: dict[tuple[str, str], int] = {}
 
     for record in ledger.records:
         provider_groups.setdefault(record.provider_name, []).append(record)
+        provider_selected_unit_counts.setdefault(record.provider_name, 0)
+        provider_selected_unit_runtime_counts.setdefault(record.provider_name, 0)
         task_budget_groups.setdefault((record.task_id, record.budget), []).append(
             record
         )
@@ -249,15 +278,29 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
                     )
 
         for selected_unit in record.selected_units:
+            provider_selected_unit_counts[record.provider_name] += 1
+            if selected_unit.has_attached_runtime_provenance:
+                provider_selected_unit_runtime_counts[record.provider_name] += 1
             primary_tier = selected_unit.primary_capability_tier
-            if primary_tier is None:
+            if (
+                primary_tier is None
+                or primary_tier == CapabilityTier.RUNTIME_BACKED.value
+            ):
                 continue
             selected_unit_tier_counts[primary_tier] = (
                 selected_unit_tier_counts.get(primary_tier, 0) + 1
             )
+            provider_tier_key = (record.provider_name, primary_tier)
+            provider_selected_unit_tier_counts[provider_tier_key] = (
+                provider_selected_unit_tier_counts.get(provider_tier_key, 0) + 1
+            )
             if selected_unit.has_attached_runtime_provenance:
                 selected_unit_runtime_counts[primary_tier] = (
                     selected_unit_runtime_counts.get(primary_tier, 0) + 1
+                )
+                provider_selected_unit_tier_runtime_counts[provider_tier_key] = (
+                    provider_selected_unit_tier_runtime_counts.get(provider_tier_key, 0)
+                    + 1
                 )
 
     task_ids = tuple(sorted({record.task_id for record in ledger.records}))
@@ -297,6 +340,36 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
         )
         for tier in sorted(selected_unit_tier_counts, key=_capability_tier_sort_key)
     )
+    provider_selected_unit_aggregates = tuple(
+        EvalProviderSelectedUnitAggregate(
+            provider_name=provider_name,
+            selected_unit_count=provider_selected_unit_counts[provider_name],
+            attached_runtime_provenance_count=(
+                provider_selected_unit_runtime_counts[provider_name]
+            ),
+        )
+        for provider_name in sorted(provider_selected_unit_counts)
+    )
+    provider_selected_unit_tier_aggregates = tuple(
+        EvalProviderSelectedUnitTierAggregate(
+            provider_name=provider_name,
+            primary_capability_tier=primary_tier,
+            selected_unit_count=provider_selected_unit_tier_counts[
+                provider_name,
+                primary_tier,
+            ],
+            attached_runtime_provenance_count=(
+                provider_selected_unit_tier_runtime_counts.get(
+                    (provider_name, primary_tier),
+                    0,
+                )
+            ),
+        )
+        for provider_name, primary_tier in sorted(
+            provider_selected_unit_tier_counts,
+            key=_provider_capability_tier_sort_key,
+        )
+    )
     task_budget_results = tuple(
         _build_task_budget_result(
             task_id,
@@ -322,6 +395,8 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
             selector_runtime_expectation_aggregates
         ),
         selected_unit_tier_aggregates=selected_unit_tier_aggregates,
+        provider_selected_unit_aggregates=provider_selected_unit_aggregates,
+        provider_selected_unit_tier_aggregates=(provider_selected_unit_tier_aggregates),
         task_budget_results=task_budget_results,
         budget_violation_run_ids=budget_violation_run_ids,
     )
@@ -418,6 +493,46 @@ def render_eval_ledger_summary(summary: EvalLedgerSummary) -> str:
                 for aggregate in summary.selected_unit_tier_aggregates
             ),
             numeric_columns=frozenset({1, 2}),
+        )
+    )
+    lines.extend(("", "### Selected Units by Provider", ""))
+    lines.extend(
+        _render_markdown_table(
+            (
+                "Provider",
+                "Selected Units",
+                "Attached Runtime Provenance",
+            ),
+            tuple(
+                (
+                    aggregate.provider_name,
+                    str(aggregate.selected_unit_count),
+                    str(aggregate.attached_runtime_provenance_count),
+                )
+                for aggregate in summary.provider_selected_unit_aggregates
+            ),
+            numeric_columns=frozenset({1, 2}),
+        )
+    )
+    lines.extend(("", "### Selected Units by Provider and Actual Primary Tier", ""))
+    lines.extend(
+        _render_optional_markdown_table(
+            (
+                "Provider",
+                "Actual Primary Tier",
+                "Selected Units",
+                "Attached Runtime Provenance",
+            ),
+            tuple(
+                (
+                    aggregate.provider_name,
+                    aggregate.primary_capability_tier,
+                    str(aggregate.selected_unit_count),
+                    str(aggregate.attached_runtime_provenance_count),
+                )
+                for aggregate in summary.provider_selected_unit_tier_aggregates
+            ),
+            numeric_columns=frozenset({2, 3}),
         )
     )
     lines.extend(("", "## Task Budget Results", ""))
@@ -1094,3 +1209,10 @@ def _capability_tier_sort_key(value: str) -> tuple[int, str]:
         _CAPABILITY_TIER_SORT_ORDER.get(value, len(_CAPABILITY_TIER_SORT_ORDER)),
         value,
     )
+
+
+def _provider_capability_tier_sort_key(value: tuple[str, str]) -> tuple[str, int, str]:
+    """Return one deterministic provider and capability-tier sort key."""
+    provider_name, primary_tier = value
+    tier_order, tier_name = _capability_tier_sort_key(primary_tier)
+    return (provider_name, tier_order, tier_name)
