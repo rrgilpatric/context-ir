@@ -186,6 +186,7 @@ def test_build_eval_run_record_is_deterministic_and_json_safe() -> None:
     assert payload["selected_unit_ids"] == list(result.selected_unit_ids)
     assert payload["omitted_unit_ids"] == list(result.omitted_unit_ids)
     assert payload["warnings"] == list(result.warnings)
+    assert payload["runtime_provenance_records"] == []
     assert payload["metrics"]["aggregate_score"] == metrics.aggregate_score
     assert json.loads(json.dumps(payload, sort_keys=True)) == payload
 

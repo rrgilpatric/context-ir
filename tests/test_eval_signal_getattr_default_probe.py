@@ -174,6 +174,10 @@ def test_getattr_default_probe_run_executes_with_runtime_backed_raw_fields(
         budget=220,
     )
     metrics = cast(dict[str, object], record["metrics"])
+    runtime_provenance_records = cast(
+        list[dict[str, object]],
+        record["runtime_provenance_records"],
+    )
     unsupported_unit = next(
         unit
         for unit in _selected_units(record)
@@ -190,6 +194,10 @@ def test_getattr_default_probe_run_executes_with_runtime_backed_raw_fields(
         list[str],
         unsupported_unit["attached_runtime_provenance_record_ids"],
     )
+    assert len(runtime_provenance_records) == 1
+    assert runtime_provenance_records[0]["normalized_payload"] == {
+        "lookup_outcome": "returned_default_value",
+    }
 
 
 def test_getattr_default_probe_summary_surfaces_internal_capability_accounting(
@@ -221,6 +229,12 @@ def test_getattr_default_probe_summary_surfaces_internal_capability_accounting(
         for aggregate in summary.selector_runtime_expectation_aggregates
         if aggregate.expected_attached_runtime_provenance is True
     )
+    runtime_outcome_aggregate = next(
+        aggregate
+        for aggregate in summary.runtime_outcome_aggregates
+        if aggregate.payload_key == "lookup_outcome"
+        and aggregate.payload_value == "returned_default_value"
+    )
     unsupported_selected_unit_aggregate = next(
         aggregate
         for aggregate in summary.selected_unit_tier_aggregates
@@ -238,6 +252,7 @@ def test_getattr_default_probe_summary_surfaces_internal_capability_accounting(
     assert unsupported_selector_aggregate.satisfied_count == 3
     assert runtime_expectation_aggregate.selector_count == 3
     assert runtime_expectation_aggregate.satisfied_count == 3
+    assert runtime_outcome_aggregate.runtime_provenance_count == 3
     assert tuple(
         (
             aggregate.primary_capability_tier,
@@ -274,6 +289,7 @@ def test_getattr_default_probe_summary_surfaces_internal_capability_accounting(
         assert "## Capability-Tier Accounting" in markdown
         assert "### Selected Units by Provider" in markdown
         assert "| yes | 3 | 3 |" in markdown
+        assert "| lookup_outcome | returned_default_value | 3 |" in markdown
         assert "| unsupported/opaque | 1 | 1 |" in markdown
         assert "| context_ir | 3 | 1 |" in markdown
         assert "| import_neighborhood_files | 0 | 0 |" in markdown

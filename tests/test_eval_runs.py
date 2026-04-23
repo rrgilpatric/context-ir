@@ -81,6 +81,7 @@ _RAW_RECORD_KEYS = {
     "warnings",
     "provider_metadata",
     "resolved_selectors",
+    "runtime_provenance_records",
     "metrics",
 }
 _PROVIDER_CONFIG_KEYS = {"max_candidates", "seed_count", "diagnostic_only"}
@@ -358,6 +359,7 @@ def test_execute_eval_run_spec_writes_one_raw_record_per_combination(
         )
         metrics = cast(dict[str, object], record["metrics"])
         assert set(metrics) == _METRIC_KEYS
+        assert record["runtime_provenance_records"] == []
         resolved_selectors = cast(list[object], record["resolved_selectors"])
         assert resolved_selectors
         for selector in resolved_selectors:

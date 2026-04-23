@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from pathlib import Path
 
 import context_ir
@@ -13,6 +14,18 @@ import context_ir.semantic_types as semantic_types
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_SPEC_PATH = REPO_ROOT / "evals" / "run_specs" / "oracle_smoke_matrix.json"
+GETATTR_DEFAULT_RUN_SPEC_PATH = (
+    REPO_ROOT
+    / "evals"
+    / "run_specs"
+    / "oracle_signal_getattr_default_probe_matrix.json"
+)
+GETATTR_DEFAULT_VALUE_RUN_SPEC_PATH = (
+    REPO_ROOT
+    / "evals"
+    / "run_specs"
+    / "oracle_signal_getattr_default_value_probe_matrix.json"
+)
 
 
 def _execute_smoke_ledger(path: Path) -> Path:
@@ -25,6 +38,76 @@ def _execute_smoke_ledger(path: Path) -> Path:
         package_version=context_ir.__version__,
     )
     return path
+
+
+def _write_runtime_outcome_ledger(path: Path) -> Path:
+    """Write one compact ledger with both defaulted getattr outcomes."""
+    records = [
+        _runtime_outcome_record(
+            run_id="run-default",
+            lookup_outcome="returned_default_value",
+        ),
+        _runtime_outcome_record(
+            run_id="run-value",
+            lookup_outcome="returned_value",
+        ),
+    ]
+    path.write_text(
+        "\n".join(
+            json.dumps(record, separators=(",", ":"), sort_keys=True)
+            for record in records
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _execute_defaulted_getattr_branch_ledger(path: Path) -> Path:
+    """Execute both accepted defaulted getattr branch specs into one ledger."""
+    for run_spec_path in (
+        GETATTR_DEFAULT_RUN_SPEC_PATH,
+        GETATTR_DEFAULT_VALUE_RUN_SPEC_PATH,
+    ):
+        eval_runs.execute_eval_run_spec(
+            run_spec_path,
+            path,
+            git_commit="abc1234",
+            python_version="3.11.9",
+            package_version=context_ir.__version__,
+        )
+    return path
+
+
+def _runtime_outcome_record(
+    *,
+    run_id: str,
+    lookup_outcome: str,
+) -> dict[str, object]:
+    """Return one minimal ledger row with normalized runtime outcome data."""
+    return {
+        "run_id": run_id,
+        "task_id": "task_alpha",
+        "provider_name": "provider_alpha",
+        "budget": 100,
+        "provider_metadata": {"selected_units": []},
+        "resolved_selectors": [],
+        "runtime_provenance_records": [
+            {
+                "record_id": f"prov:runtime:unsupported:{run_id}",
+                "normalized_payload": {"lookup_outcome": lookup_outcome},
+            }
+        ],
+        "metrics": {
+            "budget_compliant": True,
+            "aggregate_score": 0.5,
+            "edit_coverage": 0.5,
+            "support_coverage": 0.5,
+            "representation_adequacy": 0.5,
+            "uncertainty_honesty": 0.5,
+            "noise_efficiency": 0.5,
+        },
+    }
 
 
 def test_build_eval_report_creates_typed_artifact_from_smoke_ledger(
@@ -50,6 +133,56 @@ def test_build_eval_report_creates_typed_artifact_from_smoke_ledger(
         "### Selected Units by Provider and Actual Primary Tier"
         in report.markdown_report
     )
+    assert "## Runtime Outcome Accounting" in report.markdown_report
+
+
+def test_build_eval_report_surfaces_runtime_outcome_accounting(
+    tmp_path: Path,
+) -> None:
+    """Reports expose separate normalized runtime outcome counts."""
+    ledger_path = _write_runtime_outcome_ledger(tmp_path / "runtime_outcomes.jsonl")
+
+    report = eval_report.build_eval_report(ledger_path)
+
+    assert tuple(
+        (
+            aggregate.payload_key,
+            aggregate.payload_value,
+            aggregate.runtime_provenance_count,
+        )
+        for aggregate in report.summary.runtime_outcome_aggregates
+    ) == (
+        ("lookup_outcome", "returned_default_value", 1),
+        ("lookup_outcome", "returned_value", 1),
+    )
+    assert "| lookup_outcome | returned_default_value | 1 |" in report.markdown_report
+    assert "| lookup_outcome | returned_value | 1 |" in report.markdown_report
+
+
+def test_eval_report_distinguishes_defaulted_getattr_branch_outcomes(
+    tmp_path: Path,
+) -> None:
+    """A report over both defaulted getattr branches keeps branch outcomes separate."""
+    ledger_path = _execute_defaulted_getattr_branch_ledger(
+        tmp_path / "defaulted_getattr_branches.jsonl"
+    )
+
+    report = eval_report.build_eval_report(ledger_path)
+
+    assert tuple(
+        (
+            aggregate.payload_key,
+            aggregate.payload_value,
+            aggregate.runtime_provenance_count,
+        )
+        for aggregate in report.summary.runtime_outcome_aggregates
+        if aggregate.payload_key == "lookup_outcome"
+    ) == (
+        ("lookup_outcome", "returned_default_value", 3),
+        ("lookup_outcome", "returned_value", 3),
+    )
+    assert "| lookup_outcome | returned_default_value | 3 |" in report.markdown_report
+    assert "| lookup_outcome | returned_value | 3 |" in report.markdown_report
 
 
 def test_write_eval_report_markdown_writes_exact_artifact_markdown(

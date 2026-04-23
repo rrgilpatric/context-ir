@@ -55,6 +55,22 @@ class EvalLedgerSelectedUnit:
 
 
 @dataclass(frozen=True)
+class EvalLedgerRuntimePayloadField:
+    """Typed normalized runtime payload field retained for outcome accounting."""
+
+    key: str
+    value: str
+
+
+@dataclass(frozen=True)
+class EvalLedgerRuntimeProvenanceRecord:
+    """Typed runtime provenance payload retained from one raw eval ledger row."""
+
+    record_id: str
+    normalized_payload: tuple[EvalLedgerRuntimePayloadField, ...]
+
+
+@dataclass(frozen=True)
 class EvalLedgerRecord:
     """Typed internal representation of one raw JSONL eval ledger row."""
 
@@ -65,6 +81,7 @@ class EvalLedgerRecord:
     budget_compliant: bool
     resolved_selectors: tuple[EvalLedgerResolvedSelector, ...]
     selected_units: tuple[EvalLedgerSelectedUnit, ...]
+    runtime_provenance_records: tuple[EvalLedgerRuntimeProvenanceRecord, ...]
     metrics: EvalLedgerMetrics
 
 
@@ -138,6 +155,15 @@ class EvalProviderSelectedUnitTierAggregate:
 
 
 @dataclass(frozen=True)
+class EvalRuntimeOutcomeAggregate:
+    """Deterministic normalized runtime payload outcome counts."""
+
+    payload_key: str
+    payload_value: str
+    runtime_provenance_count: int
+
+
+@dataclass(frozen=True)
 class EvalTaskBudgetProviderResult:
     """Provider comparison metrics for one task and budget slot."""
 
@@ -182,6 +208,7 @@ class EvalLedgerSummary:
     provider_selected_unit_tier_aggregates: tuple[
         EvalProviderSelectedUnitTierAggregate, ...
     ]
+    runtime_outcome_aggregates: tuple[EvalRuntimeOutcomeAggregate, ...]
     task_budget_results: tuple[EvalTaskBudgetResult, ...]
     budget_violation_run_ids: tuple[str, ...]
 
@@ -245,6 +272,7 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
     provider_selected_unit_runtime_counts: dict[str, int] = {}
     provider_selected_unit_tier_counts: dict[tuple[str, str], int] = {}
     provider_selected_unit_tier_runtime_counts: dict[tuple[str, str], int] = {}
+    runtime_outcome_counts: dict[tuple[str, str], int] = {}
 
     for record in ledger.records:
         provider_groups.setdefault(record.provider_name, []).append(record)
@@ -276,6 +304,13 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
                     selector_runtime_satisfied_counts[expected_runtime] = (
                         selector_runtime_satisfied_counts.get(expected_runtime, 0) + 1
                     )
+
+        for runtime_provenance_record in record.runtime_provenance_records:
+            for payload_field in runtime_provenance_record.normalized_payload:
+                outcome_key = (payload_field.key, payload_field.value)
+                runtime_outcome_counts[outcome_key] = (
+                    runtime_outcome_counts.get(outcome_key, 0) + 1
+                )
 
         for selected_unit in record.selected_units:
             provider_selected_unit_counts[record.provider_name] += 1
@@ -370,6 +405,17 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
             key=_provider_capability_tier_sort_key,
         )
     )
+    runtime_outcome_aggregates = tuple(
+        EvalRuntimeOutcomeAggregate(
+            payload_key=payload_key,
+            payload_value=payload_value,
+            runtime_provenance_count=runtime_outcome_counts[
+                payload_key,
+                payload_value,
+            ],
+        )
+        for payload_key, payload_value in sorted(runtime_outcome_counts)
+    )
     task_budget_results = tuple(
         _build_task_budget_result(
             task_id,
@@ -397,6 +443,7 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
         selected_unit_tier_aggregates=selected_unit_tier_aggregates,
         provider_selected_unit_aggregates=provider_selected_unit_aggregates,
         provider_selected_unit_tier_aggregates=(provider_selected_unit_tier_aggregates),
+        runtime_outcome_aggregates=runtime_outcome_aggregates,
         task_budget_results=task_budget_results,
         budget_violation_run_ids=budget_violation_run_ids,
     )
@@ -535,6 +582,25 @@ def render_eval_ledger_summary(summary: EvalLedgerSummary) -> str:
             numeric_columns=frozenset({2, 3}),
         )
     )
+    lines.extend(("", "## Runtime Outcome Accounting", ""))
+    lines.extend(
+        _render_optional_markdown_table(
+            (
+                "Payload Key",
+                "Payload Value",
+                "Runtime Provenance Records",
+            ),
+            tuple(
+                (
+                    aggregate.payload_key,
+                    aggregate.payload_value,
+                    str(aggregate.runtime_provenance_count),
+                )
+                for aggregate in summary.runtime_outcome_aggregates
+            ),
+            numeric_columns=frozenset({2}),
+        )
+    )
     lines.extend(("", "## Task Budget Results", ""))
     lines.extend(
         _render_markdown_table(
@@ -623,6 +689,11 @@ def _parse_ledger_record(
         ),
         selected_units=_parse_selected_units(
             provider_metadata_record,
+            ledger_path=ledger_path,
+            line_number=line_number,
+        ),
+        runtime_provenance_records=_parse_runtime_provenance_records(
+            record,
             ledger_path=ledger_path,
             line_number=line_number,
         ),
@@ -815,6 +886,89 @@ def _parse_selected_unit(
             prefix=field_path,
         ),
     )
+
+
+def _parse_runtime_provenance_records(
+    record: dict[str, object],
+    *,
+    ledger_path: Path,
+    line_number: int,
+) -> tuple[EvalLedgerRuntimeProvenanceRecord, ...]:
+    """Return typed runtime provenance payload records from one ledger row."""
+    if "runtime_provenance_records" not in record:
+        return ()
+    provenance_records = _require_list(
+        record.get("runtime_provenance_records"),
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path="runtime_provenance_records",
+    )
+    return tuple(
+        _parse_runtime_provenance_record(
+            provenance_record,
+            ledger_path=ledger_path,
+            line_number=line_number,
+            index=index,
+        )
+        for index, provenance_record in enumerate(provenance_records)
+    )
+
+
+def _parse_runtime_provenance_record(
+    raw: object,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    index: int,
+) -> EvalLedgerRuntimeProvenanceRecord:
+    """Return one typed runtime provenance payload record."""
+    field_path = f"runtime_provenance_records[{index}]"
+    provenance_record = _require_object(
+        raw,
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path=field_path,
+    )
+    return EvalLedgerRuntimeProvenanceRecord(
+        record_id=_require_string(
+            provenance_record,
+            "record_id",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=field_path,
+        ),
+        normalized_payload=_parse_normalized_payload(
+            provenance_record.get("normalized_payload"),
+            ledger_path=ledger_path,
+            line_number=line_number,
+            field_path=f"{field_path}.normalized_payload",
+        ),
+    )
+
+
+def _parse_normalized_payload(
+    raw: object,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    field_path: str,
+) -> tuple[EvalLedgerRuntimePayloadField, ...]:
+    """Return sorted normalized payload fields from one runtime record."""
+    payload_record = _require_object(
+        raw,
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path=field_path,
+    )
+    fields: list[EvalLedgerRuntimePayloadField] = []
+    for key, value in sorted(payload_record.items()):
+        if not isinstance(value, str) or value == "":
+            raise EvalLedgerError(
+                f"required field '{field_path}.{key}' must be a non-empty string at "
+                f"{ledger_path}:{line_number}"
+            )
+        fields.append(EvalLedgerRuntimePayloadField(key=key, value=value))
+    return tuple(fields)
 
 
 def _build_provider_aggregate(

@@ -6,6 +6,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from context_ir.eval_metrics import EvalRunMetrics
 from context_ir.eval_oracles import (
@@ -21,7 +22,11 @@ from context_ir.eval_providers import (
     EvalSelectedUnit,
     LexicalFileScore,
 )
-from context_ir.semantic_types import SourceSpan
+from context_ir.semantic_types import (
+    CapabilityTier,
+    SemanticProvenanceRecord,
+    SourceSpan,
+)
 
 
 @dataclass(frozen=True)
@@ -75,6 +80,22 @@ class EvalProviderWarningRecord:
     code: str
     unit_id: str | None
     message: str
+
+
+@dataclass(frozen=True)
+class EvalRuntimePayloadFieldRecord:
+    """One normalized runtime provenance payload field retained for accounting."""
+
+    key: str
+    value: str
+
+
+@dataclass(frozen=True)
+class EvalRuntimeProvenanceRecord:
+    """JSON-safe runtime provenance payload retained for internal eval accounting."""
+
+    record_id: str
+    normalized_payload: tuple[EvalRuntimePayloadFieldRecord, ...]
 
 
 @dataclass(frozen=True)
@@ -197,6 +218,7 @@ class EvalRunRecord:
     warnings: tuple[str, ...]
     provider_metadata: EvalProviderMetadataRecord
     resolved_selectors: tuple[EvalResolvedSelectorRecord, ...]
+    runtime_provenance_records: tuple[EvalRuntimeProvenanceRecord, ...]
     metrics: EvalRunMetricRecord
 
 
@@ -257,6 +279,10 @@ def build_eval_run_record(
         resolved_selectors=tuple(
             _resolved_selector_record(record) for record in setup.resolved_selectors
         ),
+        runtime_provenance_records=_runtime_provenance_records(
+            setup,
+            result,
+        ),
         metrics=_metric_record(metrics),
     )
 
@@ -291,6 +317,10 @@ def eval_run_record_to_json(record: EvalRunRecord) -> dict[str, object]:
         "resolved_selectors": [
             _resolved_selector_to_json(selector_record)
             for selector_record in record.resolved_selectors
+        ],
+        "runtime_provenance_records": [
+            _runtime_provenance_to_json(provenance_record)
+            for provenance_record in record.runtime_provenance_records
         ],
         "metrics": _metrics_to_json(record.metrics),
     }
@@ -455,6 +485,94 @@ def _resolved_selector_record(
         attached_runtime_provenance_record_ids=(
             resolved_selector.attached_runtime_provenance_record_ids
         ),
+    )
+
+
+def _runtime_provenance_records(
+    setup: EvalOracleSetup,
+    result: EvalProviderResult,
+) -> tuple[EvalRuntimeProvenanceRecord, ...]:
+    """Return attached runtime provenance payloads used by this eval row."""
+    attached_record_ids = sorted(
+        {
+            *(
+                record_id
+                for resolved_selector in setup.resolved_selectors
+                for record_id in (
+                    resolved_selector.attached_runtime_provenance_record_ids
+                )
+            ),
+            *(
+                record_id
+                for selected_unit in result.metadata.selected_units
+                for record_id in selected_unit.attached_runtime_provenance_record_ids
+            ),
+        }
+    )
+    if not attached_record_ids:
+        return ()
+
+    provenance_by_id = {
+        provenance_record.record_id: provenance_record
+        for provenance_record in setup.semantic_program.provenance_records
+    }
+    return tuple(
+        _runtime_provenance_record(
+            _require_runtime_provenance_record(
+                record_id,
+                provenance_by_id,
+            )
+        )
+        for record_id in attached_record_ids
+    )
+
+
+def _require_runtime_provenance_record(
+    record_id: str,
+    provenance_by_id: dict[str, SemanticProvenanceRecord],
+) -> SemanticProvenanceRecord:
+    """Return one attached runtime provenance record or fail loudly."""
+    try:
+        return provenance_by_id[record_id]
+    except KeyError as error:
+        raise ValueError(
+            f"attached runtime provenance record_id is missing: {record_id}"
+        ) from error
+
+
+def _runtime_provenance_record(
+    provenance_record: SemanticProvenanceRecord,
+) -> EvalRuntimeProvenanceRecord:
+    """Project normalized runtime provenance payload data for eval accounting."""
+    if provenance_record.capability_tier is not CapabilityTier.RUNTIME_BACKED:
+        raise ValueError(
+            "attached runtime provenance record must have "
+            "capability_tier=runtime_backed"
+        )
+    origin_detail: object = json.loads(provenance_record.origin_detail)
+    if not isinstance(origin_detail, dict):
+        raise ValueError("runtime provenance origin_detail must be a JSON object")
+    normalized_payload = cast(
+        dict[object, object],
+        origin_detail,
+    ).get("normalized_payload")
+    if not isinstance(normalized_payload, dict):
+        raise ValueError(
+            "runtime provenance origin_detail.normalized_payload must be a JSON object"
+        )
+    fields: list[EvalRuntimePayloadFieldRecord] = []
+    for key, value in sorted(
+        cast(dict[object, object], normalized_payload).items(),
+        key=lambda item: str(item[0]),
+    ):
+        if not isinstance(key, str) or not isinstance(value, str):
+            raise ValueError(
+                "runtime provenance normalized_payload fields must be strings"
+            )
+        fields.append(EvalRuntimePayloadFieldRecord(key=key, value=value))
+    return EvalRuntimeProvenanceRecord(
+        record_id=provenance_record.record_id,
+        normalized_payload=tuple(fields),
     )
 
 
@@ -649,6 +767,18 @@ def _resolved_selector_to_json(
         "attached_runtime_provenance_record_ids": list(
             selector_record.attached_runtime_provenance_record_ids
         ),
+    }
+
+
+def _runtime_provenance_to_json(
+    provenance_record: EvalRuntimeProvenanceRecord,
+) -> dict[str, object]:
+    """Return one JSON-safe runtime provenance payload object."""
+    return {
+        "record_id": provenance_record.record_id,
+        "normalized_payload": {
+            field.key: field.value for field in provenance_record.normalized_payload
+        },
     }
 
 

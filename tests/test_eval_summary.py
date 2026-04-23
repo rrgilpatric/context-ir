@@ -50,6 +50,20 @@ def _selected_unit_record(
     }
 
 
+def _runtime_provenance_record(
+    *,
+    record_id: str = "prov:runtime:unsupported:alpha",
+    lookup_outcome: str,
+) -> dict[str, object]:
+    """Return one minimal runtime provenance payload for summary tests."""
+    return {
+        "record_id": record_id,
+        "normalized_payload": {
+            "lookup_outcome": lookup_outcome,
+        },
+    }
+
+
 def _ledger_record(
     *,
     run_id: str,
@@ -65,13 +79,14 @@ def _ledger_record(
     noise_efficiency: float = 0.5,
     resolved_selectors: list[dict[str, object]] | None = None,
     selected_units: list[dict[str, object]] | None = None,
+    runtime_provenance_records: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     """Return one minimal raw ledger row for strict summary loading tests."""
     if resolved_selectors is None:
         resolved_selectors = [_resolved_selector_record()]
     if selected_units is None:
         selected_units = [_selected_unit_record()]
-    return {
+    record: dict[str, object] = {
         "run_id": run_id,
         "task_id": task_id,
         "provider_name": provider_name,
@@ -90,6 +105,9 @@ def _ledger_record(
             "noise_efficiency": noise_efficiency,
         },
     }
+    if runtime_provenance_records is not None:
+        record["runtime_provenance_records"] = runtime_provenance_records
+    return record
 
 
 def _write_jsonl(path: Path, rows: list[str]) -> Path:
@@ -361,6 +379,7 @@ def test_legacy_scalar_only_ledger_loads_and_renders_empty_accounting(
     assert summary.selector_tier_expectation_aggregates == ()
     assert summary.selector_runtime_expectation_aggregates == ()
     assert summary.selected_unit_tier_aggregates == ()
+    assert summary.runtime_outcome_aggregates == ()
     assert tuple(
         (
             aggregate.provider_name,
@@ -376,8 +395,9 @@ def test_legacy_scalar_only_ledger_loads_and_renders_empty_accounting(
     assert "### Selected Units by Actual Primary Tier" in rendered
     assert "### Selected Units by Provider" in rendered
     assert "### Selected Units by Provider and Actual Primary Tier" in rendered
+    assert "## Runtime Outcome Accounting" in rendered
     assert "| provider_alpha | 0 | 0 |" in rendered
-    assert rendered.count("- None") == 4
+    assert rendered.count("- None") == 5
 
 
 def test_task_budget_rows_are_sorted_and_preserve_provider_comparisons(
@@ -631,6 +651,97 @@ def test_provider_selected_unit_accounting_is_grouped_deterministically(
     assert "| runtime_backed |" not in rendered
 
 
+def test_runtime_outcome_accounting_uses_normalized_payload_fields(
+    tmp_path: Path,
+) -> None:
+    """Normalized runtime payload outcomes roll up without changing tier counts."""
+    ledger_path = _write_ledger_records(
+        tmp_path / "runtime_outcomes.jsonl",
+        [
+            _ledger_record(
+                run_id="run-default-alpha",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:unsupported:default-alpha",
+                        lookup_outcome="returned_default_value",
+                    )
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                    )
+                ],
+            ),
+            _ledger_record(
+                run_id="run-default-beta",
+                provider_name="provider_beta",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:unsupported:default-beta",
+                        lookup_outcome="returned_default_value",
+                    )
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                    )
+                ],
+            ),
+            _ledger_record(
+                run_id="run-value",
+                provider_name="provider_gamma",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:unsupported:value",
+                        lookup_outcome="returned_value",
+                    )
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                    )
+                ],
+            ),
+        ],
+    )
+
+    summary = eval_summary.build_eval_ledger_summary(
+        eval_summary.load_eval_ledger(ledger_path)
+    )
+    rendered = eval_summary.render_eval_ledger_summary(summary)
+
+    assert tuple(
+        (
+            aggregate.payload_key,
+            aggregate.payload_value,
+            aggregate.runtime_provenance_count,
+        )
+        for aggregate in summary.runtime_outcome_aggregates
+    ) == (
+        ("lookup_outcome", "returned_default_value", 2),
+        ("lookup_outcome", "returned_value", 1),
+    )
+    assert tuple(
+        (
+            aggregate.provider_name,
+            aggregate.selected_unit_count,
+            aggregate.attached_runtime_provenance_count,
+        )
+        for aggregate in summary.provider_selected_unit_aggregates
+    ) == (
+        ("provider_alpha", 1, 1),
+        ("provider_beta", 1, 1),
+        ("provider_gamma", 1, 1),
+    )
+    assert "## Runtime Outcome Accounting" in rendered
+    assert "| Payload Key | Payload Value | Runtime Provenance Records |" in rendered
+    assert "| lookup_outcome | returned_default_value | 2 |" in rendered
+    assert "| lookup_outcome | returned_value | 1 |" in rendered
+
+
 def test_exact_ties_are_preserved_in_summary_and_rendering(tmp_path: Path) -> None:
     """Exact aggregate-score ties are rendered explicitly as ties."""
     ledger_path = _write_ledger_records(
@@ -694,6 +805,7 @@ def test_markdown_includes_internal_accounting_and_task_budget_sections(
     assert "### Selected Units by Actual Primary Tier" in rendered
     assert "### Selected Units by Provider" in rendered
     assert "### Selected Units by Provider and Actual Primary Tier" in rendered
+    assert "## Runtime Outcome Accounting" in rendered
     assert "## Task Budget Results" in rendered
     assert "| Provider | Records | Budget Compliance |" in rendered
     assert rendered.count("- None") >= 1
