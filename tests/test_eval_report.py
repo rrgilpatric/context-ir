@@ -44,6 +44,7 @@ def test_build_eval_report_creates_typed_artifact_from_smoke_ledger(
     assert report.markdown_report == eval_summary.render_eval_ledger_summary(
         report.summary
     )
+    assert "## Capability-Tier Accounting" in report.markdown_report
 
 
 def test_write_eval_report_markdown_writes_exact_artifact_markdown(

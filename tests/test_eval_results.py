@@ -68,6 +68,12 @@ def _smoke_provider_result(setup: EvalOracleSetup) -> EvalProviderResult:
             reason="Primary edit target kept at source detail.",
             edit_score=1.0,
             support_score=0.2,
+            primary_capability_tier=semantic_types.CapabilityTier.STATICALLY_PROVED,
+            primary_evidence_origin=(
+                semantic_types.EvidenceOriginKind.STATIC_DERIVATION_RULE
+            ),
+            primary_replay_status=semantic_types.ReplayStatus.DETERMINISTIC_STATIC,
+            has_attached_runtime_provenance=False,
         ),
         EvalSelectedUnit(
             unit_id=_resolved_unit_id(support_selector),
@@ -77,6 +83,12 @@ def _smoke_provider_result(setup: EvalOracleSetup) -> EvalProviderResult:
             reason="Direct support dependency for the edit target.",
             edit_score=0.3,
             support_score=0.9,
+            primary_capability_tier=semantic_types.CapabilityTier.STATICALLY_PROVED,
+            primary_evidence_origin=(
+                semantic_types.EvidenceOriginKind.STATIC_DERIVATION_RULE
+            ),
+            primary_replay_status=semantic_types.ReplayStatus.DETERMINISTIC_STATIC,
+            has_attached_runtime_provenance=False,
         ),
     )
     warning_details = (
@@ -200,6 +212,8 @@ def test_resolved_selector_evidence_is_preserved_in_raw_record() -> None:
     assert first_selector["original_selector"] == {
         "kind": "symbol",
         "min_detail": "source",
+        "expected_primary_capability_tier": None,
+        "expect_attached_runtime_provenance": None,
         "qualified_name": "main.run",
         "role": "edit",
         "symbol_kind": "function",
@@ -213,6 +227,11 @@ def test_resolved_selector_evidence_is_preserved_in_raw_record() -> None:
         "end_line": 7,
         "end_column": 18,
     }
+    assert first_selector["primary_capability_tier"] == "statically_proved"
+    assert first_selector["primary_evidence_origin"] == "static_derivation_rule"
+    assert first_selector["primary_replay_status"] == "deterministic_static"
+    assert first_selector["has_attached_runtime_provenance"] is False
+    assert first_selector["attached_runtime_provenance_record_ids"] == []
 
 
 def test_structured_provider_metadata_is_preserved_in_raw_record() -> None:
@@ -241,6 +260,11 @@ def test_structured_provider_metadata_is_preserved_in_raw_record() -> None:
             "reason": "Primary edit target kept at source detail.",
             "edit_score": 1.0,
             "support_score": 0.2,
+            "primary_capability_tier": "statically_proved",
+            "primary_evidence_origin": "static_derivation_rule",
+            "primary_replay_status": "deterministic_static",
+            "has_attached_runtime_provenance": False,
+            "attached_runtime_provenance_record_ids": [],
         },
         {
             "unit_id": "def:pkg/helpers.py:pkg.helpers.helper",
@@ -250,6 +274,11 @@ def test_structured_provider_metadata_is_preserved_in_raw_record() -> None:
             "reason": "Direct support dependency for the edit target.",
             "edit_score": 0.3,
             "support_score": 0.9,
+            "primary_capability_tier": "statically_proved",
+            "primary_evidence_origin": "static_derivation_rule",
+            "primary_replay_status": "deterministic_static",
+            "has_attached_runtime_provenance": False,
+            "attached_runtime_provenance_record_ids": [],
         },
     ]
     assert provider_metadata["warning_details"] == [
@@ -268,6 +297,49 @@ def test_structured_provider_metadata_is_preserved_in_raw_record() -> None:
     assert provider_metadata["unsupported_unit_ids"] == [
         "unsupported:import:main.py:1:0:1:*:_"
     ]
+
+
+def test_selector_tier_expectations_are_preserved_in_raw_record(
+    tmp_path: Path,
+) -> None:
+    """Raw records keep optional selector tier expectations alongside evidence."""
+    task_record = json.loads(TASK_PATH.read_text(encoding="utf-8"))
+    assert isinstance(task_record, dict)
+    selectors = task_record["expected_selectors"]
+    assert isinstance(selectors, list)
+    first_selector = selectors[0]
+    assert isinstance(first_selector, dict)
+    first_selector["expected_primary_capability_tier"] = "statically_proved"
+    first_selector["expect_attached_runtime_provenance"] = False
+    task_path = tmp_path / "task.json"
+    task_path.write_text(json.dumps(task_record), encoding="utf-8")
+
+    setup = setup_eval_oracle_task(
+        task_path,
+        REPO_ROOT / "evals" / "fixtures" / "oracle_smoke",
+    )
+    result = _smoke_provider_result(setup)
+    metrics = score_eval_run(setup, result)
+
+    payload = eval_results.eval_run_record_to_json(
+        eval_results.build_eval_run_record(
+            setup,
+            result,
+            metrics,
+            run_id="run-expectations",
+            git_commit="deadbeef",
+            python_version="3.11.9",
+            package_version=context_ir.__version__,
+        )
+    )
+    resolved_selectors = payload["resolved_selectors"]
+    assert isinstance(resolved_selectors, list)
+    selector = resolved_selectors[0]
+    assert isinstance(selector, dict)
+    original_selector = selector["original_selector"]
+    assert isinstance(original_selector, dict)
+    assert original_selector["expected_primary_capability_tier"] == "statically_proved"
+    assert original_selector["expect_attached_runtime_provenance"] is False
 
 
 def test_fixture_file_hashes_are_deterministic_and_sorted() -> None:

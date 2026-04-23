@@ -11,6 +11,9 @@ import context_ir
 import context_ir.eval_providers as eval_providers
 import context_ir.semantic_types as semantic_types
 from context_ir.semantic_types import (
+    CapabilityTier,
+    EvidenceOriginKind,
+    ReplayStatus,
     SelectionBasis,
     SemanticCompileContext,
     SemanticCompileResult,
@@ -19,9 +22,20 @@ from context_ir.semantic_types import (
     SemanticOptimizationWarningCode,
     SemanticProgram,
     SemanticSelectionRecord,
+    SemanticSubjectKind,
+    SemanticUnitTraceSummary,
     SyntaxProgram,
 )
 from context_ir.tool_facade import SemanticContextRequest, SemanticContextResponse
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+PROBE_FIXTURE_ROOT = (
+    REPO_ROOT / "evals" / "fixtures" / "oracle_signal_dynamic_import_probe"
+)
+PROBE_QUERY = (
+    'Fix unsupported dynamic import import_module("plugins.weather") '
+    "while keeping probe digest output aligned"
+)
 
 
 def _write_file(repo_root: Path, relative_path: str, text: str) -> None:
@@ -251,6 +265,14 @@ def test_context_ir_provider_delegates_to_facade_with_no_embed_fn(
         reason="fake trace",
         edit_score=0.1,
         support_score=0.0,
+        trace_summary=SemanticUnitTraceSummary(
+            subject_id="unit:selected",
+            subject_kind=SemanticSubjectKind.SYMBOL,
+            primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+            primary_evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+            primary_replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+            attached_runtime_provenance_record_ids=("prov:symbol:runtime:1",),
+        ),
     )
     warning = SemanticOptimizationWarning(
         code=SemanticOptimizationWarningCode.BUDGET_PRESSURE,
@@ -322,6 +344,11 @@ def test_context_ir_provider_delegates_to_facade_with_no_embed_fn(
             reason="fake trace",
             edit_score=0.1,
             support_score=0.0,
+            primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+            primary_evidence_origin=EvidenceOriginKind.STATIC_DERIVATION_RULE,
+            primary_replay_status=ReplayStatus.DETERMINISTIC_STATIC,
+            has_attached_runtime_provenance=True,
+            attached_runtime_provenance_record_ids=("prov:symbol:runtime:1",),
         ),
     )
     assert result.metadata.warning_details == (
@@ -341,6 +368,33 @@ def test_context_ir_provider_delegates_to_facade_with_no_embed_fn(
         )
         == result.warnings
     )
+
+
+def test_context_ir_provider_attaches_dynamic_import_runtime_probe_metadata() -> None:
+    """Context IR provider exposes additive runtime provenance from fixture probes."""
+    result = eval_providers.build_context_ir_provider_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=PROBE_FIXTURE_ROOT,
+            task_id="oracle_signal_dynamic_import_probe",
+            query=PROBE_QUERY,
+            budget=220,
+        )
+    )
+    unsupported = next(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id == "unsupported:call:main.py:5:13"
+    )
+
+    assert "unsupported:call:main.py:5:13" in result.selected_unit_ids
+    assert unsupported.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        unsupported.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported.has_attached_runtime_provenance is True
+    assert unsupported.attached_runtime_provenance_record_ids
 
 
 def test_provider_outputs_carry_metadata_for_later_scoring(tmp_path: Path) -> None:

@@ -18,6 +18,38 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_SPEC_PATH = REPO_ROOT / "evals" / "run_specs" / "oracle_smoke_matrix.json"
 
 
+def _resolved_selector_record(
+    *,
+    expected_primary_capability_tier: str | None = "statically_proved",
+    expect_attached_runtime_provenance: bool | None = False,
+    primary_capability_tier: str | None = "statically_proved",
+    has_attached_runtime_provenance: bool | None = False,
+) -> dict[str, object]:
+    """Return one minimal resolved-selector payload for summary loading tests."""
+    return {
+        "original_selector": {
+            "kind": "symbol",
+            "min_detail": "identity",
+            "expected_primary_capability_tier": expected_primary_capability_tier,
+            "expect_attached_runtime_provenance": (expect_attached_runtime_provenance),
+        },
+        "primary_capability_tier": primary_capability_tier,
+        "has_attached_runtime_provenance": has_attached_runtime_provenance,
+    }
+
+
+def _selected_unit_record(
+    *,
+    primary_capability_tier: str | None = "statically_proved",
+    has_attached_runtime_provenance: bool | None = False,
+) -> dict[str, object]:
+    """Return one minimal selected-unit payload for summary loading tests."""
+    return {
+        "primary_capability_tier": primary_capability_tier,
+        "has_attached_runtime_provenance": has_attached_runtime_provenance,
+    }
+
+
 def _ledger_record(
     *,
     run_id: str,
@@ -31,13 +63,23 @@ def _ledger_record(
     representation_adequacy: float = 0.5,
     uncertainty_honesty: float | None = 0.5,
     noise_efficiency: float = 0.5,
+    resolved_selectors: list[dict[str, object]] | None = None,
+    selected_units: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     """Return one minimal raw ledger row for strict summary loading tests."""
+    if resolved_selectors is None:
+        resolved_selectors = [_resolved_selector_record()]
+    if selected_units is None:
+        selected_units = [_selected_unit_record()]
     return {
         "run_id": run_id,
         "task_id": task_id,
         "provider_name": provider_name,
         "budget": budget,
+        "provider_metadata": {
+            "selected_units": selected_units,
+        },
+        "resolved_selectors": resolved_selectors,
         "metrics": {
             "budget_compliant": budget_compliant,
             "aggregate_score": aggregate_score,
@@ -101,6 +143,14 @@ def test_valid_raw_jsonl_ledger_loads_into_typed_records(tmp_path: Path) -> None
     assert first_record.provider_name == "context_ir"
     assert first_record.budget == 120
     assert isinstance(first_record.metrics, eval_summary.EvalLedgerMetrics)
+    assert all(
+        isinstance(selector, eval_summary.EvalLedgerResolvedSelector)
+        for selector in first_record.resolved_selectors
+    )
+    assert all(
+        isinstance(unit, eval_summary.EvalLedgerSelectedUnit)
+        for unit in first_record.selected_units
+    )
 
 
 def test_malformed_json_lines_fail_loudly(tmp_path: Path) -> None:
@@ -290,6 +340,34 @@ def test_provider_aggregates_are_deterministic_and_average_nullable_metrics(
     assert aggregates["provider_beta"].average_noise_efficiency == pytest.approx(0.8)
 
 
+def test_legacy_scalar_only_ledger_loads_and_renders_empty_accounting(
+    tmp_path: Path,
+) -> None:
+    """Legacy scalar-only rows still load and render deterministic empty accounting."""
+    legacy_record = _ledger_record(run_id="run-legacy")
+    del legacy_record["provider_metadata"]
+    del legacy_record["resolved_selectors"]
+    ledger_path = _write_ledger_records(
+        tmp_path / "legacy_scalar_only.jsonl",
+        [legacy_record],
+    )
+
+    ledger = eval_summary.load_eval_ledger(ledger_path)
+    summary = eval_summary.build_eval_ledger_summary(ledger)
+    rendered = eval_summary.render_eval_ledger_summary(summary)
+
+    assert ledger.records[0].resolved_selectors == ()
+    assert ledger.records[0].selected_units == ()
+    assert summary.selector_tier_expectation_aggregates == ()
+    assert summary.selector_runtime_expectation_aggregates == ()
+    assert summary.selected_unit_tier_aggregates == ()
+    assert "## Capability-Tier Accounting" in rendered
+    assert "### Selector Expectations by Declared Primary Tier" in rendered
+    assert "### Selector Runtime Provenance Expectations" in rendered
+    assert "### Selected Units by Actual Primary Tier" in rendered
+    assert rendered.count("- None") == 3
+
+
 def test_task_budget_rows_are_sorted_and_preserve_provider_comparisons(
     tmp_path: Path,
 ) -> None:
@@ -349,6 +427,112 @@ def test_task_budget_rows_are_sorted_and_preserve_provider_comparisons(
     assert summary.task_budget_results[0].winner_provider_names == ("provider_alpha",)
 
 
+def test_capability_tier_accounting_is_grouped_deterministically(
+    tmp_path: Path,
+) -> None:
+    """Declared selector tiers and selected-unit tiers roll up deterministically."""
+    ledger_path = _write_ledger_records(
+        tmp_path / "capability_accounting.jsonl",
+        [
+            _ledger_record(
+                run_id="run-alpha",
+                resolved_selectors=[
+                    _resolved_selector_record(
+                        expected_primary_capability_tier="statically_proved",
+                        expect_attached_runtime_provenance=False,
+                        primary_capability_tier="statically_proved",
+                        has_attached_runtime_provenance=False,
+                    ),
+                    _resolved_selector_record(
+                        expected_primary_capability_tier="unsupported/opaque",
+                        expect_attached_runtime_provenance=True,
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                    ),
+                    _resolved_selector_record(
+                        expected_primary_capability_tier="heuristic/frontier",
+                        expect_attached_runtime_provenance=False,
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                    ),
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        primary_capability_tier="statically_proved",
+                        has_attached_runtime_provenance=False,
+                    ),
+                    _selected_unit_record(
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                    ),
+                ],
+            ),
+            _ledger_record(
+                run_id="run-beta",
+                provider_name="provider_beta",
+                resolved_selectors=[
+                    _resolved_selector_record(
+                        expected_primary_capability_tier="heuristic/frontier",
+                        expect_attached_runtime_provenance=False,
+                        primary_capability_tier="heuristic/frontier",
+                        has_attached_runtime_provenance=False,
+                    ),
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        primary_capability_tier="heuristic/frontier",
+                        has_attached_runtime_provenance=False,
+                    ),
+                    _selected_unit_record(
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=False,
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    summary = eval_summary.build_eval_ledger_summary(
+        eval_summary.load_eval_ledger(ledger_path)
+    )
+
+    assert tuple(
+        (
+            aggregate.expected_primary_capability_tier,
+            aggregate.selector_count,
+            aggregate.satisfied_count,
+        )
+        for aggregate in summary.selector_tier_expectation_aggregates
+    ) == (
+        ("statically_proved", 1, 1),
+        ("heuristic/frontier", 2, 1),
+        ("unsupported/opaque", 1, 1),
+    )
+    assert tuple(
+        (
+            aggregate.expected_attached_runtime_provenance,
+            aggregate.selector_count,
+            aggregate.satisfied_count,
+        )
+        for aggregate in summary.selector_runtime_expectation_aggregates
+    ) == (
+        (True, 1, 1),
+        (False, 3, 2),
+    )
+    assert tuple(
+        (
+            aggregate.primary_capability_tier,
+            aggregate.selected_unit_count,
+            aggregate.attached_runtime_provenance_count,
+        )
+        for aggregate in summary.selected_unit_tier_aggregates
+    ) == (
+        ("statically_proved", 1, 0),
+        ("heuristic/frontier", 1, 0),
+        ("unsupported/opaque", 2, 1),
+    )
+
+
 def test_exact_ties_are_preserved_in_summary_and_rendering(tmp_path: Path) -> None:
     """Exact aggregate-score ties are rendered explicitly as ties."""
     ledger_path = _write_ledger_records(
@@ -395,7 +579,7 @@ def test_markdown_rendering_is_deterministic_for_the_accepted_smoke_ledger(
     )
 
 
-def test_markdown_includes_provider_aggregates_and_task_budget_sections(
+def test_markdown_includes_internal_accounting_and_task_budget_sections(
     tmp_path: Path,
 ) -> None:
     """Rendered Markdown includes the required internal summary sections."""
@@ -406,8 +590,16 @@ def test_markdown_includes_provider_aggregates_and_task_budget_sections(
 
     assert rendered.startswith("# Eval Summary\n")
     assert "## Provider Aggregates" in rendered
+    assert "## Capability-Tier Accounting" in rendered
+    assert "### Selector Expectations by Declared Primary Tier" in rendered
+    assert "### Selector Runtime Provenance Expectations" in rendered
+    assert "### Selected Units by Actual Primary Tier" in rendered
     assert "## Task Budget Results" in rendered
     assert "| Provider | Records | Budget Compliance |" in rendered
+    assert rendered.count("- None") >= 1
+    assert "| Actual Primary Tier | Selected Units | Attached Runtime Provenance |" in (
+        rendered
+    )
     assert "| Task | Budget | Winner | Provider Results |" in rendered
 
 

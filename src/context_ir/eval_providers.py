@@ -9,9 +9,14 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 import context_ir.tool_facade as tool_facade
+from context_ir.eval_oracles import load_fixture_dynamic_import_runtime_observations
 from context_ir.semantic_types import (
+    CapabilityTier,
+    EvidenceOriginKind,
+    ReplayStatus,
     SemanticOptimizationWarning,
     SemanticSelectionRecord,
+    SemanticUnitTraceSummary,
 )
 
 CONTEXT_IR_PROVIDER = "context_ir"
@@ -72,6 +77,11 @@ class EvalSelectedUnit:
     reason: str | None = None
     edit_score: float | None = None
     support_score: float | None = None
+    primary_capability_tier: CapabilityTier | None = None
+    primary_evidence_origin: EvidenceOriginKind | None = None
+    primary_replay_status: ReplayStatus | None = None
+    has_attached_runtime_provenance: bool | None = None
+    attached_runtime_provenance_record_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject empty identifiers and impossible selection metadata."""
@@ -89,6 +99,42 @@ class EvalSelectedUnit:
             raise ValueError("edit_score must be within [0.0, 1.0]")
         if self.support_score is not None and not 0.0 <= self.support_score <= 1.0:
             raise ValueError("support_score must be within [0.0, 1.0]")
+        if self.primary_capability_tier is None:
+            if (
+                self.primary_evidence_origin is not None
+                or self.primary_replay_status is not None
+                or self.has_attached_runtime_provenance is not None
+                or self.attached_runtime_provenance_record_ids
+            ):
+                raise ValueError(
+                    "selected-unit tier snapshot fields must be absent together"
+                )
+            return
+        if (
+            self.primary_evidence_origin is None
+            or self.primary_replay_status is None
+            or self.has_attached_runtime_provenance is None
+        ):
+            raise ValueError(
+                "selected-unit tier snapshot fields must be present together"
+            )
+        if self.primary_capability_tier is CapabilityTier.RUNTIME_BACKED:
+            raise ValueError(
+                "primary_capability_tier may not be runtime-backed; "
+                "runtime evidence remains additive"
+            )
+        if (
+            self.has_attached_runtime_provenance
+            and not self.attached_runtime_provenance_record_ids
+        ):
+            raise ValueError("attached runtime provenance requires record identifiers")
+        if (
+            not self.has_attached_runtime_provenance
+            and self.attached_runtime_provenance_record_ids
+        ):
+            raise ValueError(
+                "attached runtime provenance record identifiers require support=True"
+            )
 
 
 @dataclass(frozen=True)
@@ -214,12 +260,20 @@ def lexical_tokens(text: str) -> tuple[str, ...]:
 
 def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProviderResult:
     """Compile a Context IR provider pack through the accepted tool facade."""
+    dynamic_import_runtime_observations = (
+        load_fixture_dynamic_import_runtime_observations(request.repo_root)
+    )
     response = tool_facade.compile_repository_context(
         tool_facade.SemanticContextRequest(
             repo_root=request.repo_root,
             query=request.query,
             budget=request.budget,
             embed_fn=None,
+            dynamic_import_runtime_observations=(
+                dynamic_import_runtime_observations
+                if dynamic_import_runtime_observations
+                else None
+            ),
         )
     )
     selected_units = tuple(
@@ -802,6 +856,7 @@ def _selected_unit_metadata(
     record: SemanticSelectionRecord,
 ) -> EvalSelectedUnit:
     """Return structured selected-unit metadata from one semantic trace record."""
+    trace_summary = record.trace_summary
     return EvalSelectedUnit(
         unit_id=record.unit_id,
         detail=record.detail,
@@ -810,6 +865,21 @@ def _selected_unit_metadata(
         reason=record.reason,
         edit_score=record.edit_score,
         support_score=record.support_score,
+        primary_capability_tier=(
+            None if trace_summary is None else trace_summary.primary_capability_tier
+        ),
+        primary_evidence_origin=(
+            None if trace_summary is None else trace_summary.primary_evidence_origin
+        ),
+        primary_replay_status=(
+            None if trace_summary is None else trace_summary.primary_replay_status
+        ),
+        has_attached_runtime_provenance=_attached_runtime_support(trace_summary),
+        attached_runtime_provenance_record_ids=(
+            ()
+            if trace_summary is None
+            else trace_summary.attached_runtime_provenance_record_ids
+        ),
     )
 
 
@@ -822,6 +892,15 @@ def _provider_warning_metadata(
         unit_id=warning.unit_id,
         message=warning.message,
     )
+
+
+def _attached_runtime_support(
+    trace_summary: SemanticUnitTraceSummary | None,
+) -> bool | None:
+    """Return whether a trace summary carries additive runtime-backed support."""
+    if trace_summary is None:
+        return None
+    return trace_summary.has_attached_runtime_provenance
 
 
 __all__ = [

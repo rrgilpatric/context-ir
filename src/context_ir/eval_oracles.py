@@ -9,11 +9,24 @@ from pathlib import Path
 from typing import Literal, TypeVar, cast
 
 from context_ir.analyzer import analyze_repository
+from context_ir.runtime_acquisition import (
+    DynamicImportRuntimeObservation,
+    _RuntimeObservationField,
+    attach_dynamic_import_runtime_provenance,
+)
 from context_ir.semantic_types import (
+    CapabilityTier,
+    DownstreamVisibility,
+    EvidenceOriginKind,
     ReferenceContext,
+    ReplayStatus,
+    RepositorySnapshotBasis,
     ResolvedSymbol,
     ResolvedSymbolKind,
+    RuntimeAttachmentLink,
     SemanticProgram,
+    SemanticSubjectKind,
+    SemanticUnitTraceSummary,
     SourceSite,
     SourceSpan,
     UnresolvedAccess,
@@ -42,6 +55,8 @@ _ALLOWED_SYMBOL_SELECTOR_FIELDS = frozenset(
         "min_detail",
         "symbol_kind",
         "rationale",
+        "expected_primary_capability_tier",
+        "expect_attached_runtime_provenance",
     }
 )
 _ALLOWED_FRONTIER_SELECTOR_FIELDS = frozenset(
@@ -55,6 +70,8 @@ _ALLOWED_FRONTIER_SELECTOR_FIELDS = frozenset(
         "enclosing_qualified_name",
         "source_snippet",
         "rationale",
+        "expected_primary_capability_tier",
+        "expect_attached_runtime_provenance",
     }
 )
 _ALLOWED_UNSUPPORTED_SELECTOR_FIELDS = frozenset(
@@ -67,6 +84,8 @@ _ALLOWED_UNSUPPORTED_SELECTOR_FIELDS = frozenset(
         "enclosing_qualified_name",
         "source_snippet",
         "rationale",
+        "expected_primary_capability_tier",
+        "expect_attached_runtime_provenance",
     }
 )
 _FORBIDDEN_GENERATED_ID_FIELDS = frozenset(
@@ -85,6 +104,56 @@ _FORBIDDEN_GENERATED_ID_FIELDS = frozenset(
         "unit_ids",
     }
 )
+_PRIMARY_TRACE_DEFAULTS: dict[
+    SemanticSubjectKind, tuple[CapabilityTier, EvidenceOriginKind, ReplayStatus]
+] = {
+    SemanticSubjectKind.SYMBOL: (
+        CapabilityTier.STATICALLY_PROVED,
+        EvidenceOriginKind.STATIC_DERIVATION_RULE,
+        ReplayStatus.DETERMINISTIC_STATIC,
+    ),
+    SemanticSubjectKind.FRONTIER_ITEM: (
+        CapabilityTier.HEURISTIC_FRONTIER,
+        EvidenceOriginKind.HEURISTIC_RULE,
+        ReplayStatus.NON_PROOF_HEURISTIC,
+    ),
+    SemanticSubjectKind.UNSUPPORTED_FINDING: (
+        CapabilityTier.UNSUPPORTED_OPAQUE,
+        EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+        ReplayStatus.OPAQUE_BOUNDARY,
+    ),
+}
+_DYNAMIC_IMPORT_RUNTIME_OBSERVATION_FILENAME = "eval_runtime_observations.json"
+_ALLOWED_DYNAMIC_IMPORT_OBSERVATION_DOCUMENT_FIELDS = frozenset(
+    {"schema_version", "dynamic_import_runtime_observations"}
+)
+_ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS = frozenset(
+    {
+        "file_path",
+        "start_line",
+        "start_column",
+        "end_line",
+        "end_column",
+        "source_snippet",
+        "probe_identifier",
+        "probe_contract_revision",
+        "repository_snapshot_basis",
+        "attachment_links",
+        "replay_target",
+        "replay_selector",
+        "replay_inputs",
+        "runtime_assumptions",
+        "normalized_payload",
+        "durable_payload_reference",
+    }
+)
+_ALLOWED_REPOSITORY_SNAPSHOT_BASIS_FIELDS = frozenset(
+    {"snapshot_kind", "snapshot_id", "is_dirty_worktree"}
+)
+_ALLOWED_RUNTIME_ATTACHMENT_LINK_FIELDS = frozenset(
+    {"attachment_id", "attachment_role", "description"}
+)
+_ALLOWED_RUNTIME_FIELD_FIELDS = frozenset({"key", "value"})
 
 
 class EvalOracleSchemaError(ValueError):
@@ -114,6 +183,8 @@ class SymbolOracleSelector:
     min_detail: OracleMinDetail
     symbol_kind: ResolvedSymbolKind | None = None
     rationale: str | None = None
+    expected_primary_capability_tier: CapabilityTier | None = None
+    expect_attached_runtime_provenance: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -129,6 +200,8 @@ class FrontierOracleSelector:
     enclosing_qualified_name: str | None = None
     source_snippet: str | None = None
     rationale: str | None = None
+    expected_primary_capability_tier: CapabilityTier | None = None
+    expect_attached_runtime_provenance: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -143,6 +216,8 @@ class UnsupportedOracleSelector:
     enclosing_qualified_name: str | None = None
     source_snippet: str | None = None
     rationale: str | None = None
+    expected_primary_capability_tier: CapabilityTier | None = None
+    expect_attached_runtime_provenance: bool | None = None
 
 
 OracleSelector = (
@@ -171,6 +246,11 @@ class ResolvedOracleSelector:
     failure_reason: str | None
     candidate_count: int
     candidate_summaries: tuple[str, ...]
+    primary_capability_tier: CapabilityTier | None = None
+    primary_evidence_origin: EvidenceOriginKind | None = None
+    primary_replay_status: ReplayStatus | None = None
+    has_attached_runtime_provenance: bool | None = None
+    attached_runtime_provenance_record_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -222,7 +302,19 @@ def setup_eval_oracle_task(
             task.fixture_id,
         )
     )
-    return resolve_eval_oracle_task(task, root)
+    program = analyze_repository(root)
+    dynamic_import_runtime_observations = (
+        load_fixture_dynamic_import_runtime_observations(
+            root,
+            semantic_program=program,
+        )
+    )
+    if dynamic_import_runtime_observations:
+        program = attach_dynamic_import_runtime_provenance(
+            program,
+            dynamic_import_runtime_observations,
+        )
+    return _resolved_eval_oracle_setup(task, program)
 
 
 def resolve_eval_oracle_task(
@@ -231,6 +323,67 @@ def resolve_eval_oracle_task(
 ) -> EvalOracleSetup:
     """Resolve every durable selector through ``analyze_repository``."""
     program = analyze_repository(Path(repo_root))
+    return _resolved_eval_oracle_setup(task, program)
+
+
+def load_fixture_dynamic_import_runtime_observations(
+    repo_root: Path | str,
+    *,
+    semantic_program: SemanticProgram | None = None,
+) -> tuple[DynamicImportRuntimeObservation, ...]:
+    """Load fixture-local dynamic-import runtime observations when present."""
+    root = Path(repo_root)
+    observation_path = root / _DYNAMIC_IMPORT_RUNTIME_OBSERVATION_FILENAME
+    if not observation_path.is_file():
+        return ()
+
+    try:
+        raw: object = json.loads(observation_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise EvalOracleSchemaError(
+            f"invalid dynamic-import runtime observation JSON in "
+            f"{observation_path}: {error}"
+        ) from error
+    _reject_generated_id_fields(raw, path="$")
+    record = _expect_object(raw, path="$")
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_DOCUMENT_FIELDS,
+        path="$",
+    )
+    schema_version = _required_string(record, "schema_version", path="$")
+    if schema_version != "v1":
+        raise EvalOracleSchemaError("$.schema_version must be 'v1'")
+    observation_records = _required_list(
+        record,
+        "dynamic_import_runtime_observations",
+        path="$",
+    )
+    if not observation_records:
+        raise EvalOracleSchemaError(
+            "dynamic-import runtime observation file must contain at least one "
+            "observation"
+        )
+
+    program = (
+        semantic_program if semantic_program is not None else analyze_repository(root)
+    )
+    site_index = _dynamic_import_observation_site_index(program)
+    return tuple(
+        _parse_dynamic_import_runtime_observation(
+            observation_record,
+            path=f"$.dynamic_import_runtime_observations[{index}]",
+            site_index=site_index,
+        )
+        for index, observation_record in enumerate(observation_records)
+    )
+
+
+def _resolved_eval_oracle_setup(
+    task: EvalOracleTask,
+    program: SemanticProgram,
+) -> EvalOracleSetup:
+    """Resolve one oracle task against an already analyzed semantic program."""
     resolved_selectors = tuple(
         _resolve_selector(selector=selector, program=program)
         for selector in task.expected_selectors
@@ -255,6 +408,237 @@ def resolve_eval_oracle_task(
 def _default_fixture_root(task_path: Path, fixture_id: str) -> Path:
     """Return the conventional fixture root for a task asset path."""
     return task_path.parent.parent / "fixtures" / fixture_id
+
+
+def _dynamic_import_observation_site_index(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], SourceSite]:
+    """Index eligible dynamic-import source sites by file/span identity."""
+    site_index: dict[tuple[str, int, int, int, int], SourceSite] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.DYNAMIC_IMPORT:
+            continue
+        identity = _source_site_identity(construct.site)
+        if identity in site_index:
+            raise EvalOracleSchemaError(
+                "multiple dynamic-import unsupported constructs share the same "
+                "source site"
+            )
+        site_index[identity] = construct.site
+    return site_index
+
+
+def _parse_dynamic_import_runtime_observation(
+    raw: object,
+    *,
+    path: str,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+) -> DynamicImportRuntimeObservation:
+    """Parse one fixture-local dynamic-import runtime observation record."""
+    record = _expect_object(raw, path=path)
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS,
+        path=path,
+    )
+    site = _matched_dynamic_import_observation_site(
+        file_path=_required_string(record, "file_path", path=path),
+        start_line=_required_positive_int(record, "start_line", path=path),
+        start_column=_required_non_negative_int(record, "start_column", path=path),
+        end_line=_required_positive_int(record, "end_line", path=path),
+        end_column=_required_non_negative_int(record, "end_column", path=path),
+        source_snippet=_optional_string(record, "source_snippet", path=path),
+        site_index=site_index,
+        path=path,
+    )
+    return DynamicImportRuntimeObservation(
+        site=site,
+        probe_identifier=_required_string(record, "probe_identifier", path=path),
+        probe_contract_revision=_required_string(
+            record,
+            "probe_contract_revision",
+            path=path,
+        ),
+        repository_snapshot_basis=_required_repository_snapshot_basis(
+            record,
+            path=path,
+        ),
+        attachment_links=_required_runtime_attachment_links(record, path=path),
+        replay_target=_required_string(record, "replay_target", path=path),
+        replay_selector=_required_string(record, "replay_selector", path=path),
+        replay_inputs=_optional_runtime_fields(record, "replay_inputs", path=path),
+        runtime_assumptions=_optional_runtime_fields(
+            record,
+            "runtime_assumptions",
+            path=path,
+        ),
+        normalized_payload=_required_runtime_fields(
+            record,
+            "normalized_payload",
+            path=path,
+        ),
+        durable_payload_reference=_optional_string(
+            record,
+            "durable_payload_reference",
+            path=path,
+        ),
+    )
+
+
+def _matched_dynamic_import_observation_site(
+    *,
+    file_path: str,
+    start_line: int,
+    start_column: int,
+    end_line: int,
+    end_column: int,
+    source_snippet: str | None,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+    path: str,
+) -> SourceSite:
+    """Return the analyzed source site matching one fixture observation record."""
+    identity = (file_path, start_line, start_column, end_line, end_column)
+    site = site_index.get(identity)
+    if site is None:
+        raise EvalOracleSchemaError(
+            f"{path} does not match any analyzed dynamic-import source site"
+        )
+    if source_snippet is not None and site.snippet != source_snippet:
+        raise EvalOracleSchemaError(
+            f"{path}.source_snippet does not match the analyzed source site"
+        )
+    return site
+
+
+def _required_repository_snapshot_basis(
+    record: dict[str, object],
+    *,
+    path: str,
+) -> RepositorySnapshotBasis:
+    """Parse one required repository snapshot basis object."""
+    basis_record = _required_object(record, "repository_snapshot_basis", path=path)
+    _validate_allowed_fields(
+        basis_record,
+        _ALLOWED_REPOSITORY_SNAPSHOT_BASIS_FIELDS,
+        path=f"{path}.repository_snapshot_basis",
+    )
+    return RepositorySnapshotBasis(
+        snapshot_kind=_required_string(
+            basis_record,
+            "snapshot_kind",
+            path=f"{path}.repository_snapshot_basis",
+        ),
+        snapshot_id=_required_string(
+            basis_record,
+            "snapshot_id",
+            path=f"{path}.repository_snapshot_basis",
+        ),
+        is_dirty_worktree=_optional_bool(
+            basis_record,
+            "is_dirty_worktree",
+            path=f"{path}.repository_snapshot_basis",
+        )
+        or False,
+    )
+
+
+def _required_runtime_attachment_links(
+    record: dict[str, object],
+    *,
+    path: str,
+) -> tuple[RuntimeAttachmentLink, ...]:
+    """Parse required runtime attachment link metadata."""
+    link_records = _required_list(record, "attachment_links", path=path)
+    return tuple(
+        _runtime_attachment_link(
+            link_record,
+            path=f"{path}.attachment_links[{index}]",
+        )
+        for index, link_record in enumerate(link_records)
+    )
+
+
+def _runtime_attachment_link(
+    raw: object,
+    *,
+    path: str,
+) -> RuntimeAttachmentLink:
+    """Parse one runtime attachment link object."""
+    record = _expect_object(raw, path=path)
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_RUNTIME_ATTACHMENT_LINK_FIELDS,
+        path=path,
+    )
+    return RuntimeAttachmentLink(
+        attachment_id=_required_string(record, "attachment_id", path=path),
+        attachment_role=_required_string(record, "attachment_role", path=path),
+        description=_optional_string(record, "description", path=path),
+    )
+
+
+def _required_runtime_fields(
+    record: dict[str, object],
+    key: str,
+    *,
+    path: str,
+) -> tuple[_RuntimeObservationField, ...]:
+    """Parse one required non-empty runtime field collection."""
+    field_records = _required_list(record, key, path=path)
+    if not field_records:
+        raise EvalOracleSchemaError(f"{path}.{key} must contain at least one field")
+    return tuple(
+        _runtime_observation_field(
+            field_record,
+            path=f"{path}.{key}[{index}]",
+        )
+        for index, field_record in enumerate(field_records)
+    )
+
+
+def _optional_runtime_fields(
+    record: dict[str, object],
+    key: str,
+    *,
+    path: str,
+) -> tuple[_RuntimeObservationField, ...]:
+    """Parse an optional runtime field collection."""
+    field_records = _optional_list(record, key, path=path)
+    if field_records is None:
+        return ()
+    return tuple(
+        _runtime_observation_field(
+            field_record,
+            path=f"{path}.{key}[{index}]",
+        )
+        for index, field_record in enumerate(field_records)
+    )
+
+
+def _runtime_observation_field(
+    raw: object,
+    *,
+    path: str,
+) -> _RuntimeObservationField:
+    """Parse one key/value runtime observation field entry."""
+    record = _expect_object(raw, path=path)
+    _validate_allowed_fields(record, _ALLOWED_RUNTIME_FIELD_FIELDS, path=path)
+    return _RuntimeObservationField(
+        key=_required_string(record, "key", path=path),
+        value=_required_string(record, "value", path=path),
+    )
+
+
+def _source_site_identity(site: SourceSite) -> tuple[str, int, int, int, int]:
+    """Return the stable file/span identity for one analyzed source site."""
+    span = site.span
+    return (
+        site.file_path,
+        span.start_line,
+        span.start_column,
+        span.end_line,
+        span.end_column,
+    )
 
 
 def _parse_selector(raw: object, *, path: str) -> OracleSelector:
@@ -287,6 +671,15 @@ def _parse_symbol_selector(
         ),
         symbol_kind=_optional_resolved_symbol_kind(record, path=path),
         rationale=_optional_string(record, "rationale", path=path),
+        expected_primary_capability_tier=_optional_expected_primary_capability_tier(
+            record,
+            path=path,
+        ),
+        expect_attached_runtime_provenance=_optional_bool(
+            record,
+            "expect_attached_runtime_provenance",
+            path=path,
+        ),
     )
 
 
@@ -320,6 +713,15 @@ def _parse_frontier_selector(
         ),
         source_snippet=_optional_string(record, "source_snippet", path=path),
         rationale=_optional_string(record, "rationale", path=path),
+        expected_primary_capability_tier=_optional_expected_primary_capability_tier(
+            record,
+            path=path,
+        ),
+        expect_attached_runtime_provenance=_optional_bool(
+            record,
+            "expect_attached_runtime_provenance",
+            path=path,
+        ),
     )
 
 
@@ -349,6 +751,15 @@ def _parse_unsupported_selector(
         ),
         source_snippet=_optional_string(record, "source_snippet", path=path),
         rationale=_optional_string(record, "rationale", path=path),
+        expected_primary_capability_tier=_optional_expected_primary_capability_tier(
+            record,
+            path=path,
+        ),
+        expect_attached_runtime_provenance=_optional_bool(
+            record,
+            "expect_attached_runtime_provenance",
+            path=path,
+        ),
     )
 
 
@@ -383,6 +794,7 @@ def _resolve_symbol_selector(
         unit_id=lambda symbol: symbol.symbol_id,
         site=lambda symbol: symbol.definition_site,
         summary=_symbol_candidate_summary,
+        program=program,
     )
 
 
@@ -412,6 +824,7 @@ def _resolve_frontier_selector(
         unit_id=lambda access: access.access_id,
         site=lambda access: access.site,
         summary=_frontier_candidate_summary,
+        program=program,
     )
 
 
@@ -440,6 +853,7 @@ def _resolve_unsupported_selector(
         unit_id=lambda construct: construct.construct_id,
         site=lambda construct: construct.site,
         summary=_unsupported_candidate_summary,
+        program=program,
     )
 
 
@@ -450,11 +864,17 @@ def _resolved_record_from_candidates(
     unit_id: Callable[[_CandidateT], str],
     site: Callable[[_CandidateT], SourceSite],
     summary: Callable[[_CandidateT], str],
+    program: SemanticProgram,
 ) -> ResolvedOracleSelector:
     """Build the standard resolution record from a candidate list."""
     if len(candidates) == 1:
         candidate = candidates[0]
         candidate_site = site(candidate)
+        trace_summary = _selector_trace_summary(
+            selector=selector,
+            subject_id=unit_id(candidate),
+            program=program,
+        )
         return ResolvedOracleSelector(
             selector=selector,
             resolution_status="resolved",
@@ -464,6 +884,15 @@ def _resolved_record_from_candidates(
             failure_reason=None,
             candidate_count=1,
             candidate_summaries=(),
+            primary_capability_tier=trace_summary.primary_capability_tier,
+            primary_evidence_origin=trace_summary.primary_evidence_origin,
+            primary_replay_status=trace_summary.primary_replay_status,
+            has_attached_runtime_provenance=(
+                trace_summary.has_attached_runtime_provenance
+            ),
+            attached_runtime_provenance_record_ids=(
+                trace_summary.attached_runtime_provenance_record_ids
+            ),
         )
     if len(candidates) > 1:
         return ResolvedOracleSelector(
@@ -617,6 +1046,31 @@ def _required_list(
     return value
 
 
+def _optional_list(
+    record: dict[str, object],
+    key: str,
+    *,
+    path: str,
+) -> list[object] | None:
+    """Return an optional list field from a schema object."""
+    value = record.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise EvalOracleSchemaError(f"{path}.{key} must be a list")
+    return value
+
+
+def _required_object(
+    record: dict[str, object],
+    key: str,
+    *,
+    path: str,
+) -> dict[str, object]:
+    """Return a required object field from a schema object."""
+    return _expect_object(record.get(key), path=f"{path}.{key}")
+
+
 def _required_string(
     record: dict[str, object],
     key: str,
@@ -627,6 +1081,32 @@ def _required_string(
     value = record.get(key)
     if not isinstance(value, str) or not value:
         raise EvalOracleSchemaError(f"{path}.{key} must be a non-empty string")
+    return value
+
+
+def _required_positive_int(
+    record: dict[str, object],
+    key: str,
+    *,
+    path: str,
+) -> int:
+    """Return a required positive integer field from a schema object."""
+    value = record.get(key)
+    if type(value) is not int or value <= 0:
+        raise EvalOracleSchemaError(f"{path}.{key} must be a positive integer")
+    return value
+
+
+def _required_non_negative_int(
+    record: dict[str, object],
+    key: str,
+    *,
+    path: str,
+) -> int:
+    """Return a required non-negative integer field from a schema object."""
+    value = record.get(key)
+    if type(value) is not int or value < 0:
+        raise EvalOracleSchemaError(f"{path}.{key} must be a non-negative integer")
     return value
 
 
@@ -661,6 +1141,44 @@ def _parse_min_detail(value: str, *, path: str) -> OracleMinDetail:
     return cast(OracleMinDetail, value)
 
 
+def _optional_expected_primary_capability_tier(
+    record: dict[str, object],
+    *,
+    path: str,
+) -> CapabilityTier | None:
+    """Parse an optional expected primary capability tier."""
+    value = _optional_string(record, "expected_primary_capability_tier", path=path)
+    if value is None:
+        return None
+    try:
+        tier = CapabilityTier(value)
+    except ValueError as error:
+        raise EvalOracleSchemaError(
+            f"{path}.expected_primary_capability_tier is not supported"
+        ) from error
+    if tier is CapabilityTier.RUNTIME_BACKED:
+        raise EvalOracleSchemaError(
+            f"{path}.expected_primary_capability_tier must be statically_proved, "
+            "heuristic/frontier, or unsupported/opaque"
+        )
+    return tier
+
+
+def _optional_bool(
+    record: dict[str, object],
+    key: str,
+    *,
+    path: str,
+) -> bool | None:
+    """Return an optional boolean field from a schema object."""
+    value = record.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, bool):
+        raise EvalOracleSchemaError(f"{path}.{key} must be a boolean")
+    return value
+
+
 def _optional_resolved_symbol_kind(
     record: dict[str, object],
     *,
@@ -674,6 +1192,67 @@ def _optional_resolved_symbol_kind(
         return ResolvedSymbolKind(value)
     except ValueError as error:
         raise EvalOracleSchemaError(f"{path}.symbol_kind is not supported") from error
+
+
+def _selector_trace_summary(
+    *,
+    selector: OracleSelector,
+    subject_id: str,
+    program: SemanticProgram,
+) -> SemanticUnitTraceSummary:
+    """Return the compile-visible trace summary for one resolved selector subject."""
+    subject_kind = _selector_subject_kind(selector)
+    ordered_records = tuple(
+        sorted(
+            (
+                record
+                for record in program.provenance_records
+                if record.subject_kind is subject_kind
+                and record.subject_id == subject_id
+                and DownstreamVisibility.COMPILE in record.downstream_visibility
+            ),
+            key=lambda record: record.record_id,
+        )
+    )
+    primary_record = next(
+        (
+            record
+            for record in ordered_records
+            if record.capability_tier is not CapabilityTier.RUNTIME_BACKED
+        ),
+        None,
+    )
+    if primary_record is None:
+        (
+            primary_capability_tier,
+            primary_evidence_origin,
+            primary_replay_status,
+        ) = _PRIMARY_TRACE_DEFAULTS[subject_kind]
+    else:
+        primary_capability_tier = primary_record.capability_tier
+        primary_evidence_origin = primary_record.evidence_origin
+        primary_replay_status = primary_record.replay_status
+    return SemanticUnitTraceSummary(
+        subject_id=subject_id,
+        subject_kind=subject_kind,
+        primary_capability_tier=primary_capability_tier,
+        primary_evidence_origin=primary_evidence_origin,
+        primary_replay_status=primary_replay_status,
+        attached_runtime_provenance_record_ids=tuple(
+            record.record_id
+            for record in ordered_records
+            if record.capability_tier is CapabilityTier.RUNTIME_BACKED
+        ),
+    )
+
+
+def _selector_subject_kind(selector: OracleSelector) -> SemanticSubjectKind:
+    """Return the semantic subject kind implied by one durable selector."""
+    if selector.kind == "symbol":
+        return SemanticSubjectKind.SYMBOL
+    if selector.kind == "frontier":
+        return SemanticSubjectKind.FRONTIER_ITEM
+    return SemanticSubjectKind.UNSUPPORTED_FINDING
 
 
 def _parse_reference_context(value: str, *, path: str) -> ReferenceContext:

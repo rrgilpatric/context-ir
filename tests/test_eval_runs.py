@@ -23,6 +23,9 @@ from context_ir.eval_providers import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_SPEC_PATH = REPO_ROOT / "evals" / "run_specs" / "oracle_smoke_matrix.json"
 TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_smoke.json"
+PROBE_RUN_SPEC_PATH = (
+    REPO_ROOT / "evals" / "run_specs" / "oracle_signal_dynamic_import_probe_matrix.json"
+)
 _RAW_RECORD_KEYS = {
     "spec_version",
     "run_id",
@@ -70,6 +73,11 @@ _RESOLVED_SELECTOR_KEYS = {
     "failure_reason",
     "candidate_count",
     "candidate_summaries",
+    "primary_capability_tier",
+    "primary_evidence_origin",
+    "primary_replay_status",
+    "has_attached_runtime_provenance",
+    "attached_runtime_provenance_record_ids",
 }
 _METRIC_KEYS = {
     "provider_name",
@@ -303,6 +311,66 @@ def test_execute_eval_run_spec_writes_one_raw_record_per_combination(
         for selector in resolved_selectors:
             assert isinstance(selector, dict)
             assert set(selector) == _RESOLVED_SELECTOR_KEYS
+
+
+def test_execute_eval_run_spec_populates_runtime_backed_fields_for_probe(
+    tmp_path: Path,
+) -> None:
+    """Probe run execution keeps tier-aware raw fields non-null under spec v1."""
+    ledger_path = tmp_path / "probe.jsonl"
+
+    execution = eval_runs.execute_eval_run_spec(
+        PROBE_RUN_SPEC_PATH,
+        ledger_path,
+        git_commit="abc1234",
+        python_version="3.11.9",
+        package_version=context_ir.__version__,
+    )
+
+    parsed_records = _parsed_ledger_records(ledger_path)
+    assert execution.record_count == 1
+    assert parsed_records[0]["spec_version"] == "v1"
+    assert parsed_records[0]["provider_name"] == CONTEXT_IR_PROVIDER
+
+    record = parsed_records[0]
+    unsupported_selector = next(
+        selector
+        for selector in cast(list[dict[str, object]], record["resolved_selectors"])
+        if selector["resolved_unit_id"] == "unsupported:call:main.py:5:13"
+    )
+    unsupported_selected_unit = next(
+        unit
+        for unit in cast(
+            list[dict[str, object]],
+            cast(dict[str, object], record["provider_metadata"])["selected_units"],
+        )
+        if unit["unit_id"] == "unsupported:call:main.py:5:13"
+    )
+
+    assert (
+        cast(dict[str, object], unsupported_selector["original_selector"])[
+            "expected_primary_capability_tier"
+        ]
+        == "unsupported/opaque"
+    )
+    assert (
+        cast(dict[str, object], unsupported_selector["original_selector"])[
+            "expect_attached_runtime_provenance"
+        ]
+        is True
+    )
+    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selector["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        unsupported_selector["attached_runtime_provenance_record_ids"],
+    )
+    assert unsupported_selected_unit["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selected_unit["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        unsupported_selected_unit["attached_runtime_provenance_record_ids"],
+    )
 
 
 def test_execution_order_is_deterministic_and_reuses_setup_once_per_case(

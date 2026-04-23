@@ -61,6 +61,11 @@ class EvalSelectedUnitRecord:
     reason: str | None
     edit_score: float | None
     support_score: float | None
+    primary_capability_tier: str | None
+    primary_evidence_origin: str | None
+    primary_replay_status: str | None
+    has_attached_runtime_provenance: bool | None
+    attached_runtime_provenance_record_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -104,6 +109,8 @@ class EvalOriginalSelectorRecord:
 
     kind: str
     min_detail: str
+    expected_primary_capability_tier: str | None = None
+    expect_attached_runtime_provenance: bool | None = None
     qualified_name: str | None = None
     role: str | None = None
     symbol_kind: str | None = None
@@ -129,6 +136,11 @@ class EvalResolvedSelectorRecord:
     failure_reason: str | None
     candidate_count: int
     candidate_summaries: tuple[str, ...]
+    primary_capability_tier: str | None
+    primary_evidence_origin: str | None
+    primary_replay_status: str | None
+    has_attached_runtime_provenance: bool | None
+    attached_runtime_provenance_record_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -377,6 +389,25 @@ def _selected_unit_record(selected_unit: EvalSelectedUnit) -> EvalSelectedUnitRe
         reason=selected_unit.reason,
         edit_score=selected_unit.edit_score,
         support_score=selected_unit.support_score,
+        primary_capability_tier=(
+            None
+            if selected_unit.primary_capability_tier is None
+            else selected_unit.primary_capability_tier.value
+        ),
+        primary_evidence_origin=(
+            None
+            if selected_unit.primary_evidence_origin is None
+            else selected_unit.primary_evidence_origin.value
+        ),
+        primary_replay_status=(
+            None
+            if selected_unit.primary_replay_status is None
+            else selected_unit.primary_replay_status.value
+        ),
+        has_attached_runtime_provenance=(selected_unit.has_attached_runtime_provenance),
+        attached_runtime_provenance_record_ids=(
+            selected_unit.attached_runtime_provenance_record_ids
+        ),
     )
 
 
@@ -403,6 +434,27 @@ def _resolved_selector_record(
         failure_reason=resolved_selector.failure_reason,
         candidate_count=resolved_selector.candidate_count,
         candidate_summaries=resolved_selector.candidate_summaries,
+        primary_capability_tier=(
+            None
+            if resolved_selector.primary_capability_tier is None
+            else resolved_selector.primary_capability_tier.value
+        ),
+        primary_evidence_origin=(
+            None
+            if resolved_selector.primary_evidence_origin is None
+            else resolved_selector.primary_evidence_origin.value
+        ),
+        primary_replay_status=(
+            None
+            if resolved_selector.primary_replay_status is None
+            else resolved_selector.primary_replay_status.value
+        ),
+        has_attached_runtime_provenance=(
+            resolved_selector.has_attached_runtime_provenance
+        ),
+        attached_runtime_provenance_record_ids=(
+            resolved_selector.attached_runtime_provenance_record_ids
+        ),
     )
 
 
@@ -415,6 +467,14 @@ def _original_selector_record(selector: OracleSelector) -> EvalOriginalSelectorR
         return EvalOriginalSelectorRecord(
             kind=selector.kind,
             min_detail=selector.min_detail,
+            expected_primary_capability_tier=(
+                None
+                if selector.expected_primary_capability_tier is None
+                else selector.expected_primary_capability_tier.value
+            ),
+            expect_attached_runtime_provenance=(
+                selector.expect_attached_runtime_provenance
+            ),
             qualified_name=selector.qualified_name,
             role=selector.role,
             symbol_kind=symbol_kind,
@@ -425,6 +485,14 @@ def _original_selector_record(selector: OracleSelector) -> EvalOriginalSelectorR
         return EvalOriginalSelectorRecord(
             kind=selector.kind,
             min_detail=selector.min_detail,
+            expected_primary_capability_tier=(
+                None
+                if selector.expected_primary_capability_tier is None
+                else selector.expected_primary_capability_tier.value
+            ),
+            expect_attached_runtime_provenance=(
+                selector.expect_attached_runtime_provenance
+            ),
             file_path=selector.file_path,
             access_text=selector.access_text,
             context=selector.context.value,
@@ -437,6 +505,14 @@ def _original_selector_record(selector: OracleSelector) -> EvalOriginalSelectorR
     return EvalOriginalSelectorRecord(
         kind=selector.kind,
         min_detail=selector.min_detail,
+        expected_primary_capability_tier=(
+            None
+            if selector.expected_primary_capability_tier is None
+            else selector.expected_primary_capability_tier.value
+        ),
+        expect_attached_runtime_provenance=(
+            selector.expect_attached_runtime_provenance
+        ),
         file_path=selector.file_path,
         reason_code=selector.reason_code.value,
         enclosing_qualified_name=selector.enclosing_qualified_name,
@@ -518,6 +594,15 @@ def _provider_metadata_to_json(
                 "reason": unit.reason,
                 "edit_score": unit.edit_score,
                 "support_score": unit.support_score,
+                "primary_capability_tier": unit.primary_capability_tier,
+                "primary_evidence_origin": unit.primary_evidence_origin,
+                "primary_replay_status": unit.primary_replay_status,
+                "has_attached_runtime_provenance": (
+                    unit.has_attached_runtime_provenance
+                ),
+                "attached_runtime_provenance_record_ids": list(
+                    unit.attached_runtime_provenance_record_ids
+                ),
             }
             for unit in metadata.selected_units
         ],
@@ -555,6 +640,15 @@ def _resolved_selector_to_json(
         "failure_reason": selector_record.failure_reason,
         "candidate_count": selector_record.candidate_count,
         "candidate_summaries": list(selector_record.candidate_summaries),
+        "primary_capability_tier": selector_record.primary_capability_tier,
+        "primary_evidence_origin": selector_record.primary_evidence_origin,
+        "primary_replay_status": selector_record.primary_replay_status,
+        "has_attached_runtime_provenance": (
+            selector_record.has_attached_runtime_provenance
+        ),
+        "attached_runtime_provenance_record_ids": list(
+            selector_record.attached_runtime_provenance_record_ids
+        ),
     }
 
 
@@ -565,6 +659,10 @@ def _original_selector_to_json(
     selector_json: dict[str, object] = {
         "kind": selector.kind,
         "min_detail": selector.min_detail,
+        "expected_primary_capability_tier": selector.expected_primary_capability_tier,
+        "expect_attached_runtime_provenance": (
+            selector.expect_attached_runtime_provenance
+        ),
     }
     if selector.qualified_name is not None:
         selector_json["qualified_name"] = selector.qualified_name

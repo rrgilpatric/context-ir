@@ -9,6 +9,16 @@ from math import fsum, isfinite
 from pathlib import Path
 from typing import cast
 
+from context_ir.semantic_types import CapabilityTier
+
+_CAPABILITY_TIER_SORT_ORDER = {
+    CapabilityTier.STATICALLY_PROVED.value: 0,
+    CapabilityTier.HEURISTIC_FRONTIER.value: 1,
+    CapabilityTier.UNSUPPORTED_OPAQUE.value: 2,
+    CapabilityTier.RUNTIME_BACKED.value: 3,
+}
+_ALLOWED_CAPABILITY_TIERS = frozenset(_CAPABILITY_TIER_SORT_ORDER)
+
 
 class EvalLedgerError(ValueError):
     """Raised when a raw eval ledger cannot be loaded or summarized safely."""
@@ -27,6 +37,24 @@ class EvalLedgerMetrics:
 
 
 @dataclass(frozen=True)
+class EvalLedgerResolvedSelector:
+    """Typed selector expectation and resolution fields retained for accounting."""
+
+    expected_primary_capability_tier: str | None
+    expect_attached_runtime_provenance: bool | None
+    primary_capability_tier: str | None
+    has_attached_runtime_provenance: bool | None
+
+
+@dataclass(frozen=True)
+class EvalLedgerSelectedUnit:
+    """Typed selected-unit capability fields retained for internal accounting."""
+
+    primary_capability_tier: str | None
+    has_attached_runtime_provenance: bool | None
+
+
+@dataclass(frozen=True)
 class EvalLedgerRecord:
     """Typed internal representation of one raw JSONL eval ledger row."""
 
@@ -35,6 +63,8 @@ class EvalLedgerRecord:
     provider_name: str
     budget: int
     budget_compliant: bool
+    resolved_selectors: tuple[EvalLedgerResolvedSelector, ...]
+    selected_units: tuple[EvalLedgerSelectedUnit, ...]
     metrics: EvalLedgerMetrics
 
 
@@ -59,6 +89,33 @@ class EvalProviderAggregate:
     average_representation_adequacy: float
     average_uncertainty_honesty: float | None
     average_noise_efficiency: float
+
+
+@dataclass(frozen=True)
+class EvalSelectorTierExpectationAggregate:
+    """Deterministic declared selector-tier counts and satisfaction totals."""
+
+    expected_primary_capability_tier: str
+    selector_count: int
+    satisfied_count: int
+
+
+@dataclass(frozen=True)
+class EvalSelectorRuntimeExpectationAggregate:
+    """Deterministic selector runtime-expectation counts and satisfaction totals."""
+
+    expected_attached_runtime_provenance: bool
+    selector_count: int
+    satisfied_count: int
+
+
+@dataclass(frozen=True)
+class EvalSelectedUnitTierAggregate:
+    """Deterministic selected-unit counts grouped by actual primary tier."""
+
+    primary_capability_tier: str
+    selected_unit_count: int
+    attached_runtime_provenance_count: int
 
 
 @dataclass(frozen=True)
@@ -95,6 +152,13 @@ class EvalLedgerSummary:
     provider_names: tuple[str, ...]
     budgets: tuple[int, ...]
     provider_aggregates: tuple[EvalProviderAggregate, ...]
+    selector_tier_expectation_aggregates: tuple[
+        EvalSelectorTierExpectationAggregate, ...
+    ]
+    selector_runtime_expectation_aggregates: tuple[
+        EvalSelectorRuntimeExpectationAggregate, ...
+    ]
+    selected_unit_tier_aggregates: tuple[EvalSelectedUnitTierAggregate, ...]
     task_budget_results: tuple[EvalTaskBudgetResult, ...]
     budget_violation_run_ids: tuple[str, ...]
 
@@ -148,12 +212,53 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
     """Build deterministic provider and task-budget rollups for one ledger."""
     provider_groups: dict[str, list[EvalLedgerRecord]] = {}
     task_budget_groups: dict[tuple[str, int], list[EvalLedgerRecord]] = {}
+    selector_tier_counts: dict[str, int] = {}
+    selector_tier_satisfied_counts: dict[str, int] = {}
+    selector_runtime_counts: dict[bool, int] = {}
+    selector_runtime_satisfied_counts: dict[bool, int] = {}
+    selected_unit_tier_counts: dict[str, int] = {}
+    selected_unit_runtime_counts: dict[str, int] = {}
 
     for record in ledger.records:
         provider_groups.setdefault(record.provider_name, []).append(record)
         task_budget_groups.setdefault((record.task_id, record.budget), []).append(
             record
         )
+        for resolved_selector in record.resolved_selectors:
+            expected_primary_tier = resolved_selector.expected_primary_capability_tier
+            if expected_primary_tier is not None:
+                selector_tier_counts[expected_primary_tier] = (
+                    selector_tier_counts.get(expected_primary_tier, 0) + 1
+                )
+                if resolved_selector.primary_capability_tier == expected_primary_tier:
+                    selector_tier_satisfied_counts[expected_primary_tier] = (
+                        selector_tier_satisfied_counts.get(expected_primary_tier, 0) + 1
+                    )
+
+            expected_runtime = resolved_selector.expect_attached_runtime_provenance
+            if expected_runtime is not None:
+                selector_runtime_counts[expected_runtime] = (
+                    selector_runtime_counts.get(expected_runtime, 0) + 1
+                )
+                if (
+                    resolved_selector.has_attached_runtime_provenance
+                    == expected_runtime
+                ):
+                    selector_runtime_satisfied_counts[expected_runtime] = (
+                        selector_runtime_satisfied_counts.get(expected_runtime, 0) + 1
+                    )
+
+        for selected_unit in record.selected_units:
+            primary_tier = selected_unit.primary_capability_tier
+            if primary_tier is None:
+                continue
+            selected_unit_tier_counts[primary_tier] = (
+                selected_unit_tier_counts.get(primary_tier, 0) + 1
+            )
+            if selected_unit.has_attached_runtime_provenance:
+                selected_unit_runtime_counts[primary_tier] = (
+                    selected_unit_runtime_counts.get(primary_tier, 0) + 1
+                )
 
     task_ids = tuple(sorted({record.task_id for record in ledger.records}))
     provider_names = tuple(sorted({record.provider_name for record in ledger.records}))
@@ -161,6 +266,36 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
     provider_aggregates = tuple(
         _build_provider_aggregate(provider_name, provider_groups[provider_name])
         for provider_name in sorted(provider_groups)
+    )
+    selector_tier_expectation_aggregates = tuple(
+        EvalSelectorTierExpectationAggregate(
+            expected_primary_capability_tier=tier,
+            selector_count=selector_tier_counts[tier],
+            satisfied_count=selector_tier_satisfied_counts.get(tier, 0),
+        )
+        for tier in sorted(selector_tier_counts, key=_capability_tier_sort_key)
+    )
+    selector_runtime_expectation_aggregates = tuple(
+        EvalSelectorRuntimeExpectationAggregate(
+            expected_attached_runtime_provenance=expected_runtime,
+            selector_count=selector_runtime_counts[expected_runtime],
+            satisfied_count=selector_runtime_satisfied_counts.get(expected_runtime, 0),
+        )
+        for expected_runtime in sorted(
+            selector_runtime_counts,
+            key=lambda value: not value,
+        )
+    )
+    selected_unit_tier_aggregates = tuple(
+        EvalSelectedUnitTierAggregate(
+            primary_capability_tier=tier,
+            selected_unit_count=selected_unit_tier_counts[tier],
+            attached_runtime_provenance_count=selected_unit_runtime_counts.get(
+                tier,
+                0,
+            ),
+        )
+        for tier in sorted(selected_unit_tier_counts, key=_capability_tier_sort_key)
     )
     task_budget_results = tuple(
         _build_task_budget_result(
@@ -182,6 +317,11 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
         provider_names=provider_names,
         budgets=budgets,
         provider_aggregates=provider_aggregates,
+        selector_tier_expectation_aggregates=selector_tier_expectation_aggregates,
+        selector_runtime_expectation_aggregates=(
+            selector_runtime_expectation_aggregates
+        ),
+        selected_unit_tier_aggregates=selected_unit_tier_aggregates,
         task_budget_results=task_budget_results,
         budget_violation_run_ids=budget_violation_run_ids,
     )
@@ -230,6 +370,56 @@ def render_eval_ledger_summary(summary: EvalLedgerSummary) -> str:
             numeric_columns=frozenset({1, 2, 3, 4, 5, 6, 7, 8}),
         )
     )
+    lines.extend(("", "## Capability-Tier Accounting", ""))
+    lines.extend(("", "### Selector Expectations by Declared Primary Tier", ""))
+    lines.extend(
+        _render_optional_markdown_table(
+            ("Declared Primary Tier", "Selectors", "Satisfied"),
+            tuple(
+                (
+                    aggregate.expected_primary_capability_tier,
+                    str(aggregate.selector_count),
+                    str(aggregate.satisfied_count),
+                )
+                for aggregate in summary.selector_tier_expectation_aggregates
+            ),
+            numeric_columns=frozenset({1, 2}),
+        )
+    )
+    lines.extend(("", "### Selector Runtime Provenance Expectations", ""))
+    lines.extend(
+        _render_optional_markdown_table(
+            ("Expected Attached Runtime Provenance", "Selectors", "Satisfied"),
+            tuple(
+                (
+                    _format_bool_label(aggregate.expected_attached_runtime_provenance),
+                    str(aggregate.selector_count),
+                    str(aggregate.satisfied_count),
+                )
+                for aggregate in summary.selector_runtime_expectation_aggregates
+            ),
+            numeric_columns=frozenset({1, 2}),
+        )
+    )
+    lines.extend(("", "### Selected Units by Actual Primary Tier", ""))
+    lines.extend(
+        _render_optional_markdown_table(
+            (
+                "Actual Primary Tier",
+                "Selected Units",
+                "Attached Runtime Provenance",
+            ),
+            tuple(
+                (
+                    aggregate.primary_capability_tier,
+                    str(aggregate.selected_unit_count),
+                    str(aggregate.attached_runtime_provenance_count),
+                )
+                for aggregate in summary.selected_unit_tier_aggregates
+            ),
+            numeric_columns=frozenset({1, 2}),
+        )
+    )
     lines.extend(("", "## Task Budget Results", ""))
     lines.extend(
         _render_markdown_table(
@@ -268,6 +458,16 @@ def _parse_ledger_record(
         line_number=line_number,
         field_path="metrics",
     )
+    provider_metadata_record: dict[str, object] | None
+    if "provider_metadata" in record:
+        provider_metadata_record = _require_object(
+            record.get("provider_metadata"),
+            ledger_path=ledger_path,
+            line_number=line_number,
+            field_path="provider_metadata",
+        )
+    else:
+        provider_metadata_record = None
 
     return EvalLedgerRecord(
         run_id=_require_string(
@@ -300,6 +500,16 @@ def _parse_ledger_record(
             ledger_path=ledger_path,
             line_number=line_number,
             prefix="metrics",
+        ),
+        resolved_selectors=_parse_resolved_selectors(
+            record,
+            ledger_path=ledger_path,
+            line_number=line_number,
+        ),
+        selected_units=_parse_selected_units(
+            provider_metadata_record,
+            ledger_path=ledger_path,
+            line_number=line_number,
         ),
         metrics=EvalLedgerMetrics(
             aggregate_score=_require_float(
@@ -344,6 +554,150 @@ def _parse_ledger_record(
                 line_number=line_number,
                 prefix="metrics",
             ),
+        ),
+    )
+
+
+def _parse_resolved_selectors(
+    record: dict[str, object],
+    *,
+    ledger_path: Path,
+    line_number: int,
+) -> tuple[EvalLedgerResolvedSelector, ...]:
+    """Return typed selector expectation snapshots retained in one ledger row."""
+    if "resolved_selectors" not in record:
+        return ()
+    selector_records = _require_list(
+        record.get("resolved_selectors"),
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path="resolved_selectors",
+    )
+    return tuple(
+        _parse_resolved_selector(
+            selector_record,
+            ledger_path=ledger_path,
+            line_number=line_number,
+            index=index,
+        )
+        for index, selector_record in enumerate(selector_records)
+    )
+
+
+def _parse_resolved_selector(
+    raw: object,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    index: int,
+) -> EvalLedgerResolvedSelector:
+    """Return typed expectation fields for one resolved selector payload."""
+    field_path = f"resolved_selectors[{index}]"
+    selector_record = _require_object(
+        raw,
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path=field_path,
+    )
+    original_selector: dict[str, object]
+    if "original_selector" in selector_record:
+        original_selector = _require_object(
+            selector_record.get("original_selector"),
+            ledger_path=ledger_path,
+            line_number=line_number,
+            field_path=f"{field_path}.original_selector",
+        )
+    else:
+        original_selector = {}
+    return EvalLedgerResolvedSelector(
+        expected_primary_capability_tier=_require_optional_capability_tier(
+            original_selector,
+            "expected_primary_capability_tier",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=f"{field_path}.original_selector",
+        ),
+        expect_attached_runtime_provenance=_require_optional_bool(
+            original_selector,
+            "expect_attached_runtime_provenance",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=f"{field_path}.original_selector",
+        ),
+        primary_capability_tier=_require_optional_capability_tier(
+            selector_record,
+            "primary_capability_tier",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=field_path,
+        ),
+        has_attached_runtime_provenance=_require_optional_bool(
+            selector_record,
+            "has_attached_runtime_provenance",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=field_path,
+        ),
+    )
+
+
+def _parse_selected_units(
+    provider_metadata_record: dict[str, object] | None,
+    *,
+    ledger_path: Path,
+    line_number: int,
+) -> tuple[EvalLedgerSelectedUnit, ...]:
+    """Return typed selected-unit capability snapshots from one ledger row."""
+    if provider_metadata_record is None:
+        return ()
+    if "selected_units" not in provider_metadata_record:
+        return ()
+    unit_records = _require_list(
+        provider_metadata_record.get("selected_units"),
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path="provider_metadata.selected_units",
+    )
+    return tuple(
+        _parse_selected_unit(
+            unit_record,
+            ledger_path=ledger_path,
+            line_number=line_number,
+            index=index,
+        )
+        for index, unit_record in enumerate(unit_records)
+    )
+
+
+def _parse_selected_unit(
+    raw: object,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    index: int,
+) -> EvalLedgerSelectedUnit:
+    """Return typed capability fields for one selected-unit payload."""
+    field_path = f"provider_metadata.selected_units[{index}]"
+    unit_record = _require_object(
+        raw,
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path=field_path,
+    )
+    return EvalLedgerSelectedUnit(
+        primary_capability_tier=_require_optional_capability_tier(
+            unit_record,
+            "primary_capability_tier",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=field_path,
+        ),
+        has_attached_runtime_provenance=_require_optional_bool(
+            unit_record,
+            "has_attached_runtime_provenance",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=field_path,
         ),
     )
 
@@ -452,6 +806,22 @@ def _render_markdown_table(
     return (header_row, separator_row, *body_rows)
 
 
+def _render_optional_markdown_table(
+    headers: tuple[str, ...],
+    rows: tuple[tuple[str, ...], ...],
+    *,
+    numeric_columns: frozenset[int],
+) -> tuple[str, ...]:
+    """Render a compact Markdown table or a deterministic empty marker."""
+    if not rows:
+        return ("- None",)
+    return _render_markdown_table(
+        headers,
+        rows,
+        numeric_columns=numeric_columns,
+    )
+
+
 def _winner_label(winner_provider_names: tuple[str, ...]) -> str:
     """Render one deterministic winner label, preserving explicit ties."""
     if len(winner_provider_names) == 1:
@@ -499,6 +869,11 @@ def _format_metric(value: float | None) -> str:
     return f"{value:.3f}"
 
 
+def _format_bool_label(value: bool) -> str:
+    """Render one deterministic yes/no label for boolean expectations."""
+    return "yes" if value else "no"
+
+
 def _require_object(
     raw: object,
     *,
@@ -517,6 +892,22 @@ def _require_object(
             f"'{field_path}' must be a JSON object at {ledger_path}:{line_number}"
         )
     return cast(dict[str, object], raw)
+
+
+def _require_list(
+    raw: object,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    field_path: str,
+) -> list[object]:
+    """Return one required JSON list or raise with ledger line context."""
+    if not isinstance(raw, list):
+        raise EvalLedgerError(
+            f"required field '{field_path}' must be a JSON list at "
+            f"{ledger_path}:{line_number}"
+        )
+    return cast(list[object], raw)
 
 
 def _require_string(
@@ -573,6 +964,27 @@ def _require_bool(
     return value
 
 
+def _require_optional_bool(
+    record: dict[str, object],
+    key: str,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    prefix: str | None = None,
+) -> bool | None:
+    """Return one required nullable boolean field from a ledger object."""
+    field_path = _field_path(key, prefix=prefix)
+    value = record.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, bool):
+        raise EvalLedgerError(
+            f"required field '{field_path}' must be boolean or null at "
+            f"{ledger_path}:{line_number}"
+        )
+    return value
+
+
 def _require_float(
     record: dict[str, object],
     key: str,
@@ -611,6 +1023,27 @@ def _require_optional_float(
         ledger_path=ledger_path,
         line_number=line_number,
     )
+
+
+def _require_optional_capability_tier(
+    record: dict[str, object],
+    key: str,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    prefix: str | None = None,
+) -> str | None:
+    """Return one required nullable capability-tier field from a ledger object."""
+    field_path = _field_path(key, prefix=prefix)
+    value = record.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or value not in _ALLOWED_CAPABILITY_TIERS:
+        raise EvalLedgerError(
+            f"required field '{field_path}' must be a known capability tier at "
+            f"{ledger_path}:{line_number}"
+        )
+    return value
 
 
 def _require_finite_float(
@@ -653,3 +1086,11 @@ def _field_path(key: str, *, prefix: str | None) -> str:
     if prefix is None:
         return key
     return f"{prefix}.{key}"
+
+
+def _capability_tier_sort_key(value: str) -> tuple[int, str]:
+    """Return one deterministic sort key for capability-tier rows."""
+    return (
+        _CAPABILITY_TIER_SORT_ORDER.get(value, len(_CAPABILITY_TIER_SORT_ORDER)),
+        value,
+    )
