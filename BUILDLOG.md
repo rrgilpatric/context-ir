@@ -2,6 +2,139 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Runtime-Outcome Methodology Remote Push and Continuity Sync
+
+- Ryan explicitly authorized remote push of local release commit `d8ebdc3`
+- Pushed commit:
+  - `d8ebdc3 Add runtime outcome eval accounting`
+- Post-push release state verified:
+  - branch `main`
+  - local `HEAD` `d8ebdc3`
+  - `origin/main` `d8ebdc3`
+  - latest pushed code/test release authority is now `d8ebdc3`
+  - prior pushed defaulted `getattr(obj, name, default)` value-return branch release authority `b014595` remains the value-return branch anchor
+  - prior pushed defaulted `getattr(obj, name, default)` default-return branch release authority `7d43302` remains the default-return branch anchor
+  - prior pushed `getattr(obj, name)` release authority `c592dca` remains the two-argument `getattr` anchor
+- Synced post-push continuity and evidence authority in:
+  - `EVAL.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Preserved boundaries:
+  - runtime outcome accounting remains internal eval/report methodology
+  - runtime-backed provenance remains additive only
+  - selector and selected-unit primary truth remains unchanged
+  - no runtime-acquisition, analyzer, tool-facade, package-root export, MCP, fixture, task, run-spec, provider, budget, scoring, winner-selection, public-claim, or product-positioning widening
+- Acceptance decision:
+  - accept the remote push first-pass
+  - commit and push this docs-only continuity sync so future control lanes restart from repo-backed state
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Runtime-Outcome Methodology Release Gates and Local Commit
+
+- Accepted the dedicated read-only release-unit audit for the runtime-outcome methodology/reporting hardening release unit first-pass
+- Audit result:
+  - no findings
+  - runtime outcome accounting is derived from normalized runtime provenance payloads rather than task IDs or fixture names
+  - `lookup_outcome=returned_default_value` and `lookup_outcome=returned_value` are distinguished in summary/report accounting
+  - existing selector-tier, selected-unit-tier, provider, and provider+tier additive-provenance accounting remains intact
+- Full regression gate passed first-pass:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - pytest result: `578 passed`
+  - `git diff --check`
+- Commit-gating review passed first-pass:
+  - no staged files before staging
+  - no untracked files
+  - no forbidden-surface diffs in runtime acquisition, analyzer/tool facade, package root, MCP, eval metrics/scoring/providers, fixtures, tasks, run specs, public docs, or public claims
+  - release/public docs contain no workspace-state wording
+  - exact implementation files approved for staging:
+    - `src/context_ir/eval_results.py`
+    - `src/context_ir/eval_summary.py`
+    - `tests/test_eval_report.py`
+    - `tests/test_eval_results.py`
+    - `tests/test_eval_runs.py`
+    - `tests/test_eval_signal_getattr_default_probe.py`
+    - `tests/test_eval_signal_getattr_default_value_probe.py`
+    - `tests/test_eval_summary.py`
+  - `PLAN.md` and `BUILDLOG.md` were kept unstaged as continuity state
+- Created local commit:
+  - `d8ebdc3 Add runtime outcome eval accounting`
+- Post-commit release state:
+  - local `HEAD` is `d8ebdc3`
+  - `origin/main` remains `e047ffe`
+  - latest pushed code/test authority remains `b014595` until Ryan explicitly authorizes push of `d8ebdc3`
+  - `PLAN.md` and `BUILDLOG.md` remain workspace-only continuity state after local commit creation
+- Acceptance decision:
+  - accept release-unit audit, full regression, commit-gating, and local commit creation first-pass
+  - hold for explicit Ryan push authorization
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Runtime-Outcome Methodology Implementation Review
+
+- Reviewed the returned bounded implementation slice for internal runtime outcome accounting after accepted post-`b014595` planning
+- Repo-backed release state verified:
+  - branch `main`
+  - local `HEAD` `e047ffe`
+  - `origin/main` `e047ffe`
+  - latest pushed code/test authority remains `b014595`
+- Workspace-only state before this acceptance included the pre-existing accepted continuity edits in `PLAN.md` and `BUILDLOG.md`
+- Files reviewed in this implementation slice:
+  - `src/context_ir/eval_results.py`
+  - `src/context_ir/eval_summary.py`
+  - `tests/test_eval_report.py`
+  - `tests/test_eval_results.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_summary.py`
+- Findings-first review result:
+  - no findings
+  - runtime outcome accounting is derived from normalized runtime provenance payload data, not task IDs or fixture names
+  - raw eval records now preserve attached runtime provenance `normalized_payload` fields in `runtime_provenance_records`
+  - internal summary/report output now renders separate runtime outcome accounting rows for payload key/value counts such as `lookup_outcome=returned_default_value` and `lookup_outcome=returned_value`
+  - existing tier/provider additive-provenance accounting remains unchanged
+  - no runtime-acquisition, analyzer, tool-facade, package-root export, MCP, fixture, task, run-spec, provider, budget, scoring, winner-selection, public-claim, public-doc, or product-positioning surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/eval_results.py src/context_ir/eval_summary.py src/context_ir/eval_report.py tests/test_eval_results.py tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_signal_getattr_default_probe.py tests/test_eval_signal_getattr_default_value_probe.py tests/test_eval_runs.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_results.py src/context_ir/eval_summary.py src/context_ir/eval_report.py tests/test_eval_results.py tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_signal_getattr_default_probe.py tests/test_eval_signal_getattr_default_value_probe.py tests/test_eval_runs.py`
+  - `.venv/bin/python -m mypy --strict src/context_ir/eval_results.py src/context_ir/eval_summary.py src/context_ir/eval_report.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_results.py tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_signal_getattr_default_probe.py tests/test_eval_signal_getattr_default_value_probe.py tests/test_eval_runs.py -q`
+  - `git diff --check`
+  - forbidden-surface diff check over runtime acquisition, analyzer, tool facade, package root, MCP, eval metrics/scoring/provider surfaces, fixtures, tasks, run specs, and public docs
+- Acceptance decision:
+  - accept the implementation slice first-pass as workspace-only state
+  - route the next control action to a dedicated read-only release-unit audit over the accumulated workspace diff
+  - do not stage, commit, or push yet
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Post-b014595 Runtime-Outcome Methodology Planning Spike Review
+
+- Reviewed the returned read-only planning spike for the next smallest truthful move after pushed `b014595`
+- Live release state verified:
+  - branch `main`
+  - local `HEAD` `e047ffe`
+  - `origin/main` `e047ffe`
+  - workspace clean before continuity sync
+  - latest pushed code/test authority remains `b014595`
+- Findings-first review result:
+  - no findings
+  - no concrete defect requires reopening `b014595`, `7d43302`, or earlier accepted release units
+  - `PLAN.md` and `EVAL.md` keep `b014595` as the latest pushed code/test evidence authority
+  - the two defaulted `getattr(obj, name, default)` branches are distinguished at fixture/test level through `lookup_outcome=returned_default_value` and `lookup_outcome=returned_value`
+  - current eval summary/report accounting still surfaces attached runtime provenance as counts and does not distinguish normalized runtime outcomes
+  - raw eval result records preserve attached runtime provenance record IDs, while the normalized outcome payload remains in semantic runtime provenance detail and is not surfaced in the eval ledger/report path
+- Accepted next implementation boundary:
+  - add internal eval outcome accounting so summary/report output can distinguish normalized runtime outcomes such as `lookup_outcome=returned_default_value` and `lookup_outcome=returned_value`
+  - in-scope areas are `src/context_ir/eval_results.py`, `src/context_ir/eval_summary.py`, `src/context_ir/eval_report.py`, and focused eval result/summary/report/defaulted-getattr tests
+  - do not infer outcomes from task IDs or fixture names; use normalized runtime provenance payload data
+  - no new fixture, task, run spec, provider, budget, runtime family, scoring, winner-selection, public API, MCP, analyzer behavior, runtime-acquisition widening, or public-claim widening
+- Acceptance decision:
+  - accept the planning spike first-pass
+  - route the next control action to one bounded implementation slice for runtime-outcome methodology/reporting hardening
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Defaulted Getattr Value-Return Post-Push Continuity Sync
 
 - Synced post-push release state after `b014595` reached `origin/main`

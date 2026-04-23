@@ -11,12 +11,15 @@ accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
 Release authority is split by artifact type. The latest pushed code/test
-evidence authority is `b014595`, which carries narrow internal
-`REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch
-evidence beside the prior `7d43302` default-return branch and the earlier
-`c592dca` `hasattr(obj, name)` and `getattr(obj, name)` runtime-backed
-evidence. These reflective pilots do not widen public claims, public APIs, MCP
-behavior, scoring, winner selection, or generalized runtime coverage.
+evidence authority is `d8ebdc3`, which adds internal eval runtime-outcome
+accounting over normalized runtime provenance payload data. The prior
+`b014595` release carries narrow internal `REFLECTIVE_BUILTIN` /
+`getattr(obj, name, default)` value-return branch evidence beside the prior
+`7d43302` default-return branch and the earlier `c592dca` `hasattr(obj, name)`
+and `getattr(obj, name)` runtime-backed evidence. These reflective pilots and
+the runtime-outcome accounting do not widen public claims, public APIs, MCP
+behavior, scoring, winner selection, runtime acquisition, or generalized
+runtime coverage.
 
 Proven by current unit and integration tests:
 
@@ -59,6 +62,11 @@ Proven by current unit and integration tests:
 - Provider-scoped selected-unit capability-tier accounting is supported for
   internal eval summaries/reports, including additive runtime-backed support
   attached to selected units.
+- Internal eval runtime-outcome accounting is supported for normalized runtime
+  provenance payload fields, so summary/report output can distinguish outcome
+  counts such as `lookup_outcome=returned_default_value` and
+  `lookup_outcome=returned_value` while preserving existing tier/provider
+  additive-provenance accounting.
 - Internal runtime-backed evidence currently covers narrow pilots only:
   - the `DYNAMIC_IMPORT` internal provider/budget matrix for the
     `oracle_signal_dynamic_import_probe` task
