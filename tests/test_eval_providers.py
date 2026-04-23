@@ -32,9 +32,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PROBE_FIXTURE_ROOT = (
     REPO_ROOT / "evals" / "fixtures" / "oracle_signal_dynamic_import_probe"
 )
+HASATTR_PROBE_FIXTURE_ROOT = (
+    REPO_ROOT / "evals" / "fixtures" / "oracle_signal_hasattr_probe"
+)
 PROBE_QUERY = (
     'Fix unsupported dynamic import import_module("plugins.weather") '
     "while keeping probe digest output aligned"
+)
+HASATTR_PROBE_QUERY = (
+    "Fix probe_attribute unsupported hasattr(obj, name) and keep digest output aligned"
 )
 
 
@@ -387,6 +393,33 @@ def test_context_ir_provider_attaches_dynamic_import_runtime_probe_metadata() ->
     )
 
     assert "unsupported:call:main.py:5:13" in result.selected_unit_ids
+    assert unsupported.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        unsupported.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported.has_attached_runtime_provenance is True
+    assert unsupported.attached_runtime_provenance_record_ids
+
+
+def test_context_ir_provider_attaches_hasattr_runtime_probe_metadata() -> None:
+    """Context IR provider exposes additive ``hasattr`` runtime provenance."""
+    result = eval_providers.build_context_ir_provider_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=HASATTR_PROBE_FIXTURE_ROOT,
+            task_id="oracle_signal_hasattr_probe",
+            query=HASATTR_PROBE_QUERY,
+            budget=220,
+        )
+    )
+    unsupported = next(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id == "unsupported:call:main.py:2:11"
+    )
+
+    assert "unsupported:call:main.py:2:11" in result.selected_unit_ids
     assert unsupported.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
     assert (
         unsupported.primary_evidence_origin

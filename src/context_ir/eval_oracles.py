@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -11,10 +12,13 @@ from typing import Literal, TypeVar, cast
 from context_ir.analyzer import analyze_repository
 from context_ir.runtime_acquisition import (
     DynamicImportRuntimeObservation,
+    HasattrRuntimeObservation,
     _RuntimeObservationField,
     attach_dynamic_import_runtime_provenance,
+    attach_hasattr_runtime_provenance,
 )
 from context_ir.semantic_types import (
+    CallSiteFact,
     CapabilityTier,
     DownstreamVisibility,
     EvidenceOriginKind,
@@ -123,9 +127,15 @@ _PRIMARY_TRACE_DEFAULTS: dict[
         ReplayStatus.OPAQUE_BOUNDARY,
     ),
 }
-_DYNAMIC_IMPORT_RUNTIME_OBSERVATION_FILENAME = "eval_runtime_observations.json"
-_ALLOWED_DYNAMIC_IMPORT_OBSERVATION_DOCUMENT_FIELDS = frozenset(
-    {"schema_version", "dynamic_import_runtime_observations"}
+_RUNTIME_OBSERVATION_FILENAME = "eval_runtime_observations.json"
+_DYNAMIC_IMPORT_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
+_HASATTR_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
+_ALLOWED_RUNTIME_OBSERVATION_DOCUMENT_FIELDS = frozenset(
+    {
+        "schema_version",
+        "dynamic_import_runtime_observations",
+        "hasattr_runtime_observations",
+    }
 )
 _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS = frozenset(
     {
@@ -147,6 +157,7 @@ _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS = frozenset(
         "durable_payload_reference",
     }
 )
+_ALLOWED_HASATTR_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_REPOSITORY_SNAPSHOT_BASIS_FIELDS = frozenset(
     {"snapshot_kind", "snapshot_id", "is_dirty_worktree"}
 )
@@ -314,6 +325,15 @@ def setup_eval_oracle_task(
             program,
             dynamic_import_runtime_observations,
         )
+    hasattr_runtime_observations = load_fixture_hasattr_runtime_observations(
+        root,
+        semantic_program=program,
+    )
+    if hasattr_runtime_observations:
+        program = attach_hasattr_runtime_provenance(
+            program,
+            hasattr_runtime_observations,
+        )
     return _resolved_eval_oracle_setup(task, program)
 
 
@@ -348,17 +368,19 @@ def load_fixture_dynamic_import_runtime_observations(
     record = _expect_object(raw, path="$")
     _validate_allowed_fields(
         record,
-        _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_DOCUMENT_FIELDS,
+        _ALLOWED_RUNTIME_OBSERVATION_DOCUMENT_FIELDS,
         path="$",
     )
     schema_version = _required_string(record, "schema_version", path="$")
     if schema_version != "v1":
         raise EvalOracleSchemaError("$.schema_version must be 'v1'")
-    observation_records = _required_list(
+    observation_records = _optional_list(
         record,
         "dynamic_import_runtime_observations",
         path="$",
     )
+    if observation_records is None:
+        return ()
     if not observation_records:
         raise EvalOracleSchemaError(
             "dynamic-import runtime observation file must contain at least one "
@@ -373,6 +395,59 @@ def load_fixture_dynamic_import_runtime_observations(
         _parse_dynamic_import_runtime_observation(
             observation_record,
             path=f"$.dynamic_import_runtime_observations[{index}]",
+            site_index=site_index,
+        )
+        for index, observation_record in enumerate(observation_records)
+    )
+
+
+def load_fixture_hasattr_runtime_observations(
+    repo_root: Path | str,
+    *,
+    semantic_program: SemanticProgram | None = None,
+) -> tuple[HasattrRuntimeObservation, ...]:
+    """Load fixture-local ``hasattr`` runtime observations when present."""
+    root = Path(repo_root)
+    observation_path = root / _HASATTR_RUNTIME_OBSERVATION_FILENAME
+    if not observation_path.is_file():
+        return ()
+
+    try:
+        raw: object = json.loads(observation_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise EvalOracleSchemaError(
+            f"invalid hasattr runtime observation JSON in {observation_path}: {error}"
+        ) from error
+    _reject_generated_id_fields(raw, path="$")
+    record = _expect_object(raw, path="$")
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_RUNTIME_OBSERVATION_DOCUMENT_FIELDS,
+        path="$",
+    )
+    schema_version = _required_string(record, "schema_version", path="$")
+    if schema_version != "v1":
+        raise EvalOracleSchemaError("$.schema_version must be 'v1'")
+    observation_records = _optional_list(
+        record,
+        "hasattr_runtime_observations",
+        path="$",
+    )
+    if observation_records is None:
+        return ()
+    if not observation_records:
+        raise EvalOracleSchemaError(
+            "hasattr runtime observation file must contain at least one observation"
+        )
+
+    program = (
+        semantic_program if semantic_program is not None else analyze_repository(root)
+    )
+    site_index = _hasattr_observation_site_index(program)
+    return tuple(
+        _parse_hasattr_runtime_observation(
+            observation_record,
+            path=f"$.hasattr_runtime_observations[{index}]",
             site_index=site_index,
         )
         for index, observation_record in enumerate(observation_records)
@@ -426,6 +501,41 @@ def _dynamic_import_observation_site_index(
             )
         site_index[identity] = construct.site
     return site_index
+
+
+def _hasattr_observation_site_index(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], SourceSite]:
+    """Index eligible ``hasattr(obj, name)`` source sites by file/span identity."""
+    call_sites_by_unsupported_id = {
+        f"unsupported:{call_site.call_site_id}": call_site
+        for call_site in program.syntax.call_sites
+    }
+    site_index: dict[tuple[str, int, int, int, int], SourceSite] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.REFLECTIVE_BUILTIN:
+            continue
+        call_site = call_sites_by_unsupported_id.get(construct.construct_id)
+        if call_site is None or not _is_eligible_hasattr_call_site(call_site):
+            continue
+        identity = _source_site_identity(construct.site)
+        if identity in site_index:
+            raise EvalOracleSchemaError(
+                "multiple hasattr unsupported constructs share the same source site"
+            )
+        site_index[identity] = construct.site
+    return site_index
+
+
+def _is_eligible_hasattr_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is the fixture-loadable ``hasattr`` form."""
+    if call_site.argument_count != 2:
+        return False
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    return isinstance(expression, ast.Name) and expression.id == "hasattr"
 
 
 def _parse_dynamic_import_runtime_observation(
@@ -485,6 +595,63 @@ def _parse_dynamic_import_runtime_observation(
     )
 
 
+def _parse_hasattr_runtime_observation(
+    raw: object,
+    *,
+    path: str,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+) -> HasattrRuntimeObservation:
+    """Parse one fixture-local ``hasattr`` runtime observation record."""
+    record = _expect_object(raw, path=path)
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_HASATTR_OBSERVATION_FIELDS,
+        path=path,
+    )
+    site = _matched_hasattr_observation_site(
+        file_path=_required_string(record, "file_path", path=path),
+        start_line=_required_positive_int(record, "start_line", path=path),
+        start_column=_required_non_negative_int(record, "start_column", path=path),
+        end_line=_required_positive_int(record, "end_line", path=path),
+        end_column=_required_non_negative_int(record, "end_column", path=path),
+        source_snippet=_optional_string(record, "source_snippet", path=path),
+        site_index=site_index,
+        path=path,
+    )
+    return HasattrRuntimeObservation(
+        site=site,
+        probe_identifier=_required_string(record, "probe_identifier", path=path),
+        probe_contract_revision=_required_string(
+            record,
+            "probe_contract_revision",
+            path=path,
+        ),
+        repository_snapshot_basis=_required_repository_snapshot_basis(
+            record,
+            path=path,
+        ),
+        attachment_links=_required_runtime_attachment_links(record, path=path),
+        replay_target=_required_string(record, "replay_target", path=path),
+        replay_selector=_required_string(record, "replay_selector", path=path),
+        replay_inputs=_optional_runtime_fields(record, "replay_inputs", path=path),
+        runtime_assumptions=_optional_runtime_fields(
+            record,
+            "runtime_assumptions",
+            path=path,
+        ),
+        normalized_payload=_required_runtime_fields(
+            record,
+            "normalized_payload",
+            path=path,
+        ),
+        durable_payload_reference=_optional_string(
+            record,
+            "durable_payload_reference",
+            path=path,
+        ),
+    )
+
+
 def _matched_dynamic_import_observation_site(
     *,
     file_path: str,
@@ -502,6 +669,31 @@ def _matched_dynamic_import_observation_site(
     if site is None:
         raise EvalOracleSchemaError(
             f"{path} does not match any analyzed dynamic-import source site"
+        )
+    if source_snippet is not None and site.snippet != source_snippet:
+        raise EvalOracleSchemaError(
+            f"{path}.source_snippet does not match the analyzed source site"
+        )
+    return site
+
+
+def _matched_hasattr_observation_site(
+    *,
+    file_path: str,
+    start_line: int,
+    start_column: int,
+    end_line: int,
+    end_column: int,
+    source_snippet: str | None,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+    path: str,
+) -> SourceSite:
+    """Return the analyzed source site matching one ``hasattr`` observation."""
+    identity = (file_path, start_line, start_column, end_line, end_column)
+    site = site_index.get(identity)
+    if site is None:
+        raise EvalOracleSchemaError(
+            f"{path} does not match any analyzed eligible hasattr source site"
         )
     if source_snippet is not None and site.snippet != source_snippet:
         raise EvalOracleSchemaError(

@@ -9,7 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 import context_ir.tool_facade as tool_facade
-from context_ir.eval_oracles import load_fixture_dynamic_import_runtime_observations
+from context_ir.eval_oracles import (
+    load_fixture_dynamic_import_runtime_observations,
+    load_fixture_hasattr_runtime_observations,
+)
 from context_ir.semantic_types import (
     CapabilityTier,
     EvidenceOriginKind,
@@ -263,6 +266,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
     dynamic_import_runtime_observations = (
         load_fixture_dynamic_import_runtime_observations(request.repo_root)
     )
+    hasattr_runtime_observations = load_fixture_hasattr_runtime_observations(
+        request.repo_root
+    )
     response = tool_facade.compile_repository_context(
         tool_facade.SemanticContextRequest(
             repo_root=request.repo_root,
@@ -273,6 +279,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
                 dynamic_import_runtime_observations
                 if dynamic_import_runtime_observations
                 else None
+            ),
+            hasattr_runtime_observations=(
+                hasattr_runtime_observations if hasattr_runtime_observations else None
             ),
         )
     )
