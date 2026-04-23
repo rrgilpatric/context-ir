@@ -38,7 +38,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The latest code/test/pilot release unit remains the accepted capability-tier eval / evidence unit at `a605b22`; that release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit. Current continuity commits after `a605b22` are docs-only and do not widen any implementation, exposure, schema, scoring, or public-claim boundary.
+Release authority is split deliberately. The latest pushed code/test release unit is now provider-scoped selected-unit capability-tier accounting at `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`; that release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit. Continuity commits after `a605b22` and before `215b6bb` are docs-only and do not widen any implementation, exposure, schema, scoring, or public-claim boundary.
 
 ## What Is Complete
 
@@ -73,6 +73,11 @@ Release authority is split deliberately. The latest code/test/pilot release unit
 - [x] Remote push for the coherent capability-tier eval/evidence release unit accepted first-pass at `a605b22`
 - [x] Docs-only continuity sync and push authorization accepted after 1 correction
 - [x] Docs-only continuity push completed through `d1265fe`
+- [x] Post-release provider-scoped capability-tier accounting planning spike accepted first-pass
+- [x] Provider-scoped selected-unit capability-tier accounting implementation accepted first-pass
+- [x] Full regression gate for provider-scoped selected-unit capability-tier accounting accepted first-pass
+- [x] Commit-gating review and local commit creation for provider-scoped selected-unit capability-tier accounting accepted first-pass at `215b6bb`
+- [x] Remote push for provider-scoped selected-unit capability-tier accounting completed at `215b6bb`
 - [x] README / public-claim sync accepted first-pass
 - [x] Release sequencing completed to `origin/main` at `9abc57c`
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
@@ -197,9 +202,11 @@ Release authority is split deliberately. The latest code/test/pilot release unit
 - No planning spike is currently in flight
 - Repo-backed released state is now explicit and complete:
   - branch `main`
+  - `origin/main` `215b6bb`
+  - the accepted provider-scoped selected-unit capability-tier accounting release unit is `215b6bb`
   - the accepted capability-tier eval / evidence code/test/pilot release unit is `a605b22`
   - the docs-only continuity push completed through `d1265fe`
-  - local and remote branch tips may include docs-only continuity commits after `a605b22`
+  - local `HEAD` may be ahead of `origin/main` by docs-only continuity commits after this sync
   - docs-only continuity commits after `a605b22` are not implementation release changes
   - the previously accepted runtime-backed tranche at `cb1dc65` remains historical released state and must not be routed as workspace-only work
 - The current repo-backed released authority is capability-tier eval / evidence baseline:
@@ -260,10 +267,32 @@ Release authority is split deliberately. The latest code/test/pilot release unit
   - keep public claim boundaries unchanged from the accepted internal-eval state
 - Further inherited-call reopening remains on explicit hold: no next implementation slice is authorized beyond the accepted first-exclusive-branch overlap reopening
 - Push for `a605b22` is complete; the docs-only continuity push through `d1265fe` is complete
+- The accepted post-release planning spike found no concrete defect requiring `a605b22` to be reopened
+- Provider-scoped selected-unit capability-tier accounting is released in:
+  - `src/context_ir/eval_summary.py`
+  - `tests/test_eval_summary.py`
+  - `tests/test_eval_report.py`
+  - `tests/test_eval_signal_dynamic_import_probe.py`
+- The accepted provider-scoped accounting slice:
+  - adds provider selected-unit totals and attached-runtime-provenance totals
+  - adds provider plus actual-primary-tier selected-unit totals and attached-runtime-provenance totals
+  - preserves legacy scalar provider aggregates, task-budget rows, ledger-wide tier tables, schema version, scoring, winner selection, public claims, and exposure holds
+- Full regression passed on the workspace containing the accepted provider-scoped accounting slice:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v -m "not slow"`
+  - pytest result: `539 passed, 1 deselected`
+- Commit-gating review accepted the exact local code/test release unit now committed at `215b6bb`:
+  - `src/context_ir/eval_summary.py`
+  - `tests/test_eval_summary.py`
+  - `tests/test_eval_report.py`
+  - `tests/test_eval_signal_dynamic_import_probe.py`
+- Remote push for `215b6bb` is complete
 
 ## What Is Next
 
-1. Next substantive move: one bounded planning spike to choose the next capability-tier program slice after the released eval/evidence baseline.
+1. Next substantive move after this docs-only continuity sync: hold for explicit authorization before any further push or new planning/implementation lane.
 2. Treat pushed commit `a605b22` as the current code/test/pilot release authority:
    - tier-aware eval storage-contract slice
    - isolated internal `DYNAMIC_IMPORT` eval pilot
@@ -274,15 +303,17 @@ Release authority is split deliberately. The latest code/test/pilot release unit
    - local commit creation for the coherent code/test/pilot release unit
    - remote push of the coherent code/test/pilot release unit
    - docs-only continuity sync in `PLAN.md` and `BUILDLOG.md`
-3. The next planning spike must decide the next smallest authorized move without reopening:
+3. The full regression gate must not reopen:
    - the accepted code/test/pilot release unit at `a605b22`
    - public claim boundaries
    - package-root/public low-level runtime-observation exposure
    - MCP runtime-observation exposure
    - further inherited-call work
-4. Keep `a605b22` as the latest repo-backed code/test/pilot release unit; docs-only branch-tip commits after it are continuity state, not implementation release changes.
+   - scoring, winner selection, raw schema, run specs, tasks, fixtures, providers, or runtime-acquisition breadth
+4. Keep `215b6bb` as the latest repo-backed code/test release unit; docs-only continuity commits before or after it are continuity state, not implementation release changes.
 5. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
 6. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
+7. Do not push any follow-on docs-only continuity commit or start another lane without explicit Ryan authorization.
 
 ## What Is Deferred
 

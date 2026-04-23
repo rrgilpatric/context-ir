@@ -2,6 +2,160 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Docs-Only Continuity Sync After Provider-Scoped Push
+
+- Reviewed the docs-only continuity sync after the provider-scoped selected-unit capability-tier accounting release was pushed to `origin/main` at `215b6bb`
+- Verified before local docs-only commit creation:
+  - branch `main`
+  - local `HEAD` `215b6bb`
+  - `origin/main` `215b6bb`
+  - modified files are limited to continuity docs:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - `git diff --check` reported no issues
+- Continuity state captured:
+  - `215b6bb` is now the latest pushed repo-backed code/test release unit
+  - the provider-scoped selected-unit capability-tier accounting slice is released state, not workspace-only implementation state
+  - no implementation, exposure, schema, scoring, public-claim, package-root, MCP, runtime-acquisition, or inherited-call boundary was widened by this docs-only sync
+  - after this sync, further push or new planning/implementation work remains held for explicit Ryan authorization
+- Acceptance decision:
+  - accept the docs-only continuity sync first-pass
+  - commit only `PLAN.md` and `BUILDLOG.md` locally
+  - do not push the docs-only commit without later explicit authorization
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Remote Push For Provider-Scoped Accounting
+
+- Pushed the accepted provider-scoped selected-unit capability-tier accounting release unit to `origin/main`
+- Verified before push:
+  - branch `main`
+  - local `HEAD` `215b6bb`
+  - `origin/main` `d1265fe`
+  - the remote advance included the accepted docs-only continuity correction `cb6c14f` plus the accepted code/test release candidate `215b6bb`
+  - Ryan explicitly authorized pushing that two-commit sequence
+- Push result:
+  - `main` advanced from `d1265fe` to `215b6bb`
+- Verified after push:
+  - local `HEAD` `215b6bb`
+  - `origin/main` `215b6bb`
+  - remaining local changes are continuity-only:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Acceptance decision:
+  - accept the remote push first-pass
+  - `215b6bb` is now the latest pushed repo-backed code/test release unit
+  - next control action is docs-only continuity sync commit review, then hold for explicit authorization before any further push or new lane
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Commit-Gating And Local Commit For Provider-Scoped Accounting
+
+- Reviewed the accepted provider-scoped selected-unit capability-tier accounting slice for commit gating after the full regression gate
+- Verified before local commit:
+  - dirty implementation files were limited to:
+    - `src/context_ir/eval_summary.py`
+    - `tests/test_eval_summary.py`
+    - `tests/test_eval_report.py`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+  - dirty continuity files were separate:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - no untracked files were present
+  - `git diff --check` reported no issues
+  - staged release unit contained only the four implementation/test files above
+  - `git diff --cached --check` reported no issues
+- Created local commit:
+  - `215b6bb` -- `Add provider-scoped eval tier accounting`
+- Post-commit state:
+  - local `HEAD` `215b6bb`
+  - `origin/main` `d1265fe`
+  - `PLAN.md` and `BUILDLOG.md` remain uncommitted continuity-only local changes
+- Acceptance decision:
+  - accept commit-gating review and local commit creation first-pass
+  - `215b6bb` is the current unpushed local code/test release candidate for provider-scoped selected-unit capability-tier accounting
+  - push remains a later human-gated action
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Full Regression Gate For Provider-Scoped Capability-Tier Accounting
+
+- Ran the full regression gate after accepting the provider-scoped selected-unit capability-tier accounting slice
+- Validation passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - result: `73 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+  - result: `Success: no issues found in 31 source files`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v -m "not slow"`
+  - result: `539 passed, 1 deselected`
+- Acceptance decision:
+  - accept the full regression gate first-pass
+  - the accepted workspace-only provider-scoped accounting slice may advance to commit-gating review
+  - no public claim, package-root, MCP, schema, scoring, winner-selection, task, run-spec, fixture, provider, oracle, runtime-acquisition, or inherited-call boundary is widened
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Provider-Scoped Capability-Tier Accounting Implementation Review
+
+- Reviewed the returned bounded implementation slice for provider-scoped selected-unit capability-tier accounting in the internal eval summary/report path
+- Verified live state before review:
+  - branch `main`
+  - local `HEAD` `cb6c14f`
+  - `origin/main` `d1265fe`
+  - latest code/test/pilot release unit remains `a605b22`
+  - pre-existing continuity changes were present in:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - implementation changes were present in:
+    - `src/context_ir/eval_summary.py`
+    - `tests/test_eval_summary.py`
+    - `tests/test_eval_report.py`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+- Control review found no issues
+- Accepted behavior:
+  - provider-scoped selected-unit totals now include per-provider selected-unit count and attached-runtime-provenance count
+  - provider plus actual-primary-tier totals now include selected-unit count and attached-runtime-provenance count
+  - existing scalar provider aggregates, task-budget rows, and ledger-wide capability-tier tables remain intact
+  - legacy/scalar-only ledgers still render deterministic zero or empty provider-tier accounting without loader failure
+  - runtime-backed evidence remains additive and is not rendered as a primary selected-unit tier
+  - no raw schema/spec-version, scoring, winner-selection, run-spec, task, fixture, provider, oracle, runtime-acquisition, analyzer, tool-facade, package-root, MCP, public-claim, or continuity-doc change was made by the execution slice
+- Control-lane validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_signal_dynamic_import_probe.py -q`
+  - result: `30 passed`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_pipeline.py tests/test_eval_bundle.py tests/test_eval_signal_dynamic_import_probe.py -q`
+  - result: `39 passed`
+  - `.venv/bin/python -m ruff check src/context_ir/eval_summary.py tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_signal_dynamic_import_probe.py`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_summary.py tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_signal_dynamic_import_probe.py`
+  - result: passed
+  - `.venv/bin/python -m mypy --strict src/context_ir/eval_summary.py src/context_ir/eval_report.py`
+  - result: passed
+- Acceptance decision:
+  - accept the provider-scoped selected-unit capability-tier accounting implementation first-pass
+  - next control action is the full regression gate before commit sequencing
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Provider-Scoped Capability-Tier Accounting Planning Spike Review
+
+- Reviewed the returned bounded planning spike for the next capability-tier program slice after the released eval/evidence baseline
+- Verified from live repo state:
+  - branch `main`
+  - local `HEAD` `cb6c14f`
+  - `origin/main` `d1265fe`
+  - worktree was clean before this continuity update
+  - local commits ahead of origin were docs-only:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - latest code/test/pilot release unit remains `a605b22`
+- Control review found no issues
+- Acceptance decision:
+  - accept the planning spike first-pass
+  - authorize one bounded implementation slice for provider-scoped selected-unit capability-tier accounting in `src/context_ir/eval_summary.py` and targeted tests
+  - do not broaden eval matrices, add another runtime-backed pilot, update public claims, widen package-root or MCP runtime-observation exposure, or reopen inherited-call work first
+- Reasoning:
+  - current internal accounting already consumes raw selector expectation and selected-unit capability-tier fields, but selected-unit tier/provenance accounting is ledger-wide rather than provider-scoped
+  - provider-scoped accounting is the smallest truthful consumer hardening step before broader internal evidence comparisons across providers, budgets, or baselines
+  - the proposed slice uses existing raw ledger fields and preserves schema, scoring, winner selection, public claims, and exposure holds
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Docs-Only Continuity Push Completion Correction
 
 - Corrected continuity wording after the docs-only continuity push completed
