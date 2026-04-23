@@ -2,6 +2,18 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Docs-Only Continuity Local-Head Wording Correction
+
+- Corrected `PLAN.md` after local docs-only commit creation so the current release-state section does not pin local `HEAD` to the code/test/pilot release hash `a605b22`
+- Preserved the authoritative distinction:
+  - `origin/main` at `a605b22` is the latest pushed repo-backed code/test/pilot release state
+  - local `HEAD` may be ahead of `origin/main` by docs-only continuity commits
+  - docs-only continuity commits do not widen implementation, exposure, schema, scoring, or public-claim boundaries
+- Acceptance decision:
+  - accept the docs-only continuity sync after this wording correction
+  - do not push docs-only continuity commits without later explicit authorization
+- Acceptance status: 1 correction
+
 ## 2026-04-23 -- Docs-Only Continuity Sync Review
 
 - Reviewed the docs-only continuity sync after the accepted capability-tier eval / evidence unit was pushed to `origin/main` at `a605b22`
@@ -19,10 +31,10 @@ Most recent supersession entries override older architectural decisions when the
   - the docs-only sync is separate from the code/test/pilot release unit and does not widen implementation, exposure, schema, scoring, or public-claim boundaries
   - the next move after this sync remains held for Ryan's explicit authorization before any docs-only push or new implementation/planning lane
 - Acceptance decision:
-  - accept the docs-only continuity sync first-pass
+  - accept the docs-only continuity sync after the local-head wording correction
   - commit only `PLAN.md` and `BUILDLOG.md` locally
   - do not push the docs-only commit without later explicit authorization
-- Acceptance status: first-pass
+- Acceptance status: 1 correction
 
 ## 2026-04-23 -- Remote Push For Capability-Tier Eval/Evidence Unit
 

@@ -195,8 +195,8 @@ Repo-backed released state is now the accepted capability-tier eval / evidence u
 - No planning spike is currently in flight
 - Repo-backed released state is now explicit and complete:
   - branch `main`
-  - local `HEAD` `a605b22`
   - `origin/main` `a605b22`
+  - local `HEAD` may be ahead of `origin/main` by docs-only continuity commits, but those commits are not code/test/pilot release changes
   - the accepted capability-tier eval / evidence unit is the latest pushed repo-backed released state
   - the previously accepted runtime-backed tranche at `cb1dc65` remains historical released state and must not be routed as workspace-only work
 - The current repo-backed released authority is capability-tier eval / evidence baseline:
