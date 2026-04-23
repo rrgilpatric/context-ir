@@ -2,6 +2,279 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Docs-Only Continuity Sync After Dynamic-Import Matrix Push
+
+- Updated continuity after the internal `DYNAMIC_IMPORT` provider/budget matrix release was pushed at `9a52b46`
+- Verified before docs-only commit creation:
+  - branch `main`
+  - local `HEAD` `9a52b46`
+  - `origin/main` `9a52b46`
+  - remaining workspace changes are limited to workflow/continuity docs:
+    - `AGENTS.md`
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Continuity state captured:
+  - `9a52b46` is now the latest pushed code/test release authority
+  - `215b6bb` remains the prior provider-scoped selected-unit capability-tier accounting release unit
+  - `a605b22` remains the prior capability-tier eval / evidence code/test/pilot release unit
+  - the dynamic-import matrix release changed only the accepted run spec and targeted tests
+  - no public claim, schema, scoring, winner-selection, source-code, package-root, MCP, runtime-acquisition, task selector, fixture, provider algorithm, or oracle boundary was widened
+  - `AGENTS.md` now codifies workspace-only slice acceptance and release-unit audit as the default pre-commit gate
+- Acceptance decision:
+  - accept the docs-only continuity sync first-pass
+  - commit and push only `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`
+  - after the docs-only continuity push, hold before any further push or new planning/implementation lane until Ryan explicitly authorizes it
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Remote Push For Dynamic-Import Provider/Budget Matrix
+
+- Ryan authorized proceeding to the next recommended step after local commit creation
+- Verified before push:
+  - branch `main`
+  - local `HEAD` `9a52b46`
+  - `origin/main` `17f91e7`
+  - exactly one unpushed commit existed:
+    - `9a52b46` -- `Expand dynamic import eval matrix`
+  - no files were staged
+  - workspace-only workflow/continuity docs were dirty but not part of the push:
+    - `AGENTS.md`
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Push result:
+  - `main` advanced from `17f91e7` to `9a52b46`
+- Verified release boundary:
+  - pushed commit `9a52b46` contains only:
+    - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+    - `tests/test_eval_runs.py`
+  - public claims, schema, scoring, winner selection, source code, package-root exports, MCP, runtime acquisition, task selectors, fixtures, provider algorithms, and oracle boundaries remain unchanged
+- Post-push state:
+  - local `HEAD` is `9a52b46`
+  - `origin/main` is `9a52b46`
+  - latest pushed code/test release authority is now `9a52b46`
+  - `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md` remain workspace-only workflow/continuity changes
+- Acceptance decision:
+  - accept remote push first-pass
+  - hold before any further push or new planning/implementation lane until Ryan explicitly authorizes it
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Local Commit For Dynamic-Import Provider/Budget Matrix
+
+- Ryan authorized proceeding after the dedicated read-only release-unit audit returned no findings
+- Verified before local commit creation:
+  - branch `main`
+  - local `HEAD` `17f91e7`
+  - `origin/main` `17f91e7`
+  - latest pushed code/test release authority remained `215b6bb`
+  - workflow/continuity docs were dirty but excluded from the implementation commit:
+    - `AGENTS.md`
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Final validation passed before staging:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - result: `73 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+  - result: `Success: no issues found in 31 source files`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v -m "not slow"`
+  - result: `539 passed, 1 deselected`
+- Staged release unit contained only:
+  - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_probe.py`
+  - `tests/test_eval_runs.py`
+- `git diff --cached --check` reported no issues
+- Created local commit:
+  - `9a52b46` -- `Expand dynamic import eval matrix`
+- Post-commit state:
+  - local `HEAD` is `9a52b46`
+  - `origin/main` remains `17f91e7`
+  - push has not been performed and remains human-gated
+  - `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md` remain workspace-only continuity changes
+- Acceptance decision:
+  - accept local commit creation first-pass
+  - `9a52b46` is the current unpushed local code/test release candidate for the internal `DYNAMIC_IMPORT` provider/budget matrix expansion
+  - push remains a later explicit Ryan authorization gate
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Release-Unit Audit For Dynamic-Import Provider/Budget Matrix
+
+- Performed the dedicated read-only release-unit audit over the workspace-only accepted dynamic-import provider/budget matrix release unit
+- Verified:
+  - branch `main`
+  - local `HEAD` `17f91e7`
+  - `origin/main` `17f91e7`
+  - latest pushed code/test release authority remained `215b6bb`
+  - dirty files were limited to:
+    - `AGENTS.md`
+    - `PLAN.md`
+    - `BUILDLOG.md`
+    - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+    - `tests/test_eval_runs.py`
+- Reviewed implementation release unit:
+  - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_probe.py`
+  - `tests/test_eval_runs.py`
+- Reviewed workflow/continuity docs for release-state discipline, but kept them outside the implementation commit unit:
+  - `AGENTS.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Audit found no findings:
+  - the implementation release unit is limited to the accepted internal dynamic-import 1 task x 2 budget x 3 provider matrix expansion
+  - no public claim, schema, scoring, winner-selection, source-code, package-root, MCP, runtime-acquisition, task selector, fixture, provider algorithm, or oracle boundary is widened
+  - scalar winner behavior remains separate from additive runtime-provenance accounting
+  - tests assert matrix coverage, baseline selected-unit emptiness, provider-scoped accounting, and scalar winners without changing source behavior
+  - `AGENTS.md` codifies workspace-only slice acceptance and release-unit audit as the default pre-commit gate
+  - `PLAN.md` and `BUILDLOG.md` correctly routed to audit before local commit creation at the time of review
+- Audit inspection commands passed:
+  - `git diff --check -- evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json tests/test_eval_signal_dynamic_import_probe.py tests/test_eval_runs.py AGENTS.md PLAN.md BUILDLOG.md`
+  - `git diff --exit-code -- src pyproject.toml README.md ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md`
+  - `git diff --exit-code -- evals/tasks evals/fixtures src/context_ir/eval_oracles.py src/context_ir/eval_providers.py src/context_ir/eval_summary.py src/context_ir/eval_report.py src/context_ir/eval_runs.py`
+  - `git diff --exit-code -- src/context_ir/__init__.py src/context_ir/tool_facade.py src/context_ir/mcp_server.py`
+- Acceptance decision:
+  - accept the release-unit audit first-pass
+  - proceed to final validation and local commit sequencing for only the three implementation files if authorized
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Release-Unit Audit Workflow Correction
+
+- Ryan paused release sequencing to challenge whether the control lane had drifted into committing or pushing too frequently after individual accepted slices
+- Accepted concern:
+  - slice acceptance had begun to behave too much like immediate commit readiness
+  - this risks bypassing the deeper independent audit Ryan prefers before commit
+  - coherent release-unit boundaries are more important than committing after every small slice
+- Updated `AGENTS.md` to codify:
+  - slice acceptance is workspace-only by default
+  - accepted slices may accumulate into one coherent release unit
+  - a dedicated read-only release-unit audit is the default pre-commit quality gate for non-trivial code, test, eval, architecture, claim, or workflow changes
+  - the audit must be findings-first and review the full proposed release unit against active holds and governing artifacts
+  - skipping the audit requires explicit Ryan waiver recorded in `BUILDLOG.md`
+  - push remains separately human-authorized
+- Updated `PLAN.md` routing:
+  - do not proceed directly from the accepted dynamic-import matrix slice to local commit creation
+  - next control action is a read-only release-unit audit over the proposed implementation release unit before any commit
+- Acceptance decision:
+  - accept the workflow correction with human sign-off
+  - keep current implementation and continuity changes workspace-only
+  - do not stage, commit, or push as part of this correction
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Commit-Gating Review For Dynamic-Import Provider/Budget Matrix
+
+- Performed a non-mutating commit-gating review after the full regression gate passed
+- Verified:
+  - branch `main`
+  - local `HEAD` `17f91e7`
+  - `origin/main` `17f91e7`
+  - workspace changes are limited to:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+    - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+    - `tests/test_eval_runs.py`
+  - `git diff --check` reported no issues
+  - the implementation release unit is separable from continuity docs and limited to the three accepted files:
+    - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+    - `tests/test_eval_runs.py`
+- Acceptance decision:
+  - accept commit-gating review first-pass
+  - next release action, if authorized, is local commit creation for only the three implementation files
+  - leave `PLAN.md` and `BUILDLOG.md` uncommitted as continuity-only workspace changes during that implementation commit
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Full Regression Gate For Dynamic-Import Provider/Budget Matrix
+
+- Ran the full regression gate after accepting the internal `DYNAMIC_IMPORT` provider/budget matrix expansion
+- Validation passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - result: `73 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+  - result: `Success: no issues found in 31 source files`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v -m "not slow"`
+  - result: `539 passed, 1 deselected`
+- Acceptance decision:
+  - accept the full regression gate first-pass
+  - the accepted workspace-only internal dynamic-import matrix expansion may advance to commit-gating review
+  - no source code, public claim, package-root, MCP, schema, scoring, winner-selection, task selector, fixture, provider algorithm, oracle, runtime-acquisition, or inherited-call boundary is widened
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Dynamic-Import Provider/Budget Matrix Implementation Review
+
+- Reviewed the returned bounded implementation slice for broadening the existing isolated internal `DYNAMIC_IMPORT` pilot into a provider/budget internal-evidence matrix
+- Verified live state before this continuity update:
+  - branch `main`
+  - local `HEAD` `17f91e7`
+  - `origin/main` `17f91e7`
+  - pre-existing continuity changes were present in:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - implementation changes were limited to:
+    - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+    - `tests/test_eval_runs.py`
+- Control review found no issues
+- Accepted behavior:
+  - the dynamic-import pilot now runs 1 task x 2 budgets (`220`, `180`) x 3 providers (`context_ir`, `lexical_top_k_files`, `import_neighborhood_files`)
+  - targeted tests assert six provider-budget ledger rows
+  - runtime-provenance raw-field assertions filter to the `context_ir` / `220` row
+  - baseline providers have zero structured selected units and zero selected-unit attached runtime provenance
+  - provider-scoped capability-tier accounting renders the widened internal matrix
+  - scalar winner selection remains whatever current metrics produce and is not changed to favor `context_ir`
+  - `runtime_backed` is not rendered as a primary selected-unit tier
+  - no task selector, fixture, runtime observation, source code, docs, raw schema, scoring, winner-selection, provider algorithm, runtime-acquisition, tool-facade, package-root, MCP, or public-claim boundary was widened by the execution slice
+- Control-lane validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dynamic_import_probe.py tests/test_eval_runs.py tests/test_eval_summary.py tests/test_eval_report.py tests/test_eval_pipeline.py tests/test_eval_bundle.py -q`
+  - result: `52 passed`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_dynamic_import_probe.py tests/test_eval_runs.py`
+  - result: passed
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_dynamic_import_probe.py tests/test_eval_runs.py`
+  - result: `2 files already formatted`
+  - `git diff --check -- evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json tests/test_eval_signal_dynamic_import_probe.py tests/test_eval_runs.py`
+  - result: passed
+- Acceptance decision:
+  - accept the implementation first-pass as workspace-only state
+  - next control action is the full regression gate before commit sequencing
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Dynamic-Import Matrix Evidence-Broadening Planning Spike Review
+
+- Reviewed the returned bounded planning spike for the next evidence-broadening move after the provider-scoped selected-unit capability-tier accounting release
+- Verified live state before this continuity update:
+  - branch `main`
+  - local `HEAD` `17f91e7`
+  - `origin/main` `17f91e7`
+  - worktree was clean
+  - latest code/test release authority remains `215b6bb`
+  - latest continuity branch tip is docs-only `17f91e7`
+- Control review found no blocking issues
+- Accepted recommendation:
+  - broaden the existing isolated internal `DYNAMIC_IMPORT` pilot into a small internal provider/budget matrix before adding another runtime-backed pilot family
+  - authorize only `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json` and targeted tests for the next execution slice
+  - keep task selectors, fixture source, runtime observations, source code, docs, raw schema, scoring, winner selection, package-root exports, MCP surface, runtime-acquisition breadth, and public claims unchanged
+- Alternatives considered:
+  - add another runtime-backed pilot family
+  - broaden static evidence review only
+  - harden report/bundle code first
+  - update public claims or benchmark methodology
+- Reasoning:
+  - provider-scoped selected-unit accounting is now released and needs a real internal matrix exercising provider and budget variation
+  - the existing dynamic-import pilot already has accepted fixture-local runtime provenance and stored tier/provenance fields
+  - another runtime-backed family would broaden runtime semantics before exercising the released accounting on the accepted pilot
+  - scalar winner selection is deliberately separate from runtime-provenance accounting, so baseline scalar wins in this internal matrix are not a defect and must not become public claims
+- Known caveats carried forward:
+  - the internal dynamic-import matrix may show baseline scalar winners while only `context_ir` carries attached runtime provenance
+  - selector expectation accounting remains per run row rather than de-duplicated across the matrix
+  - the accepted pilot evidence proves additive runtime provenance on the unsupported dynamic-import boundary, not broad dynamic-import capability coverage
+- Acceptance decision:
+  - accept the planning spike first-pass
+  - issue one bounded implementation slice for the dynamic-import provider/budget internal matrix
+  - do not commit, push, or widen public/exposure boundaries as part of the implementation slice
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Docs-Only Continuity Push Authorization After Provider-Scoped Release
 
 - Ryan authorized pushing the docs-only continuity state after the provider-scoped selected-unit capability-tier accounting release was pushed at `215b6bb`

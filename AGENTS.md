@@ -92,6 +92,8 @@ Its responsibilities:
 - Issue correction prompts when needed
 - Decide when a continuity/doc-sync pass is required
 - Decide commit sequencing
+- Decide when accepted workspace slices form a coherent release unit
+- Require a release-unit audit before commit unless Ryan explicitly waives it
 - Proactively determine what comes next after each accepted closeout
 - If substantive execution is not yet authorized, open the next validation, backlog, decomposition, planning, or continuity lane needed to create that authorization
 - Prevent stale work from being reopened accidentally
@@ -139,6 +141,11 @@ After reviewing any completed slice, before advancing to the next slice, the con
 
 The quality gate exists because speed is already baked into AI-assisted delivery. The optimization target is correctness, not velocity.
 
+Slice acceptance is not commit readiness. The default state after an accepted
+slice is **workspace-only accepted**. The control lane may accumulate multiple
+accepted slices into one coherent release unit, and must not automatically
+stage, commit, or push after every accepted slice.
+
 ---
 
 ## Control State Bundle
@@ -182,13 +189,17 @@ Slice zero follows a lighter validation standard -- there may be no tests to run
 5. **Single-slice execution** -- One execution chat handles one slice only. Tests for new behavior are part of the slice deliverable, not a separate step.
 6. **Review and correction** -- Returned work is reviewed in the control lane. If it is wrong or incomplete, issue a narrow correction pass.
 7. **Quality gate** -- All findings surfaced to human. Explicit go/no-go before advancing.
-8. **Full regression check** -- Run the complete validation suite (`ruff check`, `ruff format --check`, `mypy --strict`, `pytest`) to catch regressions across the codebase. This is not where tests are written -- they were written in step 5. This is where the full suite is run to confirm nothing else broke.
-9. **Release sequencing** -- Distinguish:
+8. **Workspace acceptance / accumulation** -- Accepted slices remain workspace-only until the control lane declares a coherent release unit. Do not assume one accepted slice equals one commit.
+9. **Release-unit audit** -- Before local commit creation, run or request a dedicated read-only deep quality audit over the complete proposed release unit unless Ryan explicitly waives it. The audit is separate from the implementation lane and must be findings-first.
+10. **Full regression check** -- Run the complete validation suite (`ruff check`, `ruff format --check`, `mypy --strict`, `pytest`) to catch regressions across the codebase. This is not where tests are written -- they were written in step 5. This is where the full suite is run to confirm nothing else broke.
+11. **Release sequencing** -- Distinguish:
    - Accepted in workspace
+   - Audit-cleared
    - Commit-ready
+   - Committed locally
    - Pushed to remote
-10. **Continuity sync** -- Update PLAN.md and BUILDLOG.md so future chats route correctly.
-11. **Advance to next lane** -- Only after acceptance, quality gate, and continuity sync. The control lane proactively chooses the next authorized move rather than waiting to be asked.
+12. **Continuity sync** -- Update PLAN.md and BUILDLOG.md so future chats route correctly.
+13. **Advance to next lane** -- Only after acceptance, quality gate, and continuity sync. The control lane proactively chooses the next authorized move rather than waiting to be asked.
 
 ---
 
@@ -300,18 +311,68 @@ An acceptance decision is always explicit:
 
 ---
 
+## Release-Unit Audit
+
+A release-unit audit is the default pre-commit quality gate for non-trivial
+code, test, eval, architecture, claim, or workflow changes.
+
+Purpose:
+
+- prevent the control lane from turning every accepted slice into an automatic
+  commit
+- preserve a deeper independent review pass over the full accumulated release
+  unit
+- verify that accepted slices still compose correctly when reviewed together
+- catch scope creep, stale continuity, release-state ambiguity, claim drift,
+  and boundary violations before commit
+
+Rules:
+
+- The audit is read-only. It must not edit files, stage changes, commit, push,
+  or rewrite continuity.
+- The audit must be findings-first and review the complete proposed release
+  unit, not just the last slice.
+- The audit prompt must state the repo-backed release truth, workspace-only
+  accepted state, files included in the proposed release unit, files excluded
+  from it, active holds, validation already run, and governing artifacts.
+- The audit must check the proposed release unit against `AGENTS.md`,
+  `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `EVAL.md`,
+  `PUBLIC_CLAIMS.md`, and `README.md` when those artifacts are relevant to the
+  slice.
+- If the audit finds any issue, the control lane must issue a correction prompt
+  or hold for Ryan according to the normal quality gate. Do not silently accept
+  "minor" audit findings.
+- The audit may be skipped only with explicit Ryan waiver recorded in
+  `BUILDLOG.md`, and the waiver must state why skipping the audit is acceptable
+  for that release unit.
+
+Release-unit audit clearance means the unit may proceed to full regression and
+commit-gating review. It still does not imply push authorization.
+
+---
+
 ## Release Discipline
 
 **Branch strategy**: This is a solo project. All work happens on `main`. Push only after the full quality gate clears. There is no feature-branch overhead. Note: no auto-deploy; GitHub is the distribution surface.
 
 For this project, the release pipeline is:
 
-1. Complete the slice in the workspace
-2. Review and correct as needed (quality gate)
-3. Run full validation suite as a final gate-check: `ruff check src/ tests/`, `ruff format --check src/ tests/`, `mypy --strict src/`, `pytest tests/ -v`. Execution chats run validation during their slice and report results; the control lane may re-run at its discretion. This step is the final confirmation before push, not a redundant re-run if results were already verified and trusted.
-4. Stage and commit with a meaningful commit message
-5. Push to remote
-6. Update PLAN.md and BUILDLOG.md as a separate continuity sync step
+1. Complete one or more slices in the workspace
+2. Review and correct each slice as needed under the quality gate
+3. Declare the coherent release unit and explicitly separate included files
+   from excluded continuity or unrelated workspace changes
+4. Run or request the release-unit audit, unless Ryan explicitly waives it
+5. Run full validation suite as a final gate-check: `ruff check src/ tests/`,
+   `ruff format --check src/ tests/`, `mypy --strict src/`,
+   `pytest tests/ -v`. Execution chats run validation during their slice and
+   report results; the control lane may re-run at its discretion. This step is
+   the final confirmation before commit/push, not a substitute for the
+   release-unit audit.
+6. Perform commit-gating review over the exact file set to be staged
+7. Stage and commit with a meaningful commit message only after the release
+   unit is audit-cleared, regression-cleared, and commit-gating-cleared
+8. Push to remote only after explicit Ryan authorization
+9. Update PLAN.md and BUILDLOG.md as a separate continuity sync step
 
 **Post-push revert protocol**: If a pushed slice is discovered to be broken after push, immediately revert the commit and push the revert. Log the incident in BUILDLOG.md with root cause. The broken slice re-enters the workflow as a correction pass with a refined slice spec.
 
