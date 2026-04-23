@@ -2,6 +2,26 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Docs-Only Continuity Push Completion Correction
+
+- Corrected continuity wording after the docs-only continuity push completed
+- Verified live state before this correction:
+  - branch `main`
+  - local `HEAD` `d1265fe`
+  - `origin/main` `d1265fe`
+  - worktree clean
+  - commit `d1265fe` touched only:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Preserved release-state distinction:
+  - `a605b22` remains the latest code/test/pilot release unit
+  - docs-only continuity commits after `a605b22`, including `d1265fe`, are continuity state and not implementation release changes
+  - public claims, exposure boundaries, schema, scoring, and eval implementation remain unchanged by this correction
+- Acceptance decision:
+  - accept this docs-only continuity correction
+  - the next substantive move is one bounded planning spike to choose the next capability-tier program slice after the released eval/evidence baseline
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Docs-Only Continuity Push Authorization
 
 - Ryan authorized pushing the docs-only continuity commits after the capability-tier eval / evidence code/test/pilot release was already pushed at `a605b22`
