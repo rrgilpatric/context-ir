@@ -2,6 +2,27 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Docs-Only Continuity Push Authorization After Provider-Scoped Release
+
+- Ryan authorized pushing the docs-only continuity state after the provider-scoped selected-unit capability-tier accounting release was pushed at `215b6bb`
+- Verified before this correction:
+  - branch `main`
+  - local `HEAD` `db5113a`
+  - `origin/main` `215b6bb`
+  - worktree was clean
+  - local commits ahead of `origin/main` touched only:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Corrected continuity wording before the push so the docs remain true after the branch tip advances with docs-only continuity commits:
+  - `215b6bb` remains the latest repo-backed code/test release unit
+  - docs-only commits after `215b6bb` are continuity state, not implementation release changes
+  - no implementation, exposure, schema, scoring, public-claim, package-root, MCP, runtime-acquisition, or inherited-call boundary is widened
+- Acceptance decision:
+  - accept the docs-only continuity push authorization
+  - push only docs-only commits whose diff is limited to `PLAN.md` and `BUILDLOG.md`
+  - after that push, hold before any further push or new planning/implementation lane until Ryan explicitly authorizes it
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Docs-Only Continuity Sync After Provider-Scoped Push
 
 - Reviewed the docs-only continuity sync after the provider-scoped selected-unit capability-tier accounting release was pushed to `origin/main` at `215b6bb`

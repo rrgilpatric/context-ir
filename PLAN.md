@@ -202,11 +202,10 @@ Release authority is split deliberately. The latest pushed code/test release uni
 - No planning spike is currently in flight
 - Repo-backed released state is now explicit and complete:
   - branch `main`
-  - `origin/main` `215b6bb`
   - the accepted provider-scoped selected-unit capability-tier accounting release unit is `215b6bb`
   - the accepted capability-tier eval / evidence code/test/pilot release unit is `a605b22`
   - the docs-only continuity push completed through `d1265fe`
-  - local `HEAD` may be ahead of `origin/main` by docs-only continuity commits after this sync
+  - branch tips may move past `215b6bb` only through docs-only continuity commits unless a later code/test release is explicitly accepted
   - docs-only continuity commits after `a605b22` are not implementation release changes
   - the previously accepted runtime-backed tranche at `cb1dc65` remains historical released state and must not be routed as workspace-only work
 - The current repo-backed released authority is capability-tier eval / evidence baseline:
@@ -292,8 +291,12 @@ Release authority is split deliberately. The latest pushed code/test release uni
 
 ## What Is Next
 
-1. Next substantive move after this docs-only continuity sync: hold for explicit authorization before any further push or new planning/implementation lane.
-2. Treat pushed commit `a605b22` as the current code/test/pilot release authority:
+1. Next substantive move after the authorized docs-only continuity push: hold for explicit authorization before any further push or new planning/implementation lane.
+2. Treat pushed commit `215b6bb` as the current code/test release authority:
+   - provider-scoped selected-unit capability-tier accounting
+   - full regression gate over the provider-scoped accounting slice
+   - commit-gating and remote push of the provider-scoped accounting release unit
+3. Treat pushed commit `a605b22` as the prior capability-tier eval/evidence code/test/pilot release authority:
    - tier-aware eval storage-contract slice
    - isolated internal `DYNAMIC_IMPORT` eval pilot
    - accepted post-pilot planning spike that authorizes the tier-aware internal-accounting rollout boundary
@@ -303,17 +306,17 @@ Release authority is split deliberately. The latest pushed code/test release uni
    - local commit creation for the coherent code/test/pilot release unit
    - remote push of the coherent code/test/pilot release unit
    - docs-only continuity sync in `PLAN.md` and `BUILDLOG.md`
-3. The full regression gate must not reopen:
+4. The next lane, if later authorized, must not reopen:
    - the accepted code/test/pilot release unit at `a605b22`
+   - the accepted provider-scoped accounting release unit at `215b6bb`
    - public claim boundaries
    - package-root/public low-level runtime-observation exposure
    - MCP runtime-observation exposure
    - further inherited-call work
    - scoring, winner selection, raw schema, run specs, tasks, fixtures, providers, or runtime-acquisition breadth
-4. Keep `215b6bb` as the latest repo-backed code/test release unit; docs-only continuity commits before or after it are continuity state, not implementation release changes.
-5. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
-6. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
-7. Do not push any follow-on docs-only continuity commit or start another lane without explicit Ryan authorization.
+5. Keep `215b6bb` as the latest repo-backed code/test release unit; docs-only continuity commits before or after it are continuity state, not implementation release changes.
+6. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
+7. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
 
 ## What Is Deferred
 
