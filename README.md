@@ -28,6 +28,9 @@ tool-facing facade, and the minimal MCP compile tool. They are covered by local
 tests and quality gates. The repo also includes deterministic internal eval
 infrastructure and a current four-asset signal evidence surface documented in
 `EVAL.md`; those artifacts are internal evidence, not external benchmark proof.
+`EVAL.md` also records narrow internal runtime-backed pilots for
+`DYNAMIC_IMPORT` and `hasattr(obj, name)`. Those pilots do not widen the public
+supported subset, public API, MCP wrapper, or public benchmark claim boundary.
 
 ## Supported Subset and Limits
 
@@ -54,6 +57,12 @@ Unsupported limits include:
 - broad decorator semantics beyond the current narrow `@dataclass` support
 - broad dynamic Python behavior
 - multi-language analysis
+
+The repo does contain narrow internal runtime-backed eval evidence for selected
+unsupported `DYNAMIC_IMPORT` and `hasattr(obj, name)` cases. That evidence is
+additive internal provenance on otherwise unsupported/opaque selectors; it does
+not make broad dynamic imports or reflection part of the public supported
+subset.
 
 ## Python API
 
@@ -137,8 +146,8 @@ The project depends on the Python MCP SDK through `mcp>=1.27.0` in
 
 ## Evidence and Claims
 
-`EVAL.md` defines what the repository currently proves and what remains future
-work.
+`EVAL.md` defines what the repository currently proves, what remains internal
+evidence only, and what remains future work.
 
 Current evidence includes:
 
@@ -151,24 +160,29 @@ Current evidence includes:
   `oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`, and
   `oracle_signal_smoke_d`
 - a current quad matrix over 4 tasks x 2 budgets x 3 providers
+- capability-tier and provider-scoped selected-unit accounting in the internal
+  eval evidence path
+- narrow internal runtime-backed pilots for `DYNAMIC_IMPORT` and
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`
 - within that fixed internal matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,
   `0.6228480543023547` for `import_neighborhood_files`, and
   `0.6065653086866415` for `lexical_top_k_files`
 
-Earlier signal pair/triple matrices remain historical internal evidence, but
-the current top surface is the four-asset quad matrix documented in `EVAL.md`.
-That surface is broader than the previous public summary, but it is still not
-uniformly clean: `oracle_signal_smoke_b` at budget `200` still records honest
-`budget_pressure`, and
+Earlier signal pair/triple matrices remain historical internal evidence. The
+current public-safe comparative surface is the four-asset quad matrix
+documented in `EVAL.md`. That surface is broader than the previous public
+summary, but it is still not uniformly clean: `oracle_signal_smoke_b` at budget
+`200` still records honest `budget_pressure`, and
 `def:pkg/digest.py:pkg.digest.render_assignment_digest` can remain omitted under
 that tight budget.
 
 The project currently makes no SWE-bench, external benchmark improvement,
 resolve-rate, production-readiness, performance, token-savings, cost-reduction,
-or multi-language claims. Stronger public claims require the future eval gates
-and raw evidence described in `EVAL.md`.
+or multi-language claims. The runtime-backed pilots are internal evidence only;
+stronger public claims require the claim gates and raw evidence described in
+`EVAL.md`.
 
 ## Legacy API Note
 

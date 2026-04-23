@@ -21,9 +21,13 @@ stays scoped to repo-local evidence only.
   [EVAL.md](EVAL.md#supported-claims-today).
 - Safe evidence descriptor: The repo contains a deterministic internal eval
   harness with summary, report, pipeline, manifest, and bundle artifacts over
-  fixed run specs and JSONL ledgers. The current top internal evidence surface
-  is the four-asset quad matrix defined in
+  fixed run specs and JSONL ledgers. The current public-safe comparative
+  evidence surface remains the four-asset quad matrix defined in
   [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json).
+  Later internal runtime-backed evidence is limited to narrow
+  `DYNAMIC_IMPORT` and `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` pilots and
+  must not be described as public benchmark proof or generalized hybrid-runtime
+  support.
   Evidence: [EVAL.md](EVAL.md#current-evidence-status),
   [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md),
   [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json).
@@ -53,7 +57,12 @@ stays scoped to repo-local evidence only.
   [evals/run_specs/oracle_signal_triple_matrix.json](evals/run_specs/oracle_signal_triple_matrix.json)
   as the prior internal surface and
   [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json)
-  as the current top internal surface.
+  as the current public-safe comparative internal surface.
+- When referencing runtime-backed work, say only that narrow internal evidence
+  exists for the `DYNAMIC_IMPORT` provider/budget matrix and the
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` pilot. Do not convert that into a
+  public supported-subset, benchmark, product, or generalized hybrid static +
+  runtime claim.
 - Any comparative sentence must stay explicitly scoped to the accepted internal
   quad matrix. Do not generalize the current `8/8` result beyond that fixed
   four-task, two-budget, three-provider surface.
@@ -69,6 +78,8 @@ stays scoped to repo-local evidence only.
   "resolve rate," or similar generalized score language.
 - Do not say "full Python semantics," "broad decorator support," or
   "multi-language analysis."
+- Do not say "hybrid runtime coverage," "runtime-backed Python coverage," or
+  similar broad runtime wording without the narrow internal-pilot qualifier.
 - Do not say "latency reduction," "token savings," or "cost reduction."
 
 ## Evidence Map
@@ -77,5 +88,5 @@ stays scoped to repo-local evidence only.
 | --- | --- | --- |
 | AC1 | Context IR is an in-progress semantic-first Python context compiler over a supported static subset. | [README.md](README.md), [EVAL.md](EVAL.md#supported-claims-today), [PLAN.md](PLAN.md) |
 | AC2 | Public interface claims are limited to `analyze_repository(...)`, `compile_repository_context(...)`, and one tested MCP compile tool. | [README.md](README.md#python-api), [README.md](README.md#minimal-mcp-usage), [EVAL.md](EVAL.md#supported-claims-today) |
-| AC3 | Deterministic internal eval infrastructure exists, and the quad matrix is the current top internal evidence surface while the triple matrix is prior internal evidence. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_triple_matrix.json](evals/run_specs/oracle_signal_triple_matrix.json), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |
+| AC3 | Deterministic internal eval infrastructure exists; the quad matrix remains the current public-safe comparative internal surface, while runtime-backed evidence is limited to narrow internal `DYNAMIC_IMPORT` and `hasattr(obj, name)` pilots. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_triple_matrix.json](evals/run_specs/oracle_signal_triple_matrix.json), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json), [evals/run_specs/oracle_signal_hasattr_probe_matrix.json](evals/run_specs/oracle_signal_hasattr_probe_matrix.json) |
 | AC4 | The only allowed comparative claim is the fixed-scope quad-matrix claim: within that matrix only, `context_ir` wins all `8/8` task-budget rows and leads the provider-average aggregate. | [EVAL.md](EVAL.md#supported-claims-today), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |

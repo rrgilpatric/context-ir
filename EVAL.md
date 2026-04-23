@@ -10,6 +10,12 @@ The current semantic-first baseline is supported by repo-local tests and
 accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
+Release authority is split by artifact type. `7cb48bb` is docs-only
+continuity. The latest pushed code/test evidence authority is `90dcc15`, which
+adds the internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed
+eval pilot without widening public claims, public APIs, MCP behavior, scoring,
+winner selection, or generalized runtime coverage.
+
 Proven by current unit and integration tests:
 
 - Semantic contracts expose `SyntaxProgram`, `SemanticProgram`, proof status, supported-subset, unresolved-frontier, unsupported-construct, diagnostic, optimization, compile, diagnose, and recompile dataclasses.
@@ -45,10 +51,21 @@ Proven by current unit and integration tests:
 - This quad matrix is the completed phase 0 internal evidence surface and
   regression anchor for the post-milestone program. It is not external
   benchmark proof.
-- The post-milestone roadmap introduces capability tier planning for
-  statically proved, runtime-backed, heuristic/frontier, and
-  unsupported/opaque surfaces, but current evidence still proves only the
-  accepted phase 0 semantic-first behavior.
+- Post-phase-0 internal evidence now includes capability-tier storage and
+  accounting for statically proved, runtime-backed, heuristic/frontier, and
+  unsupported/opaque surfaces.
+- Provider-scoped selected-unit capability-tier accounting is supported for
+  internal eval summaries/reports, including additive runtime-backed support
+  attached to selected units.
+- Internal runtime-backed evidence currently covers narrow pilots only:
+  - the `DYNAMIC_IMPORT` internal provider/budget matrix for the
+    `oracle_signal_dynamic_import_probe` task
+  - the `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` internal pilot for the
+    `oracle_signal_hasattr_probe` task
+- In those runtime-backed pilots, the dynamic or reflective selector remains
+  primarily `unsupported/opaque`; runtime-backed provenance is additive
+  attached evidence. This is internal evidence, not a public benchmark, broad
+  hybrid-runtime support claim, or generalized dynamic-Python claim.
 
 Validated by local quality gates, not by benchmark evidence:
 
@@ -66,11 +83,14 @@ Validated by local quality gates, not by benchmark evidence:
 
 Architecturally intended but not yet evaluated:
 
-- Broader task sets beyond the current four accepted signal assets.
-- Wider budget-curve measurements beyond the current fixed `200` and `240`
-  budgets.
+- Broader public task sets beyond the current accepted internal signal assets
+  and narrow runtime-backed pilot tasks.
+- Wider budget-curve measurements beyond the fixed budgets committed in the
+  current internal run specs.
 - Additional baseline comparisons beyond the current lexical and
   import-neighborhood providers.
+- Runtime-backed task families beyond the current narrow `DYNAMIC_IMPORT` and
+  `hasattr(obj, name)` internal pilots.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -83,8 +103,15 @@ Architecturally intended but not yet evaluated:
 - Deterministic internal eval artifacts: raw JSONL ledger rows, typed summary
   loading and aggregation, Markdown report generation, pipeline composition,
   manifest generation, and nested bundle output are all present and tested.
-- Current internal evidence surface: four methodology-tightened signal assets
-  run as a 4 task x 2 budget x 3 provider quad matrix.
+- Phase 0 comparative internal evidence surface: four methodology-tightened
+  signal assets run as a 4 task x 2 budget x 3 provider quad matrix.
+- Capability-tier internal evidence: tier-aware eval storage and
+  provider-scoped selected-unit accounting for statically proved,
+  runtime-backed, heuristic/frontier, and unsupported/opaque surfaces.
+- Narrow runtime-backed internal pilots: `DYNAMIC_IMPORT` and
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` fixtures, tasks, run specs, and
+  additive runtime provenance. These pilots are internal evidence surfaces, not
+  public benchmark surfaces.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -112,14 +139,22 @@ The following claims are allowed because current repo artifacts support them:
 - A deterministic internal eval harness exists through summary, report,
   pipeline, manifest, and bundle artifacts over fixed run specs and JSONL
   ledgers.
-- The current top internal evidence surface is the four-asset signal quad
-  matrix over `oracle_signal_smoke`, `oracle_signal_smoke_b`,
+- The current public-safe comparative internal surface is the four-asset
+  signal quad matrix over `oracle_signal_smoke`, `oracle_signal_smoke_b`,
   `oracle_signal_smoke_c`, and `oracle_signal_smoke_d`.
 - Within that fixed quad matrix only, `context_ir` is the sole winner on all
   8/8 task-budget rows and has the top provider-average aggregate score.
 - The current internal evidence surface includes an explicit tight-budget
   blemish: `oracle_signal_smoke_b / 200` still records `budget_pressure`, and
   `def:pkg/digest.py:pkg.digest.render_assignment_digest` can remain omitted.
+- Internal capability-tier evidence and accounting exists for selected eval
+  units, including provider-scoped accounting that keeps statically proved,
+  runtime-backed, heuristic/frontier, and unsupported/opaque support separate.
+- Internal runtime-backed eval evidence currently covers the narrow
+  `DYNAMIC_IMPORT` provider/budget matrix and the narrow `REFLECTIVE_BUILTIN` /
+  `hasattr(obj, name)` pilot. These pilots keep the dynamic or reflective
+  selector primarily `unsupported/opaque` while attaching runtime-backed
+  provenance additively.
 
 ## Unsupported Claims Today
 
@@ -130,23 +165,32 @@ The following claims are not currently allowed:
 - No resolve-rate, edit-success-rate, retrieval-quality, area-under-budget-curve, or task-win-rate claims.
 - No production-readiness claims.
 - No multi-language claims.
-- No broad Python dynamic-semantics claims, including dynamic imports, reflection, `exec`, `eval`, monkey patching, metaclasses, runtime attribute injection, or general decorator semantics.
+- No broad or public Python dynamic-semantics claims, including generalized
+  dynamic imports, reflection, `exec`, `eval`, monkey patching, metaclasses,
+  runtime attribute injection, or general decorator semantics. The narrow
+  internal `DYNAMIC_IMPORT` and `hasattr(obj, name)` pilots do not change this
+  public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
 - No performance, latency, token-savings, or cost-reduction claims without measured data.
 - No claim that README or portfolio positioning has been fully synchronized with the accepted final-phase state.
-- No claim that hybrid static + runtime analysis is implemented today.
-- No capability tier claim beyond the accepted phase 0 static-proof baseline plus explicit uncertainty handling.
-- No claim that runtime-backed, heuristic/frontier, or unsupported/opaque surfaces have benchmarked coverage or production-grade handling.
+- No public claim that hybrid static + runtime analysis is generally
+  implemented today.
+- No capability-tier claim beyond the accepted internal accounting/evidence
+  surfaces and explicit uncertainty handling.
+- No claim that runtime-backed, heuristic/frontier, or unsupported/opaque
+  surfaces have broad benchmarked coverage or production-grade handling.
 
 ## Future Eval Plan
 
 Next smallest eval slices for the post-milestone program:
 
-1. Define eval semantics for each capability tier and keep capability tier
-   scoring separate from representation-tier rendering choices.
-2. Add hybrid static + runtime analysis evidence only through reproducible
+1. Continue hardening eval semantics for each capability tier and keep
+   capability-tier accounting separate from representation-tier rendering
+   choices.
+2. Broaden hybrid static + runtime analysis evidence beyond the current narrow
+   `DYNAMIC_IMPORT` and `hasattr(obj, name)` pilots only through reproducible
    runtime-backed fixtures, probes, and raw evidence storage.
 3. Broaden task, budget, and baseline coverage only after the tiered internal
    eval model is stable and claim-bounded.

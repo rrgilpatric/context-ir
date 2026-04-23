@@ -2,11 +2,18 @@
 
 ## Status
 
-Semantic-first re-baselining. This document is the current architectural authority.
+Semantic-first re-baselining with narrow internal runtime-backed evidence. This
+document is the current architectural authority.
 
-The accepted semantic-first / deterministic-evidence / reviewer-stack milestone is the completed phase 0 foundation. It remains the only implemented architectural authority for current claims, regression anchors, and reviewer-facing surfaces.
+The accepted semantic-first / deterministic-evidence / reviewer-stack milestone
+is the completed phase 0 foundation. It remains the public architectural
+authority for current claims, regression anchors, and reviewer-facing surfaces.
 
-The next program reopens selected boundaries to pursue broad Python repo coverage through hybrid static + runtime analysis with explicit capability tiers. Until those later slices land, phase 0 remains the sole implemented truth.
+Post-phase-0 internal slices have added capability-tier accounting and narrow
+runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
+matrix and the `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` pilot. Those slices
+do not widen public claims, public APIs, MCP behavior, scoring, winner
+selection, or generalized hybrid-runtime coverage.
 
 The April 13 frozen spec is retired and superseded. Existing runtime modules under `src/context_ir/` still largely reflect the retired symbol-graph-first build and must be treated as implementation history until they are replaced slice by slice.
 
@@ -27,10 +34,13 @@ Closed current authority:
 - the accepted quad matrix remains the top internal evidence surface for the completed milestone
 - the accepted `oracle_signal_smoke_b / 200` `budget_pressure` limitation remains an explicit tight-budget truth
 - current README, claim, and portfolio artifacts stay derivative of this phase 0 authority
+- narrow post-phase-0 runtime-backed eval pilots are internal evidence only and
+  do not change the public supported-subset boundary
 
 Reopened for the post-milestone program:
 
-- the exact shape of `SemanticProgram` once hybrid static + runtime analysis is introduced
+- the exact shape of `SemanticProgram` as hybrid static + runtime evidence
+  expands beyond narrow additive internal attachments
 - supported-subset policy as it evolves into explicit capability tier handling
 - dependency, frontier, and uncertainty modeling for mixed static/runtime evidence
 - renderer, compiler, diagnose, and recompile contracts for tier-aware output
@@ -58,10 +68,14 @@ This remains the authoritative phase 0 contract. Later slices may widen it, but 
 
 ## Capability-Tier Target Model
 
-The future program is organized around capability tier boundaries, not around rendering density.
+The post-milestone program is organized around capability tier boundaries, not
+around rendering density.
 
 - statically proved: facts established from the accepted static semantic pipeline inside the supported subset
-- runtime-backed: future repository-backed facts supported by reproducible runtime evidence or probes
+- runtime-backed: repository-backed facts supported by reproducible runtime
+  evidence or probes; current internal evidence is limited to narrow additive
+  `DYNAMIC_IMPORT` and `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` pilot
+  attachments
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 
@@ -73,7 +87,9 @@ Representation tiers remain a separate concern:
 
 ## Phase-1 Capability-Tier Contract
 
-Phase 1 is a contract-definition step, not an implementation claim. It freezes the meaning of each capability tier and the provenance invariants that later code slices must preserve.
+Phase 1 began as a contract-definition step. The current repo now contains
+narrow internal implementation/evidence slices that must continue to preserve
+the same capability-tier meanings and provenance invariants.
 
 ### Tier Semantics and Admissible Evidence
 
@@ -86,7 +102,7 @@ Runtime-backed evidence is additive provenance, not a substitute for static proo
 
 ### Runtime-Backed Admissibility Boundary
 
-A future runtime-backed record is admissible only when all of the following hold:
+A runtime-backed record is admissible only when all of the following hold:
 
 - repository linkage: the observation attaches to a concrete repository subject such as a symbol, source span, dependency edge, frontier item, or unsupported finding; a free-floating claim that "the program did X" is insufficient
 - stable probe identity: the record names the specific probe or observation contract that produced it, including a stable probe identifier and probe-contract revision
@@ -121,11 +137,13 @@ Attachment rules for the widened provenance boundary:
 - lack of admissible runtime evidence does not erase frontier or unsupported status; it leaves the subject in its prior non-proof state
 - compile, ranking, and diagnose layers may consume admissible runtime-backed records later, but they must not infer missing replay metadata or probe identity after the fact
 
-### Future `SemanticProgram` Provenance Boundary
+### `SemanticProgram` Provenance Boundary
 
-Later code may widen `SemanticProgram`, but the widened contract must preserve the phase 0 static layer as-is and add provenance-bearing records rather than replacing existing proof classes.
+Current and later widened `SemanticProgram` contracts must preserve the phase 0
+static layer as-is and add provenance-bearing records rather than replacing
+existing proof classes.
 
-Minimum future contract shape, even if field names differ:
+Minimum widened contract shape, even if field names differ:
 
 - subject identity for each symbol, dependency edge, frontier item, or unsupported finding
 - source spans or repository locations for the subject and its supporting evidence
@@ -241,7 +259,8 @@ Output:
 - frontier or unknown set for unresolved but relevant areas
 
 Future reopening:
-- the hybrid static + runtime analysis program may add runtime-backed dependency evidence
+- the hybrid static + runtime analysis program may continue to add
+  runtime-backed dependency evidence
 - any such widening must preserve a visible separation between statically proved, runtime-backed, heuristic/frontier, and unsupported/opaque surfaces
 
 ### 4. Rendering / Representation Policy
@@ -267,7 +286,9 @@ Policy:
 - `p_edit` and `p_support` may remain as internal ranking policy
 - they are not the public thesis of the project
 - they can rank among proved candidates and frontier items, but they cannot create semantic facts
-- future mixed-evidence ranking may compare statically proved, runtime-backed, and heuristic/frontier units, but it must preserve those boundaries in traces and outputs
+- future user-facing mixed-evidence ranking may compare statically proved,
+  runtime-backed, and heuristic/frontier units, but it must preserve those
+  boundaries in traces and outputs
 
 ### 6. Optimization
 
@@ -293,7 +314,8 @@ Responsibility:
 Policy:
 - compile behavior is downstream of `SemanticProgram`
 - no compile contract is authoritative unless it matches the semantic substrate beneath it
-- future compiled artifacts may mix statically proved and runtime-backed material, but the artifact must keep capability tier provenance explicit
+- compiled artifacts that mix statically proved and runtime-backed material
+  must keep capability tier provenance explicit
 
 ### 8. Diagnose / Recompile
 
@@ -306,7 +328,9 @@ Current authority:
 - diagnose and `recompile` are required architectural layers
 - the public `recompile` contract is not frozen yet
 - the old `recompile` hold is now part of the historical evidence trail, not the main control problem
-- future diagnose behavior may distinguish static-proof misses, runtime-backed misses, heuristic/frontier misses, and unsupported/opaque misses, but current claims stop at phase 0 behavior
+- diagnose behavior may distinguish static-proof misses, runtime-backed misses,
+  heuristic/frontier misses, and unsupported/opaque misses for tested internal
+  surfaces, but public claims remain bounded by the current claim envelope
 
 ## Planned Boundaries
 
