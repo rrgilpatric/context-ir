@@ -2,6 +2,27 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Docs-Only Continuity Push Authorization
+
+- Ryan authorized pushing the docs-only continuity commits after the capability-tier eval / evidence code/test/pilot release was already pushed at `a605b22`
+- Pre-push verification before this entry:
+  - branch `main`
+  - local `HEAD` `8df45aa`
+  - `origin/main` `a605b22`
+  - worktree clean
+  - commits ahead of `origin/main` touched only:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Corrected the live continuity wording before push so it remains true after the docs-only commits advance the branch tip:
+  - the code/test/pilot release unit remains `a605b22`
+  - commits after `a605b22` in this continuity chain are docs-only continuity commits
+  - those docs-only commits do not widen implementation, exposure, schema, scoring, or public-claim boundaries
+- Acceptance decision:
+  - accept the docs-only continuity push authorization
+  - push only docs-only commits whose diff is limited to `PLAN.md` and `BUILDLOG.md`
+  - after that push, hold before any new implementation or planning lane until Ryan explicitly authorizes it
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Docs-Only Continuity Local-Head Wording Correction
 
 - Corrected `PLAN.md` after local docs-only commit creation so the current release-state section does not pin local `HEAD` to the code/test/pilot release hash `a605b22`

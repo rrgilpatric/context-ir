@@ -38,7 +38,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Repo-backed released state is now the accepted capability-tier eval / evidence unit on `main` / `origin/main` at `a605b22`. That released unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit. This docs-only continuity sync is separate from that code/test/pilot release unit and does not widen any implementation, exposure, or public-claim boundary.
+The latest repo-backed code/test/pilot release unit remains the accepted capability-tier eval / evidence unit at `a605b22`. That release unit includes the tier-aware eval storage-contract slice, the isolated internal `DYNAMIC_IMPORT` eval pilot, the accepted post-pilot planning spike's authorized tier-aware internal-accounting rollout, and the accepted full-regression-gated code/test/pilot release unit. Any commits after `a605b22` in the current continuity chain are docs-only continuity commits and do not widen any implementation, exposure, schema, scoring, or public-claim boundary.
 
 ## What Is Complete
 
@@ -71,6 +71,7 @@ Repo-backed released state is now the accepted capability-tier eval / evidence u
 - [x] Commit-gating review for the enlarged workspace-only eval/evidence unit accepted first-pass
 - [x] Local commit creation for the coherent capability-tier eval/evidence release unit accepted first-pass at `a605b22`
 - [x] Remote push for the coherent capability-tier eval/evidence release unit accepted first-pass at `a605b22`
+- [x] Docs-only continuity sync and push authorization accepted after 1 correction
 - [x] README / public-claim sync accepted first-pass
 - [x] Release sequencing completed to `origin/main` at `9abc57c`
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
@@ -195,9 +196,9 @@ Repo-backed released state is now the accepted capability-tier eval / evidence u
 - No planning spike is currently in flight
 - Repo-backed released state is now explicit and complete:
   - branch `main`
-  - `origin/main` `a605b22`
-  - local `HEAD` may be ahead of `origin/main` by docs-only continuity commits, but those commits are not code/test/pilot release changes
-  - the accepted capability-tier eval / evidence unit is the latest pushed repo-backed released state
+  - the accepted capability-tier eval / evidence code/test/pilot release unit is `a605b22`
+  - local and remote branch tips may include docs-only continuity commits after `a605b22`
+  - docs-only continuity commits after `a605b22` are not implementation release changes
   - the previously accepted runtime-backed tranche at `cb1dc65` remains historical released state and must not be routed as workspace-only work
 - The current repo-backed released authority is capability-tier eval / evidence baseline:
   - accepted tier-aware eval storage-contract slice is released in:
@@ -246,8 +247,8 @@ Repo-backed released state is now the accepted capability-tier eval / evidence u
     - `evals/fixtures/oracle_signal_dynamic_import_probe/`
     - `evals/tasks/oracle_signal_dynamic_import_probe.json`
     - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
-  - `PLAN.md` and `BUILDLOG.md` remain separate docs-only continuity-sync files outside that pushed release unit
-  - this docs-only continuity sync is limited to:
+  - `PLAN.md` and `BUILDLOG.md` are separate docs-only continuity-sync files outside that pushed release unit
+  - the docs-only continuity sync is limited to:
     - `PLAN.md`
     - `BUILDLOG.md`
 - Release-boundary holds remain unchanged:
@@ -256,12 +257,12 @@ Repo-backed released state is now the accepted capability-tier eval / evidence u
   - do not widen MCP runtime-observation exposure
   - keep public claim boundaries unchanged from the accepted internal-eval state
 - Further inherited-call reopening remains on explicit hold: no next implementation slice is authorized beyond the accepted first-exclusive-branch overlap reopening
-- Push for `a605b22` is complete; no further push is authorized for the local docs-only continuity changes
+- Push for `a605b22` is complete; Ryan has authorized the docs-only continuity push for commits that touch only `PLAN.md` and `BUILDLOG.md`
 
 ## What Is Next
 
-1. Next substantive move after this docs-only sync: hold for Ryan's explicit authorization before any docs-only push or new implementation/planning lane.
-2. Treat pushed commit `a605b22` as the current repo-backed release authority:
+1. Next substantive move after the authorized docs-only continuity push: hold for Ryan's explicit authorization before any new implementation or planning lane.
+2. Treat pushed commit `a605b22` as the current code/test/pilot release authority:
    - tier-aware eval storage-contract slice
    - isolated internal `DYNAMIC_IMPORT` eval pilot
    - accepted post-pilot planning spike that authorizes the tier-aware internal-accounting rollout boundary
@@ -271,11 +272,11 @@ Repo-backed released state is now the accepted capability-tier eval / evidence u
    - local commit creation for the coherent code/test/pilot release unit
    - remote push of the coherent code/test/pilot release unit
    - docs-only continuity sync in `PLAN.md` and `BUILDLOG.md`
-3. Any docs-only continuity-sync push must preserve explicit release-state discipline:
+3. The authorized docs-only continuity-sync push must preserve explicit release-state discipline:
    - verify the docs-only local commit contains only `PLAN.md` and `BUILDLOG.md`
    - verify the remote base before pushing
-   - do not push the docs-only commit unless Ryan explicitly authorizes that later push step
-4. Keep `a605b22` as the latest repo-backed released unit on `main` / `origin/main`; do not route back into completed runtime-backed tranche work.
+   - do not include implementation, test, eval asset, public-claim, or exposure-boundary changes
+4. Keep `a605b22` as the latest repo-backed code/test/pilot release unit; docs-only branch-tip commits after it are continuity state, not implementation release changes.
 5. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
 6. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
 
