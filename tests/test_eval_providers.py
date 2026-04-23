@@ -38,6 +38,9 @@ GETATTR_PROBE_FIXTURE_ROOT = (
 GETATTR_DEFAULT_PROBE_FIXTURE_ROOT = (
     REPO_ROOT / "evals" / "fixtures" / "oracle_signal_getattr_default_probe"
 )
+GETATTR_DEFAULT_VALUE_PROBE_FIXTURE_ROOT = (
+    REPO_ROOT / "evals" / "fixtures" / "oracle_signal_getattr_default_value_probe"
+)
 HASATTR_PROBE_FIXTURE_ROOT = (
     REPO_ROOT / "evals" / "fixtures" / "oracle_signal_hasattr_probe"
 )
@@ -50,6 +53,10 @@ GETATTR_PROBE_QUERY = (
 )
 GETATTR_DEFAULT_PROBE_QUERY = (
     "Fix probe_attribute unsupported getattr(obj, name, default) "
+    "and keep digest output aligned"
+)
+GETATTR_DEFAULT_VALUE_PROBE_QUERY = (
+    "Fix probe_attribute unsupported getattr(obj, name, default) value-return branch "
     "and keep digest output aligned"
 )
 HASATTR_PROBE_QUERY = (
@@ -479,6 +486,33 @@ def test_context_ir_provider_attaches_defaulted_getattr_runtime_probe_metadata()
             repo_root=GETATTR_DEFAULT_PROBE_FIXTURE_ROOT,
             task_id="oracle_signal_getattr_default_probe",
             query=GETATTR_DEFAULT_PROBE_QUERY,
+            budget=220,
+        )
+    )
+    unsupported = next(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id == "unsupported:call:main.py:2:11"
+    )
+
+    assert "unsupported:call:main.py:2:11" in result.selected_unit_ids
+    assert unsupported.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        unsupported.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported.has_attached_runtime_provenance is True
+    assert unsupported.attached_runtime_provenance_record_ids
+
+
+def test_context_ir_provider_attaches_defaulted_getattr_value_probe_metadata() -> None:
+    """Context IR provider exposes defaulted ``getattr`` value provenance."""
+    result = eval_providers.build_context_ir_provider_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=GETATTR_DEFAULT_VALUE_PROBE_FIXTURE_ROOT,
+            task_id="oracle_signal_getattr_default_value_probe",
+            query=GETATTR_DEFAULT_VALUE_PROBE_QUERY,
             budget=220,
         )
     )

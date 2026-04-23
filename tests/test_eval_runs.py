@@ -35,12 +35,19 @@ GETATTR_DEFAULT_PROBE_RUN_SPEC_PATH = (
     / "run_specs"
     / "oracle_signal_getattr_default_probe_matrix.json"
 )
+GETATTR_DEFAULT_VALUE_PROBE_RUN_SPEC_PATH = (
+    REPO_ROOT
+    / "evals"
+    / "run_specs"
+    / "oracle_signal_getattr_default_value_probe_matrix.json"
+)
 HASATTR_PROBE_RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_hasattr_probe_matrix.json"
 )
 PROBE_BUDGETS = (220, 180)
 GETATTR_PROBE_BUDGETS = (220,)
 GETATTR_DEFAULT_PROBE_BUDGETS = (220,)
+GETATTR_DEFAULT_VALUE_PROBE_BUDGETS = (220,)
 HASATTR_PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     CONTEXT_IR_PROVIDER,
@@ -628,6 +635,74 @@ def test_execute_eval_run_spec_populates_runtime_fields_for_getattr_default_prob
 
     for provider_name in BASELINE_PROVIDERS:
         for budget in GETATTR_DEFAULT_PROBE_BUDGETS:
+            baseline_record = _record_for(
+                parsed_records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
+
+    record = _record_for(
+        parsed_records,
+        provider_name=CONTEXT_IR_PROVIDER,
+        budget=220,
+    )
+    unsupported_selector = next(
+        selector
+        for selector in cast(list[dict[str, object]], record["resolved_selectors"])
+        if selector["resolved_unit_id"] == "unsupported:call:main.py:2:11"
+    )
+    unsupported_selected_unit = next(
+        unit
+        for unit in _selected_units(record)
+        if unit["unit_id"] == "unsupported:call:main.py:2:11"
+    )
+
+    assert record["spec_version"] == "v1"
+    assert record["provider_name"] == CONTEXT_IR_PROVIDER
+    assert record["budget"] == 220
+    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selector["has_attached_runtime_provenance"] is True
+    assert unsupported_selected_unit["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selected_unit["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        unsupported_selected_unit["attached_runtime_provenance_record_ids"],
+    )
+
+
+def test_execute_eval_run_spec_populates_runtime_fields_for_getattr_default_value_probe(
+    tmp_path: Path,
+) -> None:
+    """The defaulted ``getattr`` value pilot keeps runtime fields additive."""
+    ledger_path = tmp_path / "getattr_default_value_probe.jsonl"
+
+    execution = eval_runs.execute_eval_run_spec(
+        GETATTR_DEFAULT_VALUE_PROBE_RUN_SPEC_PATH,
+        ledger_path,
+        git_commit="abc1234",
+        python_version="3.11.9",
+        package_version=context_ir.__version__,
+    )
+
+    parsed_records = _parsed_ledger_records(ledger_path)
+    assert execution.record_count == len(PROBE_PROVIDERS) * len(
+        GETATTR_DEFAULT_VALUE_PROBE_BUDGETS
+    )
+    assert len(parsed_records) == len(PROBE_PROVIDERS) * len(
+        GETATTR_DEFAULT_VALUE_PROBE_BUDGETS
+    )
+    assert {
+        (record["provider_name"], record["budget"]) for record in parsed_records
+    } == {
+        (provider_name, budget)
+        for provider_name in PROBE_PROVIDERS
+        for budget in GETATTR_DEFAULT_VALUE_PROBE_BUDGETS
+    }
+
+    for provider_name in BASELINE_PROVIDERS:
+        for budget in GETATTR_DEFAULT_VALUE_PROBE_BUDGETS:
             baseline_record = _record_for(
                 parsed_records,
                 provider_name=provider_name,

@@ -10,16 +10,17 @@ The current semantic-first baseline is supported by repo-local tests and
 accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
-Release authority is split by artifact type. `8133e0a` is the latest pushed
-docs-only continuity/process-correction commit, and `3291268` is the latest
-pushed docs-only evidence/claim reconciliation commit. The latest pushed
-code/test evidence authority is `c592dca`, which carries narrow internal
-`REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and `getattr(obj, name)`
-runtime-backed evidence. The accepted narrow internal eval-only
-`REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` pilot records evidence for
-the default-return branch. These
-reflective pilots do not widen public claims, public APIs, MCP behavior,
-scoring, winner selection, or generalized runtime coverage.
+Release authority is split by artifact type. `4d9334f` is the latest pushed
+docs-only continuity/release-state commit, and `3291268` is the latest pushed
+docs-only evidence/claim reconciliation commit. The latest pushed code/test
+evidence authority is `7d43302`, which carries narrow internal
+`REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` default-return branch
+evidence beside the earlier `c592dca` `hasattr(obj, name)` and
+`getattr(obj, name)` runtime-backed evidence. Current accepted internal
+eval-only evidence also includes a sibling `getattr(obj, name, default)`
+value-return branch pilot. These reflective pilots do not widen public claims,
+public APIs, MCP behavior, scoring, winner selection, or generalized runtime
+coverage.
 
 Proven by current unit and integration tests:
 
@@ -69,10 +70,12 @@ Proven by current unit and integration tests:
     `oracle_signal_hasattr_probe` task
   - the `REFLECTIVE_BUILTIN` / `getattr(obj, name)` internal pilot for the
     `oracle_signal_getattr_probe` task
-  - the accepted narrow internal eval-only `REFLECTIVE_BUILTIN` /
-    `getattr(obj, name, default)` pilot for the
-    `oracle_signal_getattr_default_probe` task, limited to default-return
-    branch evidence
+  - the narrow internal eval-only `REFLECTIVE_BUILTIN` /
+    `getattr(obj, name, default)` default-return branch pilot for the
+    `oracle_signal_getattr_default_probe` task
+  - the narrow internal eval-only `REFLECTIVE_BUILTIN` /
+    `getattr(obj, name, default)` value-return sibling pilot for the
+    `oracle_signal_getattr_default_value_probe` task
 - In those runtime-backed pilots, the dynamic or reflective selector remains
   primarily `unsupported/opaque`; runtime-backed provenance is additive
   attached evidence. This is internal evidence, not a public benchmark, broad
@@ -102,7 +105,8 @@ Architecturally intended but not yet evaluated:
   import-neighborhood providers.
 - Runtime-backed task families beyond the current narrow `DYNAMIC_IMPORT`,
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
-  eval-only default-return `getattr(obj, name, default)` internal pilots.
+  eval-only default-return and value-return `getattr(obj, name, default)`
+  internal pilots.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -122,9 +126,9 @@ Architecturally intended but not yet evaluated:
   runtime-backed, heuristic/frontier, and unsupported/opaque surfaces.
 - Narrow runtime-backed internal pilots: `DYNAMIC_IMPORT` plus
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
-  eval-only default-return `getattr(obj, name, default)` fixtures, tasks, run
-  specs, and additive runtime provenance. These pilots are internal evidence
-  surfaces, not public benchmark surfaces.
+  eval-only default-return and value-return `getattr(obj, name, default)`
+  fixtures, tasks, run specs, and additive runtime provenance. These pilots are
+  internal evidence surfaces, not public benchmark surfaces.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -166,9 +170,9 @@ The following claims are allowed because current repo artifacts support them:
 - Internal runtime-backed eval evidence currently covers the narrow
   `DYNAMIC_IMPORT` provider/budget matrix and the narrow
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
-  eval-only default-return `getattr(obj, name, default)` pilots. These pilots
-  keep the dynamic or reflective selector primarily `unsupported/opaque` while
-  attaching runtime-backed provenance additively.
+  eval-only default-return and value-return `getattr(obj, name, default)`
+  pilots. These pilots keep the dynamic or reflective selector primarily
+  `unsupported/opaque` while attaching runtime-backed provenance additively.
 
 ## Unsupported Claims Today
 
@@ -183,8 +187,8 @@ The following claims are not currently allowed:
   dynamic imports, reflection, `exec`, `eval`, monkey patching, metaclasses,
   runtime attribute injection, or general decorator semantics. The narrow
   internal `DYNAMIC_IMPORT`, `hasattr(obj, name)`, `getattr(obj, name)`, and
-  eval-only default-return `getattr(obj, name, default)` pilots do not change
-  this public boundary.
+  eval-only default-return and value-return `getattr(obj, name, default)`
+  pilots do not change this public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
@@ -206,7 +210,7 @@ Next smallest eval slices for the post-milestone program:
    choices.
 2. Broaden hybrid static + runtime analysis evidence beyond the current narrow
    `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`,
-   `getattr(obj, name)`, and eval-only default-return
+   `getattr(obj, name)`, and eval-only default-return and value-return
    `getattr(obj, name, default)` pilots only through reproducible
    runtime-backed fixtures, probes, and raw evidence storage.
 3. Broaden task, budget, and baseline coverage only after the tiered internal
