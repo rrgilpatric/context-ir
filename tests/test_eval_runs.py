@@ -26,6 +26,16 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_smoke.json"
 PROBE_RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_dynamic_import_probe_matrix.json"
 )
+PROBE_BUDGETS = (220, 180)
+PROBE_PROVIDERS = (
+    CONTEXT_IR_PROVIDER,
+    LEXICAL_TOP_K_FILES_PROVIDER,
+    IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
+)
+BASELINE_PROVIDERS = (
+    LEXICAL_TOP_K_FILES_PROVIDER,
+    IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
+)
 _RAW_RECORD_KEYS = {
     "spec_version",
     "run_id",
@@ -140,6 +150,26 @@ def _parsed_ledger_records(ledger_path: Path) -> list[dict[str, object]]:
         cast(dict[str, object], json.loads(line))
         for line in ledger_path.read_text(encoding="utf-8").splitlines()
     ]
+
+
+def _record_for(
+    records: list[dict[str, object]],
+    *,
+    provider_name: str,
+    budget: int,
+) -> dict[str, object]:
+    """Return one raw ledger record by provider and budget."""
+    return next(
+        record
+        for record in records
+        if record["provider_name"] == provider_name and record["budget"] == budget
+    )
+
+
+def _selected_units(record: dict[str, object]) -> list[dict[str, object]]:
+    """Return structured selected-unit metadata from one raw ledger record."""
+    provider_metadata = cast(dict[str, object], record["provider_metadata"])
+    return cast(list[dict[str, object]], provider_metadata["selected_units"])
 
 
 def _smoke_setup() -> EvalOracleSetup:
@@ -328,11 +358,31 @@ def test_execute_eval_run_spec_populates_runtime_backed_fields_for_probe(
     )
 
     parsed_records = _parsed_ledger_records(ledger_path)
-    assert execution.record_count == 1
-    assert parsed_records[0]["spec_version"] == "v1"
-    assert parsed_records[0]["provider_name"] == CONTEXT_IR_PROVIDER
+    assert execution.record_count == len(PROBE_PROVIDERS) * len(PROBE_BUDGETS)
+    assert len(parsed_records) == len(PROBE_PROVIDERS) * len(PROBE_BUDGETS)
+    assert {
+        (record["provider_name"], record["budget"]) for record in parsed_records
+    } == {
+        (provider_name, budget)
+        for provider_name in PROBE_PROVIDERS
+        for budget in PROBE_BUDGETS
+    }
 
-    record = parsed_records[0]
+    for provider_name in BASELINE_PROVIDERS:
+        for budget in PROBE_BUDGETS:
+            baseline_record = _record_for(
+                parsed_records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
+
+    record = _record_for(
+        parsed_records,
+        provider_name=CONTEXT_IR_PROVIDER,
+        budget=220,
+    )
     unsupported_selector = next(
         selector
         for selector in cast(list[dict[str, object]], record["resolved_selectors"])
@@ -340,13 +390,13 @@ def test_execute_eval_run_spec_populates_runtime_backed_fields_for_probe(
     )
     unsupported_selected_unit = next(
         unit
-        for unit in cast(
-            list[dict[str, object]],
-            cast(dict[str, object], record["provider_metadata"])["selected_units"],
-        )
+        for unit in _selected_units(record)
         if unit["unit_id"] == "unsupported:call:main.py:5:13"
     )
 
+    assert record["spec_version"] == "v1"
+    assert record["provider_name"] == CONTEXT_IR_PROVIDER
+    assert record["budget"] == 220
     assert (
         cast(dict[str, object], unsupported_selector["original_selector"])[
             "expected_primary_capability_tier"

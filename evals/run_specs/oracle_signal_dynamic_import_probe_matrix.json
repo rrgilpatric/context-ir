@@ -5,8 +5,12 @@
       "case_id": "signal_dynamic_import_probe",
       "task_path": "evals/tasks/oracle_signal_dynamic_import_probe.json",
       "query": "Fix unsupported dynamic import import_module(\"plugins.weather\") while keeping probe digest output aligned",
-      "budgets": [220],
-      "providers": ["context_ir"]
+      "budgets": [220, 180],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
     }
   ]
 }

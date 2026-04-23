@@ -8,6 +8,7 @@ from typing import cast
 
 import context_ir
 import context_ir.eval_providers as eval_providers
+import context_ir.eval_report as eval_report
 import context_ir.eval_runs as eval_runs
 import context_ir.eval_summary as eval_summary
 import context_ir.semantic_types as semantic_types
@@ -24,6 +25,16 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_dynamic_import_probe.
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_dynamic_import_probe_matrix.json"
 )
+PROBE_BUDGETS = (220, 180)
+PROBE_PROVIDERS = (
+    eval_providers.CONTEXT_IR_PROVIDER,
+    eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
+    eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
+)
+BASELINE_PROVIDERS = (
+    eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
+    eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
+)
 QUERY = (
     'Fix unsupported dynamic import import_module("plugins.weather") '
     "while keeping probe digest output aligned"
@@ -36,6 +47,26 @@ def _parsed_ledger_records(ledger_path: Path) -> list[dict[str, object]]:
         cast(dict[str, object], json.loads(line))
         for line in ledger_path.read_text(encoding="utf-8").splitlines()
     ]
+
+
+def _record_for(
+    records: list[dict[str, object]],
+    *,
+    provider_name: str,
+    budget: int,
+) -> dict[str, object]:
+    """Return one raw ledger record by provider and budget."""
+    return next(
+        record
+        for record in records
+        if record["provider_name"] == provider_name and record["budget"] == budget
+    )
+
+
+def _selected_units(record: dict[str, object]) -> list[dict[str, object]]:
+    """Return structured selected-unit metadata from one raw ledger record."""
+    provider_metadata = cast(dict[str, object], record["provider_metadata"])
+    return cast(list[dict[str, object]], provider_metadata["selected_units"])
 
 
 def test_dynamic_import_probe_task_resolves_expected_selectors_deterministically() -> (
@@ -72,8 +103,8 @@ def test_dynamic_import_probe_run_spec_loads_cleanly_through_runner() -> None:
     assert case.case_id == "signal_dynamic_import_probe"
     assert case.task_path == "evals/tasks/oracle_signal_dynamic_import_probe.json"
     assert case.query == QUERY
-    assert case.budgets == (220,)
-    assert case.providers == (eval_providers.CONTEXT_IR_PROVIDER,)
+    assert case.budgets == PROBE_BUDGETS
+    assert case.providers == PROBE_PROVIDERS
 
 
 def test_dynamic_import_probe_assets_stay_internal() -> None:
@@ -102,15 +133,33 @@ def test_dynamic_import_probe_run_executes_with_runtime_backed_raw_fields(
 
     records = _parsed_ledger_records(ledger_path)
     assert execution.plan_id == "oracle_signal_dynamic_import_probe_matrix"
-    assert execution.record_count == 1
-    assert len(records) == 1
+    assert execution.record_count == len(PROBE_PROVIDERS) * len(PROBE_BUDGETS)
+    assert len(records) == len(PROBE_PROVIDERS) * len(PROBE_BUDGETS)
+    assert {(record["provider_name"], record["budget"]) for record in records} == {
+        (provider_name, budget)
+        for provider_name in PROBE_PROVIDERS
+        for budget in PROBE_BUDGETS
+    }
 
-    record = records[0]
-    provider_metadata = cast(dict[str, object], record["provider_metadata"])
+    for provider_name in BASELINE_PROVIDERS:
+        for budget in PROBE_BUDGETS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
+
+    record = _record_for(
+        records,
+        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+        budget=220,
+    )
     metrics = cast(dict[str, object], record["metrics"])
     unsupported_unit = next(
         unit
-        for unit in cast(list[dict[str, object]], provider_metadata["selected_units"])
+        for unit in _selected_units(record)
         if unit["unit_id"] == "unsupported:call:main.py:5:13"
     )
 
@@ -162,34 +211,85 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
         for aggregate in summary.selected_unit_tier_aggregates
         if aggregate.primary_capability_tier == "unsupported/opaque"
     )
-    provider_selected_unit_aggregate = next(
-        aggregate
-        for aggregate in summary.provider_selected_unit_aggregates
-        if aggregate.provider_name == eval_providers.CONTEXT_IR_PROVIDER
-    )
     provider_unsupported_selected_unit_aggregate = next(
         aggregate
         for aggregate in summary.provider_selected_unit_tier_aggregates
         if aggregate.provider_name == eval_providers.CONTEXT_IR_PROVIDER
         and aggregate.primary_capability_tier == "unsupported/opaque"
     )
+    report = eval_report.build_eval_report(ledger_path)
 
-    assert unsupported_selector_aggregate.selector_count == 1
-    assert unsupported_selector_aggregate.satisfied_count == 1
-    assert runtime_expectation_aggregate.selector_count == 1
-    assert runtime_expectation_aggregate.satisfied_count == 1
-    assert unsupported_selected_unit_aggregate.selected_unit_count == 1
-    assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 1
-    assert provider_selected_unit_aggregate.selected_unit_count == 5
-    assert provider_selected_unit_aggregate.attached_runtime_provenance_count == 1
-    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 1
+    assert unsupported_selector_aggregate.selector_count == 6
+    assert unsupported_selector_aggregate.satisfied_count == 6
+    assert runtime_expectation_aggregate.selector_count == 6
+    assert runtime_expectation_aggregate.satisfied_count == 6
+    assert tuple(
+        (
+            aggregate.primary_capability_tier,
+            aggregate.selected_unit_count,
+            aggregate.attached_runtime_provenance_count,
+        )
+        for aggregate in summary.selected_unit_tier_aggregates
+    ) == (
+        ("statically_proved", 5, 0),
+        ("heuristic/frontier", 2, 0),
+        ("unsupported/opaque", 2, 2),
+    )
+    assert unsupported_selected_unit_aggregate.selected_unit_count == 2
+    assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 2
+    assert tuple(
+        (
+            aggregate.provider_name,
+            aggregate.selected_unit_count,
+            aggregate.attached_runtime_provenance_count,
+        )
+        for aggregate in summary.provider_selected_unit_aggregates
+    ) == (
+        (eval_providers.CONTEXT_IR_PROVIDER, 9, 2),
+        (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER, 0, 0),
+        (eval_providers.LEXICAL_TOP_K_FILES_PROVIDER, 0, 0),
+    )
+    assert tuple(
+        (
+            aggregate.provider_name,
+            aggregate.primary_capability_tier,
+            aggregate.selected_unit_count,
+            aggregate.attached_runtime_provenance_count,
+        )
+        for aggregate in summary.provider_selected_unit_tier_aggregates
+    ) == (
+        (eval_providers.CONTEXT_IR_PROVIDER, "statically_proved", 5, 0),
+        (eval_providers.CONTEXT_IR_PROVIDER, "heuristic/frontier", 2, 0),
+        (eval_providers.CONTEXT_IR_PROVIDER, "unsupported/opaque", 2, 2),
+    )
+    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 2
     assert (
         provider_unsupported_selected_unit_aggregate.attached_runtime_provenance_count
-        == 1
+        == 2
     )
-    assert "## Capability-Tier Accounting" in rendered
-    assert "| yes | 1 | 1 |" in rendered
-    assert "| unsupported/opaque | 1 | 1 |" in rendered
-    assert "| context_ir | 5 | 1 |" in rendered
-    assert "| context_ir | unsupported/opaque | 1 | 1 |" in rendered
-    assert "| runtime_backed |" not in rendered
+    assert tuple(
+        (result.budget, result.winner_provider_names)
+        for result in summary.task_budget_results
+    ) == (
+        (180, (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,)),
+        (220, (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,)),
+    )
+
+    assert report.markdown_report == rendered
+    for markdown in (rendered, report.markdown_report):
+        assert "## Capability-Tier Accounting" in markdown
+        assert "### Selected Units by Provider" in markdown
+        assert "### Selected Units by Provider and Actual Primary Tier" in markdown
+        assert "| yes | 6 | 6 |" in markdown
+        assert "| unsupported/opaque | 2 | 2 |" in markdown
+        assert "| context_ir | 9 | 2 |" in markdown
+        assert "| import_neighborhood_files | 0 | 0 |" in markdown
+        assert "| lexical_top_k_files | 0 | 0 |" in markdown
+        assert "| context_ir | unsupported/opaque | 2 | 2 |" in markdown
+        assert (
+            "| oracle_signal_dynamic_import_probe | 180 | import_neighborhood_files |"
+        ) in markdown
+        assert (
+            "| oracle_signal_dynamic_import_probe | 220 | import_neighborhood_files |"
+        ) in markdown
+        assert "| runtime_backed |" not in markdown
