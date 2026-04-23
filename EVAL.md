@@ -10,17 +10,13 @@ The current semantic-first baseline is supported by repo-local tests and
 accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
-Release authority is split by artifact type. `4d9334f` is the latest pushed
-docs-only continuity/release-state commit, and `3291268` is the latest pushed
-docs-only evidence/claim reconciliation commit. The latest pushed code/test
-evidence authority is `7d43302`, which carries narrow internal
-`REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` default-return branch
-evidence beside the earlier `c592dca` `hasattr(obj, name)` and
-`getattr(obj, name)` runtime-backed evidence. Current accepted internal
-eval-only evidence also includes a sibling `getattr(obj, name, default)`
-value-return branch pilot. These reflective pilots do not widen public claims,
-public APIs, MCP behavior, scoring, winner selection, or generalized runtime
-coverage.
+Release authority is split by artifact type. The latest pushed code/test
+evidence authority is `b014595`, which carries narrow internal
+`REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch
+evidence beside the prior `7d43302` default-return branch and the earlier
+`c592dca` `hasattr(obj, name)` and `getattr(obj, name)` runtime-backed
+evidence. These reflective pilots do not widen public claims, public APIs, MCP
+behavior, scoring, winner selection, or generalized runtime coverage.
 
 Proven by current unit and integration tests:
 

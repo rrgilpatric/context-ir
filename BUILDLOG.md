@@ -2,6 +2,309 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-23 -- Defaulted Getattr Value-Return Post-Push Continuity Sync
+
+- Synced post-push release state after `b014595` reached `origin/main`
+- Corrected release/evidence wording so `EVAL.md` names `b014595` as the latest pushed code/test evidence authority and keeps `7d43302` as the prior default-return branch anchor
+- Updated continuity state in `PLAN.md` and `BUILDLOG.md`
+- Preserved boundaries:
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - public-safe quad-matrix comparative boundaries remain unchanged
+  - no public API, MCP, runtime-acquisition, analyzer/tool-facade, schema, scoring, winner-selection, public-claim, or product-positioning widening
+- Validation:
+  - `git diff --check -- EVAL.md PLAN.md BUILDLOG.md`
+  - release-doc stale authority grep corrected from `7d43302` to `b014595`
+- Acceptance decision:
+  - accept the post-push continuity sync first-pass
+  - commit and push this docs-only continuity sync so future control lanes restart from repo-backed state rather than chat-only state
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Defaulted Getattr Value-Return Remote Push
+
+- Ryan explicitly authorized remote push of local release commit `b014595`
+- Verified before push:
+  - branch `main`
+  - local `HEAD` `b014595`
+  - `origin/main` `4d9334f`
+  - local workspace modifications were limited to:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+- Pushed commit:
+  - `b014595 Add defaulted getattr value eval pilot`
+- Post-push release state:
+  - local `HEAD` is `b014595`
+  - `origin/main` is `b014595`
+  - latest pushed code/test release authority is now `b014595`
+  - prior pushed defaulted `getattr(obj, name, default)` default-return branch release authority `7d43302` remains the default-return branch anchor
+  - prior pushed `getattr(obj, name)` release authority `c592dca` remains the two-argument `getattr` anchor
+  - latest pushed docs-only continuity/process correction commit remains `8133e0a`
+  - latest pushed docs-only evidence/claim reconciliation commit remains `3291268`
+- Acceptance decision:
+  - accept the remote push first-pass
+  - route the next control action to this post-push continuity sync
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Defaulted Getattr Value-Return Local Commit
+
+- Created the local release commit for the accepted defaulted `getattr(obj, name, default)` value-return branch tranche after release-unit audit, full regression, and commit-gating review passed
+- Verified staged release-unit files before commit:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `tests/test_eval_providers.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `evals/fixtures/oracle_signal_getattr_default_value_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_default_value_probe/main.py`
+  - `evals/tasks/oracle_signal_getattr_default_value_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+- Files kept unstaged and excluded from the release-unit commit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Created local commit:
+  - `b014595 Add defaulted getattr value eval pilot`
+- Post-commit release state:
+  - local `HEAD` is `b014595`
+  - `origin/main` remains `4d9334f`
+  - latest pushed code/test release authority remains `7d43302` until Ryan explicitly authorizes push
+  - `b014595` is audit-cleared, full-regression-cleared, commit-gating-cleared, and committed locally
+  - push remains human-gated and has not occurred
+- Acceptance decision:
+  - accept local commit creation first-pass
+  - route the next control action to an explicit hold for human push authorization
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Defaulted Getattr Value-Return Commit-Gating Review
+
+- Performed commit-gating review for the accumulated defaulted `getattr(obj, name, default)` value-return branch release unit after release-unit audit and full regression passed
+- Exact release-unit files approved for staging:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `tests/test_eval_providers.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `evals/fixtures/oracle_signal_getattr_default_value_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_default_value_probe/main.py`
+  - `evals/tasks/oracle_signal_getattr_default_value_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+- Files explicitly excluded from the release-unit commit candidate:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Findings-first review result:
+  - no findings
+  - no source, default-return fixture, runtime-acquisition, analyzer, tool-facade, package-root export, MCP, schema, scoring, winner-selection, public-claim, or product-positioning surface has a diff
+  - release docs contain no `workspace-only`, `workspace tranche`, or `accepted workspace` wording
+  - JSON assets validate
+  - the value-return runtime payload remains `lookup_outcome=returned_value`
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+- Control-lane validation passed:
+  - `git diff --name-only -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md tests/test_eval_providers.py tests/test_eval_runs.py`
+  - `git ls-files --others --exclude-standard`
+  - `git diff --name-only -- src evals/fixtures/oracle_signal_getattr_default_probe evals/tasks/oracle_signal_getattr_default_probe.json evals/run_specs/oracle_signal_getattr_default_probe_matrix.json` returned no changed forbidden/default-return files
+  - `git diff --cached --name-only` returned no staged files before staging
+  - `git diff --check --` the exact release-unit file set
+  - `rg -n "workspace-only|workspace tranche|accepted workspace" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md` returned no matches as expected
+  - JSON validation for the new runtime observation, task, and run-spec files
+  - targeted boundary grep checks over value-return/default-return, `unsupported/opaque`, additive provenance, public-safe quad-matrix, release docs, and tests
+- Acceptance decision:
+  - accept commit-gating first-pass
+  - only the exact release-unit file set may be staged for the local commit
+  - keep continuity files excluded from the release-unit commit
+  - local commit creation may proceed; push remains human-gated
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Defaulted Getattr Value-Return Full Regression Gate
+
+- Ran the full regression gate for the accumulated workspace-only defaulted `getattr(obj, name, default)` value-return branch tranche after the clean release-unit audit
+- Verified live control state:
+  - branch `main`
+  - local `HEAD` `4d9334f`
+  - `origin/main` `4d9334f`
+  - latest pushed code/test release authority remains `7d43302`
+  - tranche remains workspace-only, uncommitted, and unpushed
+- Full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - pytest result: `575 passed`
+- Acceptance decision:
+  - accept the full regression gate first-pass
+  - the tranche is now audit-cleared and full-regression-cleared, but remains pre-commit-gating, pre-commit, and pre-push
+  - route the next control action to commit-gating review over the exact release-unit file set before staging or local commit creation
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Defaulted Getattr Value-Return Release-Unit Audit
+
+- Reviewed the returned dedicated read-only release-unit audit over the accumulated workspace tranche
+- Verified live state before acceptance:
+  - branch `main`
+  - local `HEAD` `4d9334f`
+  - `origin/main` `4d9334f`
+  - latest pushed code/test release authority remains `7d43302`
+  - workspace diff matches the accepted value-return implementation slice, same-tranche docs/evidence reconciliation, and continuity updates
+- Audit scope:
+  - `evals/fixtures/oracle_signal_getattr_default_value_probe/`
+  - `evals/tasks/oracle_signal_getattr_default_value_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_providers.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Findings-first review result:
+  - no findings
+  - the stale release-doc `workspace-only` wording finding is not active in the live release docs
+  - no `src/` changes were introduced
+  - no runtime-acquisition, analyzer, tool-facade, package-root export, MCP, schema, scoring, winner-selection, public-claim, or product-positioning surface was widened
+  - the new value-return probe keeps selector and selected-unit primary truth `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - the existing default-return fixture has no diff
+- Audit validation reported as passed:
+  - `git diff --check`
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md PLAN.md BUILDLOG.md tests/test_eval_runs.py tests/test_eval_providers.py`
+  - JSON validation for the new runtime observation, task, and run-spec files
+  - `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m ruff check --no-cache src/ tests/`
+  - `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m mypy --strict --cache-dir /tmp/context-ir-mypy-audit-cache src/`
+  - targeted pytest for the new value-return probe and affected eval-run/provider subsets
+  - broader affected two-file eval test run reported `36 passed`
+- Control-lane validation passed:
+  - `git diff --name-only -- src evals/fixtures/oracle_signal_getattr_default_probe evals/tasks/oracle_signal_getattr_default_probe.json evals/run_specs/oracle_signal_getattr_default_probe_matrix.json` returned no changed forbidden/default-return files
+  - `rg -n "workspace-only|workspace tranche|accepted workspace" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md` returned no matches as expected
+  - `git diff --check`
+  - targeted boundary grep checks confirmed `7d43302`, value-return/default-return, `unsupported/opaque`, additive provenance, quad-matrix, public API, MCP, and winner-selection boundary wording
+- Acceptance decision:
+  - accept the release-unit audit first-pass
+  - the accumulated workspace tranche is audit-cleared but remains pre-final full-regression gate, pre-commit-gating, pre-commit, and pre-push
+  - route the next control action to the full regression gate
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Defaulted Getattr Value-Return Docs Reconciliation Review
+
+- Reviewed the returned same-tranche docs/evidence reconciliation for the accepted workspace-only `getattr(obj, name, default)` value-return branch pilot
+- Verified live state before acceptance:
+  - branch `main`
+  - local `HEAD` `4d9334f`
+  - `origin/main` `4d9334f`
+  - latest pushed code/test release authority remains `7d43302`
+  - accepted workspace-only implementation slice for `oracle_signal_getattr_default_value_probe` remains uncommitted and unpushed
+  - pre-existing continuity edits remain local in `PLAN.md` and `BUILDLOG.md`
+- Files changed by the docs/evidence slice:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- Findings-first review result:
+  - no findings
+  - the stale release-doc `workspace-only` wording finding is not active in the live release docs
+  - the docs name `7d43302` as pushed code/test evidence authority
+  - the value-return pilot is described with release-neutral wording as narrow internal eval-only evidence beside the default-return branch
+  - public-safe quad-matrix boundaries are preserved
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - no public claim, public API, MCP behavior, runtime acquisition, analyzer/tool-facade behavior, schema, scoring, winner-selection, or product-positioning widening was introduced
+- Execution-lane validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - `rg -n "workspace-only|workspace tranche|accepted workspace" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md` returned no matches as expected
+  - targeted grep checks confirmed default-return, value-return, `unsupported/opaque`, additive provenance, public-safe quad-matrix, public API, MCP, and winner-selection boundary wording
+- Control-lane validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - `rg -n "workspace-only|workspace tranche|accepted workspace" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md` returned no matches as expected
+  - `rg -n "7d43302|default-return|value-return|returned_value|unsupported/opaque|additive|quad matrix|public-safe|public API|public APIs|MCP|winner selection|runtime acquisition|schema|scoring" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+- Acceptance decision:
+  - accept the docs/evidence reconciliation first-pass as workspace-only tranche state
+  - keep the accumulated tranche pre-release-unit audit, pre-final full-regression gate, pre-commit-gating, pre-commit, and pre-push
+  - route the next control action to a dedicated read-only release-unit audit over the accumulated workspace tranche
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Defaulted Getattr Value-Return Pilot Implementation Review
+
+- Reviewed the returned implementation slice for the additive internal eval-only value-return branch pilot for `getattr(obj, name, default)`
+- Verified live state before acceptance:
+  - branch `main`
+  - local `HEAD` `4d9334f`
+  - `origin/main` `4d9334f`
+  - latest pushed code/test release authority remains `7d43302`
+  - pre-existing local continuity edits were limited to `PLAN.md` and `BUILDLOG.md`
+- Files changed by the implementation slice:
+  - `evals/fixtures/oracle_signal_getattr_default_value_probe/main.py`
+  - `evals/fixtures/oracle_signal_getattr_default_value_probe/eval_runtime_observations.json`
+  - `evals/tasks/oracle_signal_getattr_default_value_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_providers.py`
+- Findings-first review result:
+  - no findings
+  - the existing `oracle_signal_getattr_default_probe` default-return fixture remains unchanged
+  - the new pilot remains `1 task x 1 budget x 3 providers` with budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - the runtime observation payload covers `lookup_outcome=returned_value`
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - no package-root API, MCP, analyzer/tool-facade behavior, runtime-acquisition, schema, scoring, winner-selection, public benchmark claim, or public product-boundary surface changed
+  - the previously reported release-doc `workspace-only` wording finding is not active in live release docs
+- Execution-lane validation passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_value_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - pytest result: `575 passed`
+- Control-lane validation passed:
+  - `git diff --check`
+  - JSON validation for the new runtime observation, task, and run-spec files
+  - forbidden-surface diff check over source, public docs, package-root, MCP, runtime-acquisition, analyzer/tool-facade, schema, scoring, and winner-selection surfaces
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_value_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_runs.py tests/test_eval_providers.py -k getattr_default_value_probe -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_providers.py -k "defaulted_getattr_value_probe or getattr_value_probe" -q`
+- Acceptance decision:
+  - accept the implementation slice first-pass as workspace-only tranche state
+  - keep the tranche pre-same-tranche docs/evidence reconciliation, pre-release-unit audit, pre-final full-regression gate, pre-commit-gating, pre-commit, and pre-push
+  - route the next control action to one bounded same-tranche docs/evidence reconciliation slice
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Post-7d43302 Value-Return Planning Spike Review
+
+- Reviewed the returned read-only planning spike for the next smallest truthful internal eval/evidence move after pushed `7d43302`
+- Verified live state before accepting:
+  - branch `main`
+  - local `HEAD` `4d9334f`
+  - `origin/main` `4d9334f`
+  - workspace clean before continuity sync
+  - latest pushed code/test release authority remains `7d43302`
+  - latest branch tip is docs-only continuity commit `4d9334f`
+- Findings-first review result:
+  - no findings
+  - the spike matches repo reality: the defaulted `getattr(obj, name, default)` evidence in `7d43302` is limited to the default-return branch, while runtime observation validation already admits `returned_value` for three-argument `getattr`
+  - no concrete defect requires reopening `7d43302`
+- Accepted planning decision:
+  - add one sibling internal eval-only value-return branch pilot for `getattr(obj, name, default)`, tentatively `oracle_signal_getattr_default_value_probe`
+  - keep the existing `oracle_signal_getattr_default_probe` default-return fixture unchanged
+  - keep the pilot at `1 task x 1 budget x 3 providers` with budget `220`
+  - keep providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - keep selector and selected-unit primary truth `unsupported/opaque`
+  - keep runtime-backed provenance additive only
+  - do not widen package-root APIs, MCP exposure, analyzer/tool-facade behavior, runtime acquisition, schema, scoring, winner selection, public benchmark claims, or public product boundaries
+- Deferred:
+  - another reflective-builtin broadening step
+  - a different runtime-backed eval family
+  - methodology/reporting hardening for outcome-count visibility
+- Acceptance decision:
+  - accept the planning spike first-pass
+  - route the next control action to one bounded external implementation slice prompt for the additive value-return probe
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Defaulted Getattr Tranche Remote Push
 
 - Ryan explicitly authorized remote push of local release commit `7d43302`
