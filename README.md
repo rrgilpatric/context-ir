@@ -29,8 +29,10 @@ tests and quality gates. The repo also includes deterministic internal eval
 infrastructure and a current four-asset signal evidence surface documented in
 `EVAL.md`; those artifacts are internal evidence, not external benchmark proof.
 `EVAL.md` also records narrow internal runtime-backed pilots for
-`DYNAMIC_IMPORT` and `hasattr(obj, name)`. Those pilots do not widen the public
-supported subset, public API, MCP wrapper, or public benchmark claim boundary.
+`DYNAMIC_IMPORT` and narrow `REFLECTIVE_BUILTIN` selectors exercised via
+`hasattr(obj, name)` and `getattr(obj, name)`. Those pilots do not widen the
+public supported subset, public API, MCP wrapper, or public benchmark claim
+boundary.
 
 ## Supported Subset and Limits
 
@@ -59,7 +61,8 @@ Unsupported limits include:
 - multi-language analysis
 
 The repo does contain narrow internal runtime-backed eval evidence for selected
-unsupported `DYNAMIC_IMPORT` and `hasattr(obj, name)` cases. That evidence is
+unsupported `DYNAMIC_IMPORT` cases and narrow `REFLECTIVE_BUILTIN` pilots over
+`hasattr(obj, name)` and `getattr(obj, name)` selectors. That evidence is
 additive internal provenance on otherwise unsupported/opaque selectors; it does
 not make broad dynamic imports or reflection part of the public supported
 subset.
@@ -163,7 +166,7 @@ Current evidence includes:
 - capability-tier and provider-scoped selected-unit accounting in the internal
   eval evidence path
 - narrow internal runtime-backed pilots for `DYNAMIC_IMPORT` and
-  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and `getattr(obj, name)`
 - within that fixed internal matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,

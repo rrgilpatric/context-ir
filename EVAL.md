@@ -10,11 +10,15 @@ The current semantic-first baseline is supported by repo-local tests and
 accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
-Release authority is split by artifact type. `7cb48bb` is docs-only
-continuity. The latest pushed code/test evidence authority is `90dcc15`, which
-adds the internal `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed
-eval pilot without widening public claims, public APIs, MCP behavior, scoring,
-winner selection, or generalized runtime coverage.
+Release authority is split by artifact type. `8133e0a` is the latest pushed
+docs-only continuity/process-correction commit, and `3291268` is the latest
+pushed docs-only evidence/claim reconciliation commit. The latest pushed
+code/test evidence authority is `762dd51`, which carries narrow internal
+`REFLECTIVE_BUILTIN` / `hasattr(obj, name)` runtime-backed evidence. The
+accepted current workspace tranche also includes a narrow internal
+`REFLECTIVE_BUILTIN` / `getattr(obj, name)` runtime-backed eval pilot. These
+reflective pilots do not widen public claims, public APIs, MCP behavior,
+scoring, winner selection, or generalized runtime coverage.
 
 Proven by current unit and integration tests:
 
@@ -62,6 +66,8 @@ Proven by current unit and integration tests:
     `oracle_signal_dynamic_import_probe` task
   - the `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` internal pilot for the
     `oracle_signal_hasattr_probe` task
+  - the `REFLECTIVE_BUILTIN` / `getattr(obj, name)` internal pilot for the
+    `oracle_signal_getattr_probe` task
 - In those runtime-backed pilots, the dynamic or reflective selector remains
   primarily `unsupported/opaque`; runtime-backed provenance is additive
   attached evidence. This is internal evidence, not a public benchmark, broad
@@ -90,7 +96,8 @@ Architecturally intended but not yet evaluated:
 - Additional baseline comparisons beyond the current lexical and
   import-neighborhood providers.
 - Runtime-backed task families beyond the current narrow `DYNAMIC_IMPORT` and
-  `hasattr(obj, name)` internal pilots.
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and `getattr(obj, name)`
+  internal pilots.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -108,10 +115,10 @@ Architecturally intended but not yet evaluated:
 - Capability-tier internal evidence: tier-aware eval storage and
   provider-scoped selected-unit accounting for statically proved,
   runtime-backed, heuristic/frontier, and unsupported/opaque surfaces.
-- Narrow runtime-backed internal pilots: `DYNAMIC_IMPORT` and
-  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` fixtures, tasks, run specs, and
-  additive runtime provenance. These pilots are internal evidence surfaces, not
-  public benchmark surfaces.
+- Narrow runtime-backed internal pilots: `DYNAMIC_IMPORT` plus
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and `getattr(obj, name)`
+  fixtures, tasks, run specs, and additive runtime provenance. These pilots
+  are internal evidence surfaces, not public benchmark surfaces.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -151,10 +158,10 @@ The following claims are allowed because current repo artifacts support them:
   units, including provider-scoped accounting that keeps statically proved,
   runtime-backed, heuristic/frontier, and unsupported/opaque support separate.
 - Internal runtime-backed eval evidence currently covers the narrow
-  `DYNAMIC_IMPORT` provider/budget matrix and the narrow `REFLECTIVE_BUILTIN` /
-  `hasattr(obj, name)` pilot. These pilots keep the dynamic or reflective
-  selector primarily `unsupported/opaque` while attaching runtime-backed
-  provenance additively.
+  `DYNAMIC_IMPORT` provider/budget matrix and the narrow
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and `getattr(obj, name)`
+  pilots. These pilots keep the dynamic or reflective selector primarily
+  `unsupported/opaque` while attaching runtime-backed provenance additively.
 
 ## Unsupported Claims Today
 
@@ -168,8 +175,8 @@ The following claims are not currently allowed:
 - No broad or public Python dynamic-semantics claims, including generalized
   dynamic imports, reflection, `exec`, `eval`, monkey patching, metaclasses,
   runtime attribute injection, or general decorator semantics. The narrow
-  internal `DYNAMIC_IMPORT` and `hasattr(obj, name)` pilots do not change this
-  public boundary.
+  internal `DYNAMIC_IMPORT`, `hasattr(obj, name)`, and `getattr(obj, name)`
+  pilots do not change this public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
@@ -190,8 +197,9 @@ Next smallest eval slices for the post-milestone program:
    capability-tier accounting separate from representation-tier rendering
    choices.
 2. Broaden hybrid static + runtime analysis evidence beyond the current narrow
-   `DYNAMIC_IMPORT` and `hasattr(obj, name)` pilots only through reproducible
-   runtime-backed fixtures, probes, and raw evidence storage.
+   `DYNAMIC_IMPORT` and `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and
+   `getattr(obj, name)` pilots only through reproducible runtime-backed
+   fixtures, probes, and raw evidence storage.
 3. Broaden task, budget, and baseline coverage only after the tiered internal
    eval model is stable and claim-bounded.
 4. Publish external benchmark methodology only after the internal tiered

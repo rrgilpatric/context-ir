@@ -11,9 +11,10 @@ authority for current claims, regression anchors, and reviewer-facing surfaces.
 
 Post-phase-0 internal slices have added capability-tier accounting and narrow
 runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
-matrix and the `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` pilot. Those slices
-do not widen public claims, public APIs, MCP behavior, scoring, winner
-selection, or generalized hybrid-runtime coverage.
+matrix and `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
+`getattr(obj, name)`. Those slices do not widen public claims, public APIs,
+MCP behavior, scoring, winner selection, or generalized hybrid-runtime
+coverage.
 
 The April 13 frozen spec is retired and superseded. Existing runtime modules under `src/context_ir/` still largely reflect the retired symbol-graph-first build and must be treated as implementation history until they are replaced slice by slice.
 
@@ -74,8 +75,8 @@ around rendering density.
 - statically proved: facts established from the accepted static semantic pipeline inside the supported subset
 - runtime-backed: repository-backed facts supported by reproducible runtime
   evidence or probes; current internal evidence is limited to narrow additive
-  `DYNAMIC_IMPORT` and `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` pilot
-  attachments
+  `DYNAMIC_IMPORT` plus `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and
+  `getattr(obj, name)` pilot attachments
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 

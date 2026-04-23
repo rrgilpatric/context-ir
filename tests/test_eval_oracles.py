@@ -46,6 +46,9 @@ FIXTURE_ROOT = REPO_ROOT / "evals" / "fixtures" / "oracle_smoke"
 PROBE_TASK_PATH = (
     REPO_ROOT / "evals" / "tasks" / "oracle_signal_dynamic_import_probe.json"
 )
+GETATTR_PROBE_TASK_PATH = (
+    REPO_ROOT / "evals" / "tasks" / "oracle_signal_getattr_probe.json"
+)
 HASATTR_PROBE_TASK_PATH = (
     REPO_ROOT / "evals" / "tasks" / "oracle_signal_hasattr_probe.json"
 )
@@ -357,6 +360,33 @@ def test_setup_eval_oracle_task_loads_dynamic_import_runtime_probe_when_present(
 def test_setup_eval_oracle_task_loads_hasattr_runtime_probe_when_present() -> None:
     """Fixture-local ``hasattr`` probes attach additive runtime provenance."""
     setup = setup_eval_oracle_task(HASATTR_PROBE_TASK_PATH)
+
+    assert [resolved.resolved_unit_id for resolved in setup.resolved_selectors] == [
+        "def:main.py:main.probe_attribute",
+        "def:main.py:main.render_probe_digest",
+        "unsupported:call:main.py:2:11",
+    ]
+    unsupported = setup.resolved_selectors[2]
+    selector = unsupported.selector
+
+    assert isinstance(selector, UnsupportedOracleSelector)
+    assert (
+        selector.expected_primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    )
+    assert selector.expect_attached_runtime_provenance is True
+    assert unsupported.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        unsupported.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported.has_attached_runtime_provenance is True
+    assert unsupported.attached_runtime_provenance_record_ids
+
+
+def test_setup_eval_oracle_task_loads_getattr_runtime_probe_when_present() -> None:
+    """Fixture-local ``getattr`` probes attach additive runtime provenance."""
+    setup = setup_eval_oracle_task(GETATTR_PROBE_TASK_PATH)
 
     assert [resolved.resolved_unit_id for resolved in setup.resolved_selectors] == [
         "def:main.py:main.probe_attribute",
