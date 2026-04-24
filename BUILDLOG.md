@@ -2,6 +2,221 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-24 -- Getattr Family Matrix Commit-Gating Review
+
+- Reviewed the returned read-only commit-gating result for the audit-cleared and full-regression-cleared `getattr` family provider/budget matrix expansion tranche
+- Repo-backed release state verified:
+  - branch `main`
+  - local `HEAD` `a23953c`
+  - `origin/main` `a23953c`
+  - latest pushed code/test authority remains `d8ebdc3`
+- Commit-gating result:
+  - no findings
+  - dirty set exactly matched the expected 14-file release set
+  - no staged changes were present
+  - no source, runtime/API/MCP, schema, scoring, provider, fixture, or task files were dirty
+  - each changed run spec has one case, budgets `[220, 100]`, and providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - release-facing docs preserve the quad-matrix comparative boundary, narrow internal `getattr` wording, selector and selected-unit `unsupported/opaque` truth, and additive runtime provenance
+  - no stale workspace-state wording appears in `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, or `ARCHITECTURE.md`
+  - `git diff --check` was clean
+- Recommended local commit subject:
+  - `Expand getattr-family eval matrices`
+- Acceptance decision:
+  - accept commit-gating first-pass
+  - route next to local commit creation over the exact intended release file set
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Getattr Family Matrix Full Regression Gate
+
+- Reviewed the returned full-regression gate for the audit-cleared `getattr` family provider/budget matrix expansion tranche
+- Repo-backed release state verified:
+  - branch `main`
+  - local `HEAD` `a23953c`
+  - `origin/main` `a23953c`
+  - latest pushed code/test authority remains `d8ebdc3`
+- Workspace state verified:
+  - dirty set remains the expected 14-file audit-cleared tranche
+  - no local commit is ahead of `origin/main`
+- Full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - result: `All checks passed!`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - result: `77 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+  - result: `Success: no issues found in 31 source files`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - result: `578 passed`
+- Control-lane validation passed:
+  - `git status --short --branch`
+  - `git diff --name-status`
+  - `git diff --check` over the full dirty tranche
+  - release-facing docs check for stale workspace wording and `c592dca` / `hasattr(obj, name)` attribution regression
+- Acceptance decision:
+  - accept the full regression gate first-pass
+  - the tranche is now audit-cleared and full-regression-cleared
+  - route next to commit-gating review over the exact intended release file set
+  - do not stage, commit, or push until commit-gating clears
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Getattr Family Matrix Release-Unit Audit
+
+- Reviewed the returned dedicated read-only release-unit audit for the accumulated `getattr` family provider/budget matrix expansion tranche
+- Repo-backed release state verified:
+  - branch `main`
+  - local `HEAD` `a23953c`
+  - `origin/main` `a23953c`
+  - latest pushed code/test authority remains `d8ebdc3`
+- Proposed release-unit file set audited:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_probe.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_report.py`
+- Audit result:
+  - no findings
+  - dirty set matches the expected 14 files on `main`
+  - the three run specs are valid JSON, each has one case, budgets `[220, 100]`, and the same three providers
+  - forbidden-surface checks found no diffs in source, package-root export, MCP, schema, scoring, provider, runtime acquisition, analyzer, tool facade, fixtures, tasks, or `pyproject.toml`
+  - ruff, format check, and focused pytest over changed Python tests passed
+  - focused pytest result: `42 passed`
+- Control-lane validation passed:
+  - `git status --short --branch`
+  - `git diff --name-status`
+  - `git diff --check` over the full dirty tranche
+  - forbidden-surface diff spot-check over `src`, `evals/fixtures`, `evals/tasks`, and `pyproject.toml`
+  - stale release-facing docs check for workspace-state wording
+  - anchor check confirming no `c592dca` / `hasattr(obj, name)` attribution regression
+- Acceptance decision:
+  - accept the release-unit audit first-pass
+  - route the tranche to the full regression gate
+  - do not commit or push until full regression and commit-gating both clear
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Getattr Family Matrix Docs/Evidence Reconciliation Review
+
+- Reviewed the returned same-tranche docs/evidence reconciliation for the accepted workspace-only `getattr` family provider/budget matrix expansion
+- Repo-backed release state verified:
+  - branch `main`
+  - local `HEAD` `a23953c`
+  - `origin/main` `a23953c`
+  - latest pushed code/test authority remains `d8ebdc3`
+- Files reviewed in this docs slice:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- Findings-first review result:
+  - no findings
+  - the docs describe the accepted `getattr` family matrix expansion as narrow internal eval evidence for the existing reflective probes
+  - the docs record budgets `100` and `220` and keep each existing matrix at `1 task x 2 budgets x 3 providers`
+  - the docs preserve the public-safe quad-matrix comparative surface
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - no public benchmark, generalized `getattr`, generalized hybrid-runtime, public API, package-root API, MCP, scoring, winner-selection, analyzer/tool-facade, runtime-acquisition, fixture, task, run-spec, or provider widening is claimed
+- Control-lane validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - stale workspace wording check over release-facing docs
+  - anchor check confirming no `c592dca` / `hasattr(obj, name)` attribution regression
+  - boundary wording checks for budgets `100` and `220`, `1 task x 2 budgets x 3 providers`, `unsupported/opaque`, additive runtime provenance, and public-safe quad-matrix wording
+- Acceptance decision:
+  - accept the docs/evidence reconciliation first-pass as workspace-only state
+  - route the accumulated `getattr` family matrix expansion tranche to release-unit audit
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Getattr Family Matrix Expansion Implementation Review
+
+- Reviewed the returned bounded implementation slice for existing `getattr` family provider/budget matrix expansion
+- Repo-backed release state verified:
+  - branch `main`
+  - local `HEAD` `a23953c`
+  - `origin/main` `a23953c`
+  - latest pushed code/test authority remains `d8ebdc3`
+- Workspace-only state before this implementation acceptance included the accepted docs/control tranche:
+  - `EVAL.md`
+  - `BUILDLOG.md`
+  - `PLAN.md`
+- Files reviewed in this implementation slice:
+  - `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_probe.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_report.py`
+- Findings-first review result:
+  - no findings
+  - the three existing `getattr` family run specs now add budget `100` beside `220`
+  - each existing task is now `1 task x 2 budgets x 3 providers`
+  - focused tests double the expected selector/runtime-outcome/selected-unit/provider accounting from `3` to `6` where the added budget doubles the matrix
+  - no source, fixture, task, provider, baseline, public claim, runtime-acquisition, analyzer/tool-facade, schema, scoring, winner-selection, package-root API, or MCP behavior changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_getattr_probe.py tests/test_eval_signal_getattr_default_probe.py tests/test_eval_signal_getattr_default_value_probe.py tests/test_eval_runs.py tests/test_eval_report.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_getattr_probe.py tests/test_eval_signal_getattr_default_probe.py tests/test_eval_signal_getattr_default_value_probe.py tests/test_eval_runs.py tests/test_eval_report.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py tests/test_eval_signal_getattr_default_probe.py tests/test_eval_signal_getattr_default_value_probe.py tests/test_eval_runs.py tests/test_eval_report.py -q`
+  - pytest result: `42 passed`
+  - `git diff --check`
+  - forbidden-surface diff check over source, fixtures, tasks, public docs, and architecture docs
+- Acceptance decision:
+  - accept the implementation slice first-pass as workspace-only state
+  - route next to same-tranche docs/evidence reconciliation before release-unit audit
+- Acceptance status: first-pass
+
+## 2026-04-23 -- Post-d8ebdc3 Getattr Matrix Planning Review
+
+- Reviewed the returned read-only planning spike for the next smallest truthful evidence-broadening move after pushed `d8ebdc3`
+- Repo-backed release state verified:
+  - branch `main`
+  - local `HEAD` `a23953c`
+  - `origin/main` `a23953c`
+  - latest pushed code/test authority remains `d8ebdc3`
+- Findings-first review result:
+  - one docs finding was confirmed in `EVAL.md`: `hasattr(obj, name)` evidence had been attributed to `c592dca`, but `c592dca` is the `getattr(obj, name)` anchor
+  - the docs-only correction now attributes `hasattr(obj, name)` to `90dcc15` / `762dd51` and keeps `c592dca` as the two-argument `getattr(obj, name)` anchor
+  - no concrete defect requires reopening `d8ebdc3`, `b014595`, `7d43302`, or earlier accepted release units
+  - `d8ebdc3` closes the runtime-outcome reporting blocker, so broader existing `getattr` evidence can proceed without another reporting slice first
+  - the three existing `getattr` family run specs still use only budget `220`
+  - `hasattr(obj, name)` already has the matching `220` / `100` matrix precedent
+- Accepted next implementation boundary:
+  - add budget `100` to `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - add budget `100` to `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - add budget `100` to `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - update focused tests only as needed for the three `getattr` signal tests, `tests/test_eval_runs.py`, and `tests/test_eval_report.py`
+  - keep each task at `1 task x 2 budgets x 3 providers`
+  - no new fixtures, tasks, providers, baselines, runtime family, public claims, source runtime acquisition, analyzer/tool-facade behavior, schema, scoring, winner selection, package-root API, or MCP behavior
+- Acceptance decision:
+  - accept the docs-only correction first-pass as workspace-only state
+  - accept the planning spike after 1 control correction
+  - route the next control action to the bounded `getattr` family run-spec/test matrix expansion
+- Acceptance status: 1 correction
+
+## 2026-04-23 -- Eval Release Anchor Correction
+
+- Corrected `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence
+  is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the
+  two-argument `getattr(obj, name)` anchor
+- Preserved release authority wording:
+  - latest pushed code/test evidence authority remains `d8ebdc3`
+  - `b014595` remains the defaulted `getattr(obj, name, default)`
+    value-return branch anchor
+  - `7d43302` remains the defaulted `getattr(obj, name, default)`
+    default-return branch anchor
+  - no source, test, eval asset, public-claim, commit, or push change
+- Acceptance status: first-pass
+
 ## 2026-04-23 -- Runtime-Outcome Methodology Remote Push and Continuity Sync
 
 - Ryan explicitly authorized remote push of local release commit `d8ebdc3`

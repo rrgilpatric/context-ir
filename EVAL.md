@@ -15,11 +15,21 @@ evidence authority is `d8ebdc3`, which adds internal eval runtime-outcome
 accounting over normalized runtime provenance payload data. The prior
 `b014595` release carries narrow internal `REFLECTIVE_BUILTIN` /
 `getattr(obj, name, default)` value-return branch evidence beside the prior
-`7d43302` default-return branch and the earlier `c592dca` `hasattr(obj, name)`
-and `getattr(obj, name)` runtime-backed evidence. These reflective pilots and
+`7d43302` default-return branch, the earlier `c592dca`
+`getattr(obj, name)` runtime-backed evidence, and the `90dcc15` / `762dd51`
+`hasattr(obj, name)` runtime-backed evidence. These reflective pilots and
 the runtime-outcome accounting do not widen public claims, public APIs, MCP
 behavior, scoring, winner selection, runtime acquisition, or generalized
 runtime coverage.
+
+The current internal evidence ledger also records a narrow provider/budget
+expansion for the existing getattr-family run specs:
+`oracle_signal_getattr_probe_matrix`,
+`oracle_signal_getattr_default_probe_matrix`, and
+`oracle_signal_getattr_default_value_probe_matrix`. Each matrix remains one
+existing task only: 1 task x 2 budgets x 3 providers at budgets `100` and
+`220`. This is internal eval evidence for existing reflective probes only; it
+does not create generalized `getattr` support or widen public/runtime APIs.
 
 Proven by current unit and integration tests:
 
@@ -80,10 +90,14 @@ Proven by current unit and integration tests:
   - the narrow internal eval-only `REFLECTIVE_BUILTIN` /
     `getattr(obj, name, default)` value-return sibling pilot for the
     `oracle_signal_getattr_default_value_probe` task
+- The three existing getattr-family provider/budget matrices now cover budgets
+  `100` and `220`; each remains 1 task x 2 budgets x 3 providers.
 - In those runtime-backed pilots, the dynamic or reflective selector remains
-  primarily `unsupported/opaque`; runtime-backed provenance is additive
-  attached evidence. This is internal evidence, not a public benchmark, broad
-  hybrid-runtime support claim, or generalized dynamic-Python claim.
+  primarily `unsupported/opaque`, selected-unit primary truth remains
+  `unsupported/opaque`, and runtime-backed provenance is additive attached
+  evidence. This is internal evidence, not a public benchmark, broad
+  hybrid-runtime support claim, generalized `getattr` support claim, or
+  generalized dynamic-Python claim.
 
 Validated by local quality gates, not by benchmark evidence:
 
@@ -133,6 +147,9 @@ Architecturally intended but not yet evaluated:
   eval-only default-return and value-return `getattr(obj, name, default)`
   fixtures, tasks, run specs, and additive runtime provenance. These pilots are
   internal evidence surfaces, not public benchmark surfaces.
+- Narrow getattr-family provider/budget evidence: the three existing
+  getattr-family matrices cover budgets `100` and `220`, and each remains
+  1 task x 2 budgets x 3 providers.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -175,8 +192,11 @@ The following claims are allowed because current repo artifacts support them:
   `DYNAMIC_IMPORT` provider/budget matrix and the narrow
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
-  pilots. These pilots keep the dynamic or reflective selector primarily
-  `unsupported/opaque` while attaching runtime-backed provenance additively.
+  pilots. The three getattr-family provider/budget matrices cover budgets
+  `100` and `220`, and each remains 1 task x 2 budgets x 3 providers. These
+  pilots keep the dynamic or reflective selector and selected-unit primary
+  truth `unsupported/opaque` while attaching runtime-backed provenance
+  additively.
 
 ## Unsupported Claims Today
 

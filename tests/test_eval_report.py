@@ -178,11 +178,11 @@ def test_eval_report_distinguishes_defaulted_getattr_branch_outcomes(
         for aggregate in report.summary.runtime_outcome_aggregates
         if aggregate.payload_key == "lookup_outcome"
     ) == (
-        ("lookup_outcome", "returned_default_value", 3),
-        ("lookup_outcome", "returned_value", 3),
+        ("lookup_outcome", "returned_default_value", 6),
+        ("lookup_outcome", "returned_value", 6),
     )
-    assert "| lookup_outcome | returned_default_value | 3 |" in report.markdown_report
-    assert "| lookup_outcome | returned_value | 3 |" in report.markdown_report
+    assert "| lookup_outcome | returned_default_value | 6 |" in report.markdown_report
+    assert "| lookup_outcome | returned_value | 6 |" in report.markdown_report
 
 
 def test_write_eval_report_markdown_writes_exact_artifact_markdown(

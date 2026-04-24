@@ -5,7 +5,7 @@
       "case_id": "signal_getattr_default_probe",
       "task_path": "evals/tasks/oracle_signal_getattr_default_probe.json",
       "query": "Fix probe_attribute unsupported getattr(obj, name, default) and keep digest output aligned",
-      "budgets": [220],
+      "budgets": [220, 100],
       "providers": [
         "context_ir",
         "lexical_top_k_files",

@@ -14,9 +14,12 @@ runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
 matrix and `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
 `getattr(obj, name)`. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
-evidence and value-return sibling evidence.
+evidence and value-return sibling evidence. The three existing getattr-family
+provider/budget matrices each remain one existing task only: 1 task x 2 budgets
+x 3 providers at budgets `100` and `220`.
 Those slices do not widen public claims, public APIs, MCP behavior, scoring,
-winner selection, or generalized hybrid-runtime coverage.
+winner selection, generalized `getattr` support, or generalized hybrid-runtime
+coverage.
 
 The April 13 frozen spec is retired and superseded. Existing runtime modules under `src/context_ir/` still largely reflect the retired symbol-graph-first build and must be treated as implementation history until they are replaced slice by slice.
 
@@ -79,7 +82,11 @@ around rendering density.
   evidence or probes; current internal evidence is limited to narrow additive
   `DYNAMIC_IMPORT` plus `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and
   `getattr(obj, name)` pilot attachments, plus eval-only default-return and
-  value-return branch pilots for `getattr(obj, name, default)`
+  value-return branch pilots for `getattr(obj, name, default)`. The three
+  existing getattr-family provider/budget matrices cover budgets `100` and
+  `220`; each remains 1 task x 2 budgets x 3 providers, with selector and
+  selected-unit primary truth still `unsupported/opaque` and runtime-backed
+  provenance additive only.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 

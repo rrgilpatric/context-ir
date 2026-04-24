@@ -44,6 +44,8 @@ The active release model is tranche-based, not slice-by-slice. Accepted slices m
 
 The defaulted `getattr(obj, name, default)` value-return branch tranche is pushed to `origin/main` at `b014595`. The post-`b014595` runtime-outcome methodology/reporting planning spike is accepted first-pass. The bounded runtime-outcome accounting implementation slice is accepted first-pass, audit-cleared, full-regression-cleared, commit-gating-cleared, committed locally at `d8ebdc3`, and pushed to `origin/main` after explicit Ryan authorization. No implementation or planning slice is currently in flight.
 
+The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family is accepted first-pass as workspace-only state. The same-tranche docs/evidence reconciliation is accepted first-pass as workspace-only state. The release-unit audit for the accumulated `getattr` family matrix expansion tranche is accepted first-pass. The full regression gate is accepted first-pass. Commit-gating is accepted first-pass. The next control action is local commit creation over the exact intended release file set.
+
 ## What Is Complete
 
 - [x] Slice 0: project bootstrap
@@ -142,6 +144,13 @@ The defaulted `getattr(obj, name, default)` value-return branch tranche is pushe
 - [x] Commit-gating review for runtime-outcome methodology/reporting hardening accepted first-pass
 - [x] Local commit creation for runtime-outcome methodology/reporting hardening accepted first-pass at `d8ebdc3`
 - [x] Remote push for runtime-outcome methodology/reporting hardening completed at `d8ebdc3`
+- [x] Post-`d8ebdc3` `getattr` family evidence-broadening planning spike accepted after 1 control correction
+- [x] `EVAL.md` release-anchor attribution correction accepted first-pass as workspace-only state
+- [x] `getattr` family provider/budget matrix expansion accepted first-pass as workspace-only state
+- [x] Same-tranche docs/evidence reconciliation for the `getattr` family provider/budget matrix expansion accepted first-pass as workspace-only state
+- [x] Release-unit audit for the `getattr` family provider/budget matrix expansion accepted first-pass
+- [x] Full regression gate for the `getattr` family provider/budget matrix expansion accepted first-pass
+- [x] Commit-gating review for the `getattr` family provider/budget matrix expansion accepted first-pass
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
@@ -264,6 +273,33 @@ The defaulted `getattr(obj, name, default)` value-return branch tranche is pushe
 - No planning spike is currently in flight
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
 - No local unpushed code/test release candidate is currently ahead of `origin/main`
+- The accepted workspace-only docs/control tranche currently includes:
+  - `EVAL.md`
+  - `BUILDLOG.md`
+  - `PLAN.md`
+- The accepted workspace-only same-tranche docs/evidence reconciliation currently includes:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- The accepted workspace-only `getattr` family matrix expansion currently includes:
+  - `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_probe.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_report.py`
+- The release-unit audit over the accumulated `getattr` family matrix expansion tranche is accepted first-pass
+- The accepted `getattr` family matrix expansion:
+  - add budget `100` to `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - add budget `100` to `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - add budget `100` to `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - update focused tests only as needed
+- The full regression gate over the accumulated `getattr` family matrix expansion tranche is accepted first-pass
+- Commit-gating over the exact intended release file set is accepted first-pass
+- The next authorized execution boundary is local commit creation over the exact intended release file set
 - The post-push docs-only continuity sync records the `d8ebdc3` release state in:
   - `PLAN.md`
   - `BUILDLOG.md`
@@ -717,13 +753,55 @@ The defaulted `getattr(obj, name, default)` value-return branch tranche is pushe
    - commit-gating approved exactly eight implementation files and kept `PLAN.md` / `BUILDLOG.md` excluded as continuity state
    - pushed commit `d8ebdc3 Add runtime outcome eval accounting` contains only the approved implementation release-unit files
    - `origin/main` is `d8ebdc3`
-28. Release sequencing going forward must follow the restored tranche cadence:
+28. Treat the post-`d8ebdc3` `getattr` family evidence-broadening planning spike as accepted after 1 control correction:
+   - no concrete defect requires reopening `d8ebdc3`, `b014595`, `7d43302`, or earlier accepted release units
+   - the control correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor
+   - `d8ebdc3` closes the runtime-outcome reporting blocker, so broader existing `getattr` evidence can proceed without another reporting slice first
+   - the next smallest truthful implementation slice is to add budget `100` to the three existing `getattr` family run specs, creating `1 task x 2 budgets x 3 providers` for each existing task
+   - no new fixture, task, provider, baseline, runtime family, public claim, source runtime acquisition, analyzer/tool-facade behavior, schema, scoring, winner-selection, package-root API, or MCP change is authorized
+29. Treat the `getattr` family provider/budget matrix expansion as accepted first-pass in workspace-only state:
+   - `oracle_signal_getattr_probe_matrix`, `oracle_signal_getattr_default_probe_matrix`, and `oracle_signal_getattr_default_value_probe_matrix` now use budgets `220` and `100`
+   - each existing task is now `1 task x 2 budgets x 3 providers`
+   - focused tests double expected selector/runtime-outcome/selected-unit/provider accounting from `3` to `6` where the added budget doubles the matrix
+   - JSON validation, focused pytest, ruff over changed Python tests, forbidden-surface diff checks, and `git diff --check` passed
+   - no source, fixture, task, provider, baseline, public claim, runtime-acquisition, analyzer/tool-facade, schema, scoring, winner-selection, package-root API, or MCP behavior changed
+   - this acceptance is not commit readiness
+30. Treat the same-tranche docs/evidence reconciliation for the `getattr` family provider/budget matrix expansion as accepted first-pass in workspace-only state:
+   - `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` record the accepted internal evidence expansion without changing public claim boundaries
+   - release-facing docs describe the three existing `getattr` family matrices as `1 task x 2 budgets x 3 providers` at budgets `100` and `220`
+   - public-safe quad-matrix comparative wording remains unchanged
+   - selector and selected-unit primary truth remain `unsupported/opaque`, and runtime-backed provenance remains additive only
+   - no public benchmark, generalized `getattr`, generalized hybrid-runtime, public API, package-root API, MCP, scoring, winner-selection, analyzer/tool-facade, runtime-acquisition, fixture, task, run-spec, or provider widening is claimed
+   - this acceptance is not commit readiness
+31. Treat the release-unit audit for the accumulated `getattr` family provider/budget matrix expansion tranche as accepted first-pass:
+   - the audit reviewed the governing docs, release-facing docs, three changed run specs, and five changed eval tests
+   - the audit found no findings
+   - the audit confirmed the expected 14-file dirty set, valid JSON run specs with budgets `[220, 100]`, unchanged forbidden surfaces, and focused validation passing with `42 passed`
+   - the tranche is now audit-cleared
+   - this is not full-regression clearance, commit-gating clearance, commit readiness, or push readiness
+32. Treat the full regression gate for the accumulated `getattr` family provider/budget matrix expansion tranche as accepted first-pass:
+   - ruff check over `src/` and `tests/` passed
+   - ruff format check over `src/` and `tests/` passed with `77 files already formatted`
+   - strict mypy over `src/` passed with no issues in 31 source files
+   - full pytest passed with `578 passed`
+   - the tranche is now audit-cleared and full-regression-cleared
+   - this is not commit-gating clearance, commit readiness, local commit creation, or push readiness
+33. Treat commit-gating over the exact `getattr` family provider/budget matrix expansion release file set as accepted first-pass:
+   - no findings
+   - dirty set exactly matches the expected 14-file release set
+   - no staged changes were present during the commit-gating review
+   - no source, runtime/API/MCP, schema, scoring, provider, fixture, or task files are included
+   - the three changed run specs each have one case, budgets `[220, 100]`, and providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+   - release-facing docs preserve public-safe quad-matrix boundaries, narrow internal `getattr` wording, selector and selected-unit `unsupported/opaque` truth, and additive runtime provenance
+   - the approved local commit subject is `Expand getattr-family eval matrices`
+   - this is not local commit creation or push readiness
+34. Release sequencing going forward must follow the restored tranche cadence:
    - accumulate multiple accepted slices locally until they form one coherent release unit or are just shy of becoming too large
    - keep continuity synced in workspace during that accumulation
    - run one dedicated findings-first deep release-unit audit over the whole accumulated diff before commit
    - correct audit findings before final regression / commit-gating / commit / push
    - do not return to per-slice commit/push churn without explicit reason and explicit Ryan sign-off
-29. The next lane must not reopen:
+35. The next lane must not reopen:
    - the accepted pushed `c592dca` `getattr(obj, name)` release unit
    - the accepted pushed `7d43302` defaulted `getattr(obj, name, default)` release unit
    - the accepted workspace-only `EVAL.md` authority correction
@@ -744,8 +822,8 @@ The defaulted `getattr(obj, name, default)` value-return branch tranche is pushe
    - further inherited-call work
    - scoring, winner selection, tasks, fixtures, providers, docs, public surfaces, or runtime-acquisition breadth
    - any run spec unless a later control-reviewed eval pilot explicitly authorizes it
-30. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
-31. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
+36. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
+37. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
 
 ## What Is Deferred
 
