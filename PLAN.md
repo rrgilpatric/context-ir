@@ -38,13 +38,13 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The latest pushed eval/test/docs release unit is `1b555ef`, which expands the three existing `getattr` family run specs to budgets `220` and `100`, keeping each matrix at `1 task x 2 budgets x 3 providers`. It preserves `unsupported/opaque` primary truth, additive runtime provenance, the public-safe quad-matrix comparative boundary, and all package-root, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public-claim, and product boundaries. The prior pushed code/test release unit `d8ebdc3` remains the runtime-outcome accounting release anchor. The prior pushed code/test release unit `b014595` remains the defaulted `getattr(obj, name, default)` value-return branch release anchor. The prior pushed code/test release unit `7d43302` remains the defaulted `getattr(obj, name, default)` default-return branch release anchor. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The latest pushed docs-only continuity/process-correction commit in the current release chain remains `8133e0a`; it corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The latest pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
+Release authority is split deliberately. The latest pushed eval/test/docs release unit is `1b555ef`, which expands the three existing `getattr` family run specs to budgets `220` and `100`, keeping each matrix at `1 task x 2 budgets x 3 providers`. It preserves `unsupported/opaque` primary truth, additive runtime provenance, the public-safe quad-matrix comparative boundary, and all package-root, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public-claim, and product boundaries. The post-push continuity anchor for that `1b555ef` release state is `159e363`. The prior pushed code/test release unit `d8ebdc3` remains the runtime-outcome accounting release anchor. The prior pushed code/test release unit `b014595` remains the defaulted `getattr(obj, name, default)` value-return branch release anchor. The prior pushed code/test release unit `7d43302` remains the defaulted `getattr(obj, name, default)` default-return branch release anchor. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The prior pushed docs-only process-correction anchor `8133e0a` corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The prior pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
 
 The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. Before the next commit/push tranche, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push.
 
 The defaulted `getattr(obj, name, default)` value-return branch tranche is pushed to `origin/main` at `b014595`. The post-`b014595` runtime-outcome methodology/reporting planning spike is accepted first-pass. The bounded runtime-outcome accounting implementation slice is accepted first-pass, audit-cleared, full-regression-cleared, commit-gating-cleared, committed locally at `d8ebdc3`, and pushed to `origin/main` after explicit Ryan authorization. No implementation or planning slice is currently in flight.
 
-The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family is accepted first-pass as workspace-only state. The same-tranche docs/evidence reconciliation is accepted first-pass as workspace-only state. The release-unit audit for the accumulated `getattr` family matrix expansion tranche is accepted first-pass. The full regression gate is accepted first-pass. Commit-gating is accepted first-pass. Local commit creation is accepted first-pass at `1b555ef`. Ryan authorized push, and `1b555ef` is pushed to `origin/main`. This post-push continuity sync records the pushed release state so future control lanes can restart from repo-backed continuity. The next control action is a bounded planning decision for the next north-star evidence move.
+The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family and the same-tranche docs/evidence reconciliation are released together at `1b555ef` after first-pass audit, full regression, commit-gating, local commit creation, and Ryan-authorized push. The post-push continuity anchor for that release state is `159e363`. The next control action is a bounded planning decision for the next north-star evidence move.
 
 ## What Is Complete
 
@@ -274,17 +274,14 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
-- No local unpushed code/test release candidate is currently ahead of `origin/main`
-- The accepted workspace-only docs/control tranche currently includes:
-  - `EVAL.md`
-  - `BUILDLOG.md`
-  - `PLAN.md`
-- The accepted workspace-only same-tranche docs/evidence reconciliation currently includes:
+- Live branch, `HEAD`, `origin/main`, and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
+- The `getattr` family matrix expansion release unit is pushed at `1b555ef`
+- The same-tranche docs/evidence reconciliation released in `1b555ef` includes:
   - `EVAL.md`
   - `PUBLIC_CLAIMS.md`
   - `README.md`
   - `ARCHITECTURE.md`
-- The accepted workspace-only `getattr` family matrix expansion currently includes:
+- The `getattr` family matrix expansion released in `1b555ef` includes:
   - `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
   - `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
   - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
@@ -303,8 +300,7 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 - Commit-gating over the exact intended release file set is accepted first-pass
 - Local commit creation over the exact intended release file set is accepted first-pass at `1b555ef`
 - Remote push of `1b555ef` is accepted first-pass after explicit Ryan authorization
-- `origin/main` is `1b555ef`
-- This post-push continuity sync records the repo-backed `1b555ef` release state
+- The post-push continuity anchor for the `1b555ef` release state is `159e363`
 - The next authorized boundary is a bounded planning decision for the next north-star evidence move
 - The post-push docs-only continuity sync records the `d8ebdc3` release state in:
   - `PLAN.md`
@@ -630,11 +626,16 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 
 ## What Is Next
 
-1. Keep the latest pushed code/test release authority pinned to `d8ebdc3`.
-2. Treat pushed commit `8133e0a` as the latest pushed docs-only continuity/process-correction authority in the current release chain:
+1. Treat pushed commit `1b555ef` as the latest pushed eval/test/docs release authority:
+   - existing `getattr` family matrices are expanded to budgets `220` and `100`
+   - each existing matrix remains `1 task x 2 budgets x 3 providers`
+   - selector and selected-unit primary truth remains `unsupported/opaque`
+   - runtime-backed provenance remains additive only
+   - no package-root API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, fixture, task, provider, public-claim, or product-positioning boundary changed
+2. Treat pushed commit `159e363` as the post-push continuity anchor for the `1b555ef` release state, and treat `8133e0a` as the prior docs-only process-correction anchor:
    - it corrects the self-referential continuity loop
    - it restores tranche-style release sequencing discipline
-   - it does not change code/test authority or widen product boundaries
+   - neither commit changes eval/test/docs release contents or widens product boundaries
 3. Treat pushed commit `3291268` as the latest docs-only evidence/claim reconciliation authority:
    - it updates `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
    - it does not widen code/test authority, public claims, package-root exports, MCP behavior, source boundaries, schema, scoring, or winner selection
@@ -807,7 +808,7 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
    - the commit body records budgets `100` beside `220`, 1 task x 2 budgets x 3 providers, unsupported/opaque primary truth, additive runtime provenance, and no public/API/MCP/runtime/scoring widening
    - local `HEAD` is `1b555ef`
 35. Treat remote push of `1b555ef` as accepted first-pass after explicit Ryan authorization:
-   - `origin/main` is `1b555ef`
+   - remote push of `1b555ef` completed
    - the latest pushed eval/test/docs release authority is now `1b555ef`
    - the prior pushed code/test release authority `d8ebdc3` remains the runtime-outcome accounting anchor
    - this post-push continuity sync in `PLAN.md` and `BUILDLOG.md` records the repo-backed `1b555ef` release state
@@ -820,9 +821,9 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 37. The next lane must not reopen:
    - the accepted pushed `c592dca` `getattr(obj, name)` release unit
    - the accepted pushed `7d43302` defaulted `getattr(obj, name, default)` release unit
-   - the accepted workspace-only `EVAL.md` authority correction
-   - the accepted workspace-only defaulted `getattr(obj, name, default)` eval pilot slice
-   - the accepted workspace-only same-tranche docs/evidence reconciliation slice
+   - the accepted `EVAL.md` authority correction released in `7d43302`
+   - the accepted defaulted `getattr(obj, name, default)` default-return eval pilot slice released in `7d43302`
+   - the accepted same-tranche docs/evidence reconciliation slice released in `7d43302`
    - the accepted pushed `b014595` defaulted `getattr(obj, name, default)` value-return branch release unit
    - the accepted same-tranche docs/evidence reconciliation for the value-return branch in `b014595`
    - the accepted `hasattr` provider/budget matrix release unit at `762dd51`
@@ -860,9 +861,9 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 
 - The accepted pushed `c592dca` `REFLECTIVE_BUILTIN` / `getattr(obj, name)` release unit unless a later findings-based review proves a concrete defect
 - The accepted pushed `7d43302` defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` release unit unless a later findings-based review proves a concrete defect
-- The accepted workspace-only `EVAL.md` authority correction unless a later findings-based review proves a concrete defect
-- The accepted workspace-only defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` eval pilot slice unless a later findings-based review proves a concrete defect
-- The accepted workspace-only same-tranche docs/evidence reconciliation for defaulted `getattr(obj, name, default)` unless a later findings-based review proves a concrete defect
+- The accepted `EVAL.md` authority correction released in `7d43302` unless a later findings-based review proves a concrete defect
+- The accepted defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` default-return eval pilot slice released in `7d43302` unless a later findings-based review proves a concrete defect
+- The accepted same-tranche docs/evidence reconciliation for defaulted `getattr(obj, name, default)` released in `7d43302` unless a later findings-based review proves a concrete defect
 - The accepted pushed `b014595` defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch release unit unless a later findings-based review proves a concrete defect
 - The accepted same-tranche docs/evidence reconciliation for the defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch in `b014595` unless a later findings-based review proves a concrete defect
 - The accepted bounded runtime-backed tranche work for `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, and `METACLASS_BEHAVIOR` unless a later findings-based review proves a concrete defect

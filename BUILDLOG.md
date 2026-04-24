@@ -2,15 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-24 -- Non-Recursive Continuity Policy
+
+- Ryan requested a process-level correction to stop continuity docs from creating recursive docs-only commits whose only purpose is to record that the previous docs-only continuity commit was pushed
+- Durable policy decision:
+  - committed continuity docs record durable release anchors, accepted decisions, holds, and routing boundaries
+  - live `HEAD`, `origin/main`, branch, and worktree state are verified from git by each control lane instead of being kept as always-current committed fields
+  - standalone docs-only continuity commits are allowed only for materially wrong routing, safety, or process defects, or with explicit Ryan authorization
+  - post-push continuity notes may be folded into the next substantive tranche unless they are needed to prevent misrouting
+- Alternatives considered:
+  - keep recording live branch-tip and worktree facts in committed continuity docs after each push
+  - create another standalone docs-only continuity commit whenever a prior docs-only continuity commit changes `HEAD`
+  - stop recording durable release anchors in continuity docs and rely only on git history
+- Reasoning:
+  - live git state is cheap and authoritative to verify from git, but expensive and self-invalidating to preserve as mutable prose
+  - durable anchors, accepted decisions, holds, and routing boundaries are the continuity facts future control lanes need for safe routing
+  - preserving stable release anchors while verifying live state from git prevents recursive docs-only commits without weakening restart continuity
+- Updated routing docs without adding a new live branch-tip or worktree-state claim
+- Acceptance status: 1 correction
+
 ## 2026-04-24 -- Getattr Family Matrix Remote Push And Continuity Sync
 
 - Ryan explicitly authorized remote push of local release commit `1b555ef`
 - Pushed commit:
   - `1b555ef Expand getattr-family eval matrices`
-- Post-push release state verified:
+- Post-push release state verified at the time of the release action:
   - branch `main`
-  - local `HEAD` `1b555ef`
-  - `origin/main` `1b555ef`
+  - release commit `1b555ef` was local `HEAD` at verification time
+  - the remote-tracking branch matched `1b555ef` at verification time
   - latest pushed eval/test/docs release authority is now `1b555ef`
   - prior pushed code/test authority `d8ebdc3` remains the runtime-outcome accounting release anchor
 - Preserved boundaries:
@@ -943,7 +962,7 @@ Most recent supersession entries override older architectural decisions when the
   - local `HEAD` `c592dca`
   - `origin/main` `c592dca`
   - latest pushed code/test release authority remains `c592dca`
-  - the accepted workspace-only tranche currently contains:
+  - the accepted uncommitted tranche at that time contained:
     - the accepted `EVAL.md` authority correction
     - the accepted eval-only defaulted `getattr(obj, name, default)` pilot
   - repo-facing evidence/claim artifacts still enumerate narrow reflective runtime-backed evidence only through `hasattr(obj, name)` and `getattr(obj, name)` without the accepted workspace-only defaulted form

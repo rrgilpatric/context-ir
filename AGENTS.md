@@ -424,6 +424,16 @@ For any entry where risks were accepted, note the risk and that human sign-off w
 
 If a continuity artifact is stale relative to repo reality, do not proceed blindly. Update from current repo state first.
 
+### Non-Recursive Continuity
+
+Committed continuity docs should record durable release anchors, accepted decisions, holds, and routing boundaries. They should not try to keep mutable live git facts perpetually current when those facts become stale immediately after the next continuity commit.
+
+Live `HEAD`, `origin/main`, branch, and worktree state are verified from git by each control lane during intake, review, and release sequencing. They are not kept as always-current fields in `PLAN.md`, `BUILDLOG.md`, or other committed continuity docs.
+
+Standalone docs-only continuity commits are allowed only for materially wrong routing, safety, or process defects, or with explicit Ryan authorization. They are not allowed merely to record that the previous docs-only continuity commit was pushed.
+
+Post-push continuity notes may be folded into the next substantive tranche unless they are needed to prevent misrouting.
+
 ---
 
 ## Disposal Rule
