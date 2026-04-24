@@ -2,6 +2,65 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-24 -- Getattr Family Matrix Remote Push And Continuity Sync
+
+- Ryan explicitly authorized remote push of local release commit `1b555ef`
+- Pushed commit:
+  - `1b555ef Expand getattr-family eval matrices`
+- Post-push release state verified:
+  - branch `main`
+  - local `HEAD` `1b555ef`
+  - `origin/main` `1b555ef`
+  - latest pushed eval/test/docs release authority is now `1b555ef`
+  - prior pushed code/test authority `d8ebdc3` remains the runtime-outcome accounting release anchor
+- Preserved boundaries:
+  - each existing `getattr` family matrix remains `1 task x 2 budgets x 3 providers`
+  - budgets are `220` and `100`
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - public-safe quad-matrix comparative boundary remains unchanged
+  - no package-root API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, fixture, task, provider, public-claim, or product-positioning widening
+- Acceptance decision:
+  - accept the remote push first-pass
+  - record this post-push continuity sync in `PLAN.md` and `BUILDLOG.md` so future control lanes restart from repo-backed release state
+- Acceptance status: first-pass
+
+## 2026-04-24 -- Getattr Family Matrix Local Commit
+
+- Reviewed the returned local commit creation result for the commit-gating-cleared `getattr` family provider/budget matrix expansion tranche
+- Repo-backed release state verified after commit:
+  - branch `main`
+  - local `HEAD` `1b555ef`
+  - `origin/main` `a23953c`
+  - latest pushed code/test authority remains `d8ebdc3` until Ryan explicitly authorizes push of `1b555ef`
+- Created local commit:
+  - `1b555ef Expand getattr-family eval matrices`
+- Committed file set:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `evals/run_specs/oracle_signal_getattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_probe.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_report.py`
+- Verification:
+  - commit subject and body match the approved commit-gating guidance
+  - committed file set matches the approved 14-file release unit
+  - `git diff --check origin/main..HEAD` passed
+  - no push was performed
+- Acceptance decision:
+  - accept local commit creation first-pass
+  - hold for explicit Ryan authorization before any push
+  - keep this post-local-commit continuity sync workspace-only until the next release sequencing decision
+- Acceptance status: first-pass
+
 ## 2026-04-24 -- Getattr Family Matrix Commit-Gating Review
 
 - Reviewed the returned read-only commit-gating result for the audit-cleared and full-regression-cleared `getattr` family provider/budget matrix expansion tranche

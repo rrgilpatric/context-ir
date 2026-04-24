@@ -38,13 +38,13 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The latest pushed code/test release unit is `d8ebdc3`, which adds internal eval runtime-outcome accounting over normalized runtime provenance payload data. It keeps runtime-backed provenance additive, preserves existing selector-tier, selected-unit-tier, provider, and provider+tier accounting, and leaves package-root exports, MCP behavior, analyzer, tool-facade, source runtime-acquisition semantics, schema, scoring, winner selection, public docs, public claims, and product boundaries unchanged. The prior pushed code/test release unit `b014595` remains the defaulted `getattr(obj, name, default)` value-return branch release anchor. The prior pushed code/test release unit `7d43302` remains the defaulted `getattr(obj, name, default)` default-return branch release anchor. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The latest pushed docs-only continuity/process-correction commit in the current release chain remains `8133e0a`; it corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The latest pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
+Release authority is split deliberately. The latest pushed eval/test/docs release unit is `1b555ef`, which expands the three existing `getattr` family run specs to budgets `220` and `100`, keeping each matrix at `1 task x 2 budgets x 3 providers`. It preserves `unsupported/opaque` primary truth, additive runtime provenance, the public-safe quad-matrix comparative boundary, and all package-root, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public-claim, and product boundaries. The prior pushed code/test release unit `d8ebdc3` remains the runtime-outcome accounting release anchor. The prior pushed code/test release unit `b014595` remains the defaulted `getattr(obj, name, default)` value-return branch release anchor. The prior pushed code/test release unit `7d43302` remains the defaulted `getattr(obj, name, default)` default-return branch release anchor. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The latest pushed docs-only continuity/process-correction commit in the current release chain remains `8133e0a`; it corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The latest pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
 
 The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. Before the next commit/push tranche, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push.
 
 The defaulted `getattr(obj, name, default)` value-return branch tranche is pushed to `origin/main` at `b014595`. The post-`b014595` runtime-outcome methodology/reporting planning spike is accepted first-pass. The bounded runtime-outcome accounting implementation slice is accepted first-pass, audit-cleared, full-regression-cleared, commit-gating-cleared, committed locally at `d8ebdc3`, and pushed to `origin/main` after explicit Ryan authorization. No implementation or planning slice is currently in flight.
 
-The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family is accepted first-pass as workspace-only state. The same-tranche docs/evidence reconciliation is accepted first-pass as workspace-only state. The release-unit audit for the accumulated `getattr` family matrix expansion tranche is accepted first-pass. The full regression gate is accepted first-pass. Commit-gating is accepted first-pass. The next control action is local commit creation over the exact intended release file set.
+The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family is accepted first-pass as workspace-only state. The same-tranche docs/evidence reconciliation is accepted first-pass as workspace-only state. The release-unit audit for the accumulated `getattr` family matrix expansion tranche is accepted first-pass. The full regression gate is accepted first-pass. Commit-gating is accepted first-pass. Local commit creation is accepted first-pass at `1b555ef`. Ryan authorized push, and `1b555ef` is pushed to `origin/main`. This post-push continuity sync records the pushed release state so future control lanes can restart from repo-backed continuity. The next control action is a bounded planning decision for the next north-star evidence move.
 
 ## What Is Complete
 
@@ -151,6 +151,8 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 - [x] Release-unit audit for the `getattr` family provider/budget matrix expansion accepted first-pass
 - [x] Full regression gate for the `getattr` family provider/budget matrix expansion accepted first-pass
 - [x] Commit-gating review for the `getattr` family provider/budget matrix expansion accepted first-pass
+- [x] Local commit creation for the `getattr` family provider/budget matrix expansion accepted first-pass at `1b555ef`
+- [x] Remote push for the `getattr` family provider/budget matrix expansion completed at `1b555ef`
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
@@ -299,7 +301,11 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
   - update focused tests only as needed
 - The full regression gate over the accumulated `getattr` family matrix expansion tranche is accepted first-pass
 - Commit-gating over the exact intended release file set is accepted first-pass
-- The next authorized execution boundary is local commit creation over the exact intended release file set
+- Local commit creation over the exact intended release file set is accepted first-pass at `1b555ef`
+- Remote push of `1b555ef` is accepted first-pass after explicit Ryan authorization
+- `origin/main` is `1b555ef`
+- This post-push continuity sync records the repo-backed `1b555ef` release state
+- The next authorized boundary is a bounded planning decision for the next north-star evidence move
 - The post-push docs-only continuity sync records the `d8ebdc3` release state in:
   - `PLAN.md`
   - `BUILDLOG.md`
@@ -795,13 +801,23 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
    - release-facing docs preserve public-safe quad-matrix boundaries, narrow internal `getattr` wording, selector and selected-unit `unsupported/opaque` truth, and additive runtime provenance
    - the approved local commit subject is `Expand getattr-family eval matrices`
    - this is not local commit creation or push readiness
-34. Release sequencing going forward must follow the restored tranche cadence:
+34. Treat local commit creation for the `getattr` family provider/budget matrix expansion as accepted first-pass:
+   - local commit `1b555ef Expand getattr-family eval matrices` was created on `main`
+   - the committed file set matches the approved 14-file release unit
+   - the commit body records budgets `100` beside `220`, 1 task x 2 budgets x 3 providers, unsupported/opaque primary truth, additive runtime provenance, and no public/API/MCP/runtime/scoring widening
+   - local `HEAD` is `1b555ef`
+35. Treat remote push of `1b555ef` as accepted first-pass after explicit Ryan authorization:
+   - `origin/main` is `1b555ef`
+   - the latest pushed eval/test/docs release authority is now `1b555ef`
+   - the prior pushed code/test release authority `d8ebdc3` remains the runtime-outcome accounting anchor
+   - this post-push continuity sync in `PLAN.md` and `BUILDLOG.md` records the repo-backed `1b555ef` release state
+36. Release sequencing going forward must follow the restored tranche cadence:
    - accumulate multiple accepted slices locally until they form one coherent release unit or are just shy of becoming too large
    - keep continuity synced in workspace during that accumulation
    - run one dedicated findings-first deep release-unit audit over the whole accumulated diff before commit
    - correct audit findings before final regression / commit-gating / commit / push
    - do not return to per-slice commit/push churn without explicit reason and explicit Ryan sign-off
-35. The next lane must not reopen:
+37. The next lane must not reopen:
    - the accepted pushed `c592dca` `getattr(obj, name)` release unit
    - the accepted pushed `7d43302` defaulted `getattr(obj, name, default)` release unit
    - the accepted workspace-only `EVAL.md` authority correction
@@ -822,8 +838,8 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
    - further inherited-call work
    - scoring, winner selection, tasks, fixtures, providers, docs, public surfaces, or runtime-acquisition breadth
    - any run spec unless a later control-reviewed eval pilot explicitly authorizes it
-36. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
-37. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
+38. Keep `context_ir.tool_facade` as the highest exposed hybrid entry point, keep package-root/public low-level plus MCP runtime-observation widening on explicit hold, and keep public claim boundaries unchanged.
+39. Maintain the accepted hold on further inherited-call reopening beyond the accepted first-exclusive-branch overlap boundary.
 
 ## What Is Deferred
 
