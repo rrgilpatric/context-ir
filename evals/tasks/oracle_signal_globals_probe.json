@@ -1,0 +1,26 @@
+{
+  "task_id": "oracle_signal_globals_probe",
+  "fixture_id": "oracle_signal_globals_probe",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.probe_global_namespace",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the isolated globals probe fixture."
+    },
+    {
+      "kind": "unsupported",
+      "file_path": "main.py",
+      "construct_text": "globals()",
+      "reason_code": "runtime_mutation",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main.probe_global_namespace",
+      "source_snippet": "globals()",
+      "rationale": "Direct globals namespace reflection stays primarily unsupported while carrying additive runtime provenance.",
+      "expected_primary_capability_tier": "unsupported/opaque",
+      "expect_attached_runtime_provenance": true
+    }
+  ]
+}

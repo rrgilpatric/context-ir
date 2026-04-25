@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_signal_globals_probe_matrix",
+  "cases": [
+    {
+      "case_id": "signal_globals_probe",
+      "task_path": "evals/tasks/oracle_signal_globals_probe.json",
+      "query": "Fix probe_global_namespace unsupported globals() returned namespace and keep digest output aligned",
+      "budgets": [220],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}
