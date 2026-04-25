@@ -2,6 +2,62 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-25 -- Locals Budget Matrix Docs Reconciliation
+
+- Reconciled docs for the accepted workspace-only internal eval-only
+  `RUNTIME_MUTATION` / `locals()` budget expansion
+- Files updated in this docs pass:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Current accepted provider/budget wording:
+  - `oracle_signal_locals_probe_matrix` is 1 task x 2 budgets x 3 providers at
+    budgets `100` and `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime outcome wording remains `lookup_outcome=returned_namespace`
+- Preserved boundaries:
+  - this remains narrow internal eval-only evidence
+  - selector, runtime-mutation surface, and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - public comparative claims remain bounded to the existing quad matrix
+  - no generalized `locals()` support claim is authorized
+- Explicit non-actions:
+  - no code, tests, fixtures, tasks, run specs, API, MCP, runtime acquisition,
+    analyzer/tool facade, schema, scoring, optimizer, or winner-selection files
+    were edited in this docs pass
+  - release-unit audit, full regression, commit-gating, staging, local commit
+    creation, and push were not run in this docs pass
+- Current release-state after later gates:
+  - the locals budget-expansion candidate is implementation-accepted,
+    docs-reconciled, release-unit audit-cleared, and full-regression-cleared
+  - commit-gating is not cleared yet because the first commit-gating review
+    found one P2 continuity-routing issue in `PLAN.md` and `BUILDLOG.md`
+  - staging, local commit creation, and push have not run
+  - push remains explicitly Ryan-gated
+- The accepted workspace-only implementation part of this expansion remains the
+  prior run-spec/test change to expand the existing locals matrix from budget
+  `[220]` to budgets `[220, 100]`
+- Scoped docs validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md PLAN.md BUILDLOG.md`
+  - stale one-budget locals wording scan returned no matches in
+    `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
+  - positive fact scan confirmed the two-budget locals wording,
+    `lookup_outcome=returned_namespace`, `unsupported/opaque`, additive
+    provenance, and unchanged quad-matrix boundary wording
+- Next control action:
+  - rerun commit-gating over the exact accumulated locals budget-expansion
+    release-candidate file set after this continuity-routing correction
+  - commit-gating is not cleared yet; the first commit-gating review found one
+    P2 stale-routing issue in `PLAN.md` and `BUILDLOG.md`
+  - staging, local commit creation, and push have not run
+  - push remains explicitly Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-04-25 -- Locals Eval Pilot Commit-Gating Review
 
 - Reviewed the commit-gating review for the audit-cleared and full-regression-cleared workspace-only internal eval-only `RUNTIME_MUTATION` / `locals()` release candidate

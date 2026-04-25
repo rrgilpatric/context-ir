@@ -8,7 +8,9 @@ from typing import cast
 
 import context_ir
 import context_ir.eval_providers as eval_providers
+import context_ir.eval_report as eval_report
 import context_ir.eval_runs as eval_runs
+import context_ir.eval_summary as eval_summary
 import context_ir.semantic_types as semantic_types
 from context_ir.eval_oracles import (
     SymbolOracleSelector,
@@ -29,7 +31,7 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_locals_probe.json"
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_locals_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -113,8 +115,8 @@ def test_locals_probe_task_resolves_expected_selectors_deterministically() -> No
     assert unsupported.attached_runtime_provenance_record_ids
 
 
-def test_locals_probe_run_spec_loads_single_budget_matrix() -> None:
-    """The locals probe run spec is one task x one budget x three providers."""
+def test_locals_probe_run_spec_loads_budget_matrix() -> None:
+    """The locals probe run spec is one task x two budgets x three providers."""
     spec = eval_runs.load_eval_run_spec(RUN_SPEC_PATH)
 
     assert spec.plan_id == "oracle_signal_locals_probe_matrix"
@@ -177,56 +179,142 @@ def test_locals_probe_run_executes_with_additive_runtime_provenance(
         for budget in PROBE_BUDGETS
     }
 
-    for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
+    for budget in PROBE_BUDGETS:
+        for provider_name in BASELINE_PROVIDERS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
+
+        record = _record_for(
             records,
-            provider_name=provider_name,
-            budget=220,
+            provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+            budget=budget,
         )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+        metrics = cast(dict[str, object], record["metrics"])
+        runtime_provenance_records = cast(
+            list[dict[str, object]],
+            record["runtime_provenance_records"],
+        )
+        unsupported_selector = next(
+            selector
+            for selector in _resolved_selectors(record)
+            if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
+        )
+        unsupported_unit = next(
+            unit
+            for unit in _selected_units(record)
+            if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+        )
 
-    record = _record_for(
-        records,
-        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
-        budget=220,
-    )
-    metrics = cast(dict[str, object], record["metrics"])
-    runtime_provenance_records = cast(
-        list[dict[str, object]],
-        record["runtime_provenance_records"],
-    )
-    unsupported_selector = next(
-        selector
-        for selector in _resolved_selectors(record)
-        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
-    )
-    unsupported_unit = next(
-        unit
-        for unit in _selected_units(record)
-        if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+        assert record["spec_version"] == "v1"
+        assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+        assert record["budget"] == budget
+        assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
+        assert metrics["uncertainty_honesty"] == 1.0
+        assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
+        assert unsupported_selector["primary_evidence_origin"] == (
+            "unsupported_reason_code"
+        )
+        assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
+        assert unsupported_selector["has_attached_runtime_provenance"] is True
+        assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
+        assert unsupported_unit["primary_evidence_origin"] == (
+            "unsupported_reason_code"
+        )
+        assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
+        assert unsupported_unit["has_attached_runtime_provenance"] is True
+        assert cast(
+            list[str],
+            unsupported_unit["attached_runtime_provenance_record_ids"],
+        )
+        assert len(runtime_provenance_records) == 1
+        assert runtime_provenance_records[0]["normalized_payload"] == {
+            "lookup_outcome": "returned_namespace",
+        }
+
+
+def test_locals_probe_summary_surfaces_internal_capability_accounting(
+    tmp_path: Path,
+) -> None:
+    """The accepted pilot renders tier-aware accounting without widening claims."""
+    ledger_path = tmp_path / "locals_probe.jsonl"
+
+    eval_runs.execute_eval_run_spec(
+        RUN_SPEC_PATH,
+        ledger_path,
+        git_commit="abc1234",
+        python_version="3.11.9",
+        package_version=context_ir.__version__,
     )
 
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert record["budget"] == 220
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert metrics["uncertainty_honesty"] == 1.0
-    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_selector["primary_evidence_origin"] == (
-        "unsupported_reason_code"
+    summary = eval_summary.build_eval_ledger_summary(
+        eval_summary.load_eval_ledger(ledger_path)
     )
-    assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_selector["has_attached_runtime_provenance"] is True
-    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
-    assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_unit["has_attached_runtime_provenance"] is True
-    assert cast(
-        list[str],
-        unsupported_unit["attached_runtime_provenance_record_ids"],
+    rendered = eval_summary.render_eval_ledger_summary(summary)
+
+    unsupported_selector_aggregate = next(
+        aggregate
+        for aggregate in summary.selector_tier_expectation_aggregates
+        if aggregate.expected_primary_capability_tier == "unsupported/opaque"
     )
-    assert len(runtime_provenance_records) == 1
-    assert runtime_provenance_records[0]["normalized_payload"] == {
-        "lookup_outcome": "returned_namespace",
-    }
+    runtime_expectation_aggregate = next(
+        aggregate
+        for aggregate in summary.selector_runtime_expectation_aggregates
+        if aggregate.expected_attached_runtime_provenance is True
+    )
+    runtime_outcome_aggregate = next(
+        aggregate
+        for aggregate in summary.runtime_outcome_aggregates
+        if aggregate.payload_key == "lookup_outcome"
+        and aggregate.payload_value == "returned_namespace"
+    )
+    unsupported_selected_unit_aggregate = next(
+        aggregate
+        for aggregate in summary.selected_unit_tier_aggregates
+        if aggregate.primary_capability_tier == "unsupported/opaque"
+    )
+    provider_unsupported_selected_unit_aggregate = next(
+        aggregate
+        for aggregate in summary.provider_selected_unit_tier_aggregates
+        if aggregate.provider_name == eval_providers.CONTEXT_IR_PROVIDER
+        and aggregate.primary_capability_tier == "unsupported/opaque"
+    )
+    report = eval_report.build_eval_report(ledger_path)
+
+    expected_record_count = len(PROBE_PROVIDERS) * len(PROBE_BUDGETS)
+    expected_context_ir_count = len(PROBE_BUDGETS)
+
+    assert unsupported_selector_aggregate.selector_count == expected_record_count
+    assert unsupported_selector_aggregate.satisfied_count == expected_record_count
+    assert runtime_expectation_aggregate.selector_count == expected_record_count
+    assert runtime_expectation_aggregate.satisfied_count == expected_record_count
+    assert runtime_outcome_aggregate.runtime_provenance_count == expected_record_count
+    assert (
+        unsupported_selected_unit_aggregate.selected_unit_count
+        == expected_context_ir_count
+    )
+    assert (
+        unsupported_selected_unit_aggregate.attached_runtime_provenance_count
+        == expected_context_ir_count
+    )
+    assert (
+        provider_unsupported_selected_unit_aggregate.selected_unit_count
+        == expected_context_ir_count
+    )
+    assert (
+        provider_unsupported_selected_unit_aggregate.attached_runtime_provenance_count
+        == expected_context_ir_count
+    )
+
+    assert report.markdown_report == rendered
+    for markdown in (rendered, report.markdown_report):
+        assert "## Capability-Tier Accounting" in markdown
+        assert "### Selected Units by Provider" in markdown
+        assert "| yes | 6 | 6 |" in markdown
+        assert "| lookup_outcome | returned_namespace | 6 |" in markdown
+        assert "| unsupported/opaque | 2 | 2 |" in markdown
+        assert "| runtime_backed |" not in markdown

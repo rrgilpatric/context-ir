@@ -38,15 +38,42 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The pushed `631a303` release adds the initial internal eval-only `RUNTIME_MUTATION` / `globals()` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`, preserving `unsupported/opaque` primary truth, additive runtime provenance, and the public-safe quad-matrix comparative boundary. The prior pushed `9eec985` release expands the internal zero-argument `REFLECTIVE_BUILTIN` / `vars()` eval matrix to `1 task x 2 budgets x 3 providers` at budgets `100` and `220`. The prior pushed `71db72e` release adds the initial internal zero-argument `REFLECTIVE_BUILTIN` / `vars()` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`. The prior pushed `2c6b54a` release expands the internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval matrix to `1 task x 2 budgets x 3 providers` at budgets `100` and `220`. The prior pushed `ead239d` release added the initial internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`. The prior pushed `getattr` family eval/test/docs release unit is `1b555ef`, which expands the three existing `getattr` family run specs to budgets `220` and `100`, keeping each matrix at `1 task x 2 budgets x 3 providers`. The post-push continuity anchor for that `1b555ef` release state is `159e363`. The prior pushed code/test release unit `d8ebdc3` remains the runtime-outcome accounting release anchor. The prior pushed code/test release unit `b014595` remains the defaulted `getattr(obj, name, default)` value-return branch release anchor. The prior pushed code/test release unit `7d43302` remains the defaulted `getattr(obj, name, default)` default-return branch release anchor. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The prior pushed docs-only process-correction anchor `8133e0a` corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The prior pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
+Release authority is split deliberately. The pushed `38e9d5f` release adds the
+initial internal eval-only `RUNTIME_MUTATION` / `locals()` eval pilot at
+`1 task x 1 budget x 3 providers` with budget `220`, preserving
+`unsupported/opaque` primary truth, additive runtime provenance, and the
+public-safe quad-matrix comparative boundary. The accepted workspace-only
+locals budget expansion changes only the existing
+`oracle_signal_locals_probe_matrix` run spec and focused locals tests from
+budget `[220]` to budgets `[220, 100]`. Current evidence and claim docs must
+describe `oracle_signal_locals_probe_matrix` as 1 task x 2 budgets x 3
+providers at budgets `100` and `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`, with
+`lookup_outcome=returned_namespace`. Selector, runtime-mutation surface, and
+selected-unit primary truth remain `unsupported/opaque`; runtime provenance is
+additive only; and public comparative claims remain bounded to the existing
+quad matrix. No generalized `locals()` support claim is authorized.
+
+Prior pushed release anchors remain: `5f74ede` for the internal eval-only
+`RUNTIME_MUTATION` / `globals()` budget expansion; `631a303` for the initial
+`globals()` pilot; `9eec985` for the zero-argument `vars()` budget expansion;
+`71db72e` for the initial zero-argument `vars()` pilot; `2c6b54a` for the
+`vars(obj)` budget expansion; `ead239d` for the initial `vars(obj)` pilot;
+`1b555ef` for the `getattr` family budget expansion; `d8ebdc3` for
+runtime-outcome accounting; `b014595`, `7d43302`, and `c592dca` for the
+accepted `getattr` runtime-backed family releases; `762dd51` and `90dcc15` for
+`hasattr(obj, name)`; `9a52b46` for `DYNAMIC_IMPORT`; `215b6bb` for
+provider-scoped selected-unit capability-tier accounting; and `a605b22` for
+the capability-tier eval / evidence baseline.
 
 The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. Before the next commit/push tranche, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push.
 
-The defaulted `getattr(obj, name, default)` value-return branch tranche is pushed to `origin/main` at `b014595`. The post-`b014595` runtime-outcome methodology/reporting planning spike is accepted first-pass. The bounded runtime-outcome accounting implementation slice is accepted first-pass, audit-cleared, full-regression-cleared, commit-gating-cleared, committed locally at `d8ebdc3`, and pushed to `origin/main` after explicit Ryan authorization. No implementation or planning slice is currently in flight.
-
-The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family and the same-tranche docs/evidence reconciliation are released together at `1b555ef` after first-pass audit, full regression, commit-gating, local commit creation, and Ryan-authorized push. The post-push continuity anchor for that release state is `159e363`. The next north-star evidence planning boundary is now complete.
-
-The post-`d9be4d5` north-star evidence planning decision is accepted first-pass. The next smallest truthful evidence move was one narrow internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` pilot over the one-argument returned-namespace branch, reusing existing runtime-acquisition and tool-facade support while adding only eval loader/provider/assets/tests. That tranche is pushed at `ead239d`. The post-`ead239d` budget-expansion planning decision is accepted first-pass, and the resulting budget-expansion tranche is pushed at `2c6b54a`. The post-`2c6b54a` zero-argument `vars()` pilot tranche is pushed at `71db72e`, and the zero-argument `vars()` budget-expansion tranche is pushed at `9eec985`. The post-`9eec985` globals-family planning decision is accepted first-pass, and the resulting internal eval-only `RUNTIME_MUTATION` / `globals()` implementation slice is pushed at `631a303`. The post-`631a303` globals budget-expansion planning decision is accepted first-pass, and the resulting budget-expansion tranche is pushed at `5f74ede`. It expands the existing `oracle_signal_globals_probe_matrix` from budget `[220]` to budgets `[220, 100]`, keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, keeps baseline providers empty at the selected-unit layer, and changes only the run spec plus focused tests and release-facing documentation. The post-`5f74ede` next-move planning result recommended one narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot. That implementation slice is accepted first-pass as workspace-only state. It adds fixture-local `locals_runtime_observations` loading and Context IR provider pass-through for the existing accepted lower-layer `locals()` seam, plus `oracle_signal_locals_probe` fixture/task/run-spec/test assets at 1 task x 1 budget x 3 providers with budget `220`. Same-tranche docs/evidence reconciliation is accepted first-pass and keeps release-facing docs narrow, internal, release-neutral, and public-safe. The release-unit audit, full-regression gate, and commit-gating review over the accumulated locals release candidate are accepted first-pass, with full pytest passing at `601 passed`. Selector and selected-unit primary truth remain `unsupported/opaque`, runtime-backed provenance remains additive only with `lookup_outcome=returned_namespace`, and no runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, or public-claim surface changed in the accepted workspace-only locals tranche.
+The accepted workspace-only locals budget expansion is implementation-accepted,
+docs-reconciled, release-unit audit-cleared, and full-regression-cleared.
+Commit-gating is not cleared yet because the first commit-gating review found
+one P2 continuity-routing issue in `PLAN.md` and `BUILDLOG.md`. Staging, local
+commit creation, and push have not run for the expanded locals release
+candidate. Push remains explicitly Ryan-gated.
 
 ## What Is Complete
 
@@ -297,6 +324,10 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 - [x] Reflective-queue continuity reconciliation accepted first-pass
 - [x] Bounded `globals()` runtime-backed implementation slice accepted first-pass
 - [x] Bounded `locals()` runtime-backed implementation slice accepted first-pass
+- [x] Internal `locals()` provider/budget matrix expansion accepted first-pass as workspace-only state
+- [x] Same-tranche docs/evidence reconciliation for internal `locals()` provider/budget matrix expansion completed first-pass as workspace-only state
+- [x] Release-unit audit for internal `locals()` provider/budget matrix expansion accepted first-pass
+- [x] Full regression gate for internal `locals()` provider/budget matrix expansion accepted first-pass
 - [x] `delattr(obj, name)` vs `setattr(obj, name, value)` mutation-planning spike accepted first-pass
 - [x] Bounded `delattr(obj, name)` runtime-backed implementation slice accepted first-pass
 - [x] `setattr(obj, name, value)` assigned-value contract spike accepted first-pass
@@ -485,31 +516,47 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 - The commit-gating review over the accepted `globals()` budget expansion is accepted first-pass
 - The accepted commit message is `Expand globals eval budget matrix`
 - Local commit creation and remote push for the `globals()` budget expansion completed at `5f74ede`
-- The accepted workspace-only `locals()` eval pilot currently includes:
-  - `src/context_ir/eval_oracles.py`
-  - `src/context_ir/eval_providers.py`
-  - `evals/fixtures/oracle_signal_locals_probe/eval_runtime_observations.json`
-  - `evals/fixtures/oracle_signal_locals_probe/main.py`
-  - `evals/tasks/oracle_signal_locals_probe.json`
+- The initial `locals()` eval pilot is pushed at `38e9d5f`; it added the
+  internal eval-only `RUNTIME_MUTATION` / `locals()` fixture, task, run spec,
+  focused tests, and release-facing evidence docs for the one-budget `220`
+  pilot
+- The accepted workspace-only `locals()` budget expansion currently includes:
   - `evals/run_specs/oracle_signal_locals_probe_matrix.json`
   - `tests/test_eval_signal_locals_probe.py`
-- The accepted workspace-only `locals()` pilot is one internal eval-only task at budget `220` across `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
-- The accepted workspace-only `locals()` pilot keeps selector and selected-unit primary truth `unsupported/opaque` with additive `lookup_outcome=returned_namespace` runtime provenance only
-- The accepted workspace-only `locals()` pilot does not widen runtime acquisition, analyzer, tool facade implementation, MCP, package-root APIs, schema, scoring, winner selection, release-facing docs, public claims, or sibling runtime families
-- Same-tranche docs/evidence reconciliation for the accepted `locals()` pilot is complete in:
+- The accepted workspace-only budget expansion changes only the existing
+  `oracle_signal_locals_probe_matrix` from budget `[220]` to budgets
+  `[220, 100]`
+- The accepted workspace-only budget expansion describes
+  `oracle_signal_locals_probe_matrix` as 1 task x 2 budgets x 3 providers at
+  budgets `100` and `220`
+- The budget `100` row preserves the expected `unsupported/opaque` selected
+  unit with additive `lookup_outcome=returned_namespace` runtime provenance;
+  baseline providers remain empty at the selected-unit layer
+- The accepted workspace-only budget expansion does not widen fixtures, tasks,
+  providers, source, runtime acquisition, analyzer, tool facade implementation,
+  MCP, package-root APIs, schema, scoring, winner selection, public claims,
+  generalized locals() support, or sibling runtime families
+- Same-tranche docs/evidence reconciliation for the accepted `locals()` budget
+  expansion is complete in:
   - `EVAL.md`
   - `PUBLIC_CLAIMS.md`
   - `README.md`
   - `ARCHITECTURE.md`
-- The accepted docs/evidence reconciliation describes `oracle_signal_locals_probe_matrix` as 1 task x 1 budget x 3 providers at budget `220`
-- The accepted docs/evidence reconciliation keeps selector and selected-unit primary truth `unsupported/opaque`, runtime-backed provenance additive only, and the public-safe quad-matrix comparative boundary unchanged
-- The accepted docs/evidence reconciliation does not introduce live workspace, local commit, or push-state wording in release-facing docs
-- The release-unit audit over the accumulated `locals()` release candidate is accepted first-pass
-- The audit found no findings and confirmed the dirty/untracked set matches the intended release candidate, no staged changes are present, lower layers remain unchanged, docs stay claim-bounded, and continuity preserves tranche release-state discipline
-- The full regression gate over the accumulated `locals()` release candidate is accepted first-pass with `601 passed`
-- Commit-gating over the exact accumulated `locals()` release-candidate file set is accepted first-pass
-- The accepted commit message is `Add locals runtime eval pilot`
-- Local commit and remote push state for any later release commit must be verified from git rather than inferred from continuity prose
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The accepted docs/evidence reconciliation keeps selector, runtime-mutation
+  surface, and selected-unit primary truth `unsupported/opaque`; keeps
+  runtime-backed provenance additive only; preserves
+  `lookup_outcome=returned_namespace`; and leaves the public-safe quad-matrix
+  comparative boundary unchanged
+- The accumulated `locals()` budget-expansion release candidate is
+  implementation-accepted, docs-reconciled, release-unit audit-cleared, and
+  full-regression-cleared
+- Commit-gating is not cleared yet because the first commit-gating review found
+  one P2 continuity-routing issue in `PLAN.md` and `BUILDLOG.md`
+- Staging, local commit creation, and push for the accumulated `locals()`
+  budget-expansion release candidate have not run; push remains explicitly
+  Ryan-gated
 - The post-push docs-only continuity sync records the `d8ebdc3` release state in:
   - `PLAN.md`
   - `BUILDLOG.md`
@@ -834,9 +881,26 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 
 ## What Is Next
 
-Immediate next control action: create the local commit for the audit-cleared, full-regression-cleared, and commit-gating-cleared `RUNTIME_MUTATION` / `locals()` release candidate if git state still matches the accepted staging set. Push remains explicitly Ryan-gated.
+Immediate next control action: rerun commit-gating over the exact accumulated
+`RUNTIME_MUTATION` / `locals()` budget-expansion release-candidate file set
+after this continuity-routing correction. The candidate is
+implementation-accepted, docs-reconciled, release-unit audit-cleared, and
+full-regression-cleared. Commit-gating is not cleared yet because the first
+commit-gating review found one P2 continuity-routing issue in `PLAN.md` and
+`BUILDLOG.md`. Staging, local commit creation, and push have not run for this
+expanded locals release candidate. Push remains explicitly Ryan-gated.
 
-1. Treat pushed commit `5f74ede` as the latest pushed eval/test/docs release authority, pushed commit `631a303` as the prior initial `globals()` release authority, pushed commit `9eec985` as the prior zero-argument `vars()` budget-expansion release authority, pushed commit `71db72e` as the prior initial zero-argument `vars()` pilot release authority, pushed commit `2c6b54a` as the prior `vars(obj)` budget-expansion release authority, pushed commit `ead239d` as the prior initial `vars(obj)` pilot release authority, and pushed commit `1b555ef` as the prior `getattr` family release authority:
+1. Treat pushed commit `38e9d5f` as the latest pushed eval/test/docs release
+   authority, pushed commit `5f74ede` as the prior `globals()` budget-expansion
+   release authority, pushed commit `631a303` as the prior initial `globals()`
+   release authority, pushed commit `9eec985` as the prior zero-argument
+   `vars()` budget-expansion release authority, pushed commit `71db72e` as the
+   prior initial zero-argument `vars()` pilot release authority, pushed commit
+   `2c6b54a` as the prior `vars(obj)` budget-expansion release authority,
+   pushed commit `ead239d` as the prior initial `vars(obj)` pilot release
+   authority, and pushed commit `1b555ef` as the prior `getattr` family release
+   authority:
+   - `38e9d5f` adds the initial internal eval-only `RUNTIME_MUTATION` / `locals()` pilot at `1 task x 1 budget x 3 providers` with budget `220`
    - `5f74ede` expands the existing internal eval-only `RUNTIME_MUTATION` / `globals()` matrix from budget `[220]` to budgets `[220, 100]`
    - `5f74ede` keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, or public-claim boundaries
    - `631a303` adds the initial internal eval-only `RUNTIME_MUTATION` / `globals()` pilot at `1 task x 1 budget x 3 providers` with budget `220`
@@ -847,8 +911,8 @@ Immediate next control action: create the local commit for the audit-cleared, fu
    - `ead239d` adds the initial internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`
    - `1b555ef` expands the existing `getattr` family matrices to budgets `220` and `100`
    - each `getattr` family matrix remains `1 task x 2 budgets x 3 providers`
-   - accepted workspace-only post-`5f74ede` work adds one internal eval-only `RUNTIME_MUTATION` / `locals()` pilot: `oracle_signal_locals_probe_matrix`, 1 task x 1 budget x 3 providers at budget `220`
-   - the `locals()` pilot keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, release-facing docs, public benchmark, or public-claim boundaries
+   - accepted workspace-only post-`38e9d5f` work expands `oracle_signal_locals_probe_matrix` to 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+   - the `locals()` matrix keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, generalized `locals()` support, or public-claim boundaries
 2. Treat pushed commit `159e363` as the post-push continuity anchor for the `1b555ef` release state, and treat `8133e0a` as the prior docs-only process-correction anchor:
    - it corrects the self-referential continuity loop
    - it restores tranche-style release sequencing discipline

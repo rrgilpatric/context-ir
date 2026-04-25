@@ -128,9 +128,10 @@ Proven by current unit and integration tests:
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`.
 - The current internal `RUNTIME_MUTATION` / `locals()` pilot covers only
-  `oracle_signal_locals_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`.
+  `oracle_signal_locals_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `100` and `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with
+  `lookup_outcome=returned_namespace`.
 - In those runtime-backed pilots, the dynamic selector, reflective selector, or
   runtime-mutation surface and selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive attached
@@ -216,8 +217,8 @@ Architecturally intended but not yet evaluated:
   `lookup_outcome=returned_namespace`; primary truth remains
   `unsupported/opaque`, and runtime-backed provenance is additive only.
 - Narrow `locals()` provider/budget evidence: the internal
-  `oracle_signal_locals_probe_matrix` covers only 1 task x 1 budget x 3
-  providers at budget `220`, against providers `context_ir`,
+  `oracle_signal_locals_probe_matrix` covers only 1 task x 2 budgets x 3
+  providers at budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
   remain `unsupported/opaque`, and runtime-backed provenance is additive only.
@@ -280,9 +281,10 @@ The following claims are allowed because current repo artifacts support them:
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`. The current internal eval-only
   `RUNTIME_MUTATION` / `locals()` pilot covers only
-  `oracle_signal_locals_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`. These
+  `oracle_signal_locals_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `100` and `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with
+  `lookup_outcome=returned_namespace`. These
   pilots keep the dynamic selector, reflective selector, or runtime-mutation
   surface and selected-unit primary truth `unsupported/opaque` while attaching
   runtime-backed provenance additively. The public-safe quad-matrix
