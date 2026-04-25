@@ -540,7 +540,7 @@ def load_fixture_vars_runtime_observations(
     *,
     semantic_program: SemanticProgram | None = None,
 ) -> tuple[VarsRuntimeObservation, ...]:
-    """Load fixture-local one-argument ``vars(obj)`` runtime observations."""
+    """Load fixture-local zero/one-argument ``vars`` runtime observations."""
     root = Path(repo_root)
     observation_path = root / _VARS_RUNTIME_OBSERVATION_FILENAME
     if not observation_path.is_file():
@@ -710,7 +710,7 @@ def _is_eligible_getattr_call_site(call_site: CallSiteFact) -> bool:
 def _vars_observation_site_index(
     program: SemanticProgram,
 ) -> dict[tuple[str, int, int, int, int], SourceSite]:
-    """Index eligible one-argument ``vars(obj)`` source sites by identity."""
+    """Index eligible zero/one-argument ``vars`` source sites by identity."""
     call_sites_by_unsupported_id = {
         f"unsupported:{call_site.call_site_id}": call_site
         for call_site in program.syntax.call_sites
@@ -732,8 +732,8 @@ def _vars_observation_site_index(
 
 
 def _is_eligible_vars_call_site(call_site: CallSiteFact) -> bool:
-    """Return whether ``call_site`` is fixture-loadable ``vars(obj)``."""
-    if call_site.argument_count != 1:
+    """Return whether ``call_site`` is a fixture-loadable ``vars`` form."""
+    if call_site.argument_count not in {0, 1}:
         return False
     try:
         expression = ast.parse(call_site.callee_text, mode="eval").body
@@ -919,7 +919,7 @@ def _parse_vars_runtime_observation(
     path: str,
     site_index: dict[tuple[str, int, int, int, int], SourceSite],
 ) -> VarsRuntimeObservation:
-    """Parse one fixture-local ``vars(obj)`` runtime observation record."""
+    """Parse one fixture-local ``vars`` runtime observation record."""
     record = _expect_object(raw, path=path)
     _validate_allowed_fields(
         record,
@@ -1056,7 +1056,7 @@ def _matched_vars_observation_site(
     site_index: dict[tuple[str, int, int, int, int], SourceSite],
     path: str,
 ) -> SourceSite:
-    """Return the analyzed source site matching one ``vars(obj)`` observation."""
+    """Return the analyzed source site matching one ``vars`` observation."""
     identity = (file_path, start_line, start_column, end_line, end_column)
     site = site_index.get(identity)
     if site is None:

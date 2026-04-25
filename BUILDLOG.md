@@ -2,6 +2,167 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-25 -- Vars Zero Eval Commit-Gating Review
+
+- Reviewed the returned commit-gating review for the audit-cleared and full-regression-cleared zero-argument `REFLECTIVE_BUILTIN` / `vars()` release candidate
+- Findings-first review result:
+  - no findings
+  - dirty/untracked file set exactly matches the 12-file release candidate
+  - no staged changes were present
+  - `git diff --check` was clean
+  - repo-backed state remained `main`, with `HEAD` and `origin/main` at `2c6b54a`
+  - the tranche is coherent as one commit: one internal eval-only zero-argument `vars()` pilot plus same-tranche evidence docs and continuity
+  - no package-root API, MCP, runtime acquisition, analyzer, tool facade, schema, scoring, winner selection, public benchmark framing, or public-claim widening was found
+- Accepted staging set:
+  - `src/context_ir/eval_oracles.py`
+  - `evals/fixtures/oracle_signal_vars_zero_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_vars_zero_probe/main.py`
+  - `evals/tasks/oracle_signal_vars_zero_probe.json`
+  - `evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Accepted commit message:
+  - subject: `Add zero-argument vars eval pilot`
+  - body: `Record one internal eval-only REFLECTIVE_BUILTIN vars() pilot at budget 220 with additive runtime provenance while preserving unsupported/opaque primary truth and public/API/MCP/runtime/scoring boundaries.`
+- Acceptance decision:
+  - accept commit-gating first-pass
+  - local commit creation may proceed over the exact accepted staging set if git shows the tranche is still uncommitted
+  - if git shows the release commit already exists locally and is ahead of `origin/main`, remote push remains explicitly Ryan-gated
+  - if git shows the release commit is already pushed, route to the next bounded planning/evidence move without a docs-only post-push continuity commit
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Eval Full Regression Gate
+
+- Reviewed the returned full-regression gate for the accumulated zero-argument `REFLECTIVE_BUILTIN` / `vars()` release candidate after first-pass release-unit audit acceptance
+- Findings-first review result:
+  - no findings
+  - repo-backed state remained `main`, with `HEAD` and `origin/main` at `2c6b54a`
+  - dirty workspace state matched the expected accumulated release-candidate file set
+  - no staged changes were present
+  - `git diff --check` was clean
+- Full-regression gate passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+  - pytest result: `590 passed`
+- Acceptance decision:
+  - accept the full-regression gate first-pass
+  - route next to commit-gating review over the exact accumulated release-candidate file set
+  - this is not commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Eval Release-Unit Audit Review
+
+- Reviewed the returned dedicated read-only release-unit audit for the accumulated zero-argument `REFLECTIVE_BUILTIN` / `vars()` release candidate
+- Audit scope covered:
+  - `src/context_ir/eval_oracles.py`
+  - `evals/fixtures/oracle_signal_vars_zero_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_vars_zero_probe/main.py`
+  - `evals/tasks/oracle_signal_vars_zero_probe.json`
+  - `evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Findings-first audit result:
+  - no findings
+  - release candidate matches the intended file set
+  - no staged changes were present
+  - repo-backed state remained `main`, with `HEAD` and `origin/main` at `2c6b54a`
+  - `git diff --check` was clean
+  - JSON parse checks passed for the new fixture, task, and run spec
+  - structural JSON review confirmed one zero-argument `vars()` fixture, one task, one run spec, budget `[220]`, and providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - focused review confirmed the pilot stays internal and eval-only
+  - `eval_oracles.py` only expands fixture eligibility to zero-argument and one-argument `vars`
+  - the fixture is a single `vars()` call
+  - the task keeps the unsupported selector primary truth
+  - docs preserve internal-only, additive-provenance wording without widening public claims
+- Acceptance decision:
+  - accept the release-unit audit first-pass
+  - route next to full regression over the accumulated release candidate
+  - this is not full-regression clearance, commit-gating clearance, local commit creation, or push authorization
+- Residual risk:
+  - full regression has not yet been run for this release candidate
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Eval Docs/Evidence Reconciliation Review
+
+- Reviewed the returned same-tranche docs/evidence reconciliation for the accepted internal eval-only zero-argument `REFLECTIVE_BUILTIN` / `vars()` pilot
+- Files reviewed:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- Findings-first review result:
+  - no findings
+  - release-facing docs contain no `workspace-only`, `workspace only`, `not pushed`, or `accepted workspace` wording for this pilot
+  - docs describe the zero-argument `vars()` pilot as narrow internal eval evidence only
+  - the new evidence wording is limited to `oracle_signal_vars_zero_probe_matrix`: 1 task x 1 budget x 3 providers at budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - `lookup_outcome=returned_namespace` remains explicit
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - the existing `vars(obj)` matrix remains separate at 1 task x 2 budgets x 3 providers for budgets `100` and `220`
+  - the public-safe quad-matrix comparative boundary remains separate and unchanged
+  - no public supported-subset, API, MCP, public benchmark, generalized reflective-builtin, generalized runtime, scoring, or winner-selection claim widening was introduced
+- Control-lane validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - `rg -n 'workspace-only|workspace only|not pushed|accepted workspace' EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md` returned no matches
+  - focused evidence-wording grep confirmed the zero-argument matrix name, 1 task x 1 budget x 3 providers, budget `220`, provider names, `lookup_outcome=returned_namespace`, `unsupported/opaque`, additive provenance, and unchanged quad-matrix boundary
+  - focused negative claim-widening grep found no prohibited `vars()` support or generalized public-support wording
+- Acceptance decision:
+  - accept the docs/evidence reconciliation first-pass
+  - declare the accumulated zero-argument `vars()` tranche ready for one dedicated read-only release-unit audit
+  - the tranche is not release-unit audit-cleared, full-regression-cleared, commit-gating-cleared, committed, or push-authorized
+  - local commit and remote push state must be verified from git rather than maintained as mutable continuity prose
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Eval Pilot Implementation Review
+
+- Reviewed the returned bounded implementation slice for one internal eval-only zero-argument `REFLECTIVE_BUILTIN` / `vars()` pilot
+- Files reviewed:
+  - `src/context_ir/eval_oracles.py`
+  - `evals/fixtures/oracle_signal_vars_zero_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_vars_zero_probe/main.py`
+  - `evals/tasks/oracle_signal_vars_zero_probe.json`
+  - `evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Findings-first review result:
+  - no findings
+  - the eval oracle fixture loader now accepts zero-argument and one-argument `vars` call sites
+  - the new fixture uses one zero-argument `vars()` call only and does not include `vars(obj)`
+  - the new `oracle_signal_vars_zero_probe_matrix` is 1 task x 1 budget x 3 providers at budget `220`
+  - the fixture records `lookup_outcome=returned_namespace`
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - package-root API exposure is asserted unchanged
+  - no runtime-acquisition, analyzer, tool-facade behavior, MCP, package-root API, metrics/results/reporting, scoring, winner-selection, docs, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m json.tool evals/tasks/oracle_signal_vars_zero_probe.json`
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `.venv/bin/python -m json.tool evals/fixtures/oracle_signal_vars_zero_probe/eval_runtime_observations.json`
+  - `.venv/bin/python -m ruff check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_vars_zero_probe.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_vars_zero_probe.py`
+  - `.venv/bin/python -m mypy --strict src/context_ir/eval_oracles.py src/context_ir/eval_providers.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_zero_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py tests/test_eval_report.py -q`
+  - focused pytest result: `67 passed`
+  - `git diff --check`
+  - out-of-scope diff check over runtime acquisition, analyzer, tool facade, package root, MCP, eval metrics/results/summary/runs/report, and `pyproject.toml`
+- Acceptance decision:
+  - accept the implementation first-pass as workspace-only state
+  - route next to same-tranche docs/evidence reconciliation before declaring a release candidate or requesting release-unit audit
+  - fold the stale post-`2c6b54a` `PLAN.md` routing correction into this same substantive tranche
+- Acceptance status: first-pass
+
 ## 2026-04-25 -- Vars Probe Budget Matrix Commit-Gating Review
 
 - Performed commit-gating review for the corrected-audit-cleared and full-regression-cleared internal `REFLECTIVE_BUILTIN` / `vars(obj)` budget-expansion tranche

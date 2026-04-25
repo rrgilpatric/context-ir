@@ -32,14 +32,20 @@ infrastructure and a current four-asset signal evidence surface documented in
 `DYNAMIC_IMPORT` and narrow `REFLECTIVE_BUILTIN` selectors exercised via
 `hasattr(obj, name)`, `getattr(obj, name)`, and narrow internal eval-only
 default-return and value-return branches of `getattr(obj, name, default)`, plus
-a current internal one-argument `vars(obj)` pilot. Those pilots do not
-widen the public supported subset, public API, MCP wrapper, or public benchmark
-claim boundary. The three existing getattr-family pilot matrices cover only
-1 task x 2 budgets x 3 providers at budgets `100` and `220`; the current
-internal `vars(obj)` pilot covers only 1 task x 2 budgets x 3 providers
-at budgets `100` and `220`, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`, with
-`lookup_outcome=returned_namespace`.
+a current internal one-argument `vars(obj)` pilot and a current internal
+zero-argument `vars()` pilot. Those pilots do not widen the public supported
+subset, public API, MCP wrapper, or public benchmark claim boundary. The three
+existing getattr-family pilot matrices cover only 1 task x 2 budgets x 3
+providers at budgets `100` and `220`; the current internal `vars(obj)` pilot
+covers only 1 task x 2 budgets x 3 providers at budgets `100` and `220`,
+against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`, with `lookup_outcome=returned_namespace`. The
+current internal zero-argument `vars()` pilot covers only
+`oracle_signal_vars_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
+budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`, with `lookup_outcome=returned_namespace`; selector
+and selected-unit primary truth remain `unsupported/opaque`, and runtime-backed
+provenance is additive only.
 
 ## Supported Subset and Limits
 
@@ -71,10 +77,11 @@ The repo does contain narrow internal runtime-backed eval evidence for selected
 unsupported `DYNAMIC_IMPORT` cases and narrow `REFLECTIVE_BUILTIN` pilots over
 `hasattr(obj, name)`, `getattr(obj, name)`, and the eval-only default-return
 and value-return branches of `getattr(obj, name, default)` selectors, plus the
-current internal one-argument `vars(obj)` selector. That evidence is
-additive internal provenance on otherwise unsupported/opaque selectors and
-selected units; it does not make broad dynamic imports, reflection, or
-generalized reflective-builtin behavior part of the public supported subset.
+current internal one-argument `vars(obj)` selector and zero-argument `vars()`
+selector. That evidence is additive internal provenance on otherwise
+unsupported/opaque selectors and selected units; it does not make broad dynamic
+imports, reflection, or generalized reflective-builtin behavior part of the
+public supported subset.
 
 ## Python API
 
@@ -178,7 +185,7 @@ Current evidence includes:
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and the
   eval-only default-return and value-return branches of
   `getattr(obj, name, default)`, plus the current internal one-argument
-  `vars(obj)` pilot
+  `vars(obj)` and zero-argument `vars()` pilots
 - three existing getattr-family provider/budget matrices limited to budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and
@@ -188,6 +195,12 @@ Current evidence includes:
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`, selector and selected-unit primary truth
   still `unsupported/opaque`, and runtime-backed provenance additive only
+- the current internal zero-argument `vars()` pilot remains
+  `oracle_signal_vars_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`,
+  selector and selected-unit primary truth still `unsupported/opaque`, and
+  runtime-backed provenance additive only
 - within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,

@@ -20,7 +20,13 @@ x 3 providers at budgets `100` and `220`. The current internal
 `REFLECTIVE_BUILTIN` / `vars(obj)` pilot remains one task only:
 `oracle_signal_vars_probe`, 1 task x 2 budgets x 3 providers at budgets `100`
 and `220`, against providers `context_ir`, `lexical_top_k_files`, and
-`import_neighborhood_files`, with `lookup_outcome=returned_namespace`.
+`import_neighborhood_files`, with `lookup_outcome=returned_namespace`. The
+current internal zero-argument `REFLECTIVE_BUILTIN` / `vars()` pilot remains one
+task only through `oracle_signal_vars_zero_probe_matrix`: 1 task x 1 budget x 3
+providers at budget `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`, with
+`lookup_outcome=returned_namespace`; selector and selected-unit primary truth
+remain `unsupported/opaque`, and runtime-backed provenance is additive only.
 Those slices do not widen public claims, public APIs, MCP behavior, scoring,
 winner selection, generalized reflective-builtin support, or generalized
 hybrid-runtime coverage.
@@ -87,13 +93,18 @@ around rendering density.
   `DYNAMIC_IMPORT` plus `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and
   `getattr(obj, name)` pilot attachments, plus eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, plus the
-  current internal one-argument `vars(obj)` pilot. The three existing
+  current internal one-argument `vars(obj)` and zero-argument `vars()` pilots.
+  The three existing
   getattr-family provider/budget matrices cover budgets `100` and `220`; each
   remains 1 task x 2 budgets x 3 providers. The current internal `vars(obj)`
   pilot covers only 1 task x 2 budgets x 3 providers at budgets `100` and
   `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`. In each case, selector and selected-unit primary
-  truth still `unsupported/opaque` and runtime-backed provenance remains
+  `import_neighborhood_files`. The current internal zero-argument `vars()`
+  pilot covers only `oracle_signal_vars_zero_probe_matrix`: 1 task x 1 budget x
+  3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with
+  `lookup_outcome=returned_namespace`. In each case, selector and selected-unit
+  primary truth still `unsupported/opaque` and runtime-backed provenance remains
   additive only.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence

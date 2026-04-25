@@ -11,17 +11,19 @@ accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
 Release authority is split by artifact type. The `oracle_signal_vars_probe`
-evidence described below is a narrow internal `vars(obj)` pilot. The `d8ebdc3`
-code/test evidence anchor adds internal eval runtime-outcome accounting over
-normalized runtime provenance payload data. The prior `b014595` release carries
-narrow internal `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)`
-value-return branch evidence beside the prior `7d43302` default-return branch,
-the earlier `c592dca` `getattr(obj, name)` runtime-backed evidence, and the
-`90dcc15` / `762dd51` `hasattr(obj, name)` runtime-backed evidence. These
-reflective pilots, the current internal `vars(obj)` pilot, and the
-runtime-outcome accounting do not widen public claims, public APIs, MCP
-behavior, scoring, winner selection, runtime acquisition, or generalized
-runtime coverage.
+evidence described below is a narrow internal `vars(obj)` pilot, and the
+`oracle_signal_vars_zero_probe` evidence described below is a narrow internal
+zero-argument `vars()` pilot. The `d8ebdc3` code/test evidence anchor adds
+internal eval runtime-outcome accounting over normalized runtime provenance
+payload data. The prior `b014595` release carries narrow internal
+`REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch
+evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
+`getattr(obj, name)` runtime-backed evidence, and the `90dcc15` / `762dd51`
+`hasattr(obj, name)` runtime-backed evidence. These reflective pilots, the
+current internal `vars(obj)` pilot, the current internal zero-argument `vars()`
+pilot, and the runtime-outcome accounting do not widen public claims, public
+APIs, MCP behavior, scoring, winner selection, runtime acquisition, or
+generalized runtime coverage.
 
 The current internal evidence ledger also records a narrow provider/budget
 expansion for the existing getattr-family run specs:
@@ -76,9 +78,9 @@ Proven by current unit and integration tests:
 - Internal eval runtime-outcome accounting is supported for normalized runtime
   provenance payload fields, so summary/report output can distinguish outcome
   counts such as `lookup_outcome=returned_default_value` and
-  `lookup_outcome=returned_value`, and the current internal `vars(obj)` pilot
-  records `lookup_outcome=returned_namespace` while preserving existing
-  tier/provider additive-provenance accounting.
+  `lookup_outcome=returned_value`, and the current internal `vars(obj)` and
+  zero-argument `vars()` pilots record `lookup_outcome=returned_namespace` while
+  preserving existing tier/provider additive-provenance accounting.
 - Internal runtime-backed evidence currently covers narrow pilots only:
   - the `DYNAMIC_IMPORT` internal provider/budget matrix for the
     `oracle_signal_dynamic_import_probe` task
@@ -94,18 +96,23 @@ Proven by current unit and integration tests:
     `oracle_signal_getattr_default_value_probe` task
   - the narrow internal `REFLECTIVE_BUILTIN` / `vars(obj)` pilot for the
     `oracle_signal_vars_probe` task
+  - the narrow internal `REFLECTIVE_BUILTIN` / zero-argument `vars()` pilot for
+    the `oracle_signal_vars_zero_probe` task
 - The three existing getattr-family provider/budget matrices now cover budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers.
 - The current internal `vars(obj)` pilot covers only
   `oracle_signal_vars_probe`: 1 task x 2 budgets x 3 providers at budgets
   `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`.
-- In those runtime-backed pilots, the dynamic or reflective selector remains
-  primarily `unsupported/opaque`, selected-unit primary truth remains
-  `unsupported/opaque`, and runtime-backed provenance is additive attached
-  evidence. This is internal evidence, not a public benchmark, broad
-  hybrid-runtime support claim, generalized reflective-builtin support claim,
-  or generalized dynamic-Python claim.
+- The current internal zero-argument `vars()` pilot covers only
+  `oracle_signal_vars_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`.
+- In those runtime-backed pilots, the dynamic or reflective selector and
+  selected-unit primary truth remain `unsupported/opaque`, and runtime-backed
+  provenance is additive attached evidence. This is internal evidence, not a
+  public benchmark, broad hybrid-runtime support claim, generalized
+  reflective-builtin support claim, or generalized dynamic-Python claim.
 
 Validated by local quality gates, not by benchmark evidence:
 
@@ -132,7 +139,8 @@ Architecturally intended but not yet evaluated:
 - Runtime-backed task families beyond the current narrow `DYNAMIC_IMPORT`,
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
-  internal pilots, plus the current one-argument `vars(obj)` internal pilot.
+  internal pilots, plus the current one-argument `vars(obj)` and zero-argument
+  `vars()` internal pilots.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -155,8 +163,9 @@ Architecturally intended but not yet evaluated:
   eval-only default-return and value-return `getattr(obj, name, default)`
   fixtures, tasks, run specs, and additive runtime provenance, plus the current
   internal one-argument `vars(obj)` fixture, task, run spec, and additive
-  runtime provenance. These pilots are internal evidence surfaces, not public
-  benchmark surfaces.
+  runtime provenance, and the current internal zero-argument `vars()` fixture,
+  task, run spec, and additive runtime provenance. These pilots are internal
+  evidence surfaces, not public benchmark surfaces.
 - Narrow getattr-family provider/budget evidence: the three existing
   getattr-family matrices cover budgets `100` and `220`, and each remains
   1 task x 2 budgets x 3 providers.
@@ -164,6 +173,12 @@ Architecturally intended but not yet evaluated:
   `oracle_signal_vars_probe_matrix` covers only 1 task x 2 budgets x 3
   providers at budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`.
+- Narrow zero-argument `vars()` provider/budget evidence: the internal
+  `oracle_signal_vars_zero_probe_matrix` covers only 1 task x 1 budget x 3
+  providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with
+  `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
+  remain `unsupported/opaque`, and runtime-backed provenance is additive only.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -211,6 +226,10 @@ The following claims are allowed because current repo artifacts support them:
   current internal `REFLECTIVE_BUILTIN` / `vars(obj)` pilot covers only
   `oracle_signal_vars_probe`: 1 task x 2 budgets x 3 providers at budgets
   `100` and `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`. The
+  current internal `REFLECTIVE_BUILTIN` / zero-argument `vars()` pilot covers
+  only `oracle_signal_vars_zero_probe_matrix`: 1 task x 1 budget x 3 providers
+  at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`, with `lookup_outcome=returned_namespace`. These
   pilots keep the dynamic or reflective selector and selected-unit primary truth
   `unsupported/opaque` while attaching runtime-backed provenance additively.
@@ -229,8 +248,8 @@ The following claims are not currently allowed:
   runtime attribute injection, or general decorator semantics. The narrow
   internal `DYNAMIC_IMPORT`, `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
-  pilots, plus the current internal one-argument `vars(obj)` pilot, do not
-  change this public boundary.
+  pilots, plus the current internal one-argument `vars(obj)` and zero-argument
+  `vars()` pilots, do not change this public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
@@ -254,8 +273,8 @@ Next smallest eval slices for the post-milestone program:
    `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`,
    `getattr(obj, name)`, and eval-only default-return and value-return
    `getattr(obj, name, default)` pilots, plus the current internal one-argument
-   `vars(obj)` pilot, only through reproducible runtime-backed fixtures,
-   probes, and raw evidence storage.
+   `vars(obj)` and zero-argument `vars()` pilots, only through reproducible
+   runtime-backed fixtures, probes, and raw evidence storage.
 3. Broaden task, budget, and baseline coverage only after the tiered internal
    eval model is stable and claim-bounded.
 4. Publish external benchmark methodology only after the internal tiered
