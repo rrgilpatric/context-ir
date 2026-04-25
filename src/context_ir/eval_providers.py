@@ -13,6 +13,7 @@ from context_ir.eval_oracles import (
     load_fixture_dynamic_import_runtime_observations,
     load_fixture_getattr_runtime_observations,
     load_fixture_hasattr_runtime_observations,
+    load_fixture_vars_runtime_observations,
 )
 from context_ir.semantic_types import (
     CapabilityTier,
@@ -273,6 +274,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
     hasattr_runtime_observations = load_fixture_hasattr_runtime_observations(
         request.repo_root
     )
+    vars_runtime_observations = load_fixture_vars_runtime_observations(
+        request.repo_root
+    )
     response = tool_facade.compile_repository_context(
         tool_facade.SemanticContextRequest(
             repo_root=request.repo_root,
@@ -289,6 +293,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
             ),
             getattr_runtime_observations=(
                 getattr_runtime_observations if getattr_runtime_observations else None
+            ),
+            vars_runtime_observations=(
+                vars_runtime_observations if vars_runtime_observations else None
             ),
         )
     )

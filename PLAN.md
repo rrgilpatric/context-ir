@@ -44,7 +44,9 @@ The active release model is tranche-based, not slice-by-slice. Accepted slices m
 
 The defaulted `getattr(obj, name, default)` value-return branch tranche is pushed to `origin/main` at `b014595`. The post-`b014595` runtime-outcome methodology/reporting planning spike is accepted first-pass. The bounded runtime-outcome accounting implementation slice is accepted first-pass, audit-cleared, full-regression-cleared, commit-gating-cleared, committed locally at `d8ebdc3`, and pushed to `origin/main` after explicit Ryan authorization. No implementation or planning slice is currently in flight.
 
-The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family and the same-tranche docs/evidence reconciliation are released together at `1b555ef` after first-pass audit, full regression, commit-gating, local commit creation, and Ryan-authorized push. The post-push continuity anchor for that release state is `159e363`. The next control action is a bounded planning decision for the next north-star evidence move.
+The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family and the same-tranche docs/evidence reconciliation are released together at `1b555ef` after first-pass audit, full regression, commit-gating, local commit creation, and Ryan-authorized push. The post-push continuity anchor for that release state is `159e363`. The next north-star evidence planning boundary is now complete.
+
+The post-`d9be4d5` north-star evidence planning decision is accepted first-pass. The next smallest truthful evidence move is one narrow internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` pilot over the one-argument returned-namespace branch, reusing existing runtime-acquisition and tool-facade support while adding only eval loader/provider/assets/tests. The accumulated `vars(obj)` tranche has passed planning, implementation review, same-tranche docs/evidence reconciliation, release-unit audit, full regression, and commit-gating. It adds `oracle_signal_vars_probe` at `1 task x 1 budget x 3 providers` with budget `220`, keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only, and keeps the public-safe quad-matrix comparative boundary unchanged. Local commit and remote push state are verified from git at control-lane intake and release sequencing, not maintained as mutable prose in this plan. If the release commit is local-only, push remains explicitly Ryan-gated. If it is already pushed, the next control action is the next bounded planning/evidence move. Do not create a docs-only post-push commit merely to record the push.
 
 ## What Is Complete
 
@@ -153,6 +155,12 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 - [x] Commit-gating review for the `getattr` family provider/budget matrix expansion accepted first-pass
 - [x] Local commit creation for the `getattr` family provider/budget matrix expansion accepted first-pass at `1b555ef`
 - [x] Remote push for the `getattr` family provider/budget matrix expansion completed at `1b555ef`
+- [x] Post-`d9be4d5` `vars(obj)` internal eval evidence planning spike accepted first-pass
+- [x] Internal `vars(obj)` runtime-backed eval pilot implementation accepted first-pass
+- [x] Same-tranche docs/evidence reconciliation for internal `vars(obj)` pilot accepted after 1 correction
+- [x] Release-unit audit for internal `vars(obj)` tranche accepted first-pass
+- [x] Full regression gate for internal `vars(obj)` tranche accepted first-pass
+- [x] Commit-gating review for internal `vars(obj)` tranche accepted first-pass
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
@@ -301,7 +309,32 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 - Local commit creation over the exact intended release file set is accepted first-pass at `1b555ef`
 - Remote push of `1b555ef` is accepted first-pass after explicit Ryan authorization
 - The post-push continuity anchor for the `1b555ef` release state is `159e363`
-- The next authorized boundary is a bounded planning decision for the next north-star evidence move
+- The post-`1b555ef` / `d9be4d5` bounded planning boundary is complete
+- The post-`d9be4d5` `vars(obj)` planning decision is accepted first-pass
+- The accepted `vars(obj)` eval pilot includes:
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_vars_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_vars_probe/main.py`
+  - `evals/tasks/oracle_signal_vars_probe.json`
+  - `evals/run_specs/oracle_signal_vars_probe_matrix.json`
+  - `tests/test_eval_signal_vars_probe.py`
+- The accepted same-tranche docs/evidence reconciliation for the `vars(obj)` pilot includes:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- The accepted `vars(obj)` pilot is one internal eval-only task at budget `220` across `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+- The accepted `vars(obj)` pilot keeps selector and selected-unit primary truth `unsupported/opaque` with additive runtime-backed provenance only
+- The accepted `vars(obj)` tranche does not widen package-root APIs, MCP behavior, analyzer/runtime-acquisition/tool-facade behavior, schema, scoring, winner selection, public claims, public comparison boundaries, or zero-argument `vars()` / sibling reflective families
+- The release-unit audit over the accumulated `vars(obj)` tranche is accepted first-pass
+- The full regression gate over the accumulated `vars(obj)` tranche is accepted first-pass
+- Commit-gating over the exact intended `vars(obj)` release file set is accepted first-pass
+- The accumulated `vars(obj)` tranche has passed planning, implementation review, docs reconciliation, release-unit audit, full regression, and commit-gating
+- Local commit and remote push state for the tranche are verified from git, not maintained as mutable continuity prose
+- If git shows the release commit is local-only, push remains explicitly Ryan-gated
+- If git shows the release commit is already pushed, route to the next bounded planning/evidence move
+- Do not create a docs-only post-push commit merely to record the push
 - The post-push docs-only continuity sync records the `d8ebdc3` release state in:
   - `PLAN.md`
   - `BUILDLOG.md`
@@ -625,6 +658,8 @@ The post-`d8ebdc3` evidence-broadening planning spike is accepted after one cont
 - Remote push for `215b6bb` is complete
 
 ## What Is Next
+
+Immediate next control action: verify git state for the accumulated accepted, audit-cleared, full-regression-cleared, commit-gating-cleared `REFLECTIVE_BUILTIN` / `vars(obj)` tranche. If the release commit is local-only, hold for explicit Ryan push authorization. If git shows the release commit is already pushed, route to the next bounded planning/evidence move. Do not create a docs-only post-push continuity commit solely to record the push.
 
 1. Treat pushed commit `1b555ef` as the latest pushed eval/test/docs release authority:
    - existing `getattr` family matrices are expanded to budgets `220` and `100`
