@@ -30,7 +30,7 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_vars_zero_probe.json"
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_vars_zero_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -305,7 +305,15 @@ def test_vars_zero_probe_summary_surfaces_internal_capability_accounting(
     for markdown in (rendered, report.markdown_report):
         assert "## Capability-Tier Accounting" in markdown
         assert "### Selected Units by Provider" in markdown
-        assert "| yes | 3 | 3 |" in markdown
-        assert "| lookup_outcome | returned_namespace | 3 |" in markdown
-        assert "| unsupported/opaque | 1 | 1 |" in markdown
+        assert (
+            f"| yes | {expected_record_count} | {expected_record_count} |" in markdown
+        )
+        assert (
+            f"| lookup_outcome | returned_namespace | {expected_record_count} |"
+            in markdown
+        )
+        assert (
+            f"| unsupported/opaque | {expected_context_ir_count} | "
+            f"{expected_context_ir_count} |" in markdown
+        )
         assert "| runtime_backed |" not in markdown

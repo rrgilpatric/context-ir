@@ -5,7 +5,7 @@
       "case_id": "signal_vars_zero_probe",
       "task_path": "evals/tasks/oracle_signal_vars_zero_probe.json",
       "query": "Fix probe_local_namespace unsupported vars() returned namespace and keep digest output aligned",
-      "budgets": [220],
+      "budgets": [220, 100],
       "providers": [
         "context_ir",
         "lexical_top_k_files",

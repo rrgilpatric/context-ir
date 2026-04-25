@@ -2,6 +2,155 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-25 -- Vars Zero Budget Matrix Commit-Gating Review
+
+- Reviewed the returned commit-gating review for the audit-cleared and full-regression-cleared zero-argument `REFLECTIVE_BUILTIN` / `vars()` budget-expansion release candidate
+- Findings-first review result:
+  - no findings
+  - repo-backed state remained `main`, with `HEAD` and `origin/main` at `71db72e`
+  - no staged changes were present
+  - dirty file set exactly matched the expected 8 files
+  - `git diff --check` was clean
+  - no source, fixture, task, provider, API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public benchmark framing, or public-claim widening was found
+  - the tranche is coherent as one commit
+- Accepted staging set:
+  - `evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Accepted commit message:
+  - subject: `Expand zero-argument vars budget matrix`
+  - body: `Add the 100-token budget to the internal zero-argument vars() eval matrix while keeping the pilot scoped to one task and three providers.`
+  - body: `Preserve unsupported/opaque primary truth, additive runtime provenance, and the existing public-claim boundary.`
+- Acceptance decision:
+  - accept commit-gating first-pass
+  - local commit creation may proceed over the exact accepted staging set if git shows the tranche is still uncommitted
+  - if git shows the release commit already exists locally and is ahead of `origin/main`, remote push remains explicitly Ryan-gated
+  - if git shows the release commit is already pushed, route to the next bounded planning/evidence move without a docs-only post-push continuity commit
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Budget Matrix Full Regression Gate
+
+- Reviewed the returned full-regression gate for the accumulated zero-argument `REFLECTIVE_BUILTIN` / `vars()` budget-expansion release candidate after first-pass release-unit audit acceptance
+- Findings-first review result:
+  - no findings
+  - repo-backed state remained `main`, with `HEAD` and `origin/main` at `71db72e`
+  - dirty workspace state matched the expected 8-file release-candidate file set
+  - no staged changes were present
+  - `git diff --check` was clean
+- Full-regression gate passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+  - pytest result: `590 passed`
+- Acceptance decision:
+  - accept the full-regression gate first-pass
+  - route next to commit-gating review over the exact accumulated 8-file release-candidate file set
+  - this is not commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Budget Matrix Release-Unit Audit Review
+
+- Reviewed the returned dedicated read-only release-unit audit for the accumulated zero-argument `REFLECTIVE_BUILTIN` / `vars()` budget-expansion release candidate
+- Audit scope covered:
+  - `evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Findings-first audit result:
+  - no findings
+  - branch and HEAD truth matched `main`, with `HEAD` and `origin/main` at `71db72e`
+  - dirty set exactly matched the expected 8 files
+  - no staged changes were present
+  - `git diff --check` was clean
+  - `oracle_signal_vars_zero_probe_matrix.json` changes only budgets from `[220]` to `[220, 100]`
+  - `tests/test_eval_signal_vars_zero_probe.py` covers both budgets, keeps baseline providers empty, preserves the unsupported/opaque selected unit for `context_ir`, and verifies additive `lookup_outcome=returned_namespace` runtime provenance
+  - `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` update zero-argument `vars()` to 1 task x 2 budgets x 3 providers at budgets `100` and `220` without widening public claims
+  - no source, fixture, task, provider, API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public benchmark, or public-claim surface is widened
+- Acceptance decision:
+  - accept the release-unit audit first-pass
+  - route next to full regression over the accumulated zero-argument `vars()` budget-expansion release candidate
+  - this is not full-regression clearance, commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Budget Matrix Docs/Evidence Reconciliation Review
+
+- Reviewed the returned same-tranche docs/evidence reconciliation for the accepted internal zero-argument `REFLECTIVE_BUILTIN` / `vars()` budget expansion
+- Files reviewed:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- Findings-first review result:
+  - no findings
+  - docs update the zero-argument `vars()` matrix wording from 1 task x 1 budget x 3 providers at budget `220` to 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+  - `oracle_signal_vars_zero_probe_matrix`, providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, and `lookup_outcome=returned_namespace` remain explicit
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - public-safe quad-matrix comparative boundary remains separate and unchanged
+  - release-facing docs contain no live workspace, local commit, or push-state wording for this budget expansion
+  - no package-root API, MCP, runtime acquisition, analyzer, tool facade, schema, scoring, winner selection, public benchmark framing, generalized reflective-builtin support, generalized runtime support, or public-claim widening was introduced
+- Returned validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - forbidden release-state phrase scan returned no matches
+  - stale zero-argument 1-budget wording scan returned no matches
+  - positive evidence-wording checks confirmed the matrix name, 1 task x 2 budgets x 3 providers, budgets `100` and `220`, `lookup_outcome=returned_namespace`, `unsupported/opaque`, additive provenance, and unchanged quad-matrix boundary
+- Control-lane spot-check passed:
+  - `git status --short --branch`
+  - `git diff --name-status`
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - release-state wording grep over release-facing docs returned no matches
+  - claim-widening grep over release-facing docs returned no matches
+- Acceptance decision:
+  - accept the docs/evidence reconciliation first-pass
+  - declare the accumulated zero-argument `vars()` budget-expansion tranche ready for one dedicated read-only release-unit audit
+  - this is not release-unit audit clearance, full-regression clearance, commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Zero Budget Matrix Implementation Review
+
+- Reviewed the returned bounded implementation slice for expanding the existing zero-argument `REFLECTIVE_BUILTIN` / `vars()` internal eval matrix from budget `[220]` to budgets `[220, 100]`
+- Files reviewed:
+  - `evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Findings-first review result:
+  - no findings
+  - dirty workspace state matched the intended two-file implementation slice before continuity updates
+  - no staged changes were present
+  - the run spec changes only `oracle_signal_vars_zero_probe_matrix` budgets from `[220]` to `[220, 100]`
+  - focused tests now drive provider/budget rows, baseline-empty behavior, unsupported selected-unit assertions, runtime provenance assertions, and summary/report accounting from both budgets
+  - budget `100` preserves the expected `unsupported/opaque` selected unit with unsupported reason-code primary truth and additive `lookup_outcome=returned_namespace` runtime provenance
+  - baseline providers remain empty for both budgets
+  - no source, fixture, task, provider, package-root API, MCP, runtime-acquisition, analyzer/tool-facade, schema, scoring, winner-selection, public benchmark, or public-claim surface changed
+- Returned validation passed:
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_vars_zero_probe.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_vars_zero_probe.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_zero_probe.py -q`
+  - focused pytest result: `6 passed`
+  - `git diff --check`
+- Control-lane spot-check passed:
+  - `git status --short --branch`
+  - `git diff --name-status`
+  - `git diff --cached --name-status`
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_vars_zero_probe_matrix.json`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_zero_probe.py -q`
+  - `git diff --check`
+- Acceptance decision:
+  - accept the implementation first-pass as workspace-only state
+  - route next to same-tranche docs/evidence reconciliation before declaring a release candidate or requesting release-unit audit
+  - fold stale post-`71db72e` routing correction into this substantive tranche without creating a standalone docs-only post-push continuity commit
+- Acceptance status: first-pass
+
 ## 2026-04-25 -- Vars Zero Eval Commit-Gating Review
 
 - Reviewed the returned commit-gating review for the audit-cleared and full-regression-cleared zero-argument `REFLECTIVE_BUILTIN` / `vars()` release candidate
