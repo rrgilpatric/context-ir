@@ -97,7 +97,9 @@ Proven by current unit and integration tests:
 - The three existing getattr-family provider/budget matrices now cover budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers.
 - The current internal `vars(obj)` pilot covers only
-  `oracle_signal_vars_probe`: 1 task x 1 budget x 3 providers at budget `220`.
+  `oracle_signal_vars_probe`: 1 task x 2 budgets x 3 providers at budgets
+  `100` and `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`.
 - In those runtime-backed pilots, the dynamic or reflective selector remains
   primarily `unsupported/opaque`, selected-unit primary truth remains
   `unsupported/opaque`, and runtime-backed provenance is additive attached
@@ -159,8 +161,9 @@ Architecturally intended but not yet evaluated:
   getattr-family matrices cover budgets `100` and `220`, and each remains
   1 task x 2 budgets x 3 providers.
 - Narrow `vars(obj)` provider/budget evidence: the internal
-  `oracle_signal_vars_probe_matrix` covers only 1 task x 1 budget x 3
-  providers at budget `220`.
+  `oracle_signal_vars_probe_matrix` covers only 1 task x 2 budgets x 3
+  providers at budgets `100` and `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -206,10 +209,11 @@ The following claims are allowed because current repo artifacts support them:
   pilots. The three getattr-family provider/budget matrices cover budgets
   `100` and `220`, and each remains 1 task x 2 budgets x 3 providers. The
   current internal `REFLECTIVE_BUILTIN` / `vars(obj)` pilot covers only
-  `oracle_signal_vars_probe`: 1 task x 1 budget x 3 providers at budget `220`,
-  with `lookup_outcome=returned_namespace`. These pilots keep the dynamic or
-  reflective selector and selected-unit primary truth `unsupported/opaque`
-  while attaching runtime-backed provenance additively.
+  `oracle_signal_vars_probe`: 1 task x 2 budgets x 3 providers at budgets
+  `100` and `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`. These
+  pilots keep the dynamic or reflective selector and selected-unit primary truth
+  `unsupported/opaque` while attaching runtime-backed provenance additively.
 
 ## Unsupported Claims Today
 

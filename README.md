@@ -36,8 +36,10 @@ a current internal one-argument `vars(obj)` pilot. Those pilots do not
 widen the public supported subset, public API, MCP wrapper, or public benchmark
 claim boundary. The three existing getattr-family pilot matrices cover only
 1 task x 2 budgets x 3 providers at budgets `100` and `220`; the current
-internal `vars(obj)` pilot covers only 1 task x 1 budget x 3 providers
-at budget `220` with `lookup_outcome=returned_namespace`.
+internal `vars(obj)` pilot covers only 1 task x 2 budgets x 3 providers
+at budgets `100` and `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`, with
+`lookup_outcome=returned_namespace`.
 
 ## Supported Subset and Limits
 
@@ -181,11 +183,12 @@ Current evidence includes:
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and
   runtime-backed provenance additive only
-- the current internal `vars(obj)` pilot remains 1 task x 1 budget x 3 providers
-  at budget `220`, with `lookup_outcome=returned_namespace`, selected-unit
-  primary truth still `unsupported/opaque`, and runtime-backed provenance
-  additive only
-- within that fixed internal matrix, `context_ir` wins all 8/8 task-budget
+- the current internal `vars(obj)` pilot remains 1 task x 2 budgets x 3 providers
+  at budgets `100` and `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with
+  `lookup_outcome=returned_namespace`, selector and selected-unit primary truth
+  still `unsupported/opaque`, and runtime-backed provenance additive only
+- within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,
   `0.6228480543023547` for `import_neighborhood_files`, and

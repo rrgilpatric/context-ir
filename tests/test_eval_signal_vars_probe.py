@@ -26,7 +26,7 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_vars_probe.json"
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_vars_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -152,45 +152,47 @@ def test_vars_probe_run_executes_with_runtime_backed_raw_fields(
         for budget in PROBE_BUDGETS
     }
 
-    for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
+    for budget in PROBE_BUDGETS:
+        for provider_name in BASELINE_PROVIDERS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
+
+        record = _record_for(
             records,
-            provider_name=provider_name,
-            budget=220,
+            provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+            budget=budget,
         )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+        metrics = cast(dict[str, object], record["metrics"])
+        runtime_provenance_records = cast(
+            list[dict[str, object]],
+            record["runtime_provenance_records"],
+        )
+        unsupported_unit = next(
+            unit
+            for unit in _selected_units(record)
+            if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+        )
 
-    record = _record_for(
-        records,
-        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
-        budget=220,
-    )
-    metrics = cast(dict[str, object], record["metrics"])
-    runtime_provenance_records = cast(
-        list[dict[str, object]],
-        record["runtime_provenance_records"],
-    )
-    unsupported_unit = next(
-        unit
-        for unit in _selected_units(record)
-        if unit["unit_id"] == UNSUPPORTED_UNIT_ID
-    )
-
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert metrics["uncertainty_honesty"] == 1.0
-    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_unit["has_attached_runtime_provenance"] is True
-    assert cast(
-        list[str],
-        unsupported_unit["attached_runtime_provenance_record_ids"],
-    )
-    assert len(runtime_provenance_records) == 1
-    assert runtime_provenance_records[0]["normalized_payload"] == {
-        "lookup_outcome": "returned_namespace",
-    }
+        assert record["spec_version"] == "v1"
+        assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+        assert record["budget"] == budget
+        assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
+        assert metrics["uncertainty_honesty"] == 1.0
+        assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
+        assert unsupported_unit["has_attached_runtime_provenance"] is True
+        assert cast(
+            list[str],
+            unsupported_unit["attached_runtime_provenance_record_ids"],
+        )
+        assert len(runtime_provenance_records) == 1
+        assert runtime_provenance_records[0]["normalized_payload"] == {
+            "lookup_outcome": "returned_namespace",
+        }
 
 
 def test_vars_probe_summary_surfaces_internal_capability_accounting(
@@ -241,24 +243,36 @@ def test_vars_probe_summary_surfaces_internal_capability_accounting(
     )
     report = eval_report.build_eval_report(ledger_path)
 
-    assert unsupported_selector_aggregate.selector_count == 3
-    assert unsupported_selector_aggregate.satisfied_count == 3
-    assert runtime_expectation_aggregate.selector_count == 3
-    assert runtime_expectation_aggregate.satisfied_count == 3
-    assert runtime_outcome_aggregate.runtime_provenance_count == 3
-    assert unsupported_selected_unit_aggregate.selected_unit_count == 1
-    assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 1
-    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 1
+    expected_record_count = len(PROBE_PROVIDERS) * len(PROBE_BUDGETS)
+    expected_context_ir_count = len(PROBE_BUDGETS)
+
+    assert unsupported_selector_aggregate.selector_count == expected_record_count
+    assert unsupported_selector_aggregate.satisfied_count == expected_record_count
+    assert runtime_expectation_aggregate.selector_count == expected_record_count
+    assert runtime_expectation_aggregate.satisfied_count == expected_record_count
+    assert runtime_outcome_aggregate.runtime_provenance_count == expected_record_count
+    assert (
+        unsupported_selected_unit_aggregate.selected_unit_count
+        == expected_context_ir_count
+    )
+    assert (
+        unsupported_selected_unit_aggregate.attached_runtime_provenance_count
+        == expected_context_ir_count
+    )
+    assert (
+        provider_unsupported_selected_unit_aggregate.selected_unit_count
+        == expected_context_ir_count
+    )
     assert (
         provider_unsupported_selected_unit_aggregate.attached_runtime_provenance_count
-        == 1
+        == expected_context_ir_count
     )
 
     assert report.markdown_report == rendered
     for markdown in (rendered, report.markdown_report):
         assert "## Capability-Tier Accounting" in markdown
         assert "### Selected Units by Provider" in markdown
-        assert "| yes | 3 | 3 |" in markdown
-        assert "| lookup_outcome | returned_namespace | 3 |" in markdown
-        assert "| unsupported/opaque | 1 | 1 |" in markdown
+        assert "| yes | 6 | 6 |" in markdown
+        assert "| lookup_outcome | returned_namespace | 6 |" in markdown
+        assert "| unsupported/opaque | 2 | 2 |" in markdown
         assert "| runtime_backed |" not in markdown

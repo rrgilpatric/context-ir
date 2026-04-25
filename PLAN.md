@@ -38,7 +38,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The latest pushed eval/test/docs release unit is `1b555ef`, which expands the three existing `getattr` family run specs to budgets `220` and `100`, keeping each matrix at `1 task x 2 budgets x 3 providers`. It preserves `unsupported/opaque` primary truth, additive runtime provenance, the public-safe quad-matrix comparative boundary, and all package-root, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public-claim, and product boundaries. The post-push continuity anchor for that `1b555ef` release state is `159e363`. The prior pushed code/test release unit `d8ebdc3` remains the runtime-outcome accounting release anchor. The prior pushed code/test release unit `b014595` remains the defaulted `getattr(obj, name, default)` value-return branch release anchor. The prior pushed code/test release unit `7d43302` remains the defaulted `getattr(obj, name, default)` default-return branch release anchor. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The prior pushed docs-only process-correction anchor `8133e0a` corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The prior pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
+Release authority is split deliberately. The pushed `ead239d` release adds the initial internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`, preserving `unsupported/opaque` primary truth, additive runtime provenance, and the public-safe quad-matrix comparative boundary. The prior pushed `getattr` family eval/test/docs release unit is `1b555ef`, which expands the three existing `getattr` family run specs to budgets `220` and `100`, keeping each matrix at `1 task x 2 budgets x 3 providers`. The post-push continuity anchor for that `1b555ef` release state is `159e363`. The prior pushed code/test release unit `d8ebdc3` remains the runtime-outcome accounting release anchor. The prior pushed code/test release unit `b014595` remains the defaulted `getattr(obj, name, default)` value-return branch release anchor. The prior pushed code/test release unit `7d43302` remains the defaulted `getattr(obj, name, default)` default-return branch release anchor. The prior pushed code/test release unit `c592dca` remains the `getattr(obj, name)` release anchor. The prior pushed docs-only process-correction anchor `8133e0a` corrects the self-referential continuity loop and restores tranche-style release sequencing discipline. The prior pushed docs-only evidence/claim reconciliation commit remains `3291268`; it updated `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md` to match the earlier pushed internal runtime-backed eval state. The prior internal `hasattr(obj, name)` provider/budget matrix release unit remains `762dd51`. The prior internal `hasattr(obj, name)` pilot release unit remains `90dcc15`. The prior internal `DYNAMIC_IMPORT` provider/budget matrix release unit remains `9a52b46`. The prior provider-scoped selected-unit capability-tier accounting release unit remains `215b6bb`. The prior capability-tier eval / evidence release unit remains `a605b22`.
 
 The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. Before the next commit/push tranche, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push.
 
@@ -46,7 +46,7 @@ The defaulted `getattr(obj, name, default)` value-return branch tranche is pushe
 
 The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family and the same-tranche docs/evidence reconciliation are released together at `1b555ef` after first-pass audit, full regression, commit-gating, local commit creation, and Ryan-authorized push. The post-push continuity anchor for that release state is `159e363`. The next north-star evidence planning boundary is now complete.
 
-The post-`d9be4d5` north-star evidence planning decision is accepted first-pass. The next smallest truthful evidence move is one narrow internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` pilot over the one-argument returned-namespace branch, reusing existing runtime-acquisition and tool-facade support while adding only eval loader/provider/assets/tests. The accumulated `vars(obj)` tranche has passed planning, implementation review, same-tranche docs/evidence reconciliation, release-unit audit, full regression, and commit-gating. It adds `oracle_signal_vars_probe` at `1 task x 1 budget x 3 providers` with budget `220`, keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only, and keeps the public-safe quad-matrix comparative boundary unchanged. Local commit and remote push state are verified from git at control-lane intake and release sequencing, not maintained as mutable prose in this plan. If the release commit is local-only, push remains explicitly Ryan-gated. If it is already pushed, the next control action is the next bounded planning/evidence move. Do not create a docs-only post-push commit merely to record the push.
+The post-`d9be4d5` north-star evidence planning decision is accepted first-pass. The next smallest truthful evidence move was one narrow internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` pilot over the one-argument returned-namespace branch, reusing existing runtime-acquisition and tool-facade support while adding only eval loader/provider/assets/tests. That tranche is pushed at `ead239d`. The post-`ead239d` budget-expansion planning decision is accepted first-pass. The bounded implementation slice expanding the existing `oracle_signal_vars_probe_matrix` from budget `[220]` to `[220, 100]` is accepted first-pass as workspace-only state. The same-tranche docs/evidence reconciliation is accepted first-pass as workspace-only state. After one continuity correction, the corrected release-unit audit, full regression gate, and commit-gating review are accepted. The accumulated release-unit candidate keeps the same fixture, task, query, providers, one-argument `vars(obj)` branch, selector and selected-unit primary truth `unsupported/opaque`, additive runtime provenance, and public-safe quad-matrix comparative boundary. Local commit creation may proceed over the exact 8-file release-unit candidate. Remote push remains explicitly Ryan-gated.
 
 ## What Is Complete
 
@@ -161,6 +161,12 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 - [x] Release-unit audit for internal `vars(obj)` tranche accepted first-pass
 - [x] Full regression gate for internal `vars(obj)` tranche accepted first-pass
 - [x] Commit-gating review for internal `vars(obj)` tranche accepted first-pass
+- [x] Post-`ead239d` `vars(obj)` budget-expansion planning spike accepted first-pass
+- [x] Internal `vars(obj)` provider/budget matrix expansion accepted first-pass as workspace-only state
+- [x] Same-tranche docs/evidence reconciliation for internal `vars(obj)` provider/budget matrix expansion accepted first-pass as workspace-only state
+- [x] Corrected release-unit audit for internal `vars(obj)` provider/budget matrix expansion accepted after 1 correction
+- [x] Full regression gate for internal `vars(obj)` provider/budget matrix expansion accepted first-pass
+- [x] Commit-gating review for internal `vars(obj)` provider/budget matrix expansion accepted first-pass
 - [x] Deterministic fixture-level eval design accepted after 2 corrections
 - [x] Eval oracle foundation accepted after 1 correction
 - [x] Deterministic provider/baseline infrastructure accepted after 1 correction
@@ -335,6 +341,24 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 - If git shows the release commit is local-only, push remains explicitly Ryan-gated
 - If git shows the release commit is already pushed, route to the next bounded planning/evidence move
 - Do not create a docs-only post-push commit merely to record the push
+- The post-`ead239d` `vars(obj)` budget-expansion planning decision is accepted first-pass
+- The accepted workspace-only `vars(obj)` budget expansion currently includes:
+  - `evals/run_specs/oracle_signal_vars_probe_matrix.json`
+  - `tests/test_eval_signal_vars_probe.py`
+- The accepted workspace-only budget expansion changes only the existing `oracle_signal_vars_probe_matrix` from budget `[220]` to `[220, 100]`
+- The budget `100` row preserves the expected `unsupported/opaque` selected unit with additive runtime provenance
+- The accepted same-tranche docs/evidence reconciliation for the `vars(obj)` budget expansion currently includes:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- The accepted docs/evidence reconciliation describes the `vars(obj)` pilot as 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+- The accepted budget expansion does not widen fixtures, tasks, providers, source, package-root APIs, MCP behavior, runtime-acquisition/analyzer/tool-facade behavior, schema, scoring, winner selection, public claims, zero-argument `vars()`, or sibling runtime families
+- The corrected release-unit audit over this budget expansion tranche is accepted after 1 correction
+- The full regression gate over this budget expansion tranche is accepted first-pass
+- Commit-gating over the exact 8-file release-unit candidate is accepted first-pass
+- Local commit creation may proceed over the exact accepted staging set
+- Remote push remains explicitly Ryan-gated
 - The post-push docs-only continuity sync records the `d8ebdc3` release state in:
   - `PLAN.md`
   - `BUILDLOG.md`
@@ -659,13 +683,13 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 
 ## What Is Next
 
-Immediate next control action: verify git state for the accumulated accepted, audit-cleared, full-regression-cleared, commit-gating-cleared `REFLECTIVE_BUILTIN` / `vars(obj)` tranche. If the release commit is local-only, hold for explicit Ryan push authorization. If git shows the release commit is already pushed, route to the next bounded planning/evidence move. Do not create a docs-only post-push continuity commit solely to record the push.
+Immediate next control action: create the local release commit for the accepted, corrected-audit-cleared, full-regression-cleared, commit-gating-cleared 8-file `REFLECTIVE_BUILTIN` / `vars(obj)` budget-expansion release-unit candidate. Do not push without explicit Ryan authorization.
 
-1. Treat pushed commit `1b555ef` as the latest pushed eval/test/docs release authority:
-   - existing `getattr` family matrices are expanded to budgets `220` and `100`
-   - each existing matrix remains `1 task x 2 budgets x 3 providers`
-   - selector and selected-unit primary truth remains `unsupported/opaque`
-   - runtime-backed provenance remains additive only
+1. Treat pushed commit `ead239d` as the latest pushed eval/test/docs release authority, and treat pushed commit `1b555ef` as the prior `getattr` family release authority:
+   - `ead239d` adds the initial internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`
+   - `ead239d` preserves `unsupported/opaque` primary truth, additive runtime provenance, and the public-safe quad-matrix comparative boundary
+   - `1b555ef` expands the existing `getattr` family matrices to budgets `220` and `100`
+   - each `getattr` family matrix remains `1 task x 2 budgets x 3 providers`
    - no package-root API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, fixture, task, provider, public-claim, or product-positioning boundary changed
 2. Treat pushed commit `159e363` as the post-push continuity anchor for the `1b555ef` release state, and treat `8133e0a` as the prior docs-only process-correction anchor:
    - it corrects the self-referential continuity loop
@@ -844,7 +868,7 @@ Immediate next control action: verify git state for the accumulated accepted, au
    - local `HEAD` is `1b555ef`
 35. Treat remote push of `1b555ef` as accepted first-pass after explicit Ryan authorization:
    - remote push of `1b555ef` completed
-   - the latest pushed eval/test/docs release authority is now `1b555ef`
+   - `1b555ef` became the pushed `getattr` family eval/test/docs release authority at that release point and is now superseded by later pushed release `ead239d`
    - the prior pushed code/test release authority `d8ebdc3` remains the runtime-outcome accounting anchor
    - this post-push continuity sync in `PLAN.md` and `BUILDLOG.md` records the repo-backed `1b555ef` release state
 36. Release sequencing going forward must follow the restored tranche cadence:

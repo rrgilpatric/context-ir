@@ -2,6 +2,161 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-25 -- Vars Probe Budget Matrix Commit-Gating Review
+
+- Performed commit-gating review for the corrected-audit-cleared and full-regression-cleared internal `REFLECTIVE_BUILTIN` / `vars(obj)` budget-expansion tranche
+- Findings-first review result:
+  - no findings
+  - dirty file set exactly matches the intended 8-file release-unit candidate
+  - no staged changes were present during commit-gating
+  - `git diff --check` is clean
+  - no source, fixture, task, provider, package-root API, MCP, runtime-acquisition, analyzer/tool-facade, schema, scoring, or winner-selection files are included
+  - the run spec changes only `oracle_signal_vars_probe_matrix` budgets from `[220]` to `[220, 100]`
+  - focused tests assert both budgets, empty baseline selections, Context IR unsupported/opaque selected-unit preservation, additive runtime provenance, and doubled summary/report accounting
+  - release-facing docs preserve release-neutral `vars(obj)` wording, additive runtime provenance, unsupported/opaque primary truth, and the public-safe quad-matrix comparative boundary
+- Accepted staging set:
+  - `evals/run_specs/oracle_signal_vars_probe_matrix.json`
+  - `tests/test_eval_signal_vars_probe.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Accepted commit message:
+  - subject: `Expand vars eval matrix budgets`
+  - body: `Broaden the narrow internal vars(obj) eval matrix with budget 100 while keeping public claims, APIs, and runtime boundaries unchanged.`
+- Acceptance decision:
+  - accept commit-gating first-pass
+  - the tranche has passed corrected release-unit audit, full regression, and commit-gating
+  - local commit creation may proceed over the exact accepted staging set
+  - remote push remains explicitly Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Probe Budget Matrix Corrected Audit and Full Regression Gate
+
+- Re-ran the release-unit audit after the `PLAN.md` routing correction for the accepted internal `REFLECTIVE_BUILTIN` / `vars(obj)` budget expansion
+- Corrected audit scope covered exactly:
+  - `evals/run_specs/oracle_signal_vars_probe_matrix.json`
+  - `tests/test_eval_signal_vars_probe.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Findings-first corrected audit result:
+  - no active findings
+  - the prior `PLAN.md` stale live-routing finding is corrected
+  - the release-unit candidate still has exactly the expected 8-file dirty set
+  - `oracle_signal_vars_probe_matrix` changes only from budget `[220]` to `[220, 100]`
+  - no source, fixture, task, provider, package-root API, MCP, runtime-acquisition, analyzer/tool-facade, schema, scoring, winner-selection, zero-argument `vars()`, or sibling runtime-family surface changed
+  - docs keep `vars(obj)` release-neutral at 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+  - the public-safe quad-matrix comparative boundary remains unchanged
+  - `PLAN.md` now records pushed `ead239d` as the latest pushed eval/test/docs release authority while keeping `1b555ef` as prior `getattr` family history
+- Full regression gate passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+  - full pytest result: `584 passed`
+- Acceptance decision:
+  - accept the corrected release-unit audit after 1 correction
+  - accept the full regression gate first-pass
+  - route next to commit-gating review over the exact 8-file release-unit candidate
+  - this is not commit-gating clearance, commit readiness, local commit creation, or push readiness
+- Acceptance status: 1 correction
+
+## 2026-04-25 -- Vars Probe Budget Matrix Docs/Evidence Reconciliation Review
+
+- Reviewed the returned same-tranche docs/evidence reconciliation for the accepted internal `REFLECTIVE_BUILTIN` / `vars(obj)` budget expansion
+- Files reviewed:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- Findings-first review result:
+  - no findings
+  - the docs update the `vars(obj)` matrix wording from 1 task x 1 budget x 3 providers at budget `220` to 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+  - `oracle_signal_vars_probe_matrix`, one existing task, providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, and `lookup_outcome=returned_namespace` remain explicit
+  - selector and selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - the public-safe quad-matrix comparative boundary remains unchanged
+  - no workspace-only, not-pushed, accepted-workspace, public benchmark, generalized reflective-builtin, public API, MCP, analyzer/runtime-acquisition/tool-facade, schema, scoring, or winner-selection claim was introduced
+- Validation caveat reviewed:
+  - the docs lane reported that `git diff --name-status -- src/context_ir evals/fixtures evals/tasks evals/run_specs tests pyproject.toml` was not empty
+  - the output was the already-accepted workspace-only run spec and focused test implementation diff for this same tranche
+  - this is not a docs-lane scope breach
+- Control-lane validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - `rg -n "workspace-only|workspace only|not pushed|accepted workspace" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md` returned no matches
+  - positive boundary checks confirmed `vars(obj)`, `oracle_signal_vars_probe_matrix`, 1 task x 2 budgets x 3 providers, budgets `100` and `220`, `lookup_outcome=returned_namespace`, `unsupported/opaque`, additive provenance, and quad-matrix boundary wording remain present
+- Acceptance decision:
+  - accept the docs/evidence reconciliation first-pass as workspace-only tranche state
+  - route next to a dedicated read-only release-unit audit over the accumulated `vars(obj)` budget-expansion tranche
+  - this is not release-unit audit clearance, full-regression clearance, commit readiness, or push readiness
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Vars Probe Budget Matrix Expansion Implementation Review
+
+- Reviewed the returned bounded implementation slice expanding the existing internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval matrix
+- Files reviewed:
+  - `evals/run_specs/oracle_signal_vars_probe_matrix.json`
+  - `tests/test_eval_signal_vars_probe.py`
+- Findings-first review result:
+  - no findings
+  - the existing `oracle_signal_vars_probe_matrix` budget list expands from `[220]` to `[220, 100]`
+  - the task, fixture, provider set, query, and one-argument `vars(obj)` branch remain unchanged
+  - focused tests now assert both budgets across provider rows, empty baseline selections, Context IR unsupported-unit selection, additive runtime provenance, and summary/report accounting
+  - budget `100` preserves the expected `unsupported/opaque` selected unit with additive runtime provenance
+  - no source, fixture, task, package-root API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_vars_probe_matrix.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_vars_probe.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_vars_probe.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_probe.py -q`
+  - focused pytest result: `6 passed`
+  - `git diff --check`
+  - `git diff --name-status -- src/context_ir evals/fixtures evals/tasks pyproject.toml` returned no output
+  - `git diff --cached --name-status` returned no staged files
+- Acceptance decision:
+  - accept the implementation first-pass as workspace-only state
+  - route next to same-tranche docs/evidence and continuity reconciliation before release-unit audit
+  - the reconciliation should update the `vars(obj)` matrix wording from 1 task x 1 budget x 3 providers to 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+  - the reconciliation should preserve the non-recursive continuity policy by recording durable anchors and current routing, not mutable live branch-tip state
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Post-ead239d Vars Budget Expansion Planning Review
+
+- Reviewed the returned read-only planning spike for the next smallest truthful north-star evidence move after pushed release `ead239d`
+- Repo-backed state verified:
+  - branch `main`
+  - local `HEAD` and `origin/main` are `ead239d`
+  - worktree clean before implementation slice authorization
+- Findings-first review result:
+  - one non-blocking continuity finding: `PLAN.md` still labelled `1b555ef` as the latest pushed eval/test/docs release unit even though `ead239d` is the current pushed vars release
+  - under the non-recursive continuity policy, that wording should be folded into the next substantive tranche rather than fixed through a standalone docs-only post-push commit
+  - the existing `vars(obj)` fixture remains one task, one budget, and three providers at budget `220`
+  - a read-only provider probe indicated budget `100` is plausible without lower-layer source changes
+- Accepted next implementation boundary:
+  - expand only `evals/run_specs/oracle_signal_vars_probe_matrix.json` from budget `[220]` to `[220, 100]`
+  - update only `tests/test_eval_signal_vars_probe.py` expectations for doubled provider/budget rows and accounting
+  - stop if budget `100` cannot preserve the expected `unsupported/opaque` selected unit with additive runtime provenance
+  - do not change source, fixtures, tasks, providers, docs, package-root APIs, MCP behavior, runtime acquisition, analyzer, tool facade, schema, scoring, winner selection, public claims, zero-argument `vars()`, or sibling runtime families
+- Alternatives considered:
+  - open zero-argument `vars()`
+  - start a new runtime-backed family such as `globals()`, `locals()`, or `dir(obj)`
+  - do methodology/reporting hardening first
+  - do a standalone docs-only continuity correction for the `ead239d` push
+- Reasoning:
+  - adding budget `100` to the existing `vars(obj)` matrix broadens evidence within an accepted family without adding a new selector, fixture, task, provider, lower-layer behavior, or public claim
+  - zero-argument `vars()` and new reflective/runtime families would require broader eligibility and evidence decisions
+  - the stale `1b555ef` wording is a release-label issue, not a misrouting emergency, so it should be corrected inside the next substantive tranche
+- Acceptance decision:
+  - accept the planning result first-pass
+  - Ryan authorized opening the bounded budget-expansion implementation slice
+- Acceptance status: first-pass
+
 ## 2026-04-24 -- Vars Eval Commit-Gating Review
 
 - Reviewed the returned commit-gating review for the accepted, audit-cleared, full-regression-cleared internal `REFLECTIVE_BUILTIN` / `vars(obj)` tranche
