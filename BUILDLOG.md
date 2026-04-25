@@ -2,6 +2,139 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-25 -- Globals Budget Matrix Commit-Gating Review
+
+- Reviewed the audit-cleared and full-regression-cleared workspace-only internal eval-only `RUNTIME_MUTATION` / `globals()` budget-expansion release candidate
+- Findings-first review result:
+  - no findings
+  - repo-backed truth remained `main`, with `HEAD` and `origin/main` at `631a303`
+  - dirty file set matched the expected release-candidate files exactly
+  - no untracked files were present
+  - no staged changes were present
+  - `git diff --check` was clean
+  - the tranche is coherent as one local commit
+  - no forbidden widening was found across runtime acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner selection, public benchmark framing, or public claims
+- Accepted staging set:
+  - `evals/run_specs/oracle_signal_globals_probe_matrix.json`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Accepted commit message:
+  - subject: `Expand globals eval budget matrix`
+  - body: `Expand the internal RUNTIME_MUTATION / globals() eval matrix to budgets 220 and 100 while preserving unsupported/opaque primary truth and additive runtime provenance.`
+  - body: `Keep release-facing docs bounded to internal evidence without widening public APIs, MCP behavior, scoring, winner selection, runtime acquisition, or public benchmark claims.`
+- Acceptance decision:
+  - accept commit-gating first-pass
+  - local commit creation may proceed over the exact accepted staging set if git shows the tranche is still uncommitted
+  - remote push remains explicitly Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Globals Budget Matrix Full Regression Gate
+
+- Reviewed the full-regression gate for the audit-cleared workspace-only internal eval-only `RUNTIME_MUTATION` / `globals()` budget-expansion release candidate
+- Findings-first review result:
+  - no findings
+  - repo-backed truth remained `main`, with `HEAD` and `origin/main` at `631a303`
+  - the expected workspace-only release-candidate file set remained present
+  - no staged changes or untracked files were present
+- Full regression passed:
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+  - pytest result: `596 passed`
+  - `git diff --check`
+- Acceptance decision:
+  - accept the full-regression gate first-pass
+  - route next to commit-gating review over the exact accumulated globals budget-expansion release-candidate file set
+  - this still does not imply local commit creation or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Globals Budget Matrix Release-Unit Audit Review
+
+- Reviewed the dedicated read-only release-unit audit for the accumulated workspace-only internal eval-only `RUNTIME_MUTATION` / `globals()` budget-expansion release candidate
+- Findings-first review result:
+  - no findings
+  - repo-backed truth matched `main`, with `HEAD` and `origin/main` at `631a303`
+  - the dirty file set matched the expected eight tracked modifications exactly
+  - no staged changes or untracked files were present
+  - `git diff --check` was clean
+  - the run spec parses as JSON and remains 1 task x 2 budgets x 3 providers at budgets `220` and `100`
+  - task, fixture, provider set, query, source runtime acquisition, analyzer, tool facade implementation, MCP, package-root API, schema, scoring, and winner selection are unchanged
+  - focused tests cover both budgets, empty baseline selected units, Context IR selection of the unsupported unit, additive `lookup_outcome=returned_namespace` provenance, and summary/report accounting
+  - release-facing docs remain release-neutral and claim-bounded
+  - no public benchmark, public API, MCP, generalized runtime-mutation, or public-claim boundary was widened
+- Residual risk:
+  - full regression was not run in the audit lane
+- Acceptance decision:
+  - accept the release-unit audit first-pass
+  - route next to full regression before commit-gating or local commit creation
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Globals Budget Matrix Docs Reconciliation Review
+
+- Reviewed the returned same-tranche docs/evidence reconciliation for the accepted workspace-only internal eval-only `RUNTIME_MUTATION` / `globals()` budget expansion
+- Files reviewed:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- Findings-first review result:
+  - no findings
+  - release-facing docs now describe `oracle_signal_globals_probe_matrix` as 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - `lookup_outcome=returned_namespace` is preserved
+  - primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - the public-safe quad-matrix comparative boundary remains unchanged
+  - no live workspace, local-commit, or push-state wording was introduced in release-facing docs
+  - no source, fixture, task, run-spec, test, public API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public benchmark, or public-claim boundary was widened
+- Validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - release-state wording scan returned no matches
+  - scoped stale 1 task x 1 budget wording scan returned no matches
+  - fact scan confirmed the updated globals matrix wording and boundary language
+- Acceptance decision:
+  - accept the docs/evidence reconciliation first-pass as workspace-only tranche state
+  - the accumulated globals budget-expansion release candidate may proceed to a dedicated read-only release-unit audit
+  - this still does not imply full-regression clearance, commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Globals Budget Matrix Implementation Review
+
+- Reviewed the returned bounded implementation slice for expanding the existing internal eval-only `RUNTIME_MUTATION` / `globals()` matrix from budget `[220]` to budgets `[220, 100]`
+- Files reviewed:
+  - `evals/run_specs/oracle_signal_globals_probe_matrix.json`
+  - `tests/test_eval_signal_globals_probe.py`
+- Findings-first review result:
+  - no findings
+  - the run spec remains one task with providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - the only run-spec behavior change is adding budget `100` beside existing budget `220`
+  - focused tests now assert both budgets
+  - budget `100` preserves selection of `unsupported:call:main.py:2:11` by `context_ir`
+  - selected-unit primary truth remains `unsupported/opaque`
+  - runtime-backed provenance remains additive only with `lookup_outcome=returned_namespace`
+  - baseline providers remain empty at the selected-unit layer
+  - summary/report accounting assertions cover the expanded two-budget matrix
+  - no source, fixture, task, provider, runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, docs, public benchmark, or public-claim surface changed
+- Validation passed:
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_globals_probe_matrix.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_globals_probe.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_globals_probe.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_globals_probe.py -q`
+  - focused pytest result: `6 passed`
+  - `git diff --check`
+  - `git diff --name-status -- src/context_ir evals/fixtures evals/tasks pyproject.toml` produced no output
+- Acceptance decision:
+  - accept the implementation first-pass as workspace-only state
+  - route next to same-tranche docs/evidence and continuity reconciliation before declaring a release candidate or requesting release-unit audit
+  - fold the pushed `631a303` release authority update into this substantive tranche without creating a standalone docs-only post-push continuity commit
+- Acceptance status: first-pass
+
 ## 2026-04-25 -- Globals Eval Pilot Commit-Gating Review
 
 - Reviewed the returned commit-gating review for the audit-cleared and full-regression-cleared workspace-only internal eval-only `RUNTIME_MUTATION` / `globals()` release candidate

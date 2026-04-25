@@ -28,8 +28,8 @@ task only through `oracle_signal_vars_zero_probe_matrix`: 1 task x 2 budgets x
 `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
 remain `unsupported/opaque`, and runtime-backed provenance is additive only.
 The current internal eval-only `RUNTIME_MUTATION` / `globals()` pilot remains
-one task only through `oracle_signal_globals_probe_matrix`: 1 task x 1 budget x
-3 providers at budget `220`, against providers `context_ir`,
+one task only through `oracle_signal_globals_probe_matrix`: 1 task x 2 budgets x
+3 providers at budgets `100` and `220`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`, with
 `lookup_outcome=returned_namespace`; primary truth remains
 `unsupported/opaque`, and runtime-backed provenance is additive only. Those
@@ -114,11 +114,11 @@ around rendering density.
   `lookup_outcome=returned_namespace`. In each case, selector and selected-unit
   primary truth still `unsupported/opaque` and runtime-backed provenance remains
   additive only. The current internal `globals()` pilot covers only
-  `oracle_signal_globals_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`;
-  primary truth remains `unsupported/opaque`, and runtime-backed provenance is
-  additive only.
+  `oracle_signal_globals_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `100` and `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with
+  `lookup_outcome=returned_namespace`; primary truth remains
+  `unsupported/opaque`, and runtime-backed provenance is additive only.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 

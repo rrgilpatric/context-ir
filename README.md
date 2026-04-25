@@ -49,11 +49,11 @@ budgets `100` and `220`, against providers `context_ir`,
 `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
 remain `unsupported/opaque`, and runtime-backed provenance is additive only.
 The current internal `globals()` pilot covers only
-`oracle_signal_globals_probe_matrix`: 1 task x 1 budget x 3 providers at
-budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-`import_neighborhood_files`, with `lookup_outcome=returned_namespace`; primary
-truth remains `unsupported/opaque`, and runtime-backed provenance is additive
-only.
+`oracle_signal_globals_probe_matrix`: 1 task x 2 budgets x 3 providers at
+budgets `100` and `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`, with
+`lookup_outcome=returned_namespace`; primary truth remains
+`unsupported/opaque`, and runtime-backed provenance is additive only.
 
 ## Supported Subset and Limits
 
@@ -212,11 +212,11 @@ Current evidence includes:
   `lookup_outcome=returned_namespace`, selector and selected-unit primary truth
   still `unsupported/opaque`, and runtime-backed provenance additive only
 - the current internal `globals()` pilot remains
-  `oracle_signal_globals_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`, with `lookup_outcome=returned_namespace`,
-  primary truth still `unsupported/opaque`, and runtime-backed provenance
-  additive only
+  `oracle_signal_globals_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `100` and `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with
+  `lookup_outcome=returned_namespace`, primary truth still
+  `unsupported/opaque`, and runtime-backed provenance additive only
 - within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,
