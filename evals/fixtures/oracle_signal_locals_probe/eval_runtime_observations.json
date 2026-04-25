@@ -1,0 +1,42 @@
+{
+  "schema_version": "v1",
+  "locals_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 3,
+      "start_column": 11,
+      "end_line": 3,
+      "end_column": 19,
+      "source_snippet": "locals()",
+      "probe_identifier": "probe:locals:function-namespace",
+      "probe_contract_revision": "2026-04-25.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_locals_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://locals/function-namespace-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed locals probe trace for the function namespace."
+        }
+      ],
+      "replay_target": "main.probe_local_namespace",
+      "replay_selector": "call:main.probe_local_namespace",
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "lookup_outcome",
+          "value": "returned_namespace"
+        }
+      ],
+      "durable_payload_reference": "artifact://locals/function-namespace-observation.json"
+    }
+  ]
+}

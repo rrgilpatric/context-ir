@@ -46,7 +46,7 @@ The defaulted `getattr(obj, name, default)` value-return branch tranche is pushe
 
 The post-`d8ebdc3` evidence-broadening planning spike is accepted after one control correction. The correction fixed `EVAL.md` release-anchor wording so `hasattr(obj, name)` evidence is attributed to `90dcc15` / `762dd51`, while `c592dca` remains only the `getattr(obj, name)` anchor. The bounded run-spec/test matrix expansion for the existing `getattr` family and the same-tranche docs/evidence reconciliation are released together at `1b555ef` after first-pass audit, full regression, commit-gating, local commit creation, and Ryan-authorized push. The post-push continuity anchor for that release state is `159e363`. The next north-star evidence planning boundary is now complete.
 
-The post-`d9be4d5` north-star evidence planning decision is accepted first-pass. The next smallest truthful evidence move was one narrow internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` pilot over the one-argument returned-namespace branch, reusing existing runtime-acquisition and tool-facade support while adding only eval loader/provider/assets/tests. That tranche is pushed at `ead239d`. The post-`ead239d` budget-expansion planning decision is accepted first-pass, and the resulting budget-expansion tranche is pushed at `2c6b54a`. The post-`2c6b54a` zero-argument `vars()` pilot tranche is pushed at `71db72e`, and the zero-argument `vars()` budget-expansion tranche is pushed at `9eec985`. The post-`9eec985` globals-family planning decision is accepted first-pass, and the resulting internal eval-only `RUNTIME_MUTATION` / `globals()` implementation slice is pushed at `631a303`. The post-`631a303` globals budget-expansion planning decision is accepted first-pass, and the resulting implementation slice is accepted first-pass as workspace-only state. It expands the existing `oracle_signal_globals_probe_matrix` from budget `[220]` to budgets `[220, 100]`, keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, keeps baseline providers empty at the selected-unit layer, and changes only the run spec plus focused tests. Same-tranche docs/evidence reconciliation is accepted first-pass and keeps release-facing docs narrow, internal, release-neutral, and public-safe. The release-unit audit, full regression gate, and commit-gating review are accepted first-pass. Local commit creation may proceed over the exact accepted staging set if git shows the tranche is still uncommitted; remote push remains explicitly Ryan-gated.
+The post-`d9be4d5` north-star evidence planning decision is accepted first-pass. The next smallest truthful evidence move was one narrow internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` pilot over the one-argument returned-namespace branch, reusing existing runtime-acquisition and tool-facade support while adding only eval loader/provider/assets/tests. That tranche is pushed at `ead239d`. The post-`ead239d` budget-expansion planning decision is accepted first-pass, and the resulting budget-expansion tranche is pushed at `2c6b54a`. The post-`2c6b54a` zero-argument `vars()` pilot tranche is pushed at `71db72e`, and the zero-argument `vars()` budget-expansion tranche is pushed at `9eec985`. The post-`9eec985` globals-family planning decision is accepted first-pass, and the resulting internal eval-only `RUNTIME_MUTATION` / `globals()` implementation slice is pushed at `631a303`. The post-`631a303` globals budget-expansion planning decision is accepted first-pass, and the resulting budget-expansion tranche is pushed at `5f74ede`. It expands the existing `oracle_signal_globals_probe_matrix` from budget `[220]` to budgets `[220, 100]`, keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, keeps baseline providers empty at the selected-unit layer, and changes only the run spec plus focused tests and release-facing documentation. The post-`5f74ede` next-move planning result recommended one narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot. That implementation slice is accepted first-pass as workspace-only state. It adds fixture-local `locals_runtime_observations` loading and Context IR provider pass-through for the existing accepted lower-layer `locals()` seam, plus `oracle_signal_locals_probe` fixture/task/run-spec/test assets at 1 task x 1 budget x 3 providers with budget `220`. Same-tranche docs/evidence reconciliation is accepted first-pass and keeps release-facing docs narrow, internal, release-neutral, and public-safe. The release-unit audit, full-regression gate, and commit-gating review over the accumulated locals release candidate are accepted first-pass, with full pytest passing at `601 passed`. Selector and selected-unit primary truth remain `unsupported/opaque`, runtime-backed provenance remains additive only with `lookup_outcome=returned_namespace`, and no runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, or public-claim surface changed in the accepted workspace-only locals tranche.
 
 ## What Is Complete
 
@@ -468,13 +468,13 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 - The commit-gating review over the accumulated `globals()` release candidate is accepted first-pass
 - The accepted commit message is `Add globals runtime eval pilot`
 - Local commit creation and remote push for the initial `globals()` pilot completed at `631a303`
-- The accepted workspace-only `globals()` budget expansion currently includes:
+- The pushed `globals()` budget expansion at `5f74ede` includes:
   - `evals/run_specs/oracle_signal_globals_probe_matrix.json`
   - `tests/test_eval_signal_globals_probe.py`
-- The accepted workspace-only budget expansion changes only the existing `oracle_signal_globals_probe_matrix` from budget `[220]` to budgets `[220, 100]`
-- The accepted workspace-only budget expansion keeps the existing task, fixture, query, provider set, selector, and runtime provenance shape unchanged
-- The accepted workspace-only budget expansion preserves `unsupported/opaque` selected-unit primary truth, additive `lookup_outcome=returned_namespace` runtime provenance, empty baseline selected units, and summary/report accounting over the expanded two-budget matrix
-- The accepted workspace-only budget expansion does not widen runtime acquisition, analyzer, tool facade implementation, MCP, package-root APIs, schema, scoring, winner selection, public claims, or sibling runtime families
+- The pushed `globals()` budget expansion changes only the existing `oracle_signal_globals_probe_matrix` from budget `[220]` to budgets `[220, 100]`
+- The pushed `globals()` budget expansion keeps the existing task, fixture, query, provider set, selector, and runtime provenance shape unchanged
+- The pushed `globals()` budget expansion preserves `unsupported/opaque` selected-unit primary truth, additive `lookup_outcome=returned_namespace` runtime provenance, empty baseline selected units, and summary/report accounting over the expanded two-budget matrix
+- The pushed `globals()` budget expansion does not widen runtime acquisition, analyzer, tool facade implementation, MCP, package-root APIs, schema, scoring, winner selection, public claims, or sibling runtime families
 - Same-tranche docs/evidence reconciliation for the accepted `globals()` budget expansion is complete in:
   - `EVAL.md`
   - `PUBLIC_CLAIMS.md`
@@ -484,6 +484,31 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 - The full regression gate over the accepted `globals()` budget expansion is accepted first-pass with `596 passed`
 - The commit-gating review over the accepted `globals()` budget expansion is accepted first-pass
 - The accepted commit message is `Expand globals eval budget matrix`
+- Local commit creation and remote push for the `globals()` budget expansion completed at `5f74ede`
+- The accepted workspace-only `locals()` eval pilot currently includes:
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_locals_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_locals_probe/main.py`
+  - `evals/tasks/oracle_signal_locals_probe.json`
+  - `evals/run_specs/oracle_signal_locals_probe_matrix.json`
+  - `tests/test_eval_signal_locals_probe.py`
+- The accepted workspace-only `locals()` pilot is one internal eval-only task at budget `220` across `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+- The accepted workspace-only `locals()` pilot keeps selector and selected-unit primary truth `unsupported/opaque` with additive `lookup_outcome=returned_namespace` runtime provenance only
+- The accepted workspace-only `locals()` pilot does not widen runtime acquisition, analyzer, tool facade implementation, MCP, package-root APIs, schema, scoring, winner selection, release-facing docs, public claims, or sibling runtime families
+- Same-tranche docs/evidence reconciliation for the accepted `locals()` pilot is complete in:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- The accepted docs/evidence reconciliation describes `oracle_signal_locals_probe_matrix` as 1 task x 1 budget x 3 providers at budget `220`
+- The accepted docs/evidence reconciliation keeps selector and selected-unit primary truth `unsupported/opaque`, runtime-backed provenance additive only, and the public-safe quad-matrix comparative boundary unchanged
+- The accepted docs/evidence reconciliation does not introduce live workspace, local commit, or push-state wording in release-facing docs
+- The release-unit audit over the accumulated `locals()` release candidate is accepted first-pass
+- The audit found no findings and confirmed the dirty/untracked set matches the intended release candidate, no staged changes are present, lower layers remain unchanged, docs stay claim-bounded, and continuity preserves tranche release-state discipline
+- The full regression gate over the accumulated `locals()` release candidate is accepted first-pass with `601 passed`
+- Commit-gating over the exact accumulated `locals()` release-candidate file set is accepted first-pass
+- The accepted commit message is `Add locals runtime eval pilot`
 - Local commit and remote push state for any later release commit must be verified from git rather than inferred from continuity prose
 - The post-push docs-only continuity sync records the `d8ebdc3` release state in:
   - `PLAN.md`
@@ -809,9 +834,11 @@ The post-`d9be4d5` north-star evidence planning decision is accepted first-pass.
 
 ## What Is Next
 
-Immediate next control action: create the local commit for the audit-cleared, full-regression-cleared, and commit-gating-cleared `RUNTIME_MUTATION` / `globals()` budget-expansion tranche if git still shows it as uncommitted. Push remains Ryan-gated.
+Immediate next control action: create the local commit for the audit-cleared, full-regression-cleared, and commit-gating-cleared `RUNTIME_MUTATION` / `locals()` release candidate if git state still matches the accepted staging set. Push remains explicitly Ryan-gated.
 
-1. Treat pushed commit `631a303` as the latest pushed eval/test/docs release authority, pushed commit `9eec985` as the prior zero-argument `vars()` budget-expansion release authority, pushed commit `71db72e` as the prior initial zero-argument `vars()` pilot release authority, pushed commit `2c6b54a` as the prior `vars(obj)` budget-expansion release authority, pushed commit `ead239d` as the prior initial `vars(obj)` pilot release authority, and pushed commit `1b555ef` as the prior `getattr` family release authority:
+1. Treat pushed commit `5f74ede` as the latest pushed eval/test/docs release authority, pushed commit `631a303` as the prior initial `globals()` release authority, pushed commit `9eec985` as the prior zero-argument `vars()` budget-expansion release authority, pushed commit `71db72e` as the prior initial zero-argument `vars()` pilot release authority, pushed commit `2c6b54a` as the prior `vars(obj)` budget-expansion release authority, pushed commit `ead239d` as the prior initial `vars(obj)` pilot release authority, and pushed commit `1b555ef` as the prior `getattr` family release authority:
+   - `5f74ede` expands the existing internal eval-only `RUNTIME_MUTATION` / `globals()` matrix from budget `[220]` to budgets `[220, 100]`
+   - `5f74ede` keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, or public-claim boundaries
    - `631a303` adds the initial internal eval-only `RUNTIME_MUTATION` / `globals()` pilot at `1 task x 1 budget x 3 providers` with budget `220`
    - `631a303` preserves `unsupported/opaque` primary truth, additive runtime provenance, and the public-safe quad-matrix comparative boundary
    - `9eec985` expands the internal zero-argument `REFLECTIVE_BUILTIN` / `vars()` matrix to `1 task x 2 budgets x 3 providers` at budgets `100` and `220`
@@ -820,8 +847,8 @@ Immediate next control action: create the local commit for the audit-cleared, fu
    - `ead239d` adds the initial internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`
    - `1b555ef` expands the existing `getattr` family matrices to budgets `220` and `100`
    - each `getattr` family matrix remains `1 task x 2 budgets x 3 providers`
-   - accepted workspace-only post-`631a303` work expands the existing internal eval-only `RUNTIME_MUTATION` / `globals()` matrix from budget `[220]` to budgets `[220, 100]`
-   - the `globals()` budget expansion keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, or public-claim boundaries
+   - accepted workspace-only post-`5f74ede` work adds one internal eval-only `RUNTIME_MUTATION` / `locals()` pilot: `oracle_signal_locals_probe_matrix`, 1 task x 1 budget x 3 providers at budget `220`
+   - the `locals()` pilot keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, release-facing docs, public benchmark, or public-claim boundaries
 2. Treat pushed commit `159e363` as the post-push continuity anchor for the `1b555ef` release state, and treat `8133e0a` as the prior docs-only process-correction anchor:
    - it corrects the self-referential continuity loop
    - it restores tranche-style release sequencing discipline

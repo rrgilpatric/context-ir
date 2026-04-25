@@ -2,6 +2,193 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-25 -- Locals Eval Pilot Commit-Gating Review
+
+- Reviewed the commit-gating review for the audit-cleared and full-regression-cleared workspace-only internal eval-only `RUNTIME_MUTATION` / `locals()` release candidate
+- Findings-first review result:
+  - no findings
+  - repo-backed truth remained `main`, with `HEAD` and `origin/main` at `5f74ede`
+  - dirty and untracked file sets matched the expected release-candidate files exactly
+  - no staged changes were present
+  - `git diff --check` was clean
+  - the release candidate is coherent as one local commit
+  - no forbidden widening was found across runtime acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, optimizer, winner selection, dependencies, public benchmark framing, generalized runtime-mutation wording, generalized locals wording, or public claims
+- Accepted staging set:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_locals_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_locals_probe/main.py`
+  - `evals/tasks/oracle_signal_locals_probe.json`
+  - `evals/run_specs/oracle_signal_locals_probe_matrix.json`
+  - `tests/test_eval_signal_locals_probe.py`
+- Accepted commit message:
+  - subject: `Add locals runtime eval pilot`
+  - body: `Add a narrow internal RUNTIME_MUTATION / locals() eval pilot while preserving unsupported/opaque primary truth and additive runtime provenance.`
+  - body: `Document the evidence boundary without widening public APIs, MCP behavior, runtime acquisition, analyzer/tool-facade implementation, scoring, winner selection, or public benchmark claims.`
+- Acceptance decision:
+  - accept commit-gating first-pass
+  - local commit creation may proceed over the exact accepted staging set if git state still matches
+  - remote push remains explicitly Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Locals Eval Pilot Full Regression Gate
+
+- Reviewed the full-regression gate for the audit-cleared workspace-only internal eval-only `RUNTIME_MUTATION` / `locals()` release candidate
+- Findings-first review result:
+  - no findings
+  - repo-backed truth remained `main`, with `HEAD` and `origin/main` at `5f74ede`
+  - the expected workspace-only release-candidate file set remained present
+  - no staged changes were present
+  - no git-visible tracked or candidate files changed during validation
+- Full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - pytest result: `601 passed`
+  - `git diff --check`
+- Control-lane verification passed:
+  - repo state verification
+  - `git diff --check`
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+  - pytest result: `601 passed`
+- Acceptance decision:
+  - accept the full-regression gate first-pass
+  - route next to commit-gating review over the exact accumulated locals release-candidate file set
+  - this is not commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Locals Eval Pilot Release-Unit Audit Review
+
+- Reviewed the returned dedicated read-only release-unit audit for the accumulated workspace-only internal eval-only `RUNTIME_MUTATION` / `locals()` release candidate
+- Findings-first review result:
+  - no findings
+  - repo-backed truth matched `main`, with `HEAD` and `origin/main` at `5f74ede`
+  - the dirty and untracked file set matched the intended locals release candidate
+  - no staged changes were present
+  - `git diff --check` was clean
+  - fixture, task, and run-spec JSON parsed successfully
+  - the run spec is 1 task x 1 budget x 3 providers at budget `220`
+  - providers are `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - `lookup_outcome=returned_namespace` is preserved
+  - source deltas are limited to eval oracle/provider loading and pass-through through the existing accepted `locals_runtime_observations` seam
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - release-facing docs contain no live workspace or push-state wording
+  - no runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, generalized runtime-mutation, generalized locals, or public-claim boundary was widened
+  - `PLAN.md` and `BUILDLOG.md` preserve tranche release-state discipline and do not create a recursive docs-only continuity loop
+- Audit validation reported:
+  - `git diff --check` passed
+  - JSON validation passed for the locals fixture, task, and run spec
+  - forbidden release-facing wording grep returned no matches
+  - forbidden lower-layer diff checks found no changes
+  - focused pytest with bytecode/cache disabled passed with `66 passed`
+- Control-lane spot-check validation passed:
+  - repo state verification
+  - `git diff --check`
+  - JSON validation for the locals fixture, task, and run spec
+  - release-facing forbidden wording grep
+  - forbidden lower-layer diff check
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py tests/test_eval_report.py -q`
+  - focused pytest result: `66 passed`
+- Residual risks:
+  - full regression has not been run yet
+  - untracked release-candidate files remain unstaged and must be explicitly included during later commit-gating/staging
+- Acceptance decision:
+  - accept release-unit audit first-pass
+  - route next to full regression for the accumulated locals release candidate
+  - this still does not imply commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Locals Eval Pilot Docs Reconciliation Review
+
+- Reviewed the returned same-tranche docs/evidence reconciliation for the accepted workspace-only internal eval-only `RUNTIME_MUTATION` / `locals()` pilot
+- Files reviewed:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+- Findings-first review result:
+  - no findings
+  - release-facing docs now describe `oracle_signal_locals_probe_matrix` as one narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot
+  - the accepted provider/budget wording is 1 task x 1 budget x 3 providers at budget `220`
+  - accepted providers remain `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - `lookup_outcome=returned_namespace` is preserved
+  - selector, runtime-mutation surface, and selected-unit primary truth remain `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - the public-safe quad-matrix comparative boundary remains unchanged
+  - no live workspace, local-commit, or push-state wording was introduced in release-facing docs
+  - no source, tests, fixtures, tasks, run specs, PLAN, BUILDLOG, public API, MCP, runtime-acquisition, analyzer, tool-facade, schema, scoring, winner-selection, public benchmark, or public-claim boundary was widened by the docs slice
+- Validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - `rg -n "workspace-only|workspace only|not pushed|accepted workspace|local commit|push pending" EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md` returned no matches
+  - positive fact checks confirmed the locals pilot facts, budget `220`, provider set, `lookup_outcome=returned_namespace`, `unsupported/opaque`, additive provenance, non-widening language, and unchanged quad-matrix boundary
+  - forbidden-surface diff checks showed no lower-layer runtime acquisition, analyzer, tool facade, MCP, schema, scoring, winner-selection, package config, or extra source changes beyond the already accepted locals implementation files
+- Acceptance decision:
+  - accept the docs/evidence reconciliation first-pass as workspace-only tranche state
+  - the accumulated locals release candidate may proceed to a dedicated read-only release-unit audit
+  - this still does not imply full-regression clearance, commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
+## 2026-04-25 -- Locals Eval Pilot Implementation Review
+
+- Reviewed the returned bounded implementation slice for one internal eval-only
+  `RUNTIME_MUTATION` / `locals()` pilot
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `5f74ede`
+  - no staged changes
+  - the latest pushed release is `5f74ede Expand globals eval budget matrix`
+- Files reviewed:
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_locals_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_locals_probe/main.py`
+  - `evals/tasks/oracle_signal_locals_probe.json`
+  - `evals/run_specs/oracle_signal_locals_probe_matrix.json`
+  - `tests/test_eval_signal_locals_probe.py`
+- Findings-first review result:
+  - no findings
+  - the eval oracle fixture loader now admits fixture-local `locals_runtime_observations`
+  - the Context IR eval provider passes fixture-local `locals()` runtime observations through the existing accepted facade/analyzer seam
+  - the new fixture uses one `locals()` call only
+  - the task contains the expected edit selector, support selector, and exactly one `locals()` unsupported selector
+  - the unsupported selector reason code is `runtime_mutation`
+  - the new `oracle_signal_locals_probe_matrix` is 1 task x 1 budget x 3 providers at budget `220`
+  - the fixture records `lookup_outcome=returned_namespace`
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime-backed provenance remains additive only
+  - baseline providers remain empty at the semantic selected-unit layer
+  - no runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, release-facing docs, public benchmark, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m json.tool evals/fixtures/oracle_signal_locals_probe/eval_runtime_observations.json`
+  - `.venv/bin/python -m json.tool evals/tasks/oracle_signal_locals_probe.json`
+  - `.venv/bin/python -m json.tool evals/run_specs/oracle_signal_locals_probe_matrix.json`
+  - `.venv/bin/python -m ruff check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_locals_probe.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_locals_probe.py`
+  - `.venv/bin/python -m mypy --strict src/context_ir/eval_oracles.py src/context_ir/eval_providers.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_oracles.py tests/test_eval_providers.py tests/test_eval_runs.py tests/test_eval_report.py -q`
+  - broader targeted pytest result: `66 passed`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py -q`
+  - focused locals pytest result: `5 passed`
+  - `git diff --check`
+  - forbidden-surface diff checks over runtime acquisition, analyzer, tool facade, MCP, schema, scoring, winner selection, release-facing docs, and public claims before this control continuity update
+- Acceptance decision:
+  - accept the implementation first-pass as workspace-only state
+  - route next to same-tranche docs/evidence and continuity reconciliation before declaring a release candidate or requesting release-unit audit
+  - fold the stale post-`5f74ede` routing correction into this substantive locals tranche without creating a standalone docs-only post-push continuity commit
+  - this is not release-unit audit clearance, full-regression clearance, commit-gating clearance, local commit creation, or push authorization
+- Acceptance status: first-pass
+
 ## 2026-04-25 -- Globals Budget Matrix Commit-Gating Review
 
 - Reviewed the audit-cleared and full-regression-cleared workspace-only internal eval-only `RUNTIME_MUTATION` / `globals()` budget-expansion release candidate
