@@ -62,10 +62,22 @@ boundary is a durable dir listing artifact via `durable_payload_reference`;
 optional `listing_entry_count` is additive summary only. Selector and
 selected-unit primary truth remain `unsupported/opaque`, and runtime-backed
 provenance is additive only.
+The current internal eval-only `METACLASS_BEHAVIOR` pilot remains one task
+only through `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget
+x 3 providers at budget `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+`class_creation_outcome=created_class`; `durable_payload_reference` is required
+and non-empty, optional `created_class_qualified_name` and
+`selected_metaclass_qualified_name` fields are additive summary only,
+attachment is limited to the preserved full `metaclass=...` keyword-site
+unsupported construct, selector and selected-unit primary truth remain
+`unsupported/opaque`, runtime provenance remains additive only, and public
+comparative claims remain bounded to the existing quad matrix.
 Those slices do not widen public claims, public APIs, MCP behavior, scoring,
 winner selection, runtime acquisition, analyzer/tool-facade implementation, schema,
 generalized reflective-builtin support, generalized runtime-mutation support,
-generalized locals() support, or generalized hybrid-runtime coverage. The
+generalized locals() support, or generalized hybrid-runtime coverage, and they
+do not make metaclasses part of the public supported subset. The
 public-safe quad-matrix comparative boundary remains unchanged.
 
 The April 13 frozen spec is retired and superseded. Existing runtime modules under `src/context_ir/` still largely reflect the retired symbol-graph-first build and must be treated as implementation history until they are replaced slice by slice.
@@ -134,7 +146,9 @@ around rendering density.
   plus the current internal one-argument `dir(obj)` pilot, plus the current
   internal eval-only `RUNTIME_MUTATION` / `globals()`, `locals()`, and
   `delattr(obj, name)` pilots, plus the current narrow internal eval-only
-  `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence.
+  `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
+  internal eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...`
+  keyword-site pilot.
   The three existing
   getattr-family provider/budget matrices cover budgets `100` and `220`; each
   remains 1 task x 2 budgets x 3 providers. The current internal `vars(obj)`
@@ -182,6 +196,17 @@ around rendering density.
   `durable_payload_reference`, optional `listing_entry_count` is additive
   summary only, selector and selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive only.
+  The current internal `METACLASS_BEHAVIOR` pilot covers only
+  `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget x 3
+  providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `class_creation_outcome=created_class`; `durable_payload_reference` is
+  required and non-empty, optional `created_class_qualified_name` and
+  `selected_metaclass_qualified_name` fields are additive summary only,
+  attachment is limited to the preserved full `metaclass=...` keyword-site
+  unsupported construct, selector and selected-unit primary truth remain
+  `unsupported/opaque`, runtime provenance remains additive only, and public
+  comparative claims remain bounded to the existing quad matrix.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 

@@ -2,6 +2,317 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-26 -- Metaclass Behavior Eval Matrix Commit-Gating Review
+
+- Reviewed the returned commit-gating review for the accumulated
+  audit-cleared and regression-cleared internal eval-only `METACLASS_BEHAVIOR`
+  release unit
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `f67bab7`
+  - latest pushed commit `f67bab7 Add setattr runtime eval pilot`
+  - nothing staged
+- Exact accepted release-unit file set:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/main.py`
+  - `evals/tasks/oracle_signal_metaclass_behavior_probe.json`
+  - `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- Findings:
+  - none
+- Commit-gating clearance:
+  - dirty tracked files and untracked files matched the expected release-unit
+    file set
+  - accumulated diff stayed within eval oracle/provider wiring, internal eval
+    assets, tests, and bounded docs/continuity
+  - docs and claims remain scoped to internal eval-only `METACLASS_BEHAVIOR`,
+    keep primary truth `unsupported/opaque`, preserve additive-only runtime
+    provenance, and do not widen public comparative claims beyond the existing
+    quad matrix
+  - no forbidden runtime acquisition, analyzer, tool facade, schema, scoring,
+    optimizer, compiler, MCP, package-root API, winner-selection, package
+    config, public benchmark, generalized metaclass support, exception/failure
+    outcome, `__prepare__`, namespace/MRO modeling, post-creation side-effect,
+    nested metaclass expression handling, budget `100` expansion, or
+    generalized runtime-mutation support was found
+  - continuity correctly recorded release-unit audit and full regression
+    clearance before routing to commit-gating
+- Decision:
+  - accept commit-gating first-pass with no findings
+  - approve local commit creation over the exact accepted file set with subject
+    `Add metaclass runtime eval pilot`
+  - push remains Ryan-gated and is not authorized by commit-gating
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Metaclass Behavior Eval Matrix Full Regression Gate
+
+- Reviewed the returned full-regression gate for the accumulated
+  workspace-only internal eval-only `METACLASS_BEHAVIOR` provider matrix and
+  same-tranche docs/evidence reconciliation
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `f67bab7`
+  - latest pushed commit `f67bab7 Add setattr runtime eval pilot`
+  - nothing staged
+  - expected dirty/untracked release-unit files remained present
+- Findings:
+  - none
+- Validation reviewed:
+  - `git status --short --branch`
+  - `git rev-parse --short HEAD` returned `f67bab7`
+  - `git rev-parse --short origin/main` returned `f67bab7`
+  - `git diff --cached --name-status` returned empty output
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed with `85
+    files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed over `31` source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed with `624
+    passed`
+  - final git checks retained `HEAD=f67bab7`, `origin/main=f67bab7`, nothing
+    staged, and the same dirty workspace release-unit files
+- Decision:
+  - accept the full regression gate first-pass
+  - route next to commit-gating review over the exact accumulated
+    workspace-only release-unit file set
+  - do not stage, commit, or push until commit-gating is reviewed and accepted
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Metaclass Behavior Eval Matrix Release-Unit Audit
+
+- Reviewed the returned read-only release-unit audit for the accumulated
+  workspace-only internal eval-only `METACLASS_BEHAVIOR` provider matrix and
+  same-tranche docs/evidence reconciliation
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `f67bab7`
+  - latest pushed commit `f67bab7 Add setattr runtime eval pilot`
+  - nothing staged
+- Audited release-unit boundary:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/main.py`
+  - `evals/tasks/oracle_signal_metaclass_behavior_probe.json`
+  - `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- Findings:
+  - none
+- Audit clearance:
+  - `oracle_signal_metaclass_behavior_probe_matrix` remains 1 task x 1 budget
+    x 3 providers at budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload includes `class_creation_outcome=created_class`
+  - `durable_payload_reference` remains non-empty
+  - optional additive summary fields remain limited to created class and
+    selected metaclass names
+  - attachment remains limited to the preserved full `metaclass=...`
+    keyword-site unsupported construct
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - public comparative claims remain bounded to the existing quad matrix
+  - no forbidden runtime acquisition, analyzer, tool facade, schema, scoring,
+    optimizer, compiler, MCP, package-root API, winner-selection, package
+    config, public benchmark, generalized metaclass support, exception/failure
+    outcome, `__prepare__`, namespace/MRO modeling, post-creation side-effect,
+    nested metaclass expression handling, budget `100` expansion, or
+    generalized runtime-mutation support was found
+- Validation reviewed:
+  - expected live git state and dirty/untracked file set
+  - `git diff --check`
+  - JSON validity for the new fixture, task, and run spec
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_metaclass_behavior_probe.py -v`
+    with `5 passed`
+  - release-facing docs contained no release-state wording
+- Decision:
+  - accept the release-unit audit first-pass with no findings
+  - route next to the full regression gate
+  - do not route to commit-gating, local commit creation, or push until full
+    regression is reviewed and accepted
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Metaclass Behavior Eval Matrix Docs/Evidence Reconciliation
+
+- Reviewed the returned docs/evidence reconciliation slice for the accepted
+  workspace-only internal eval-only `METACLASS_BEHAVIOR` provider matrix
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `f67bab7`
+  - nothing staged
+  - expected accumulated workspace-only dirty/untracked candidate present
+- Docs/evidence files changed:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+- Findings:
+  - none
+- Accepted docs/evidence boundary:
+  - `oracle_signal_metaclass_behavior_probe_matrix` is documented as narrow
+    internal eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...`
+    keyword-site evidence
+  - matrix shape is 1 task x 1 budget x 3 providers at budget `220`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload is `class_creation_outcome=created_class`
+  - `durable_payload_reference` is required and non-empty
+  - optional `created_class_qualified_name` and
+    `selected_metaclass_qualified_name` fields are additive summary only
+  - attachment is limited to the preserved full `metaclass=...` keyword-site
+    unsupported construct
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - public comparative claims remain bounded to the existing quad matrix
+- Validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - positive wording checks for matrix name, matrix shape, budget, providers,
+    runtime payload, `durable_payload_reference`, `unsupported/opaque`,
+    additive provenance, metaclass keyword-site boundary, and quad-matrix
+    boundary
+  - negative checks for release-state wording and claim widening
+- Decision:
+  - accept the docs/evidence reconciliation first-pass as workspace-only state
+  - route next to one dedicated read-only release-unit audit over the
+    accumulated workspace-only `METACLASS_BEHAVIOR` candidate
+  - do not route to full regression, commit-gating, local commit creation, or
+    push until the release-unit audit is reviewed and accepted
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Metaclass Behavior Eval Matrix Implementation
+
+- Reviewed the returned bounded implementation slice for the internal
+  eval-only `METACLASS_BEHAVIOR` provider matrix
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `f67bab7`
+  - nothing staged
+  - pre-existing control-lane continuity edits remain in `PLAN.md` and
+    `BUILDLOG.md`
+- Implementation files changed:
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/main.py`
+  - `evals/tasks/oracle_signal_metaclass_behavior_probe.json`
+  - `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- Findings:
+  - none
+- Accepted implementation boundary:
+  - `oracle_signal_metaclass_behavior_probe_matrix` is 1 task x 1 budget x 3
+    providers at budget `220`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture-local `metaclass_behavior_runtime_observations` load through
+    `eval_oracles.py`
+  - Context IR eval provider passes fixture-local metaclass behavior
+    observations through the existing accepted lower-layer seam
+  - runtime payload includes `class_creation_outcome=created_class`
+  - runtime observation carries a non-empty `durable_payload_reference`
+  - optional additive summary payload is limited to created class and selected
+    metaclass names
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - attachment is limited to the preserved full `metaclass=...` keyword-site
+    unsupported construct
+- Validation passed:
+  - `git diff --check`
+  - JSON validation for the new runtime observation, task, and run-spec files
+  - `.venv/bin/python -m ruff check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_metaclass_behavior_probe.py -v` with `5 passed`
+- Preserved boundaries:
+  - no edits to runtime acquisition, analyzer, tool facade, schema, scoring,
+    optimizer, compiler, MCP, package-root API, winner selection, or package
+    config
+  - no docs/evidence reconciliation in the implementation slice
+  - no generalized metaclass support claim
+  - no exception/failure outcome, `__prepare__`, namespace/MRO modeling,
+    post-creation side-effect, nested metaclass expression handling, budget
+    `100` expansion, public claim widening, or generalized runtime-mutation
+    support
+- Decision:
+  - accept the implementation slice first-pass as workspace-only state
+  - route next to same-tranche docs/evidence reconciliation before
+    release-unit audit, full regression, commit-gating, local commit creation,
+    or push
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Post-Setattr Metaclass Eval Next-Move Planning
+
+- Reviewed the returned read-only planning spike for the next smallest
+  truthful north-star evidence move after pushed release
+  `f67bab7 Add setattr runtime eval pilot`
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` both point to `f67bab7`
+  - worktree clean
+  - nothing staged or untracked
+- Findings:
+  - no mismatch found between the planning result and live repo reality
+  - `RUNTIME_MUTATION` now has internal eval-only evidence for `globals()`,
+    `locals()`, `delattr(obj, name)`, and `setattr(obj, name, value)`
+  - `METACLASS_BEHAVIOR` lower-layer runtime provenance support exists through
+    parser/frontier keyword surfacing,
+    `MetaclassBehaviorRuntimeObservation`,
+    `attach_metaclass_behavior_runtime_provenance(...)`, analyzer pass-through,
+    and tool-facade pass-through
+  - no `oracle_signal_metaclass_behavior_probe` fixture, task, run spec, or
+    `tests/test_eval_signal_metaclass_behavior_probe.py` exists
+- Decision:
+  - accept the planning spike first-pass
+  - route next to one bounded internal eval-only `METACLASS_BEHAVIOR`
+    provider-matrix implementation slice
+  - the target matrix is `oracle_signal_metaclass_behavior_probe_matrix`: 1
+    task x 1 budget x 3 providers at budget `220`, against providers
+    `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+  - runtime payload must include `class_creation_outcome=created_class` and a
+    non-empty `durable_payload_reference`
+  - optional additive summary fields may be limited to created class and
+    selected metaclass names
+  - selector and selected-unit primary truth must remain `unsupported/opaque`
+  - runtime provenance must remain additive only
+  - attachment must stay limited to the preserved full `metaclass=...`
+    keyword-site unsupported construct
+- Alternatives rejected:
+  - `delattr(obj, name)` / `setattr(obj, name, value)` budget `100`
+    expansion: rejected for now because budget expansion is not automatic and
+    no specific unanswered comparison requires it before first metaclass
+    evidence
+  - family-level consolidation or docs-only work: rejected for now because it
+    does not add the missing eval evidence point
+  - broader runtime-mutation generalization: rejected as larger and more
+    claim-sensitive than a first metaclass evidence packet
+  - public benchmark/methodology work: rejected as premature before internal
+    tiered surfaces are broader
+  - production/API/MCP work: rejected as not the smallest evidence move and as
+    public/product-surface widening
+- Preserved boundaries:
+  - no runtime acquisition, analyzer, tool-facade, schema, scoring, optimizer,
+    compiler, MCP, API, winner-selection, public claim, generalized metaclass
+    support, exception/failure outcome, `__prepare__`, namespace/MRO modeling,
+    post-creation side-effect, nested metaclass expression handling, budget
+    `100` expansion, or generalized runtime-mutation support is authorized
+- Next control action:
+  - issue one bounded execution-lane prompt for the
+    `METACLASS_BEHAVIOR` eval-only provider matrix
+- Acceptance status: first-pass
+
 ## 2026-04-26 -- Setattr Eval Matrix Commit-Gating Review
 
 - Reviewed the returned commit-gating review for the accumulated

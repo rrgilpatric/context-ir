@@ -1,0 +1,56 @@
+{
+  "schema_version": "v1",
+  "metaclass_behavior_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 9,
+      "start_column": 20,
+      "end_line": 9,
+      "end_column": 34,
+      "source_snippet": "metaclass=Meta",
+      "probe_identifier": "probe:metaclass-behavior:example-meta",
+      "probe_contract_revision": "2026-04-26.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_metaclass_behavior_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://metaclass-behavior/example-meta-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed metaclass behavior trace for creating Example with Meta."
+        }
+      ],
+      "replay_target": "main.Example",
+      "replay_selector": "class:main.Example:metaclass",
+      "replay_inputs": [
+        {
+          "key": "declared_base_qualified_name",
+          "value": "main.Base"
+        }
+      ],
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "class_creation_outcome",
+          "value": "created_class"
+        },
+        {
+          "key": "created_class_qualified_name",
+          "value": "main.Example"
+        },
+        {
+          "key": "selected_metaclass_qualified_name",
+          "value": "main.Meta"
+        }
+      ],
+      "durable_payload_reference": "artifact://metaclass-behavior/example-meta-observation.json"
+    }
+  ]
+}

@@ -42,7 +42,7 @@ The prior pushed docs-only continuity anchor is `9e73226 Correct dir(obj)
 continuity routing after push`. Live git refs and worktree state must be
 verified from git during control intake rather than treated as an
 always-current committed field. The latest pushed eval/test/docs release
-authority is `41f6b57 Add delattr runtime eval pilot`.
+authority is `f67bab7 Add setattr runtime eval pilot`.
 
 `c1a12d7 Add dir(obj) eval pilot` is a narrow internal eval-only
 `REFLECTIVE_BUILTIN` / `dir(obj)` release that adds only
@@ -82,14 +82,33 @@ expansion, no public claim widening, and no API, MCP, runtime acquisition,
 analyzer, tool facade, schema, scoring, optimizer, or winner-selection
 widening.
 
-The accepted post-`41f6b57` north-star planning decision is to open one bounded
-internal eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` provider
-matrix next. This is a first evidence point for the already accepted lower
-`setattr` runtime-provenance seam, not a public claim or product-surface
-widening. The candidate shape is 1 task x 1 budget x 3 providers at budget
-`220`, against `context_ir`, `lexical_top_k_files`, and
-`import_neighborhood_files`; primary selector and selected-unit truth must stay
-`unsupported/opaque`, and runtime provenance must remain additive only.
+After `41f6b57`, pushed release `f67bab7 Add setattr runtime eval pilot` adds
+the narrow internal eval-only `RUNTIME_MUTATION` /
+`setattr(obj, name, value)` pilot: `oracle_signal_setattr_probe_matrix` only.
+The matrix is 1 task x 1 budget x 3 providers at budget 220, against providers
+`context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with
+runtime payload `mutation_outcome=returned_none`. Selector/runtime-mutation
+surface and selected-unit primary truth remain `unsupported/opaque`, runtime
+provenance remains additive only, and public comparative claims remain bounded
+to the existing quad matrix.
+
+The `f67bab7` release passed implementation review, same-tranche docs/evidence
+reconciliation, release-unit audit, full regression with `619 passed`,
+commit-gating, local commit creation, and Ryan-authorized push. It is no longer
+pending release sequencing. Preserved non-goals: no generalized `setattr`
+support, no generalized runtime-mutation support, no budget 100 expansion, no
+public claim widening, and no API, MCP, runtime acquisition, analyzer, tool
+facade, schema, scoring, optimizer, compiler, or winner-selection widening.
+
+The accepted post-`f67bab7` north-star planning decision is to open one bounded
+internal eval-only `METACLASS_BEHAVIOR` provider matrix next. This is a first
+eval evidence point for the already accepted lower metaclass runtime-provenance
+seam, not a public claim or product-surface widening. The candidate shape is 1
+task x 1 budget x 3 providers at budget `220`, against `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`; primary selector and
+selected-unit truth must stay `unsupported/opaque`, runtime provenance must
+remain additive only, and attachment must stay limited to the preserved full
+`metaclass=...` keyword-site unsupported construct.
 
 Prior pushed release anchors remain: `38e9d5f` for the initial internal
 eval-only `RUNTIME_MUTATION` / `locals()` pilot; `5f74ede` for the internal
@@ -444,17 +463,24 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Release-unit audit for internal `setattr(obj, name, value)` eval-only provider matrix accepted first-pass with no findings
 - [x] Full regression gate for internal `setattr(obj, name, value)` eval-only provider matrix accepted first-pass with `619 passed`
 - [x] Commit-gating review for internal `setattr(obj, name, value)` eval-only provider matrix accepted first-pass
+- [x] Local commit creation and Ryan-authorized push for internal `setattr(obj, name, value)` eval-only provider matrix completed at `f67bab7`
+- [x] Post-`f67bab7` metaclass eval-matrix next-move planning spike accepted first-pass
+- [x] Internal `METACLASS_BEHAVIOR` eval-only provider matrix implementation accepted first-pass as workspace-only state
+- [x] Same-tranche docs/evidence reconciliation for internal `METACLASS_BEHAVIOR` eval-only provider matrix accepted first-pass as workspace-only state
+- [x] Release-unit audit for internal `METACLASS_BEHAVIOR` eval-only provider matrix accepted first-pass with no findings
+- [x] Full regression gate for internal `METACLASS_BEHAVIOR` eval-only provider matrix accepted first-pass with `624 passed`
+- [x] Commit-gating review for internal `METACLASS_BEHAVIOR` eval-only provider matrix accepted first-pass
 
 ## What Is In Progress
 
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
-- No release sequencing is currently in flight for `41f6b57`
-- `41f6b57 Add delattr runtime eval pilot` is the latest pushed eval/test/docs
+- No release sequencing is currently in flight for `f67bab7`
+- `f67bab7 Add setattr runtime eval pilot` is the latest pushed eval/test/docs
   release authority and must not be reopened absent new findings
-- The accepted workspace-only internal eval-only `RUNTIME_MUTATION` /
-  `setattr(obj, name, value)` provider-matrix implementation and same-tranche
-  docs/evidence reconciliation are the current accumulated candidate
+- The accepted workspace-only internal eval-only `METACLASS_BEHAVIOR`
+  provider-matrix implementation and same-tranche docs/evidence reconciliation
+  are the current accumulated candidate
 - The accumulated workspace-only candidate includes:
   - `ARCHITECTURE.md`
   - `BUILDLOG.md`
@@ -464,22 +490,31 @@ sequencing for `c1a12d7` absent new findings.
   - `README.md`
   - `src/context_ir/eval_oracles.py`
   - `src/context_ir/eval_providers.py`
-  - `evals/fixtures/oracle_signal_setattr_probe/eval_runtime_observations.json`
-  - `evals/fixtures/oracle_signal_setattr_probe/main.py`
-  - `evals/tasks/oracle_signal_setattr_probe.json`
-  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
-  - `tests/test_eval_signal_setattr_probe.py`
-- `oracle_signal_setattr_probe_matrix` is 1 task x 1 budget x 3 providers at
-  budget `220`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_metaclass_behavior_probe/main.py`
+  - `evals/tasks/oracle_signal_metaclass_behavior_probe.json`
+  - `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `oracle_signal_metaclass_behavior_probe_matrix` is 1 task x 1 budget x 3
+  providers at budget `220`
 - Providers must remain `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`
-- Runtime payload is `mutation_outcome=returned_none`
-- Selector and selected-unit primary truth must remain `unsupported/opaque`
+- Runtime payload includes `class_creation_outcome=created_class` and a
+  non-empty `durable_payload_reference`
+- Optional additive summary fields may be limited to created class and selected
+  metaclass names
+- Primary selector and selected-unit truth must remain `unsupported/opaque`
 - Runtime provenance must remain additive only
-- Public comparative claims remain bounded to the existing quad matrix
+- Attachment must stay limited to the preserved full `metaclass=...`
+  keyword-site unsupported construct
+- No runtime acquisition, analyzer, tool-facade, schema, scoring, optimizer,
+  compiler, MCP, API, winner-selection, public claim, generalized metaclass
+  support, exception/failure outcome, `__prepare__`, namespace/MRO modeling,
+  post-creation side-effect, nested metaclass expression handling, budget 100
+  expansion, or generalized runtime-mutation support is authorized
 - Implementation validation passed: JSON validity, targeted ruff check,
   targeted ruff format check, strict mypy over `src/`, and focused pytest with
-  `6 passed`
+  `5 passed`
 - Docs/evidence reconciliation validation passed: docs diff hygiene, positive
   evidence-wording checks, and negative release-state / claim-widening checks
 - Release-unit audit accepted first-pass with no findings
@@ -487,15 +522,11 @@ sequencing for `c1a12d7` absent new findings.
   - `.venv/bin/python -m ruff check src/ tests/`
   - `.venv/bin/python -m ruff format --check src/ tests/`
   - `.venv/bin/python -m mypy --strict src/`
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` with `619 passed`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` with `624 passed`
 - Commit-gating accepted first-pass with no findings over the exact accumulated
   workspace-only release-unit file set
-- No `delattr` budget expansion, metaclass fixture/matrix, public claim
-  widening, public API, MCP, runtime acquisition, analyzer/tool-facade, schema,
-  scoring, optimizer, compiler, winner-selection, or package-root change is
-  authorized
 - The exact release-unit file set is approved for local commit with subject
-  `Add setattr runtime eval pilot`
+  `Add metaclass runtime eval pilot`
 - Live staging, local commit creation, and push state must be verified from git
   rather than inferred from this continuity text; push remains Ryan-gated and
   is not authorized by commit-gating
@@ -1031,17 +1062,56 @@ sequencing for `c1a12d7` absent new findings.
 ## What Is Next
 
 Immediate next control action depends on live git state for the accepted
-internal eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` release
-unit. If git shows the exact release unit is still uncommitted, create the
-local commit over the exact accepted file set with subject `Add setattr runtime
-eval pilot`. If git shows it is locally committed but unpushed, request
-explicit Ryan push authorization. Do not push without explicit Ryan
-authorization.
+internal eval-only `METACLASS_BEHAVIOR` release unit. If git shows the exact
+release unit is still uncommitted, create the local commit over the exact
+accepted file set with subject `Add metaclass runtime eval pilot`. If git shows
+it is locally committed but unpushed, request explicit Ryan push authorization.
+Do not push without explicit Ryan authorization.
 
 Historical release anchors below remain guardrails and non-reopen constraints,
 not pending release gates.
 
-1. Treat pushed commit `41f6b57 Add delattr runtime eval pilot` as the latest
+1. Treat pushed commit `f67bab7 Add setattr runtime eval pilot` as the latest
+   pushed eval/test/docs release authority:
+   - `oracle_signal_setattr_probe_matrix` is 1 task x 1 budget x 3 providers at budget `220`
+   - providers remain `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+   - runtime payload is `mutation_outcome=returned_none`
+   - selector/runtime-mutation surface and selected-unit primary truth remain `unsupported/opaque`
+   - runtime provenance remains additive only
+   - public comparative claims remain bounded to the existing quad matrix
+   - implementation is accepted first-pass
+   - same-tranche docs/evidence reconciliation is accepted first-pass
+   - release-unit audit is accepted first-pass with no findings
+   - full regression is accepted first-pass with `619 passed`
+   - commit-gating is accepted first-pass
+   - local commit creation and Ryan-authorized push are complete
+2. Treat the accepted post-`f67bab7` planning decision as complete:
+   - no concrete finding requires reopening `f67bab7`
+   - `METACLASS_BEHAVIOR` has accepted lower-layer runtime provenance support
+     but no eval-only fixture, task, run spec, or test matrix
+   - first metaclass eval-only matrix is now the smallest truthful north-star
+     evidence move
+   - `delattr` / `setattr` budget `100` expansion is rejected for now because
+     budget expansion is not automatic and no specific unanswered comparison
+     requires it before first metaclass evidence
+   - family-level consolidation / docs-only is rejected for now because it
+     does not add the missing evidence point
+   - broader runtime-mutation generalization, public benchmark work, and
+     production/API/MCP work are rejected as immediate next moves because they
+     widen scope or claims before the internal tiered evidence surface is broad
+     enough
+   - next implementation is one bounded eval-only
+     `oracle_signal_metaclass_behavior_probe_matrix`
+   - implementation accepted first-pass in workspace-only state
+   - same-tranche docs/evidence reconciliation accepted first-pass in
+     workspace-only state
+   - release-unit audit accepted first-pass with no findings
+   - full regression accepted first-pass with `624 passed`
+   - commit-gating accepted first-pass
+   - exact accepted file set is approved for local commit with subject
+     `Add metaclass runtime eval pilot`
+   - live local commit and push state must be verified from git
+3. Treat pushed commit `41f6b57 Add delattr runtime eval pilot` as the prior
    pushed eval/test/docs release authority:
    - `oracle_signal_delattr_probe_matrix` is 1 task x 1 budget x 3 providers at budget `220`
    - providers remain `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
@@ -1055,7 +1125,7 @@ not pending release gates.
    - full regression is accepted first-pass with `612 passed, 1 deselected`
    - commit-gating is accepted first-pass
    - local commit creation and Ryan-authorized push are complete
-2. Treat the accepted post-`41f6b57` planning decision as complete:
+4. Treat the accepted post-`41f6b57` planning decision as complete:
    - no concrete finding requires reopening `41f6b57`
    - `setattr(obj, name, value)` is the smallest uncovered `RUNTIME_MUTATION`
      sibling with an accepted lower-layer seam and no eval-only matrix
@@ -1077,7 +1147,7 @@ not pending release gates.
    - exact accepted file set is approved for local commit with subject
      `Add setattr runtime eval pilot`
    - live local commit and push state must be verified from git
-3. Treat pushed commit `c1a12d7 Add dir(obj) eval pilot` as the prior pushed
+5. Treat pushed commit `c1a12d7 Add dir(obj) eval pilot` as the prior pushed
    eval/test/docs release authority, pushed commit `2dd8404 Expand locals eval
    budget matrix` as the prior `locals()` budget-expansion release authority,
    pushed commit `38e9d5f` as the prior initial `locals()` pilot release

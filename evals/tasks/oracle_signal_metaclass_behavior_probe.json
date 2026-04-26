@@ -1,0 +1,34 @@
+{
+  "task_id": "oracle_signal_metaclass_behavior_probe",
+  "fixture_id": "oracle_signal_metaclass_behavior_probe",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.Example",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "class",
+      "rationale": "Primary edit target for the isolated metaclass behavior probe fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "main.render_probe_digest",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Caller-visible digest wrapper keeps the created-class outcome in scope."
+    },
+    {
+      "kind": "unsupported",
+      "file_path": "main.py",
+      "construct_text": "metaclass=Meta",
+      "reason_code": "metaclass_behavior",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main",
+      "source_snippet": "metaclass=Meta",
+      "rationale": "The metaclass keyword site stays primarily unsupported while carrying additive runtime provenance.",
+      "expected_primary_capability_tier": "unsupported/opaque",
+      "expect_attached_runtime_provenance": true
+    }
+  ]
+}

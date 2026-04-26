@@ -10,7 +10,7 @@ The current semantic-first baseline is supported by repo-local tests and
 accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
-Release authority is split by artifact type. The `oracle_signal_vars_probe`
+Evidence authority is split by artifact type. The `oracle_signal_vars_probe`
 evidence described below is a narrow internal `vars(obj)` pilot, and the
 `oracle_signal_vars_zero_probe` evidence described below is a narrow internal
 zero-argument `vars()` pilot. The `oracle_signal_globals_probe_matrix`
@@ -22,9 +22,12 @@ internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot. The
 `oracle_signal_setattr_probe_matrix` evidence described below is narrow
 internal eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence.
 The current internal eval-only `oracle_signal_dir_probe_matrix` evidence is a
-narrow `REFLECTIVE_BUILTIN` / `dir(obj)` pilot. The `d8ebdc3` code/test
+narrow `REFLECTIVE_BUILTIN` / `dir(obj)` pilot. The current internal eval-only
+`oracle_signal_metaclass_behavior_probe_matrix` evidence is a narrow
+`METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot. The
+`d8ebdc3` code/test
 evidence anchor adds internal eval runtime-outcome accounting over normalized
-runtime provenance payload data. The prior `b014595` release carries narrow
+runtime provenance payload data. The prior `b014595` anchor records narrow
 internal
 `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch
 evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
@@ -35,11 +38,14 @@ current internal `vars(obj)` pilot, the current internal zero-argument
 `locals()` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
 `dir(obj)` pilot, the current internal eval-only `RUNTIME_MUTATION` /
 `delattr(obj, name)` pilot, the current internal eval-only `RUNTIME_MUTATION` /
-`setattr(obj, name, value)` evidence, and the runtime-outcome accounting do not
+`setattr(obj, name, value)` evidence, the current internal eval-only
+`METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, and the
+runtime-outcome accounting do not
 widen public claims, public APIs, MCP behavior, scoring, winner selection,
 runtime acquisition, analyzer/tool-facade implementation, schema, or
 generalized runtime-mutation support, generalized locals() support, public
-benchmark claims, or generalized hybrid-runtime coverage.
+benchmark claims, or generalized hybrid-runtime coverage, and they do not make
+metaclasses part of the public supported subset.
 
 The current internal evidence ledger also records a narrow provider/budget
 expansion for the existing getattr-family run specs:
@@ -101,11 +107,17 @@ Proven by current unit and integration tests:
   `RUNTIME_MUTATION` / `delattr(obj, name)` pilot records
   `mutation_outcome=deleted_attribute`, and the current internal eval-only
   `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence records
-  `mutation_outcome=returned_none`, preserving existing tier/provider
+  `mutation_outcome=returned_none`, while the current internal eval-only
+  `METACLASS_BEHAVIOR` pilot records
+  `class_creation_outcome=created_class`, preserving existing tier/provider
   additive-provenance accounting.
 - The current internal `REFLECTIVE_BUILTIN` / `dir(obj)` pilot records durable
   listing proof through `durable_payload_reference`; optional
   `listing_entry_count` is additive summary only.
+- The current internal eval-only `METACLASS_BEHAVIOR` pilot requires a
+  non-empty `durable_payload_reference`; optional
+  `created_class_qualified_name` and `selected_metaclass_qualified_name`
+  fields are additive summary only.
 - Internal runtime-backed evidence currently covers narrow pilots only:
   - the `DYNAMIC_IMPORT` internal provider/budget matrix for the
     `oracle_signal_dynamic_import_probe` task
@@ -134,6 +146,9 @@ Proven by current unit and integration tests:
     `oracle_signal_setattr_probe_matrix`
   - the narrow internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot for
     `oracle_signal_dir_probe_matrix`
+  - the narrow internal eval-only `METACLASS_BEHAVIOR` / preserved
+    `metaclass=...` keyword-site pilot for
+    `oracle_signal_metaclass_behavior_probe_matrix`
 - The three existing getattr-family provider/budget matrices now cover budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers.
 - The current internal `vars(obj)` pilot covers only
@@ -175,8 +190,20 @@ Proven by current unit and integration tests:
   `import_neighborhood_files`. The runtime proof boundary is a durable dir
   listing artifact via `durable_payload_reference`; optional
   `listing_entry_count` is additive summary only.
+- The current internal eval-only `METACLASS_BEHAVIOR` pilot covers only
+  `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget x 3
+  providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `class_creation_outcome=created_class`; `durable_payload_reference` is
+  required and non-empty, optional `created_class_qualified_name` and
+  `selected_metaclass_qualified_name` fields are additive summary only,
+  attachment is limited to the preserved full `metaclass=...` keyword-site
+  unsupported construct, selector and selected-unit primary truth remain
+  `unsupported/opaque`, runtime provenance remains additive only, and public
+  comparative claims remain bounded to the existing quad matrix.
 - In those runtime-backed pilots, the dynamic selector, reflective selector, or
-  runtime-mutation surface and selected-unit primary truth remain
+  runtime-mutation surface, and the metaclass-behavior keyword site and
+  selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive attached
   evidence. This is internal evidence, not a public benchmark, broad
   hybrid-runtime support claim, generalized reflective-builtin support claim,
@@ -202,7 +229,7 @@ Architecturally intended but not yet evaluated:
 
 - Broader public task sets beyond the current accepted internal signal assets
   and narrow runtime-backed pilot tasks.
-- Wider budget-curve measurements beyond the fixed budgets committed in the
+- Wider budget-curve measurements beyond the fixed budgets recorded in the
   current internal run specs.
 - Additional baseline comparisons beyond the current lexical and
   import-neighborhood providers.
@@ -212,7 +239,8 @@ Architecturally intended but not yet evaluated:
   internal pilots, plus the current one-argument `vars(obj)`, zero-argument
   `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()`,
   `locals()`, `delattr(obj, name)`, and `setattr(obj, name, value)` internal
-  pilots.
+  pilots, plus the current internal eval-only `METACLASS_BEHAVIOR` /
+  preserved `metaclass=...` keyword-site pilot.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -246,7 +274,10 @@ Architecturally intended but not yet evaluated:
   `setattr(obj, name, value)` `oracle_signal_setattr_probe_matrix` evidence
   and additive runtime provenance, plus the
   current internal one-argument `dir(obj)` `oracle_signal_dir_probe_matrix`
-  evidence and additive runtime provenance. These pilots are internal evidence
+  evidence and additive runtime provenance, plus the current internal
+  `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site
+  `oracle_signal_metaclass_behavior_probe_matrix` evidence and additive
+  runtime provenance. These pilots are internal evidence
   surfaces, not public benchmark surfaces.
 - Narrow getattr-family provider/budget evidence: the three existing
   getattr-family matrices cover budgets `100` and `220`, and each remains
@@ -297,6 +328,17 @@ Architecturally intended but not yet evaluated:
   `durable_payload_reference`, optional `listing_entry_count` is additive
   summary only, selector and selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive only.
+- Narrow `METACLASS_BEHAVIOR` provider/budget evidence: the internal
+  `oracle_signal_metaclass_behavior_probe_matrix` covers only 1 task x 1
+  budget x 3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `class_creation_outcome=created_class`; `durable_payload_reference` is
+  required and non-empty, optional `created_class_qualified_name` and
+  `selected_metaclass_qualified_name` fields are additive summary only,
+  attachment is limited to the preserved full `metaclass=...` keyword-site
+  unsupported construct, selector and selected-unit primary truth remain
+  `unsupported/opaque`, runtime provenance remains additive only, and public
+  comparative claims remain bounded to the existing quad matrix.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -378,11 +420,19 @@ The following claims are allowed because current repo artifacts support them:
   `220`, against providers `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`, with durable listing proof carried by
   `durable_payload_reference`; optional `listing_entry_count` is additive
-  summary only. These
-  pilots keep the dynamic selector, reflective selector, or runtime-mutation
-  surface and selected-unit primary truth `unsupported/opaque` while attaching
-  runtime-backed provenance additively. The public-safe quad-matrix
-  comparative boundary remains unchanged.
+  summary only. The current internal eval-only `METACLASS_BEHAVIOR` pilot
+  covers only `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1
+  budget x 3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `class_creation_outcome=created_class`; `durable_payload_reference` is
+  required and non-empty, optional `created_class_qualified_name` and
+  `selected_metaclass_qualified_name` fields are additive summary only, and
+  attachment is limited to the preserved full `metaclass=...` keyword-site
+  unsupported construct. These pilots keep the dynamic selector, reflective
+  selector, runtime-mutation surface, metaclass-behavior keyword site, and
+  selected-unit primary truth `unsupported/opaque` while attaching
+  runtime-backed provenance additively. The public-safe quad-matrix comparative
+  boundary remains unchanged.
 
 ## Unsupported Claims Today
 
@@ -401,7 +451,9 @@ The following claims are not currently allowed:
   pilots, plus the current internal one-argument `vars(obj)`, zero-argument
   `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()`,
   `locals()`, `delattr(obj, name)`, and `setattr(obj, name, value)` pilots, do
-  not change this public boundary.
+  not change this public boundary. The current internal eval-only
+  `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot also
+  does not change this public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
@@ -425,17 +477,19 @@ Next smallest eval slices for the post-milestone program:
    `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`,
    `getattr(obj, name)`, and eval-only default-return and value-return
    `getattr(obj, name, default)` pilots, plus the current internal one-argument
-   `vars(obj)`, zero-argument `vars()`, and `RUNTIME_MUTATION` / `globals()`,
-   `locals()`, `delattr(obj, name)`, and `setattr(obj, name, value)` pilots,
+   `vars(obj)`, zero-argument `vars()`, one-argument `dir(obj)`,
+   `RUNTIME_MUTATION` / `globals()`, `locals()`, `delattr(obj, name)`, and
+   `setattr(obj, name, value)` pilots, and the current internal eval-only
+   `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot,
    only through reproducible runtime-backed fixtures, probes, and raw evidence
    storage.
 3. Broaden task, budget, and baseline coverage only after the tiered internal
    eval model is stable and claim-bounded.
 4. Publish external benchmark methodology only after the internal tiered
    surfaces are stable enough to support reproducible public comparisons and
-   raw result release.
+   public raw-result disclosure.
 5. Add production-maturity evidence only through packaging, compatibility,
-   interoperability, error handling, CI/release, and observability artifacts.
+   interoperability, error handling, CI, and observability artifacts.
 
 These are planned slices, not completed eval evidence.
 
@@ -450,7 +504,7 @@ Capability-tier or hybrid-analysis claims require:
 
 Benchmark claims require:
 
-- A reproducible harness committed to the repo.
+- A reproducible harness recorded in the repo.
 - A fixed task set and immutable fixture inputs.
 - Explicit baseline definitions.
 - Seed, model, environment, and control-condition recording where applicable.
@@ -478,7 +532,7 @@ Production-readiness claims require:
 - Compatibility matrix for supported Python and MCP environments.
 - Interoperability evidence for claimed client or transport surfaces.
 - Operational error handling expectations.
-- CI or release evidence that matches the claim.
+- CI evidence that matches the claim.
 - Observability evidence that matches the claim.
 
 Portfolio or README claims require:
