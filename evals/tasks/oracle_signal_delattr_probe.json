@@ -1,0 +1,34 @@
+{
+  "task_id": "oracle_signal_delattr_probe",
+  "fixture_id": "oracle_signal_delattr_probe",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.probe_delete_attribute",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the isolated delattr probe fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "main.render_probe_digest",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Caller-visible digest wrapper keeps the deletion flow in scope."
+    },
+    {
+      "kind": "unsupported",
+      "file_path": "main.py",
+      "construct_text": "delattr(obj, name)",
+      "reason_code": "runtime_mutation",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main.probe_delete_attribute",
+      "source_snippet": "delattr(obj, name)",
+      "rationale": "Direct delattr mutation stays primarily unsupported while carrying additive runtime provenance.",
+      "expected_primary_capability_tier": "unsupported/opaque",
+      "expect_attached_runtime_provenance": true
+    }
+  ]
+}

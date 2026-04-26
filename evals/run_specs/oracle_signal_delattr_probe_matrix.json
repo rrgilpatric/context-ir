@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_signal_delattr_probe_matrix",
+  "cases": [
+    {
+      "case_id": "signal_delattr_probe",
+      "task_path": "evals/tasks/oracle_signal_delattr_probe.json",
+      "query": "Fix probe_delete_attribute unsupported delattr(obj, name) deleted attribute and keep digest output aligned",
+      "budgets": [220],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}

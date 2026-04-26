@@ -39,6 +39,12 @@ one task only through `oracle_signal_locals_probe_matrix`: 1 task x 2 budgets x
 `lexical_top_k_files`, and `import_neighborhood_files`, with
 `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
 remain `unsupported/opaque`, and runtime-backed provenance is additive only.
+The current internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot
+remains one task only through `oracle_signal_delattr_probe_matrix`: 1 task x 1
+budget x 3 providers at budget `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+`mutation_outcome=deleted_attribute`; selector and selected-unit primary truth
+remain `unsupported/opaque`, and runtime provenance remains additive only.
 The current internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot remains
 one task only through `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3
 providers at budget `220`, against providers `context_ir`,
@@ -117,7 +123,8 @@ around rendering density.
   value-return branch pilots for `getattr(obj, name, default)`, plus the
   current internal one-argument `vars(obj)` and zero-argument `vars()` pilots,
   plus the current internal one-argument `dir(obj)` pilot, plus the current
-  internal eval-only `RUNTIME_MUTATION` / `globals()` and `locals()` pilots.
+  internal eval-only `RUNTIME_MUTATION` / `globals()`, `locals()`, and
+  `delattr(obj, name)` pilots.
   The three existing
   getattr-family provider/budget matrices cover budgets `100` and `220`; each
   remains 1 task x 2 budgets x 3 providers. The current internal `vars(obj)`
@@ -142,6 +149,13 @@ around rendering density.
   `lookup_outcome=returned_namespace`;
   selector and selected-unit primary truth remain `unsupported/opaque`, and
   runtime-backed provenance is additive only.
+  The current internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)`
+  pilot covers only `oracle_signal_delattr_probe_matrix`: 1 task x 1 budget x
+  3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `mutation_outcome=deleted_attribute`; selector and selected-unit primary
+  truth remain `unsupported/opaque`, and runtime provenance remains additive
+  only.
   The current internal `dir(obj)` pilot covers only
   `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
   `220`, against providers `context_ir`, `lexical_top_k_files`, and

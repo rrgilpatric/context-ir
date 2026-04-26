@@ -17,6 +17,8 @@ zero-argument `vars()` pilot. The `oracle_signal_globals_probe_matrix`
 evidence described below is a narrow internal eval-only `RUNTIME_MUTATION` /
 `globals()` pilot. The `oracle_signal_locals_probe_matrix` evidence described
 below is a narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot. The
+`oracle_signal_delattr_probe_matrix` evidence described below is a current
+internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot. The
 current internal eval-only `oracle_signal_dir_probe_matrix` evidence is a
 narrow `REFLECTIVE_BUILTIN` / `dir(obj)` pilot. The `d8ebdc3` code/test
 evidence anchor adds internal eval runtime-outcome accounting over normalized
@@ -29,8 +31,9 @@ evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
 current internal `vars(obj)` pilot, the current internal zero-argument
 `vars()` pilot, the current internal `globals()` pilot, the current internal
 `locals()` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
-`dir(obj)` pilot, and the runtime-outcome accounting do not widen public
-claims, public APIs, MCP behavior, scoring, winner selection, runtime
+`dir(obj)` pilot, the current internal eval-only `RUNTIME_MUTATION` /
+`delattr(obj, name)` pilot, and the runtime-outcome accounting do not widen
+public claims, public APIs, MCP behavior, scoring, winner selection, runtime
 acquisition, analyzer/tool-facade implementation, schema, or generalized
 runtime-mutation support, generalized locals() support, public benchmark
 claims, or generalized hybrid-runtime coverage.
@@ -91,7 +94,9 @@ Proven by current unit and integration tests:
   `lookup_outcome=returned_value`, and the current internal `vars(obj)` and
   zero-argument `vars()` pilots plus the current internal `RUNTIME_MUTATION` /
   `globals()` and `locals()` pilots record
-  `lookup_outcome=returned_namespace` while preserving existing tier/provider
+  `lookup_outcome=returned_namespace`, while the current internal eval-only
+  `RUNTIME_MUTATION` / `delattr(obj, name)` pilot records
+  `mutation_outcome=deleted_attribute`, preserving existing tier/provider
   additive-provenance accounting.
 - The current internal `REFLECTIVE_BUILTIN` / `dir(obj)` pilot records durable
   listing proof through `durable_payload_reference`; optional
@@ -117,6 +122,8 @@ Proven by current unit and integration tests:
     the `oracle_signal_globals_probe` task
   - the narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot for the
     `oracle_signal_locals_probe` task
+  - the current internal eval-only `RUNTIME_MUTATION` /
+    `delattr(obj, name)` pilot for the `oracle_signal_delattr_probe` task
   - the narrow internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot for
     `oracle_signal_dir_probe_matrix`
 - The three existing getattr-family provider/budget matrices now cover budgets
@@ -140,6 +147,11 @@ Proven by current unit and integration tests:
   budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`.
+- The current internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)`
+  pilot covers only `oracle_signal_delattr_probe_matrix`: 1 task x 1 budget x
+  3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `mutation_outcome=deleted_attribute`.
 - The current internal `REFLECTIVE_BUILTIN` / `dir(obj)` pilot covers only
   `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
   `220`, against providers `context_ir`, `lexical_top_k_files`, and
@@ -181,8 +193,8 @@ Architecturally intended but not yet evaluated:
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   internal pilots, plus the current one-argument `vars(obj)`, zero-argument
-  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()` and
-  `locals()` internal pilots.
+  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()`,
+  `locals()`, and `delattr(obj, name)` internal pilots.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -210,6 +222,8 @@ Architecturally intended but not yet evaluated:
   `RUNTIME_MUTATION` / `globals()` fixture, task, run spec, and additive
   runtime provenance, plus the current internal `RUNTIME_MUTATION` /
   `locals()` fixture, task, run spec, and additive runtime provenance, plus the
+  current internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)`
+  fixture, task, run spec, and additive runtime provenance, plus the
   current internal one-argument `dir(obj)` `oracle_signal_dir_probe_matrix`
   evidence and additive runtime provenance. These pilots are internal evidence
   surfaces, not public benchmark surfaces.
@@ -238,6 +252,14 @@ Architecturally intended but not yet evaluated:
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
   remain `unsupported/opaque`, and runtime-backed provenance is additive only.
+- Narrow `delattr(obj, name)` provider/budget evidence: the current internal
+  eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot covers only
+  `oracle_signal_delattr_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with runtime payload
+  `mutation_outcome=deleted_attribute`; selector and selected-unit primary
+  truth remain `unsupported/opaque`, and runtime provenance remains additive
+  only.
 - Narrow `dir(obj)` provider/budget evidence: the internal
   `oracle_signal_dir_probe_matrix` covers only 1 task x 1 budget x 3 providers
   at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
@@ -308,6 +330,11 @@ The following claims are allowed because current repo artifacts support them:
   budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`. The current internal eval-only
+  `RUNTIME_MUTATION` / `delattr(obj, name)` pilot covers only
+  `oracle_signal_delattr_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with runtime payload
+  `mutation_outcome=deleted_attribute`. The current internal eval-only
   `REFLECTIVE_BUILTIN` / `dir(obj)` pilot covers only
   `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
   `220`, against providers `context_ir`, `lexical_top_k_files`, and
@@ -334,8 +361,9 @@ The following claims are not currently allowed:
   internal `DYNAMIC_IMPORT`, `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   pilots, plus the current internal one-argument `vars(obj)`, zero-argument
-  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()` and
-  `locals()` pilots, do not change this public boundary.
+  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()`,
+  `locals()`, and `delattr(obj, name)` pilots, do not change this public
+  boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
@@ -359,9 +387,9 @@ Next smallest eval slices for the post-milestone program:
    `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`,
    `getattr(obj, name)`, and eval-only default-return and value-return
    `getattr(obj, name, default)` pilots, plus the current internal one-argument
-   `vars(obj)`, zero-argument `vars()`, and `RUNTIME_MUTATION` / `globals()`
-   and `locals()` pilots, only through reproducible runtime-backed fixtures,
-   probes, and raw evidence storage.
+   `vars(obj)`, zero-argument `vars()`, and `RUNTIME_MUTATION` / `globals()`,
+   `locals()`, and `delattr(obj, name)` pilots, only through reproducible
+   runtime-backed fixtures, probes, and raw evidence storage.
 3. Broaden task, budget, and baseline coverage only after the tiered internal
    eval model is stable and claim-bounded.
 4. Publish external benchmark methodology only after the internal tiered

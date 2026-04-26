@@ -1,0 +1,52 @@
+{
+  "schema_version": "v1",
+  "delattr_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 7,
+      "start_column": 4,
+      "end_line": 7,
+      "end_column": 22,
+      "source_snippet": "delattr(obj, name)",
+      "probe_identifier": "probe:delattr:probe-target-flag",
+      "probe_contract_revision": "2026-04-26.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_delattr_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://delattr/probe-target-flag-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed delattr probe trace for deleting ProbeTarget.flag."
+        }
+      ],
+      "replay_target": "main.probe_delete_attribute",
+      "replay_selector": "call:main.probe_delete_attribute",
+      "replay_inputs": [
+        {
+          "key": "object_type",
+          "value": "main.ProbeTarget"
+        },
+        {
+          "key": "attribute_name",
+          "value": "flag"
+        }
+      ],
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "mutation_outcome",
+          "value": "deleted_attribute"
+        }
+      ],
+      "durable_payload_reference": "artifact://delattr/probe-target-flag-observation.json"
+    }
+  ]
+}

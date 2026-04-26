@@ -11,6 +11,7 @@ from typing import Literal, TypeVar, cast
 
 from context_ir.analyzer import analyze_repository
 from context_ir.runtime_acquisition import (
+    DelattrRuntimeObservation,
     DirRuntimeObservation,
     DynamicImportRuntimeObservation,
     GetattrRuntimeObservation,
@@ -19,6 +20,7 @@ from context_ir.runtime_acquisition import (
     LocalsRuntimeObservation,
     VarsRuntimeObservation,
     _RuntimeObservationField,
+    attach_delattr_runtime_provenance,
     attach_dir_runtime_provenance,
     attach_dynamic_import_runtime_provenance,
     attach_getattr_runtime_provenance,
@@ -145,8 +147,10 @@ _GLOBALS_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
 _HASATTR_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
 _LOCALS_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
 _VARS_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
+_DELATTR_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
 _ALLOWED_RUNTIME_OBSERVATION_DOCUMENT_FIELDS = frozenset(
     {
+        "delattr_runtime_observations",
         "dir_runtime_observations",
         "schema_version",
         "dynamic_import_runtime_observations",
@@ -183,6 +187,7 @@ _ALLOWED_GETATTR_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_GLOBALS_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_LOCALS_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_VARS_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
+_ALLOWED_DELATTR_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_REPOSITORY_SNAPSHOT_BASIS_FIELDS = frozenset(
     {"snapshot_kind", "snapshot_id", "is_dirty_worktree"}
 )
@@ -403,6 +408,15 @@ def setup_eval_oracle_task(
         program = attach_locals_runtime_provenance(
             program,
             locals_runtime_observations,
+        )
+    delattr_runtime_observations = load_fixture_delattr_runtime_observations(
+        root,
+        semantic_program=program,
+    )
+    if delattr_runtime_observations:
+        program = attach_delattr_runtime_provenance(
+            program,
+            delattr_runtime_observations,
         )
     return _resolved_eval_oracle_setup(task, program)
 
@@ -789,6 +803,59 @@ def load_fixture_locals_runtime_observations(
     )
 
 
+def load_fixture_delattr_runtime_observations(
+    repo_root: Path | str,
+    *,
+    semantic_program: SemanticProgram | None = None,
+) -> tuple[DelattrRuntimeObservation, ...]:
+    """Load fixture-local ``delattr(obj, name)`` runtime observations."""
+    root = Path(repo_root)
+    observation_path = root / _DELATTR_RUNTIME_OBSERVATION_FILENAME
+    if not observation_path.is_file():
+        return ()
+
+    try:
+        raw: object = json.loads(observation_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise EvalOracleSchemaError(
+            f"invalid delattr runtime observation JSON in {observation_path}: {error}"
+        ) from error
+    _reject_generated_id_fields(raw, path="$")
+    record = _expect_object(raw, path="$")
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_RUNTIME_OBSERVATION_DOCUMENT_FIELDS,
+        path="$",
+    )
+    schema_version = _required_string(record, "schema_version", path="$")
+    if schema_version != "v1":
+        raise EvalOracleSchemaError("$.schema_version must be 'v1'")
+    observation_records = _optional_list(
+        record,
+        "delattr_runtime_observations",
+        path="$",
+    )
+    if observation_records is None:
+        return ()
+    if not observation_records:
+        raise EvalOracleSchemaError(
+            "delattr runtime observation file must contain at least one observation"
+        )
+
+    program = (
+        semantic_program if semantic_program is not None else analyze_repository(root)
+    )
+    site_index = _delattr_observation_site_index(program)
+    return tuple(
+        _parse_delattr_runtime_observation(
+            observation_record,
+            path=f"$.delattr_runtime_observations[{index}]",
+            site_index=site_index,
+        )
+        for index, observation_record in enumerate(observation_records)
+    )
+
+
 def _resolved_eval_oracle_setup(
     task: EvalOracleTask,
     program: SemanticProgram,
@@ -1037,6 +1104,30 @@ def _locals_observation_site_index(
     return site_index
 
 
+def _delattr_observation_site_index(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], SourceSite]:
+    """Index eligible ``delattr(obj, name)`` source sites by identity."""
+    call_sites_by_unsupported_id = {
+        f"unsupported:{call_site.call_site_id}": call_site
+        for call_site in program.syntax.call_sites
+    }
+    site_index: dict[tuple[str, int, int, int, int], SourceSite] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+            continue
+        call_site = call_sites_by_unsupported_id.get(construct.construct_id)
+        if call_site is None or not _is_eligible_delattr_call_site(call_site):
+            continue
+        identity = _source_site_identity(construct.site)
+        if identity in site_index:
+            raise EvalOracleSchemaError(
+                "multiple delattr unsupported constructs share the same source site"
+            )
+        site_index[identity] = construct.site
+    return site_index
+
+
 def _is_eligible_locals_call_site(call_site: CallSiteFact) -> bool:
     """Return whether ``call_site`` is a fixture-loadable ``locals()`` form."""
     if call_site.argument_count != 0:
@@ -1046,6 +1137,17 @@ def _is_eligible_locals_call_site(call_site: CallSiteFact) -> bool:
     except SyntaxError:
         return False
     return isinstance(expression, ast.Name) and expression.id == "locals"
+
+
+def _is_eligible_delattr_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is fixture-loadable ``delattr(obj, name)``."""
+    if call_site.argument_count != 2:
+        return False
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    return isinstance(expression, ast.Name) and expression.id == "delattr"
 
 
 def _parse_dynamic_import_runtime_observation(
@@ -1447,6 +1549,63 @@ def _parse_locals_runtime_observation(
     )
 
 
+def _parse_delattr_runtime_observation(
+    raw: object,
+    *,
+    path: str,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+) -> DelattrRuntimeObservation:
+    """Parse one fixture-local ``delattr`` runtime observation record."""
+    record = _expect_object(raw, path=path)
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_DELATTR_OBSERVATION_FIELDS,
+        path=path,
+    )
+    site = _matched_delattr_observation_site(
+        file_path=_required_string(record, "file_path", path=path),
+        start_line=_required_positive_int(record, "start_line", path=path),
+        start_column=_required_non_negative_int(record, "start_column", path=path),
+        end_line=_required_positive_int(record, "end_line", path=path),
+        end_column=_required_non_negative_int(record, "end_column", path=path),
+        source_snippet=_optional_string(record, "source_snippet", path=path),
+        site_index=site_index,
+        path=path,
+    )
+    return DelattrRuntimeObservation(
+        site=site,
+        probe_identifier=_required_string(record, "probe_identifier", path=path),
+        probe_contract_revision=_required_string(
+            record,
+            "probe_contract_revision",
+            path=path,
+        ),
+        repository_snapshot_basis=_required_repository_snapshot_basis(
+            record,
+            path=path,
+        ),
+        attachment_links=_required_runtime_attachment_links(record, path=path),
+        replay_target=_required_string(record, "replay_target", path=path),
+        replay_selector=_required_string(record, "replay_selector", path=path),
+        replay_inputs=_optional_runtime_fields(record, "replay_inputs", path=path),
+        runtime_assumptions=_optional_runtime_fields(
+            record,
+            "runtime_assumptions",
+            path=path,
+        ),
+        normalized_payload=_required_runtime_fields(
+            record,
+            "normalized_payload",
+            path=path,
+        ),
+        durable_payload_reference=_optional_string(
+            record,
+            "durable_payload_reference",
+            path=path,
+        ),
+    )
+
+
 def _matched_dynamic_import_observation_site(
     *,
     file_path: str,
@@ -1614,6 +1773,31 @@ def _matched_locals_observation_site(
     if site is None:
         raise EvalOracleSchemaError(
             f"{path} does not match any analyzed eligible locals source site"
+        )
+    if source_snippet is not None and site.snippet != source_snippet:
+        raise EvalOracleSchemaError(
+            f"{path}.source_snippet does not match the analyzed source site"
+        )
+    return site
+
+
+def _matched_delattr_observation_site(
+    *,
+    file_path: str,
+    start_line: int,
+    start_column: int,
+    end_line: int,
+    end_column: int,
+    source_snippet: str | None,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+    path: str,
+) -> SourceSite:
+    """Return the analyzed source site matching one ``delattr`` observation."""
+    identity = (file_path, start_line, start_column, end_line, end_column)
+    site = site_index.get(identity)
+    if site is None:
+        raise EvalOracleSchemaError(
+            f"{path} does not match any analyzed eligible delattr source site"
         )
     if source_snippet is not None and site.snippet != source_snippet:
         raise EvalOracleSchemaError(

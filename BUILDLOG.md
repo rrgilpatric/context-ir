@@ -2,6 +2,215 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-26 -- Delattr Eval Matrix Commit-Gating Review
+
+- Performed commit-gating review over the exact accumulated audit-cleared and
+  regression-cleared workspace-only internal eval-only `RUNTIME_MUTATION` /
+  `delattr(obj, name)` release unit
+- Repo-backed truth verified during commit-gating:
+  - branch `main`
+  - `HEAD` and `origin/main` both at `9e73226`
+  - nothing staged
+  - dirty tracked files are exactly:
+    - `ARCHITECTURE.md`
+    - `BUILDLOG.md`
+    - `EVAL.md`
+    - `PLAN.md`
+    - `PUBLIC_CLAIMS.md`
+    - `README.md`
+    - `src/context_ir/eval_oracles.py`
+    - `src/context_ir/eval_providers.py`
+  - untracked files are exactly:
+    - `evals/fixtures/oracle_signal_delattr_probe/eval_runtime_observations.json`
+    - `evals/fixtures/oracle_signal_delattr_probe/main.py`
+    - `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
+    - `evals/tasks/oracle_signal_delattr_probe.json`
+    - `tests/test_eval_signal_delattr_probe.py`
+  - `git diff --check` is clean
+- Findings:
+  - none
+- Commit-gating checks:
+  - forbidden lower-layer file diff check returned no files for runtime
+    acquisition, analyzer, tool facade, package root, MCP, schema, scoring,
+    optimizer, compiler, dependency, or package configuration surfaces
+  - release-facing docs contain no workspace-only, push-pending,
+    commit-ready, local-commit, or pushed-state wording for this pilot
+  - release-facing docs preserve the bounded
+    `oracle_signal_delattr_probe_matrix` wording, budget `220`, all three
+    providers, `mutation_outcome=deleted_attribute`, `unsupported/opaque`
+    primary truth, additive runtime provenance, and unchanged quad-matrix
+    comparative boundary
+  - sibling-surface mentions in the delattr test are negative assertions only
+  - full regression was already accepted first-pass with `612 passed, 1
+    deselected`
+- Approved release-unit file set:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_delattr_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_delattr_probe/main.py`
+  - `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
+  - `evals/tasks/oracle_signal_delattr_probe.json`
+  - `tests/test_eval_signal_delattr_probe.py`
+- Approved local commit subject:
+  - `Add delattr runtime eval pilot`
+- Explicit non-actions:
+  - no push authorization was granted by this gate
+  - no public API, MCP, runtime acquisition, analyzer, tool facade, schema,
+    scoring, optimizer, winner-selection, public benchmark, generalized
+    runtime-mutation, generalized `delattr(obj, name)`, sibling runtime
+    family, or budget `100` widening is accepted or authorized
+- Decision:
+  - accept commit-gating first-pass
+  - local commit creation may proceed over the exact accepted file set if live
+    git state still matches
+  - push remains blocked until explicit Ryan authorization
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Delattr Eval Matrix Full Regression Gate
+
+- Ran the full regression gate over the accumulated audit-cleared
+  workspace-only internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)`
+  release candidate
+- Repo-backed truth verified after the gate:
+  - branch `main`
+  - `HEAD` and `origin/main` both at `9e73226`
+  - nothing staged
+  - tracked and untracked dirty files still match the expected accumulated
+    `oracle_signal_delattr_probe_matrix` candidate
+  - `git diff --check` is clean
+- Validation passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed with `83
+    files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in `31`
+    source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v -m "not slow"`
+    passed with `612 passed, 1 deselected`
+- Preserved boundaries:
+  - no runtime acquisition, analyzer, tool facade, package-root API, MCP,
+    schema, scoring, optimizer, winner-selection, public benchmark,
+    generalized runtime-mutation, generalized `delattr(obj, name)`, `setattr`,
+    metaclass, `dir`, `globals`, `locals`, `vars`, or budget `100` widening is
+    accepted or authorized by this gate
+- Explicit non-actions:
+  - commit-gating was not run
+  - no staging, local commit creation, push, or release sequencing was
+    performed
+- Decision:
+  - accept the full regression gate first-pass
+  - route next to commit-gating review over the exact accumulated
+    audit-cleared and regression-cleared workspace-only `delattr(obj, name)`
+    candidate
+  - do not stage, commit, or push until commit-gating clears
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Delattr Eval Matrix Release-Unit Audit
+
+- Reviewed the returned dedicated read-only release-unit audit for the
+  accumulated workspace-only internal eval-only `RUNTIME_MUTATION` /
+  `delattr(obj, name)` release candidate
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` both at `9e73226`
+  - nothing staged
+  - tracked and untracked dirty files match the expected accumulated
+    `oracle_signal_delattr_probe_matrix` candidate
+  - `git diff --check` is clean
+- Audit result reviewed:
+  - findings: none
+  - `oracle_signal_delattr_probe_matrix` remains exactly 1 task x 1 budget x 3
+    providers at budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload remains `mutation_outcome=deleted_attribute`
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - JSON validation passed in the audit lane
+  - focused pytest passed in the audit lane with `6 passed`
+- Control review found no mismatch between the pasted audit result, live repo
+  state, and the expected bounded candidate scope
+- Preserved boundaries:
+  - no runtime acquisition, analyzer, tool facade, package-root API, MCP,
+    schema, scoring, optimizer, winner-selection, public benchmark,
+    generalized runtime-mutation, generalized `delattr(obj, name)`, `setattr`,
+    metaclass, `dir`, `globals`, `locals`, `vars`, or budget `100` widening is
+    accepted or authorized
+- Explicit non-actions:
+  - full regression was not run
+  - commit-gating was not run
+  - no staging, local commit creation, push, or release sequencing was
+    performed
+- Decision:
+  - accept the release-unit audit first-pass
+  - route next to the full regression gate for the accumulated audit-cleared
+    workspace-only `delattr(obj, name)` candidate
+  - do not stage, commit, or push until full regression and commit-gating both
+    clear
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Delattr Eval Matrix Docs Reconciliation
+
+- Reconciled docs for the accepted workspace-only internal eval-only
+  `RUNTIME_MUTATION` / `delattr(obj, name)` pilot
+- Repo-backed truth for this docs pass:
+  - branch `main`
+  - `HEAD` and `origin/main` both at `9e73226`
+  - the accepted workspace-only implementation candidate adds only
+    `oracle_signal_delattr_probe_matrix`
+  - implementation review accepted the candidate first-pass
+  - release-unit audit, full regression, commit-gating, staging, local commit
+    creation, and push have not run for this candidate
+- Files updated in this docs pass:
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `ARCHITECTURE.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Current accepted provider/budget wording:
+  - `oracle_signal_delattr_probe_matrix` is 1 task x 1 budget x 3 providers at
+    budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload wording is `mutation_outcome=deleted_attribute`
+- Preserved boundaries:
+  - this remains narrow internal eval-only evidence
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - public comparative claims remain bounded to the existing quad matrix
+  - no generalized `delattr(obj, name)` support, generalized runtime-mutation
+    support, public benchmark, public API, MCP, runtime acquisition,
+    analyzer/tool-facade, scoring, schema, optimizer, or winner-selection
+    widening is authorized
+- Explicit non-actions:
+  - no code, tests, fixtures, tasks, run specs, API, MCP, runtime acquisition,
+    analyzer/tool facade, schema, scoring, optimizer, or winner-selection files
+    were edited in this docs pass
+  - release-unit audit, full regression, commit-gating, staging, local commit
+    creation, and push were not run in this docs pass
+- Scoped docs validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md PLAN.md BUILDLOG.md`
+  - positive fact scans confirmed `oracle_signal_delattr_probe_matrix`,
+    1 task x 1 budget x 3 providers, budget `220`, all three providers,
+    `mutation_outcome=deleted_attribute`, `unsupported/opaque`, additive
+    provenance, and unchanged quad-matrix comparative boundary wording
+  - negative scans over release-facing docs returned no matches for
+    workspace-only, push-pending, or commit-ready wording tied to this pilot,
+    and no positive generalized delattr or runtime-mutation claim wording
+- Next control action:
+  - run a dedicated findings-first release-unit audit over the accumulated
+    workspace-only `delattr(obj, name)` release candidate after control review
+    accepts this docs reconciliation
+  - do not route to full regression, commit-gating, staging, local commit
+    creation, or push before release-unit audit clears
+- Acceptance status: first-pass
+
 ## 2026-04-26 -- Dir(obj) Pushed Release Authority Correction
 
 - Recorded `c1a12d7 Add dir(obj) eval pilot` as the latest pushed
