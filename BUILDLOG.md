@@ -2,6 +2,54 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-26 -- Dir(obj) Pushed Release Authority Correction
+
+- Recorded `c1a12d7 Add dir(obj) eval pilot` as the latest pushed
+  eval/test/docs release authority
+- This entry supersedes the earlier dir(obj) gate-clearance routing entry now
+  that the release has been committed and pushed
+- Pre-correction repo-backed truth verified for this continuity correction:
+  - branch `main`
+  - `HEAD` and `origin/main` both at `c1a12d7`
+  - worktree clean
+  - nothing staged
+- Pushed release boundary:
+  - `oracle_signal_dir_probe_matrix` remains narrow internal eval-only evidence
+  - the matrix is 1 task x 1 budget x 3 providers at budget 220
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - durable dir listing proof is carried by `durable_payload_reference`
+  - optional `listing_entry_count` is additive summary only
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive provenance only
+- Accepted release state:
+  - implementation review passed
+  - docs/evidence reconciliation after correction passed
+  - process guardrail note acceptance passed
+  - release-unit audit passed
+  - full regression passed after one formatting correction with `607 passed`
+  - corrected commit-gating passed
+  - local commit creation passed
+  - Ryan-authorized push passed
+- Preserved non-goals:
+  - no generalized dir support
+  - no zero-argument dir support
+  - no budget 100 expansion
+  - no public claim widening
+  - no API, MCP, runtime acquisition, analyzer, tool facade, schema, scoring,
+    optimizer, or winner-selection widening
+- Routing decision:
+  - route next to a fresh control-lane north-star decision for the next
+    evidence move after `c1a12d7`
+  - do not reopen release sequencing for `c1a12d7` absent new findings
+  - this is a one-time correction for material misrouting, not a standing
+    instruction to create another continuity-only post-push commit
+- Explicit non-actions:
+  - no code, tests, eval fixtures, tasks, run specs, release-facing claim docs,
+    staging, commits, or pushes were changed or performed in this continuity
+    correction
+- Acceptance status: first-pass
+
 ## 2026-04-26 -- Dir(obj) Release-State Gate Clearance Sync
 
 - Corrected continuity routing for the accumulated workspace-only internal
