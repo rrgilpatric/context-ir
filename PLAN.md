@@ -38,28 +38,24 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-Release authority is split deliberately. The pushed `38e9d5f` release adds the
-initial internal eval-only `RUNTIME_MUTATION` / `locals()` eval pilot at
-`1 task x 1 budget x 3 providers` with budget `220`, preserving
-`unsupported/opaque` primary truth, additive runtime provenance, and the
-public-safe quad-matrix comparative boundary. The accepted workspace-only
-locals budget expansion changes only the existing
-`oracle_signal_locals_probe_matrix` run spec and focused locals tests from
-budget `[220]` to budgets `[220, 100]`. Current evidence and claim docs must
-describe `oracle_signal_locals_probe_matrix` as 1 task x 2 budgets x 3
-providers at budgets `100` and `220`, against providers `context_ir`,
+The latest pushed eval/test/docs release authority is `2dd8404 Expand locals
+eval budget matrix`. It expands the existing internal eval-only
+`RUNTIME_MUTATION` / `locals()` `oracle_signal_locals_probe_matrix` from
+`1 task x 1 budget x 3 providers` at budget `220` to `1 task x 2 budgets x 3
+providers` at budgets `100` and `220`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`, with
 `lookup_outcome=returned_namespace`. Selector, runtime-mutation surface, and
 selected-unit primary truth remain `unsupported/opaque`; runtime provenance is
 additive only; and public comparative claims remain bounded to the existing
 quad matrix. No generalized `locals()` support claim is authorized.
 
-Prior pushed release anchors remain: `5f74ede` for the internal eval-only
-`RUNTIME_MUTATION` / `globals()` budget expansion; `631a303` for the initial
-`globals()` pilot; `9eec985` for the zero-argument `vars()` budget expansion;
-`71db72e` for the initial zero-argument `vars()` pilot; `2c6b54a` for the
-`vars(obj)` budget expansion; `ead239d` for the initial `vars(obj)` pilot;
-`1b555ef` for the `getattr` family budget expansion; `d8ebdc3` for
+Prior pushed release anchors remain: `38e9d5f` for the initial internal
+eval-only `RUNTIME_MUTATION` / `locals()` pilot; `5f74ede` for the internal
+eval-only `RUNTIME_MUTATION` / `globals()` budget expansion; `631a303` for the
+initial `globals()` pilot; `9eec985` for the zero-argument `vars()` budget
+expansion; `71db72e` for the initial zero-argument `vars()` pilot; `2c6b54a`
+for the `vars(obj)` budget expansion; `ead239d` for the initial `vars(obj)`
+pilot; `1b555ef` for the `getattr` family budget expansion; `d8ebdc3` for
 runtime-outcome accounting; `b014595`, `7d43302`, and `c592dca` for the
 accepted `getattr` runtime-backed family releases; `762dd51` and `90dcc15` for
 `hasattr(obj, name)`; `9a52b46` for `DYNAMIC_IMPORT`; `215b6bb` for
@@ -68,12 +64,12 @@ the capability-tier eval / evidence baseline.
 
 The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. Before the next commit/push tranche, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push.
 
-The accepted workspace-only locals budget expansion is implementation-accepted,
-docs-reconciled, release-unit audit-cleared, and full-regression-cleared.
-Commit-gating is not cleared yet because the first commit-gating review found
-one P2 continuity-routing issue in `PLAN.md` and `BUILDLOG.md`. Staging, local
-commit creation, and push have not run for the expanded locals release
-candidate. Push remains explicitly Ryan-gated.
+The `2dd8404` locals budget-expansion release passed implementation review,
+same-tranche docs reconciliation, release-unit audit, full regression,
+corrected commit-gating, local commit creation, and Ryan-authorized push. It is
+no longer pending any release gate. The next lane should make a fresh control
+decision on the next north-star move rather than reopen release sequencing for
+`2dd8404` absent new findings.
 
 ## What Is Complete
 
@@ -328,6 +324,10 @@ candidate. Push remains explicitly Ryan-gated.
 - [x] Same-tranche docs/evidence reconciliation for internal `locals()` provider/budget matrix expansion completed first-pass as workspace-only state
 - [x] Release-unit audit for internal `locals()` provider/budget matrix expansion accepted first-pass
 - [x] Full regression gate for internal `locals()` provider/budget matrix expansion accepted first-pass
+- [x] Corrected commit-gating review for internal `locals()` provider/budget matrix expansion accepted after 1 correction
+- [x] Local commit creation for internal `locals()` provider/budget matrix expansion accepted at `2dd8404`
+- [x] Ryan-authorized remote push for internal `locals()` provider/budget matrix expansion completed at `2dd8404`
+- [x] Post-`2dd8404` release-authority sync completed first-pass
 - [x] `delattr(obj, name)` vs `setattr(obj, name, value)` mutation-planning spike accepted first-pass
 - [x] Bounded `delattr(obj, name)` runtime-backed implementation slice accepted first-pass
 - [x] `setattr(obj, name, value)` assigned-value contract spike accepted first-pass
@@ -341,6 +341,15 @@ candidate. Push remains explicitly Ryan-gated.
 
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
+- The latest pushed eval/test/docs release authority is `2dd8404 Expand locals
+  eval budget matrix`
+- No implementation lane is authorized yet
+- The next control action is a fresh control-lane decision on the next
+  north-star move
+- New code, tests, fixtures, tasks, run specs, release-facing claim docs,
+  staging, commits, and pushes remain unauthorized
+- Older release-anchor bullets below are historical carry-forward context, not
+  active release routing for `2dd8404`
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
 - Live branch, `HEAD`, `origin/main`, and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
 - The `getattr` family matrix expansion release unit is pushed at `1b555ef`
@@ -516,27 +525,25 @@ candidate. Push remains explicitly Ryan-gated.
 - The commit-gating review over the accepted `globals()` budget expansion is accepted first-pass
 - The accepted commit message is `Expand globals eval budget matrix`
 - Local commit creation and remote push for the `globals()` budget expansion completed at `5f74ede`
-- The initial `locals()` eval pilot is pushed at `38e9d5f`; it added the
-  internal eval-only `RUNTIME_MUTATION` / `locals()` fixture, task, run spec,
-  focused tests, and release-facing evidence docs for the one-budget `220`
-  pilot
-- The accepted workspace-only `locals()` budget expansion currently includes:
+- The latest pushed `locals()` eval/test/docs release authority is `2dd8404
+  Expand locals eval budget matrix`; `38e9d5f` remains the initial one-budget
+  `locals()` pilot anchor
+- The pushed `2dd8404` `locals()` budget expansion includes:
   - `evals/run_specs/oracle_signal_locals_probe_matrix.json`
   - `tests/test_eval_signal_locals_probe.py`
-- The accepted workspace-only budget expansion changes only the existing
+- The pushed budget expansion changes only the existing
   `oracle_signal_locals_probe_matrix` from budget `[220]` to budgets
   `[220, 100]`
-- The accepted workspace-only budget expansion describes
-  `oracle_signal_locals_probe_matrix` as 1 task x 2 budgets x 3 providers at
-  budgets `100` and `220`
+- The pushed budget expansion describes `oracle_signal_locals_probe_matrix` as
+  1 task x 2 budgets x 3 providers at budgets `100` and `220`
 - The budget `100` row preserves the expected `unsupported/opaque` selected
   unit with additive `lookup_outcome=returned_namespace` runtime provenance;
   baseline providers remain empty at the selected-unit layer
-- The accepted workspace-only budget expansion does not widen fixtures, tasks,
-  providers, source, runtime acquisition, analyzer, tool facade implementation,
-  MCP, package-root APIs, schema, scoring, winner selection, public claims,
+- The pushed budget expansion does not widen fixtures, tasks, providers,
+  source, runtime acquisition, analyzer, tool facade implementation, MCP,
+  package-root APIs, schema, scoring, winner selection, public claims,
   generalized locals() support, or sibling runtime families
-- Same-tranche docs/evidence reconciliation for the accepted `locals()` budget
+- Same-tranche docs/evidence reconciliation for the pushed `locals()` budget
   expansion is complete in:
   - `EVAL.md`
   - `PUBLIC_CLAIMS.md`
@@ -544,23 +551,16 @@ candidate. Push remains explicitly Ryan-gated.
   - `ARCHITECTURE.md`
   - `PLAN.md`
   - `BUILDLOG.md`
-- The accepted docs/evidence reconciliation keeps selector, runtime-mutation
+- The pushed docs/evidence reconciliation keeps selector, runtime-mutation
   surface, and selected-unit primary truth `unsupported/opaque`; keeps
   runtime-backed provenance additive only; preserves
   `lookup_outcome=returned_namespace`; and leaves the public-safe quad-matrix
   comparative boundary unchanged
-- The accumulated `locals()` budget-expansion release candidate is
-  implementation-accepted, docs-reconciled, release-unit audit-cleared, and
-  full-regression-cleared
-- Commit-gating is not cleared yet because the first commit-gating review found
-  one P2 continuity-routing issue in `PLAN.md` and `BUILDLOG.md`
-- Staging, local commit creation, and push for the accumulated `locals()`
-  budget-expansion release candidate have not run; push remains explicitly
-  Ryan-gated
-- The post-push docs-only continuity sync records the `d8ebdc3` release state in:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `EVAL.md`
+- The `2dd8404` locals budget-expansion release passed implementation review,
+  same-tranche docs reconciliation, release-unit audit, full regression,
+  corrected commit-gating, local commit creation, and Ryan-authorized push
+- Do not route future control work to release gates for `2dd8404` unless a
+  later findings-based review identifies a concrete defect
 - Pushed implementation release `d8ebdc3` contains the runtime-outcome methodology/reporting hardening implementation release unit:
   - `src/context_ir/eval_results.py`
   - `src/context_ir/eval_summary.py`
@@ -787,7 +787,7 @@ candidate. Push remains explicitly Ryan-gated.
   - `AGENTS.md`
   - `AGENTS.md` codifies that slice acceptance is workspace-only by default, commits happen at coherent release-unit boundaries, and a release-unit audit is the default pre-commit quality gate
 - Repo-backed and local release state is now explicit and complete:
-  - latest pushed code/test release authority is `d8ebdc3`
+  - historical pushed runtime-outcome accounting release authority is `d8ebdc3`
   - prior pushed defaulted `getattr(obj, name, default)` default-return branch release authority is `7d43302`
   - latest pushed docs-only continuity/process correction commit in the current release chain is `8133e0a`
   - latest pushed docs-only evidence/claim reconciliation commit remains `3291268`
@@ -881,25 +881,29 @@ candidate. Push remains explicitly Ryan-gated.
 
 ## What Is Next
 
-Immediate next control action: rerun commit-gating over the exact accumulated
-`RUNTIME_MUTATION` / `locals()` budget-expansion release-candidate file set
-after this continuity-routing correction. The candidate is
-implementation-accepted, docs-reconciled, release-unit audit-cleared, and
-full-regression-cleared. Commit-gating is not cleared yet because the first
-commit-gating review found one P2 continuity-routing issue in `PLAN.md` and
-`BUILDLOG.md`. Staging, local commit creation, and push have not run for this
-expanded locals release candidate. Push remains explicitly Ryan-gated.
+Immediate next control action: make a fresh control-lane decision on the next
+north-star move after the pushed `2dd8404` locals budget-expansion release. No
+implementation lane is authorized yet. Do not route the next lane to release
+gates for `2dd8404` unless a later findings-based review identifies a concrete
+defect.
 
-1. Treat pushed commit `38e9d5f` as the latest pushed eval/test/docs release
-   authority, pushed commit `5f74ede` as the prior `globals()` budget-expansion
-   release authority, pushed commit `631a303` as the prior initial `globals()`
-   release authority, pushed commit `9eec985` as the prior zero-argument
-   `vars()` budget-expansion release authority, pushed commit `71db72e` as the
-   prior initial zero-argument `vars()` pilot release authority, pushed commit
-   `2c6b54a` as the prior `vars(obj)` budget-expansion release authority,
-   pushed commit `ead239d` as the prior initial `vars(obj)` pilot release
-   authority, and pushed commit `1b555ef` as the prior `getattr` family release
-   authority:
+Historical release anchors below remain guardrails and non-reopen constraints,
+not pending release gates.
+
+1. Treat pushed commit `2dd8404 Expand locals eval budget matrix` as the latest
+   pushed eval/test/docs release authority, pushed commit `38e9d5f` as the prior
+   initial `locals()` pilot release authority, pushed commit `5f74ede` as the
+   prior `globals()` budget-expansion release authority, pushed commit
+   `631a303` as the prior initial `globals()` release authority, pushed commit
+   `9eec985` as the prior zero-argument `vars()` budget-expansion release
+   authority, pushed commit `71db72e` as the prior initial zero-argument
+   `vars()` pilot release authority, pushed commit `2c6b54a` as the prior
+   `vars(obj)` budget-expansion release authority, pushed commit `ead239d` as
+   the prior initial `vars(obj)` pilot release authority, and pushed commit
+   `1b555ef` as the prior `getattr` family release authority:
+   - `2dd8404` expands `oracle_signal_locals_probe_matrix` to 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+   - `2dd8404` passed implementation review, same-tranche docs reconciliation, release-unit audit, full regression, corrected commit-gating, local commit creation, and Ryan-authorized push
+   - the `locals()` matrix keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, generalized `locals()` support, or public-claim boundaries
    - `38e9d5f` adds the initial internal eval-only `RUNTIME_MUTATION` / `locals()` pilot at `1 task x 1 budget x 3 providers` with budget `220`
    - `5f74ede` expands the existing internal eval-only `RUNTIME_MUTATION` / `globals()` matrix from budget `[220]` to budgets `[220, 100]`
    - `5f74ede` keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, or public-claim boundaries
@@ -911,8 +915,6 @@ expanded locals release candidate. Push remains explicitly Ryan-gated.
    - `ead239d` adds the initial internal `REFLECTIVE_BUILTIN` / `vars(obj)` eval pilot at `1 task x 1 budget x 3 providers` with budget `220`
    - `1b555ef` expands the existing `getattr` family matrices to budgets `220` and `100`
    - each `getattr` family matrix remains `1 task x 2 budgets x 3 providers`
-   - accepted workspace-only post-`38e9d5f` work expands `oracle_signal_locals_probe_matrix` to 1 task x 2 budgets x 3 providers at budgets `100` and `220`
-   - the `locals()` matrix keeps selector and selected-unit primary truth `unsupported/opaque`, keeps runtime-backed provenance additive only with `lookup_outcome=returned_namespace`, and does not change runtime-acquisition, analyzer, tool-facade implementation, package-root API, MCP, schema, scoring, winner-selection, public benchmark, generalized `locals()` support, or public-claim boundaries
 2. Treat pushed commit `159e363` as the post-push continuity anchor for the `1b555ef` release state, and treat `8133e0a` as the prior docs-only process-correction anchor:
    - it corrects the self-referential continuity loop
    - it restores tranche-style release sequencing discipline
@@ -920,7 +922,7 @@ expanded locals release candidate. Push remains explicitly Ryan-gated.
 3. Treat pushed commit `3291268` as the latest docs-only evidence/claim reconciliation authority:
    - it updates `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, and `ARCHITECTURE.md`
    - it does not widen code/test authority, public claims, package-root exports, MCP behavior, source boundaries, schema, scoring, or winner selection
-4. Treat pushed commit `d8ebdc3` as the current code/test release authority:
+4. Treat pushed commit `d8ebdc3` as the prior runtime-outcome accounting release authority:
    - internal eval runtime-outcome accounting over normalized runtime provenance payload data
    - separate summary/report outcome counts for payload key/value pairs such as `lookup_outcome=returned_default_value` and `lookup_outcome=returned_value`
    - existing selector-tier, selected-unit-tier, provider, provider+tier, scoring, and winner-selection accounting remains unchanged

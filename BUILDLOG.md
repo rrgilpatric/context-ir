@@ -2,6 +2,40 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-25 -- Locals Budget Matrix Release Authority Sync
+
+- Repo-backed truth for this continuity correction:
+  - branch `main`
+  - `HEAD` and `origin/main` both at `2dd8404`
+  - latest pushed release: `2dd8404 Expand locals eval budget matrix`
+- `2dd8404 Expand locals eval budget matrix` is the latest pushed
+  eval/test/docs release authority
+- The locals budget-expansion candidate passed implementation review,
+  same-tranche docs reconciliation, release-unit audit, full regression,
+  corrected commit-gating, local commit creation, and Ryan-authorized push
+- Preserved release boundary:
+  - `oracle_signal_locals_probe_matrix` remains internal eval-only
+  - the matrix is 1 task x 2 budgets x 3 providers at budgets `100` and `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - selector, runtime-mutation surface, and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime-backed provenance remains additive only with
+    `lookup_outcome=returned_namespace`
+  - public comparative claims remain bounded to the existing quad matrix
+  - no generalized `locals()` support claim is authorized
+- Routing decision:
+  - `2dd8404` is no longer pending release gates
+  - the next control lane should make a fresh decision on the next north-star
+    move rather than reopen release sequencing for `2dd8404` absent new
+    findings
+  - this entry is a one-time correction to stale routing after the pushed
+    release, not a standing instruction to create another continuity pass
+- Explicit non-actions:
+  - no code, tests, specs, release-facing evidence/claim docs, staging,
+    commits, or pushes were changed or performed in this continuity correction
+- Acceptance status: first-pass
+
 ## 2026-04-25 -- Locals Budget Matrix Docs Reconciliation
 
 - Reconciled docs for the accepted workspace-only internal eval-only
@@ -33,15 +67,15 @@ Most recent supersession entries override older architectural decisions when the
   - release-unit audit, full regression, commit-gating, staging, local commit
     creation, and push were not run in this docs pass
 - Current release-state after later gates:
-  - the locals budget-expansion candidate is implementation-accepted,
-    docs-reconciled, release-unit audit-cleared, and full-regression-cleared
-  - commit-gating is not cleared yet because the first commit-gating review
-    found one P2 continuity-routing issue in `PLAN.md` and `BUILDLOG.md`
-  - staging, local commit creation, and push have not run
-  - push remains explicitly Ryan-gated
-- The accepted workspace-only implementation part of this expansion remains the
-  prior run-spec/test change to expand the existing locals matrix from budget
-  `[220]` to budgets `[220, 100]`
+  - `2dd8404 Expand locals eval budget matrix` is the latest pushed
+    eval/test/docs release authority
+  - the locals budget-expansion candidate passed implementation review,
+    docs reconciliation, release-unit audit, full regression, corrected
+    commit-gating, local commit creation, and Ryan-authorized push
+  - `2dd8404` is not pending any release gate
+- The implementation part of this pushed release remains the prior run-spec/test
+  change to expand the existing locals matrix from budget `[220]` to budgets
+  `[220, 100]`
 - Scoped docs validation passed:
   - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md PLAN.md BUILDLOG.md`
   - stale one-budget locals wording scan returned no matches in
@@ -50,12 +84,10 @@ Most recent supersession entries override older architectural decisions when the
     `lookup_outcome=returned_namespace`, `unsupported/opaque`, additive
     provenance, and unchanged quad-matrix boundary wording
 - Next control action:
-  - rerun commit-gating over the exact accumulated locals budget-expansion
-    release-candidate file set after this continuity-routing correction
-  - commit-gating is not cleared yet; the first commit-gating review found one
-    P2 stale-routing issue in `PLAN.md` and `BUILDLOG.md`
-  - staging, local commit creation, and push have not run
-  - push remains explicitly Ryan-gated
+  - make a fresh control decision on the next north-star move after the pushed
+    `2dd8404` locals budget-expansion release
+  - do not route the next lane to release gates for `2dd8404` unless a later
+    findings-based review identifies a concrete defect
 - Acceptance status: first-pass
 
 ## 2026-04-25 -- Locals Eval Pilot Commit-Gating Review
