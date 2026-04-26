@@ -17,6 +17,7 @@ from context_ir.eval_oracles import (
     load_fixture_globals_runtime_observations,
     load_fixture_hasattr_runtime_observations,
     load_fixture_locals_runtime_observations,
+    load_fixture_setattr_runtime_observations,
     load_fixture_vars_runtime_observations,
 )
 from context_ir.semantic_types import (
@@ -288,6 +289,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
     locals_runtime_observations = load_fixture_locals_runtime_observations(
         request.repo_root
     )
+    setattr_runtime_observations = load_fixture_setattr_runtime_observations(
+        request.repo_root
+    )
     delattr_runtime_observations = load_fixture_delattr_runtime_observations(
         request.repo_root
     )
@@ -319,6 +323,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
             ),
             locals_runtime_observations=(
                 locals_runtime_observations if locals_runtime_observations else None
+            ),
+            setattr_runtime_observations=(
+                setattr_runtime_observations if setattr_runtime_observations else None
             ),
             delattr_runtime_observations=(
                 delattr_runtime_observations if delattr_runtime_observations else None

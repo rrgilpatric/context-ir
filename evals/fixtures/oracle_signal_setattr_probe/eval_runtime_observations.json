@@ -1,0 +1,56 @@
+{
+  "schema_version": "v1",
+  "setattr_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 7,
+      "start_column": 4,
+      "end_line": 7,
+      "end_column": 29,
+      "source_snippet": "setattr(obj, name, value)",
+      "probe_identifier": "probe:setattr:probe-target-flag",
+      "probe_contract_revision": "2026-04-26.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_setattr_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://setattr/probe-target-flag-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed setattr probe trace for assigning ProbeTarget.flag."
+        }
+      ],
+      "replay_target": "main.probe_set_attribute",
+      "replay_selector": "call:main.probe_set_attribute",
+      "replay_inputs": [
+        {
+          "key": "object_type",
+          "value": "main.ProbeTarget"
+        },
+        {
+          "key": "attribute_name",
+          "value": "flag"
+        },
+        {
+          "key": "assigned_value_type",
+          "value": "builtins.str"
+        }
+      ],
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "mutation_outcome",
+          "value": "returned_none"
+        }
+      ],
+      "durable_payload_reference": "artifact://setattr/probe-target-flag-observation.json"
+    }
+  ]
+}

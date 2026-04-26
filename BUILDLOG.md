@@ -2,6 +2,293 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-26 -- Setattr Eval Matrix Commit-Gating Review
+
+- Reviewed the returned commit-gating review for the accumulated
+  audit-cleared and regression-cleared internal eval-only `RUNTIME_MUTATION` /
+  `setattr(obj, name, value)` release unit
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `41f6b57d10e2fce3ab9647638afe234f0fd5c8a3`
+  - latest pushed commit `41f6b57 Add delattr runtime eval pilot`
+  - nothing staged
+- Exact accepted release-unit file set:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_setattr_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_setattr_probe/main.py`
+  - `evals/tasks/oracle_signal_setattr_probe.json`
+  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+  - `tests/test_eval_signal_setattr_probe.py`
+- Findings:
+  - none
+- Commit-gating clearance:
+  - dirty tracked files and untracked files matched the expected release-unit
+    file set
+  - `git diff --check` was clean
+  - accumulated diff stayed within eval-only `setattr_runtime_observations`
+    loading/provider wiring, one narrow `oracle_signal_setattr_probe_matrix`
+    at budget `220`, runtime payload `mutation_outcome=returned_none`, and
+    matching tests/docs
+  - no public API, MCP, runtime acquisition, analyzer, schema, scoring,
+    optimizer, compiler, winner-selection, `delattr` budget expansion,
+    metaclass work, generalized runtime-mutation support, generalized
+    `setattr` support, or public claim widening was found
+  - continuity correctly blocked staging, commit, and push until this gate
+    cleared
+- Decision:
+  - accept commit-gating first-pass with no findings
+  - approve local commit creation over the exact accepted file set with subject
+    `Add setattr runtime eval pilot`
+  - push remains Ryan-gated and is not authorized by commit-gating
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Setattr Eval Matrix Full Regression Gate
+
+- Reviewed the returned full-regression gate for the accumulated
+  workspace-only internal eval-only `RUNTIME_MUTATION` /
+  `setattr(obj, name, value)` provider matrix and same-tranche docs/evidence
+  reconciliation
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `41f6b57`
+  - latest pushed commit `41f6b57 Add delattr runtime eval pilot`
+  - nothing staged
+  - expected dirty/untracked release-unit files remained present
+- Findings:
+  - none
+- Validation reviewed:
+  - `git status --short --branch`
+  - `git rev-parse --short HEAD` returned `41f6b57`
+  - `git rev-parse --short origin/main` returned `41f6b57`
+  - `git diff --cached --name-status` returned empty output
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed with `84
+    files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in `31`
+    source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed with `619
+    passed`
+  - final git checks retained `HEAD=41f6b57`, `origin/main=41f6b57`, nothing
+    staged, and the same dirty workspace release-unit files
+- Decision:
+  - accept the full regression gate first-pass
+  - route next to commit-gating review over the exact accumulated
+    workspace-only release-unit file set
+  - do not stage, commit, or push until commit-gating is reviewed and accepted
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Setattr Eval Matrix Release-Unit Audit
+
+- Reviewed the returned read-only release-unit audit for the accumulated
+  workspace-only internal eval-only `RUNTIME_MUTATION` /
+  `setattr(obj, name, value)` provider matrix and same-tranche docs/evidence
+  reconciliation
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `41f6b57`
+  - latest pushed commit `41f6b57 Add delattr runtime eval pilot`
+  - nothing staged
+- Audited release-unit boundary:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_setattr_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_setattr_probe/main.py`
+  - `evals/tasks/oracle_signal_setattr_probe.json`
+  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+  - `tests/test_eval_signal_setattr_probe.py`
+- Findings:
+  - none
+- Audit clearance:
+  - `oracle_signal_setattr_probe_matrix` remains 1 task x 1 budget x 3
+    providers at budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload remains `mutation_outcome=returned_none`
+  - selector/runtime-mutation surface and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - public comparative claims remain bounded to the existing quad matrix
+  - no forbidden runtime acquisition, analyzer, tool facade, MCP, package-root
+    API, schema, scoring, optimizer, compiler, winner-selection, public
+    benchmark, generalized runtime-mutation, generalized `setattr`, `delattr`
+    budget expansion, metaclass, `dir`, `globals`, `locals`, `vars`, or budget
+    `100` widening was found
+- Validation reviewed:
+  - expected live git state and dirty/untracked file set
+  - `git diff --check`
+  - JSON validity and shape/payload assertions for the new fixture, task, and
+    run spec
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_probe.py -v`
+    with `6 passed`
+  - release-facing docs contained no release-state wording
+- Decision:
+  - accept the release-unit audit first-pass with no findings
+  - route next to the full regression gate
+  - do not route to commit-gating, local commit creation, or push until full
+    regression is reviewed and accepted
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Setattr Eval Matrix Docs/Evidence Reconciliation
+
+- Reviewed the returned docs/evidence reconciliation slice for the accepted
+  workspace-only internal eval-only `RUNTIME_MUTATION` /
+  `setattr(obj, name, value)` provider matrix
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at `41f6b57`
+  - nothing staged
+  - expected accumulated workspace-only dirty/untracked candidate present
+- Docs/evidence files changed:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+- Findings:
+  - none
+- Accepted docs/evidence boundary:
+  - `oracle_signal_setattr_probe_matrix` is documented as narrow internal
+    eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence
+  - matrix shape is 1 task x 1 budget x 3 providers at budget `220`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload is `mutation_outcome=returned_none`
+  - selector/runtime-mutation surface and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - public comparative claims remain bounded to the existing quad matrix
+- Validation passed:
+  - `git diff --check -- EVAL.md PUBLIC_CLAIMS.md README.md ARCHITECTURE.md`
+  - positive wording checks for matrix name, matrix shape, budget, providers,
+    runtime payload, `unsupported/opaque`, additive provenance, and quad-matrix
+    boundary
+  - negative checks for release-state wording and claim widening
+- Decision:
+  - accept the docs/evidence reconciliation first-pass as workspace-only state
+  - route next to one dedicated read-only release-unit audit over the
+    accumulated workspace-only `setattr(obj, name, value)` candidate
+  - do not route to full regression, commit-gating, local commit creation, or
+    push until the release-unit audit is reviewed and accepted
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Setattr Eval Matrix Implementation
+
+- Reviewed the returned bounded implementation slice for the internal
+  eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` provider matrix
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` at `41f6b57`
+  - nothing staged
+  - pre-existing control-lane continuity edits remain in `PLAN.md` and
+    `BUILDLOG.md`
+- Implementation files changed:
+  - `src/context_ir/eval_oracles.py`
+  - `src/context_ir/eval_providers.py`
+  - `evals/fixtures/oracle_signal_setattr_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_setattr_probe/main.py`
+  - `evals/tasks/oracle_signal_setattr_probe.json`
+  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+  - `tests/test_eval_signal_setattr_probe.py`
+- Findings:
+  - none
+- Accepted implementation boundary:
+  - `oracle_signal_setattr_probe_matrix` is 1 task x 1 budget x 3 providers at
+    budget `220`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture-local `setattr_runtime_observations` load through
+    `eval_oracles.py`
+  - Context IR eval provider passes fixture-local `setattr` observations
+    through the existing accepted lower-layer seam
+  - runtime payload is `mutation_outcome=returned_none`
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+- Validation passed:
+  - JSON validation for the new runtime observation, task, and run-spec files
+  - `.venv/bin/python -m ruff check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_setattr_probe.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_oracles.py src/context_ir/eval_providers.py tests/test_eval_signal_setattr_probe.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_probe.py -v` with `6 passed`
+- Preserved boundaries:
+  - no edits to runtime acquisition, analyzer, tool facade, MCP, package root,
+    schema, scoring, optimizer, compiler, winner selection, package config, or
+    `delattr` run specs
+  - no `delattr` budget expansion
+  - no metaclass fixture or matrix
+  - no public support claim, benchmark claim, generalized runtime-mutation
+    claim, API widening, or MCP widening
+- Decision:
+  - accept the implementation slice first-pass as workspace-only state
+  - route next to same-tranche docs/evidence reconciliation before
+    release-unit audit, full regression, commit-gating, local commit creation,
+    or push
+- Acceptance status: first-pass
+
+## 2026-04-26 -- Post-Delattr Runtime-Mutation Next-Move Planning
+
+- Reviewed the returned read-only planning spike for the next smallest
+  truthful north-star evidence move after pushed release `41f6b57 Add delattr
+  runtime eval pilot`
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD`, local `origin/main`, and remote `refs/heads/main` all point to
+    `41f6b57`
+  - worktree clean
+  - nothing staged
+- Findings:
+  - no mismatch found between the planning result and live repo reality
+  - `RUNTIME_MUTATION` / `globals()` and `locals()` have internal eval-only
+    matrices at budgets `100` and `220`
+  - `RUNTIME_MUTATION` / `delattr(obj, name)` has a pushed internal eval-only
+    matrix at budget `220` only
+  - no `oracle_signal_setattr_probe` fixture, task, run spec, or test exists
+  - lower-layer `setattr` runtime provenance support already exists through
+    `SetattrRuntimeObservation`, `attach_setattr_runtime_provenance(...)`,
+    analyzer pass-through, and tool-facade pass-through
+  - `METACLASS_BEHAVIOR` lower-layer support exists, but no eval-only provider
+    matrix assets exist
+- Decision:
+  - accept the planning spike first-pass
+  - route next to one bounded internal eval-only `RUNTIME_MUTATION` /
+    `setattr(obj, name, value)` provider-matrix implementation slice
+  - the target matrix is `oracle_signal_setattr_probe_matrix`: 1 task x 1
+    budget x 3 providers at budget `220`, against providers `context_ir`,
+    `lexical_top_k_files`, and `import_neighborhood_files`
+  - selector and selected-unit primary truth must remain `unsupported/opaque`
+  - runtime provenance must remain additive only
+- Alternatives rejected:
+  - `delattr(obj, name)` budget `100` expansion: rejected for now because
+    budget expansion is not automatic and no specific unanswered comparison
+    requires it before the uncovered `setattr` sibling
+  - first `METACLASS_BEHAVIOR` eval-only matrix: rejected as the immediate
+    next move because it is a different, more claim-sensitive family
+  - family-level consolidation / no implementation: rejected for now because a
+    small truthful eval-only evidence slice remains available
+- Preserved boundaries:
+  - no `delattr` budget expansion
+  - no metaclass fixture or matrix
+  - no public support claim, public benchmark claim, generalized
+    runtime-mutation claim, package-root API, MCP, runtime acquisition,
+    analyzer, tool-facade, schema, scoring, optimizer, compiler, or
+    winner-selection widening is authorized
+- Next control action:
+  - issue one bounded execution-lane prompt for the `setattr(obj, name, value)`
+    eval-only provider matrix
+- Acceptance status: first-pass
+
 ## 2026-04-26 -- Delattr Eval Matrix Commit-Gating Review
 
 - Performed commit-gating review over the exact accumulated audit-cleared and

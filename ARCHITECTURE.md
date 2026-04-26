@@ -45,6 +45,15 @@ budget x 3 providers at budget `220`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
 `mutation_outcome=deleted_attribute`; selector and selected-unit primary truth
 remain `unsupported/opaque`, and runtime provenance remains additive only.
+The current internal eval-only `RUNTIME_MUTATION` /
+`setattr(obj, name, value)` evidence is narrow and remains one task only
+through `oracle_signal_setattr_probe_matrix`: 1 task x 1 budget x 3 providers
+at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`, with runtime payload
+`mutation_outcome=returned_none`; selector/runtime-mutation surface and
+selected-unit primary truth remain `unsupported/opaque`, runtime provenance
+remains additive only, and public comparative claims remain bounded to the
+existing quad matrix.
 The current internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot remains
 one task only through `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3
 providers at budget `220`, against providers `context_ir`,
@@ -124,7 +133,8 @@ around rendering density.
   current internal one-argument `vars(obj)` and zero-argument `vars()` pilots,
   plus the current internal one-argument `dir(obj)` pilot, plus the current
   internal eval-only `RUNTIME_MUTATION` / `globals()`, `locals()`, and
-  `delattr(obj, name)` pilots.
+  `delattr(obj, name)` pilots, plus the current narrow internal eval-only
+  `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence.
   The three existing
   getattr-family provider/budget matrices cover budgets `100` and `220`; each
   remains 1 task x 2 budgets x 3 providers. The current internal `vars(obj)`
@@ -156,6 +166,15 @@ around rendering density.
   `mutation_outcome=deleted_attribute`; selector and selected-unit primary
   truth remain `unsupported/opaque`, and runtime provenance remains additive
   only.
+  The current internal eval-only `RUNTIME_MUTATION` /
+  `setattr(obj, name, value)` evidence is narrow and covers only
+  `oracle_signal_setattr_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with runtime payload
+  `mutation_outcome=returned_none`; selector/runtime-mutation surface and
+  selected-unit primary truth remain `unsupported/opaque`, runtime provenance
+  remains additive only, and public comparative claims remain bounded to the
+  existing quad matrix.
   The current internal `dir(obj)` pilot covers only
   `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
   `220`, against providers `context_ir`, `lexical_top_k_files`, and
