@@ -628,7 +628,7 @@ def load_fixture_dir_runtime_observations(
     *,
     semantic_program: SemanticProgram | None = None,
 ) -> tuple[DirRuntimeObservation, ...]:
-    """Load fixture-local one-argument ``dir(obj)`` runtime observations."""
+    """Load fixture-local zero/one-argument ``dir`` runtime observations."""
     root = Path(repo_root)
     observation_path = root / _DIR_RUNTIME_OBSERVATION_FILENAME
     if not observation_path.is_file():
@@ -1118,7 +1118,7 @@ def _is_eligible_getattr_call_site(call_site: CallSiteFact) -> bool:
 def _dir_observation_site_index(
     program: SemanticProgram,
 ) -> dict[tuple[str, int, int, int, int], SourceSite]:
-    """Index eligible one-argument ``dir(obj)`` source sites by identity."""
+    """Index eligible zero/one-argument ``dir`` source sites by identity."""
     call_sites_by_unsupported_id = {
         f"unsupported:{call_site.call_site_id}": call_site
         for call_site in program.syntax.call_sites
@@ -1140,8 +1140,8 @@ def _dir_observation_site_index(
 
 
 def _is_eligible_dir_call_site(call_site: CallSiteFact) -> bool:
-    """Return whether ``call_site`` is a fixture-loadable ``dir(obj)`` form."""
-    if call_site.argument_count != 1:
+    """Return whether ``call_site`` is a fixture-loadable ``dir`` form."""
+    if call_site.argument_count not in {0, 1}:
         return False
     try:
         expression = ast.parse(call_site.callee_text, mode="eval").body
@@ -1520,7 +1520,7 @@ def _parse_dir_runtime_observation(
     path: str,
     site_index: dict[tuple[str, int, int, int, int], SourceSite],
 ) -> DirRuntimeObservation:
-    """Parse one fixture-local one-argument ``dir`` runtime observation record."""
+    """Parse one fixture-local ``dir`` runtime observation record."""
     record = _expect_object(raw, path=path)
     _validate_allowed_fields(
         record,
@@ -1999,7 +1999,7 @@ def _matched_dir_observation_site(
     site_index: dict[tuple[str, int, int, int, int], SourceSite],
     path: str,
 ) -> SourceSite:
-    """Return the analyzed source site matching one ``dir(obj)`` observation."""
+    """Return the analyzed source site matching one ``dir`` observation."""
     identity = (file_path, start_line, start_column, end_line, end_column)
     site = site_index.get(identity)
     if site is None:

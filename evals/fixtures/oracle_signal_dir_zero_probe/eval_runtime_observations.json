@@ -1,0 +1,42 @@
+{
+  "schema_version": "v1",
+  "dir_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 2,
+      "start_column": 11,
+      "end_line": 2,
+      "end_column": 16,
+      "source_snippet": "dir()",
+      "probe_identifier": "probe:dir:zero-local-directory",
+      "probe_contract_revision": "2026-04-26.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_dir_zero_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://dir/zero-local-directory-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed zero-argument dir probe trace for the local directory listing."
+        }
+      ],
+      "replay_target": "main.probe_directory",
+      "replay_selector": "call:main.probe_directory",
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "listing_entry_count",
+          "value": "3"
+        }
+      ],
+      "durable_payload_reference": "artifact://dir/zero-local-directory-observation.json"
+    }
+  ]
+}

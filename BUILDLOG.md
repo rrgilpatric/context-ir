@@ -2,6 +2,71 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-26 -- Dir Zero Eval Matrix Release-Gate Continuity Correction
+
+- Corrected continuity routing for the accumulated workspace-only internal
+  eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()` provider matrix after
+  release-unit audit and full regression cleared but commit-gating returned
+  continuity findings
+- Repo-backed truth during this correction:
+  - branch `main`
+  - `HEAD` and `origin/main` at `19d9a32`
+  - latest pushed release `19d9a32 Add metaclass runtime eval pilot`
+  - nothing staged
+- Accumulated workspace-only candidate:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/eval_oracles.py`
+  - `evals/fixtures/oracle_signal_dir_zero_probe/main.py`
+  - `evals/fixtures/oracle_signal_dir_zero_probe/eval_runtime_observations.json`
+  - `evals/tasks/oracle_signal_dir_zero_probe.json`
+  - `evals/run_specs/oracle_signal_dir_zero_probe_matrix.json`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+- Accepted state:
+  - implementation accepted first-pass
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - release-unit audit cleared with no findings
+  - full regression cleared
+- Full regression result:
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed
+  - `mypy --strict src/` passed
+  - `pytest tests/ -v` passed with `629 passed`
+- Commit-gating state:
+  - commit-gating returned continuity findings and is not cleared
+  - stale continuity still routed next to release-unit audit even though audit
+    was already cleared
+  - `BUILDLOG.md` missed the current gate state
+  - this correction is required before rerunning commit-gating
+- Preserved boundaries:
+  - `oracle_signal_dir_zero_probe_matrix` remains 1 task x 1 budget x 3
+    providers at budget `220`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime proof requires non-empty `durable_payload_reference`
+  - optional `listing_entry_count` remains additive summary only
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - public comparative claims remain bounded to the existing quad matrix
+  - no generalized dir support, `dir(obj)` reopening, budget `100` expansion,
+    public benchmark claim, API, MCP, runtime acquisition, analyzer,
+    tool-facade, schema, scoring, optimizer, compiler, package export, or
+    winner-selection widening is authorized
+- Routing decision:
+  - after this `PLAN.md` / `BUILDLOG.md` correction is accepted, rerun
+    commit-gating over the exact accumulated workspace-only candidate
+  - do not route back to release-unit audit or full regression absent new
+    findings
+  - do not claim commit-gating clearance or commit readiness
+  - local commit creation is authorized only after commit-gating clears
+  - push remains Ryan-gated
+- Acceptance status: held until this continuity correction is accepted and
+  commit-gating is rerun
+
 ## 2026-04-26 -- Metaclass Behavior Eval Matrix Commit-Gating Review
 
 - Reviewed the returned commit-gating review for the accumulated

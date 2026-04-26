@@ -62,6 +62,15 @@ boundary is a durable dir listing artifact via `durable_payload_reference`;
 optional `listing_entry_count` is additive summary only. Selector and
 selected-unit primary truth remain `unsupported/opaque`, and runtime-backed
 provenance is additive only.
+The current internal eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()`
+pilot remains one task only through `oracle_signal_dir_zero_probe_matrix`: 1
+task x 1 budget x 3 providers at budget `220`, against providers
+`context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. Runtime
+proof requires non-empty `durable_payload_reference`; optional
+`listing_entry_count` is additive summary only. Primary selector and
+selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+additive only, and public comparative claims remain bounded to the existing
+quad matrix.
 The current internal eval-only `METACLASS_BEHAVIOR` pilot remains one task
 only through `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget
 x 3 providers at budget `220`, against providers `context_ir`,
@@ -144,7 +153,8 @@ around rendering density.
   value-return branch pilots for `getattr(obj, name, default)`, plus the
   current internal one-argument `vars(obj)` and zero-argument `vars()` pilots,
   plus the current internal one-argument `dir(obj)` pilot, plus the current
-  internal eval-only `RUNTIME_MUTATION` / `globals()`, `locals()`, and
+  internal zero-argument `dir()` pilot, plus the current internal eval-only
+  `RUNTIME_MUTATION` / `globals()`, `locals()`, and
   `delattr(obj, name)` pilots, plus the current narrow internal eval-only
   `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
   internal eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...`
@@ -196,6 +206,14 @@ around rendering density.
   `durable_payload_reference`, optional `listing_entry_count` is additive
   summary only, selector and selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive only.
+  The current internal zero-argument `dir()` pilot covers only
+  `oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; runtime proof requires non-empty
+  `durable_payload_reference`, optional `listing_entry_count` is additive
+  summary only, primary selector and selected-unit truth remain
+  `unsupported/opaque`, runtime provenance remains additive only, and public
+  comparative claims remain bounded to the existing quad matrix.
   The current internal `METACLASS_BEHAVIOR` pilot covers only
   `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget x 3
   providers at budget `220`, against providers `context_ir`,

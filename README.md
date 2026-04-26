@@ -39,6 +39,7 @@ internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot, plus
 narrow internal eval-only `RUNTIME_MUTATION` /
 `setattr(obj, name, value)` evidence, plus a current internal eval-only
 one-argument `dir(obj)` pilot, plus a current internal eval-only
+zero-argument `dir()` pilot, plus a current internal eval-only
 `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot. Those
 pilots do not widen the public supported
 subset, public API, MCP wrapper, runtime acquisition, analyzer/tool-facade
@@ -94,6 +95,14 @@ The current internal `dir(obj)` pilot covers only
 `durable_payload_reference`, optional `listing_entry_count` is additive summary
 only, selector and selected-unit primary truth remain `unsupported/opaque`, and
 runtime-backed provenance is additive only.
+The current internal zero-argument `dir()` pilot covers only
+`oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
+budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`; runtime proof requires non-empty
+`durable_payload_reference`, optional `listing_entry_count` is additive summary
+only, primary selector and selected-unit truth remain `unsupported/opaque`,
+runtime provenance remains additive only, and public comparative claims remain
+bounded to the existing quad matrix.
 The current internal eval-only `METACLASS_BEHAVIOR` pilot covers only
 `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget x 3
 providers at budget `220`, against providers `context_ir`,
@@ -142,6 +151,7 @@ and `locals()` pilots, plus the current internal eval-only `RUNTIME_MUTATION` /
 `delattr(obj, name)` pilot, plus the current narrow internal eval-only
 `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
 internal one-argument `dir(obj)` pilot, plus the current internal eval-only
+zero-argument `dir()` pilot, plus the current internal eval-only
 `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot.
 That evidence is additive internal provenance on
 otherwise unsupported/opaque selectors, mutation surfaces, metaclass keyword
@@ -259,8 +269,9 @@ Current evidence includes:
   current internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot,
   plus the current narrow internal eval-only `RUNTIME_MUTATION` /
   `setattr(obj, name, value)` evidence, plus the current internal one-argument
-  `dir(obj)` pilot, plus the current internal eval-only `METACLASS_BEHAVIOR` /
-  preserved `metaclass=...` keyword-site pilot
+  `dir(obj)` pilot, plus the current internal zero-argument `dir()` pilot,
+  plus the current internal eval-only `METACLASS_BEHAVIOR` / preserved
+  `metaclass=...` keyword-site pilot
 - three existing getattr-family provider/budget matrices limited to budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and
@@ -311,6 +322,14 @@ Current evidence includes:
   `durable_payload_reference`, optional `listing_entry_count` is additive
   summary only, selector and selected-unit primary truth still
   `unsupported/opaque`, and runtime-backed provenance additive only
+- the current internal zero-argument `dir()` pilot remains
+  `oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; runtime proof requires non-empty
+  `durable_payload_reference`, optional `listing_entry_count` is additive
+  summary only, primary selector and selected-unit truth still
+  `unsupported/opaque`, runtime provenance additive only, and public
+  comparative claims remain bounded to the existing quad matrix
 - the current internal eval-only `METACLASS_BEHAVIOR` pilot remains
   `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget x 3
   providers at budget `220`, against providers `context_ir`,

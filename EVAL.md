@@ -23,7 +23,9 @@ internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot. The
 internal eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence.
 The current internal eval-only `oracle_signal_dir_probe_matrix` evidence is a
 narrow `REFLECTIVE_BUILTIN` / `dir(obj)` pilot. The current internal eval-only
-`oracle_signal_metaclass_behavior_probe_matrix` evidence is a narrow
+`oracle_signal_dir_zero_probe_matrix` evidence is a narrow
+`REFLECTIVE_BUILTIN` / zero-argument `dir()` pilot. The current internal
+eval-only `oracle_signal_metaclass_behavior_probe_matrix` evidence is a narrow
 `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot. The
 `d8ebdc3` code/test
 evidence anchor adds internal eval runtime-outcome accounting over normalized
@@ -36,11 +38,12 @@ evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
 current internal `vars(obj)` pilot, the current internal zero-argument
 `vars()` pilot, the current internal `globals()` pilot, the current internal
 `locals()` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
-`dir(obj)` pilot, the current internal eval-only `RUNTIME_MUTATION` /
-`delattr(obj, name)` pilot, the current internal eval-only `RUNTIME_MUTATION` /
-`setattr(obj, name, value)` evidence, the current internal eval-only
-`METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, and the
-runtime-outcome accounting do not
+`dir(obj)` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
+zero-argument `dir()` pilot, the current internal eval-only
+`RUNTIME_MUTATION` / `delattr(obj, name)` pilot, the current internal
+eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, the
+current internal eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...`
+keyword-site pilot, and the runtime-outcome accounting do not
 widen public claims, public APIs, MCP behavior, scoring, winner selection,
 runtime acquisition, analyzer/tool-facade implementation, schema, or
 generalized runtime-mutation support, generalized locals() support, public
@@ -114,6 +117,10 @@ Proven by current unit and integration tests:
 - The current internal `REFLECTIVE_BUILTIN` / `dir(obj)` pilot records durable
   listing proof through `durable_payload_reference`; optional
   `listing_entry_count` is additive summary only.
+- The current internal eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()`
+  pilot requires non-empty durable listing proof through
+  `durable_payload_reference`; optional `listing_entry_count` is additive
+  summary only.
 - The current internal eval-only `METACLASS_BEHAVIOR` pilot requires a
   non-empty `durable_payload_reference`; optional
   `created_class_qualified_name` and `selected_metaclass_qualified_name`
@@ -146,6 +153,8 @@ Proven by current unit and integration tests:
     `oracle_signal_setattr_probe_matrix`
   - the narrow internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot for
     `oracle_signal_dir_probe_matrix`
+  - the narrow internal eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()`
+    pilot for `oracle_signal_dir_zero_probe_matrix`
   - the narrow internal eval-only `METACLASS_BEHAVIOR` / preserved
     `metaclass=...` keyword-site pilot for
     `oracle_signal_metaclass_behavior_probe_matrix`
@@ -190,6 +199,15 @@ Proven by current unit and integration tests:
   `import_neighborhood_files`. The runtime proof boundary is a durable dir
   listing artifact via `durable_payload_reference`; optional
   `listing_entry_count` is additive summary only.
+- The current internal eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()`
+  pilot covers only `oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x
+  3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. Runtime proof
+  requires non-empty `durable_payload_reference`; optional
+  `listing_entry_count` is additive summary only. Primary selector and
+  selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+  additive only, and public comparative claims remain bounded to the existing
+  quad matrix.
 - The current internal eval-only `METACLASS_BEHAVIOR` pilot covers only
   `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget x 3
   providers at budget `220`, against providers `context_ir`,
@@ -237,10 +255,11 @@ Architecturally intended but not yet evaluated:
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   internal pilots, plus the current one-argument `vars(obj)`, zero-argument
-  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()`,
-  `locals()`, `delattr(obj, name)`, and `setattr(obj, name, value)` internal
-  pilots, plus the current internal eval-only `METACLASS_BEHAVIOR` /
-  preserved `metaclass=...` keyword-site pilot.
+  `vars()`, one-argument `dir(obj)`, zero-argument `dir()`, and
+  `RUNTIME_MUTATION` / `globals()`, `locals()`, `delattr(obj, name)`, and
+  `setattr(obj, name, value)` internal pilots, plus the current internal
+  eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site
+  pilot.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -275,6 +294,8 @@ Architecturally intended but not yet evaluated:
   and additive runtime provenance, plus the
   current internal one-argument `dir(obj)` `oracle_signal_dir_probe_matrix`
   evidence and additive runtime provenance, plus the current internal
+  zero-argument `dir()` `oracle_signal_dir_zero_probe_matrix` evidence and
+  additive runtime provenance, plus the current internal
   `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site
   `oracle_signal_metaclass_behavior_probe_matrix` evidence and additive
   runtime provenance. These pilots are internal evidence
@@ -328,6 +349,15 @@ Architecturally intended but not yet evaluated:
   `durable_payload_reference`, optional `listing_entry_count` is additive
   summary only, selector and selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive only.
+- Narrow zero-argument `dir()` provider/budget evidence: the internal
+  `oracle_signal_dir_zero_probe_matrix` covers only 1 task x 1 budget x 3
+  providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; runtime proof
+  requires non-empty `durable_payload_reference`, optional
+  `listing_entry_count` is additive summary only, primary selector and
+  selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+  additive only, and public comparative claims remain bounded to the existing
+  quad matrix.
 - Narrow `METACLASS_BEHAVIOR` provider/budget evidence: the internal
   `oracle_signal_metaclass_behavior_probe_matrix` covers only 1 task x 1
   budget x 3 providers at budget `220`, against providers `context_ir`,
@@ -420,7 +450,16 @@ The following claims are allowed because current repo artifacts support them:
   `220`, against providers `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`, with durable listing proof carried by
   `durable_payload_reference`; optional `listing_entry_count` is additive
-  summary only. The current internal eval-only `METACLASS_BEHAVIOR` pilot
+  summary only. The current internal eval-only `REFLECTIVE_BUILTIN` /
+  zero-argument `dir()` pilot covers only
+  `oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; runtime proof requires non-empty
+  `durable_payload_reference`, optional `listing_entry_count` is additive
+  summary only, primary selector and selected-unit truth remain
+  `unsupported/opaque`, runtime provenance remains additive only, and public
+  comparative claims remain bounded to the existing quad matrix. The current
+  internal eval-only `METACLASS_BEHAVIOR` pilot
   covers only `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1
   budget x 3 providers at budget `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
@@ -449,9 +488,10 @@ The following claims are not currently allowed:
   internal `DYNAMIC_IMPORT`, `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   pilots, plus the current internal one-argument `vars(obj)`, zero-argument
-  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()`,
-  `locals()`, `delattr(obj, name)`, and `setattr(obj, name, value)` pilots, do
-  not change this public boundary. The current internal eval-only
+  `vars()`, one-argument `dir(obj)`, zero-argument `dir()`, and
+  `RUNTIME_MUTATION` / `globals()`, `locals()`, `delattr(obj, name)`, and
+  `setattr(obj, name, value)` pilots, do not change this public boundary. The
+  current internal eval-only
   `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot also
   does not change this public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
@@ -478,8 +518,9 @@ Next smallest eval slices for the post-milestone program:
    `getattr(obj, name)`, and eval-only default-return and value-return
    `getattr(obj, name, default)` pilots, plus the current internal one-argument
    `vars(obj)`, zero-argument `vars()`, one-argument `dir(obj)`,
-   `RUNTIME_MUTATION` / `globals()`, `locals()`, `delattr(obj, name)`, and
-   `setattr(obj, name, value)` pilots, and the current internal eval-only
+   zero-argument `dir()`, `RUNTIME_MUTATION` / `globals()`, `locals()`,
+   `delattr(obj, name)`, and `setattr(obj, name, value)` pilots, and the
+   current internal eval-only
    `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot,
    only through reproducible runtime-backed fixtures, probes, and raw evidence
    storage.

@@ -1,0 +1,34 @@
+{
+  "task_id": "oracle_signal_dir_zero_probe",
+  "fixture_id": "oracle_signal_dir_zero_probe",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.probe_directory",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the isolated zero-argument dir probe fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "main.render_probe_digest",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Caller-visible digest wrapper keeps the directory output flow in scope."
+    },
+    {
+      "kind": "unsupported",
+      "file_path": "main.py",
+      "construct_text": "dir()",
+      "reason_code": "reflective_builtin",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main.probe_directory",
+      "source_snippet": "dir()",
+      "rationale": "Direct zero-argument dir reflection stays primarily unsupported while carrying additive runtime provenance.",
+      "expected_primary_capability_tier": "unsupported/opaque",
+      "expect_attached_runtime_provenance": true
+    }
+  ]
+}
