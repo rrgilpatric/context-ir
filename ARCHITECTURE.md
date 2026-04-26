@@ -39,6 +39,14 @@ one task only through `oracle_signal_locals_probe_matrix`: 1 task x 2 budgets x
 `lexical_top_k_files`, and `import_neighborhood_files`, with
 `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
 remain `unsupported/opaque`, and runtime-backed provenance is additive only.
+The current internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot remains
+one task only through `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3
+providers at budget `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The runtime proof
+boundary is a durable dir listing artifact via `durable_payload_reference`;
+optional `listing_entry_count` is additive summary only. Selector and
+selected-unit primary truth remain `unsupported/opaque`, and runtime-backed
+provenance is additive only.
 Those slices do not widen public claims, public APIs, MCP behavior, scoring,
 winner selection, runtime acquisition, analyzer/tool-facade implementation, schema,
 generalized reflective-builtin support, generalized runtime-mutation support,
@@ -108,8 +116,8 @@ around rendering density.
   `getattr(obj, name)` pilot attachments, plus eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, plus the
   current internal one-argument `vars(obj)` and zero-argument `vars()` pilots,
-  plus the current internal eval-only `RUNTIME_MUTATION` / `globals()` and
-  `locals()` pilots.
+  plus the current internal one-argument `dir(obj)` pilot, plus the current
+  internal eval-only `RUNTIME_MUTATION` / `globals()` and `locals()` pilots.
   The three existing
   getattr-family provider/budget matrices cover budgets `100` and `220`; each
   remains 1 task x 2 budgets x 3 providers. The current internal `vars(obj)`
@@ -134,6 +142,13 @@ around rendering density.
   `lookup_outcome=returned_namespace`;
   selector and selected-unit primary truth remain `unsupported/opaque`, and
   runtime-backed provenance is additive only.
+  The current internal `dir(obj)` pilot covers only
+  `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+  `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; durable listing proof is carried by
+  `durable_payload_reference`, optional `listing_entry_count` is additive
+  summary only, selector and selected-unit primary truth remain
+  `unsupported/opaque`, and runtime-backed provenance is additive only.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 

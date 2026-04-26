@@ -34,11 +34,12 @@ infrastructure and a current four-asset signal evidence surface documented in
 default-return and value-return branches of `getattr(obj, name, default)`, plus
 a current internal one-argument `vars(obj)` pilot and a current internal
 zero-argument `vars()` pilot, and a current internal eval-only
-`RUNTIME_MUTATION` / `globals()` pilot and `locals()` pilot. Those pilots do not
-widen the public supported subset, public API, MCP wrapper, runtime
-acquisition, analyzer/tool-facade implementation, schema, scoring, winner
-selection, public benchmark claim boundary, generalized runtime-mutation
-support, generalized locals() support, or generalized hybrid-runtime coverage.
+`RUNTIME_MUTATION` / `globals()` pilot and `locals()` pilot, plus a current
+internal eval-only one-argument `dir(obj)` pilot. Those pilots do not widen the
+public supported subset, public API, MCP wrapper, runtime acquisition,
+analyzer/tool-facade implementation, schema, scoring, winner selection, public
+benchmark claim boundary, generalized runtime-mutation support, generalized
+locals() support, or generalized hybrid-runtime coverage.
 The public-safe quad-matrix comparative boundary remains unchanged. The three
 existing getattr-family pilot matrices cover only 1 task x 2 budgets x 3
 providers at budgets `100` and `220`; the current internal `vars(obj)` pilot
@@ -63,6 +64,13 @@ budgets `100` and `220`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`, with
 `lookup_outcome=returned_namespace`;
 selector and selected-unit primary truth remain `unsupported/opaque`, and
+runtime-backed provenance is additive only.
+The current internal `dir(obj)` pilot covers only
+`oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+`220`, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`; durable listing proof is carried by
+`durable_payload_reference`, optional `listing_entry_count` is additive summary
+only, selector and selected-unit primary truth remain `unsupported/opaque`, and
 runtime-backed provenance is additive only.
 
 ## Supported Subset and Limits
@@ -97,7 +105,8 @@ unsupported `DYNAMIC_IMPORT` cases and narrow `REFLECTIVE_BUILTIN` pilots over
 and value-return branches of `getattr(obj, name, default)` selectors, plus the
 current internal one-argument `vars(obj)` selector and zero-argument `vars()`
 selector, plus the current internal eval-only `RUNTIME_MUTATION` / `globals()`
-and `locals()` pilots. That evidence is additive internal provenance on
+and `locals()` pilots, plus the current internal one-argument `dir(obj)` pilot.
+That evidence is additive internal provenance on
 otherwise unsupported/opaque selectors, mutation surfaces, and selected units;
 it does not make broad dynamic imports, reflection, runtime mutation,
 generalized runtime-mutation support, generalized locals() support,
@@ -207,7 +216,8 @@ Current evidence includes:
   eval-only default-return and value-return branches of
   `getattr(obj, name, default)`, plus the current internal one-argument
   `vars(obj)` and zero-argument `vars()` pilots, plus the current internal
-  eval-only `RUNTIME_MUTATION` / `globals()` and `locals()` pilots
+  eval-only `RUNTIME_MUTATION` / `globals()` and `locals()` pilots, plus the
+  current internal one-argument `dir(obj)` pilot
 - three existing getattr-family provider/budget matrices limited to budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and
@@ -236,6 +246,13 @@ Current evidence includes:
   `lookup_outcome=returned_namespace`,
   selector and selected-unit primary truth still `unsupported/opaque`, and
   runtime-backed provenance additive only
+- the current internal `dir(obj)` pilot remains
+  `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+  `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; durable listing proof is carried by
+  `durable_payload_reference`, optional `listing_entry_count` is additive
+  summary only, selector and selected-unit primary truth still
+  `unsupported/opaque`, and runtime-backed provenance additive only
 - within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,

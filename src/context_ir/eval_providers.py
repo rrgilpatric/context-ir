@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 
 import context_ir.tool_facade as tool_facade
 from context_ir.eval_oracles import (
+    load_fixture_dir_runtime_observations,
     load_fixture_dynamic_import_runtime_observations,
     load_fixture_getattr_runtime_observations,
     load_fixture_globals_runtime_observations,
@@ -273,6 +274,7 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
     getattr_runtime_observations = load_fixture_getattr_runtime_observations(
         request.repo_root
     )
+    dir_runtime_observations = load_fixture_dir_runtime_observations(request.repo_root)
     hasattr_runtime_observations = load_fixture_hasattr_runtime_observations(
         request.repo_root
     )
@@ -301,6 +303,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
             ),
             getattr_runtime_observations=(
                 getattr_runtime_observations if getattr_runtime_observations else None
+            ),
+            dir_runtime_observations=(
+                dir_runtime_observations if dir_runtime_observations else None
             ),
             vars_runtime_observations=(
                 vars_runtime_observations if vars_runtime_observations else None

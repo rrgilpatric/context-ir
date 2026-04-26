@@ -38,8 +38,12 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-The latest pushed eval/test/docs release authority is `2dd8404 Expand locals
-eval budget matrix`. It expands the existing internal eval-only
+The prior pushed docs-only continuity anchor is `f0eb272 Sync locals release
+authority after push`. Live git refs and worktree state must be verified from
+git during control intake rather than treated as an always-current committed
+field. The latest pushed eval/test/docs release
+authority remains `2dd8404 Expand locals eval budget matrix`. It expands the
+existing internal eval-only
 `RUNTIME_MUTATION` / `locals()` `oracle_signal_locals_probe_matrix` from
 `1 task x 1 budget x 3 providers` at budget `220` to `1 task x 2 budgets x 3
 providers` at budgets `100` and `220`, against providers `context_ir`,
@@ -48,6 +52,31 @@ providers` at budgets `100` and `220`, against providers `context_ir`,
 selected-unit primary truth remain `unsupported/opaque`; runtime provenance is
 additive only; and public comparative claims remain bounded to the existing
 quad matrix. No generalized `locals()` support claim is authorized.
+
+The active workspace-only candidate is a narrow internal eval-only
+`REFLECTIVE_BUILTIN` / `dir(obj)` pilot that adds only
+`oracle_signal_dir_probe_matrix`. The matrix is 1 task x 1 budget x 3
+providers at budget `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The runtime proof
+boundary is a durable dir listing artifact via `durable_payload_reference`;
+optional `listing_entry_count` is additive summary only. Selector and
+selected-unit primary truth remain `unsupported/opaque`, runtime-backed
+provenance remains additive only, and public comparative claims remain bounded
+to the existing quad matrix. Implementation review was accepted first-pass,
+docs/evidence reconciliation was accepted after 1 correction, the process
+guardrail note was accepted first-pass, the release-unit audit was accepted
+first-pass with no findings, and full regression was accepted first-pass after
+one formatting correction. Full regression passed `ruff check src/ tests/`,
+`ruff format --check src/ tests/`, `mypy --strict src/`, and
+`pytest tests/ -v` with `607 passed`. Commit-gating is not cleared yet, local
+commit creation has not run, and push has not run and remains Ryan-gated. The
+candidate remains workspace-only until committed. No generalized
+reflective-builtin support, additional `dir` arity, a second budget row, public
+benchmark, public API, MCP, runtime acquisition, analyzer/tool-facade, scoring,
+schema, optimizer, or winner-selection widening is authorized. Route next to
+rerun commit-gating over the exact accumulated workspace-only dir(obj) release
+candidate; do not route back to release-unit audit or full regression absent
+new findings, and do not route to staging, local commit creation, or push yet.
 
 Prior pushed release anchors remain: `38e9d5f` for the initial internal
 eval-only `RUNTIME_MUTATION` / `locals()` pilot; `5f74ede` for the internal
@@ -62,7 +91,46 @@ accepted `getattr` runtime-backed family releases; `762dd51` and `90dcc15` for
 provider-scoped selected-unit capability-tier accounting; and `a605b22` for
 the capability-tier eval / evidence baseline.
 
-The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. Before the next commit/push tranche, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push.
+The active release model is tranche-based, not slice-by-slice. Accepted slices may accumulate locally with continuity synced in workspace until they form one coherent release unit. For a release unit that has not already cleared gates, the control lane should request one dedicated findings-first deep release-unit audit over the whole accumulated diff, then run the full regression gate, then do commit-gating, commit, and push. The active dir(obj) candidate has already cleared release-unit audit and full regression, so its next route is commit-gating only.
+
+## Evidence-Building Cadence Guardrails
+
+These streamlining guardrails standardize repeatable mechanics without
+weakening findings-first review, release-unit audit, full regression,
+commit-gating, human push authorization, or claim-boundary discipline.
+
+During the current internal evidence-building mode, future control lanes may
+reuse a standard eval-pilot packet for repeated internal evidence slices: one
+bounded task/fixture/run-spec packet, explicit provider and budget shape,
+runtime proof boundary, selector/selected-unit truth boundary, docs
+reconciliation checklist, and the exact validation commands needed for that
+pilot. The packet is a prompt scaffold only; it does not open the next lane or
+widen scope by itself.
+
+Docs reconciliation for these pilots should use stable wording: name the
+matrix, state task x budget x provider shape, list providers and budgets, state
+runtime proof as additive, preserve `unsupported/opaque` primary truth when
+applicable, and restate the public claim boundary. Avoid recording every
+transient handoff; after several related pilots, consolidate at the family
+level when the durable evidence story is clearer.
+
+Before commit-gating any accumulated evidence release unit, the control lane
+must run an explicit release-state checklist: branch/HEAD/origin state,
+staged/unstaged file set, included/excluded files, active holds,
+release-unit audit status, full-regression status, and whether human push
+sign-off exists. Common guard checks should also look for dirty-file surprises,
+forbidden diffs outside the slice/doc set, stale routing language, run-spec
+shape drift, and claim widening.
+
+Budget expansion remains a control question, not an automatic next step.
+Consider it only when a first-budget pilot leaves a specific unanswered
+comparison or coverage question, the run-spec shape can stay bounded, and
+claim boundaries remain unchanged.
+
+This section is a standing process note only. It does not change `AGENTS.md`,
+alter the current workspace-only dir(obj) release state, claim new evidence or
+capability, or route to commit or push. It does not require a follow-on
+continuity pass.
 
 The `2dd8404` locals budget-expansion release passed implementation review,
 same-tranche docs reconciliation, release-unit audit, full regression,
@@ -336,22 +404,58 @@ decision on the next north-star move rather than reopen release sequencing for
 - [x] Bounded `METACLASS_BEHAVIOR` runtime-backed implementation slice accepted first-pass
 - [x] Deep-audit correction slice for `PLAN.md` truthfulness and runtime-acquisition negative coverage accepted first-pass
 - [x] Runtime-backed tranche release sequencing completed to `origin/main` at `cb1dc65`
+- [x] Internal `dir(obj)` eval-only provider matrix implementation accepted first-pass as workspace-only state
+- [x] Same-tranche docs/evidence reconciliation for internal `dir(obj)` eval-only provider matrix accepted after 1 correction as workspace-only state
+- [x] Evidence-building process guardrail note accepted first-pass as workspace-only continuity state
+- [x] Release-unit audit for internal `dir(obj)` eval-only provider matrix accepted first-pass with no findings
+- [x] Full regression gate for internal `dir(obj)` eval-only provider matrix accepted first-pass after one formatting correction with `607 passed`
 
 ## What Is In Progress
 
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
-- The latest pushed eval/test/docs release authority is `2dd8404 Expand locals
-  eval budget matrix`
-- No implementation lane is authorized yet
-- The next control action is a fresh control-lane decision on the next
-  north-star move
-- New code, tests, fixtures, tasks, run specs, release-facing claim docs,
-  staging, commits, and pushes remain unauthorized
+- The accepted workspace-only internal eval-only `REFLECTIVE_BUILTIN` /
+  `dir(obj)` implementation candidate adds only `oracle_signal_dir_probe_matrix`
+- The candidate shape is 1 task x 1 budget x 3 providers at budget `220`,
+  against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`
+- The runtime proof boundary is a durable dir listing artifact via
+  `durable_payload_reference`; optional `listing_entry_count` is additive
+  summary only
+- Selector and selected-unit primary truth remain `unsupported/opaque`, and
+  runtime-backed provenance remains additive only
+- Public comparative claims remain bounded to the existing quad matrix
+- Implementation review is accepted first-pass
+- Docs/evidence reconciliation is accepted after 1 correction
+- The process guardrail note is accepted first-pass
+- Release-unit audit is accepted first-pass with no findings
+- Full regression is accepted first-pass after one formatting correction:
+  `ruff check src/ tests/`, `ruff format --check src/ tests/`,
+  `mypy --strict src/`, and `pytest tests/ -v` passed with `607 passed`
+- Commit-gating is not cleared yet
+- Local commit creation has not run
+- Push has not run and remains Ryan-gated
+- The candidate remains workspace-only until committed
+- The exact accumulated release candidate for the next commit-gating rerun is:
+  `ARCHITECTURE.md`, `BUILDLOG.md`, `EVAL.md`, `PLAN.md`,
+  `PUBLIC_CLAIMS.md`, `README.md`, `src/context_ir/eval_oracles.py`,
+  `src/context_ir/eval_providers.py`,
+  `evals/fixtures/oracle_signal_dir_probe/eval_runtime_observations.json`,
+  `evals/fixtures/oracle_signal_dir_probe/main.py`,
+  `evals/run_specs/oracle_signal_dir_probe_matrix.json`,
+  `evals/tasks/oracle_signal_dir_probe.json`, and
+  `tests/test_eval_signal_dir_probe.py`
+- New code, tests, fixtures, tasks, run specs, staging, commits, pushes, public
+  API, MCP, runtime acquisition, analyzer/tool-facade, scoring, schema,
+  optimizer, winner-selection, public benchmark, additional `dir` arity, or a
+  second budget row remains closed
+- The next control action is to rerun commit-gating over the exact accumulated
+  workspace-only dir(obj) candidate listed above; do not route back to
+  release-unit audit or full regression absent new findings
 - Older release-anchor bullets below are historical carry-forward context, not
   active release routing for `2dd8404`
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
-- Live branch, `HEAD`, `origin/main`, and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
+- Live git refs and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
 - The `getattr` family matrix expansion release unit is pushed at `1b555ef`
 - The same-tranche docs/evidence reconciliation released in `1b555ef` includes:
   - `EVAL.md`
@@ -881,11 +985,12 @@ decision on the next north-star move rather than reopen release sequencing for
 
 ## What Is Next
 
-Immediate next control action: make a fresh control-lane decision on the next
-north-star move after the pushed `2dd8404` locals budget-expansion release. No
-implementation lane is authorized yet. Do not route the next lane to release
-gates for `2dd8404` unless a later findings-based review identifies a concrete
-defect.
+Immediate next control action: rerun commit-gating over the exact accumulated
+workspace-only `oracle_signal_dir_probe_matrix` release candidate listed in
+`What Is In Progress`. Release-unit audit and full regression have both
+cleared for this candidate. Do not route back to release-unit audit or full
+regression absent new findings. Do not route to staging, local commit creation,
+or push yet.
 
 Historical release anchors below remain guardrails and non-reopen constraints,
 not pending release gates.

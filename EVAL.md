@@ -17,16 +17,19 @@ zero-argument `vars()` pilot. The `oracle_signal_globals_probe_matrix`
 evidence described below is a narrow internal eval-only `RUNTIME_MUTATION` /
 `globals()` pilot. The `oracle_signal_locals_probe_matrix` evidence described
 below is a narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot. The
-`d8ebdc3` code/test evidence anchor adds internal eval runtime-outcome
-accounting over normalized runtime provenance payload data. The prior `b014595`
-release carries narrow internal
+current internal eval-only `oracle_signal_dir_probe_matrix` evidence is a
+narrow `REFLECTIVE_BUILTIN` / `dir(obj)` pilot. The `d8ebdc3` code/test
+evidence anchor adds internal eval runtime-outcome accounting over normalized
+runtime provenance payload data. The prior `b014595` release carries narrow
+internal
 `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch
 evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
 `getattr(obj, name)` runtime-backed evidence, and the `90dcc15` / `762dd51`
 `hasattr(obj, name)` runtime-backed evidence. These reflective pilots, the
 current internal `vars(obj)` pilot, the current internal zero-argument
 `vars()` pilot, the current internal `globals()` pilot, the current internal
-`locals()` pilot, and the runtime-outcome accounting do not widen public
+`locals()` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
+`dir(obj)` pilot, and the runtime-outcome accounting do not widen public
 claims, public APIs, MCP behavior, scoring, winner selection, runtime
 acquisition, analyzer/tool-facade implementation, schema, or generalized
 runtime-mutation support, generalized locals() support, public benchmark
@@ -90,6 +93,9 @@ Proven by current unit and integration tests:
   `globals()` and `locals()` pilots record
   `lookup_outcome=returned_namespace` while preserving existing tier/provider
   additive-provenance accounting.
+- The current internal `REFLECTIVE_BUILTIN` / `dir(obj)` pilot records durable
+  listing proof through `durable_payload_reference`; optional
+  `listing_entry_count` is additive summary only.
 - Internal runtime-backed evidence currently covers narrow pilots only:
   - the `DYNAMIC_IMPORT` internal provider/budget matrix for the
     `oracle_signal_dynamic_import_probe` task
@@ -111,6 +117,8 @@ Proven by current unit and integration tests:
     the `oracle_signal_globals_probe` task
   - the narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot for the
     `oracle_signal_locals_probe` task
+  - the narrow internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot for
+    `oracle_signal_dir_probe_matrix`
 - The three existing getattr-family provider/budget matrices now cover budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers.
 - The current internal `vars(obj)` pilot covers only
@@ -132,6 +140,12 @@ Proven by current unit and integration tests:
   budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`.
+- The current internal `REFLECTIVE_BUILTIN` / `dir(obj)` pilot covers only
+  `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+  `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`. The runtime proof boundary is a durable dir
+  listing artifact via `durable_payload_reference`; optional
+  `listing_entry_count` is additive summary only.
 - In those runtime-backed pilots, the dynamic selector, reflective selector, or
   runtime-mutation surface and selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive attached
@@ -167,8 +181,8 @@ Architecturally intended but not yet evaluated:
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   internal pilots, plus the current one-argument `vars(obj)`, zero-argument
-  `vars()`, and `RUNTIME_MUTATION` / `globals()` and `locals()` internal
-  pilots.
+  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()` and
+  `locals()` internal pilots.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -195,8 +209,10 @@ Architecturally intended but not yet evaluated:
   task, run spec, and additive runtime provenance, plus the current internal
   `RUNTIME_MUTATION` / `globals()` fixture, task, run spec, and additive
   runtime provenance, plus the current internal `RUNTIME_MUTATION` /
-  `locals()` fixture, task, run spec, and additive runtime provenance. These
-  pilots are internal evidence surfaces, not public benchmark surfaces.
+  `locals()` fixture, task, run spec, and additive runtime provenance, plus the
+  current internal one-argument `dir(obj)` `oracle_signal_dir_probe_matrix`
+  evidence and additive runtime provenance. These pilots are internal evidence
+  surfaces, not public benchmark surfaces.
 - Narrow getattr-family provider/budget evidence: the three existing
   getattr-family matrices cover budgets `100` and `220`, and each remains
   1 task x 2 budgets x 3 providers.
@@ -222,6 +238,13 @@ Architecturally intended but not yet evaluated:
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
   remain `unsupported/opaque`, and runtime-backed provenance is additive only.
+- Narrow `dir(obj)` provider/budget evidence: the internal
+  `oracle_signal_dir_probe_matrix` covers only 1 task x 1 budget x 3 providers
+  at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; durable listing proof is carried by
+  `durable_payload_reference`, optional `listing_entry_count` is additive
+  summary only, selector and selected-unit primary truth remain
+  `unsupported/opaque`, and runtime-backed provenance is additive only.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -284,7 +307,13 @@ The following claims are allowed because current repo artifacts support them:
   `oracle_signal_locals_probe_matrix`: 1 task x 2 budgets x 3 providers at
   budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
-  `lookup_outcome=returned_namespace`. These
+  `lookup_outcome=returned_namespace`. The current internal eval-only
+  `REFLECTIVE_BUILTIN` / `dir(obj)` pilot covers only
+  `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+  `220`, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with durable listing proof carried by
+  `durable_payload_reference`; optional `listing_entry_count` is additive
+  summary only. These
   pilots keep the dynamic selector, reflective selector, or runtime-mutation
   surface and selected-unit primary truth `unsupported/opaque` while attaching
   runtime-backed provenance additively. The public-safe quad-matrix
@@ -305,8 +334,8 @@ The following claims are not currently allowed:
   internal `DYNAMIC_IMPORT`, `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   pilots, plus the current internal one-argument `vars(obj)`, zero-argument
-  `vars()`, and `RUNTIME_MUTATION` / `globals()` and `locals()` pilots, do not
-  change this public boundary.
+  `vars()`, one-argument `dir(obj)`, and `RUNTIME_MUTATION` / `globals()` and
+  `locals()` pilots, do not change this public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
