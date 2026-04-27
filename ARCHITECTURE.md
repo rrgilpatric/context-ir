@@ -82,12 +82,32 @@ attachment is limited to the preserved full `metaclass=...` keyword-site
 unsupported construct, selector and selected-unit primary truth remain
 `unsupported/opaque`, runtime provenance remains additive only, and public
 comparative claims remain bounded to the existing quad matrix.
-Those slices do not widen public claims, public APIs, MCP behavior, scoring,
-winner selection, runtime acquisition, analyzer/tool-facade implementation, schema,
-generalized reflective-builtin support, generalized runtime-mutation support,
-generalized locals() support, or generalized hybrid-runtime coverage, and they
-do not make metaclasses part of the public supported subset. The
-public-safe quad-matrix comparative boundary remains unchanged.
+The current internal eval-only `EXEC_OR_EVAL` / `eval(source)`
+evidence is narrow and remains one task only through
+`oracle_signal_eval_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+220, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The runtime payload/proof boundary is
+`evaluation_outcome=returned_value`, `source_shape=literal_expression`, valid
+`source_sha256`, and non-empty `durable_payload_reference`; optional
+`result_type=builtins.str` is additive summary only. Runtime provenance
+attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
+`eval(source)`. Primary selector and selected-unit truth remain
+`unsupported/opaque`, additive runtime provenance remains separate from primary
+truth, and public comparative claims remain bounded to the existing quad
+matrix.
+This release intentionally adds a narrow lower-layer eval(source) runtime
+provenance seam in runtime_acquisition, analyzer, and tool_facade. It does not
+add generalized eval support, exec support, `eval(source, globals)` support,
+`eval(source, globals, locals)` support, generated-code dependency modeling, or
+namespace mutation modeling. Those slices do not widen public claims, public
+APIs, MCP behavior, package-export surfaces, scoring, winner-selection,
+optimizer, compiler, product surfaces, schema, generalized reflective-builtin
+support, generalized runtime-mutation support, generalized locals() support,
+or generalized hybrid-runtime coverage, and they do not make metaclasses part
+of the public supported subset. The no-widening boundary remains no
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening. The public-safe quad-matrix comparative boundary remains
+unchanged.
 
 The April 13 frozen spec is retired and superseded. Existing runtime modules under `src/context_ir/` still largely reflect the retired symbol-graph-first build and must be treated as implementation history until they are replaced slice by slice.
 

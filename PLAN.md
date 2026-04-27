@@ -41,54 +41,67 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. The latest
 pushed eval/test/docs release authority is
-`19d9a32 Add metaclass runtime eval pilot`.
+`f0efbef Add dir zero runtime eval pilot`.
 
-`19d9a32 Add metaclass runtime eval pilot` adds the narrow internal eval-only
-`METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site provider matrix:
-`oracle_signal_metaclass_behavior_probe_matrix` only. The matrix is 1 task x 1
-budget x 3 providers at budget `220`, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
-`class_creation_outcome=created_class`; `durable_payload_reference` is required
-and non-empty, optional `created_class_qualified_name` and
-`selected_metaclass_qualified_name` fields are additive summary only,
-attachment is limited to the preserved full `metaclass=...` keyword-site
-unsupported construct, selector and selected-unit primary truth remain
-`unsupported/opaque`, runtime provenance remains additive only, and public
-comparative claims remain bounded to the existing quad matrix.
-
-The `19d9a32` release passed implementation review, same-tranche docs/evidence
-reconciliation, release-unit audit, full regression with `624 passed`,
-commit-gating, local commit creation, and Ryan-authorized push. It is no longer
-pending release sequencing. Preserved non-goals: no generalized metaclass
-support, no exception/failure outcome, no `__prepare__`, namespace/MRO
-modeling, post-creation side-effect, nested metaclass expression handling, no
-budget `100` expansion, no public claim widening, and no API, MCP, runtime
-acquisition, analyzer, tool-facade, schema, scoring, optimizer, compiler,
-package export, or winner-selection widening.
-
-The accepted workspace-only candidate after `19d9a32` is the internal
-eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()` provider matrix:
+`f0efbef Add dir zero runtime eval pilot` adds the narrow internal eval-only
+`REFLECTIVE_BUILTIN` / zero-argument `dir()` provider matrix:
 `oracle_signal_dir_zero_probe_matrix` only. The matrix is 1 task x 1 budget x 3
 providers at budget `220`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`. Runtime proof requires
 non-empty `durable_payload_reference`; optional `listing_entry_count` is
 additive summary only. Primary selector and selected-unit truth remain
-`unsupported/opaque`, runtime provenance remains additive only, and public
-comparative claims remain bounded to the existing quad matrix.
+`unsupported/opaque`, additive runtime provenance remains separate from primary
+truth, and public comparative claims remain bounded to the existing quad
+matrix.
 
-The zero-argument `dir()` implementation is accepted first-pass as
-workspace-only state, and same-tranche docs/evidence/continuity reconciliation
-is accepted after 1 correction. The accumulated workspace-only candidate has
-cleared release-unit audit with no findings and full regression with `629
-passed`. Commit-gating was run and did not clear because continuity still
-routed to audit and `BUILDLOG.md` missed the current gate state. It remains not
-staged, not committed locally, and not pushed. After this `PLAN.md` /
-`BUILDLOG.md` continuity correction is accepted, route next to rerun
-commit-gating over the exact accumulated workspace-only candidate. Local commit
-creation is not authorized until commit-gating clears; push remains
-Ryan-gated.
+The `f0efbef` dir-zero release passed implementation review, same-tranche
+docs/evidence/continuity reconciliation after 1 correction, release-unit audit
+with no findings, full regression with `629 passed`, corrected commit-gating,
+local commit creation, and Ryan-authorized push. Dir-zero release sequencing is
+complete and must not be reopened absent new findings. Do not route next to
+dir-zero commit-gating, local commit creation, or push.
 
-Prior pushed release anchors remain: `38e9d5f` for the initial internal
+The accepted post-`f0efbef` workspace-only state is the accumulated internal
+eval-only `EXEC_OR_EVAL` / `eval(source)` release unit. The lower-layer
+`EXEC_OR_EVAL` / `eval(source)` runtime provenance seam is accepted
+workspace-only after 1 correction. The `oracle_signal_eval_probe_matrix`
+implementation/assets are accepted workspace-only first-pass. This
+docs/evidence/continuity reconciliation accepted first-pass as workspace-only
+state.
+
+The current eval matrix is narrow internal evidence only:
+`oracle_signal_eval_probe_matrix`, 1 task x 1 budget x 3 providers at budget
+220, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The runtime payload/proof boundary is
+`evaluation_outcome=returned_value`, `source_shape=literal_expression`, valid
+`source_sha256`, and non-empty `durable_payload_reference`; optional
+`result_type=builtins.str` is additive summary only. Runtime provenance
+attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
+`eval(source)`. Primary selector and selected-unit truth remain
+`unsupported/opaque`, additive runtime provenance remains separate from primary
+truth, and public comparative claims remain bounded to the existing quad
+matrix. Scope remains exactly simple-name builtin `eval(source)` with one
+positional argument. The release intentionally adds a narrow lower-layer
+eval(source) runtime provenance seam in runtime_acquisition, analyzer, and
+tool_facade. It does not add generalized eval support, exec support,
+`eval(source, globals)` support, `eval(source, globals, locals)` support,
+generated-code dependency modeling, or namespace mutation modeling.
+
+This accumulated release unit is not audit-cleared, not regression-cleared, not
+commit-gating-cleared, not committed, and not pushed. Nothing from the current
+`EXEC_OR_EVAL` / `eval(source)` release unit has been committed or pushed. The
+release-unit audit was run and release-unit audit not cleared because of
+continuity/claim wording drift. The audit rerun next step is blocked on
+correction acceptance. Full regression blocked until audit clears;
+commit-gating blocked until full regression clears; local commit creation
+remains blocked until commit-gating clears; push remains Ryan-gated. The
+no-widening boundary remains no
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+
+Prior pushed release anchors remain: `19d9a32` for the internal eval-only
+`METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site provider matrix;
+`38e9d5f` for the initial internal
 eval-only `RUNTIME_MUTATION` / `locals()` pilot; `5f74ede` for the internal
 eval-only `RUNTIME_MUTATION` / `globals()` budget expansion; `631a303` for the
 initial `globals()` pilot; `9eec985` for the zero-argument `vars()` budget
@@ -453,57 +466,63 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Same-tranche docs/evidence/continuity reconciliation for internal zero-argument `dir()` eval-only provider matrix accepted after 1 correction
 - [x] Release-unit audit for internal zero-argument `dir()` eval-only provider matrix cleared with no findings
 - [x] Full regression gate for internal zero-argument `dir()` eval-only provider matrix cleared with `629 passed`
+- [x] Corrected commit-gating review for internal zero-argument `dir()` eval-only provider matrix accepted first-pass
+- [x] Local commit creation and Ryan-authorized push for internal zero-argument `dir()` eval-only provider matrix completed at `f0efbef`
+- [x] `EXEC_OR_EVAL` / `eval(source)` contract spike accepted first-pass
+- [x] Lower-layer `EXEC_OR_EVAL` / `eval(source)` runtime provenance seam accepted workspace-only after 1 correction
+- [x] `oracle_signal_eval_probe_matrix` implementation/assets accepted workspace-only first-pass
+- [x] Docs/evidence/continuity reconciliation for accumulated internal eval-only `EXEC_OR_EVAL` / `eval(source)` release unit accepted first-pass as workspace-only state
+- [ ] Narrow continuity/claim wording correction for accumulated internal eval-only `EXEC_OR_EVAL` / `eval(source)` release-unit audit findings awaits correction acceptance
 
 ## What Is In Progress
 
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
-- No release sequencing is currently in flight for `19d9a32`
-- `19d9a32 Add metaclass runtime eval pilot` is the latest pushed
+- No release sequencing is currently in flight for `f0efbef`
+- `f0efbef Add dir zero runtime eval pilot` is the latest pushed
   eval/test/docs release authority and must not be reopened absent new findings
-- The accepted workspace-only internal eval-only `REFLECTIVE_BUILTIN` /
-  zero-argument `dir()` provider-matrix implementation plus accepted
-  docs/evidence/continuity reconciliation are the current accumulated candidate
-- The accumulated workspace-only candidate for commit-gating rerun after this
-  continuity correction is accepted includes:
-  - `ARCHITECTURE.md`
-  - `BUILDLOG.md`
-  - `EVAL.md`
-  - `PLAN.md`
-  - `PUBLIC_CLAIMS.md`
-  - `README.md`
-  - `src/context_ir/eval_oracles.py`
-  - `evals/fixtures/oracle_signal_dir_zero_probe/eval_runtime_observations.json`
-  - `evals/fixtures/oracle_signal_dir_zero_probe/main.py`
-  - `evals/tasks/oracle_signal_dir_zero_probe.json`
-  - `evals/run_specs/oracle_signal_dir_zero_probe_matrix.json`
-  - `tests/test_eval_signal_dir_zero_probe.py`
-- `oracle_signal_dir_zero_probe_matrix` is 1 task x 1 budget x 3 providers at
-  budget `220`
-- Providers must remain `context_ir`, `lexical_top_k_files`, and
+- Dir-zero release sequencing is complete; do not route to dir-zero
+  commit-gating, local commit creation, or push absent new findings
+- The accumulated workspace-only internal eval-only `EXEC_OR_EVAL` /
+  `eval(source)` release unit is active
+- The lower-layer runtime provenance seam is accepted workspace-only after 1
+  correction
+- The `oracle_signal_eval_probe_matrix` implementation/assets are accepted
+  workspace-only first-pass
+- Docs/evidence/continuity reconciliation accepted first-pass as workspace-only
+  state
+- The matrix is 1 task x 1 budget x 3 providers at budget 220, against
+  providers `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`
-- Runtime proof requires non-empty `durable_payload_reference`
-- Optional `listing_entry_count` is additive summary only
-- Primary selector and selected-unit truth must remain `unsupported/opaque`
-- Runtime provenance must remain additive only
-- No runtime acquisition, analyzer, tool-facade, schema, scoring, optimizer,
-  compiler, MCP, API, package export, winner-selection, public claim,
-  generalized dir support, `dir(obj)` reopening, budget `100` expansion,
-  public benchmark claim, or product-surface widening is authorized
-- The implementation acceptance is workspace-only and first-pass
-- The docs/evidence/continuity reconciliation is accepted after 1 correction
-- Release-unit audit is cleared with no findings
-- Full regression is cleared:
-  - `ruff check src/ tests/` passed
-  - `ruff format --check src/ tests/` passed
-  - `mypy --strict src/` passed
-  - `pytest tests/ -v` passed with `629 passed`
-- Commit-gating was run and did not clear because continuity still routed to
-  audit and `BUILDLOG.md` missed the current gate state
-- Commit-gating is pending rerun after this `PLAN.md` / `BUILDLOG.md`
-  continuity correction is accepted
-- Local commit creation is not authorized until commit-gating clears
-- Push has not run and remains Ryan-gated
+- Runtime payload/proof boundary is `evaluation_outcome=returned_value`,
+  `source_shape=literal_expression`, valid `source_sha256`, and non-empty
+  `durable_payload_reference`; optional `result_type=builtins.str` is additive
+  summary only
+- Provenance attaches only to the preserved `EXEC_OR_EVAL` unsupported finding
+  for `eval(source)`
+- Primary selector and selected-unit truth remain `unsupported/opaque`;
+  additive runtime provenance remains separate from primary truth
+- Public comparative claims remain bounded to the existing quad matrix
+- Scope remains exactly simple-name builtin `eval(source)` with one positional
+  argument; the release intentionally adds a narrow lower-layer eval(source)
+  runtime provenance seam in runtime_acquisition, analyzer, and tool_facade
+- No generalized eval support, no exec support, no globals/locals eval support,
+  no `eval(source, globals)` support, no `eval(source, globals, locals)`
+  support, no generated-code dependency modeling, and no namespace mutation
+  modeling are included
+- No
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is authorized
+- The release unit is not audit-cleared, not regression-cleared, not
+  commit-gating-cleared, not committed, and not pushed
+- The release-unit audit was run and release-unit audit not cleared because of
+  continuity/claim wording drift
+- Route next to correction acceptance, then audit rerun next over the complete
+  accumulated release unit
+- Full regression blocked until audit clears; commit-gating blocked until full
+  regression clears; local commit creation remains blocked until commit-gating
+  clears
+- Push remains Ryan-gated
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
 - Live git refs and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
 - The `getattr` family matrix expansion release unit is pushed at `1b555ef`
@@ -1035,37 +1054,20 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next control action after this `PLAN.md` / `BUILDLOG.md` continuity
-correction is accepted: rerun commit-gating over the exact accumulated
-workspace-only internal eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()`
-candidate. Do not route back to release-unit audit or full regression absent
-new findings; both gates are already cleared. Do not stage, create a local
-commit, or push yet. Local commit creation is authorized only after
-commit-gating clears, and push remains Ryan-gated.
+Immediate next control action after this narrow continuity/claim wording
+correction is accepted: audit rerun next over the accumulated workspace-only
+internal eval-only `EXEC_OR_EVAL` / `eval(source)` release unit. Full
+regression blocked until audit clears; commit-gating blocked until full
+regression clears; local commit creation remains blocked until commit-gating
+clears; push remains Ryan-gated. The `f0efbef` dir-zero release is already
+pushed and release sequencing is complete; do not route to dir-zero
+commit-gating, local commit creation, or push absent new findings.
 
 Historical release anchors below remain guardrails and non-reopen constraints,
 not pending release gates.
 
-1. Treat pushed commit `19d9a32 Add metaclass runtime eval pilot` as the latest
+1. Treat pushed commit `f0efbef Add dir zero runtime eval pilot` as the latest
    pushed eval/test/docs release authority:
-   - `oracle_signal_metaclass_behavior_probe_matrix` is 1 task x 1 budget x 3
-     providers at budget `220`
-   - providers remain `context_ir`, `lexical_top_k_files`, and
-     `import_neighborhood_files`
-   - runtime payload is `class_creation_outcome=created_class`
-   - `durable_payload_reference` is required and non-empty
-   - optional `created_class_qualified_name` and
-     `selected_metaclass_qualified_name` fields are additive summary only
-   - attachment remains limited to the preserved full `metaclass=...`
-     keyword-site unsupported construct
-   - selector and selected-unit primary truth remain `unsupported/opaque`
-   - runtime provenance remains additive only
-   - public comparative claims remain bounded to the existing quad matrix
-   - implementation, same-tranche docs/evidence reconciliation,
-     release-unit audit, full regression, commit-gating, local commit creation,
-     and Ryan-authorized push are complete
-2. Treat the accepted post-`19d9a32` zero-argument `dir()` implementation as
-   workspace-only state:
    - `oracle_signal_dir_zero_probe_matrix` is 1 task x 1 budget x 3 providers
      at budget `220`
    - providers remain `context_ir`, `lexical_top_k_files`, and
@@ -1073,22 +1075,57 @@ not pending release gates.
    - runtime proof requires non-empty `durable_payload_reference`
    - optional `listing_entry_count` is additive summary only
    - primary selector and selected-unit truth remain `unsupported/opaque`
-   - runtime provenance remains additive only
+   - runtime provenance remains additive only, as additive runtime provenance
+     separate from primary truth
    - public comparative claims remain bounded to the existing quad matrix
-   - implementation is accepted first-pass as workspace-only state
-   - docs/evidence/continuity reconciliation is accepted after 1 correction
-   - release-unit audit is cleared with no findings
-   - full regression is cleared with `629 passed`
-   - commit-gating was run and did not clear because continuity still routed to
-     audit and `BUILDLOG.md` missed the current gate state
-   - commit-gating is pending rerun after this continuity correction is
-     accepted
-   - local commit creation is not authorized until commit-gating clears
-   - push has not run and remains Ryan-gated
+   - implementation, same-tranche docs/evidence reconciliation,
+     release-unit audit, full regression, commit-gating, local commit creation,
+     and Ryan-authorized push are complete
    - no generalized dir support, `dir(obj)` reopening, budget `100` expansion,
      public benchmark claim, API, MCP, runtime acquisition, analyzer,
      tool-facade, schema, scoring, optimizer, compiler, package export, or
      winner-selection widening is authorized
+2. Treat the accumulated `EXEC_OR_EVAL` / `eval(source)` release unit as
+   workspace-only until gates clear:
+   - contract spike accepted first-pass
+   - lower-layer runtime provenance seam accepted workspace-only after 1
+     correction
+   - `oracle_signal_eval_probe_matrix` implementation/assets accepted
+     workspace-only first-pass
+   - docs/evidence/continuity reconciliation accepted first-pass as
+     workspace-only state
+   - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+   - providers remain `context_ir`, `lexical_top_k_files`, and
+     `import_neighborhood_files`
+   - runtime payload/proof boundary is `evaluation_outcome=returned_value`,
+     `source_shape=literal_expression`, valid `source_sha256`, and non-empty
+     `durable_payload_reference`
+   - optional `result_type=builtins.str` is additive summary only
+   - runtime provenance attaches only to the preserved `EXEC_OR_EVAL`
+     unsupported finding for `eval(source)`
+   - primary selector and selected-unit truth remain `unsupported/opaque`
+   - additive runtime provenance remains separate from primary truth
+   - public comparative claims remain bounded to the existing quad matrix
+   - scope remains exactly simple-name builtin `eval(source)` with one
+     positional argument
+   - the release intentionally adds a narrow lower-layer eval(source) runtime
+     provenance seam in runtime_acquisition, analyzer, and tool_facade
+   - no generalized eval support, no exec support, no globals/locals eval
+     support, no `eval(source, globals)` support,
+     no `eval(source, globals, locals)` support, no generated-code dependency
+     modeling, and no namespace mutation modeling are included
+   - not audit-cleared, not regression-cleared, not commit-gating-cleared, not
+     committed, and not pushed
+   - release-unit audit was run and release-unit audit not cleared because of
+     continuity/claim wording drift
+   - route next to correction acceptance, then audit rerun next
+   - full regression blocked until audit clears
+   - commit-gating blocked until full regression clears
+   - local commit creation remains blocked until commit-gating clears
+   - push remains Ryan-gated
+   - no
+     public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+     benchmark widening is authorized
 3. Treat pushed commit `41f6b57 Add delattr runtime eval pilot` as the prior
    pushed eval/test/docs release authority:
    - `oracle_signal_delattr_probe_matrix` is 1 task x 1 budget x 3 providers at budget `220`

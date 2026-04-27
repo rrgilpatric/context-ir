@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         DelattrRuntimeObservation,
         DirRuntimeObservation,
         DynamicImportRuntimeObservation,
+        EvalRuntimeObservation,
         GetattrRuntimeObservation,
         GlobalsRuntimeObservation,
         HasattrRuntimeObservation,
@@ -43,6 +44,7 @@ class _AnalyzeRepositoryKwargs(TypedDict, total=False):
     delattr_runtime_observations: Sequence[DelattrRuntimeObservation]
     dynamic_import_runtime_observations: Sequence[DynamicImportRuntimeObservation]
     dir_runtime_observations: Sequence[DirRuntimeObservation]
+    eval_runtime_observations: Sequence[EvalRuntimeObservation]
     getattr_runtime_observations: Sequence[GetattrRuntimeObservation]
     globals_runtime_observations: Sequence[GlobalsRuntimeObservation]
     hasattr_runtime_observations: Sequence[HasattrRuntimeObservation]
@@ -65,6 +67,7 @@ class SemanticContextRequest:
     dynamic_import_runtime_observations: (
         Sequence[DynamicImportRuntimeObservation] | None
     ) = None
+    eval_runtime_observations: Sequence[EvalRuntimeObservation] | None = None
     hasattr_runtime_observations: Sequence[HasattrRuntimeObservation] | None = None
     getattr_runtime_observations: Sequence[GetattrRuntimeObservation] | None = None
     vars_runtime_observations: Sequence[VarsRuntimeObservation] | None = None
@@ -121,6 +124,7 @@ def compile_repository_context(
 ) -> SemanticContextResponse:
     """Analyze a repository and compile a semantic context response."""
     dynamic_import_runtime_observations = request.dynamic_import_runtime_observations
+    eval_runtime_observations = request.eval_runtime_observations
     hasattr_runtime_observations = request.hasattr_runtime_observations
     getattr_runtime_observations = request.getattr_runtime_observations
     vars_runtime_observations = request.vars_runtime_observations
@@ -140,6 +144,8 @@ def compile_repository_context(
         analyze_kwargs["dynamic_import_runtime_observations"] = (
             dynamic_import_runtime_observations
         )
+    if eval_runtime_observations is not None:
+        analyze_kwargs["eval_runtime_observations"] = eval_runtime_observations
     if hasattr_runtime_observations is not None:
         analyze_kwargs["hasattr_runtime_observations"] = hasattr_runtime_observations
     if getattr_runtime_observations is not None:

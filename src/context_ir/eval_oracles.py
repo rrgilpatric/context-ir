@@ -14,6 +14,7 @@ from context_ir.runtime_acquisition import (
     DelattrRuntimeObservation,
     DirRuntimeObservation,
     DynamicImportRuntimeObservation,
+    EvalRuntimeObservation,
     GetattrRuntimeObservation,
     GlobalsRuntimeObservation,
     HasattrRuntimeObservation,
@@ -25,6 +26,7 @@ from context_ir.runtime_acquisition import (
     attach_delattr_runtime_provenance,
     attach_dir_runtime_provenance,
     attach_dynamic_import_runtime_provenance,
+    attach_eval_runtime_provenance,
     attach_getattr_runtime_provenance,
     attach_globals_runtime_provenance,
     attach_hasattr_runtime_provenance,
@@ -145,6 +147,7 @@ _PRIMARY_TRACE_DEFAULTS: dict[
 }
 _RUNTIME_OBSERVATION_FILENAME = "eval_runtime_observations.json"
 _DYNAMIC_IMPORT_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
+_EVAL_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
 _DIR_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
 _GETATTR_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
 _GLOBALS_RUNTIME_OBSERVATION_FILENAME = _RUNTIME_OBSERVATION_FILENAME
@@ -160,6 +163,7 @@ _ALLOWED_RUNTIME_OBSERVATION_DOCUMENT_FIELDS = frozenset(
         "dir_runtime_observations",
         "schema_version",
         "dynamic_import_runtime_observations",
+        "eval_runtime_observations",
         "getattr_runtime_observations",
         "globals_runtime_observations",
         "hasattr_runtime_observations",
@@ -189,6 +193,7 @@ _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS = frozenset(
         "durable_payload_reference",
     }
 )
+_ALLOWED_EVAL_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_DIR_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_HASATTR_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
 _ALLOWED_GETATTR_OBSERVATION_FIELDS = _ALLOWED_DYNAMIC_IMPORT_OBSERVATION_FIELDS
@@ -367,6 +372,15 @@ def setup_eval_oracle_task(
             program,
             dynamic_import_runtime_observations,
         )
+    eval_runtime_observations = load_fixture_eval_runtime_observations(
+        root,
+        semantic_program=program,
+    )
+    if eval_runtime_observations:
+        program = attach_eval_runtime_provenance(
+            program,
+            eval_runtime_observations,
+        )
     hasattr_runtime_observations = load_fixture_hasattr_runtime_observations(
         root,
         semantic_program=program,
@@ -511,6 +525,59 @@ def load_fixture_dynamic_import_runtime_observations(
         _parse_dynamic_import_runtime_observation(
             observation_record,
             path=f"$.dynamic_import_runtime_observations[{index}]",
+            site_index=site_index,
+        )
+        for index, observation_record in enumerate(observation_records)
+    )
+
+
+def load_fixture_eval_runtime_observations(
+    repo_root: Path | str,
+    *,
+    semantic_program: SemanticProgram | None = None,
+) -> tuple[EvalRuntimeObservation, ...]:
+    """Load fixture-local bounded ``eval(source)`` runtime observations."""
+    root = Path(repo_root)
+    observation_path = root / _EVAL_RUNTIME_OBSERVATION_FILENAME
+    if not observation_path.is_file():
+        return ()
+
+    try:
+        raw: object = json.loads(observation_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise EvalOracleSchemaError(
+            f"invalid eval runtime observation JSON in {observation_path}: {error}"
+        ) from error
+    _reject_generated_id_fields(raw, path="$")
+    record = _expect_object(raw, path="$")
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_RUNTIME_OBSERVATION_DOCUMENT_FIELDS,
+        path="$",
+    )
+    schema_version = _required_string(record, "schema_version", path="$")
+    if schema_version != "v1":
+        raise EvalOracleSchemaError("$.schema_version must be 'v1'")
+    observation_records = _optional_list(
+        record,
+        "eval_runtime_observations",
+        path="$",
+    )
+    if observation_records is None:
+        return ()
+    if not observation_records:
+        raise EvalOracleSchemaError(
+            "eval runtime observation file must contain at least one observation"
+        )
+
+    program = (
+        semantic_program if semantic_program is not None else analyze_repository(root)
+    )
+    site_index = _eval_observation_site_index(program)
+    return tuple(
+        _parse_eval_runtime_observation(
+            observation_record,
+            path=f"$.eval_runtime_observations[{index}]",
             site_index=site_index,
         )
         for index, observation_record in enumerate(observation_records)
@@ -1045,6 +1112,59 @@ def _dynamic_import_observation_site_index(
     return site_index
 
 
+def _eval_observation_site_index(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], SourceSite]:
+    """Index eligible ``eval(source)`` source sites by file/span identity."""
+    call_sites_by_unsupported_id = {
+        f"unsupported:{call_site.call_site_id}": call_site
+        for call_site in program.syntax.call_sites
+    }
+    site_index: dict[tuple[str, int, int, int, int], SourceSite] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.EXEC_OR_EVAL:
+            continue
+        call_site = call_sites_by_unsupported_id.get(construct.construct_id)
+        if call_site is None or not _is_eligible_eval_call_site(call_site):
+            continue
+        identity = _source_site_identity(construct.site)
+        if identity in site_index:
+            raise EvalOracleSchemaError(
+                "multiple eval unsupported constructs share the same source site"
+            )
+        site_index[identity] = construct.site
+    return site_index
+
+
+def _is_eligible_eval_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is fixture-loadable ``eval(source)``."""
+    if call_site.argument_count != 1:
+        return False
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    if not (isinstance(expression, ast.Name) and expression.id == "eval"):
+        return False
+
+    snippet = call_site.site.snippet
+    if snippet is None:
+        return False
+    try:
+        call_expression = ast.parse(snippet.strip(), mode="eval").body
+    except SyntaxError:
+        return False
+    return (
+        isinstance(call_expression, ast.Call)
+        and isinstance(call_expression.func, ast.Name)
+        and call_expression.func.id == "eval"
+        and len(call_expression.args) == 1
+        and not call_expression.keywords
+        and isinstance(call_expression.args[0], ast.Name)
+        and call_expression.args[0].id == "source"
+    )
+
+
 def _hasattr_observation_site_index(
     program: SemanticProgram,
 ) -> dict[tuple[str, int, int, int, int], SourceSite]:
@@ -1367,6 +1487,63 @@ def _parse_dynamic_import_runtime_observation(
         path=path,
     )
     return DynamicImportRuntimeObservation(
+        site=site,
+        probe_identifier=_required_string(record, "probe_identifier", path=path),
+        probe_contract_revision=_required_string(
+            record,
+            "probe_contract_revision",
+            path=path,
+        ),
+        repository_snapshot_basis=_required_repository_snapshot_basis(
+            record,
+            path=path,
+        ),
+        attachment_links=_required_runtime_attachment_links(record, path=path),
+        replay_target=_required_string(record, "replay_target", path=path),
+        replay_selector=_required_string(record, "replay_selector", path=path),
+        replay_inputs=_optional_runtime_fields(record, "replay_inputs", path=path),
+        runtime_assumptions=_optional_runtime_fields(
+            record,
+            "runtime_assumptions",
+            path=path,
+        ),
+        normalized_payload=_required_runtime_fields(
+            record,
+            "normalized_payload",
+            path=path,
+        ),
+        durable_payload_reference=_optional_string(
+            record,
+            "durable_payload_reference",
+            path=path,
+        ),
+    )
+
+
+def _parse_eval_runtime_observation(
+    raw: object,
+    *,
+    path: str,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+) -> EvalRuntimeObservation:
+    """Parse one fixture-local bounded ``eval(source)`` observation record."""
+    record = _expect_object(raw, path=path)
+    _validate_allowed_fields(
+        record,
+        _ALLOWED_EVAL_OBSERVATION_FIELDS,
+        path=path,
+    )
+    site = _matched_eval_observation_site(
+        file_path=_required_string(record, "file_path", path=path),
+        start_line=_required_positive_int(record, "start_line", path=path),
+        start_column=_required_non_negative_int(record, "start_column", path=path),
+        end_line=_required_positive_int(record, "end_line", path=path),
+        end_column=_required_non_negative_int(record, "end_column", path=path),
+        source_snippet=_optional_string(record, "source_snippet", path=path),
+        site_index=site_index,
+        path=path,
+    )
+    return EvalRuntimeObservation(
         site=site,
         probe_identifier=_required_string(record, "probe_identifier", path=path),
         probe_contract_revision=_required_string(
@@ -1930,6 +2107,31 @@ def _matched_dynamic_import_observation_site(
     if site is None:
         raise EvalOracleSchemaError(
             f"{path} does not match any analyzed dynamic-import source site"
+        )
+    if source_snippet is not None and site.snippet != source_snippet:
+        raise EvalOracleSchemaError(
+            f"{path}.source_snippet does not match the analyzed source site"
+        )
+    return site
+
+
+def _matched_eval_observation_site(
+    *,
+    file_path: str,
+    start_line: int,
+    start_column: int,
+    end_line: int,
+    end_column: int,
+    source_snippet: str | None,
+    site_index: dict[tuple[str, int, int, int, int], SourceSite],
+    path: str,
+) -> SourceSite:
+    """Return the analyzed source site matching one ``eval`` observation."""
+    identity = (file_path, start_line, start_column, end_line, end_column)
+    site = site_index.get(identity)
+    if site is None:
+        raise EvalOracleSchemaError(
+            f"{path} does not match any analyzed eligible eval source site"
         )
     if source_snippet is not None and site.snippet != source_snippet:
         raise EvalOracleSchemaError(

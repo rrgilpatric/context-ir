@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import replace
 from pathlib import Path
@@ -92,6 +93,64 @@ def _dynamic_import_runtime_observation(
                 value=imported_module,
             ),
         ),
+    )
+
+
+def _eval_runtime_observation(
+    site: SourceSite,
+    *,
+    evaluation_outcome: str = "returned_value",
+    source_shape: str = "literal_expression",
+    source_text: str = '"runtime-value"',
+    source_sha256: str | None = None,
+    durable_payload_reference: str | None = None,
+) -> runtime_acquisition.EvalRuntimeObservation:
+    """Create one admissible ``eval(source)`` runtime observation."""
+    durable_reference = durable_payload_reference
+    if durable_reference is None:
+        durable_reference = f"artifact://eval-result/{site.site_id}.json"
+    source_digest = source_sha256
+    if source_digest is None:
+        source_digest = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+    return runtime_acquisition.EvalRuntimeObservation(
+        site=site,
+        probe_identifier="probe:eval",
+        probe_contract_revision="2026-04-26.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="eval trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value=source_shape,
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=source_digest,
+            ),
+        ),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="evaluation_outcome",
+                value=evaluation_outcome,
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="result_type",
+                value="builtins.str",
+            ),
+        ),
+        durable_payload_reference=durable_reference,
     )
 
 
@@ -805,6 +864,122 @@ def run(name: str, source: str) -> None:
         assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
         assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
         assert record.subject_sites == (construct.site,)
+
+
+def test_attach_eval_runtime_provenance_targets_only_bounded_eval_source(
+    tmp_path: Path,
+) -> None:
+    """Only the exact ``eval(source)`` boundary gains runtime attachments."""
+    (tmp_path / "main.py").write_text(
+        """
+def helper() -> str:
+    return "helper"
+
+def run(source: str, suffix: str, globals_ns: dict[str, object]) -> None:
+    eval(source)
+    eval(source, globals_ns)
+    eval(source=source)
+    eval("helper()")
+    eval(helper())
+    eval(source + suffix)
+    exec(source)
+    getattr(source, "strip")
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _eval_runtime_observation(construct.site)
+        for construct in program.unsupported_constructs
+    ]
+
+    updated_program = runtime_acquisition.attach_eval_runtime_provenance(
+        program,
+        observations,
+    )
+    constructs_by_text = {
+        construct.construct_text: construct
+        for construct in program.unsupported_constructs
+    }
+    attached_subject_ids = {
+        record.subject_id for record in updated_program.provenance_records
+    }
+
+    assert updated_program is not program
+    assert program.provenance_records == []
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert attached_subject_ids == {constructs_by_text["eval(source)"].construct_id}
+    assert (
+        constructs_by_text["eval(source, globals_ns)"].construct_id
+        not in attached_subject_ids
+    )
+    assert (
+        constructs_by_text["eval(source=source)"].construct_id
+        not in attached_subject_ids
+    )
+    assert (
+        constructs_by_text['eval("helper()")'].construct_id not in attached_subject_ids
+    )
+    assert constructs_by_text["eval(helper())"].construct_id not in attached_subject_ids
+    assert (
+        constructs_by_text["eval(source + suffix)"].construct_id
+        not in attached_subject_ids
+    )
+    assert constructs_by_text["exec(source)"].construct_id not in attached_subject_ids
+    assert (
+        constructs_by_text['getattr(source, "strip")'].construct_id
+        not in attached_subject_ids
+    )
+
+    [record] = updated_program.provenance_records
+    observation = _eval_runtime_observation(constructs_by_text["eval(source)"].site)
+    origin_detail = json.loads(record.origin_detail)
+    assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert record.subject_sites == (constructs_by_text["eval(source)"].site,)
+    assert origin_detail["normalized_payload"] == {
+        "evaluation_outcome": "returned_value",
+        "result_type": "builtins.str",
+    }
+    assert origin_detail["replay_inputs"] == {
+        "source_shape": "literal_expression",
+        "source_sha256": hashlib.sha256(b'"runtime-value"').hexdigest(),
+    }
+    assert (
+        origin_detail["durable_payload_reference"]
+        == observation.durable_payload_reference
+    )
+
+
+def test_attach_eval_runtime_provenance_ignores_shadowed_names(
+    tmp_path: Path,
+) -> None:
+    """Shadowed ``eval`` names remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(loader, source: str) -> None:
+    eval = loader
+    eval(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    call_site = next(
+        candidate
+        for candidate in program.syntax.call_sites
+        if candidate.callee_text == "eval"
+    )
+    observation = _eval_runtime_observation(call_site.site)
+
+    updated_program = runtime_acquisition.attach_eval_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
 
 
 def test_attach_hasattr_runtime_provenance_targets_supported_hasattr_boundaries(
@@ -1924,6 +2099,101 @@ class Example(Base, metaclass=Meta):
 
     with pytest.raises(ValueError, match="durable_payload_reference"):
         runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_eval_runtime_provenance_rejects_invalid_evaluation_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``eval`` observations must claim the returned-value branch."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    eval(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "eval(source)"
+    )
+    observation = _eval_runtime_observation(
+        construct.site,
+        evaluation_outcome="raised_syntax_error",
+    )
+
+    with pytest.raises(ValueError, match="returned_value"):
+        runtime_acquisition.attach_eval_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_eval_runtime_provenance_rejects_missing_source_replay_proof(
+    tmp_path: Path,
+) -> None:
+    """Matched ``eval`` observations must carry bounded evaluated-source proof."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    eval(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "eval(source)"
+    )
+    observation = replace(
+        _eval_runtime_observation(construct.site),
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_expression",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="source_sha256"):
+        runtime_acquisition.attach_eval_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_eval_runtime_provenance_rejects_missing_durable_payload_reference(
+    tmp_path: Path,
+) -> None:
+    """Matched ``eval`` observations must carry durable returned-value proof."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    eval(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "eval(source)"
+    )
+    observation = replace(
+        _eval_runtime_observation(construct.site),
+        durable_payload_reference=None,
+    )
+
+    with pytest.raises(ValueError, match="durable_payload_reference"):
+        runtime_acquisition.attach_eval_runtime_provenance(
             program,
             [observation],
         )

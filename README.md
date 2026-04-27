@@ -40,13 +40,20 @@ narrow internal eval-only `RUNTIME_MUTATION` /
 `setattr(obj, name, value)` evidence, plus a current internal eval-only
 one-argument `dir(obj)` pilot, plus a current internal eval-only
 zero-argument `dir()` pilot, plus a current internal eval-only
-`METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot. Those
-pilots do not widen the public supported
-subset, public API, MCP wrapper, runtime acquisition, analyzer/tool-facade
-implementation, schema, scoring, winner selection, public benchmark claim
-boundary, generalized runtime-mutation support, generalized locals() support,
-or generalized hybrid-runtime coverage, and they do not make metaclasses part
-of the public supported subset.
+`METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus the
+current internal eval-only `EXEC_OR_EVAL` / `eval(source)`
+evidence. Those
+pilots do not widen the public supported subset, public API, MCP wrapper,
+package-export surface, schema, scoring, optimizer, compiler,
+winner-selection, product surface, public benchmark claim boundary,
+generalized runtime-mutation support, generalized locals() support, or
+generalized hybrid-runtime coverage, and they do not make metaclasses part of
+the public supported subset. The `EXEC_OR_EVAL` / `eval(source)` release
+intentionally adds a narrow lower-layer eval(source) runtime provenance seam in
+runtime_acquisition, analyzer, and tool_facade; that seam is internal evidence
+plumbing only and does not authorize
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
 The public-safe quad-matrix comparative boundary remains unchanged, and public
 comparative claims remain bounded to the existing quad matrix. The three
 existing getattr-family pilot matrices cover only 1 task x 2 budgets x 3
@@ -114,6 +121,21 @@ attachment is limited to the preserved full `metaclass=...` keyword-site
 unsupported construct, selector and selected-unit primary truth remain
 `unsupported/opaque`, runtime provenance remains additive only, and public
 comparative claims remain bounded to the existing quad matrix.
+The current internal eval-only `EXEC_OR_EVAL` / `eval(source)`
+evidence covers only `oracle_signal_eval_probe_matrix`: 1 task x 1 budget x 3
+providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The runtime
+payload/proof boundary is `evaluation_outcome=returned_value`,
+`source_shape=literal_expression`, valid `source_sha256`, and non-empty
+`durable_payload_reference`; optional `result_type=builtins.str` is additive
+summary only. Runtime provenance attaches only to the preserved `EXEC_OR_EVAL`
+unsupported finding for `eval(source)`. Primary selector and selected-unit
+truth remain `unsupported/opaque`, additive runtime provenance remains
+separate from primary truth, and public comparative claims remain bounded to
+the existing quad matrix. It does not add generalized eval support, exec
+support, `eval(source, globals)` support,
+`eval(source, globals, locals)` support, generated-code dependency modeling, or
+namespace mutation modeling.
 
 ## Supported Subset and Limits
 
@@ -271,7 +293,8 @@ Current evidence includes:
   `setattr(obj, name, value)` evidence, plus the current internal one-argument
   `dir(obj)` pilot, plus the current internal zero-argument `dir()` pilot,
   plus the current internal eval-only `METACLASS_BEHAVIOR` / preserved
-  `metaclass=...` keyword-site pilot
+  `metaclass=...` keyword-site pilot, plus the current internal
+  eval-only `EXEC_OR_EVAL` / `eval(source)` evidence
 - three existing getattr-family provider/budget matrices limited to budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and
@@ -341,6 +364,18 @@ Current evidence includes:
   unsupported construct, selector and selected-unit primary truth still
   `unsupported/opaque`, runtime provenance additive only, and public
   comparative claims remain bounded to the existing quad matrix
+- the current internal eval-only `EXEC_OR_EVAL` /
+  `eval(source)` evidence remains `oracle_signal_eval_probe_matrix`: 1 task x
+  1 budget x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; the runtime
+  payload/proof boundary is `evaluation_outcome=returned_value`,
+  `source_shape=literal_expression`, valid `source_sha256`, and non-empty
+  `durable_payload_reference`; optional `result_type=builtins.str` is additive
+  summary only, runtime provenance attaches only to the preserved
+  `EXEC_OR_EVAL` unsupported finding for `eval(source)`, primary selector and
+  selected-unit truth still `unsupported/opaque`, additive runtime provenance
+  separate from primary truth, and public comparative claims remain bounded to
+  the existing quad matrix
 - within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,

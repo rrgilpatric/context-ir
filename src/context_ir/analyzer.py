@@ -13,6 +13,7 @@ from context_ir.runtime_acquisition import (
     DelattrRuntimeObservation,
     DirRuntimeObservation,
     DynamicImportRuntimeObservation,
+    EvalRuntimeObservation,
     GetattrRuntimeObservation,
     GlobalsRuntimeObservation,
     HasattrRuntimeObservation,
@@ -23,6 +24,7 @@ from context_ir.runtime_acquisition import (
     attach_delattr_runtime_provenance,
     attach_dir_runtime_provenance,
     attach_dynamic_import_runtime_provenance,
+    attach_eval_runtime_provenance,
     attach_getattr_runtime_provenance,
     attach_globals_runtime_provenance,
     attach_hasattr_runtime_provenance,
@@ -38,6 +40,7 @@ def analyze_repository(
     repo_root: Path | str,
     *,
     dynamic_import_runtime_observations: Sequence[DynamicImportRuntimeObservation] = (),
+    eval_runtime_observations: Sequence[EvalRuntimeObservation] = (),
     hasattr_runtime_observations: Sequence[HasattrRuntimeObservation] = (),
     getattr_runtime_observations: Sequence[GetattrRuntimeObservation] = (),
     vars_runtime_observations: Sequence[VarsRuntimeObservation] = (),
@@ -57,6 +60,7 @@ def analyze_repository(
     derived_program = derive_dependency_frontier(resolved_program)
     if (
         not dynamic_import_runtime_observations
+        and not eval_runtime_observations
         and not hasattr_runtime_observations
         and not getattr_runtime_observations
         and not vars_runtime_observations
@@ -74,6 +78,11 @@ def analyze_repository(
         program = attach_dynamic_import_runtime_provenance(
             program,
             dynamic_import_runtime_observations,
+        )
+    if eval_runtime_observations:
+        program = attach_eval_runtime_provenance(
+            program,
+            eval_runtime_observations,
         )
     if hasattr_runtime_observations:
         program = attach_hasattr_runtime_provenance(

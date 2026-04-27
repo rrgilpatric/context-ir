@@ -119,6 +119,23 @@ class DynamicImportRuntimeObservation:
 
 
 @dataclass(frozen=True)
+class EvalRuntimeObservation:
+    """Admissible runtime observation for one bounded ``eval(source)`` boundary."""
+
+    site: SourceSite
+    probe_identifier: str
+    probe_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    attachment_links: tuple[RuntimeAttachmentLink, ...]
+    replay_target: str
+    replay_selector: str
+    replay_inputs: tuple[_RuntimeObservationField, ...] = ()
+    runtime_assumptions: tuple[_RuntimeObservationField, ...] = ()
+    normalized_payload: tuple[_RuntimeObservationField, ...] = ()
+    durable_payload_reference: str | None = None
+
+
+@dataclass(frozen=True)
 class HasattrRuntimeObservation:
     """Admissible runtime observation for one ``hasattr(obj, name)`` boundary."""
 
@@ -338,6 +355,33 @@ def attach_dynamic_import_runtime_provenance(
     eligible_constructs = _eligible_dynamic_import_constructs(program)
     matched_observations = [
         _runtime_observation_from_dynamic_import_observation(
+            construct=construct,
+            observation=observation,
+        )
+        for observation in observations
+        if (
+            construct := eligible_constructs.get(
+                _source_site_identity(observation.site)
+            )
+        )
+        is not None
+    ]
+    if not matched_observations:
+        return program
+    return attach_runtime_observations(program, matched_observations)
+
+
+def attach_eval_runtime_provenance(
+    program: SemanticProgram,
+    observations: Sequence[EvalRuntimeObservation],
+) -> SemanticProgram:
+    """Attach runtime-backed provenance to eligible ``eval(source)`` boundaries."""
+    if not observations:
+        return program
+
+    eligible_constructs = _eligible_eval_constructs(program)
+    matched_observations = [
+        _runtime_observation_from_eval_observation(
             construct=construct,
             observation=observation,
         )
@@ -836,6 +880,32 @@ def _eligible_hasattr_constructs(
     return eligible_constructs
 
 
+def _eligible_eval_constructs(
+    program: SemanticProgram,
+) -> dict[tuple[str, int, int, int, int], UnsupportedConstruct]:
+    """Index eligible ``eval(source)`` unsupported constructs by source site."""
+    call_sites_by_id = {
+        call_site.call_site_id: call_site for call_site in program.syntax.call_sites
+    }
+    eligible_constructs: dict[tuple[str, int, int, int, int], UnsupportedConstruct] = {}
+    for construct in program.unsupported_constructs:
+        if construct.reason_code is not UnresolvedReasonCode.EXEC_OR_EVAL:
+            continue
+        call_site = _call_site_for_unsupported_construct(
+            construct=construct,
+            call_sites_by_id=call_sites_by_id,
+        )
+        if call_site is None or not _is_supported_eval_call_site(call_site):
+            continue
+        source_identity = _source_site_identity(construct.site)
+        if source_identity in eligible_constructs:
+            raise ValueError(
+                "multiple eligible eval constructs share the same source site"
+            )
+        eligible_constructs[source_identity] = construct
+    return eligible_constructs
+
+
 def _eligible_getattr_constructs(
     program: SemanticProgram,
 ) -> dict[tuple[str, int, int, int, int], tuple[UnsupportedConstruct, int]]:
@@ -1105,6 +1175,36 @@ def _is_supported_hasattr_call_site(call_site: CallSiteFact) -> bool:
     return isinstance(expression, ast.Name) and expression.id == "hasattr"
 
 
+def _is_supported_eval_call_site(call_site: CallSiteFact) -> bool:
+    """Return whether ``call_site`` is the accepted attachable ``eval`` form."""
+    if call_site.argument_count != 1:
+        return False
+
+    try:
+        expression = ast.parse(call_site.callee_text, mode="eval").body
+    except SyntaxError:
+        return False
+    if not (isinstance(expression, ast.Name) and expression.id == "eval"):
+        return False
+
+    snippet = call_site.site.snippet
+    if snippet is None:
+        return False
+    try:
+        call_expression = ast.parse(snippet.strip(), mode="eval").body
+    except SyntaxError:
+        return False
+    return (
+        isinstance(call_expression, ast.Call)
+        and isinstance(call_expression.func, ast.Name)
+        and call_expression.func.id == "eval"
+        and len(call_expression.args) == 1
+        and not call_expression.keywords
+        and isinstance(call_expression.args[0], ast.Name)
+        and call_expression.args[0].id == "source"
+    )
+
+
 def _is_supported_getattr_call_site(call_site: CallSiteFact) -> bool:
     """Return whether ``call_site`` is the accepted attachable ``getattr`` form."""
     if call_site.argument_count not in {2, 3}:
@@ -1234,6 +1334,32 @@ def _runtime_observation_from_hasattr_observation(
     observation: HasattrRuntimeObservation,
 ) -> _RuntimeObservation:
     """Translate one matched ``hasattr`` observation into the generic contract."""
+    return _RuntimeObservation(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=construct.construct_id,
+        outcome=_RuntimeObservationOutcome.OBSERVED,
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        attachment_links=observation.attachment_links,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=observation.replay_inputs,
+        runtime_assumptions=observation.runtime_assumptions,
+        normalized_payload=observation.normalized_payload,
+        durable_payload_reference=observation.durable_payload_reference,
+    )
+
+
+def _runtime_observation_from_eval_observation(
+    *,
+    construct: UnsupportedConstruct,
+    observation: EvalRuntimeObservation,
+) -> _RuntimeObservation:
+    """Translate one matched ``eval`` observation into the generic contract."""
+    _validate_eval_evaluation_outcome(observation.normalized_payload)
+    _validate_eval_replay_inputs(observation.replay_inputs)
+    _validate_eval_durable_payload_reference(observation)
     return _RuntimeObservation(
         subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
         subject_id=construct.construct_id,
@@ -1517,6 +1643,63 @@ def _validate_vars_lookup_outcome(
         )
 
 
+def _validate_eval_evaluation_outcome(
+    normalized_payload: tuple[_RuntimeObservationField, ...],
+) -> None:
+    """Require the bounded ``eval`` runtime payload for this slice."""
+    payload = _normalized_field_mapping(
+        normalized_payload,
+        field_name="normalized_payload",
+    )
+    evaluation_outcome = payload.get("evaluation_outcome")
+    if evaluation_outcome is None:
+        raise ValueError(
+            "eval runtime observations require normalized_payload.evaluation_outcome"
+        )
+    if evaluation_outcome != "returned_value":
+        raise ValueError(
+            "eval runtime observations require evaluation_outcome to be "
+            "'returned_value'"
+        )
+
+
+def _validate_eval_replay_inputs(
+    replay_inputs: tuple[_RuntimeObservationField, ...],
+) -> None:
+    """Require bounded evaluated-source replay proof for ``eval`` observations."""
+    inputs = _normalized_field_mapping(
+        replay_inputs,
+        field_name="replay_inputs",
+    )
+    source_shape = inputs.get("source_shape")
+    if source_shape is None:
+        raise ValueError("eval runtime observations require replay_inputs.source_shape")
+    if source_shape != "literal_expression":
+        raise ValueError(
+            "eval runtime observations require source_shape to be 'literal_expression'"
+        )
+
+    source_sha256 = inputs.get("source_sha256")
+    if source_sha256 is None:
+        raise ValueError(
+            "eval runtime observations require replay_inputs.source_sha256"
+        )
+    if not _is_sha256_digest(source_sha256):
+        raise ValueError(
+            "eval runtime observations require source_sha256 to be a "
+            "64-character hex digest"
+        )
+
+
+def _validate_eval_durable_payload_reference(
+    observation: EvalRuntimeObservation,
+) -> None:
+    """Require durable returned-value proof for the bounded ``eval`` seam."""
+    durable_payload_reference = observation.durable_payload_reference
+    if durable_payload_reference is None or not durable_payload_reference.strip():
+        raise ValueError("eval runtime observations require durable_payload_reference")
+
+
 def _validate_globals_lookup_outcome(
     normalized_payload: tuple[_RuntimeObservationField, ...],
 ) -> None:
@@ -1649,6 +1832,14 @@ def _validate_metaclass_behavior_durable_payload_reference(
         )
 
 
+def _is_sha256_digest(value: str) -> bool:
+    """Return whether ``value`` is a SHA-256 hex digest."""
+    stripped = value.strip()
+    if len(stripped) != 64:
+        return False
+    return all(character in "0123456789abcdefABCDEF" for character in stripped)
+
+
 def _source_site_identity(site: SourceSite) -> tuple[str, int, int, int, int]:
     """Return the stable source identity used for runtime-attachment matching."""
     span = site.span
@@ -1753,6 +1944,7 @@ __all__ = [
     "DelattrRuntimeObservation",
     "DynamicImportRuntimeObservation",
     "DirRuntimeObservation",
+    "EvalRuntimeObservation",
     "GetattrRuntimeObservation",
     "GlobalsRuntimeObservation",
     "HasattrRuntimeObservation",
@@ -1763,6 +1955,7 @@ __all__ = [
     "attach_delattr_runtime_provenance",
     "attach_dynamic_import_runtime_provenance",
     "attach_dir_runtime_provenance",
+    "attach_eval_runtime_provenance",
     "attach_getattr_runtime_provenance",
     "attach_globals_runtime_provenance",
     "attach_hasattr_runtime_provenance",

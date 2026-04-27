@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import textwrap
 from pathlib import Path
 
@@ -66,6 +67,50 @@ def _dynamic_import_runtime_observation(
                 value="pkg.dynamic",
             ),
         ),
+    )
+
+
+def _eval_runtime_observation(
+    site,
+) -> runtime_acquisition.EvalRuntimeObservation:
+    """Create one admissible ``eval(source)`` runtime observation for analyzer tests."""
+    return runtime_acquisition.EvalRuntimeObservation(
+        site=site,
+        probe_identifier="probe:eval",
+        probe_contract_revision="2026-04-26.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:eval:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_expression",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=hashlib.sha256(b'"runtime-value"').hexdigest(),
+            ),
+        ),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="evaluation_outcome",
+                value="returned_value",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="result_type",
+                value="builtins.str",
+            ),
+        ),
+        durable_payload_reference=f"artifact://eval-result/{site.site_id}.json",
     )
 
 
@@ -634,6 +679,51 @@ def test_analyze_repository_attaches_dynamic_import_runtime_provenance_post_fron
         }
     }
     assert len(analyzed_program.provenance_records) == 2
+
+
+def test_analyze_repository_attaches_eval_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded ``eval(source)`` runtime provenance post-frontier."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(source: str, globals_ns: dict[str, object]) -> None:
+                eval(source)
+                eval(source, globals_ns)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _eval_runtime_observation(construct.site)
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        eval_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_eval_runtime_provenance(
+        manual_program,
+        observations,
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        next(
+            construct.construct_id
+            for construct in manual_program.unsupported_constructs
+            if construct.construct_text == "eval(source)"
+        )
+    }
+    assert len(analyzed_program.provenance_records) == 1
 
 
 def test_analyze_repository_attaches_hasattr_runtime_provenance_post_frontier(

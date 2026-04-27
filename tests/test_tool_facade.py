@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import textwrap
 from pathlib import Path
 
@@ -93,6 +94,76 @@ def _dynamic_import_runtime_observation_for_site(
                 value=imported_module,
             ),
         ),
+    )
+
+
+def _eval_runtime_observation() -> runtime_acquisition.EvalRuntimeObservation:
+    """Create one admissible ``eval(source)`` runtime observation for facade tests."""
+    return _eval_runtime_observation_for_site(
+        SourceSite(
+            site_id="site:main:eval",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=1,
+                start_column=0,
+                end_line=1,
+                end_column=12,
+            ),
+            snippet="eval(source)",
+        )
+    )
+
+
+def _eval_runtime_observation_for_site(
+    site: SourceSite,
+    *,
+    evaluation_outcome: str = "returned_value",
+    source_text: str = '"runtime-value"',
+    durable_payload_reference: str | None = None,
+) -> runtime_acquisition.EvalRuntimeObservation:
+    """Create one admissible ``eval(source)`` runtime observation for ``site``."""
+    durable_reference = durable_payload_reference
+    if durable_reference is None:
+        durable_reference = f"artifact://eval-result/{site.site_id}.json"
+    return runtime_acquisition.EvalRuntimeObservation(
+        site=site,
+        probe_identifier="probe:eval",
+        probe_contract_revision="2026-04-26.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id="attachment:eval:trace",
+                attachment_role="trace",
+                description="eval trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_expression",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=hashlib.sha256(source_text.encode("utf-8")).hexdigest(),
+            ),
+        ),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="evaluation_outcome",
+                value=evaluation_outcome,
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="result_type",
+                value="builtins.str",
+            ),
+        ),
+        durable_payload_reference=durable_reference,
     )
 
 
@@ -786,6 +857,122 @@ def test_compile_repository_context_attaches_builtin_dynamic_import_runtime_prov
         )
     )
     expected_program = runtime_acquisition.attach_dynamic_import_runtime_provenance(
+        base_program,
+        [observation],
+    )
+
+    assert response.program == expected_program
+    assert response.unsupported_constructs == tuple(base_program.unsupported_constructs)
+    assert len(response.program.provenance_records) == 1
+    [record] = response.program.provenance_records
+    assert record.subject_kind is semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.subject_id == construct.construct_id
+
+
+def test_compile_repository_context_forwards_eval_runtime_observations(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade forwards bounded ``eval`` observations to the analyzer seam."""
+    observation = _eval_runtime_observation()
+    syntax = SyntaxProgram(repo_root=tmp_path)
+    program = SemanticProgram(repo_root=tmp_path, syntax=syntax)
+    compile_result = SemanticCompileResult(
+        document="# Semantic Context\nruntime-backed",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(),
+            warnings=(),
+            total_tokens=0,
+            budget=64,
+            confidence=0.5,
+        ),
+        omitted_unit_ids=(),
+        total_tokens=8,
+        budget=64,
+        confidence=0.5,
+        compile_context=SemanticCompileContext(query="query"),
+    )
+    analyzer_calls: list[
+        tuple[
+            Path | str,
+            tuple[runtime_acquisition.EvalRuntimeObservation, ...],
+        ]
+    ] = []
+
+    def fake_analyze(
+        repo_root: Path | str,
+        *,
+        eval_runtime_observations: tuple[
+            runtime_acquisition.EvalRuntimeObservation, ...
+        ] = (),
+    ) -> SemanticProgram:
+        analyzer_calls.append((repo_root, eval_runtime_observations))
+        return program
+
+    def fake_compile(
+        received_program: SemanticProgram,
+        query: str,
+        budget: int,
+        *,
+        embed_fn: tool_facade.EmbeddingFunction | None = None,
+    ) -> SemanticCompileResult:
+        assert received_program is program
+        assert query == "query"
+        assert budget == 64
+        assert embed_fn is None
+        return compile_result
+
+    monkeypatch.setattr(tool_facade, "analyze_repository", fake_analyze)
+    monkeypatch.setattr(tool_facade, "compile_semantic_context", fake_compile)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="query",
+            budget=64,
+            eval_runtime_observations=(observation,),
+        )
+    )
+
+    assert response.program is program
+    assert response.compile_result is compile_result
+    assert analyzer_calls == [(tmp_path, (observation,))]
+
+
+def test_compile_repository_context_attaches_eval_runtime_provenance(
+    tmp_path: Path,
+) -> None:
+    """The facade preserves unsupported truth while attaching ``eval`` runtime."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(source: str, globals_ns: dict[str, object]) -> None:
+                eval(source)
+                eval(source, globals_ns)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = context_ir.analyze_repository(tmp_path)
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == "eval(source)"
+    )
+    observation = _eval_runtime_observation_for_site(construct.site)
+
+    response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="eval runtime",
+            budget=160,
+            eval_runtime_observations=(observation,),
+        )
+    )
+    expected_program = runtime_acquisition.attach_eval_runtime_provenance(
         base_program,
         [observation],
     )

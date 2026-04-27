@@ -1,0 +1,56 @@
+{
+  "schema_version": "v1",
+  "eval_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 3,
+      "start_column": 11,
+      "end_line": 3,
+      "end_column": 23,
+      "source_snippet": "eval(source)",
+      "probe_identifier": "probe:eval:literal-source",
+      "probe_contract_revision": "2026-04-26.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_eval_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://eval/literal-source-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed eval(source) probe trace for literal source evaluation."
+        }
+      ],
+      "replay_target": "main.probe_eval_source",
+      "replay_selector": "call:main.probe_eval_source",
+      "replay_inputs": [
+        {
+          "key": "source_shape",
+          "value": "literal_expression"
+        },
+        {
+          "key": "source_sha256",
+          "value": "c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199"
+        }
+      ],
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "evaluation_outcome",
+          "value": "returned_value"
+        },
+        {
+          "key": "result_type",
+          "value": "builtins.str"
+        }
+      ],
+      "durable_payload_reference": "artifact://eval/literal-source-observation.json"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ from context_ir.eval_oracles import (
     load_fixture_delattr_runtime_observations,
     load_fixture_dir_runtime_observations,
     load_fixture_dynamic_import_runtime_observations,
+    load_fixture_eval_runtime_observations,
     load_fixture_getattr_runtime_observations,
     load_fixture_globals_runtime_observations,
     load_fixture_hasattr_runtime_observations,
@@ -274,6 +275,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
     dynamic_import_runtime_observations = (
         load_fixture_dynamic_import_runtime_observations(request.repo_root)
     )
+    eval_runtime_observations = load_fixture_eval_runtime_observations(
+        request.repo_root
+    )
     getattr_runtime_observations = load_fixture_getattr_runtime_observations(
         request.repo_root
     )
@@ -309,6 +313,9 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
                 dynamic_import_runtime_observations
                 if dynamic_import_runtime_observations
                 else None
+            ),
+            eval_runtime_observations=(
+                eval_runtime_observations if eval_runtime_observations else None
             ),
             hasattr_runtime_observations=(
                 hasattr_runtime_observations if hasattr_runtime_observations else None

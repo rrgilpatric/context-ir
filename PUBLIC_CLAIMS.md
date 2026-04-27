@@ -35,7 +35,9 @@ stays scoped to repo-local evidence only.
   `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
   internal eval-only one-argument `dir(obj)` pilot, plus the current internal
   eval-only zero-argument `dir()` pilot, plus the current internal eval-only
-  `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot.
+  `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus
+  the current internal eval-only `EXEC_OR_EVAL` /
+  `eval(source)` evidence.
   The three existing
   getattr-family pilot matrices
   (`oracle_signal_getattr_probe_matrix`,
@@ -92,7 +94,18 @@ stays scoped to repo-local evidence only.
   attachment is limited to the preserved full `metaclass=...` keyword-site
   unsupported construct, selector and selected-unit primary truth remain
   `unsupported/opaque`, runtime provenance remains additive only, and public
-  comparative claims remain bounded to the existing quad matrix. These
+  comparative claims remain bounded to the existing quad matrix; the internal
+  `oracle_signal_eval_probe_matrix` is limited to 1 task x 1 budget x 3
+  providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime
+  payload/proof boundary `evaluation_outcome=returned_value`,
+  `source_shape=literal_expression`, valid `source_sha256`, and non-empty
+  `durable_payload_reference`; optional `result_type=builtins.str` is additive
+  summary only, runtime provenance attaches only to the preserved
+  `EXEC_OR_EVAL` unsupported finding for `eval(source)`, primary selector and
+  selected-unit truth remain `unsupported/opaque`, additive runtime provenance
+  remains separate from primary truth, and public comparative claims remain
+  bounded to the existing quad matrix. These
   pilots must not be described as public benchmark proof, generalized
   reflective-builtin support, generalized runtime-mutation support,
   generalized locals() support, or generalized hybrid-runtime support. The
@@ -107,7 +120,8 @@ stays scoped to repo-local evidence only.
   [evals/run_specs/oracle_signal_setattr_probe_matrix.json](evals/run_specs/oracle_signal_setattr_probe_matrix.json),
   [evals/run_specs/oracle_signal_dir_probe_matrix.json](evals/run_specs/oracle_signal_dir_probe_matrix.json),
   [evals/run_specs/oracle_signal_dir_zero_probe_matrix.json](evals/run_specs/oracle_signal_dir_zero_probe_matrix.json),
-  [evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json](evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json).
+  [evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json](evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json),
+  [evals/run_specs/oracle_signal_eval_probe_matrix.json](evals/run_specs/oracle_signal_eval_probe_matrix.json).
 - Safe comparative descriptor: Within the fixed internal quad matrix only
   (`oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`,
   and `oracle_signal_smoke_d` at budgets `200` and `240` against
@@ -147,7 +161,8 @@ stays scoped to repo-local evidence only.
   plus the current internal eval-only one-argument `dir(obj)` pilot, plus the
   current internal eval-only zero-argument `dir()` pilot, plus the current
   internal eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...`
-  keyword-site pilot. For
+  keyword-site pilot, plus the current internal eval-only
+  `EXEC_OR_EVAL` / `eval(source)` evidence. For
   the three existing getattr-family matrices, the only accepted
   provider/budget wording is 1 task x 2 budgets x 3 providers at budgets `100`
   and `220`. For the internal `vars(obj)` matrix, the only accepted
@@ -212,6 +227,19 @@ stays scoped to repo-local evidence only.
   selected-unit primary truth remain `unsupported/opaque`, runtime provenance
   remains additive only, and public comparative claims remain bounded to the
   existing quad matrix.
+  For the current internal eval-only `EXEC_OR_EVAL` /
+  `eval(source)` matrix, the only accepted provider/budget wording is
+  `oracle_signal_eval_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+  220, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; the runtime payload/proof boundary is
+  `evaluation_outcome=returned_value`, `source_shape=literal_expression`,
+  valid `source_sha256`, and non-empty `durable_payload_reference`; optional
+  `result_type=builtins.str` is additive summary only, runtime provenance
+  attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
+  `eval(source)`, primary selector and selected-unit truth remain
+  `unsupported/opaque`, additive runtime provenance remains separate from
+  primary truth, and public comparative claims remain bounded to the existing
+  quad matrix.
   Do not convert that into a public supported-subset, benchmark, product, or
   generalized hybrid static + runtime claim.
 - For reflective-builtin pilot wording, preserve that selector and
@@ -225,7 +253,9 @@ stays scoped to repo-local evidence only.
   provenance is additive only. For the `METACLASS_BEHAVIOR` pilot, attachment
   is limited to the preserved full `metaclass=...` keyword-site unsupported
   construct, selector and selected-unit primary truth remain
-  `unsupported/opaque`, and runtime provenance remains additive only.
+  `unsupported/opaque`, and runtime provenance remains additive only. For the
+  current `EXEC_OR_EVAL` / `eval(source)` matrix, runtime provenance attaches
+  only to the preserved unsupported finding and remains additive only.
 - Any comparative sentence must stay explicitly scoped to the accepted internal
   quad matrix. Do not generalize the current `8/8` result beyond that fixed
   four-task, two-budget, three-provider surface.
@@ -251,5 +281,5 @@ stays scoped to repo-local evidence only.
 | --- | --- | --- |
 | AC1 | Context IR is an in-progress semantic-first Python context compiler over a supported static subset. | [README.md](README.md), [EVAL.md](EVAL.md#supported-claims-today), [PLAN.md](PLAN.md) |
 | AC2 | Public interface claims are limited to `analyze_repository(...)`, `compile_repository_context(...)`, and one tested MCP compile tool. | [README.md](README.md#python-api), [README.md](README.md#minimal-mcp-usage), [EVAL.md](EVAL.md#supported-claims-today) |
-| AC3 | Deterministic internal eval infrastructure exists; the quad matrix remains the current public-safe comparative internal surface, while runtime-backed evidence is limited to narrow internal `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, and `METACLASS_BEHAVIOR` pilots enumerated in `EVAL.md`. The internal `oracle_signal_dir_zero_probe_matrix` covers only zero-argument `dir()` evidence as 1 task x 1 budget x 3 providers at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`; runtime proof requires non-empty `durable_payload_reference`, `listing_entry_count` is additive summary only, primary selector and selected-unit truth remain `unsupported/opaque`, runtime provenance remains additive only, and public comparative claims remain bounded to the existing quad matrix. The internal `oracle_signal_metaclass_behavior_probe_matrix` covers only 1 task x 1 budget x 3 providers at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload `class_creation_outcome=created_class`; `durable_payload_reference` is required and non-empty, optional `created_class_qualified_name` and `selected_metaclass_qualified_name` fields are additive summary only, attachment is limited to the preserved full `metaclass=...` keyword-site unsupported construct, selector and selected-unit primary truth remain `unsupported/opaque`, runtime provenance remains additive only, and public comparative claims remain bounded to the existing quad matrix. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_triple_matrix.json](evals/run_specs/oracle_signal_triple_matrix.json), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json), [evals/run_specs/oracle_signal_hasattr_probe_matrix.json](evals/run_specs/oracle_signal_hasattr_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_probe_matrix.json](evals/run_specs/oracle_signal_getattr_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_default_probe_matrix.json](evals/run_specs/oracle_signal_getattr_default_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json](evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json), [evals/run_specs/oracle_signal_vars_probe_matrix.json](evals/run_specs/oracle_signal_vars_probe_matrix.json), [evals/run_specs/oracle_signal_vars_zero_probe_matrix.json](evals/run_specs/oracle_signal_vars_zero_probe_matrix.json), [evals/run_specs/oracle_signal_globals_probe_matrix.json](evals/run_specs/oracle_signal_globals_probe_matrix.json), [evals/run_specs/oracle_signal_locals_probe_matrix.json](evals/run_specs/oracle_signal_locals_probe_matrix.json), [evals/run_specs/oracle_signal_delattr_probe_matrix.json](evals/run_specs/oracle_signal_delattr_probe_matrix.json), [evals/run_specs/oracle_signal_setattr_probe_matrix.json](evals/run_specs/oracle_signal_setattr_probe_matrix.json), [evals/run_specs/oracle_signal_dir_probe_matrix.json](evals/run_specs/oracle_signal_dir_probe_matrix.json), [evals/run_specs/oracle_signal_dir_zero_probe_matrix.json](evals/run_specs/oracle_signal_dir_zero_probe_matrix.json), [evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json](evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json) |
+| AC3 | Deterministic internal eval infrastructure exists; the quad matrix remains the current public-safe comparative internal surface, while runtime-backed evidence is limited to narrow internal `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, `METACLASS_BEHAVIOR`, and `EXEC_OR_EVAL` pilots enumerated in `EVAL.md`. The internal `oracle_signal_dir_zero_probe_matrix` covers only zero-argument `dir()` evidence as 1 task x 1 budget x 3 providers at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`; runtime proof requires non-empty `durable_payload_reference`, `listing_entry_count` is additive summary only, primary selector and selected-unit truth remain `unsupported/opaque`, runtime provenance remains additive only, and public comparative claims remain bounded to the existing quad matrix. The internal `oracle_signal_metaclass_behavior_probe_matrix` covers only 1 task x 1 budget x 3 providers at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload `class_creation_outcome=created_class`; `durable_payload_reference` is required and non-empty, optional `created_class_qualified_name` and `selected_metaclass_qualified_name` fields are additive summary only, attachment is limited to the preserved full `metaclass=...` keyword-site unsupported construct, selector and selected-unit primary truth remain `unsupported/opaque`, runtime provenance remains additive only, and public comparative claims remain bounded to the existing quad matrix. The internal `oracle_signal_eval_probe_matrix` covers only narrow eval-only `EXEC_OR_EVAL` / `eval(source)` evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload/proof boundary `evaluation_outcome=returned_value`, `source_shape=literal_expression`, valid `source_sha256`, and non-empty `durable_payload_reference`; optional `result_type=builtins.str` is additive summary only, runtime provenance attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for `eval(source)`, primary selector and selected-unit truth remain `unsupported/opaque`, additive runtime provenance remains separate from primary truth, and public comparative claims remain bounded to the existing quad matrix. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_triple_matrix.json](evals/run_specs/oracle_signal_triple_matrix.json), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json), [evals/run_specs/oracle_signal_hasattr_probe_matrix.json](evals/run_specs/oracle_signal_hasattr_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_probe_matrix.json](evals/run_specs/oracle_signal_getattr_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_default_probe_matrix.json](evals/run_specs/oracle_signal_getattr_default_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json](evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json), [evals/run_specs/oracle_signal_vars_probe_matrix.json](evals/run_specs/oracle_signal_vars_probe_matrix.json), [evals/run_specs/oracle_signal_vars_zero_probe_matrix.json](evals/run_specs/oracle_signal_vars_zero_probe_matrix.json), [evals/run_specs/oracle_signal_globals_probe_matrix.json](evals/run_specs/oracle_signal_globals_probe_matrix.json), [evals/run_specs/oracle_signal_locals_probe_matrix.json](evals/run_specs/oracle_signal_locals_probe_matrix.json), [evals/run_specs/oracle_signal_delattr_probe_matrix.json](evals/run_specs/oracle_signal_delattr_probe_matrix.json), [evals/run_specs/oracle_signal_setattr_probe_matrix.json](evals/run_specs/oracle_signal_setattr_probe_matrix.json), [evals/run_specs/oracle_signal_dir_probe_matrix.json](evals/run_specs/oracle_signal_dir_probe_matrix.json), [evals/run_specs/oracle_signal_dir_zero_probe_matrix.json](evals/run_specs/oracle_signal_dir_zero_probe_matrix.json), [evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json](evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json), [evals/run_specs/oracle_signal_eval_probe_matrix.json](evals/run_specs/oracle_signal_eval_probe_matrix.json) |
 | AC4 | The only allowed comparative claim is the fixed-scope quad-matrix claim: within that matrix only, `context_ir` wins all `8/8` task-budget rows and leads the provider-average aggregate. | [EVAL.md](EVAL.md#supported-claims-today), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |

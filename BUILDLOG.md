@@ -2,6 +2,135 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-27 -- EXEC_OR_EVAL eval(source) Release-Unit Audit Did Not Clear
+
+- Ran the release-unit audit for the accumulated workspace-only internal
+  eval-only `EXEC_OR_EVAL` / `eval(source)` release unit after accepting the
+  docs/evidence/continuity reconciliation first-pass
+- Repo-backed truth during audit:
+  - branch `main`
+  - `HEAD` and `origin/main` at `f0efbef`
+  - latest pushed release remains
+    `f0efbef Add dir zero runtime eval pilot`
+  - the current `EXEC_OR_EVAL` / `eval(source)` release unit remains
+    workspace-only, not committed, and not pushed
+- Findings:
+  - continuity still described the docs/evidence/continuity reconciliation as
+    current or held instead of accepted first-pass
+  - release-facing claim wording implied that the eval(source) release did not
+    widen runtime acquisition or analyzer/tool-facade implementation, even
+    though the release intentionally adds a narrow lower-layer eval(source)
+    runtime provenance seam in runtime_acquisition, analyzer, and tool_facade
+- Preserved boundary:
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only and attaches only to the preserved
+    `EXEC_OR_EVAL` unsupported finding for `eval(source)`
+  - no generalized eval support, no exec support, no globals/locals eval
+    support, no `eval(source, globals)` support,
+    no `eval(source, globals, locals)` support, no generated-code dependency
+    modeling, and no namespace mutation modeling are included
+  - no
+    public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening is authorized
+- Routing decision:
+  - release-unit audit not cleared
+  - route next to correction acceptance, then audit rerun next over the
+    complete accumulated release unit
+  - full regression blocked until audit clears
+  - commit-gating blocked until full regression clears
+  - local commit creation remains blocked until commit-gating clears
+  - push remains Ryan-gated
+- Acceptance status: rejected
+
+## 2026-04-27 -- EXEC_OR_EVAL eval(source) Release-Unit Docs Reconciliation
+
+- Reconciled release-facing docs and continuity for the accumulated
+  workspace-only internal eval-only `EXEC_OR_EVAL` / `eval(source)` release
+  unit
+- Repo-backed truth during this slice:
+  - branch `main`
+  - latest pushed release truth remains
+    `f0efbef Add dir zero runtime eval pilot`
+  - nothing from the current `EXEC_OR_EVAL` / `eval(source)` release unit has
+    been committed or pushed
+  - nothing is staged
+- Workspace-only accepted state:
+  - the lower-layer `EXEC_OR_EVAL` / `eval(source)` runtime provenance seam is
+    accepted after 1 correction
+  - the `oracle_signal_eval_probe_matrix` implementation/assets are accepted
+    first-pass
+  - docs/evidence/continuity reconciliation accepted first-pass
+- Evidence boundary:
+  - `oracle_signal_eval_probe_matrix` is narrow internal evidence only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload/proof boundary is `evaluation_outcome=returned_value`,
+    `source_shape=literal_expression`, valid `source_sha256`, and non-empty
+    `durable_payload_reference`
+  - optional `result_type=builtins.str` is additive summary only
+  - runtime provenance attaches only to the preserved `EXEC_OR_EVAL`
+    unsupported finding for `eval(source)`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - additive runtime provenance remains separate from primary truth
+  - public comparative claims remain bounded to the existing quad matrix
+- Preserved non-goals:
+  - no broader `eval` forms are in scope beyond simple-name builtin
+    `eval(source)` with one positional argument
+  - this release intentionally adds a narrow lower-layer eval(source) runtime
+    provenance seam in runtime_acquisition, analyzer, and tool_facade
+  - no generalized eval support, no exec support, no globals/locals eval
+    support, no `eval(source, globals)` support,
+    no `eval(source, globals, locals)` support, no generated-code dependency
+    modeling, and no namespace mutation modeling are included
+  - no
+    public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening is authorized
+- Routing decision:
+  - route next to release-unit audit
+  - full regression, commit-gating, local commit creation, and push remain
+    blocked until the release-unit audit is reviewed and accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-04-27 -- EXEC_OR_EVAL eval(source) Contract Spike Acceptance
+
+- Accepted the `EXEC_OR_EVAL` / `eval(source)` contract spike as the next
+  control authority after the pushed dir-zero release
+- Repo-backed truth during this correction:
+  - branch `main`
+  - `HEAD` and `origin/main` at `f0efbef`
+  - latest pushed release `f0efbef Add dir zero runtime eval pilot`
+  - clean worktree with nothing staged or untracked
+- Pushed release truth:
+  - `f0efbef Add dir zero runtime eval pilot` is the current pushed
+    eval/test/docs release anchor
+  - dir-zero release sequencing is complete and must not be reopened absent
+    new findings
+  - no route remains to dir-zero commit-gating, local commit creation, or push
+- Chosen first `EXEC_OR_EVAL` boundary:
+  - simple-name builtin `eval(source)`
+  - exactly one positional argument
+  - no globals/locals arguments
+  - no exec forms
+  - no generated-code dependency claims
+  - no namespace mutation modeling
+  - primary truth remains `unsupported/opaque`
+  - runtime provenance remains additive only as additive runtime provenance
+- Rejected alternatives:
+  - `exec(source)`
+  - `eval(source, globals, locals)`
+  - `eval("helper()")`
+  - budget expansion
+  - public/API/MCP/product work
+- Routing decision:
+  - route next to one lower-layer `EXEC_OR_EVAL` / `eval(source)` runtime
+    provenance implementation slice
+  - lower-layer runtime provenance seam next, before any eval matrix, assets,
+    docs claims, or public claims
+  - no API/MCP/product/public benchmark widening is authorized
+- Acceptance status: first-pass
+
 ## 2026-04-26 -- Dir Zero Eval Matrix Release-Gate Continuity Correction
 
 - Corrected continuity routing for the accumulated workspace-only internal
