@@ -40,23 +40,22 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Current
-repo-backed control state verified for this reconciliation is branch `main`,
-with `HEAD` and `origin/main` at
-`9dae4c9 Sync exec source release routing`. The latest pushed eval/test/docs
-release authority remains `bcd6d68 Add exec source runtime eval pilot`;
-`9dae4c9` is a continuity-routing sync and does not reopen that release.
+repo-backed release authority verified for this continuity sync is branch
+`main`, with `HEAD` and `origin/main` at
+`14b362e Add dynamic import root runtime eval pilot`.
 
-The active workspace-only tranche is the internal eval-only `DYNAMIC_IMPORT` /
-root-module `importlib.import_module(name)` sibling pilot. The implementation
-slice is accepted first-pass and includes only:
+`14b362e Add dynamic import root runtime eval pilot` is the latest pushed
+eval/test/docs release authority. It includes the internal eval-only
+`DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` sibling pilot.
+The pilot implementation assets are:
 
 - `evals/fixtures/oracle_signal_dynamic_import_root_probe/`
 - `evals/tasks/oracle_signal_dynamic_import_root_probe.json`
 - `evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json`
 - `tests/test_eval_signal_dynamic_import_root_probe.py`
 
-The active matrix is `oracle_signal_dynamic_import_root_probe_matrix`: 1 task
-x 1 budget x 3 providers at budget 220, against providers `context_ir`,
+The pushed matrix is `oracle_signal_dynamic_import_root_probe_matrix`: 1 task x
+1 budget x 3 providers at budget 220, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
 is `import importlib`, `name = "plugins.weather"`, and exactly
 `importlib.import_module(name)`. The runtime payload is
@@ -68,23 +67,22 @@ generalized dynamic import support, public/API/MCP/package-export/schema/scoring
 benchmark widening, product surface, schema, scoring, optimizer, compiler, or
 winner-selection widening is authorized.
 
-This docs/evidence/continuity reconciliation is the current slice. After
-control accepts it, route next to one dedicated read-only release-unit audit
-over the accumulated workspace-only root-module dynamic-import candidate:
+The release-unit audit for `14b362e` cleared first-pass. Full regression passed:
+`ruff check`, `ruff format --check`, `mypy --strict`, and
+`pytest tests/ -v` with `664 passed`. Commit-gating cleared first-pass. Local
+commit creation and Ryan-authorized push completed at `14b362e`.
 
-- the accepted implementation files listed above
-- `ARCHITECTURE.md`
-- `EVAL.md`
-- `PUBLIC_CLAIMS.md`
-- `README.md`
-- `PLAN.md`
-- `BUILDLOG.md`
+There is no live uncommitted tranche and no release-unit audit, full regression
+gate, commit-gating gate, local commit, or push open for `14b362e`. The next
+control action is one bounded post-`DYNAMIC_IMPORT` root-module north-star
+planning spike. Do not authorize a new implementation slice directly from this
+continuity state. Do not reopen `14b362e`, `bcd6d68`, or `96fc03a` absent new
+findings. Do not widen
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark scope through this routing.
 
-Full regression, commit-gating, local release creation, and remote publication
-remain blocked until the release-unit audit is reviewed and accepted.
-
-`bcd6d68 Add exec source runtime eval pilot` remains the latest pushed
-eval/test/docs release. It adds the narrow internal eval-only `EXEC_OR_EVAL` /
+`bcd6d68 Add exec source runtime eval pilot` remains the prior pushed
+exec(source) release. It adds the narrow internal eval-only `EXEC_OR_EVAL` /
 `exec(source)` evidence through `oracle_signal_exec_probe_matrix`: 1 task x 1
 budget x 3 providers at budget 220, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`. The fixture/call
@@ -120,12 +118,7 @@ remains separate from primary truth, and public comparative claims remain
 bounded to the existing quad matrix. Do not reopen `96fc03a` eval(source)
 absent new findings.
 
-There is no active release gate for `bcd6d68` or `96fc03a`. The next control
-action after this reconciliation is accepted is the root-module dynamic-import
-release-unit audit described above. Do not route to a new implementation slice
-or widen
-public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark scope through this routing.
+There is no active release gate for `bcd6d68` or `96fc03a`.
 
 Prior pushed release anchors remain: `f0efbef` for the internal eval-only
 `REFLECTIVE_BUILTIN` / zero-argument `dir()` provider matrix; `19d9a32` for
@@ -511,19 +504,23 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Full regression gate for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot passed
 - [x] Commit-gating review for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot cleared
 - [x] Local commit creation and Ryan-authorized push for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot completed at `bcd6d68`
-- [x] Internal eval-only `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` sibling implementation accepted first-pass as workspace-only state
+- [x] Internal eval-only `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` sibling implementation accepted first-pass and released at `14b362e`
+- [x] Release-unit audit for internal `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` runtime eval pilot cleared first-pass
+- [x] Full regression gate for internal `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` runtime eval pilot passed with `664 passed`
+- [x] Commit-gating review for internal `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` runtime eval pilot cleared first-pass
+- [x] Local commit creation and Ryan-authorized push for internal `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` runtime eval pilot completed at `14b362e`
 
 ## What Is In Progress
 
-- Docs/evidence/continuity reconciliation is in flight for the accepted
-  workspace-only internal eval-only `DYNAMIC_IMPORT` / root-module
-  `importlib.import_module(name)` sibling pilot
+- No implementation slice, release-unit audit, full regression gate,
+  commit-gating gate, local commit, or push is in flight for the
+  `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` release
 - No planning spike is currently in flight
-- No release sequencing is currently in flight for `bcd6d68` or `96fc03a`
-- After this reconciliation is accepted, route next to one dedicated
-  read-only release-unit audit over the accepted root-module dynamic-import
-  implementation plus the docs/control-state reconciliation
-- `bcd6d68 Add exec source runtime eval pilot` is the latest pushed release
+- Route next to one bounded post-`DYNAMIC_IMPORT` root-module north-star
+  planning spike; do not authorize a new implementation slice directly
+- `14b362e Add dynamic import root runtime eval pilot` is the latest pushed
+  eval/test/docs release authority and must not be reopened absent new findings
+- `bcd6d68 Add exec source runtime eval pilot` is the prior exec(source) release
   and must not be reopened absent new findings
 - `96fc03a Add eval runtime eval pilot` remains the prior eval(source)
   release authority and must not be reopened absent new findings
@@ -558,9 +555,8 @@ sequencing for `c1a12d7` absent new findings.
   correction pinned `source_sha256` to `sha256(b"pass")`; audit rerun cleared;
   full regression passed; commit-gating cleared; local commit creation
   completed; Ryan-authorized push completed
-- Next control action after this reconciliation is accepted is the
-  root-module dynamic-import release-unit audit, not release gates for
-  `bcd6d68`
+- Next control action is the post-`DYNAMIC_IMPORT` root-module north-star
+  planning spike, not release gates for `14b362e`, `bcd6d68`, or `96fc03a`
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
 - Live git refs and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
 - The `getattr` family matrix expansion release unit is pushed at `1b555ef`
@@ -1092,22 +1088,43 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next control action after this reconciliation is accepted: run one
-dedicated read-only release-unit audit over the accumulated workspace-only
-internal eval-only `DYNAMIC_IMPORT` / root-module
-`importlib.import_module(name)` sibling candidate. The audit scope is the
-accepted implementation files plus `ARCHITECTURE.md`, `EVAL.md`,
-`PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`, and `BUILDLOG.md`. It must not
-invent a new implementation slice, skip release gates, reopen completed
-release gates for `bcd6d68`, or widen
+Immediate next control action: run one bounded post-`DYNAMIC_IMPORT`
+root-module north-star planning spike. The spike should decide the smallest
+truthful next planning/evidence move after the pushed `14b362e` root-module
+pilot, and it must not authorize a new implementation slice directly. Do not
+route back to release-unit audit, full regression, commit-gating, local commit
+creation, or push for `14b362e` absent new findings. Do not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark scope.
+
+Current pushed release authority:
+
+- Treat pushed commit `14b362e Add dynamic import root runtime eval pilot` as
+  the latest eval/test/docs release authority:
+  - `oracle_signal_dynamic_import_root_probe_matrix` is 1 task x 1 budget x 3
+    providers at budget 220
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `import importlib`, `name = "plugins.weather"`, and
+    exactly `importlib.import_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or symbol is created from the dynamically imported module
+  - no `__import__(name)`, imported-name `import_module(name)`, alias or loader
+    forms, or generalized dynamic import support is included
+  - no public benchmark claim, API, MCP, package export, schema, scoring,
+    optimizer, compiler, product, or winner-selection widening is authorized
+  - release-unit audit cleared first-pass; full regression passed with
+    `664 passed`; commit-gating cleared first-pass; local commit and
+    Ryan-authorized push completed at `14b362e`
+  - do not reopen `14b362e` absent new findings
 
 Historical release anchors below remain guardrails and non-reopen constraints,
 not pending release gates.
 
 1. Treat pushed commit `bcd6d68 Add exec source runtime eval pilot` as the
-   latest pushed release authority:
+   prior pushed exec(source) release authority:
    - `oracle_signal_exec_probe_matrix` is 1 task x 1 budget x 3 providers at
      budget 220
    - providers remain `context_ir`, `lexical_top_k_files`, and
@@ -1452,9 +1469,9 @@ not pending release gates.
 - The accepted pushed `19d9a32` `METACLASS_BEHAVIOR` / preserved
   `metaclass=...` keyword-site release unit unless a later findings-based
   review proves a concrete defect
-- The accepted workspace-only `DYNAMIC_IMPORT` / root-module
-  `importlib.import_module(name)` sibling implementation boundary unless
-  release-unit audit or later review proves a concrete defect
+- The accepted pushed `14b362e` `DYNAMIC_IMPORT` / root-module
+  `importlib.import_module(name)` runtime eval pilot release unit unless a
+  later findings-based review proves a concrete defect
 - The accepted pushed `c592dca` `REFLECTIVE_BUILTIN` / `getattr(obj, name)` release unit unless a later findings-based review proves a concrete defect
 - The accepted pushed `7d43302` defaulted `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` release unit unless a later findings-based review proves a concrete defect
 - The accepted `EVAL.md` authority correction released in `7d43302` unless a later findings-based review proves a concrete defect

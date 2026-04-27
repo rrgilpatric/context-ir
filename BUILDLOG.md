@@ -2,19 +2,22 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-04-27 -- DYNAMIC_IMPORT Root Importlib Eval Pilot Workspace Reconciliation
+## 2026-04-27 -- DYNAMIC_IMPORT Root Importlib Eval Pilot Release
 
-- Reconciled docs and control-state for the accepted workspace-only internal
-  eval-only `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)`
-  sibling pilot
-- Repo-backed truth during this reconciliation:
+- Completed and pushed the internal eval-only `DYNAMIC_IMPORT` / root-module
+  `importlib.import_module(name)` sibling pilot at
+  `14b362e Add dynamic import root runtime eval pilot`
+- Repo-backed release truth:
   - branch `main`
-  - `HEAD` and `origin/main` at
-    `9dae4c9 Sync exec source release routing`
-  - latest pushed eval/test/docs release authority remains
-    `bcd6d68 Add exec source runtime eval pilot`
+  - `HEAD` and `origin/main` at `14b362e`
+  - latest pushed eval/test/docs release authority is
+    `14b362e Add dynamic import root runtime eval pilot`
+  - prior pushed release authorities include
+    `bcd6d68 Add exec source runtime eval pilot` and
+    `96fc03a Add eval runtime eval pilot`
   - live git refs remain authoritative
-- Accepted workspace-only implementation:
+  - do not reopen `14b362e`, `bcd6d68`, or `96fc03a` absent new findings
+- Released pilot assets:
   - `evals/fixtures/oracle_signal_dynamic_import_root_probe/`
   - `evals/tasks/oracle_signal_dynamic_import_root_probe.json`
   - `evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json`
@@ -42,18 +45,26 @@ Most recent supersession entries override older architectural decisions when the
     benchmark widening
   - no product-surface, schema, scoring, optimizer, compiler, or
     winner-selection widening
+- Release state:
+  - release-unit audit cleared first-pass
+  - full regression passed:
+    - `ruff check` passed
+    - `ruff format --check` passed
+    - `mypy --strict` passed
+    - `pytest tests/ -v` passed with `664 passed`
+  - commit-gating cleared first-pass
+  - local commit creation completed at `14b362e`
+  - Ryan-authorized push completed at `14b362e`
 - Routing decision:
-  - after this docs/evidence/continuity reconciliation is accepted, route next
-    to one dedicated read-only release-unit audit over the accumulated
-    workspace-only candidate
-  - the audit should cover the accepted implementation files plus
-    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`,
-    and `BUILDLOG.md`
-  - full regression, commit-gating, local release creation, and remote
-    publication remain blocked until the release-unit audit is reviewed and
-    accepted
-- Acceptance status: held pending control review of this reconciliation slice;
-  implementation acceptance remains first-pass
+  - route next to one bounded post-`DYNAMIC_IMPORT` root-module north-star
+    planning spike
+  - do not authorize a new implementation slice directly
+  - do not route back to release-unit audit, full regression, commit-gating,
+    local commit creation, or push for `14b362e` absent new findings
+  - do not widen
+    public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark scope through this routing
+- Acceptance status: first-pass
 
 ## 2026-04-27 -- EXEC_OR_EVAL exec(source) Runtime Eval Pilot Release
 
@@ -62,7 +73,8 @@ Most recent supersession entries override older architectural decisions when the
 - Repo-backed release truth:
   - branch `main`
   - `HEAD` and `origin/main` at `bcd6d68`
-  - latest pushed release is `bcd6d68 Add exec source runtime eval pilot`
+  - latest pushed release at that release point was
+    `bcd6d68 Add exec source runtime eval pilot`
   - prior eval(source) release authority is
     `96fc03a Add eval runtime eval pilot`
   - live git refs remain authoritative
