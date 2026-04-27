@@ -2,6 +2,61 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-27 -- DYNAMIC_IMPORT Builtin __import__(name) Workspace-Only Acceptance
+
+- Recorded the workspace-only accepted internal eval-only `DYNAMIC_IMPORT` /
+  builtin `__import__(name)` sibling pilot
+- Repo-backed release truth during this reconciliation:
+  - branch `main`
+  - `HEAD` and `origin/main` at `ad22ea6`
+  - latest pushed continuity authority is
+    `ad22ea6 Sync dynamic import root release routing`
+  - latest pushed eval/test/docs release authority remains
+    `14b362e Add dynamic import root runtime eval pilot`
+  - live git refs remain authoritative
+  - do not reopen `ad22ea6`, `14b362e`, `bcd6d68`, or `96fc03a` absent new
+    findings
+- Workspace-only accepted pilot assets:
+  - `evals/fixtures/oracle_signal_dynamic_import_builtin_probe/`
+  - `evals/tasks/oracle_signal_dynamic_import_builtin_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_builtin_probe.py`
+- Evidence boundary:
+  - `oracle_signal_dynamic_import_builtin_probe_matrix` is narrow internal
+    eval-only evidence only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `name = "plugins.weather"` and exactly
+    `__import__(name)`, with bounded `sys.modules[name]` retrieval only
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or symbol is created from `plugins.weather`
+  - public comparative claims remain bounded to the existing quad matrix
+- Preserved non-goals:
+  - no `importlib.import_module(name)` coverage
+  - no imported-name `import_module(name)` coverage
+  - no alias or loader forms
+  - no `builtins.__import__` coverage
+  - no globals/locals/fromlist forms
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+  - no product-surface, schema, scoring, optimizer, compiler, or
+    winner-selection widening
+- Routing decision:
+  - after this docs/evidence/continuity reconciliation is accepted, route next
+    to one dedicated read-only release-unit audit over the accumulated
+    workspace-only builtin `__import__(name)` release unit
+  - do not route yet to full regression, commit-gating, local commit creation,
+    staging, or push
+  - do not pre-record release-unit audit acceptance
+  - push remains Ryan-gated
+- Acceptance status: first-pass for the workspace-only implementation/assets
+  slice; this reconciliation still requires control-lane acceptance before the
+  audit lane opens
+
 ## 2026-04-27 -- DYNAMIC_IMPORT Root Importlib Eval Pilot Release
 
 - Completed and pushed the internal eval-only `DYNAMIC_IMPORT` / root-module
@@ -55,10 +110,12 @@ Most recent supersession entries override older architectural decisions when the
   - commit-gating cleared first-pass
   - local commit creation completed at `14b362e`
   - Ryan-authorized push completed at `14b362e`
-- Routing decision:
-  - route next to one bounded post-`DYNAMIC_IMPORT` root-module north-star
-    planning spike
-  - do not authorize a new implementation slice directly
+- Historical routing decision at that release point, now superseded by the
+  workspace-only builtin `__import__(name)` entry above:
+  - the next lane then was a bounded planning spike after the root-module
+    `DYNAMIC_IMPORT` pilot
+  - a new implementation slice was not authorized directly from that release
+    entry
   - do not route back to release-unit audit, full regression, commit-gating,
     local commit creation, or push for `14b362e` absent new findings
   - do not widen

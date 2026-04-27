@@ -43,7 +43,8 @@ zero-argument `dir()` pilot, plus a current internal eval-only
 `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus the
 current internal eval-only `EXEC_OR_EVAL` / `eval(source)`
 evidence, plus the current internal eval-only `EXEC_OR_EVAL` /
-`exec(source)` evidence. Those
+`exec(source)` evidence, plus narrow internal eval-only
+`DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence. Those
 pilots do not widen the public supported subset, public API, MCP wrapper,
 package-export surface, schema, scoring, optimizer, compiler,
 winner-selection, product surface, public benchmark claim boundary,
@@ -170,6 +171,22 @@ evidence does not cover `__import__(name)`, imported-name
 `import_module(name)`, alias or loader forms, generalized dynamic import
 support, or public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
+The narrow internal eval-only `DYNAMIC_IMPORT` / builtin
+`__import__(name)` sibling evidence covers only
+`oracle_signal_dynamic_import_builtin_probe_matrix`: 1 task x 1 budget x 3
+providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is `name = "plugins.weather"` and exactly `__import__(name)`, with bounded
+`sys.modules[name]` retrieval only. The runtime payload is
+`imported_module=plugins.weather`; primary selector and selected-unit truth
+remain `unsupported/opaque`, runtime provenance remains additive only, no
+dependency edge or symbol is created from `plugins.weather`, and public
+comparative claims remain bounded to the existing quad matrix. This evidence
+does not cover `importlib.import_module(name)`, imported-name
+`import_module(name)`, alias or loader forms, `builtins.__import__`,
+globals/locals/fromlist forms, generalized dynamic import support, or
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
 
 ## Supported Subset and Limits
 
@@ -211,13 +228,19 @@ zero-argument `dir()` pilot, plus the current internal eval-only
 `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus
 narrow internal eval-only `EXEC_OR_EVAL` / `eval(source)` and `exec(source)`
 evidence, plus narrow internal eval-only `DYNAMIC_IMPORT` / root-module
-`importlib.import_module(name)` sibling evidence. The `exec(source)` evidence is bounded to
+`importlib.import_module(name)` sibling evidence, plus narrow internal
+eval-only `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling
+evidence. The `exec(source)` evidence is bounded to
 `oracle_signal_exec_probe_matrix` and the exact `source = "pass"` /
 `exec(source)` fixture described in `EVAL.md`.
 The root-module dynamic-import sibling evidence is bounded to
 `oracle_signal_dynamic_import_root_probe_matrix` and the exact
 `import importlib`, `name = "plugins.weather"`,
 `importlib.import_module(name)` fixture described in `EVAL.md`.
+The builtin dynamic-import sibling evidence is bounded to
+`oracle_signal_dynamic_import_builtin_probe_matrix` and the exact
+`name = "plugins.weather"`, `__import__(name)`, and bounded
+`sys.modules[name]` retrieval fixture described in `EVAL.md`.
 That evidence is additive internal provenance on
 otherwise unsupported/opaque selectors, mutation surfaces, metaclass keyword
 sites, preserved `EXEC_OR_EVAL` unsupported findings, and selected units;
@@ -450,6 +473,17 @@ Current evidence includes:
   still `unsupported/opaque`, runtime provenance additive only, no dependency
   edge or symbol is created from the dynamically imported module, and public
   comparative claims remain bounded to the existing quad matrix
+- the narrow internal eval-only `DYNAMIC_IMPORT` / builtin
+  `__import__(name)` sibling evidence remains
+  `oracle_signal_dynamic_import_builtin_probe_matrix`: 1 task x 1 budget x 3
+  providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; the fixture boundary
+  is `name = "plugins.weather"` and exactly `__import__(name)`, with bounded
+  `sys.modules[name]` retrieval only; the runtime payload is
+  `imported_module=plugins.weather`; primary selector and selected-unit truth
+  still `unsupported/opaque`, runtime provenance additive only, no dependency
+  edge or symbol is created from `plugins.weather`, and public comparative
+  claims remain bounded to the existing quad matrix
 - within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,
