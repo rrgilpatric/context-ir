@@ -2,21 +2,24 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-04-27 -- DYNAMIC_IMPORT Builtin __import__(name) Workspace-Only Acceptance
+## 2026-04-27 -- DYNAMIC_IMPORT Builtin __import__(name) Release
 
-- Recorded the workspace-only accepted internal eval-only `DYNAMIC_IMPORT` /
-  builtin `__import__(name)` sibling pilot
+- Completed and pushed the internal eval-only `DYNAMIC_IMPORT` / builtin
+  `__import__(name)` sibling pilot at
+  `397c7dd Add builtin dynamic import eval probe`
 - Repo-backed release truth during this reconciliation:
   - branch `main`
-  - `HEAD` and `origin/main` at `ad22ea6`
-  - latest pushed continuity authority is
+  - `HEAD` and `origin/main` at `397c7dd`
+  - latest pushed release authority is
+    `397c7dd Add builtin dynamic import eval probe`
+  - prior pushed continuity authority is
     `ad22ea6 Sync dynamic import root release routing`
-  - latest pushed eval/test/docs release authority remains
+  - prior root-module dynamic-import eval/test/docs release authority is
     `14b362e Add dynamic import root runtime eval pilot`
   - live git refs remain authoritative
-  - do not reopen `ad22ea6`, `14b362e`, `bcd6d68`, or `96fc03a` absent new
+  - do not reopen `397c7dd`, `14b362e`, `bcd6d68`, or `96fc03a` absent new
     findings
-- Workspace-only accepted pilot assets:
+- Released pilot assets:
   - `evals/fixtures/oracle_signal_dynamic_import_builtin_probe/`
   - `evals/tasks/oracle_signal_dynamic_import_builtin_probe.json`
   - `evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json`
@@ -45,17 +48,25 @@ Most recent supersession entries override older architectural decisions when the
     benchmark widening
   - no product-surface, schema, scoring, optimizer, compiler, or
     winner-selection widening
+- Release state:
+  - release-unit audit cleared first-pass
+  - full regression passed:
+    - `ruff check` passed
+    - `ruff format --check` passed
+    - `mypy --strict` passed
+    - `pytest tests/ -v` passed with `670 passed`
+  - commit-gating cleared first-pass
+  - local commit creation completed at `397c7dd`
+  - Ryan-authorized push completed at `397c7dd`
 - Routing decision:
-  - after this docs/evidence/continuity reconciliation is accepted, route next
-    to one dedicated read-only release-unit audit over the accumulated
-    workspace-only builtin `__import__(name)` release unit
-  - do not route yet to full regression, commit-gating, local commit creation,
-    staging, or push
-  - do not pre-record release-unit audit acceptance
-  - push remains Ryan-gated
-- Acceptance status: first-pass for the workspace-only implementation/assets
-  slice; this reconciliation still requires control-lane acceptance before the
-  audit lane opens
+  - route next to one bounded post-`DYNAMIC_IMPORT` builtin north-star planning
+    spike
+  - do not route back to release-unit audit, full regression, commit-gating,
+    local commit creation, staging, or push for `397c7dd` absent new findings
+  - do not widen
+    public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark scope through this routing
+- Acceptance status: first-pass
 
 ## 2026-04-27 -- DYNAMIC_IMPORT Root Importlib Eval Pilot Release
 
@@ -111,7 +122,7 @@ Most recent supersession entries override older architectural decisions when the
   - local commit creation completed at `14b362e`
   - Ryan-authorized push completed at `14b362e`
 - Historical routing decision at that release point, now superseded by the
-  workspace-only builtin `__import__(name)` entry above:
+  pushed builtin `__import__(name)` release entry above:
   - the next lane then was a bounded planning spike after the root-module
     `DYNAMIC_IMPORT` pilot
   - a new implementation slice was not authorized directly from that release
