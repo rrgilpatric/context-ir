@@ -1,0 +1,56 @@
+{
+  "schema_version": "v1",
+  "exec_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 3,
+      "start_column": 4,
+      "end_line": 3,
+      "end_column": 16,
+      "source_snippet": "exec(source)",
+      "probe_identifier": "probe:exec:literal-source",
+      "probe_contract_revision": "2026-04-27.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_exec_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://exec/literal-source-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed exec(source) probe trace for literal source execution."
+        }
+      ],
+      "replay_target": "main.probe_exec_source",
+      "replay_selector": "call:main.probe_exec_source",
+      "replay_inputs": [
+        {
+          "key": "source_shape",
+          "value": "literal_statement"
+        },
+        {
+          "key": "source_sha256",
+          "value": "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+        }
+      ],
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "execution_outcome",
+          "value": "completed"
+        },
+        {
+          "key": "statement_kind",
+          "value": "pass"
+        }
+      ],
+      "durable_payload_reference": "artifact://exec/literal-source-observation.json"
+    }
+  ]
+}

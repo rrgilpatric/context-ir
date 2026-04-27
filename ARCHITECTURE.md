@@ -95,16 +95,36 @@ attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
 `unsupported/opaque`, additive runtime provenance remains separate from primary
 truth, and public comparative claims remain bounded to the existing quad
 matrix.
-This release intentionally adds a narrow lower-layer eval(source) runtime
-provenance seam in runtime_acquisition, analyzer, and tool_facade. It does not
-add generalized eval support, exec support, `eval(source, globals)` support,
-`eval(source, globals, locals)` support, generated-code dependency modeling, or
-namespace mutation modeling. Those slices do not widen public claims, public
-APIs, MCP behavior, package-export surfaces, scoring, winner-selection,
-optimizer, compiler, product surfaces, schema, generalized reflective-builtin
-support, generalized runtime-mutation support, generalized locals() support,
-or generalized hybrid-runtime coverage, and they do not make metaclasses part
-of the public supported subset. The no-widening boundary remains no
+The current internal eval-only `EXEC_OR_EVAL` / `exec(source)`
+evidence is narrow internal eval-only evidence and remains one task only
+through `oracle_signal_exec_probe_matrix`: 1 task x 1 budget x 3 providers at
+budget 220, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The fixture/call boundary is `source = "pass"`
+and exactly `exec(source)`; the executed source parses as exactly one
+`ast.Pass`. This evidence does not cover `exec("pass")`,
+`exec(source + suffix)`, `exec(source=source)`, `exec(source, globals)`,
+`exec(source, globals, locals)`, `builtins.exec`, or `eval`. The runtime
+payload/proof boundary is `execution_outcome=completed`,
+`source_shape=literal_statement`, valid `source_sha256` for exact `"pass"`,
+and non-empty `durable_payload_reference`; optional `statement_kind=pass` is
+additive summary only. Runtime provenance attaches only to the preserved
+`EXEC_OR_EVAL` unsupported finding for `exec(source)`. Primary selector and
+selected-unit truth remain `unsupported/opaque`, additive runtime provenance
+remains separate from primary truth, no dependency edge or symbol is created
+from executed source, no namespace mutation modeling is added, no
+generated-code dependency modeling is added, and public comparative claims
+remain bounded to the existing quad matrix.
+The pushed eval(source) release intentionally adds a narrow lower-layer
+eval(source) runtime provenance seam in runtime_acquisition, analyzer, and
+tool_facade. It does not add generalized eval support, exec support,
+`eval(source, globals)` support, `eval(source, globals, locals)` support,
+generated-code dependency modeling, or namespace mutation modeling. Those
+slices do not widen public claims, public APIs, MCP behavior,
+package-export surfaces, scoring, winner-selection, optimizer, compiler,
+product surfaces, schema, generalized reflective-builtin support, generalized
+runtime-mutation support, generalized locals() support, or generalized
+hybrid-runtime coverage, and they do not make metaclasses part of the public
+supported subset. The no-widening boundary remains no
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening. The public-safe quad-matrix comparative boundary remains
 unchanged.
@@ -245,6 +265,26 @@ around rendering density.
   unsupported construct, selector and selected-unit primary truth remain
   `unsupported/opaque`, runtime provenance remains additive only, and public
   comparative claims remain bounded to the existing quad matrix.
+  The current internal `EXEC_OR_EVAL` / `eval(source)` evidence covers only
+  `oracle_signal_eval_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+  220, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; runtime proof requires
+  `evaluation_outcome=returned_value`, `source_shape=literal_expression`,
+  valid `source_sha256`, and non-empty `durable_payload_reference`.
+  The current internal `EXEC_OR_EVAL` / `exec(source)` evidence covers only
+  `oracle_signal_exec_probe_matrix`: 1 task x 1 budget x 3 providers at
+  budget 220, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; fixture input is `source = "pass"`, the call is
+  exactly `exec(source)`, executed source parses as exactly one `ast.Pass`, and
+  runtime proof requires `execution_outcome=completed`,
+  `source_shape=literal_statement`, valid `source_sha256` for exact `"pass"`,
+  and non-empty `durable_payload_reference`. Optional `statement_kind=pass` is
+  additive summary only. Primary selector and selected-unit truth remain
+  `unsupported/opaque`, additive runtime provenance remains separate from
+  primary truth, no dependency edge or symbol is created from executed source,
+  no namespace mutation modeling is added, no generated-code dependency
+  modeling is added, and public comparative claims remain bounded to the
+  existing quad matrix.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 

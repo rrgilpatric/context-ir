@@ -154,6 +154,69 @@ def _eval_runtime_observation(
     )
 
 
+def _exec_runtime_observation(
+    site: SourceSite,
+    *,
+    execution_outcome: str = "completed",
+    source_shape: str = "literal_statement",
+    source_text: str = "pass",
+    source_sha256: str | None = None,
+    statement_kind: str | None = "pass",
+    durable_payload_reference: str | None = None,
+) -> runtime_acquisition.ExecRuntimeObservation:
+    """Create one admissible ``exec(source)`` runtime observation."""
+    durable_reference = durable_payload_reference
+    if durable_reference is None:
+        durable_reference = f"artifact://exec-result/{site.site_id}.json"
+    source_digest = source_sha256
+    if source_digest is None:
+        source_digest = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+    normalized_payload = [
+        runtime_acquisition._RuntimeObservationField(
+            key="execution_outcome",
+            value=execution_outcome,
+        ),
+    ]
+    if statement_kind is not None:
+        normalized_payload.append(
+            runtime_acquisition._RuntimeObservationField(
+                key="statement_kind",
+                value=statement_kind,
+            )
+        )
+    return runtime_acquisition.ExecRuntimeObservation(
+        site=site,
+        probe_identifier="probe:exec",
+        probe_contract_revision="2026-04-27.1",
+        repository_snapshot_basis=RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+            is_dirty_worktree=False,
+        ),
+        attachment_links=(
+            RuntimeAttachmentLink(
+                attachment_id=f"attachment:{site.site_id}:trace",
+                attachment_role="trace",
+                description="exec trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value=source_shape,
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=source_digest,
+            ),
+        ),
+        normalized_payload=tuple(normalized_payload),
+        durable_payload_reference=durable_reference,
+    )
+
+
 def _hasattr_runtime_observation(
     site: SourceSite,
     *,
@@ -974,6 +1037,123 @@ def run(loader, source: str) -> None:
     observation = _eval_runtime_observation(call_site.site)
 
     updated_program = runtime_acquisition.attach_eval_runtime_provenance(
+        program,
+        [observation],
+    )
+
+    assert updated_program is program
+    assert updated_program.provenance_records == []
+
+
+def test_attach_exec_runtime_provenance_targets_only_bounded_exec_source(
+    tmp_path: Path,
+) -> None:
+    """Only the exact ``exec(source)`` boundary gains runtime attachments."""
+    (tmp_path / "main.py").write_text(
+        """
+import builtins
+
+def run(
+    source: str,
+    suffix: str,
+    globals_ns: dict[str, object],
+    locals_ns: dict[str, object],
+) -> None:
+    exec(source)
+    exec(source, globals_ns)
+    exec(source, globals_ns, locals_ns)
+    exec(source=source)
+    exec("pass")
+    exec(source + suffix)
+    builtins.exec(source)
+    eval(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    observations = [
+        _exec_runtime_observation(call_site.site)
+        for call_site in program.syntax.call_sites
+    ]
+
+    updated_program = runtime_acquisition.attach_exec_runtime_provenance(
+        program,
+        observations,
+    )
+    constructs_by_text = {
+        construct.construct_text: construct
+        for construct in program.unsupported_constructs
+    }
+    attached_subject_ids = {
+        record.subject_id for record in updated_program.provenance_records
+    }
+
+    assert updated_program is not program
+    assert program.provenance_records == []
+    assert updated_program.unsupported_constructs == program.unsupported_constructs
+    assert attached_subject_ids == {constructs_by_text["exec(source)"].construct_id}
+    assert (
+        constructs_by_text["exec(source, globals_ns)"].construct_id
+        not in attached_subject_ids
+    )
+    assert (
+        constructs_by_text["exec(source, globals_ns, locals_ns)"].construct_id
+        not in attached_subject_ids
+    )
+    assert (
+        constructs_by_text["exec(source=source)"].construct_id
+        not in attached_subject_ids
+    )
+    assert constructs_by_text['exec("pass")'].construct_id not in attached_subject_ids
+    assert (
+        constructs_by_text["exec(source + suffix)"].construct_id
+        not in attached_subject_ids
+    )
+    assert constructs_by_text["eval(source)"].construct_id not in attached_subject_ids
+
+    [record] = updated_program.provenance_records
+    observation = _exec_runtime_observation(constructs_by_text["exec(source)"].site)
+    origin_detail = json.loads(record.origin_detail)
+    assert record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert record.subject_sites == (constructs_by_text["exec(source)"].site,)
+    assert origin_detail["normalized_payload"] == {
+        "execution_outcome": "completed",
+        "statement_kind": "pass",
+    }
+    assert origin_detail["replay_inputs"] == {
+        "source_shape": "literal_statement",
+        "source_sha256": hashlib.sha256(b"pass").hexdigest(),
+    }
+    assert (
+        origin_detail["durable_payload_reference"]
+        == observation.durable_payload_reference
+    )
+
+
+def test_attach_exec_runtime_provenance_ignores_shadowed_names(
+    tmp_path: Path,
+) -> None:
+    """Shadowed ``exec`` names remain outside the attachable builtin seam."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(loader, source: str) -> None:
+    exec = loader
+    exec(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    call_site = next(
+        candidate
+        for candidate in program.syntax.call_sites
+        if candidate.callee_text == "exec"
+    )
+    observation = _exec_runtime_observation(call_site.site)
+
+    updated_program = runtime_acquisition.attach_exec_runtime_provenance(
         program,
         [observation],
     )
@@ -2194,6 +2374,191 @@ def run(source: str) -> None:
 
     with pytest.raises(ValueError, match="durable_payload_reference"):
         runtime_acquisition.attach_eval_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_exec_runtime_provenance_rejects_invalid_execution_outcome(
+    tmp_path: Path,
+) -> None:
+    """Matched ``exec`` observations must claim the completed branch."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    exec(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "exec(source)"
+    )
+    observation = _exec_runtime_observation(
+        construct.site,
+        execution_outcome="raised_syntax_error",
+    )
+
+    with pytest.raises(ValueError, match="completed"):
+        runtime_acquisition.attach_exec_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_exec_runtime_provenance_rejects_invalid_statement_kind(
+    tmp_path: Path,
+) -> None:
+    """Matched ``exec`` observations only accept the optional pass-statement summary."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    exec(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "exec(source)"
+    )
+    observation = _exec_runtime_observation(
+        construct.site,
+        statement_kind="import",
+    )
+
+    with pytest.raises(ValueError, match="statement_kind"):
+        runtime_acquisition.attach_exec_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_exec_runtime_provenance_rejects_missing_source_replay_proof(
+    tmp_path: Path,
+) -> None:
+    """Matched ``exec`` observations must carry bounded executed-source proof."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    exec(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "exec(source)"
+    )
+    observation = replace(
+        _exec_runtime_observation(construct.site),
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_statement",
+            ),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="source_sha256"):
+        runtime_acquisition.attach_exec_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_exec_runtime_provenance_rejects_invalid_source_digest(
+    tmp_path: Path,
+) -> None:
+    """Matched ``exec`` observations must identify executed source by SHA-256."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    exec(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "exec(source)"
+    )
+    observation = _exec_runtime_observation(
+        construct.site,
+        source_sha256="not-a-digest",
+    )
+
+    with pytest.raises(ValueError, match="64-character hex digest"):
+        runtime_acquisition.attach_exec_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_exec_runtime_provenance_rejects_non_pass_source_digest(
+    tmp_path: Path,
+) -> None:
+    """Matched ``exec`` observations must identify exactly ``pass`` as source."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    exec(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "exec(source)"
+    )
+    observation = _exec_runtime_observation(
+        construct.site,
+        source_sha256=hashlib.sha256(b"print(1)").hexdigest(),
+    )
+
+    with pytest.raises(ValueError, match="exact executed source 'pass'"):
+        runtime_acquisition.attach_exec_runtime_provenance(
+            program,
+            [observation],
+        )
+
+
+def test_attach_exec_runtime_provenance_rejects_missing_durable_payload_reference(
+    tmp_path: Path,
+) -> None:
+    """Matched ``exec`` observations must carry durable completion proof."""
+    (tmp_path / "main.py").write_text(
+        """
+def run(source: str) -> None:
+    exec(source)
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    construct = next(
+        candidate
+        for candidate in program.unsupported_constructs
+        if candidate.construct_text == "exec(source)"
+    )
+    observation = replace(
+        _exec_runtime_observation(construct.site),
+        durable_payload_reference=None,
+    )
+
+    with pytest.raises(ValueError, match="durable_payload_reference"):
+        runtime_acquisition.attach_exec_runtime_provenance(
             program,
             [observation],
         )

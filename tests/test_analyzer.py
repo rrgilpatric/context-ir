@@ -114,6 +114,50 @@ def _eval_runtime_observation(
     )
 
 
+def _exec_runtime_observation(
+    site,
+) -> runtime_acquisition.ExecRuntimeObservation:
+    """Create one admissible ``exec(source)`` runtime observation for analyzer tests."""
+    return runtime_acquisition.ExecRuntimeObservation(
+        site=site,
+        probe_identifier="probe:exec",
+        probe_contract_revision="2026-04-27.1",
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="abc123def456",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id="attachment:exec:trace",
+                attachment_role="trace",
+            ),
+        ),
+        replay_target="main.run",
+        replay_selector="call:main.run",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_statement",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=hashlib.sha256(b"pass").hexdigest(),
+            ),
+        ),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="execution_outcome",
+                value="completed",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="statement_kind",
+                value="pass",
+            ),
+        ),
+        durable_payload_reference=f"artifact://exec-result/{site.site_id}.json",
+    )
+
+
 def _hasattr_runtime_observation(
     site,
 ) -> runtime_acquisition.HasattrRuntimeObservation:
@@ -721,6 +765,56 @@ def test_analyze_repository_attaches_eval_runtime_provenance_post_frontier(
             construct.construct_id
             for construct in manual_program.unsupported_constructs
             if construct.construct_text == "eval(source)"
+        )
+    }
+    assert len(analyzed_program.provenance_records) == 1
+
+
+def test_analyze_repository_attaches_exec_runtime_provenance_post_frontier(
+    tmp_path: Path,
+) -> None:
+    """Analyzer adds bounded ``exec(source)`` runtime provenance post-frontier."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(
+                source: str,
+                globals_ns: dict[str, object],
+                locals_ns: dict[str, object],
+            ) -> None:
+                exec(source)
+                exec(source, globals_ns)
+                exec(source, globals_ns, locals_ns)
+                eval(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    manual_program = _manual_pipeline(tmp_path)
+    observations = [
+        _exec_runtime_observation(construct.site)
+        for construct in manual_program.unsupported_constructs
+    ]
+
+    analyzed_program = analyzer_module.analyze_repository(
+        tmp_path,
+        exec_runtime_observations=observations,
+    )
+    expected_program = runtime_acquisition.attach_exec_runtime_provenance(
+        manual_program,
+        observations,
+    )
+
+    assert analyzed_program == expected_program
+    assert (
+        analyzed_program.unsupported_constructs == manual_program.unsupported_constructs
+    )
+    assert {record.subject_id for record in analyzed_program.provenance_records} == {
+        next(
+            construct.construct_id
+            for construct in manual_program.unsupported_constructs
+            if construct.construct_text == "exec(source)"
         )
     }
     assert len(analyzed_program.provenance_records) == 1

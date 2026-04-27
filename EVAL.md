@@ -29,7 +29,9 @@ eval-only `oracle_signal_metaclass_behavior_probe_matrix` evidence is a narrow
 `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot. The
 current internal eval-only
 `oracle_signal_eval_probe_matrix` evidence is narrow `EXEC_OR_EVAL` /
-`eval(source)` evidence. The `d8ebdc3` code/test
+`eval(source)` evidence. The current internal eval-only
+`oracle_signal_exec_probe_matrix` evidence is narrow `EXEC_OR_EVAL` /
+`exec(source)` evidence. The `d8ebdc3` code/test
 evidence anchor adds internal eval runtime-outcome accounting over normalized
 runtime provenance payload data. The prior `b014595` anchor records narrow
 internal
@@ -46,7 +48,8 @@ zero-argument `dir()` pilot, the current internal eval-only
 eval-only `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, the
 current internal eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...`
 keyword-site pilot, the current internal eval-only
-`EXEC_OR_EVAL` / `eval(source)` evidence, and the runtime-outcome accounting do not
+`EXEC_OR_EVAL` / `eval(source)` evidence, the current internal eval-only
+`EXEC_OR_EVAL` / `exec(source)` evidence, and the runtime-outcome accounting do not
 widen public claims, public APIs, MCP behavior, package-export surfaces,
 scoring, winner-selection, optimizer, compiler, product surfaces, schema,
 generalized runtime-mutation support, generalized locals() support, public
@@ -56,6 +59,10 @@ metaclasses part of the public supported subset. The current internal
 eval(source) runtime provenance seam in runtime_acquisition, analyzer, and
 tool_facade; that internal seam does not authorize
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening. The current internal `EXEC_OR_EVAL` / `exec(source)`
+release intentionally adds narrow internal eval-only `exec(source)` evidence
+and lower-layer runtime provenance plumbing for that exact call form only; it
+does not authorize public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
 
 The current internal evidence ledger also records a narrow provider/budget
@@ -123,8 +130,10 @@ Proven by current unit and integration tests:
   `class_creation_outcome=created_class`, and the current
   internal eval-only `EXEC_OR_EVAL` / `eval(source)` evidence records
   `evaluation_outcome=returned_value` with
-  `source_shape=literal_expression`, preserving existing tier/provider
-  additive-provenance accounting.
+  `source_shape=literal_expression`, while the current internal eval-only
+  `EXEC_OR_EVAL` / `exec(source)` evidence records
+  `execution_outcome=completed` with `source_shape=literal_statement`,
+  preserving existing tier/provider additive-provenance accounting.
 - The current internal `REFLECTIVE_BUILTIN` / `dir(obj)` pilot records durable
   listing proof through `durable_payload_reference`; optional
   `listing_entry_count` is additive summary only.
@@ -140,6 +149,10 @@ Proven by current unit and integration tests:
   `eval(source)` evidence requires valid `source_sha256` and non-empty
   `durable_payload_reference`; optional `result_type=builtins.str` is
   additive summary only.
+- The current internal eval-only `EXEC_OR_EVAL` /
+  `exec(source)` evidence requires valid `source_sha256` for exact `"pass"`
+  and non-empty `durable_payload_reference`; optional
+  `statement_kind=pass` is additive summary only.
 - Internal runtime-backed evidence currently covers narrow pilots only:
   - the `DYNAMIC_IMPORT` internal provider/budget matrix for the
     `oracle_signal_dynamic_import_probe` task
@@ -175,6 +188,8 @@ Proven by current unit and integration tests:
     `oracle_signal_metaclass_behavior_probe_matrix`
   - the current narrow internal eval-only `EXEC_OR_EVAL` /
     `eval(source)` evidence for `oracle_signal_eval_probe_matrix`
+  - the current narrow internal eval-only `EXEC_OR_EVAL` /
+    `exec(source)` evidence for `oracle_signal_exec_probe_matrix`
 - The three existing getattr-family provider/budget matrices now cover budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers.
 - The current internal `vars(obj)` pilot covers only
@@ -251,10 +266,29 @@ Proven by current unit and integration tests:
   support, exec support, `eval(source, globals)` support,
   `eval(source, globals, locals)` support, generated-code dependency modeling,
   or namespace mutation modeling.
+- The current internal eval-only `EXEC_OR_EVAL` /
+  `exec(source)` evidence covers only `oracle_signal_exec_probe_matrix`: 1
+  task x 1 budget x 3 providers at budget 220, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. The
+  fixture/call boundary is `source = "pass"` and exactly `exec(source)`; the
+  executed source parses as exactly one `ast.Pass`. This evidence does not
+  cover `exec("pass")`, `exec(source + suffix)`, `exec(source=source)`,
+  `exec(source, globals)`, `exec(source, globals, locals)`, `builtins.exec`,
+  or `eval`. The runtime payload/proof boundary is
+  `execution_outcome=completed`, `source_shape=literal_statement`, valid
+  `source_sha256` for exact `"pass"`, and non-empty
+  `durable_payload_reference`; optional `statement_kind=pass` is additive
+  summary only. Runtime provenance attaches only to the preserved
+  `EXEC_OR_EVAL` unsupported finding for `exec(source)`. Primary selector and
+  selected-unit truth remain `unsupported/opaque`, additive runtime provenance
+  remains separate from primary truth, no dependency edge or symbol is created
+  from executed source, no namespace mutation modeling is added, no
+  generated-code dependency modeling is added, and public comparative claims
+  remain bounded to the existing quad matrix.
 - In those runtime-backed pilots, the dynamic selector, reflective selector,
   runtime-mutation surface, metaclass-behavior keyword site, or preserved
-  `EXEC_OR_EVAL` unsupported finding for `eval(source)`, and selected-unit
-  primary truth remain
+  `EXEC_OR_EVAL` unsupported finding for `eval(source)` or `exec(source)`,
+  and selected-unit primary truth remain
   `unsupported/opaque`, and runtime-backed provenance is additive attached
   evidence. This is internal evidence, not a public benchmark, broad
   hybrid-runtime support claim, generalized reflective-builtin support claim,
@@ -293,7 +327,8 @@ Architecturally intended but not yet evaluated:
   `setattr(obj, name, value)` internal pilots, plus the current internal
   eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site
   pilot, plus the current internal eval-only `EXEC_OR_EVAL` /
-  `eval(source)` evidence.
+  `eval(source)` evidence, plus the current internal eval-only
+  `EXEC_OR_EVAL` / `exec(source)` evidence.
 - SWE-bench-style or other external-benchmark methodology, after the internal
   fixture surfaces are intentionally broadened.
 - Production packaging, install/run ergonomics, and external MCP client compatibility beyond the tested local wrapper behavior.
@@ -334,6 +369,8 @@ Architecturally intended but not yet evaluated:
   `oracle_signal_metaclass_behavior_probe_matrix` evidence and additive
   runtime provenance, plus the current internal eval-only
   `EXEC_OR_EVAL` / `eval(source)` `oracle_signal_eval_probe_matrix` evidence
+  and additive runtime provenance, plus the current internal eval-only
+  `EXEC_OR_EVAL` / `exec(source)` `oracle_signal_exec_probe_matrix` evidence
   and additive runtime provenance. These pilots are internal evidence
   surfaces, not public benchmark surfaces.
 - Narrow getattr-family provider/budget evidence: the three existing
@@ -418,6 +455,25 @@ Architecturally intended but not yet evaluated:
   `unsupported/opaque`, additive runtime provenance remains separate from
   primary truth, and public comparative claims remain bounded to the existing
   quad matrix.
+- Narrow `exec(source)` provider/budget evidence: the current
+  internal eval-only `EXEC_OR_EVAL` evidence covers only
+  `oracle_signal_exec_probe_matrix`: 1 task x 1 budget x 3 providers at budget
+  220, against providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`. The fixture/call boundary is
+  `source = "pass"` and exactly `exec(source)`; the executed source parses as
+  exactly one `ast.Pass`. This evidence does not cover `exec("pass")`,
+  `exec(source + suffix)`, `exec(source=source)`, `exec(source, globals)`,
+  `exec(source, globals, locals)`, `builtins.exec`, or `eval`. The runtime
+  payload/proof boundary is `execution_outcome=completed`,
+  `source_shape=literal_statement`, valid `source_sha256` for exact `"pass"`,
+  and non-empty `durable_payload_reference`; optional `statement_kind=pass` is
+  additive summary only. Runtime provenance attaches only to the preserved
+  `EXEC_OR_EVAL` unsupported finding for `exec(source)`. Primary selector and
+  selected-unit truth remain `unsupported/opaque`, additive runtime provenance
+  remains separate from primary truth, no dependency edge or symbol is created
+  from executed source, no namespace mutation modeling is added, no
+  generated-code dependency modeling is added, and public comparative claims
+  remain bounded to the existing quad matrix.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -525,11 +581,22 @@ The following claims are allowed because current repo artifacts support them:
   valid `source_sha256`, and non-empty `durable_payload_reference`; optional
   `result_type=builtins.str` is additive summary only, and runtime provenance
   attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
-  `eval(source)`. These pilots keep the dynamic selector, reflective selector,
-  runtime-mutation surface, metaclass-behavior keyword site, preserved
-  `EXEC_OR_EVAL` unsupported finding, and selected-unit primary truth
-  `unsupported/opaque` while attaching runtime-backed provenance additively.
-  The public-safe quad-matrix comparative boundary remains unchanged.
+  `eval(source)`. The current internal eval-only `EXEC_OR_EVAL` /
+  `exec(source)` evidence covers only `oracle_signal_exec_probe_matrix`: 1
+  task x 1 budget x 3 providers at budget 220, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with
+  fixture/call boundary `source = "pass"` and exactly `exec(source)`,
+  executed source parsing as exactly one `ast.Pass`, runtime proof boundary
+  `execution_outcome=completed`, `source_shape=literal_statement`, valid
+  `source_sha256` for exact `"pass"`, and non-empty
+  `durable_payload_reference`; optional `statement_kind=pass` is additive
+  summary only, and runtime provenance attaches only to the preserved
+  `EXEC_OR_EVAL` unsupported finding for `exec(source)`. These pilots keep the
+  dynamic selector, reflective selector, runtime-mutation surface,
+  metaclass-behavior keyword site, preserved `EXEC_OR_EVAL` unsupported
+  finding, and selected-unit primary truth `unsupported/opaque` while
+  attaching runtime-backed provenance additively. The public-safe quad-matrix
+  comparative boundary remains unchanged.
 
 ## Unsupported Claims Today
 
@@ -553,7 +620,8 @@ The following claims are not currently allowed:
   `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot also
   does not change this public boundary. The current internal
   eval-only `EXEC_OR_EVAL` / `eval(source)` matrix also does not change this
-  public boundary.
+  public boundary. The current internal eval-only `EXEC_OR_EVAL` /
+  `exec(source)` matrix also does not change this public boundary.
 - No claim that the MCP wrapper is a complete product integration beyond the minimal tested compile tool.
 - No claim that the old graph-first stack or exact 5-tier renderer thesis is the current architecture.
 - No claim that `p_edit` or `p_support` is the public thesis; they are internal ranking policy only.
@@ -583,7 +651,8 @@ Next smallest eval slices for the post-milestone program:
    current internal eval-only
    `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus
    the current internal eval-only `EXEC_OR_EVAL` /
-   `eval(source)` evidence,
+   `eval(source)` evidence, plus the current internal eval-only
+   `EXEC_OR_EVAL` / `exec(source)` evidence,
    only through reproducible runtime-backed fixtures, probes, and raw evidence
    storage.
 3. Broaden task, budget, and baseline coverage only after the tiered internal

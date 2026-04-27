@@ -2,6 +2,65 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-27 -- EXEC_OR_EVAL exec(source) Docs/Evidence/Continuity Reconciliation
+
+- Reconciled release-facing docs and continuity for the accumulated
+  workspace-only internal eval-only `EXEC_OR_EVAL` / `exec(source)` release
+  unit
+- Repo-backed truth during this slice:
+  - branch `main`
+  - `HEAD` and `origin/main` at `96fc03a`
+  - latest pushed release is `96fc03a Add eval runtime eval pilot`
+  - live git refs remain authoritative
+  - do not reopen `96fc03a` eval(source) absent new findings
+- Workspace-only accepted state:
+  - the lower-layer `EXEC_OR_EVAL` / `exec(source)` runtime provenance seam is
+    accepted first-pass
+  - the `oracle_signal_exec_probe_matrix` implementation/assets are accepted
+    first-pass
+  - docs/evidence/continuity reconciliation is the current slice
+- Evidence boundary:
+  - `oracle_signal_exec_probe_matrix` is narrow internal eval-only evidence
+    only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture/call boundary is `source = "pass"` and exactly `exec(source)`
+  - executed source parses as exactly one `ast.Pass`
+  - no `exec("pass")`, `exec(source + suffix)`, `exec(source=source)`,
+    `exec(source, globals)`, `exec(source, globals, locals)`,
+    `builtins.exec`, or `eval` is included
+  - runtime payload/proof boundary is `execution_outcome=completed`,
+    `source_shape=literal_statement`, valid `source_sha256` for exact
+    `"pass"`, and non-empty `durable_payload_reference`
+  - optional `statement_kind=pass` is additive summary only
+  - runtime provenance attaches only to the preserved `EXEC_OR_EVAL`
+    unsupported finding for `exec(source)`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - additive runtime provenance remains separate from primary truth
+  - no dependency edge or symbol is created from executed source
+  - no namespace mutation modeling is added
+  - no generated-code dependency modeling is added
+  - public comparative claims remain bounded to the existing quad matrix
+- Preserved non-goals:
+  - no broader `exec` forms are in scope beyond simple-name builtin
+    `exec(source)` with one positional argument
+  - no `exec("pass")`, `exec(source + suffix)`, `exec(source=source)`,
+    `exec(source, globals)`, `exec(source, globals, locals)`,
+    `builtins.exec`, or `eval` support is included
+  - no
+    public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening is authorized
+  - no public benchmark coverage for `exec(source)` is claimed
+- Release state:
+  - the exec release unit is not audit-cleared, not regression-cleared, not
+    commit-gating-cleared, not committed, and not pushed
+  - release-unit audit next if this docs reconciliation is accepted
+  - full regression, commit-gating, local commit creation, and push have not
+    run for this exec release unit
+  - push remains Ryan-gated
+- Acceptance status: current slice pending control review
+
 ## 2026-04-27 -- EXEC_OR_EVAL eval(source) Release-Unit Audit Did Not Clear
 
 - Ran the release-unit audit for the accumulated workspace-only internal
