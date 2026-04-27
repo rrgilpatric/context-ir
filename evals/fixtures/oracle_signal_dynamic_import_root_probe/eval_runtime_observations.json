@@ -1,0 +1,48 @@
+{
+  "schema_version": "v1",
+  "dynamic_import_runtime_observations": [
+    {
+      "file_path": "main.py",
+      "start_line": 6,
+      "start_column": 13,
+      "end_line": 6,
+      "end_column": 42,
+      "source_snippet": "importlib.import_module(name)",
+      "probe_identifier": "probe:dynamic-import-root:weather-plugin",
+      "probe_contract_revision": "2026-04-27.1",
+      "repository_snapshot_basis": {
+        "snapshot_kind": "fixture_commit",
+        "snapshot_id": "oracle_signal_dynamic_import_root_probe@v1",
+        "is_dirty_worktree": false
+      },
+      "attachment_links": [
+        {
+          "attachment_id": "artifact://dynamic-import-root/weather-plugin-trace.json",
+          "attachment_role": "probe_trace",
+          "description": "Committed root importlib dynamic-import probe trace for the weather plugin."
+        }
+      ],
+      "replay_target": "main.load_weather_plugin",
+      "replay_selector": "call:main.load_weather_plugin",
+      "replay_inputs": [
+        {
+          "key": "plugin_name_binding",
+          "value": "name=plugins.weather"
+        }
+      ],
+      "runtime_assumptions": [
+        {
+          "key": "python",
+          "value": "3.11"
+        }
+      ],
+      "normalized_payload": [
+        {
+          "key": "imported_module",
+          "value": "plugins.weather"
+        }
+      ],
+      "durable_payload_reference": "artifact://dynamic-import-root/weather-plugin-observation.json"
+    }
+  ]
+}

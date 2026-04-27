@@ -2,6 +2,59 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-27 -- DYNAMIC_IMPORT Root Importlib Eval Pilot Workspace Reconciliation
+
+- Reconciled docs and control-state for the accepted workspace-only internal
+  eval-only `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)`
+  sibling pilot
+- Repo-backed truth during this reconciliation:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `9dae4c9 Sync exec source release routing`
+  - latest pushed eval/test/docs release authority remains
+    `bcd6d68 Add exec source runtime eval pilot`
+  - live git refs remain authoritative
+- Accepted workspace-only implementation:
+  - `evals/fixtures/oracle_signal_dynamic_import_root_probe/`
+  - `evals/tasks/oracle_signal_dynamic_import_root_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_root_probe.py`
+- Evidence boundary:
+  - `oracle_signal_dynamic_import_root_probe_matrix` is narrow internal
+    eval-only evidence only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `import importlib`, `name = "plugins.weather"`, and
+    exactly `importlib.import_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or symbol is created from the dynamically imported
+    module
+  - public comparative claims remain bounded to the existing quad matrix
+- Preserved non-goals:
+  - no `__import__(name)` coverage
+  - no imported-name `import_module(name)` coverage
+  - no alias or loader forms
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+  - no product-surface, schema, scoring, optimizer, compiler, or
+    winner-selection widening
+- Routing decision:
+  - after this docs/evidence/continuity reconciliation is accepted, route next
+    to one dedicated read-only release-unit audit over the accumulated
+    workspace-only candidate
+  - the audit should cover the accepted implementation files plus
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`,
+    and `BUILDLOG.md`
+  - full regression, commit-gating, local release creation, and remote
+    publication remain blocked until the release-unit audit is reviewed and
+    accepted
+- Acceptance status: held pending control review of this reconciliation slice;
+  implementation acceptance remains first-pass
+
 ## 2026-04-27 -- EXEC_OR_EVAL exec(source) Runtime Eval Pilot Release
 
 - Completed and pushed the internal eval-only `EXEC_OR_EVAL` / `exec(source)`

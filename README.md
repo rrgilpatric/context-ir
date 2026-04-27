@@ -155,6 +155,21 @@ remains separate from primary truth, no dependency edge or symbol is created
 from executed source, no namespace mutation modeling is added, no
 generated-code dependency modeling is added, and public comparative claims
 remain bounded to the existing quad matrix.
+The current internal eval-only `DYNAMIC_IMPORT` / root-module
+`importlib.import_module(name)` sibling evidence covers only
+`oracle_signal_dynamic_import_root_probe_matrix`: 1 task x 1 budget x 3
+providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is `import importlib`, `name = "plugins.weather"`, and exactly
+`importlib.import_module(name)`. The runtime payload is
+`imported_module=plugins.weather`; primary selector and selected-unit truth
+remain `unsupported/opaque`, runtime provenance remains additive only, no
+dependency edge or symbol is created from the dynamically imported module, and
+public comparative claims remain bounded to the existing quad matrix. This
+evidence does not cover `__import__(name)`, imported-name
+`import_module(name)`, alias or loader forms, generalized dynamic import
+support, or public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
 
 ## Supported Subset and Limits
 
@@ -195,17 +210,23 @@ internal one-argument `dir(obj)` pilot, plus the current internal eval-only
 zero-argument `dir()` pilot, plus the current internal eval-only
 `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus
 narrow internal eval-only `EXEC_OR_EVAL` / `eval(source)` and `exec(source)`
-evidence. The `exec(source)` evidence is bounded to
+evidence, plus narrow internal eval-only `DYNAMIC_IMPORT` / root-module
+`importlib.import_module(name)` sibling evidence. The `exec(source)` evidence is bounded to
 `oracle_signal_exec_probe_matrix` and the exact `source = "pass"` /
 `exec(source)` fixture described in `EVAL.md`.
+The root-module dynamic-import sibling evidence is bounded to
+`oracle_signal_dynamic_import_root_probe_matrix` and the exact
+`import importlib`, `name = "plugins.weather"`,
+`importlib.import_module(name)` fixture described in `EVAL.md`.
 That evidence is additive internal provenance on
 otherwise unsupported/opaque selectors, mutation surfaces, metaclass keyword
 sites, preserved `EXEC_OR_EVAL` unsupported findings, and selected units;
 it does not make broad dynamic imports, reflection, runtime mutation,
 generalized runtime-mutation support, generalized locals() support,
-generalized hybrid-runtime coverage, generalized `exec` behavior, or
-generalized reflective-builtin behavior part of the public supported subset,
-and it does not make metaclasses part of the public supported subset.
+generalized hybrid-runtime coverage, generalized `exec` behavior, generalized
+dynamic-import support, or generalized reflective-builtin behavior part of the
+public supported subset, and it does not make metaclasses part of the public
+supported subset.
 
 ## Python API
 
@@ -318,7 +339,9 @@ Current evidence includes:
   plus the current internal eval-only `METACLASS_BEHAVIOR` / preserved
   `metaclass=...` keyword-site pilot, plus the current internal
   eval-only `EXEC_OR_EVAL` / `eval(source)` evidence, plus the current
-  internal eval-only `EXEC_OR_EVAL` / `exec(source)` evidence
+  internal eval-only `EXEC_OR_EVAL` / `exec(source)` evidence, plus the
+  current internal eval-only `DYNAMIC_IMPORT` / root-module
+  `importlib.import_module(name)` sibling evidence
 - three existing getattr-family provider/budget matrices limited to budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and
@@ -416,6 +439,17 @@ Current evidence includes:
   executed source, no namespace mutation modeling is added, no generated-code
   dependency modeling is added, and public comparative claims remain bounded
   to the existing quad matrix
+- the current internal eval-only `DYNAMIC_IMPORT` / root-module
+  `importlib.import_module(name)` sibling evidence remains
+  `oracle_signal_dynamic_import_root_probe_matrix`: 1 task x 1 budget x 3
+  providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; the fixture boundary
+  is `import importlib`, `name = "plugins.weather"`, and exactly
+  `importlib.import_module(name)`; the runtime payload is
+  `imported_module=plugins.weather`; primary selector and selected-unit truth
+  still `unsupported/opaque`, runtime provenance additive only, no dependency
+  edge or symbol is created from the dynamically imported module, and public
+  comparative claims remain bounded to the existing quad matrix
 - within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
   rows; provider-average aggregate scores are
   `0.9599139230003012` for `context_ir`,

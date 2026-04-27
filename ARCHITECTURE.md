@@ -114,6 +114,22 @@ remains separate from primary truth, no dependency edge or symbol is created
 from executed source, no namespace mutation modeling is added, no
 generated-code dependency modeling is added, and public comparative claims
 remain bounded to the existing quad matrix.
+The current internal eval-only `DYNAMIC_IMPORT` / root-module
+`importlib.import_module(name)` sibling evidence is narrow and remains one task
+only through `oracle_signal_dynamic_import_root_probe_matrix`: 1 task x 1
+budget x 3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is `import importlib`, `name = "plugins.weather"`, and exactly
+`importlib.import_module(name)`. The runtime payload is
+`imported_module=plugins.weather`. Primary selector and selected-unit truth
+remain `unsupported/opaque`, runtime provenance remains additive only, no
+dependency edge or symbol is created from the dynamically imported module, and
+public comparative claims remain bounded to the existing quad matrix. This
+evidence does not cover `__import__(name)`, imported-name
+`import_module(name)`, alias or loader forms, generalized dynamic import
+support, or any
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
 The pushed eval(source) release intentionally adds a narrow lower-layer
 eval(source) runtime provenance seam in runtime_acquisition, analyzer, and
 tool_facade. It does not add generalized eval support, exec support,
@@ -188,7 +204,9 @@ around rendering density.
 - statically proved: facts established from the accepted static semantic pipeline inside the supported subset
 - runtime-backed: repository-backed facts supported by reproducible runtime
   evidence or probes; current internal evidence is limited to narrow additive
-  `DYNAMIC_IMPORT` plus `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` and
+  `DYNAMIC_IMPORT` evidence, including the current root-module
+  `importlib.import_module(name)` sibling pilot, plus `REFLECTIVE_BUILTIN` /
+  `hasattr(obj, name)` and
   `getattr(obj, name)` pilot attachments, plus eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, plus the
   current internal one-argument `vars(obj)` and zero-argument `vars()` pilots,
@@ -285,6 +303,19 @@ around rendering density.
   no namespace mutation modeling is added, no generated-code dependency
   modeling is added, and public comparative claims remain bounded to the
   existing quad matrix.
+  The current internal `DYNAMIC_IMPORT` / root-module
+  `importlib.import_module(name)` sibling evidence covers only
+  `oracle_signal_dynamic_import_root_probe_matrix`: 1 task x 1 budget x 3
+  providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture input is
+  `import importlib`, `name = "plugins.weather"`, and exactly
+  `importlib.import_module(name)`; runtime payload is
+  `imported_module=plugins.weather`. Primary selector and selected-unit truth
+  remain `unsupported/opaque`, runtime provenance remains additive only, no
+  dependency edge or symbol is created from the dynamically imported module,
+  no `__import__(name)`, imported-name `import_module(name)`, alias or loader
+  forms, generalized dynamic import support, or public comparative claim
+  widening is included.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 
