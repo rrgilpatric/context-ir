@@ -2,6 +2,123 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-27 -- DYNAMIC_IMPORT Imported-name Gate-State Continuity Correction
+
+- Corrected active continuity for the workspace-only internal eval-only
+  `DYNAMIC_IMPORT` / imported-name `import_module(name)` sibling candidate
+  after commit-gating returned P1 continuity findings.
+- Repo-backed truth at correction intake:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ca191c8 Sync builtin dynamic import release routing`
+  - nothing staged
+  - tracked dirty files are `ARCHITECTURE.md`, `BUILDLOG.md`, `EVAL.md`,
+    `PLAN.md`, `PUBLIC_CLAIMS.md`, and `README.md`
+  - untracked files are the seven expected imported-name probe assets:
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/eval_runtime_observations.json`
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/main.py`
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/plugins/__init__.py`
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/plugins/weather.py`
+    - `evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json`
+    - `evals/tasks/oracle_signal_dynamic_import_imported_name_probe.json`
+    - `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+- Evidence boundary preserved:
+  - `oracle_signal_dynamic_import_imported_name_probe_matrix`
+  - 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `from importlib import import_module`,
+    `name = "plugins.weather"`, and exactly `import_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+- Gate state:
+  - release-unit audit cleared first-pass
+  - full regression cleared with `676 passed`
+  - commit-gating returned P1 continuity findings and is not cleared
+  - no staging, local commit creation, or push was performed
+  - push remains Ryan-gated
+- Routing decision:
+  - after this continuity correction is accepted, rerun commit-gating over the
+    exact audit-cleared and regression-cleared imported-name candidate
+  - do not route back to release-unit audit or full regression absent new
+    findings
+  - do not claim commit-gating clearance, commit readiness, local commit
+    creation, or push readiness
+- Acceptance status: held pending control review
+
+## 2026-04-27 -- DYNAMIC_IMPORT Imported-name import_module(name) Docs Reconciliation
+
+- Reconciled docs and continuity for the workspace-only accepted internal
+  eval-only `DYNAMIC_IMPORT` / imported-name `import_module(name)` sibling
+  pilot.
+- Repo-backed truth at reconciliation intake:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ca191c8 Sync builtin dynamic import release routing`
+  - nothing staged
+  - no tracked diffs before this docs reconciliation
+  - active workspace-only candidate files were the seven expected untracked
+    imported-name probe assets:
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/eval_runtime_observations.json`
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/main.py`
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/plugins/__init__.py`
+    - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/plugins/weather.py`
+    - `evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json`
+    - `evals/tasks/oracle_signal_dynamic_import_imported_name_probe.json`
+    - `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+- Files updated in this reconciliation:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Evidence boundary:
+  - `oracle_signal_dynamic_import_imported_name_probe_matrix` is narrow
+    internal eval-only evidence only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `from importlib import import_module`,
+    `name = "plugins.weather"`, and exactly `import_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+  - public comparative claims remain bounded to the existing quad matrix
+- Preserved non-goals:
+  - no root-module `importlib.import_module(name)` expansion
+  - no literal `import_module("plugins.weather")` expansion
+  - no alias `load_module(name)`
+  - no `loader.import_module(name)`
+  - no `__import__(name)`
+  - no `builtins.__import__`
+  - no globals/locals/fromlist forms
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+  - no product-surface, schema, scoring, optimizer, compiler, or
+    winner-selection widening
+- Release state and routing:
+  - the imported-name implementation/assets are accepted as workspace-only
+    state
+  - this reconciliation is now superseded for active gate routing by the
+    gate-state continuity correction above
+  - release-unit audit cleared first-pass
+  - full regression cleared with `676 passed`
+  - commit-gating returned P1 continuity findings and is not cleared
+  - no staging, local commit creation, or push was performed
+  - after the gate-state continuity correction above is accepted, route next to
+    rerun commit-gating over the exact audit-cleared and regression-cleared
+    imported-name candidate
+  - do not route back to release-unit audit or full regression absent new
+    findings
+  - do not claim commit-gating clearance, commit readiness, local commit
+    creation, or push readiness
+- Acceptance status: first-pass
+
 ## 2026-04-27 -- DYNAMIC_IMPORT Builtin __import__(name) Release
 
 - Completed and pushed the internal eval-only `DYNAMIC_IMPORT` / builtin

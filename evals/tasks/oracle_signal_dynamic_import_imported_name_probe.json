@@ -1,0 +1,34 @@
+{
+  "task_id": "oracle_signal_dynamic_import_imported_name_probe",
+  "fixture_id": "oracle_signal_dynamic_import_imported_name_probe",
+  "expected_selectors": [
+    {
+      "kind": "symbol",
+      "qualified_name": "main.load_weather_plugin",
+      "role": "edit",
+      "min_detail": "source",
+      "symbol_kind": "function",
+      "rationale": "Primary edit target for the imported-name dynamic-import probe fixture."
+    },
+    {
+      "kind": "symbol",
+      "qualified_name": "main.render_probe_digest",
+      "role": "support",
+      "min_detail": "summary",
+      "symbol_kind": "function",
+      "rationale": "Caller-visible digest wrapper keeps the imported-name probe output flow in scope."
+    },
+    {
+      "kind": "unsupported",
+      "file_path": "main.py",
+      "construct_text": "import_module(name)",
+      "reason_code": "dynamic_import",
+      "min_detail": "identity",
+      "enclosing_qualified_name": "main.load_weather_plugin",
+      "source_snippet": "import_module(name)",
+      "rationale": "Imported-name dynamic import stays primarily unsupported while carrying additive runtime provenance.",
+      "expected_primary_capability_tier": "unsupported/opaque",
+      "expect_attached_runtime_provenance": true
+    }
+  ]
+}

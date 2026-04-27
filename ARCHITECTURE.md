@@ -11,7 +11,9 @@ authority for current claims, regression anchors, and reviewer-facing surfaces.
 
 Post-phase-0 internal slices have added capability-tier accounting and narrow
 runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
-matrix and `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
+matrix, the current root-module `importlib.import_module(name)`, builtin
+`__import__(name)`, and imported-name `import_module(name)` sibling pilots, and
+`REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
 `getattr(obj, name)`. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
 evidence and value-return sibling evidence. The three existing getattr-family
@@ -146,6 +148,24 @@ does not cover `importlib.import_module(name)`, imported-name
 globals/locals/fromlist forms, generalized dynamic import support, or any
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
+The current internal eval-only `DYNAMIC_IMPORT` / imported-name
+`import_module(name)` sibling evidence is narrow and remains one task only
+through `oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1
+budget x 3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary is
+`from importlib import import_module`, `name = "plugins.weather"`, and exactly
+`import_module(name)`. The runtime payload is
+`imported_module=plugins.weather`. Primary selector and selected-unit truth
+remain `unsupported/opaque`, runtime provenance remains additive only, no
+dependency edge or selected symbol is created from `plugins.weather`, and
+public comparative claims remain bounded to the existing quad matrix. This
+evidence does not cover root-module `importlib.import_module(name)` expansion,
+literal `import_module("plugins.weather")` expansion, alias
+`load_module(name)`, `loader.import_module(name)`, `__import__(name)`,
+`builtins.__import__`, globals/locals/fromlist forms, generalized dynamic
+import support, or any
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
 The pushed eval(source) release intentionally adds a narrow lower-layer
 eval(source) runtime provenance seam in runtime_acquisition, analyzer, and
 tool_facade. It does not add generalized eval support, exec support,
@@ -222,7 +242,8 @@ around rendering density.
   evidence or probes; current internal evidence is limited to narrow additive
   `DYNAMIC_IMPORT` evidence, including the current root-module
   `importlib.import_module(name)` sibling pilot and the narrow builtin
-  `__import__(name)` sibling pilot, plus `REFLECTIVE_BUILTIN` /
+  `__import__(name)` sibling pilot, plus the current imported-name
+  `import_module(name)` sibling pilot, plus `REFLECTIVE_BUILTIN` /
   `hasattr(obj, name)` and
   `getattr(obj, name)` pilot attachments, plus eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, plus the
@@ -347,6 +368,21 @@ around rendering density.
   or loader forms, `builtins.__import__`, globals/locals/fromlist forms,
   generalized dynamic import support, or public comparative claim widening is
   included.
+  The current internal `DYNAMIC_IMPORT` / imported-name `import_module(name)`
+  sibling evidence covers only
+  `oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1
+  budget x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture input is
+  `from importlib import import_module`, `name = "plugins.weather"`, and
+  exactly `import_module(name)`; runtime payload is
+  `imported_module=plugins.weather`. Primary selector and selected-unit truth
+  remain `unsupported/opaque`, runtime provenance remains additive only, no
+  dependency edge or selected symbol is created from `plugins.weather`, and no
+  root-module `importlib.import_module(name)` expansion, literal
+  `import_module("plugins.weather")` expansion, alias `load_module(name)`,
+  `loader.import_module(name)`, `__import__(name)`, `builtins.__import__`,
+  globals/locals/fromlist forms, generalized dynamic import support, or public
+  comparative claim widening is included.
 - heuristic/frontier: relevant candidates or unresolved areas that may guide selection or follow-up work without being promoted to proof
 - unsupported/opaque: dynamic or externalized surfaces that cannot yet be justified with durable evidence
 
