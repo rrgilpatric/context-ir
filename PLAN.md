@@ -41,55 +41,49 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. The latest
 pushed eval/test/docs release authority is
-`96fc03a Add eval runtime eval pilot`.
+`bcd6d68 Add exec source runtime eval pilot`.
 
-`96fc03a Add eval runtime eval pilot` is the latest pushed release. It adds the
-narrow internal eval-only `EXEC_OR_EVAL` / `eval(source)` evidence through
-`oracle_signal_eval_probe_matrix`: 1 task x 1 budget x 3 providers at budget
-220, against providers `context_ir`, `lexical_top_k_files`, and
-`import_neighborhood_files`. The runtime payload/proof boundary is
-`evaluation_outcome=returned_value`, `source_shape=literal_expression`, valid
-`source_sha256`, and non-empty `durable_payload_reference`; optional
-`result_type=builtins.str` is additive summary only. Runtime provenance
-attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
-`eval(source)`. Primary selector and selected-unit truth remain
-`unsupported/opaque`, additive runtime provenance remains separate from primary
-truth, and public comparative claims remain bounded to the existing quad
-matrix. Do not reopen `96fc03a` eval(source) absent new findings.
-
-The current workspace-only accepted state is the accumulated internal
-eval-only `EXEC_OR_EVAL` / `exec(source)` release unit. The lower-layer
-`EXEC_OR_EVAL` / `exec(source)` runtime provenance seam is accepted
-workspace-only first-pass. The `oracle_signal_exec_probe_matrix`
-implementation/assets are accepted workspace-only first-pass. This
-docs/evidence/continuity reconciliation is the current slice.
-
-The current exec matrix is narrow internal eval-only evidence:
-`oracle_signal_exec_probe_matrix`, 1 task x 1 budget x 3 providers at budget
-220, against providers `context_ir`, `lexical_top_k_files`, and
+`bcd6d68 Add exec source runtime eval pilot` is the latest pushed release. It
+adds the narrow internal eval-only `EXEC_OR_EVAL` / `exec(source)` evidence
+through `oracle_signal_exec_probe_matrix`: 1 task x 1 budget x 3 providers at
+budget 220, against providers `context_ir`, `lexical_top_k_files`, and
 `import_neighborhood_files`. The fixture/call boundary is `source = "pass"`
 and exactly `exec(source)`; the executed source parses as exactly one
-`ast.Pass`. It does not cover `exec("pass")`, `exec(source + suffix)`,
-`exec(source=source)`, `exec(source, globals)`,
-`exec(source, globals, locals)`, `builtins.exec`, or `eval`. The runtime
-payload/proof boundary is `execution_outcome=completed`,
-`source_shape=literal_statement`, valid `source_sha256` for exact `"pass"`,
-and non-empty `durable_payload_reference`; optional `statement_kind=pass` is
+`ast.Pass`. The runtime proof boundary is `execution_outcome=completed`,
+`source_shape=literal_statement`, `source_sha256 == sha256(b"pass")`, and
+non-empty `durable_payload_reference`; optional `statement_kind=pass` is
 additive summary only. Runtime provenance attaches only to the preserved
 `EXEC_OR_EVAL` unsupported finding for `exec(source)`. Primary selector and
 selected-unit truth remain `unsupported/opaque`, additive runtime provenance
 remains separate from primary truth, no dependency edge or symbol is created
 from executed source, no namespace mutation modeling is added, no
 generated-code dependency modeling is added, and public comparative claims
-remain bounded to the existing quad matrix.
+remain bounded to the existing quad matrix. The release-unit audit initially
+found one P1 digest-boundary issue; the correction pinned `source_sha256` to
+`sha256(b"pass")`; the audit rerun cleared; full regression passed;
+commit-gating cleared; local commit creation completed; Ryan-authorized push
+completed. Do not reopen `bcd6d68` exec(source) absent new findings.
 
-The current exec release unit is not audit-cleared, not regression-cleared,
-not commit-gating-cleared, not committed, and not pushed. Release-unit audit
-is next if this docs reconciliation is accepted. Full regression,
-commit-gating, local commit creation, and push have not run for this exec
-release unit. Push remains Ryan-gated. The no-widening boundary remains no
+`96fc03a Add eval runtime eval pilot` remains the prior eval(source) release
+authority. It adds the narrow internal eval-only `EXEC_OR_EVAL` /
+`eval(source)` evidence through `oracle_signal_eval_probe_matrix`: 1 task x 1
+budget x 3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The runtime
+payload/proof boundary is `evaluation_outcome=returned_value`,
+`source_shape=literal_expression`, valid `source_sha256`, and non-empty
+`durable_payload_reference`; optional `result_type=builtins.str` is additive
+summary only. Runtime provenance attaches only to the preserved
+`EXEC_OR_EVAL` unsupported finding for `eval(source)`. Primary selector and
+selected-unit truth remain `unsupported/opaque`, additive runtime provenance
+remains separate from primary truth, and public comparative claims remain
+bounded to the existing quad matrix. Do not reopen `96fc03a` eval(source)
+absent new findings.
+
+There is no active release gate for `bcd6d68` or `96fc03a`. The next control
+action is a bounded post-`EXEC_OR_EVAL` north-star planning spike. Do not
+invent the next implementation slice, and do not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark widening.
+benchmark scope through this routing.
 
 Prior pushed release anchors remain: `f0efbef` for the internal eval-only
 `REFLECTIVE_BUILTIN` / zero-argument `dir()` provider matrix; `19d9a32` for
@@ -467,54 +461,57 @@ sequencing for `c1a12d7` absent new findings.
 - [x] `oracle_signal_eval_probe_matrix` implementation/assets accepted workspace-only first-pass
 - [x] Docs/evidence/continuity reconciliation for accumulated internal eval-only `EXEC_OR_EVAL` / `eval(source)` release unit accepted first-pass as workspace-only state
 - [x] Local commit creation and Ryan-authorized push for internal `EXEC_OR_EVAL` / `eval(source)` runtime eval pilot completed at `96fc03a`
-- [x] Lower-layer `EXEC_OR_EVAL` / `exec(source)` runtime provenance seam accepted workspace-only first-pass
-- [x] `oracle_signal_exec_probe_matrix` implementation/assets accepted workspace-only first-pass
+- [x] Lower-layer `EXEC_OR_EVAL` / `exec(source)` runtime provenance seam accepted first-pass and released at `bcd6d68`
+- [x] `oracle_signal_exec_probe_matrix` implementation/assets accepted first-pass and released at `bcd6d68`
+- [x] Docs/evidence/continuity reconciliation for accumulated internal eval-only `EXEC_OR_EVAL` / `exec(source)` release unit accepted first-pass
+- [x] Release-unit audit for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot initially found one P1 digest-boundary issue; correction pinned `source_sha256` to `sha256(b"pass")`
+- [x] Corrected release-unit audit for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot cleared
+- [x] Full regression gate for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot passed
+- [x] Commit-gating review for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot cleared
+- [x] Local commit creation and Ryan-authorized push for internal `EXEC_OR_EVAL` / `exec(source)` runtime eval pilot completed at `bcd6d68`
 
 ## What Is In Progress
 
 - No implementation slice is currently in flight
 - No planning spike is currently in flight
-- No release sequencing is currently in flight for `96fc03a`
-- `96fc03a Add eval runtime eval pilot` is the latest pushed release and must
-  not be reopened absent new findings
-- The accumulated workspace-only internal eval-only `EXEC_OR_EVAL` /
-  `exec(source)` release unit is active
-- The lower-layer `exec(source)` runtime provenance seam is accepted
-  workspace-only first-pass
-- The `oracle_signal_exec_probe_matrix` implementation/assets are accepted
-  workspace-only first-pass
-- Docs/evidence/continuity reconciliation is the current slice
-- The matrix is 1 task x 1 budget x 3 providers at budget 220, against
-  providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`
+- No release sequencing is currently in flight for `bcd6d68` or `96fc03a`
+- `bcd6d68 Add exec source runtime eval pilot` is the latest pushed release
+  and must not be reopened absent new findings
+- `96fc03a Add eval runtime eval pilot` remains the prior eval(source)
+  release authority and must not be reopened absent new findings
+- The internal eval-only `EXEC_OR_EVAL` / `exec(source)` release unit is
+  completed and pushed at `bcd6d68`
+- The exec matrix is `oracle_signal_exec_probe_matrix`, 1 task x 1 budget x 3
+  providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`
 - The fixture/call boundary is `source = "pass"` and exactly `exec(source)`;
   executed source parses as exactly one `ast.Pass`; no `exec("pass")`,
   `exec(source + suffix)`, `exec(source=source)`, `exec(source, globals)`,
   `exec(source, globals, locals)`, `builtins.exec`, or `eval` is included
-- Runtime payload/proof boundary is `execution_outcome=completed`,
-  `source_shape=literal_statement`, valid `source_sha256` for exact `"pass"`,
-  and non-empty `durable_payload_reference`; optional
-  `statement_kind=pass` is additive summary only
+- Runtime proof is `execution_outcome=completed`,
+  `source_shape=literal_statement`, `source_sha256 == sha256(b"pass")`, and
+  non-empty `durable_payload_reference`; optional `statement_kind=pass` is
+  additive summary only
 - Provenance attaches only to the preserved `EXEC_OR_EVAL` unsupported finding
   for `exec(source)`
 - Primary selector and selected-unit truth remain `unsupported/opaque`;
   additive runtime provenance remains separate from primary truth
-- Public comparative claims remain bounded to the existing quad matrix
 - No dependency edge or symbol is created from executed source, no namespace
   mutation modeling is added, and no generated-code dependency modeling is
   added
 - Scope remains exactly simple-name builtin `exec(source)` with one positional
-  argument; no broader `exec` forms are included
+  argument; no broader `exec` forms are included, no generalized exec support
+  is included, and public comparative claims remain bounded to the existing
+  quad matrix
 - No
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is authorized
-- The release unit is not audit-cleared, not regression-cleared, not
-  commit-gating-cleared, not committed, and not pushed
-- Route next to release-unit audit next if this docs reconciliation is accepted
-- Full regression blocked until audit clears; commit-gating blocked until full
-  regression clears; local commit creation remains blocked until commit-gating
-  clears
-- Push remains Ryan-gated
+- Release-unit audit initially found one P1 digest-boundary issue; the
+  correction pinned `source_sha256` to `sha256(b"pass")`; audit rerun cleared;
+  full regression passed; commit-gating cleared; local commit creation
+  completed; Ryan-authorized push completed
+- Next control action is a bounded post-`EXEC_OR_EVAL` north-star planning
+  spike, not release gates for `bcd6d68`
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
 - Live git refs and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
 - The `getattr` family matrix expansion release unit is pushed at `1b555ef`
@@ -1046,19 +1043,45 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next control action if this docs/evidence/continuity reconciliation
-is accepted: release-unit audit next over the accumulated workspace-only
-internal eval-only `EXEC_OR_EVAL` / `exec(source)` release unit. Full
-regression blocked until audit clears; commit-gating blocked until full
-regression clears; local commit creation remains blocked until commit-gating
-clears; push remains Ryan-gated. The `96fc03a` eval(source) release is already
-pushed and release sequencing is complete; do not reopen it absent new
-findings.
+Immediate next control action: run a bounded post-`EXEC_OR_EVAL` north-star
+planning spike. The spike should decide the next strategic move after the
+pushed eval(source) and exec(source) internal evidence releases. It must not
+invent a new implementation slice, reopen completed release gates for
+`bcd6d68`, or widen
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark scope.
 
 Historical release anchors below remain guardrails and non-reopen constraints,
 not pending release gates.
 
-1. Treat pushed commit `96fc03a Add eval runtime eval pilot` as the latest
+1. Treat pushed commit `bcd6d68 Add exec source runtime eval pilot` as the
+   latest pushed release authority:
+   - `oracle_signal_exec_probe_matrix` is 1 task x 1 budget x 3 providers at
+     budget 220
+   - providers remain `context_ir`, `lexical_top_k_files`, and
+     `import_neighborhood_files`
+   - fixture/call boundary is `source = "pass"` and exactly `exec(source)`;
+     executed source parses as exactly one `ast.Pass`
+   - runtime proof requires `execution_outcome=completed`,
+     `source_shape=literal_statement`, `source_sha256 == sha256(b"pass")`,
+     and non-empty `durable_payload_reference`
+   - optional `statement_kind=pass` is additive summary only
+   - primary selector and selected-unit truth remain `unsupported/opaque`
+   - runtime provenance remains additive only and attaches only to the
+     preserved `EXEC_OR_EVAL` unsupported finding for `exec(source)`
+   - no dependency edge or symbol is created from executed source
+   - no namespace mutation modeling or generated-code dependency modeling is
+     added
+   - no generalized exec support is included
+   - public comparative claims remain bounded to the existing quad matrix
+   - no public benchmark claim, API, MCP, package export, schema, scoring,
+     optimizer, compiler, product, or winner-selection widening is authorized
+   - release-unit audit initially found one P1 digest-boundary issue; the
+     correction pinned `source_sha256` to `sha256(b"pass")`; audit rerun
+     cleared; full regression passed; commit-gating cleared; local commit
+     creation completed; Ryan-authorized push completed
+   - do not reopen `bcd6d68` exec(source) absent new findings
+2. Treat pushed commit `96fc03a Add eval runtime eval pilot` as the prior
    pushed release authority:
    - `oracle_signal_eval_probe_matrix` is 1 task x 1 budget x 3 providers at
      budget 220
@@ -1075,42 +1098,6 @@ not pending release gates.
    - no public benchmark claim, API, MCP, package export, schema, scoring,
      optimizer, compiler, product, or winner-selection widening is authorized
    - do not reopen `96fc03a` eval(source) absent new findings
-2. Treat the accumulated `EXEC_OR_EVAL` / `exec(source)` release unit as
-   workspace-only until gates clear:
-   - lower-layer runtime provenance seam accepted workspace-only first-pass
-   - `oracle_signal_exec_probe_matrix` implementation/assets accepted
-     workspace-only first-pass
-   - docs/evidence/continuity reconciliation is the current slice
-   - matrix shape is 1 task x 1 budget x 3 providers at budget 220
-   - providers remain `context_ir`, `lexical_top_k_files`, and
-     `import_neighborhood_files`
-   - fixture/call boundary is `source = "pass"` and exactly `exec(source)`;
-     executed source parses as exactly one `ast.Pass`
-   - no `exec("pass")`, `exec(source + suffix)`, `exec(source=source)`,
-     `exec(source, globals)`, `exec(source, globals, locals)`,
-     `builtins.exec`, or `eval` is included
-   - runtime payload/proof boundary is `execution_outcome=completed`,
-     `source_shape=literal_statement`, valid `source_sha256` for exact
-     `"pass"`, and non-empty `durable_payload_reference`
-   - optional `statement_kind=pass` is additive summary only
-   - runtime provenance attaches only to the preserved `EXEC_OR_EVAL`
-     unsupported finding for `exec(source)`
-   - primary selector and selected-unit truth remain `unsupported/opaque`
-   - additive runtime provenance remains separate from primary truth
-   - no dependency edge or symbol is created from executed source
-   - no namespace mutation modeling or generated-code dependency modeling is
-     added
-   - public comparative claims remain bounded to the existing quad matrix
-   - not audit-cleared, not regression-cleared, not commit-gating-cleared, not
-     committed, and not pushed
-   - release-unit audit next if this docs reconciliation is accepted
-   - full regression blocked until audit clears
-   - commit-gating blocked until full regression clears
-   - local commit creation remains blocked until commit-gating clears
-   - push remains Ryan-gated
-   - no
-     public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-     benchmark widening is authorized
 3. Treat pushed commit `41f6b57 Add delattr runtime eval pilot` as the prior
    pushed eval/test/docs release authority:
    - `oracle_signal_delattr_probe_matrix` is 1 task x 1 budget x 3 providers at budget `220`
@@ -1406,6 +1393,8 @@ not pending release gates.
 
 ## What Should Not Be Reopened
 
+- The accepted pushed `bcd6d68` `EXEC_OR_EVAL` / `exec(source)` release unit
+  unless a later findings-based review proves a concrete defect
 - The accepted pushed `96fc03a` `EXEC_OR_EVAL` / `eval(source)` release unit
   unless a later findings-based review proves a concrete defect
 - The accepted pushed `19d9a32` `METACLASS_BEHAVIOR` / preserved
