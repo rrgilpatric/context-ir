@@ -42,17 +42,59 @@ Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Current
 repo-backed release authority verified for this continuity sync is branch
 `main`, with `HEAD` and `origin/main` at
-`ca191c8 Sync builtin dynamic import release routing`.
+`ee71a82 Add imported-name dynamic import eval probe`.
 
-`ca191c8 Sync builtin dynamic import release routing` is the latest pushed
-continuity authority. `397c7dd Add builtin dynamic import eval probe` remains
-the latest pushed eval/test release authority. `ad22ea6 Sync dynamic import
-root release routing` remains the prior pushed continuity authority.
-`14b362e Add dynamic import root runtime eval pilot` remains the prior
-root-module dynamic-import eval/test/docs release authority. It includes the
-internal eval-only `DYNAMIC_IMPORT` / root-module
-`importlib.import_module(name)` sibling pilot.
-The pilot implementation assets are:
+`ee71a82 Add imported-name dynamic import eval probe` is the latest pushed
+eval/test/docs release authority. `ca191c8 Sync builtin dynamic import release
+routing` remains the prior pushed continuity authority. `397c7dd Add builtin
+dynamic import eval probe` remains the prior builtin dynamic-import
+eval/test/docs release authority. `14b362e Add dynamic import root runtime
+eval pilot` remains the prior root-module dynamic-import eval/test/docs
+release authority.
+
+The completed and pushed internal eval-only `DYNAMIC_IMPORT` / imported-name
+`import_module(name)` sibling pilot was released at
+`ee71a82 Add imported-name dynamic import eval probe`. Its pilot assets are:
+
+- `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/`
+- `evals/tasks/oracle_signal_dynamic_import_imported_name_probe.json`
+- `evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json`
+- `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+
+The released matrix is
+`oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1 budget x
+3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary is
+`from importlib import import_module`, `name = "plugins.weather"`, and exactly
+`import_module(name)`. The runtime payload is
+`imported_module=plugins.weather`. Primary selector and selected-unit truth
+remain `unsupported/opaque`, runtime provenance remains additive only, and no
+dependency edge or selected symbol is created from `plugins.weather`. No
+root-module `importlib.import_module(name)` expansion, literal
+`import_module("plugins.weather")` expansion, alias `load_module(name)`,
+`loader.import_module(name)`, `__import__(name)`, `builtins.__import__`,
+globals/locals/fromlist forms, generalized dynamic import support,
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening, product surface, schema, scoring, optimizer, compiler, or
+winner-selection widening is authorized.
+
+The release-unit audit for `ee71a82` cleared first-pass. Full regression
+passed: `ruff check`, `ruff format --check`, `mypy --strict`, and
+`pytest tests/ -v` with `676 passed`. The first commit-gating review returned
+P1 continuity findings; the continuity correction was accepted; corrected
+commit-gating cleared; local commit creation completed; Ryan-authorized push
+completed at `ee71a82`.
+
+There is no active release gate for `ee71a82`: do not route back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push for this tranche absent new findings. The next control move
+is one bounded post-`DYNAMIC_IMPORT` imported-name north-star planning spike.
+Do not reopen `ee71a82`, `397c7dd`, `14b362e`, `bcd6d68`, or `96fc03a` absent
+new findings.
+
+The completed and pushed internal eval-only `DYNAMIC_IMPORT` / root-module
+`importlib.import_module(name)` sibling pilot was released at
+`14b362e Add dynamic import root runtime eval pilot`. Its pilot assets are:
 
 - `evals/fixtures/oracle_signal_dynamic_import_root_probe/`
 - `evals/tasks/oracle_signal_dynamic_import_root_probe.json`
@@ -104,47 +146,6 @@ The release-unit audit for `397c7dd` cleared first-pass. Full regression
 passed: `ruff check`, `ruff format --check`, `mypy --strict`, and
 `pytest tests/ -v` with `670 passed`. Commit-gating cleared first-pass. Local
 commit creation and Ryan-authorized push completed at `397c7dd`.
-
-The active workspace-only accepted candidate is the internal eval-only
-`DYNAMIC_IMPORT` / imported-name `import_module(name)` sibling pilot. Its
-candidate assets are:
-
-- `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/eval_runtime_observations.json`
-- `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/main.py`
-- `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/plugins/__init__.py`
-- `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/plugins/weather.py`
-- `evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json`
-- `evals/tasks/oracle_signal_dynamic_import_imported_name_probe.json`
-- `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
-
-The candidate matrix is
-`oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1 budget x
-3 providers at budget 220, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary is
-`from importlib import import_module`, `name = "plugins.weather"`, and exactly
-`import_module(name)`. The runtime payload is
-`imported_module=plugins.weather`. Primary selector and selected-unit truth
-remain `unsupported/opaque`, runtime provenance remains additive only, and no
-dependency edge or selected symbol is created from `plugins.weather`. No
-root-module `importlib.import_module(name)` expansion, literal
-`import_module("plugins.weather")` expansion, alias `load_module(name)`,
-`loader.import_module(name)`, `__import__(name)`, `builtins.__import__`,
-globals/locals/fromlist forms, generalized dynamic import support,
-public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark widening, product surface, schema, scoring, optimizer, compiler, or
-winner-selection widening is authorized.
-
-The imported-name candidate has since cleared release-unit audit first-pass.
-Full regression also cleared with `676 passed`. Commit-gating returned P1
-continuity findings and is not cleared. This continuity correction is the
-current bounded lane. After this correction is accepted, route next to rerun
-commit-gating over the exact audit-cleared and regression-cleared imported-name
-candidate. Do not route back to release-unit audit or full regression absent
-new findings. Do not stage, create a local commit, or push until commit-gating
-clears; push remains Ryan-gated. Do not reopen `397c7dd`, `14b362e`,
-`bcd6d68`, or `96fc03a` absent new findings. Do not widen
-public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark scope through this routing.
 
 `bcd6d68 Add exec source runtime eval pilot` remains the prior pushed
 exec(source) release. It adds the narrow internal eval-only `EXEC_OR_EVAL` /
@@ -584,25 +585,28 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Docs/evidence/continuity reconciliation for internal `DYNAMIC_IMPORT` / imported-name `import_module(name)` accepted as workspace-only state
 - [x] Release-unit audit for internal `DYNAMIC_IMPORT` / imported-name `import_module(name)` runtime eval pilot cleared first-pass
 - [x] Full regression gate for internal `DYNAMIC_IMPORT` / imported-name `import_module(name)` runtime eval pilot passed with `676 passed`
+- [x] First commit-gating review for internal `DYNAMIC_IMPORT` / imported-name `import_module(name)` runtime eval pilot returned P1 continuity findings
+- [x] Continuity correction for internal `DYNAMIC_IMPORT` / imported-name `import_module(name)` runtime eval pilot accepted
+- [x] Corrected commit-gating review for internal `DYNAMIC_IMPORT` / imported-name `import_module(name)` runtime eval pilot cleared
+- [x] Local commit creation and Ryan-authorized push for internal `DYNAMIC_IMPORT` / imported-name `import_module(name)` runtime eval pilot completed at `ee71a82`
 
 ## What Is In Progress
 
 - The internal eval-only `DYNAMIC_IMPORT` / imported-name `import_module(name)`
-  sibling implementation/assets are accepted as workspace-only state
-- Release-unit audit over the complete imported-name candidate cleared
-  first-pass
-- Full regression over the complete imported-name candidate cleared with
-  `676 passed`
-- Commit-gating returned P1 continuity findings and is not cleared
-- This continuity correction is the current bounded lane
-- After this correction is accepted, route next to rerun commit-gating over the
-  exact audit-cleared and regression-cleared imported-name candidate
-- Do not route back to release-unit audit or full regression absent new
-  findings
-- Do not stage, create a local commit, or push until commit-gating clears; push
-  remains Ryan-gated
-- Do not reopen `397c7dd`, `14b362e`, `bcd6d68`, or `96fc03a` absent new
-  findings
+  sibling pilot is completed and pushed at
+  `ee71a82 Add imported-name dynamic import eval probe`
+- The imported-name release-unit audit cleared first-pass
+- Full regression over the imported-name release unit passed with `676 passed`
+- First commit-gating returned P1 continuity findings; the continuity
+  correction was accepted; corrected commit-gating cleared
+- Local commit creation and Ryan-authorized push completed at `ee71a82`
+- There is no active release gate for `ee71a82`: do not route back to
+  release-unit audit, full regression, commit-gating, staging, local commit
+  creation, or push absent new findings
+- Next control action is one bounded post-`DYNAMIC_IMPORT` imported-name
+  north-star planning spike
+- Do not reopen `ee71a82`, `397c7dd`, `14b362e`, `bcd6d68`, or `96fc03a`
+  absent new findings
 - The imported-name matrix is
   `oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1 budget
   x 3 providers at budget 220, against providers `context_ir`,
@@ -621,8 +625,11 @@ sequencing for `c1a12d7` absent new findings.
   dynamic import support, and no
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening
-- `ad22ea6 Sync dynamic import root release routing` remains the prior pushed
-  continuity authority
+- `ca191c8 Sync builtin dynamic import release routing` remains the prior
+  pushed continuity authority
+- `397c7dd Add builtin dynamic import eval probe` is the prior builtin
+  dynamic-import eval/test/docs release authority and must not be reopened
+  absent new findings
 - `14b362e Add dynamic import root runtime eval pilot` is the prior root-module
   dynamic-import eval/test/docs release authority and must not be reopened
   absent new findings
@@ -661,10 +668,9 @@ sequencing for `c1a12d7` absent new findings.
   correction pinned `source_sha256` to `sha256(b"pass")`; audit rerun cleared;
   full regression passed; commit-gating cleared; local commit creation
   completed; Ryan-authorized push completed
-- Next control action, after this continuity correction is accepted, is to
-  rerun commit-gating over the exact audit-cleared and regression-cleared
-  imported-name candidate, not release-unit audit, full regression, local
-  commit creation, staging, or push
+- Next control action is one bounded post-`DYNAMIC_IMPORT` imported-name
+  north-star planning spike, not release-unit audit, full regression,
+  commit-gating, local commit creation, staging, or push for `ee71a82`
 - The runtime-outcome methodology/reporting hardening release unit is pushed to `origin/main` at `d8ebdc3`
 - Live git refs and worktree state are intentionally verified from git rather than kept as mutable committed continuity fields
 - The `getattr` family matrix expansion release unit is pushed at `1b555ef`
@@ -1196,23 +1202,46 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next control action after this continuity correction is accepted:
-rerun commit-gating over the exact audit-cleared and regression-cleared
-imported-name candidate. Do not route back to release-unit audit or full
-regression absent new findings. Do not stage, create a local commit, or push
-until commit-gating clears; push remains Ryan-gated. Do not reopen `397c7dd`,
+Immediate next control action: run one bounded post-`DYNAMIC_IMPORT`
+imported-name north-star planning spike. Do not route back to release-unit
+audit, full regression, commit-gating, staging, local commit creation, or push
+for `ee71a82` absent new findings. Do not reopen `ee71a82`, `397c7dd`,
 `14b362e`, `bcd6d68`, or `96fc03a` absent new findings. Do not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark scope.
 
 Current pushed release authority:
 
+- Treat pushed commit `ee71a82 Add imported-name dynamic import eval probe` as
+  the latest pushed eval/test/docs release authority:
+  - `oracle_signal_dynamic_import_imported_name_probe_matrix` is 1 task x 1
+    budget x 3 providers at budget 220
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `from importlib import import_module`,
+    `name = "plugins.weather"`, and exactly `import_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+  - no root-module `importlib.import_module(name)` expansion, literal
+    `import_module("plugins.weather")` expansion, alias `load_module(name)`,
+    `loader.import_module(name)`, `__import__(name)`, `builtins.__import__`,
+    globals/locals/fromlist forms, or generalized dynamic import support is
+    included
+  - no public benchmark claim, API, MCP, package export, schema, scoring,
+    optimizer, compiler, product, or winner-selection widening is authorized
+  - release-unit audit cleared first-pass; full regression passed with
+    `676 passed`; first commit-gating returned P1 continuity findings; the
+    continuity correction was accepted; corrected commit-gating cleared; local
+    commit and Ryan-authorized push completed at `ee71a82`
+  - do not reopen `ee71a82` absent new findings
 - Treat pushed commit `ca191c8 Sync builtin dynamic import release routing` as
-  the latest pushed continuity authority. It does not change eval/test release
+  the prior pushed continuity authority. It does not change eval/test release
   contents or authorize a new public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark boundary.
 - Treat pushed commit `397c7dd Add builtin dynamic import eval probe` as the
-  latest pushed eval/test release authority:
+  prior builtin dynamic-import eval/test/docs release authority:
   - `oracle_signal_dynamic_import_builtin_probe_matrix` is 1 task x 1 budget x
     3 providers at budget 220
   - providers remain `context_ir`, `lexical_top_k_files`, and
@@ -1232,8 +1261,8 @@ Current pushed release authority:
     `670 passed`; commit-gating cleared first-pass; local commit and
     Ryan-authorized push completed at `397c7dd`
   - do not reopen `397c7dd` absent new findings
-- Treat pushed commit `ad22ea6 Sync dynamic import root release routing` as the
-  prior pushed continuity authority.
+- Treat pushed commit `ad22ea6 Sync dynamic import root release routing` as an
+  earlier pushed dynamic-import root release-routing continuity authority.
 - Treat pushed commit `14b362e Add dynamic import root runtime eval pilot` as
   the prior root-module dynamic-import eval/test/docs release authority:
   - `oracle_signal_dynamic_import_root_probe_matrix` is 1 task x 1 budget x 3
@@ -1597,6 +1626,9 @@ not pending release gates.
 
 ## What Should Not Be Reopened
 
+- The accepted pushed `ee71a82` `DYNAMIC_IMPORT` / imported-name
+  `import_module(name)` runtime eval pilot release unit unless a later
+  findings-based review proves a concrete defect
 - The accepted pushed `397c7dd` `DYNAMIC_IMPORT` / builtin
   `__import__(name)` runtime eval pilot release unit unless a later
   findings-based review proves a concrete defect

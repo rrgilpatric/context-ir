@@ -2,6 +2,78 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-27 -- DYNAMIC_IMPORT Imported-name import_module(name) Release
+
+- Completed and pushed the internal eval-only `DYNAMIC_IMPORT` / imported-name
+  `import_module(name)` sibling pilot at
+  `ee71a82 Add imported-name dynamic import eval probe`
+- Repo-backed release truth during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at `ee71a82`
+  - latest pushed eval/test/docs release authority is
+    `ee71a82 Add imported-name dynamic import eval probe`
+  - prior pushed continuity authority is
+    `ca191c8 Sync builtin dynamic import release routing`
+  - prior builtin dynamic-import eval/test/docs release authority is
+    `397c7dd Add builtin dynamic import eval probe`
+  - prior root-module dynamic-import eval/test/docs release authority is
+    `14b362e Add dynamic import root runtime eval pilot`
+  - live git refs remain authoritative
+  - do not reopen `ee71a82`, `397c7dd`, `14b362e`, `bcd6d68`, or `96fc03a`
+    absent new findings
+- Released pilot assets:
+  - `evals/fixtures/oracle_signal_dynamic_import_imported_name_probe/`
+  - `evals/tasks/oracle_signal_dynamic_import_imported_name_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+- Evidence boundary:
+  - `oracle_signal_dynamic_import_imported_name_probe_matrix` is narrow
+    internal eval-only evidence only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `from importlib import import_module`,
+    `name = "plugins.weather"`, and exactly `import_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+  - public comparative claims remain bounded to the existing quad matrix
+- Preserved non-goals:
+  - no root-module `importlib.import_module(name)` expansion
+  - no literal `import_module("plugins.weather")` expansion
+  - no alias `load_module(name)`
+  - no `loader.import_module(name)`
+  - no `__import__(name)`
+  - no `builtins.__import__`
+  - no globals/locals/fromlist forms
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+  - no product-surface, schema, scoring, optimizer, compiler, or
+    winner-selection widening
+- Release state:
+  - release-unit audit cleared first-pass
+  - full regression passed:
+    - `ruff check` passed
+    - `ruff format --check` passed
+    - `mypy --strict` passed
+    - `pytest tests/ -v` passed with `676 passed`
+  - first commit-gating returned P1 continuity findings
+  - continuity correction accepted
+  - corrected commit-gating cleared
+  - local commit creation completed at `ee71a82`
+  - Ryan-authorized push completed at `ee71a82`
+- Routing decision:
+  - route next to one bounded post-`DYNAMIC_IMPORT` imported-name north-star
+    planning spike
+  - do not route back to release-unit audit, full regression, commit-gating,
+    local commit creation, staging, or push for `ee71a82` absent new findings
+  - do not widen
+    public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark scope through this routing
+- Acceptance status: 1 correction
+
 ## 2026-04-27 -- DYNAMIC_IMPORT Imported-name Gate-State Continuity Correction
 
 - Corrected active continuity for the workspace-only internal eval-only
