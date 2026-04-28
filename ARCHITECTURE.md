@@ -12,8 +12,9 @@ authority for current claims, regression anchors, and reviewer-facing surfaces.
 Post-phase-0 internal slices have added capability-tier accounting and narrow
 runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
 matrix, the current root-module `importlib.import_module(name)`, builtin
-`__import__(name)`, and imported-name `import_module(name)` sibling pilots, and
-`REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
+`__import__(name)`, imported-name `import_module(name)`, and imported-alias
+`load_module(name)` sibling pilots, and `REFLECTIVE_BUILTIN` pilots for
+`hasattr(obj, name)` and
 `getattr(obj, name)`. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
 evidence and value-return sibling evidence. The three existing getattr-family
@@ -163,6 +164,25 @@ evidence does not cover root-module `importlib.import_module(name)` expansion,
 literal `import_module("plugins.weather")` expansion, alias
 `load_module(name)`, `loader.import_module(name)`, `__import__(name)`,
 `builtins.__import__`, globals/locals/fromlist forms, generalized dynamic
+import support, or any
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+The current internal eval-only `DYNAMIC_IMPORT` / imported-alias
+`load_module(name)` sibling evidence is narrow and remains one task only
+through `oracle_signal_dynamic_import_imported_alias_probe_matrix`: 1 task x 1
+budget x 3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary is
+`from importlib import import_module as load_module`,
+`name = "plugins.weather"`, and exactly `load_module(name)`. The runtime
+payload is `imported_module=plugins.weather`. Primary selector and selected-unit
+truth remain `unsupported/opaque`, runtime provenance remains additive only, no
+dependency edge or selected symbol is created from `plugins.weather`, and
+public comparative claims remain bounded to the existing quad matrix. This
+evidence does not cover root-module `importlib.import_module(name)` expansion,
+imported-name `import_module(name)` expansion, literal
+`load_module("plugins.weather")` expansion, `loader.import_module(name)`,
+`__import__(name)`, `builtins.__import__`, globals/locals/fromlist forms,
+namespace mutation, generated-code dependency modeling, generalized dynamic
 import support, or any
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
