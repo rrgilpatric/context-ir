@@ -2,29 +2,96 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-28 -- DYNAMIC_IMPORT Imported-alias load_module(name) Release
+
+- Completed and pushed the internal eval-only `DYNAMIC_IMPORT` /
+  imported-alias `load_module(name)` sibling pilot at
+  `4030845 Add imported-alias dynamic import eval probe`.
+- Repo-backed release truth during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at `4030845`
+  - latest pushed release authority is
+    `4030845 Add imported-alias dynamic import eval probe`
+  - prior pushed continuity authority is
+    `5d2d7e4 Sync imported-name dynamic import release routing`
+  - prior imported-name dynamic-import eval/test/docs release authority is
+    `ee71a82 Add imported-name dynamic import eval probe`
+  - live git refs remain authoritative
+- Released pilot assets:
+  - `evals/fixtures/oracle_signal_dynamic_import_imported_alias_probe/`
+  - `evals/tasks/oracle_signal_dynamic_import_imported_alias_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_imported_alias_probe.py`
+- Evidence boundary:
+  - `oracle_signal_dynamic_import_imported_alias_probe_matrix` is narrow
+    internal eval-only evidence only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `from importlib import import_module as load_module`,
+    `name = "plugins.weather"`, and exactly `load_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+- Preserved non-goals:
+  - no root-module `importlib.import_module(name)` expansion
+  - no imported-name `import_module(name)` expansion
+  - no literal `load_module("plugins.weather")` expansion
+  - no `loader.import_module(name)`
+  - no `__import__(name)`
+  - no `builtins.__import__`
+  - no globals/locals/fromlist forms
+  - no namespace mutation
+  - no generated-code dependency modeling
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+- Release state:
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `682 passed`
+  - first commit-gating rejected with P1 stale-routing findings in `PLAN.md`
+    and `BUILDLOG.md`
+  - continuity correction accepted first-pass
+  - corrected commit-gating cleared first-pass
+  - local commit creation completed at `4030845`
+  - Ryan-authorized push completed at `4030845`
+- Routing decision:
+  - there is no active release gate for `4030845`
+  - do not route back to release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push for `4030845` absent new findings
+  - next route is a fresh bounded post-imported-alias next-move
+    planning/control decision, not implementation and not release handling
+- Scope guard:
+  - this continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, `ARCHITECTURE.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `README.md` are in scope
+- Acceptance status: first-pass
+
 ## 2026-04-28 -- DYNAMIC_IMPORT Imported-alias Commit-gating Routing Correction
 
 - Corrected `PLAN.md` and `BUILDLOG.md` only after commit-gating rejected stale
   imported-alias release routing.
-- Release state now recorded for the workspace-only internal eval-only
+- Release state now recorded for the then-workspace-only internal eval-only
   `DYNAMIC_IMPORT` / imported-alias `load_module(name)` release unit:
   - release-unit audit cleared first-pass
   - full regression cleared first-pass with `682 passed`
   - commit-gating rejected with P1 stale-routing findings in `PLAN.md` and
     `BUILDLOG.md`
-  - commit-gating is not cleared
-  - no staging, commit, or push is authorized
-  - push remains Ryan-gated
-- Next route after this correction is accepted:
-  - rerun corrected commit-gating over the exact audit-cleared and
-    regression-cleared imported-alias release unit
-  - do not reroute to release-unit audit or full regression absent new findings
+  - continuity correction later accepted first-pass
+  - corrected commit-gating later cleared first-pass
+  - local commit creation and Ryan-authorized push later completed at `4030845`
+- Superseding route after push:
+  - do not reroute to release-unit audit, full regression, corrected
+    commit-gating, staging, commit, or push for `4030845` absent new findings
+  - route next to a fresh bounded post-imported-alias next-move
+    planning/control decision
 - Scope guard:
   - no source, eval assets, tests, `ARCHITECTURE.md`, `EVAL.md`,
     `PUBLIC_CLAIMS.md`, or `README.md` were edited by this correction
   - imported-alias claims, matrix/provider/budget truth, and fixture truth were
     not widened
-- Acceptance status: held pending control review
+- Acceptance status: first-pass
 
 ## 2026-04-27 -- DYNAMIC_IMPORT Imported-alias load_module(name) Docs Reconciliation
 
@@ -82,23 +149,24 @@ Most recent supersession entries override older architectural decisions when the
   - no product-surface, schema, scoring, optimizer, compiler, or
     winner-selection widening
 - Release state and routing:
-  - the imported-alias implementation/assets are accepted as workspace-only
-    state
-  - docs/evidence/continuity reconciliation is accepted as workspace-only
-    state
+  - the imported-alias implementation/assets were accepted as workspace-only
+    state before release
+  - docs/evidence/continuity reconciliation was accepted as workspace-only
+    state before release
   - release-unit audit cleared first-pass
   - full regression cleared first-pass with `682 passed`
-  - commit-gating rejected with P1 stale-routing findings in `PLAN.md` and
+  - first commit-gating rejected with P1 stale-routing findings in `PLAN.md` and
     `BUILDLOG.md`
-  - commit-gating is not cleared
-  - no staging, commit, or push is authorized
-  - after this continuity correction is accepted, route next to corrected
-    commit-gating rerun over the exact audit-cleared and regression-cleared
-    imported-alias release unit
-  - do not reroute to release-unit audit or full regression absent new findings
-  - push remains Ryan-gated
+  - continuity correction later accepted first-pass
+  - corrected commit-gating later cleared first-pass
+  - local commit creation completed at `4030845`
+  - Ryan-authorized push completed at `4030845`
+  - there is no active release gate for `4030845`
+  - do not reroute to release-unit audit, full regression, commit-gating,
+    staging, commit, or push for `4030845` absent new findings
 - Acceptance status: first-pass for docs/evidence/continuity reconciliation;
-  current commit-gating routing correction held pending control review
+  later commit-gating routing correction accepted first-pass before `4030845`
+  local commit creation and Ryan-authorized push
 
 ## 2026-04-27 -- DYNAMIC_IMPORT Imported-name import_module(name) Release
 
