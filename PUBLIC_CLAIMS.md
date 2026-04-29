@@ -44,7 +44,9 @@ stays scoped to repo-local evidence only.
   `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence, plus the
   current internal eval-only `DYNAMIC_IMPORT` / imported-name
   `import_module(name)` sibling evidence, plus the current internal eval-only
-  `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling evidence.
+  `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling evidence, plus
+  the current internal eval-only `DYNAMIC_IMPORT` /
+  root-module alias `loader.import_module(name)` sibling evidence.
   The three existing
   getattr-family pilot matrices
   (`oracle_signal_getattr_probe_matrix`,
@@ -190,6 +192,24 @@ stays scoped to repo-local evidence only.
   generated-code dependency modeling, generalized dynamic import support, or
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is included.
+  The current internal eval-only
+  `oracle_signal_dynamic_import_root_alias_probe_matrix` is limited to narrow
+  `DYNAMIC_IMPORT` / root-module alias `loader.import_module(name)` sibling
+  evidence as 1 task x 1 budget x 3 providers at budget 220, against
+  providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with fixture boundary
+  `import importlib as loader`, `name = "plugins.weather"`, and exactly
+  `loader.import_module(name)`; runtime payload
+  `imported_module=plugins.weather`; primary selector and selected-unit truth
+  remain `unsupported/opaque`; runtime provenance remains additive only; no
+  dependency edge or selected symbol is created from `plugins.weather`; no
+  root-module `importlib.import_module(name)` expansion, imported-name
+  `import_module(name)` expansion, imported-alias `load_module(name)`
+  expansion, literal dynamic import expansion, `__import__(name)`,
+  `builtins.__import__`, globals/locals/fromlist forms, namespace mutation,
+  generated-code dependency modeling, generalized dynamic import support, or
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
   These
   pilots must not be described as public benchmark proof, generalized
   dynamic-import support, generalized reflective-builtin support, generalized
@@ -212,7 +232,8 @@ stays scoped to repo-local evidence only.
   [evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json),
   [evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json),
   [evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json),
-  [evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json).
+  [evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json),
+  [evals/run_specs/oracle_signal_dynamic_import_root_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_root_alias_probe_matrix.json).
 - Safe comparative descriptor: Within the fixed internal quad matrix only
   (`oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`,
   and `oracle_signal_smoke_d` at budgets `200` and `240` against
@@ -260,7 +281,8 @@ stays scoped to repo-local evidence only.
   `__import__(name)` sibling evidence, plus the current internal eval-only
   `DYNAMIC_IMPORT` / imported-name `import_module(name)` sibling evidence,
   plus the current internal eval-only `DYNAMIC_IMPORT` / imported-alias
-  `load_module(name)` sibling evidence.
+  `load_module(name)` sibling evidence, plus the current internal eval-only `DYNAMIC_IMPORT` / root-module alias
+  `loader.import_module(name)` sibling evidence.
   For the narrow internal eval-only
   `DYNAMIC_IMPORT` / builtin
   `__import__(name)` sibling matrix, the only accepted provider/budget wording
@@ -307,6 +329,24 @@ stays scoped to repo-local evidence only.
   `loader.import_module(name)`, `__import__(name)`, `builtins.__import__`,
   globals/locals/fromlist forms, namespace mutation, generated-code dependency
   modeling, generalized dynamic import support, or public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening.
+  For the current internal eval-only `DYNAMIC_IMPORT`
+  / root-module alias `loader.import_module(name)` sibling matrix, the only
+  accepted provider/budget wording is
+  `oracle_signal_dynamic_import_root_alias_probe_matrix`: 1 task x 1 budget x
+  3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with fixture
+  boundary `import importlib as loader`, `name = "plugins.weather"`, and
+  exactly `loader.import_module(name)`, runtime payload
+  `imported_module=plugins.weather`, primary selector and selected-unit truth
+  `unsupported/opaque`, additive-only runtime provenance, no dependency edge
+  or selected symbol created from `plugins.weather`, and no root-module
+  `importlib.import_module(name)` expansion, imported-name
+  `import_module(name)` expansion, imported-alias `load_module(name)`
+  expansion, literal dynamic import expansion, `__import__(name)`,
+  `builtins.__import__`, globals/locals/fromlist forms, namespace mutation,
+  generated-code dependency modeling, generalized dynamic import support, or
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening.
   For the three existing getattr-family matrices, the only accepted
   provider/budget wording is 1 task x 2 budgets x 3 providers at budgets `100`
@@ -438,6 +478,11 @@ stays scoped to repo-local evidence only.
   dynamic selector and selected-unit primary truth remain
   `unsupported/opaque`, runtime provenance remains additive only, and no
   static dependency or symbol is created from the dynamically imported module.
+  For the current root-module alias
+  `loader.import_module(name)` sibling matrix, dynamic selector and
+  selected-unit primary truth remain `unsupported/opaque`, runtime provenance
+  remains additive only, and no static dependency or selected symbol is created
+  from `plugins.weather`.
   For the narrow builtin `__import__(name)` sibling matrix,
   dynamic selector and selected-unit primary truth remain
   `unsupported/opaque`, runtime provenance remains additive only, and no
@@ -487,6 +532,13 @@ stays scoped to repo-local evidence only.
   expansion, `loader.import_module(name)`, `__import__(name)`,
   `builtins.__import__`, globals/locals/fromlist forms, namespace mutation, or
   generated-code dependency modeling.
+- Do not describe the root-module alias `loader.import_module(name)` sibling
+  matrix as generalized dynamic import support or as covering root-module
+  `importlib.import_module(name)` expansion, imported-name
+  `import_module(name)` expansion, imported-alias `load_module(name)`
+  expansion, literal dynamic import expansion, `__import__(name)`,
+  `builtins.__import__`, globals/locals/fromlist forms, namespace mutation, or
+  generated-code dependency modeling.
 - Do not say "latency reduction," "token savings," or "cost reduction."
 
 ## Evidence Map
@@ -497,4 +549,5 @@ stays scoped to repo-local evidence only.
 | AC2 | Public interface claims are limited to `analyze_repository(...)`, `compile_repository_context(...)`, and one tested MCP compile tool. | [README.md](README.md#python-api), [README.md](README.md#minimal-mcp-usage), [EVAL.md](EVAL.md#supported-claims-today) |
 | AC3 | Deterministic internal eval infrastructure exists; the quad matrix remains the current public-safe comparative internal surface, while runtime-backed evidence is limited to narrow internal `DYNAMIC_IMPORT`, `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, `METACLASS_BEHAVIOR`, and `EXEC_OR_EVAL` pilots enumerated in `EVAL.md`. The internal `oracle_signal_dir_zero_probe_matrix` covers only zero-argument `dir()` evidence as 1 task x 1 budget x 3 providers at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`; runtime proof requires non-empty `durable_payload_reference`, `listing_entry_count` is additive summary only, primary selector and selected-unit truth remain `unsupported/opaque`, runtime provenance remains additive only, and public comparative claims remain bounded to the existing quad matrix. The internal `oracle_signal_metaclass_behavior_probe_matrix` covers only 1 task x 1 budget x 3 providers at budget `220`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload `class_creation_outcome=created_class`; `durable_payload_reference` is required and non-empty, optional `created_class_qualified_name` and `selected_metaclass_qualified_name` fields are additive summary only, attachment is limited to the preserved full `metaclass=...` keyword-site unsupported construct, selector and selected-unit primary truth remain `unsupported/opaque`, runtime provenance remains additive only, and public comparative claims remain bounded to the existing quad matrix. The internal `oracle_signal_eval_probe_matrix` covers only narrow eval-only `EXEC_OR_EVAL` / `eval(source)` evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload/proof boundary `evaluation_outcome=returned_value`, `source_shape=literal_expression`, valid `source_sha256`, and non-empty `durable_payload_reference`; optional `result_type=builtins.str` is additive summary only, runtime provenance attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for `eval(source)`, primary selector and selected-unit truth remain `unsupported/opaque`, additive runtime provenance remains separate from primary truth, and public comparative claims remain bounded to the existing quad matrix. The internal `oracle_signal_exec_probe_matrix` covers only narrow eval-only `EXEC_OR_EVAL` / `exec(source)` evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture/call boundary `source = "pass"` and exactly `exec(source)`, executed source parsing as exactly one `ast.Pass`, runtime payload/proof boundary `execution_outcome=completed`, `source_shape=literal_statement`, valid `source_sha256` for exact `"pass"`, and non-empty `durable_payload_reference`; optional `statement_kind=pass` is additive summary only, runtime provenance attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for `exec(source)`, primary selector and selected-unit truth remain `unsupported/opaque`, additive runtime provenance remains separate from primary truth, no dependency edge or symbol is created from executed source, no namespace mutation modeling is added, no generated-code dependency modeling is added, and public comparative claims remain bounded to the existing quad matrix. The internal `oracle_signal_dynamic_import_root_probe_matrix` covers only narrow eval-only `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` sibling evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary `import importlib`, `name = "plugins.weather"`, and exactly `importlib.import_module(name)`, runtime payload `imported_module=plugins.weather`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, and no dependency edge or symbol created from the dynamically imported module; it excludes `__import__(name)`, imported-name `import_module(name)`, alias or loader forms, and generalized dynamic import support. The narrow internal `oracle_signal_dynamic_import_builtin_probe_matrix` covers only narrow eval-only `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary `name = "plugins.weather"`, exactly `__import__(name)`, and bounded `sys.modules[name]` retrieval only, runtime payload `imported_module=plugins.weather`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, and no dependency edge or symbol created from `plugins.weather`; it excludes `importlib.import_module(name)`, imported-name `import_module(name)`, alias or loader forms, `builtins.__import__`, globals/locals/fromlist forms, and generalized dynamic import support. The internal `oracle_signal_dynamic_import_imported_name_probe_matrix` covers only narrow eval-only `DYNAMIC_IMPORT` / imported-name `import_module(name)` sibling evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary `from importlib import import_module`, `name = "plugins.weather"`, and exactly `import_module(name)`, runtime payload `imported_module=plugins.weather`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, and no dependency edge or selected symbol created from `plugins.weather`; it excludes root-module `importlib.import_module(name)` expansion, literal `import_module("plugins.weather")` expansion, alias `load_module(name)`, `loader.import_module(name)`, `__import__(name)`, `builtins.__import__`, globals/locals/fromlist forms, and generalized dynamic import support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_triple_matrix.json](evals/run_specs/oracle_signal_triple_matrix.json), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json), [evals/run_specs/oracle_signal_hasattr_probe_matrix.json](evals/run_specs/oracle_signal_hasattr_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_probe_matrix.json](evals/run_specs/oracle_signal_getattr_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_default_probe_matrix.json](evals/run_specs/oracle_signal_getattr_default_probe_matrix.json), [evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json](evals/run_specs/oracle_signal_getattr_default_value_probe_matrix.json), [evals/run_specs/oracle_signal_vars_probe_matrix.json](evals/run_specs/oracle_signal_vars_probe_matrix.json), [evals/run_specs/oracle_signal_vars_zero_probe_matrix.json](evals/run_specs/oracle_signal_vars_zero_probe_matrix.json), [evals/run_specs/oracle_signal_globals_probe_matrix.json](evals/run_specs/oracle_signal_globals_probe_matrix.json), [evals/run_specs/oracle_signal_locals_probe_matrix.json](evals/run_specs/oracle_signal_locals_probe_matrix.json), [evals/run_specs/oracle_signal_delattr_probe_matrix.json](evals/run_specs/oracle_signal_delattr_probe_matrix.json), [evals/run_specs/oracle_signal_setattr_probe_matrix.json](evals/run_specs/oracle_signal_setattr_probe_matrix.json), [evals/run_specs/oracle_signal_dir_probe_matrix.json](evals/run_specs/oracle_signal_dir_probe_matrix.json), [evals/run_specs/oracle_signal_dir_zero_probe_matrix.json](evals/run_specs/oracle_signal_dir_zero_probe_matrix.json), [evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json](evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json), [evals/run_specs/oracle_signal_eval_probe_matrix.json](evals/run_specs/oracle_signal_eval_probe_matrix.json), [evals/run_specs/oracle_signal_exec_probe_matrix.json](evals/run_specs/oracle_signal_exec_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json) |
 | AC3a | The internal `oracle_signal_dynamic_import_imported_alias_probe_matrix` covers only narrow eval-only `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary `from importlib import import_module as load_module`, `name = "plugins.weather"`, and exactly `load_module(name)`, runtime payload `imported_module=plugins.weather`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, and no dependency edge or selected symbol created from `plugins.weather`; it excludes root-module `importlib.import_module(name)` expansion, imported-name `import_module(name)` expansion, literal `load_module("plugins.weather")` expansion, `loader.import_module(name)`, `__import__(name)`, `builtins.__import__`, globals/locals/fromlist forms, namespace mutation, generated-code dependency modeling, and generalized dynamic import support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json) |
+| AC3b | The current internal `oracle_signal_dynamic_import_root_alias_probe_matrix` covers only narrow eval-only `DYNAMIC_IMPORT` / root-module alias `loader.import_module(name)` sibling evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary `import importlib as loader`, `name = "plugins.weather"`, and exactly `loader.import_module(name)`, runtime payload `imported_module=plugins.weather`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, and no dependency edge or selected symbol created from `plugins.weather`; it excludes root-module `importlib.import_module(name)` expansion, imported-name `import_module(name)` expansion, imported-alias `load_module(name)` expansion, literal dynamic import expansion, `__import__(name)`, `builtins.__import__`, globals/locals/fromlist forms, namespace mutation, generated-code dependency modeling, and generalized dynamic import support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dynamic_import_root_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_root_alias_probe_matrix.json) |
 | AC4 | The only allowed comparative claim is the fixed-scope quad-matrix claim: within that matrix only, `context_ir` wins all `8/8` task-budget rows and leads the provider-average aggregate. | [EVAL.md](EVAL.md#supported-claims-today), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |
