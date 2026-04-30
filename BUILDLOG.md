@@ -2,15 +2,84 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-29 -- DYNAMIC_IMPORT Root-module Alias Release
+
+- Completed and pushed the internal eval-only `DYNAMIC_IMPORT` / root-module
+  alias `loader.import_module(name)` sibling pilot at
+  `b85f038 Add root-alias dynamic import eval probe`.
+- Repo-backed release truth during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at `b85f038`
+  - working tree clean at intake
+  - latest pushed eval/test/docs release authority is
+    `b85f038 Add root-alias dynamic import eval probe`
+  - prior pushed continuity authority is
+    `8a83a9b Sync imported-alias release routing`
+  - prior dynamic-import imported-alias eval/test/docs release authority is
+    `4030845 Add imported-alias dynamic import eval probe`
+  - live git refs remain authoritative for future control intake
+- Released pilot assets:
+  - `evals/fixtures/oracle_signal_dynamic_import_root_alias_probe/`
+  - `evals/tasks/oracle_signal_dynamic_import_root_alias_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_root_alias_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_root_alias_probe.py`
+- Evidence boundary:
+  - `oracle_signal_dynamic_import_root_alias_probe_matrix` is narrow internal
+    eval-only evidence only
+  - matrix shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `import importlib as loader`,
+    `name = "plugins.weather"`, and exactly `loader.import_module(name)`
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+- Preserved non-goals:
+  - no root-module `importlib.import_module(name)` expansion
+  - no imported-name `import_module(name)` expansion
+  - no imported-alias `load_module(name)` expansion
+  - no literal dynamic import expansion
+  - no `__import__(name)`
+  - no `builtins.__import__`
+  - no globals/locals/fromlist forms
+  - no namespace mutation
+  - no generated-code dependency modeling
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+- Release state:
+  - implementation/assets accepted workspace-only before release
+  - corrected docs/evidence/continuity reconciliation accepted after one P1
+    state-neutrality correction
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `688 passed`
+  - commit-gating cleared first-pass
+  - local commit creation completed at `b85f038`
+  - Ryan-authorized push completed at `b85f038`
+- Routing decision:
+  - there is no active release gate for `b85f038`
+  - do not route back to release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push for `b85f038` absent new findings
+  - next route is a fresh bounded post-root-alias planning/control decision
+    toward the north star
+- Scope guard:
+  - this continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, `ARCHITECTURE.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `README.md` are in scope
+- Acceptance status: docs reconciliation accepted after 1 correction; release
+  audit, full regression, commit-gating, local commit creation, and
+  Ryan-authorized push completed first-pass
+
 ## 2026-04-29 -- DYNAMIC_IMPORT Root-module Alias Commit-gating Routing Correction
 
 - Corrected `PLAN.md` and `BUILDLOG.md` routing after control accepted the
   corrected docs/evidence/continuity reconciliation, release-unit audit cleared
   first-pass, and full regression cleared first-pass for the accepted
-  workspace-only internal eval-only `DYNAMIC_IMPORT` / root-module alias
+  pre-release internal eval-only `DYNAMIC_IMPORT` / root-module alias
   `loader.import_module(name)` release unit.
-- Release state now recorded:
-  - root-module alias implementation/assets are accepted workspace-only
+- Then-current release state recorded:
+  - root-module alias implementation/assets were accepted workspace-only
   - corrected docs/evidence/continuity reconciliation is accepted after the
     first docs reconciliation's P1 state-neutrality rejection
   - release-unit audit cleared first-pass
@@ -19,28 +88,31 @@ Most recent supersession entries override older architectural decisions when the
     - `ruff format --check` passed
     - `mypy --strict src/` passed
     - `pytest tests/ -v` passed with `688 passed`
-  - commit-gating is the active next gate
-  - commit-gating, staging, local commit creation, and push have not cleared
-  - push remains Ryan-gated
+  - commit-gating was the then-active next gate
+  - commit-gating, staging, local commit creation, and push had not yet cleared
+  - push remained Ryan-gated
+  - this route was later superseded by completed local commit creation and
+    Ryan-authorized push at `b85f038`
 - Scope guard:
   - only `PLAN.md` and `BUILDLOG.md` were edited by this correction
   - release-facing docs remain state-neutral and were not edited here
   - no source, tests, eval assets, `ARCHITECTURE.md`, `EVAL.md`,
     `PUBLIC_CLAIMS.md`, or `README.md` were edited by this correction
-- Routing decision:
+- Routing decision at that time:
   - route next to commit-gating review over the exact accumulated root-module
     alias release unit
   - do not route back to release-unit audit or full regression absent new
     findings
   - do not stage, commit, or push before commit-gating clears
-  - push remains Ryan-gated
+  - push remained Ryan-gated at that time
+  - this route is superseded by the root-module alias release entry above
 - Acceptance status: first-pass
 
 ## 2026-04-29 -- DYNAMIC_IMPORT Root-module Alias Docs State-neutrality Correction
 
 - Corrected the rejected docs/evidence/continuity reconciliation for the
-  accepted workspace-only internal eval-only `DYNAMIC_IMPORT` / root-module
-  alias `loader.import_module(name)` sibling pilot.
+  pre-release accepted internal eval-only `DYNAMIC_IMPORT` / root-module alias
+  `loader.import_module(name)` sibling pilot.
 - Control review rejected the first docs reconciliation with a P1
   state-neutrality finding:
   - `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, and `README.md` used
@@ -153,14 +225,16 @@ Most recent supersession entries override older architectural decisions when the
   - control review rejected this reconciliation with a P1 state-neutrality
     finding because release-facing docs used live workspace-state wording for
     the root-alias evidence
-  - root-module alias implementation/assets are accepted workspace-only state
+  - root-module alias implementation/assets were accepted workspace-only
+    before release
   - corrected docs/evidence/continuity reconciliation later accepted
   - release-unit audit later cleared first-pass
   - full regression later cleared first-pass with `688 passed`
-  - active gate routing is superseded by the commit-gating routing correction
+  - commit-gating later cleared first-pass
+  - local commit creation and Ryan-authorized push later completed at
+    `b85f038`
+  - active gate routing is superseded by the root-module alias release entry
     above
-  - commit-gating, staging, local commit creation, and push have not cleared
-  - push remains Ryan-gated
 - Acceptance status: rejected for the first reconciliation; later correction
   accepted first-pass
 
