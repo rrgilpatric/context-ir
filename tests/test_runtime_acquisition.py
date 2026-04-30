@@ -863,12 +863,14 @@ def test_attach_dynamic_import_runtime_provenance_targets_dynamic_import_boundar
     """Only existing dynamic-import unsupported constructs gain attachments."""
     (tmp_path / "main.py").write_text(
         """
+import builtins
 import importlib
 import importlib as loader
 from importlib import import_module
 from importlib import import_module as load_module
 
 def run(name: str, source: str) -> None:
+    builtins.__import__(name)
     importlib.import_module(name)
     import_module(name)
     load_module(name)
@@ -901,6 +903,7 @@ def run(name: str, source: str) -> None:
     }
 
     expected_texts = {
+        "builtins.__import__(name)",
         "importlib.import_module(name)",
         "import_module(name)",
         "load_module(name)",

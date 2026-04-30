@@ -526,6 +526,39 @@ def test_derive_dependency_frontier_surfaces_root_importlib_alias_boundaries(
     assert "loader.import_module" not in unresolved_by_text
 
 
+def test_derive_dependency_frontier_surfaces_unshadowed_builtins_import_boundary(
+    tmp_path: Path,
+) -> None:
+    """Exact ``import builtins`` calls stay explicit dynamic-import boundaries."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import builtins
+
+            def run(name: str) -> None:
+                builtins.__import__(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    unresolved_by_text = {
+        access.access_text: access.reason_code
+        for access in derived_program.unresolved_frontier
+    }
+    unsupported_by_text = {
+        construct.construct_text: construct.reason_code
+        for construct in derived_program.unsupported_constructs
+    }
+
+    assert (
+        unsupported_by_text["builtins.__import__(name)"]
+        is UnresolvedReasonCode.DYNAMIC_IMPORT
+    )
+    assert "builtins.__import__" not in unresolved_by_text
+
+
 def test_derive_dependency_frontier_surfaces_runtime_mutation_call_boundaries(
     tmp_path: Path,
 ) -> None:
@@ -753,6 +786,48 @@ def test_derive_dependency_frontier_preserves_shadowed_dynamic_call_names(
     assert "eval()" not in unsupported_by_text
     assert "__import__()" not in unsupported_by_text
     assert "importlib.import_module()" not in unsupported_by_text
+
+
+def test_derive_dependency_frontier_keeps_non_exact_builtins_import_forms_generic(
+    tmp_path: Path,
+) -> None:
+    """Shadowed, aliased, and non-exact ``builtins.__import__`` calls stay generic."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import builtins
+            import builtins as loader
+
+            def shadowed(name: str, value: object) -> None:
+                builtins = value
+                builtins.__import__(name)
+
+            def aliased(name: str) -> None:
+                loader.__import__(name)
+
+            def non_exact(name: str) -> None:
+                builtins.__import__(name, None)
+                builtins.__import__("math")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    unresolved_texts = {
+        access.access_text for access in derived_program.unresolved_frontier
+    }
+    unsupported_by_text = {
+        construct.construct_text: construct.reason_code
+        for construct in derived_program.unsupported_constructs
+    }
+
+    assert "builtins.__import__" in unresolved_texts
+    assert "loader.__import__" in unresolved_texts
+    assert "builtins.__import__(name)" not in unsupported_by_text
+    assert "loader.__import__(name)" not in unsupported_by_text
+    assert "builtins.__import__(name, None)" not in unsupported_by_text
+    assert 'builtins.__import__("math")' not in unsupported_by_text
 
 
 def test_derive_dependency_frontier_preserves_shadowed_importlib_root_alias_names(

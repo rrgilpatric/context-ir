@@ -719,10 +719,7 @@ def _dynamic_boundary_reason_for_call_site(
                 return UnresolvedReasonCode.DYNAMIC_IMPORT
             return None
         return _DYNAMIC_CALL_REASON_CODES.get(expression.name)
-    if not (
-        isinstance(expression, _AttributeChainExpression)
-        and expression.attribute_names == ("import_module",)
-    ):
+    if not isinstance(expression, _AttributeChainExpression):
         return None
     binding = _lookup_visible_binding(
         name=expression.root_name,
@@ -730,7 +727,20 @@ def _dynamic_boundary_reason_for_call_site(
         site=call_site.site,
         index=index,
     )
-    if not _binding_is_importlib_root_import(binding=binding, index=index):
+    if expression.attribute_names == ("import_module",):
+        if _binding_is_importlib_root_import(binding=binding, index=index):
+            return UnresolvedReasonCode.DYNAMIC_IMPORT
+        return None
+    if expression.attribute_names != ("__import__",):
+        return None
+    if not (
+        call_site.argument_count == 1
+        and _call_site_has_single_name_argument(
+            call_site=call_site,
+            argument_name="name",
+        )
+        and _binding_is_builtins_root_import(binding=binding, index=index)
+    ):
         return None
     return UnresolvedReasonCode.DYNAMIC_IMPORT
 
@@ -1199,6 +1209,20 @@ def _binding_is_importlib_root_import(
     return import_fact.module_name == "importlib"
 
 
+def _binding_is_builtins_root_import(
+    *,
+    binding: BindingFact | None,
+    index: _ProgramIndex,
+) -> bool:
+    """Return whether ``binding`` is exactly ``import builtins``."""
+    if binding is None or binding.binding_kind is not BindingKind.IMPORT:
+        return False
+    import_fact = index.import_facts_by_binding_symbol_id.get(binding.symbol_id)
+    if import_fact is None or import_fact.kind is not ImportKind.IMPORT:
+        return False
+    return import_fact.module_name == "builtins" and import_fact.alias is None
+
+
 def _binding_is_importlib_import_module_import(
     *,
     binding: BindingFact,
@@ -1213,6 +1237,28 @@ def _binding_is_importlib_import_module_import(
     return (
         import_fact.module_name == "importlib"
         and import_fact.imported_name == "import_module"
+    )
+
+
+def _call_site_has_single_name_argument(
+    *,
+    call_site: CallSiteFact,
+    argument_name: str,
+) -> bool:
+    """Return whether a call snippet is exactly one positional name argument."""
+    snippet = call_site.site.snippet
+    if snippet is None:
+        return False
+    try:
+        call_expression = ast.parse(snippet.strip(), mode="eval").body
+    except SyntaxError:
+        return False
+    return (
+        isinstance(call_expression, ast.Call)
+        and len(call_expression.args) == 1
+        and not call_expression.keywords
+        and isinstance(call_expression.args[0], ast.Name)
+        and call_expression.args[0].id == argument_name
     )
 
 

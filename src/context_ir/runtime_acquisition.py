@@ -1232,7 +1232,7 @@ def _is_supported_dynamic_import_call_site(callee_text: str) -> bool:
         return True
 
     attribute_names = _attribute_chain_names(expression)
-    return attribute_names == ("import_module",)
+    return attribute_names == ("import_module",) or callee_text == "builtins.__import__"
 
 
 def _is_supported_hasattr_call_site(call_site: CallSiteFact) -> bool:

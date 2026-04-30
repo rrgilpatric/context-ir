@@ -12,8 +12,10 @@ authority for current claims, regression anchors, and reviewer-facing surfaces.
 Post-phase-0 internal slices have added capability-tier accounting and narrow
 runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
 matrix, the current root-module `importlib.import_module(name)`, builtin
-`__import__(name)`, imported-name `import_module(name)`, and imported-alias
-`load_module(name)` sibling pilots, plus the current root-module alias `loader.import_module(name)` sibling pilot, and
+`__import__(name)`, builtins-attribute `builtins.__import__(name)`,
+imported-name `import_module(name)`, and imported-alias
+`load_module(name)` sibling pilots, plus the current root-module alias
+`loader.import_module(name)` sibling pilot, and
 `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
 `getattr(obj, name)`. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
@@ -167,6 +169,25 @@ comparative claims remain bounded to the existing quad matrix. This evidence
 does not cover `importlib.import_module(name)`, imported-name
 `import_module(name)`, alias or loader forms, `builtins.__import__`,
 globals/locals/fromlist forms, generalized dynamic import support, or any
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+The current internal eval-only `DYNAMIC_IMPORT` /
+builtins-attribute `builtins.__import__(name)` sibling evidence is narrow and
+remains one task only through
+`oracle_signal_dynamic_import_builtins_attr_probe_matrix`: 1 task x 1 budget x
+3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is `import builtins`, `name = "plugins.weather"`, and exactly
+`builtins.__import__(name)`, with bounded `sys.modules[name]` retrieval only.
+The runtime payload is `imported_module=plugins.weather`. Primary selector and
+selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+additive only, no dependency edge or selected symbol is created from
+`plugins.weather`, and public comparative claims remain bounded to the
+existing quad matrix. This evidence does not cover builtins alias support,
+bare `__import__(name)` expansion, shadowed/rebound/aliased forms,
+wrong-arity forms, literal `builtins.__import__("plugins.weather")`
+expansion, fromlist/globals/locals forms, namespace mutation, generated-code
+dependency modeling, generalized dynamic import support, or any
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
 The current internal eval-only `DYNAMIC_IMPORT` / imported-name
@@ -426,6 +447,21 @@ around rendering density.
   or loader forms, `builtins.__import__`, globals/locals/fromlist forms,
   generalized dynamic import support, or public comparative claim widening is
   included.
+  The current internal `DYNAMIC_IMPORT` /
+  builtins-attribute `builtins.__import__(name)` sibling evidence covers only
+  `oracle_signal_dynamic_import_builtins_attr_probe_matrix`: 1 task x 1 budget
+  x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture input is
+  `import builtins`, `name = "plugins.weather"`, and exactly
+  `builtins.__import__(name)`, with bounded `sys.modules[name]` retrieval
+  only; runtime payload is `imported_module=plugins.weather`. Primary selector
+  and selected-unit truth remain `unsupported/opaque`, runtime provenance
+  remains additive only, no dependency edge or selected symbol is created from
+  `plugins.weather`, and no builtins alias support, bare `__import__(name)`
+  expansion, shadowed/rebound/aliased forms, wrong-arity forms, literal
+  `builtins.__import__("plugins.weather")` expansion, fromlist/globals/locals
+  forms, namespace mutation, generated-code dependency modeling, generalized
+  dynamic import support, or public comparative claim widening is included.
   The current internal `DYNAMIC_IMPORT` / imported-name `import_module(name)`
   sibling evidence covers only
   `oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1

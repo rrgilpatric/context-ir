@@ -37,6 +37,10 @@ current internal eval-only
 evidence. The narrow internal eval-only
 `oracle_signal_dynamic_import_builtin_probe_matrix` evidence is narrow
 `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence. The current
+internal eval-only
+`oracle_signal_dynamic_import_builtins_attr_probe_matrix` evidence is narrow
+`DYNAMIC_IMPORT` / builtins-attribute `builtins.__import__(name)` sibling
+evidence. The current
 internal eval-only `oracle_signal_dynamic_import_imported_name_probe_matrix`
 evidence is narrow `DYNAMIC_IMPORT` / imported-name `import_module(name)`
 sibling evidence. The current internal eval-only
@@ -69,6 +73,8 @@ keyword-site pilot, the current internal eval-only
 `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` sibling
 evidence, the narrow internal eval-only `DYNAMIC_IMPORT` /
 builtin `__import__(name)` sibling evidence, the current internal eval-only
+`DYNAMIC_IMPORT` / builtins-attribute `builtins.__import__(name)` sibling
+evidence, the current internal eval-only
 `DYNAMIC_IMPORT` / imported-name `import_module(name)` sibling evidence, the
 current internal eval-only `DYNAMIC_IMPORT` / imported-alias
 `load_module(name)` sibling evidence, the current
@@ -137,6 +143,24 @@ comparative claims remain bounded to the existing quad matrix. It does not
 cover `importlib.import_module(name)`, imported-name `import_module(name)`,
 alias or loader forms, `builtins.__import__`, globals/locals/fromlist forms,
 generalized dynamic import support,
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening, or product-surface widening.
+The current internal `DYNAMIC_IMPORT` / builtins-attribute
+`builtins.__import__(name)` sibling evidence covers only
+`oracle_signal_dynamic_import_builtins_attr_probe_matrix`: 1 task x 1 budget x
+3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is `import builtins`, `name = "plugins.weather"`, and exactly
+`builtins.__import__(name)`, with bounded `sys.modules[name]` retrieval only.
+The runtime payload is `imported_module=plugins.weather`; primary selector and
+selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+additive only, no dependency edge or selected symbol is created from
+`plugins.weather`, and public comparative claims remain bounded to the
+existing quad matrix. It does not cover builtins alias support, bare
+`__import__(name)` expansion, shadowed/rebound/aliased forms, wrong-arity
+forms, literal `builtins.__import__("plugins.weather")` expansion,
+fromlist/globals/locals forms, namespace mutation, generated-code dependency
+modeling, generalized dynamic import support,
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or product-surface widening.
 The current internal `DYNAMIC_IMPORT` / imported-name `import_module(name)`
@@ -249,6 +273,9 @@ Proven by current unit and integration tests:
   `imported_module=plugins.weather`, and the narrow internal
   eval-only `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence
   records `imported_module=plugins.weather`, while the current internal
+  eval-only `DYNAMIC_IMPORT` / builtins-attribute
+  `builtins.__import__(name)` sibling evidence records
+  `imported_module=plugins.weather`, while the current internal
   eval-only `DYNAMIC_IMPORT` / imported-name `import_module(name)` sibling
   evidence records `imported_module=plugins.weather`, and the current internal
   eval-only `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling
@@ -284,6 +311,9 @@ Proven by current unit and integration tests:
   - the narrow internal eval-only `DYNAMIC_IMPORT` / builtin
     `__import__(name)` sibling evidence for
     `oracle_signal_dynamic_import_builtin_probe_matrix`
+  - the current internal eval-only `DYNAMIC_IMPORT` / builtins-attribute
+    `builtins.__import__(name)` sibling evidence for
+    `oracle_signal_dynamic_import_builtins_attr_probe_matrix`
   - the current internal eval-only `DYNAMIC_IMPORT` / imported-name
     `import_module(name)` sibling evidence for
     `oracle_signal_dynamic_import_imported_name_probe_matrix`
@@ -357,6 +387,24 @@ Proven by current unit and integration tests:
   does not cover `importlib.import_module(name)`, imported-name
   `import_module(name)`, alias or loader forms, `builtins.__import__`,
   globals/locals/fromlist forms, generalized dynamic import support, or
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening.
+- The current internal eval-only `DYNAMIC_IMPORT` / builtins-attribute
+  `builtins.__import__(name)` sibling evidence covers only
+  `oracle_signal_dynamic_import_builtins_attr_probe_matrix`: 1 task x 1 budget
+  x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+  is `import builtins`, `name = "plugins.weather"`, and exactly
+  `builtins.__import__(name)`, with bounded `sys.modules[name]` retrieval
+  only. The runtime payload is `imported_module=plugins.weather`; primary
+  selector and selected-unit truth remain `unsupported/opaque`, runtime
+  provenance remains additive only, no dependency edge or selected symbol is
+  created from `plugins.weather`, and public comparative claims remain bounded
+  to the existing quad matrix. This evidence does not cover builtins alias
+  support, bare `__import__(name)` expansion, shadowed/rebound/aliased forms,
+  wrong-arity forms, literal `builtins.__import__("plugins.weather")`
+  expansion, fromlist/globals/locals forms, namespace mutation,
+  generated-code dependency modeling, generalized dynamic import support, or
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening.
 - The current internal eval-only `DYNAMIC_IMPORT` / imported-name
@@ -562,9 +610,10 @@ Architecturally intended but not yet evaluated:
 - Narrow runtime-backed internal pilots: `DYNAMIC_IMPORT`, including the
   current root-module `importlib.import_module(name)` sibling evidence and the
   narrow builtin `__import__(name)` sibling evidence, plus the current
-  imported-name `import_module(name)` sibling evidence, plus the current
-  imported-alias `load_module(name)` sibling evidence, plus the current root-module alias `loader.import_module(name)` sibling
-  evidence, plus
+  builtins-attribute `builtins.__import__(name)` sibling evidence, plus the
+  current imported-name `import_module(name)` sibling evidence, plus the
+  current imported-alias `load_module(name)` sibling evidence, plus the
+  current root-module alias `loader.import_module(name)` sibling evidence, plus
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   fixtures, tasks, run specs, and additive runtime provenance, plus the current
@@ -621,6 +670,24 @@ Architecturally intended but not yet evaluated:
   excludes `importlib.import_module(name)`, imported-name
   `import_module(name)`, alias or loader forms, `builtins.__import__`,
   globals/locals/fromlist forms, generalized dynamic import support,
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening, and product-surface widening.
+- Narrow builtins-attribute `builtins.__import__(name)` provider/budget
+  evidence: the current internal eval-only `DYNAMIC_IMPORT` sibling evidence
+  covers only `oracle_signal_dynamic_import_builtins_attr_probe_matrix`: 1 task
+  x 1 budget x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+  is `import builtins`, `name = "plugins.weather"`, and exactly
+  `builtins.__import__(name)`, with bounded `sys.modules[name]` retrieval only.
+  The runtime payload is `imported_module=plugins.weather`; primary selector
+  and selected-unit truth remain `unsupported/opaque`, runtime provenance
+  remains additive only, no dependency edge or selected symbol is created from
+  `plugins.weather`, and public comparative claims remain bounded to the
+  existing quad matrix. The evidence excludes builtins alias support, bare
+  `__import__(name)` expansion, shadowed/rebound/aliased forms, wrong-arity
+  forms, literal `builtins.__import__("plugins.weather")` expansion,
+  fromlist/globals/locals forms, namespace mutation, generated-code dependency
+  modeling, generalized dynamic import support,
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening, and product-surface widening.
 - Narrow imported-name `import_module(name)` provider/budget evidence: the
@@ -921,6 +988,18 @@ The following claims are allowed because current repo artifacts support them:
   remain `unsupported/opaque`, runtime provenance remains additive only, no
   dependency edge or symbol is created from `plugins.weather`, and public
   comparative claims remain bounded to the existing quad matrix.
+  The current internal eval-only `DYNAMIC_IMPORT` / builtins-attribute
+  `builtins.__import__(name)` sibling evidence covers only
+  `oracle_signal_dynamic_import_builtins_attr_probe_matrix`: 1 task x 1
+  budget x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+  `import builtins`, `name = "plugins.weather"`, and exactly
+  `builtins.__import__(name)`, with bounded `sys.modules[name]` retrieval
+  only; runtime payload `imported_module=plugins.weather`; primary selector
+  and selected-unit truth remain `unsupported/opaque`, runtime provenance
+  remains additive only, no dependency edge or selected symbol is created from
+  `plugins.weather`, and public comparative claims remain bounded to the
+  existing quad matrix.
   The current internal eval-only `DYNAMIC_IMPORT` / imported-name
   `import_module(name)` sibling evidence covers only
   `oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1
@@ -975,9 +1054,11 @@ The following claims are not currently allowed:
   runtime attribute injection, or general decorator semantics. The narrow
   internal `DYNAMIC_IMPORT` pilots include the root-module
   `importlib.import_module(name)` sibling evidence, the builtin
-  `__import__(name)` sibling evidence, and the imported-name
+  `__import__(name)` sibling evidence, the builtins-attribute
+  `builtins.__import__(name)` sibling evidence, and the imported-name
   `import_module(name)` sibling evidence, and the imported-alias
-  `load_module(name)` sibling evidence, plus the current root-module alias `loader.import_module(name)` sibling evidence. The narrow
+  `load_module(name)` sibling evidence, plus the current root-module alias
+  `loader.import_module(name)` sibling evidence. The narrow
   internal
   `REFLECTIVE_BUILTIN` pilots include `hasattr(obj, name)`,
   `getattr(obj, name)`, eval-only default-return and value-return
@@ -1000,6 +1081,13 @@ The following claims are not currently allowed:
   support and does not cover `importlib.import_module(name)`, imported-name
   `import_module(name)`, alias/loader forms, `builtins.__import__`, or
   globals/locals/fromlist forms.
+  The current internal eval-only `DYNAMIC_IMPORT` / builtins-attribute
+  `builtins.__import__(name)` sibling matrix does not add generalized dynamic
+  import support and does not cover builtins alias support, bare
+  `__import__(name)` expansion, shadowed/rebound/aliased forms, wrong-arity
+  forms, literal `builtins.__import__("plugins.weather")` expansion,
+  fromlist/globals/locals forms, namespace mutation, or generated-code
+  dependency modeling.
   The current internal eval-only `DYNAMIC_IMPORT` / imported-name
   `import_module(name)` sibling matrix does not add generalized dynamic import
   support and does not cover root-module `importlib.import_module(name)`
@@ -1043,7 +1131,8 @@ Next smallest eval slices for the post-milestone program:
 2. Broaden hybrid static + runtime analysis evidence beyond the current narrow
    `DYNAMIC_IMPORT`, including the current root-module
    `importlib.import_module(name)` sibling evidence and the narrow
-   builtin `__import__(name)` sibling evidence,
+   builtin `__import__(name)` sibling evidence, plus the current
+   builtins-attribute `builtins.__import__(name)` sibling evidence,
    `REFLECTIVE_BUILTIN` /
    `hasattr(obj, name)`,
    `getattr(obj, name)`, and eval-only default-return and value-return
