@@ -864,17 +864,19 @@ def test_attach_dynamic_import_runtime_provenance_targets_dynamic_import_boundar
     (tmp_path / "main.py").write_text(
         """
 import builtins
+import builtins as loader
 import importlib
-import importlib as loader
+import importlib as module_loader
 from importlib import import_module
 from importlib import import_module as load_module
 
 def run(name: str, source: str) -> None:
     builtins.__import__(name)
+    loader.__import__(name)
     importlib.import_module(name)
     import_module(name)
     load_module(name)
-    loader.import_module(name)
+    module_loader.import_module(name)
     __import__(name)
     exec(source)
 """.lstrip(),
@@ -904,10 +906,11 @@ def run(name: str, source: str) -> None:
 
     expected_texts = {
         "builtins.__import__(name)",
+        "loader.__import__(name)",
         "importlib.import_module(name)",
         "import_module(name)",
         "load_module(name)",
-        "loader.import_module(name)",
+        "module_loader.import_module(name)",
         "__import__(name)",
     }
     expected_subject_ids = {

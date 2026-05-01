@@ -48,6 +48,8 @@ evidence, plus the current internal eval-only `EXEC_OR_EVAL` /
 pilots now also include narrow internal eval-only `DYNAMIC_IMPORT` /
 builtins-attribute `builtins.__import__(name)` sibling evidence, plus narrow
 internal eval-only `DYNAMIC_IMPORT` /
+builtins-alias `loader.__import__(name)` sibling evidence, plus narrow
+internal eval-only `DYNAMIC_IMPORT` /
 imported-name `import_module(name)` sibling evidence and imported-alias
 `load_module(name)` sibling evidence, plus narrow
 internal eval-only `DYNAMIC_IMPORT` / root-module alias
@@ -223,11 +225,31 @@ The runtime payload is `imported_module=plugins.weather`; primary selector and
 selected-unit truth remain `unsupported/opaque`, runtime provenance remains
 additive only, no dependency edge or selected symbol is created from
 `plugins.weather`, and public comparative claims remain bounded to the
-existing quad matrix. This evidence does not cover builtins alias support,
-bare `__import__(name)` expansion, shadowed/rebound/aliased forms,
+existing quad matrix. This evidence does not cover the separate builtins-alias
+`loader.__import__(name)` form, bare `__import__(name)` expansion,
+shadowed/rebound/aliased forms,
 wrong-arity forms, literal `builtins.__import__("plugins.weather")`
 expansion, fromlist/globals/locals forms, namespace mutation, generated-code
 dependency modeling, generalized dynamic import support, or
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+The current internal eval-only `DYNAMIC_IMPORT` /
+builtins-alias `loader.__import__(name)` sibling evidence covers only
+`oracle_signal_dynamic_import_builtins_alias_probe_matrix`: 1 task x 1 budget
+x 3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is `import builtins as loader`, `name = "plugins.weather"`, and exactly
+`loader.__import__(name)`, with bounded `sys.modules[name]` retrieval only.
+The runtime payload is `imported_module=plugins.weather`; primary selector and
+selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+additive only, no dependency edge or selected symbol is created from
+`plugins.weather`, and public comparative claims remain bounded to the
+existing quad matrix. This evidence does not cover other builtins alias names,
+unaliased `builtins.__import__(name)` expansion in this matrix, bare
+`__import__(name)` expansion, shadowed/rebound/non-builtins forms, wrong-arity
+forms, literal `loader.__import__("plugins.weather")` expansion,
+fromlist/globals/locals forms, namespace mutation, generated-code dependency
+modeling, generalized dynamic import support, or
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
 The current internal eval-only `DYNAMIC_IMPORT` / imported-name
@@ -311,7 +333,9 @@ evidence, plus narrow internal eval-only `DYNAMIC_IMPORT` / root-module
 `importlib.import_module(name)` sibling evidence, plus narrow internal
 eval-only `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling
 evidence, plus narrow internal eval-only `DYNAMIC_IMPORT` /
-builtins-attribute `builtins.__import__(name)` sibling evidence. The
+builtins-attribute `builtins.__import__(name)` sibling evidence, plus narrow
+internal eval-only `DYNAMIC_IMPORT` / builtins-alias
+`loader.__import__(name)` sibling evidence. The
 `exec(source)` evidence is bounded to
 `oracle_signal_exec_probe_matrix` and the exact `source = "pass"` /
 `exec(source)` fixture described in `EVAL.md`.
@@ -327,6 +351,11 @@ The builtins-attribute dynamic-import sibling evidence is bounded to
 `oracle_signal_dynamic_import_builtins_attr_probe_matrix` and the exact
 `import builtins`, `name = "plugins.weather"`,
 `builtins.__import__(name)`, and bounded `sys.modules[name]` retrieval fixture
+described in `EVAL.md`.
+The builtins-alias dynamic-import sibling evidence is bounded to
+`oracle_signal_dynamic_import_builtins_alias_probe_matrix` and the exact
+`import builtins as loader`, `name = "plugins.weather"`,
+`loader.__import__(name)`, and bounded `sys.modules[name]` retrieval fixture
 described in `EVAL.md`.
 The imported-name dynamic-import sibling evidence is bounded to
 `oracle_signal_dynamic_import_imported_name_probe_matrix` and the exact
@@ -468,6 +497,8 @@ Current evidence includes:
   eval-only `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence,
   plus the current internal eval-only `DYNAMIC_IMPORT` /
   builtins-attribute `builtins.__import__(name)` sibling evidence, plus the
+  current internal eval-only `DYNAMIC_IMPORT` /
+  builtins-alias `loader.__import__(name)` sibling evidence, plus the
   current internal eval-only `DYNAMIC_IMPORT` / imported-name
   `import_module(name)` sibling evidence, plus the current internal eval-only
   `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling evidence, plus
@@ -603,6 +634,18 @@ Current evidence includes:
   selector and selected-unit truth still `unsupported/opaque`, runtime
   provenance additive only, no dependency edge or selected symbol is created
   from `plugins.weather`, and public comparative claims remain bounded to the
+  existing quad matrix
+- the current internal eval-only `DYNAMIC_IMPORT` /
+  builtins-alias `loader.__import__(name)` sibling evidence remains
+  `oracle_signal_dynamic_import_builtins_alias_probe_matrix`: 1 task x 1
+  budget x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; the fixture boundary
+  is `import builtins as loader`, `name = "plugins.weather"`, and exactly
+  `loader.__import__(name)`, with bounded `sys.modules[name]` retrieval only;
+  the runtime payload is `imported_module=plugins.weather`; primary selector
+  and selected-unit truth still `unsupported/opaque`, runtime provenance
+  additive only, no dependency edge or selected symbol is created from
+  `plugins.weather`, and public comparative claims remain bounded to the
   existing quad matrix
 - the current internal eval-only `DYNAMIC_IMPORT` / imported-name
   `import_module(name)` sibling evidence remains

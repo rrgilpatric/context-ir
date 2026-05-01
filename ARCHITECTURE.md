@@ -13,6 +13,7 @@ Post-phase-0 internal slices have added capability-tier accounting and narrow
 runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
 matrix, the current root-module `importlib.import_module(name)`, builtin
 `__import__(name)`, builtins-attribute `builtins.__import__(name)`,
+and builtins-alias `loader.__import__(name)`,
 imported-name `import_module(name)`, and imported-alias
 `load_module(name)` sibling pilots, plus the current root-module alias
 `loader.import_module(name)` sibling pilot, and
@@ -183,11 +184,32 @@ The runtime payload is `imported_module=plugins.weather`. Primary selector and
 selected-unit truth remain `unsupported/opaque`, runtime provenance remains
 additive only, no dependency edge or selected symbol is created from
 `plugins.weather`, and public comparative claims remain bounded to the
-existing quad matrix. This evidence does not cover builtins alias support,
-bare `__import__(name)` expansion, shadowed/rebound/aliased forms,
+existing quad matrix. This evidence does not cover the separate builtins-alias
+`loader.__import__(name)` form, bare `__import__(name)` expansion,
+shadowed/rebound/aliased forms,
 wrong-arity forms, literal `builtins.__import__("plugins.weather")`
 expansion, fromlist/globals/locals forms, namespace mutation, generated-code
 dependency modeling, generalized dynamic import support, or any
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+The current internal eval-only `DYNAMIC_IMPORT` /
+builtins-alias `loader.__import__(name)` sibling evidence is narrow and
+remains one task only through
+`oracle_signal_dynamic_import_builtins_alias_probe_matrix`: 1 task x 1 budget
+x 3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is `import builtins as loader`, `name = "plugins.weather"`, and exactly
+`loader.__import__(name)`, with bounded `sys.modules[name]` retrieval only.
+The runtime payload is `imported_module=plugins.weather`. Primary selector and
+selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+additive only, no dependency edge or selected symbol is created from
+`plugins.weather`, and public comparative claims remain bounded to the
+existing quad matrix. This evidence does not cover other builtins alias names,
+unaliased `builtins.__import__(name)` expansion in this matrix, bare
+`__import__(name)` expansion, shadowed/rebound/non-builtins forms, wrong-arity
+forms, literal `loader.__import__("plugins.weather")` expansion,
+fromlist/globals/locals forms, namespace mutation, generated-code dependency
+modeling, generalized dynamic import support, or any
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
 The current internal eval-only `DYNAMIC_IMPORT` / imported-name
@@ -306,6 +328,7 @@ around rendering density.
   `__import__(name)` sibling pilot, plus the current imported-name
   `import_module(name)` sibling pilot, plus the current imported-alias
   `load_module(name)` sibling pilot, plus the current root-module alias `loader.import_module(name)` sibling pilot, plus
+  the current builtins-alias `loader.__import__(name)` sibling pilot, plus
   `REFLECTIVE_BUILTIN` /
   `hasattr(obj, name)` and
   `getattr(obj, name)` pilot attachments, plus eval-only default-return and
@@ -457,11 +480,29 @@ around rendering density.
   only; runtime payload is `imported_module=plugins.weather`. Primary selector
   and selected-unit truth remain `unsupported/opaque`, runtime provenance
   remains additive only, no dependency edge or selected symbol is created from
-  `plugins.weather`, and no builtins alias support, bare `__import__(name)`
-  expansion, shadowed/rebound/aliased forms, wrong-arity forms, literal
+  `plugins.weather`, and no separate builtins-alias
+  `loader.__import__(name)` form, bare `__import__(name)` expansion,
+  shadowed/rebound/aliased forms, wrong-arity forms, literal
   `builtins.__import__("plugins.weather")` expansion, fromlist/globals/locals
   forms, namespace mutation, generated-code dependency modeling, generalized
   dynamic import support, or public comparative claim widening is included.
+  The current internal `DYNAMIC_IMPORT` /
+  builtins-alias `loader.__import__(name)` sibling evidence covers only
+  `oracle_signal_dynamic_import_builtins_alias_probe_matrix`: 1 task x 1
+  budget x 3 providers at budget 220, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture input is
+  `import builtins as loader`, `name = "plugins.weather"`, and exactly
+  `loader.__import__(name)`, with bounded `sys.modules[name]` retrieval only;
+  runtime payload is `imported_module=plugins.weather`. Primary selector and
+  selected-unit truth remain `unsupported/opaque`, runtime provenance remains
+  additive only, no dependency edge or selected symbol is created from
+  `plugins.weather`, and no other builtins alias names, unaliased
+  `builtins.__import__(name)` expansion in this matrix, bare
+  `__import__(name)` expansion, shadowed/rebound/non-builtins forms,
+  wrong-arity forms, literal `loader.__import__("plugins.weather")`
+  expansion, fromlist/globals/locals forms, namespace mutation,
+  generated-code dependency modeling, generalized dynamic import support, or
+  public comparative claim widening is included.
   The current internal `DYNAMIC_IMPORT` / imported-name `import_module(name)`
   sibling evidence covers only
   `oracle_signal_dynamic_import_imported_name_probe_matrix`: 1 task x 1

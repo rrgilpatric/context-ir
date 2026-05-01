@@ -739,7 +739,7 @@ def _dynamic_boundary_reason_for_call_site(
             call_site=call_site,
             argument_name="name",
         )
-        and _binding_is_builtins_root_import(binding=binding, index=index)
+        and _binding_is_builtins_dynamic_import_root(binding=binding, index=index)
     ):
         return None
     return UnresolvedReasonCode.DYNAMIC_IMPORT
@@ -1209,18 +1209,21 @@ def _binding_is_importlib_root_import(
     return import_fact.module_name == "importlib"
 
 
-def _binding_is_builtins_root_import(
+def _binding_is_builtins_dynamic_import_root(
     *,
     binding: BindingFact | None,
     index: _ProgramIndex,
 ) -> bool:
-    """Return whether ``binding`` is exactly ``import builtins``."""
+    """Return whether ``binding`` is an accepted builtins dynamic-import root."""
     if binding is None or binding.binding_kind is not BindingKind.IMPORT:
         return False
     import_fact = index.import_facts_by_binding_symbol_id.get(binding.symbol_id)
     if import_fact is None or import_fact.kind is not ImportKind.IMPORT:
         return False
-    return import_fact.module_name == "builtins" and import_fact.alias is None
+    return import_fact.module_name == "builtins" and import_fact.alias in {
+        None,
+        "loader",
+    }
 
 
 def _binding_is_importlib_import_module_import(

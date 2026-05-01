@@ -2,6 +2,153 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-04-30 -- DYNAMIC_IMPORT builtins-alias Commit-gating Routing Correction
+
+- Corrected `PLAN.md` and `BUILDLOG.md` so the workspace-only builtins-alias
+  `DYNAMIC_IMPORT` / `loader.__import__(name)` release candidate routes to
+  corrected commit-gating as the active next gate after the first
+  commit-gating review.
+- Repo-backed truth at correction intake:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `3dfc355 Add builtins-attribute dynamic import eval probe`
+  - nothing staged
+  - latest pushed release authority is
+    `3dfc355 Add builtins-attribute dynamic import eval probe`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Accepted workspace-only gate state recorded:
+  - source/contract prerequisite accepted first-pass
+  - eval-only sibling accepted first-pass
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `702 passed`
+  - first commit-gating review rejected with P1 stale-routing findings in
+    `PLAN.md` and `BUILDLOG.md`
+  - corrected commit-gating review over the exact accumulated builtins-alias
+    release candidate is the active next gate
+- Preserved release boundary:
+  - matrix is `oracle_signal_dynamic_import_builtins_alias_probe_matrix`
+  - shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `import builtins as loader`,
+    `name = "plugins.weather"`, and exactly `loader.__import__(name)`, with
+    bounded `sys.modules[name]` retrieval only
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+- Routing decision:
+  - route next to corrected commit-gating review over the exact accumulated
+    builtins-alias release candidate
+  - do not route back to control review, release-unit audit, or full
+    regression absent new findings
+  - do not stage, create a local commit, or push before corrected
+    commit-gating clears
+  - staging, local commit creation, and push are not authorized
+  - push remains Ryan-gated
+- Scope guard:
+  - only `PLAN.md` and `BUILDLOG.md` are edited by this correction
+  - no source, tests, eval assets, `ARCHITECTURE.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `README.md` are edited by this correction
+- Acceptance status: first-pass
+
+## 2026-04-30 -- DYNAMIC_IMPORT builtins-alias Docs Reconciliation
+
+- Reconciled release-facing docs and continuity for the workspace-only accepted
+  builtins-alias `DYNAMIC_IMPORT` release candidate.
+- Repo-backed truth at reconciliation intake:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `3dfc355 Add builtins-attribute dynamic import eval probe`
+  - nothing staged
+  - latest pushed release authority is
+    `3dfc355 Add builtins-attribute dynamic import eval probe`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+  - no docs-only post-push sync is required merely to record that an
+    already-verified release commit was pushed
+- Workspace-only accepted source/contract prerequisite:
+  - exact unshadowed `import builtins as loader` plus exactly
+    `loader.__import__(name)` is classified as unsupported `DYNAMIC_IMPORT`
+  - runtime provenance can attach to that exact unsupported boundary
+  - existing `import builtins` plus `builtins.__import__(name)` behavior is
+    preserved
+  - shadowed/rebound/non-builtins/wrong-arity/literal forms remain generic or
+    deferred
+  - files already accepted by control:
+    - `src/context_ir/dependency_frontier.py`
+    - `src/context_ir/runtime_acquisition.py`
+    - `tests/test_dependency_frontier.py`
+    - `tests/test_runtime_acquisition.py`
+- Workspace-only accepted eval-only sibling:
+  - matrix is `oracle_signal_dynamic_import_builtins_alias_probe_matrix`
+  - shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `import builtins as loader`,
+    `name = "plugins.weather"`, and exactly `loader.__import__(name)`, with
+    bounded `sys.modules[name]` retrieval only
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+  - files already accepted by control:
+    - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/eval_runtime_observations.json`
+    - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/main.py`
+    - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/__init__.py`
+    - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/weather.py`
+    - `evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json`
+    - `evals/tasks/oracle_signal_dynamic_import_builtins_alias_probe.json`
+    - `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py`
+- Files updated in this docs/evidence/continuity reconciliation:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-facing docs remain state-neutral for this candidate:
+  - no workspace-only, not-pushed, push-pending, or accepted-workspace wording
+    was added to `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, or
+    `README.md`
+  - `PLAN.md` and `BUILDLOG.md` record workspace-only release state and route
+    next to corrected commit-gating after docs/evidence/continuity
+    reconciliation acceptance, release-unit audit clearance, full-regression
+    clearance, and first commit-gating rejection correction
+- Preserved non-goals:
+  - no other builtins alias names
+  - no unaliased `builtins.__import__(name)` expansion in this matrix
+  - no bare `__import__(name)` expansion
+  - no shadowed/rebound/non-builtins form expansion
+  - no wrong-arity form expansion
+  - no literal `loader.__import__("plugins.weather")` expansion
+  - no fromlist/globals/locals forms
+  - no namespace mutation
+  - no generated-code dependency modeling
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+- Gate state after correction:
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `702 passed`
+  - first commit-gating review rejected with P1 stale-routing findings in
+    `PLAN.md` and `BUILDLOG.md`
+  - corrected commit-gating review over the exact accumulated builtins-alias
+    release candidate is the active next gate
+  - staging, local commit creation, and push are not authorized
+  - push remains Ryan-gated
+- Slice validation:
+  - `git diff --check` passed
+  - `git diff --cached --name-status` returned no staged files
+  - `git diff --name-status` showed modified tracked docs plus the
+    pre-existing accepted tracked source/test files
+  - `rg -n "workspace-only|not pushed|push pending|accepted workspace" ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`
+    returned no matches
+- Acceptance status: 1 correction
+
 ## 2026-04-30 -- DYNAMIC_IMPORT builtins.__import__(name) Commit-gating Routing Correction
 
 - Corrected `PLAN.md` and `BUILDLOG.md` so the workspace-only
@@ -654,7 +801,8 @@ Most recent supersession entries override older architectural decisions when the
     findings
   - do not claim commit-gating clearance, commit readiness, local commit
     creation, or push readiness
-- Acceptance status: held pending control review
+- Acceptance status: 1 correction; superseded by later corrected
+  commit-gating clearance and release at `ee71a82`
 
 ## 2026-04-27 -- DYNAMIC_IMPORT Imported-name import_module(name) Docs Reconciliation
 
