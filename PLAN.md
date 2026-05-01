@@ -42,26 +42,25 @@ Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
 release truth verified for this continuity sync is branch `main`, with `HEAD`
 and `origin/main` at
-`3dfc355 Add builtins-attribute dynamic import eval probe`, nothing staged, and
-workspace-only source/test/eval changes for the next builtins-alias
-dynamic-import candidate at intake.
+`6ac1e28 Add builtins-alias dynamic import eval probe`, with a clean worktree
+and nothing staged at intake.
 
-`3dfc355 Add builtins-attribute dynamic import eval probe` is the latest
-pushed release authority for the internal eval-only `DYNAMIC_IMPORT` /
-builtins-attribute `builtins.__import__(name)` probe. The live git refs and
+`6ac1e28 Add builtins-alias dynamic import eval probe` is the latest pushed
+release authority for the internal eval-only `DYNAMIC_IMPORT` /
+builtins-alias `loader.__import__(name)` probe. The live git refs and
 worktree are authoritative for future control intake; committed continuity
-does not require a docs-only post-push sync merely to record that an
-already-verified release commit was pushed. `b9a493b Sync root-alias release
-routing` remains the prior pushed continuity authority. `b85f038 Add
-root-alias dynamic import eval probe` remains the prior root-module alias
-dynamic-import eval/test/docs release authority. `4030845 Add imported-alias
-dynamic import eval probe`, `ee71a82 Add imported-name dynamic import eval
-probe`, `397c7dd Add builtin dynamic import eval probe`, and `14b362e Add
-dynamic import root runtime eval pilot` remain earlier released
+does not require a docs-only post-push sync merely to record mutable git refs
+unless routing would otherwise be unsafe. `3dfc355 Add builtins-attribute
+dynamic import eval probe` remains the prior pushed builtins-attribute release
+authority. `b85f038 Add root-alias dynamic import eval probe` remains the
+prior root-module alias dynamic-import release authority. `4030845 Add
+imported-alias dynamic import eval probe`, `ee71a82 Add imported-name dynamic
+import eval probe`, `397c7dd Add builtin dynamic import eval probe`, and
+`14b362e Add dynamic import root runtime eval pilot` remain earlier released
 dynamic-import authorities and must not be reopened absent new findings.
 
-Current workspace-only accepted state is the next builtins-alias
-`DYNAMIC_IMPORT` release candidate:
+The completed and pushed internal eval-only `DYNAMIC_IMPORT` /
+builtins-alias `loader.__import__(name)` release at `6ac1e28` is:
 
 - Source/contract prerequisite accepted first-pass:
   - exact unshadowed `import builtins as loader` plus exactly
@@ -100,12 +99,15 @@ Current workspace-only accepted state is the next builtins-alias
 The docs/evidence/continuity reconciliation was accepted after one
 correction. The release-unit audit cleared first-pass. Full regression cleared
 first-pass with `702 passed`. The first commit-gating review rejected with P1
-stale-routing findings in `PLAN.md` and `BUILDLOG.md`; this correction routes
-next to corrected commit-gating review over the exact accumulated
-builtins-alias release candidate. Corrected commit-gating, staging, local
-commit creation, and push have not cleared. Staging, local commit creation,
-and push are not authorized, and push remains Ryan-gated. Do not route back to
-control review, release-unit audit, or full regression absent new findings.
+stale-routing findings in `PLAN.md` and `BUILDLOG.md`; a later PLAN-only
+stale-route correction was accepted first-pass; corrected commit-gating cleared
+first-pass; local commit creation completed at `6ac1e28`; and Ryan-authorized
+push completed at `6ac1e28`.
+
+There is no active release gate for `6ac1e28`: do not route back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push for this tranche absent new findings. The next route is a
+bounded post-`DYNAMIC_IMPORT` North Star planning spike.
 
 The completed and pushed internal eval-only `DYNAMIC_IMPORT` / root-module
 alias `loader.import_module(name)` sibling pilot was released at
@@ -763,44 +765,34 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Release-unit audit for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release candidate cleared first-pass
 - [x] Full regression gate for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release candidate cleared first-pass with `702 passed`
 - [x] First commit-gating review for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release candidate rejected with P1 stale-routing findings in `PLAN.md` and `BUILDLOG.md`
+- [x] Continuity routing correction for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release candidate accepted first-pass
+- [x] Corrected commit-gating review for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release candidate rejected with one P1 stale-route finding in `PLAN.md`
+- [x] PLAN-only stale-route correction for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release candidate accepted first-pass
+- [x] Corrected commit-gating review for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release unit cleared first-pass
+- [x] Local commit creation and Ryan-authorized push for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release unit completed at `6ac1e28`
 
 ## What Is In Progress
 
-- Active workspace-only release candidate: builtins-alias `DYNAMIC_IMPORT` /
-  `loader.__import__(name)`.
-- Accepted source/contract prerequisite:
-  - exact unshadowed `import builtins as loader` plus exactly
-    `loader.__import__(name)` is classified as unsupported `DYNAMIC_IMPORT`
-  - runtime provenance can attach to that exact unsupported boundary
-  - existing `import builtins` plus `builtins.__import__(name)` behavior is
-    preserved
-  - shadowed/rebound/non-builtins/wrong-arity/literal forms remain generic or
-    deferred
-- Accepted eval-only sibling:
-  - `oracle_signal_dynamic_import_builtins_alias_probe_matrix`: 1 task x 1
-    budget x 3 providers at budget 220
-  - providers are `context_ir`, `lexical_top_k_files`, and
-    `import_neighborhood_files`
-  - fixture boundary is `import builtins as loader`,
-    `name = "plugins.weather"`, and exactly `loader.__import__(name)`, with
-    bounded `sys.modules[name]` retrieval only
-  - runtime payload is `imported_module=plugins.weather`
-  - primary selector and selected-unit truth remain `unsupported/opaque`
-  - runtime provenance remains additive only
-  - no dependency edge or selected symbol is created from `plugins.weather`
-- Docs/evidence/continuity reconciliation was accepted after one correction.
-- Release-unit audit cleared first-pass.
-- Full regression cleared first-pass with `702 passed`.
-- The first commit-gating review rejected with P1 stale-routing findings in
-  `PLAN.md` and `BUILDLOG.md`.
-- Active next gate after this correction is corrected commit-gating review over
-  the exact accumulated builtins-alias release candidate.
-- Corrected commit-gating, staging, local commit creation, and push have not
-  cleared.
-- Staging, local commit creation, and push are not authorized; push remains
-  Ryan-gated.
-- Do not route back to control review, release-unit audit, or full regression
-  absent new findings.
+- No active workspace-only implementation or release candidate is open.
+- Latest pushed release authority is
+  `6ac1e28 Add builtins-alias dynamic import eval probe`.
+- The active next lane is a bounded post-`DYNAMIC_IMPORT` North Star planning
+  spike. The spike should choose the next smallest evidence-building
+  capability wedge that best advances broad Python hybrid static + runtime
+  coverage while preserving tier separation.
+- Do not route back to release-unit audit, full regression, commit-gating,
+  staging, local commit creation, or push for `6ac1e28` absent new findings.
+- Prior completed builtins-alias release state:
+  - source/contract prerequisite and eval-only sibling accepted first-pass
+  - docs/evidence/continuity reconciliation accepted after one correction
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `702 passed`
+  - first commit-gating review rejected with P1 stale-routing findings
+  - first continuity routing correction accepted first-pass
+  - corrected commit-gating review rejected with one P1 stale-route finding
+  - PLAN-only stale-route correction accepted first-pass
+  - corrected commit-gating review cleared first-pass
+  - local commit creation and Ryan-authorized push completed at `6ac1e28`
 - Prior completed builtins-attribute release state:
   - implementation/assets were accepted workspace-only before release
   - docs/evidence/continuity reconciliation was accepted first-pass
@@ -1433,21 +1425,21 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next route: corrected commit-gating review over the exact
-accumulated workspace-only builtins-alias `DYNAMIC_IMPORT` /
-`loader.__import__(name)` release candidate. The source/contract prerequisite
-and eval-only sibling are accepted first-pass; docs/evidence/continuity
-reconciliation was accepted after one correction; release-unit audit cleared
-first-pass; and full regression cleared first-pass with `702 passed`. The
-first commit-gating review rejected with P1 stale-routing findings in
-`PLAN.md` and `BUILDLOG.md`. Corrected commit-gating, staging, local commit
-creation, and push have not cleared. Do not stage, create a local commit, or
-push before corrected commit-gating clears. Push remains Ryan-gated. Do not
-widen
+Immediate next route: bounded post-`DYNAMIC_IMPORT` North Star planning spike.
+The released `DYNAMIC_IMPORT` sibling tranche now includes root-module
+`importlib.import_module(name)`, builtin `__import__(name)`, imported-name
+`import_module(name)`, imported-alias `load_module(name)`, root-module alias
+`loader.import_module(name)`, builtins-attribute `builtins.__import__(name)`,
+and builtins-alias `loader.__import__(name)` evidence. The planning spike
+should decide whether to continue `DYNAMIC_IMPORT` coverage or pivot to the
+next highest-leverage hybrid-runtime capability wedge. Do not route to
+implementation, release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push until that planning decision is accepted. Do
+not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark scope.
 
-Current workspace-only release candidate:
+Latest pushed release unit:
 
 - Source/contract prerequisite files:
   - `src/context_ir/dependency_frontier.py`
@@ -1488,20 +1480,22 @@ Current workspace-only release candidate:
   any
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening
-- Source/contract prerequisite and eval-only sibling are accepted first-pass
-  as workspace-only state.
+- Source/contract prerequisite and eval-only sibling were accepted first-pass.
 - Docs/evidence/continuity reconciliation was accepted after one correction.
 - Release-unit audit cleared first-pass.
 - Full regression cleared first-pass with `702 passed`.
 - The first commit-gating review rejected with P1 stale-routing findings in
   `PLAN.md` and `BUILDLOG.md`.
-- Corrected commit-gating review is the active next gate over this exact
-  accumulated release candidate.
-- Corrected commit-gating, staging, local commit creation, and push have not
-  cleared. Staging, local commit creation, and push are not authorized; push
-  remains Ryan-gated.
+- The first continuity routing correction was accepted first-pass.
+- Corrected commit-gating review rejected once with one P1 stale-route finding
+  in `PLAN.md`.
+- The PLAN-only stale-route correction was accepted first-pass.
+- Corrected commit-gating cleared first-pass.
+- Local commit creation and Ryan-authorized push completed at `6ac1e28`.
+- Do not route back to release-unit audit, full regression, commit-gating,
+  staging, local commit creation, or push for `6ac1e28` absent new findings.
 
-Current pushed release unit:
+Prior pushed release unit:
 
 - Treat the builtins-attribute pilot assets as completed and pushed at
   `3dfc355 Add builtins-attribute dynamic import eval probe`:

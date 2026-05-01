@@ -2,6 +2,82 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-01 -- DYNAMIC_IMPORT builtins-alias Release
+
+- Completed and pushed the internal eval-only `DYNAMIC_IMPORT` /
+  builtins-alias `loader.__import__(name)` release unit at
+  `6ac1e28 Add builtins-alias dynamic import eval probe`.
+- Repo-backed release truth during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `6ac1e28 Add builtins-alias dynamic import eval probe`
+  - working tree clean at intake
+  - latest pushed release authority is
+    `6ac1e28 Add builtins-alias dynamic import eval probe`
+  - prior pushed release authority is
+    `3dfc355 Add builtins-attribute dynamic import eval probe`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Released pilot assets:
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/main.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/__init__.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/weather.py`
+  - `evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json`
+  - `evals/tasks/oracle_signal_dynamic_import_builtins_alias_probe.json`
+  - `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py`
+- Evidence boundary:
+  - matrix is `oracle_signal_dynamic_import_builtins_alias_probe_matrix`
+  - shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is `import builtins as loader`,
+    `name = "plugins.weather"`, and exactly `loader.__import__(name)`, with
+    bounded `sys.modules[name]` retrieval only
+  - runtime payload is `imported_module=plugins.weather`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from `plugins.weather`
+- Preserved non-goals:
+  - no other builtins alias names
+  - no unaliased `builtins.__import__(name)` expansion in this matrix
+  - no bare `__import__(name)` expansion
+  - no shadowed/rebound/non-builtins form expansion
+  - no wrong-arity form expansion
+  - no literal `loader.__import__("plugins.weather")` expansion
+  - no fromlist/globals/locals forms
+  - no namespace mutation
+  - no generated-code dependency modeling
+  - no generalized dynamic import support
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+- Release state:
+  - source/contract prerequisite accepted first-pass
+  - eval-only sibling accepted first-pass
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `702 passed`
+  - first commit-gating review rejected with P1 stale-routing findings in
+    `PLAN.md` and `BUILDLOG.md`
+  - first continuity routing correction accepted first-pass
+  - corrected commit-gating review rejected with one P1 stale-route finding in
+    `PLAN.md`
+  - PLAN-only stale-route correction accepted first-pass
+  - corrected commit-gating review cleared first-pass
+  - local commit creation completed at `6ac1e28`
+  - Ryan-authorized push completed at `6ac1e28`
+- Routing decision:
+  - there is no active release gate for `6ac1e28`
+  - do not route back to release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push for `6ac1e28` absent new findings
+  - next route is a bounded post-`DYNAMIC_IMPORT` North Star planning spike
+  - do not route to implementation before that planning decision is accepted
+- Scope guard:
+  - this continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, `ARCHITECTURE.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `README.md` are in scope
+- Acceptance status: first-pass
+
 ## 2026-04-30 -- DYNAMIC_IMPORT builtins-alias Commit-gating Routing Correction
 
 - Corrected `PLAN.md` and `BUILDLOG.md` so the workspace-only builtins-alias
