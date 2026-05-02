@@ -2,6 +2,178 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-02 -- REFLECTIVE_BUILTIN getattr AttributeError Budget-pressure Docs Reconciliation
+
+- Reconciled docs and continuity for the accepted workspace-only
+  `oracle_signal_getattr_attribute_error_probe_matrix` budget-pressure
+  expansion.
+- Repo-backed release truth remains unchanged:
+  - latest pushed release authority is
+    `5bd0616 Add getattr AttributeError eval probe`
+  - the current workspace-only accepted expansion is not a new pushed release
+    state
+- Workspace-only accepted expansion state:
+  - matrix is `oracle_signal_getattr_attribute_error_probe_matrix`
+  - shape expands from `[220]` to `[220, 100]`: 1 task x 2 budgets x 3
+    providers at budgets 220 and 100
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture, task, query, and runtime payload remain unchanged
+  - runtime payload remains `lookup_outcome=raised_attribute_error`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - baseline providers remain empty at both budgets
+  - no missing-attribute dependency edge or selected symbol is created
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening is included
+- Release-facing docs remain state-neutral:
+  - no workspace-only, not-pushed, push-pending, or accepted-workspace wording
+    was added to `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, or
+    `README.md`
+  - public comparative claims remain bounded to the existing quad matrix
+- Continuity routing:
+  - docs/evidence/continuity reconciliation accepted first-pass
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `709 passed`
+  - next lane is commit-gating review over the exact workspace-only accepted
+    expansion release unit
+  - do not route back to docs-reconciliation review, release-unit audit, or
+    full regression absent new findings
+  - staging, local commit creation, and push are not authorized; push remains
+    Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-02 -- Post-5bd0616 North Star Planning Decision
+
+- Reviewed the next smallest evidence-building move after the completed and
+  pushed `5bd0616 Add getattr AttributeError eval probe` release.
+- Verified from repo state and continuity:
+  - there is no active release gate for `5bd0616`
+  - the completed `DYNAMIC_IMPORT` sibling evidence, completed
+    `REFLECTIVE_BUILTIN` branch evidence, completed `RUNTIME_MUTATION`,
+    `METACLASS_BEHAVIOR`, and `EXEC_OR_EVAL` pilots should not be reopened
+    absent new findings
+  - the three earlier getattr-family matrices already carry budget-pressure
+    evidence at budgets `220` and `100`
+  - at planning intake, the new raised-`AttributeError` `getattr(obj, name)`
+    branch matrix was still limited to budget `220`
+  - package-root/public low-level and MCP runtime-observation holds remain in
+    force
+- Planning decision:
+  - the next smallest evidence-building capability wedge is to expand only
+    `oracle_signal_getattr_attribute_error_probe_matrix` from budget `[220]`
+    to budgets `[220, 100]`
+  - this is smaller than opening another runtime family because it reuses an
+    accepted fixture, task, provider set, selector contract, and runtime
+    payload
+  - this is smaller than broad docs/product/API work because it does not
+    require package-root, MCP, analyzer, runtime-acquisition, tool-facade,
+    schema, scoring, optimizer, compiler, or winner-selection widening
+  - this is smaller than budget-expanding unrelated one-budget matrices
+    because it completes the immediate post-5bd0616 getattr-family evidence
+    symmetry before moving on
+- The planned first implementation slice was bounded to:
+  - `evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+- Expected implementation boundary:
+  - add budget `100` beside existing budget `220`
+  - preserve the same one task, query, providers, fixture, task JSON, and
+    runtime observation payload
+  - assert `context_ir` preserves the same unsupported/opaque selected unit
+    with additive `lookup_outcome=raised_attribute_error` runtime provenance at
+    both budgets
+  - assert baseline providers remain empty at both budgets
+  - update summary/report expectations to reflect doubled provider-budget
+    records
+  - do not edit source, fixtures, task JSON, release-facing docs, public
+    claims, package-root APIs, MCP behavior, analyzer/tool-facade/runtime
+    behavior, schema, scoring, optimizer, compiler, or winner selection in
+    that first implementation slice
+- Alternatives considered:
+  - start a new runtime family or reopen completed `DYNAMIC_IMPORT`,
+    `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, `METACLASS_BEHAVIOR`, or
+    `EXEC_OR_EVAL` behavior
+  - budget-expand `delattr`, `setattr`, `dir`, `metaclass`, `exec`, `eval`, or
+    dynamic-import matrices first
+  - route directly to implementation without a planning decision
+- Reasoning:
+  - budget `100` is already the accepted pressure point for the older
+    getattr-family matrices, so applying it to the new AttributeError branch is
+    a focused evidence broadening rather than a semantic widening
+  - the proposed slice keeps the current public-safe comparative boundary
+    unchanged and should be reviewable as a run-spec/test-only change
+  - implementation required Ryan go/no-go because this was a new backlog item,
+    even though it was the recommended next move
+- Acceptance status: held pending Ryan authorization at the time of entry;
+  superseded by the later workspace-only implementation acceptance and docs
+  reconciliation routing entry above
+
+## 2026-05-02 -- REFLECTIVE_BUILTIN getattr AttributeError Release Sync
+
+- Completed and pushed the internal eval-only `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` release unit at
+  `5bd0616 Add getattr AttributeError eval probe`.
+- Repo-backed release truth during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `5bd0616 Add getattr AttributeError eval probe`
+  - worktree clean at intake before this continuity-sync edit
+  - latest pushed code/eval release authority is
+    `5bd0616 Add getattr AttributeError eval probe`
+  - prior pushed code/eval release authority was
+    `6ac1e28 Add builtins-alias dynamic import eval probe`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Released pilot assets:
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/main.py`
+  - `evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json`
+  - `evals/tasks/oracle_signal_getattr_attribute_error_probe.json`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+- Evidence boundary:
+  - matrix is `oracle_signal_getattr_attribute_error_probe_matrix`
+  - shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is exactly `getattr(obj, name)`, with `AttributeError`
+    caught so `render_probe_digest()` is deterministic
+  - runtime payload is `lookup_outcome=raised_attribute_error`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from the missing attribute
+- Preserved non-goals:
+  - no generalized reflective-builtin support
+  - no dependency edge or selected symbol from the missing attribute
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+- Release state:
+  - implementation accepted first-pass
+  - docs/evidence/continuity reconciliation accepted after 2 corrections
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `709 passed`
+  - first commit-gating review rejected with P1 stale-routing findings in
+    `PLAN.md` and `BUILDLOG.md`
+  - routing correction accepted first-pass
+  - corrected commit-gating cleared first-pass
+  - local commit creation completed at `5bd0616`
+  - Ryan-authorized push completed at `5bd0616`
+- Routing decision:
+  - there is no active release gate for `5bd0616`
+  - do not route `5bd0616` back to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - next route is a bounded post-5bd0616 North Star planning/control
+    decision
+  - the planning lane should choose the next smallest evidence-building
+    capability wedge
+  - do not route directly to implementation before that planning decision is
+    accepted
+- Scope guard:
+  - this continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, `ARCHITECTURE.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `README.md` are in scope
+- Acceptance status: first-pass
+
 ## 2026-05-01 -- REFLECTIVE_BUILTIN getattr AttributeError Post-regression Routing Correction
 
 - Corrected stale post-regression routing for the workspace-only accepted

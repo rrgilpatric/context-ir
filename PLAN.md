@@ -40,30 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-release truth verified for this continuity sync is branch `main`; live `HEAD`
-and `origin/main` must be read from git rather than pinned here. The latest
+release truth verified for this continuity sync is branch `main`; `HEAD` and
+`origin/main` are at `5bd0616 Add getattr AttributeError eval probe`; and the
+worktree was clean at intake before this continuity-sync edit. The latest
 pushed code/eval release authority is
-`6ac1e28 Add builtins-alias dynamic import eval probe`. At post-regression
-correction intake, nothing was staged and the workspace-only accepted
-eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)`
-raised-`AttributeError` pilot assets were present.
+`5bd0616 Add getattr AttributeError eval probe`. The prior pushed code/eval
+release authority was
+`6ac1e28 Add builtins-alias dynamic import eval probe`. Live git refs and
+worktree state remain authoritative for future control intake.
 
-`6ac1e28 Add builtins-alias dynamic import eval probe` is the latest pushed
-release authority for the internal eval-only `DYNAMIC_IMPORT` /
-builtins-alias `loader.__import__(name)` probe. The live git refs and
-worktree are authoritative for future control intake; committed continuity
-does not require a docs-only post-push sync merely to record mutable git refs
-unless routing would otherwise be unsafe. `3dfc355 Add builtins-attribute
-dynamic import eval probe` remains the prior pushed builtins-attribute release
-authority. `b85f038 Add root-alias dynamic import eval probe` remains the
-prior root-module alias dynamic-import release authority. `4030845 Add
-imported-alias dynamic import eval probe`, `ee71a82 Add imported-name dynamic
-import eval probe`, `397c7dd Add builtin dynamic import eval probe`, and
-`14b362e Add dynamic import root runtime eval pilot` remain earlier released
-dynamic-import authorities and must not be reopened absent new findings.
-
-The current workspace-only accepted internal eval-only `REFLECTIVE_BUILTIN` /
-`getattr(obj, name)` raised-`AttributeError` pilot is:
+The completed and pushed internal eval-only `REFLECTIVE_BUILTIN` /
+`getattr(obj, name)` raised-`AttributeError` release at
+`5bd0616 Add getattr AttributeError eval probe` is:
 
 - Matrix: `oracle_signal_getattr_attribute_error_probe_matrix`
 - Shape: 1 task x 1 budget x 3 providers at budget 220
@@ -75,7 +63,7 @@ The current workspace-only accepted internal eval-only `REFLECTIVE_BUILTIN` /
 - Primary selector and selected-unit truth remain `unsupported/opaque`
 - Runtime provenance remains additive only
 - No dependency edge or selected symbol is created from the missing attribute
-- Accepted eval-only pilot files:
+- Released eval-only pilot files:
   - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/eval_runtime_observations.json`
   - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/main.py`
   - `evals/tasks/oracle_signal_getattr_attribute_error_probe.json`
@@ -84,16 +72,50 @@ The current workspace-only accepted internal eval-only `REFLECTIVE_BUILTIN` /
 
 No public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark claim widening is authorized. Release-facing docs remain
-state-neutral for this pilot. The implementation was accepted first-pass as
-workspace-only state. The docs/evidence/continuity reconciliation was accepted
-after 2 corrections. Release-unit audit cleared first-pass. Full regression
-cleared first-pass with `ruff check`, `ruff format --check`, `mypy --strict`,
-and `pytest tests/ -v` reporting `709 passed`. The first commit-gating review
+state-neutral for this pilot. The implementation was accepted first-pass.
+The docs/evidence/continuity reconciliation was accepted after 2 corrections.
+Release-unit audit cleared first-pass. Full regression cleared first-pass
+with `ruff check`, `ruff format --check`, `mypy --strict`, and
+`pytest tests/ -v` reporting `709 passed`. The first commit-gating review
 rejected with P1 stale-routing findings in `PLAN.md` and `BUILDLOG.md`.
-Corrected commit-gating is the active next gate. Do not route this candidate
-back to docs-reconciliation review, release-unit audit, or full regression
-absent new findings. Staging, local commit creation, and push are not
-authorized; push remains Ryan-gated.
+The routing correction was accepted first-pass. Corrected commit-gating
+cleared first-pass. Local commit creation completed at `5bd0616`.
+Ryan-authorized push completed at `5bd0616`.
+
+There is no active release gate for `5bd0616`: do not route back to
+docs review, release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push for this tranche absent new findings. The
+bounded post-5bd0616 North Star planning/control decision is complete. The
+current workspace-only accepted slice expands
+`oracle_signal_getattr_attribute_error_probe_matrix` from `[220]` to
+`[220, 100]`: 1 task x 2 budgets x 3 providers at budgets 220 and 100,
+against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The fixture, task, query, and runtime payload
+remain unchanged, including `lookup_outcome=raised_attribute_error`. Primary
+selector and selected-unit truth remain `unsupported/opaque`; runtime
+provenance remains additive only; baseline providers remain empty at both
+budgets; no missing-attribute dependency edge or selected symbol is created.
+No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening is authorized. The docs/evidence/continuity
+reconciliation for this workspace-only accepted expansion was accepted
+first-pass. The release-unit audit cleared first-pass.
+Full regression cleared first-pass with `709 passed`. The active next route
+is commit-gating over the exact workspace-only accepted expansion release
+unit. Do not route back to docs-reconciliation review, release-unit audit, or
+full regression absent new findings. Staging, local commit creation, and push
+are not authorized; push remains Ryan-gated.
+
+`6ac1e28 Add builtins-alias dynamic import eval probe` is the prior pushed
+release authority for the internal eval-only `DYNAMIC_IMPORT` /
+builtins-alias `loader.__import__(name)` probe. `3dfc355 Add
+builtins-attribute dynamic import eval probe` remains the prior pushed
+builtins-attribute release authority. `b85f038 Add root-alias dynamic import
+eval probe` remains the prior root-module alias dynamic-import release
+authority. `4030845 Add imported-alias dynamic import eval probe`,
+`ee71a82 Add imported-name dynamic import eval probe`, `397c7dd Add builtin
+dynamic import eval probe`, and `14b362e Add dynamic import root runtime eval
+pilot` remain earlier released dynamic-import authorities and must not be
+reopened absent new findings.
 
 The completed and pushed internal eval-only `DYNAMIC_IMPORT` /
 builtins-alias `loader.__import__(name)` release at `6ac1e28` is:
@@ -142,8 +164,9 @@ push completed at `6ac1e28`.
 
 There is no active release gate for `6ac1e28`: do not route back to
 release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push for this tranche absent new findings. The current route is
-corrected commit-gating for the workspace-only accepted `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` candidate.
+creation, or push for this tranche absent new findings. The post-`6ac1e28`
+route is superseded by the completed and pushed `5bd0616` getattr
+AttributeError release.
 
 The completed and pushed internal eval-only `DYNAMIC_IMPORT` / root-module
 alias `loader.import_module(name)` sibling pilot was released at
@@ -820,23 +843,85 @@ sequencing for `c1a12d7` absent new findings.
 - [x] First commit-gating review for internal `REFLECTIVE_BUILTIN` /
   `getattr(obj, name)` raised-`AttributeError` pilot rejected with P1
   stale-routing findings in `PLAN.md` and `BUILDLOG.md`
-- [ ] Corrected commit-gating review for internal `REFLECTIVE_BUILTIN` /
-  `getattr(obj, name)` raised-`AttributeError` pilot
+- [x] Routing correction for internal `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` pilot accepted first-pass
+- [x] Corrected commit-gating review for internal `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` pilot cleared first-pass
+- [x] Local commit creation and Ryan-authorized push for internal
+  `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError`
+  release unit completed at `5bd0616`
+- [x] Post-5bd0616 North Star planning/control decision selected the
+  `oracle_signal_getattr_attribute_error_probe_matrix` budget-pressure
+  expansion as the next smallest evidence-building capability wedge
+- [x] Bounded `oracle_signal_getattr_attribute_error_probe_matrix`
+  budget-pressure expansion from `[220]` to `[220, 100]` accepted first-pass
+  as workspace-only state
+- [x] Docs/evidence/continuity
+  reconciliation for the workspace-only accepted
+  `oracle_signal_getattr_attribute_error_probe_matrix` budget-pressure
+  expansion accepted first-pass
+- [x] Release-unit audit for the workspace-only accepted
+  `oracle_signal_getattr_attribute_error_probe_matrix` budget-pressure
+  expansion cleared first-pass
+- [x] Full regression gate for the workspace-only accepted
+  `oracle_signal_getattr_attribute_error_probe_matrix` budget-pressure
+  expansion cleared first-pass with `709 passed`
+- [ ] Commit-gating review for the workspace-only accepted
+  `oracle_signal_getattr_attribute_error_probe_matrix` budget-pressure
+  expansion
 
 ## What Is In Progress
 
-- Active workspace-only state is the accepted internal eval-only
-  `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` pilot
-  plus accepted docs/evidence/continuity reconciliation, release-unit audit,
-  and full regression clearance.
+- Active release state is complete and pushed for the internal eval-only
+  `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError`
+  release at `5bd0616 Add getattr AttributeError eval probe`.
 - Latest pushed release authority is
+  `5bd0616 Add getattr AttributeError eval probe`; the prior pushed
+  code/eval authority was
   `6ac1e28 Add builtins-alias dynamic import eval probe`.
-- The active next lane is corrected commit-gating over the exact accumulated
-  workspace-only `getattr(obj, name)` raised-`AttributeError` candidate.
-- Do not route this candidate back to docs-reconciliation review,
-  release-unit audit, or full regression absent new findings.
+- Branch is `main`; `HEAD` and `origin/main` are `5bd0616`; worktree was
+  clean at intake before this continuity-sync edit.
+- There is no active release gate for `5bd0616`. Do not route `5bd0616` back
+  to docs review, release-unit audit, full regression, commit-gating,
+  staging, local commit creation, or push absent new findings.
+- The bounded post-5bd0616 North Star planning/control decision is complete.
+  It selected a budget-pressure expansion of
+  `oracle_signal_getattr_attribute_error_probe_matrix` from budget `[220]` to
+  budgets `[220, 100]` as the next smallest evidence-building capability
+  wedge.
+- The budget-pressure expansion implementation is accepted as workspace-only
+  state. It expands only
+  `oracle_signal_getattr_attribute_error_probe_matrix` to 1 task x 2 budgets x
+  3 providers at budgets 220 and 100, preserving providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`.
+- Fixture, task, query, and runtime payload remain unchanged; runtime payload
+  remains `lookup_outcome=raised_attribute_error`.
+- Primary selector and selected-unit truth remain `unsupported/opaque`;
+  runtime provenance remains additive only; baseline providers remain empty at
+  both budgets; no missing-attribute dependency edge or selected symbol is
+  created.
+- No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is authorized.
+- Docs/evidence/continuity reconciliation for this workspace-only accepted
+  expansion was accepted first-pass.
+- Release-unit audit for this workspace-only accepted expansion cleared
+  first-pass.
+- Full regression for this workspace-only accepted expansion cleared
+  first-pass with `709 passed`.
+- The active next lane is commit-gating review over the exact workspace-only
+  accepted expansion release unit. Do not route back to docs-reconciliation
+  review, release-unit audit, or full regression absent new findings.
 - Staging, local commit creation, and push are not authorized; push remains
   Ryan-gated.
+- Completed getattr AttributeError release state:
+  - implementation accepted first-pass
+  - docs/evidence/continuity reconciliation accepted after 2 corrections
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `709 passed`
+  - first commit-gating review rejected with P1 stale-routing findings
+  - routing correction accepted first-pass
+  - corrected commit-gating cleared first-pass
+  - local commit creation and Ryan-authorized push completed at `5bd0616`
 - Prior completed builtins-alias release state:
   - source/contract prerequisite and eval-only sibling accepted first-pass
   - docs/evidence/continuity reconciliation accepted after one correction
@@ -1480,38 +1565,59 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next route: corrected commit-gating review over the exact
-workspace-only accepted internal eval-only `REFLECTIVE_BUILTIN` /
-`getattr(obj, name)` raised-`AttributeError` candidate.
+Immediate next route: commit-gating review over the exact workspace-only
+accepted `oracle_signal_getattr_attribute_error_probe_matrix` budget-pressure
+expansion from `[220]` to `[220, 100]`. Docs/evidence/continuity
+reconciliation accepted first-pass; release-unit audit cleared first-pass; and
+full regression cleared first-pass with `709 passed`. Do not route back to
+docs-reconciliation review, release-unit audit, or full regression absent new
+findings. Staging, local commit creation, and push are not authorized; push
+remains Ryan-gated.
+
 The released `DYNAMIC_IMPORT` sibling tranche now includes root-module
 `importlib.import_module(name)`, builtin `__import__(name)`, imported-name
 `import_module(name)`, imported-alias `load_module(name)`, root-module alias
 `loader.import_module(name)`, builtins-attribute `builtins.__import__(name)`,
-and builtins-alias `loader.__import__(name)` evidence. The planning spike
-should decide whether to continue `DYNAMIC_IMPORT` coverage or pivot to the
-next highest-leverage hybrid-runtime capability wedge after this candidate is
-resolved. Do not route this candidate back to docs-reconciliation review,
-release-unit audit, or full regression absent new findings. Do not stage,
-create a local commit, or push until corrected commit-gating clears; push
-remains Ryan-gated. Do not widen
+and builtins-alias `loader.__import__(name)` evidence. The released
+`REFLECTIVE_BUILTIN` tranche now includes zero-argument `dir()`,
+`dir(obj)`, zero-argument `vars()`, `vars(obj)`, defaulted
+`getattr(obj, name, default)`, and `getattr(obj, name)`
+raised-`AttributeError` evidence. Do not route `5bd0616` back to docs review,
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings. Do not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark scope.
 
+Post-5bd0616 planning decision:
+
+- The next smallest evidence-building capability wedge is not a new runtime
+  family. It is a budget-pressure expansion of the just-released
+  `oracle_signal_getattr_attribute_error_probe_matrix`.
+- The implementation slice is accepted as workspace-only state and edited only:
+  - `evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+- The slice adds budget `100` beside `220`, preserves the same fixture, task,
+  query, providers, selector truth, and
+  `lookup_outcome=raised_attribute_error` runtime payload, and asserts the
+  same unsupported/opaque selected unit with additive runtime provenance at
+  both budgets.
+- Baseline providers remain empty at both budgets.
+- Source, fixtures, task JSON, release-facing docs, public claims,
+  package-root APIs, MCP behavior, analyzer/tool-facade/runtime behavior,
+  schema, scoring, optimizer, compiler, winner-selection, product, and public
+  benchmark changes remain out of scope for this workspace-only expansion.
+
 Latest pushed release unit:
 
-- Source/contract prerequisite files:
-  - `src/context_ir/dependency_frontier.py`
-  - `src/context_ir/runtime_acquisition.py`
-  - `tests/test_dependency_frontier.py`
-  - `tests/test_runtime_acquisition.py`
-- Eval-only sibling files:
-  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/eval_runtime_observations.json`
-  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/main.py`
-  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/__init__.py`
-  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/weather.py`
-  - `evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json`
-  - `evals/tasks/oracle_signal_dynamic_import_builtins_alias_probe.json`
-  - `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py`
+- Treat the internal eval-only `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` pilot as completed and pushed
+  at `5bd0616 Add getattr AttributeError eval probe`.
+- Eval-only pilot files:
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/main.py`
+  - `evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json`
+  - `evals/tasks/oracle_signal_getattr_attribute_error_probe.json`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
 - Docs/evidence/continuity reconciliation files:
   - `ARCHITECTURE.md`
   - `EVAL.md`
@@ -1519,6 +1625,47 @@ Latest pushed release unit:
   - `README.md`
   - `PLAN.md`
   - `BUILDLOG.md`
+- The matrix is `oracle_signal_getattr_attribute_error_probe_matrix`: 1
+  task x 1 budget x 3 providers at budget 220, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
+- Fixture boundary is exactly `getattr(obj, name)`, with `AttributeError`
+  caught so `render_probe_digest()` is deterministic
+- Runtime payload is `lookup_outcome=raised_attribute_error`; primary selector
+  and selected-unit truth remain `unsupported/opaque`; runtime provenance
+  remains additive only; no dependency edge or selected symbol is created from
+  the missing attribute
+- Excluded forms remain generalized reflective-builtin support, dependency
+  edges or selected symbols from missing attributes, product surface changes,
+  schema changes, scoring changes, optimizer changes, compiler changes,
+  winner-selection changes, and any
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening
+- Implementation accepted first-pass.
+- Docs/evidence/continuity reconciliation was accepted after 2 corrections.
+- Release-unit audit cleared first-pass.
+- Full regression cleared first-pass with `709 passed`.
+- The first commit-gating review rejected with P1 stale-routing findings in
+  `PLAN.md` and `BUILDLOG.md`.
+- The routing correction was accepted first-pass.
+- Corrected commit-gating cleared first-pass.
+- Local commit creation and Ryan-authorized push completed at `5bd0616`.
+- No active release gate remains for `5bd0616 Add getattr AttributeError eval
+  probe` absent new findings.
+- Do not route back to docs review, release-unit audit, full regression,
+  commit-gating, staging, local commit creation, or push for `5bd0616` absent
+  new findings.
+
+Prior pushed release unit:
+
+- Treat the builtins-alias pilot assets as completed and pushed at
+  `6ac1e28 Add builtins-alias dynamic import eval probe`:
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/main.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/__init__.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_builtins_alias_probe/plugins/weather.py`
+  - `evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json`
+  - `evals/tasks/oracle_signal_dynamic_import_builtins_alias_probe.json`
+  - `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py`
 - The matrix is `oracle_signal_dynamic_import_builtins_alias_probe_matrix`: 1
   task x 1 budget x 3 providers at budget 220, against providers
   `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`
@@ -1529,31 +1676,16 @@ Latest pushed release unit:
   selected-unit truth remain `unsupported/opaque`; runtime provenance remains
   additive only; no dependency edge or selected symbol is created from
   `plugins.weather`
-- Excluded forms remain other builtins alias names, unaliased
-  `builtins.__import__(name)` expansion in this matrix, bare
-  `__import__(name)` expansion, shadowed/rebound/non-builtins forms,
-  wrong-arity forms, literal `loader.__import__("plugins.weather")`
-  expansion, fromlist/globals/locals forms, namespace mutation,
-  generated-code dependency modeling, generalized dynamic import support, and
-  any
-  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-  benchmark widening
 - Source/contract prerequisite and eval-only sibling were accepted first-pass.
 - Docs/evidence/continuity reconciliation was accepted after one correction.
 - Release-unit audit cleared first-pass.
 - Full regression cleared first-pass with `702 passed`.
-- The first commit-gating review rejected with P1 stale-routing findings in
-  `PLAN.md` and `BUILDLOG.md`.
-- The first continuity routing correction was accepted first-pass.
-- Corrected commit-gating review rejected once with one P1 stale-route finding
-  in `PLAN.md`.
-- The PLAN-only stale-route correction was accepted first-pass.
-- Corrected commit-gating cleared first-pass.
+- Corrected commit-gating cleared first-pass after stale-routing corrections.
 - Local commit creation and Ryan-authorized push completed at `6ac1e28`.
 - Do not route back to release-unit audit, full regression, commit-gating,
   staging, local commit creation, or push for `6ac1e28` absent new findings.
 
-Prior pushed release unit:
+Earlier pushed release unit:
 
 - Treat the builtins-attribute pilot assets as completed and pushed at
   `3dfc355 Add builtins-attribute dynamic import eval probe`:

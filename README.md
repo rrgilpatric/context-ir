@@ -72,15 +72,19 @@ comparative claims remain bounded to the existing quad matrix. The three
 existing getattr-family pilot matrices cover only 1 task x 2 budgets x 3
 providers at budgets `100` and `220`; the current internal eval-only
 raised-`AttributeError` branch pilot covers only
-`oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x 3
-providers at budget `220`, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary
-exactly `getattr(obj, name)`, caught `AttributeError` for deterministic
-`render_probe_digest()`, runtime payload
+`oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 2 budgets x 3
+providers at budgets `220` and `100`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture, task,
+query, and runtime payload remain unchanged across both budget rows; the
+fixture boundary is exactly `getattr(obj, name)`, with caught
+`AttributeError` for deterministic `render_probe_digest()`, runtime payload
 `lookup_outcome=raised_attribute_error`, primary selector and selected-unit
-truth `unsupported/opaque`, additive-only runtime provenance, no dependency
-edge or selected symbol created from the missing attribute, and no public
-claim widening; the current internal `vars(obj)` pilot
+truth `unsupported/opaque`, additive-only runtime provenance, baseline
+providers empty at both budgets, no missing-attribute dependency edge or
+selected symbol created, public comparative claims bounded to the existing
+quad matrix, and no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening; the current internal `vars(obj)` pilot
 covers only 1 task x 2 budgets x 3 providers at budgets `100` and `220`,
 against providers `context_ir`, `lexical_top_k_files`, and
 `import_neighborhood_files`, with `lookup_outcome=returned_namespace`. The
@@ -530,15 +534,19 @@ Current evidence includes:
   runtime-backed provenance additive only
 - the current internal eval-only raised-`AttributeError` branch
   `getattr(obj, name)` pilot remains
-  `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x 3
-  providers at budget `220`, against providers `context_ir`,
-  `lexical_top_k_files`, and `import_neighborhood_files`; the fixture boundary
-  is exactly `getattr(obj, name)`, with `AttributeError` caught so
-  `render_probe_digest()` is deterministic; the runtime payload is
+  `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 2 budgets x
+  3 providers at budgets `220` and `100`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; the fixture, task,
+  query, and runtime payload remain unchanged across both budget rows; the
+  fixture boundary is exactly `getattr(obj, name)`, with `AttributeError`
+  caught so `render_probe_digest()` is deterministic; the runtime payload is
   `lookup_outcome=raised_attribute_error`; primary selector and selected-unit
-  truth still `unsupported/opaque`, runtime provenance additive only, no
-  dependency edge or selected symbol is created from the missing attribute, and
-  public comparative claims remain bounded to the existing quad matrix
+  truth still `unsupported/opaque`, runtime provenance additive only, baseline
+  providers remain empty at both budgets, no missing-attribute dependency edge
+  or selected symbol is created, public comparative claims remain bounded to
+  the existing quad matrix, and no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included
 - the current internal `vars(obj)` pilot remains 1 task x 2 budgets x 3 providers
   at budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with

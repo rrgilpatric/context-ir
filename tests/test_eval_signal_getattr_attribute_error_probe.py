@@ -36,7 +36,7 @@ RUN_SPEC_PATH = (
     / "run_specs"
     / "oracle_signal_getattr_attribute_error_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -50,6 +50,7 @@ QUERY = (
     "Fix probe_attribute unsupported getattr(obj, name) and keep digest output aligned"
 )
 UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+UNSUPPORTED_SITE_ID = "call:main.py:2:11"
 MISSING_ATTRIBUTE_NAME = "definitely_missing_attribute"
 
 
@@ -114,6 +115,19 @@ def test_getattr_attribute_error_probe_resolves_expected_selectors() -> None:
     assert unsupported.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
     assert unsupported.has_attached_runtime_provenance is True
     assert unsupported.attached_runtime_provenance_record_ids
+    assert all(
+        MISSING_ATTRIBUTE_NAME not in (symbol.symbol_id, symbol.qualified_name)
+        for symbol in setup.semantic_program.resolved_symbols.values()
+    )
+    assert all(
+        MISSING_ATTRIBUTE_NAME
+        not in (dependency.source_symbol_id, dependency.target_symbol_id)
+        for dependency in setup.semantic_program.proven_dependencies
+    )
+    assert all(
+        dependency.evidence_site_id != UNSUPPORTED_SITE_ID
+        for dependency in setup.semantic_program.proven_dependencies
+    )
 
 
 def test_getattr_attribute_error_probe_run_spec_loads_cleanly() -> None:
@@ -184,48 +198,49 @@ def test_getattr_attribute_error_probe_run_preserves_additive_runtime_fields(
         for budget in PROBE_BUDGETS
     }
 
-    for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
+    for budget in PROBE_BUDGETS:
+        for provider_name in BASELINE_PROVIDERS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
+
+        record = _record_for(
             records,
-            provider_name=provider_name,
-            budget=220,
+            provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+            budget=budget,
         )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+        metrics = cast(dict[str, object], record["metrics"])
+        runtime_provenance_records = cast(
+            list[dict[str, object]],
+            record["runtime_provenance_records"],
+        )
+        selected_units = _selected_units(record)
+        unsupported_unit = next(
+            unit for unit in selected_units if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+        )
 
-    record = _record_for(
-        records,
-        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
-        budget=220,
-    )
-    metrics = cast(dict[str, object], record["metrics"])
-    runtime_provenance_records = cast(
-        list[dict[str, object]],
-        record["runtime_provenance_records"],
-    )
-    selected_units = _selected_units(record)
-    unsupported_unit = next(
-        unit for unit in selected_units if unit["unit_id"] == UNSUPPORTED_UNIT_ID
-    )
-
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert metrics["uncertainty_honesty"] == 1.0
-    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_unit["has_attached_runtime_provenance"] is True
-    assert cast(
-        list[str],
-        unsupported_unit["attached_runtime_provenance_record_ids"],
-    )
-    assert len(runtime_provenance_records) == 1
-    assert runtime_provenance_records[0]["normalized_payload"] == {
-        "lookup_outcome": "raised_attribute_error",
-    }
-    assert all(
-        MISSING_ATTRIBUTE_NAME not in json.dumps(unit, sort_keys=True)
-        for unit in selected_units
-    )
+        assert record["spec_version"] == "v1"
+        assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+        assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
+        assert metrics["uncertainty_honesty"] == 1.0
+        assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
+        assert unsupported_unit["has_attached_runtime_provenance"] is True
+        assert cast(
+            list[str],
+            unsupported_unit["attached_runtime_provenance_record_ids"],
+        )
+        assert len(runtime_provenance_records) == 1
+        assert runtime_provenance_records[0]["normalized_payload"] == {
+            "lookup_outcome": "raised_attribute_error",
+        }
+        assert all(
+            MISSING_ATTRIBUTE_NAME not in json.dumps(unit, sort_keys=True)
+            for unit in selected_units
+        )
 
 
 def test_getattr_attribute_error_probe_summary_keeps_runtime_additive(
@@ -276,11 +291,11 @@ def test_getattr_attribute_error_probe_summary_keeps_runtime_additive(
     )
     report = eval_report.build_eval_report(ledger_path)
 
-    assert unsupported_selector_aggregate.selector_count == 3
-    assert unsupported_selector_aggregate.satisfied_count == 3
-    assert runtime_expectation_aggregate.selector_count == 3
-    assert runtime_expectation_aggregate.satisfied_count == 3
-    assert runtime_outcome_aggregate.runtime_provenance_count == 3
+    assert unsupported_selector_aggregate.selector_count == 6
+    assert unsupported_selector_aggregate.satisfied_count == 6
+    assert runtime_expectation_aggregate.selector_count == 6
+    assert runtime_expectation_aggregate.satisfied_count == 6
+    assert runtime_outcome_aggregate.runtime_provenance_count == 6
     assert tuple(
         (
             aggregate.primary_capability_tier,
@@ -289,11 +304,11 @@ def test_getattr_attribute_error_probe_summary_keeps_runtime_additive(
         )
         for aggregate in summary.selected_unit_tier_aggregates
     ) == (
-        ("statically_proved", 2, 0),
-        ("unsupported/opaque", 1, 1),
+        ("statically_proved", 4, 0),
+        ("unsupported/opaque", 2, 2),
     )
-    assert unsupported_selected_unit_aggregate.selected_unit_count == 1
-    assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 1
+    assert unsupported_selected_unit_aggregate.selected_unit_count == 2
+    assert unsupported_selected_unit_aggregate.attached_runtime_provenance_count == 2
     assert tuple(
         (
             aggregate.provider_name,
@@ -302,24 +317,24 @@ def test_getattr_attribute_error_probe_summary_keeps_runtime_additive(
         )
         for aggregate in summary.provider_selected_unit_aggregates
     ) == (
-        (eval_providers.CONTEXT_IR_PROVIDER, 3, 1),
+        (eval_providers.CONTEXT_IR_PROVIDER, 6, 2),
         (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER, 0, 0),
         (eval_providers.LEXICAL_TOP_K_FILES_PROVIDER, 0, 0),
     )
-    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 1
+    assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 2
     assert (
         provider_unsupported_selected_unit_aggregate.attached_runtime_provenance_count
-        == 1
+        == 2
     )
 
     assert report.markdown_report == rendered
     for markdown in (rendered, report.markdown_report):
         assert "## Capability-Tier Accounting" in markdown
         assert "### Selected Units by Provider" in markdown
-        assert "| yes | 3 | 3 |" in markdown
-        assert "| lookup_outcome | raised_attribute_error | 3 |" in markdown
-        assert "| unsupported/opaque | 1 | 1 |" in markdown
-        assert "| context_ir | 3 | 1 |" in markdown
+        assert "| yes | 6 | 6 |" in markdown
+        assert "| lookup_outcome | raised_attribute_error | 6 |" in markdown
+        assert "| unsupported/opaque | 2 | 2 |" in markdown
+        assert "| context_ir | 6 | 2 |" in markdown
         assert "| import_neighborhood_files | 0 | 0 |" in markdown
         assert "| lexical_top_k_files | 0 | 0 |" in markdown
         assert "| runtime_backed |" not in markdown
