@@ -31,7 +31,7 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_delattr_probe.json"
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_delattr_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -116,7 +116,7 @@ def test_delattr_probe_task_resolves_expected_selectors_deterministically() -> N
 
 
 def test_delattr_probe_run_spec_loads_budget_matrix() -> None:
-    """The delattr probe run spec is one task x one budget x three providers."""
+    """The delattr probe run spec is one task x two budgets x three providers."""
     spec = eval_runs.load_eval_run_spec(RUN_SPEC_PATH)
 
     assert spec.plan_id == "oracle_signal_delattr_probe_matrix"
@@ -189,59 +189,60 @@ def test_delattr_probe_run_executes_with_additive_runtime_provenance(
         for budget in PROBE_BUDGETS
     }
 
-    for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
+    for budget in PROBE_BUDGETS:
+        for provider_name in BASELINE_PROVIDERS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
+
+        record = _record_for(
             records,
-            provider_name=provider_name,
-            budget=220,
+            provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+            budget=budget,
         )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+        metrics = cast(dict[str, object], record["metrics"])
+        runtime_provenance_records = cast(
+            list[dict[str, object]],
+            record["runtime_provenance_records"],
+        )
+        unsupported_selector = next(
+            selector
+            for selector in _resolved_selectors(record)
+            if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
+        )
+        unsupported_unit = next(
+            unit
+            for unit in _selected_units(record)
+            if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+        )
 
-    record = _record_for(
-        records,
-        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
-        budget=220,
-    )
-    metrics = cast(dict[str, object], record["metrics"])
-    runtime_provenance_records = cast(
-        list[dict[str, object]],
-        record["runtime_provenance_records"],
-    )
-    unsupported_selector = next(
-        selector
-        for selector in _resolved_selectors(record)
-        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
-    )
-    unsupported_unit = next(
-        unit
-        for unit in _selected_units(record)
-        if unit["unit_id"] == UNSUPPORTED_UNIT_ID
-    )
-
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert record["budget"] == 220
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert metrics["uncertainty_honesty"] == 1.0
-    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_selector["primary_evidence_origin"] == (
-        "unsupported_reason_code"
-    )
-    assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_selector["has_attached_runtime_provenance"] is True
-    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
-    assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_unit["has_attached_runtime_provenance"] is True
-    assert cast(
-        list[str],
-        unsupported_unit["attached_runtime_provenance_record_ids"],
-    )
-    assert len(runtime_provenance_records) == 1
-    assert runtime_provenance_records[0]["normalized_payload"] == {
-        "mutation_outcome": "deleted_attribute",
-    }
+        assert record["spec_version"] == "v1"
+        assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+        assert record["budget"] == budget
+        assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
+        assert metrics["uncertainty_honesty"] == 1.0
+        assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
+        assert unsupported_selector["primary_evidence_origin"] == (
+            "unsupported_reason_code"
+        )
+        assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
+        assert unsupported_selector["has_attached_runtime_provenance"] is True
+        assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
+        assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
+        assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
+        assert unsupported_unit["has_attached_runtime_provenance"] is True
+        assert cast(
+            list[str],
+            unsupported_unit["attached_runtime_provenance_record_ids"],
+        )
+        assert len(runtime_provenance_records) == 1
+        assert runtime_provenance_records[0]["normalized_payload"] == {
+            "mutation_outcome": "deleted_attribute",
+        }
 
 
 def test_delattr_probe_summary_surfaces_internal_capability_accounting(
@@ -321,7 +322,7 @@ def test_delattr_probe_summary_surfaces_internal_capability_accounting(
     for markdown in (rendered, report.markdown_report):
         assert "## Capability-Tier Accounting" in markdown
         assert "### Selected Units by Provider" in markdown
-        assert "| yes | 3 | 3 |" in markdown
-        assert "| mutation_outcome | deleted_attribute | 3 |" in markdown
-        assert "| unsupported/opaque | 1 | 1 |" in markdown
+        assert "| yes | 6 | 6 |" in markdown
+        assert "| mutation_outcome | deleted_attribute | 6 |" in markdown
+        assert "| unsupported/opaque | 2 | 2 |" in markdown
         assert "| runtime_backed |" not in markdown

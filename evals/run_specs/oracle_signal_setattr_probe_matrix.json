@@ -5,7 +5,7 @@
       "case_id": "signal_setattr_probe",
       "task_path": "evals/tasks/oracle_signal_setattr_probe.json",
       "query": "Fix probe_set_attribute unsupported setattr(obj, name, value) returned None and keep digest output aligned",
-      "budgets": [220],
+      "budgets": [220, 100],
       "providers": [
         "context_ir",
         "lexical_top_k_files",

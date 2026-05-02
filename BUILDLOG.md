@@ -2,7 +2,189 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-05-02 -- Tranche Batching Throughput Discipline
+## 2026-05-02 -- RUNTIME_MUTATION delattr/setattr Corrected Commit-Gating Route
+
+- Supersedes the earlier current routing text for the docs/evidence/continuity
+  reconciliation of the accepted workspace-only internal eval-only
+  `RUNTIME_MUTATION` / `delattr(obj, name)` and
+  `setattr(obj, name, value)` budget expansion tranche.
+- Current accepted gate truth:
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `709 passed`
+  - corrected commit-gating is the active next gate
+- The ten-file release unit remains unchanged:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+  - `tests/test_eval_signal_delattr_probe.py`
+  - `tests/test_eval_signal_setattr_probe.py`
+- Release state:
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - audit-cleared
+  - full-regression-cleared
+  - not corrected-commit-gating-cleared
+  - not staged
+  - not committed
+  - not pushed
+- Routing decision:
+  - next route is corrected commit-gating only
+  - do not route back to findings-first docs-reconciliation control review,
+    release-unit audit, or full regression absent new findings
+  - staging, local commit creation, and push remain blocked before corrected
+    commit-gating clears
+  - push remains Ryan-gated
+- Scope guard:
+  - this correction edits `BUILDLOG.md` only
+  - no `PLAN.md`, source, tests, eval assets, release-facing docs,
+    `AGENTS.md`, staging, local commit creation, push, regression rerun, or
+    commit-gating were performed
+- Acceptance status: 1 correction
+
+## 2026-05-02 -- RUNTIME_MUTATION delattr/setattr Full Regression
+
+- The audit-cleared `RUNTIME_MUTATION` delattr/setattr budget-pressure tranche
+  passed full regression first-pass.
+- Commands passed:
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `pytest tests/ -v` with `709 passed`
+- The ten-file release unit remains unchanged:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+  - `tests/test_eval_signal_delattr_probe.py`
+  - `tests/test_eval_signal_setattr_probe.py`
+- Release state:
+  - audit-cleared
+  - full-regression-cleared
+  - not commit-gating-cleared
+  - not staged
+  - not committed
+  - not pushed
+- Routing decision:
+  - next route is commit-gating only
+  - do not route to staging, local commit creation, or push before
+    commit-gating clears
+  - push remains Ryan-gated
+- Scope guard:
+  - this control-state update edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs beyond `PLAN.md` and
+    `BUILDLOG.md`, staging, commits, push, full regression rerun, or
+    commit-gating were performed
+- Acceptance status: first-pass
+
+## 2026-05-02 -- RUNTIME_MUTATION delattr/setattr Release-Unit Audit
+
+- The `RUNTIME_MUTATION` delattr/setattr budget-pressure tranche passed
+  release-unit audit first-pass.
+- The ten-file release unit remains:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+  - `tests/test_eval_signal_delattr_probe.py`
+  - `tests/test_eval_signal_setattr_probe.py`
+- Release state:
+  - audit-cleared
+  - not full-regression-cleared
+  - not commit-gating-cleared
+  - not staged
+  - not committed
+  - not pushed
+- Routing decision:
+  - next route is full regression only
+  - do not route to commit-gating, staging, local commit creation, or push
+    before full regression clears
+  - push remains Ryan-gated
+- Scope guard:
+  - this control-state update edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs beyond `PLAN.md` and
+    `BUILDLOG.md`, staging, commits, push, full regression, or commit-gating
+    were performed
+- Acceptance status: first-pass
+
+## 2026-05-02 -- RUNTIME_MUTATION delattr/setattr Budget Expansion Docs Sync
+
+- Completed docs/evidence/continuity reconciliation for the accepted
+  workspace-only internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)`
+  and `setattr(obj, name, value)` budget expansion tranche.
+- Repo-backed truth verified for this reconciliation:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `125f088 Codify tranche batching discipline`
+  - nothing staged
+  - no untracked files
+  - expected dirty/release-unit files are the full ten-file tranche:
+    - `ARCHITECTURE.md`
+    - `BUILDLOG.md`
+    - `EVAL.md`
+    - `PLAN.md`
+    - `PUBLIC_CLAIMS.md`
+    - `README.md`
+    - `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
+    - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+    - `tests/test_eval_signal_delattr_probe.py`
+    - `tests/test_eval_signal_setattr_probe.py`
+- Accepted workspace-only implementation state recorded:
+  - `oracle_signal_setattr_probe_matrix` expanded from `[220]` to
+    `[220, 100]`
+  - `oracle_signal_delattr_probe_matrix` expanded from `[220]` to
+    `[220, 100]`
+  - each matrix remains 1 task x 2 budgets x 3 providers
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixtures, tasks, queries, and runtime payloads are unchanged
+  - `setattr` runtime payload remains `mutation_outcome=returned_none`
+  - `delattr` runtime payload remains `mutation_outcome=deleted_attribute`
+  - selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - baseline providers remain empty at both budgets
+  - no source/API/MCP/package-export/schema/scoring/optimizer/compiler/
+    winner-selection/product/public benchmark widening is authorized
+  - this accepted tranche supersedes older historical routing notes that
+    rejected `delattr` budget `100` expansion before a specific comparison
+    need existed
+- Documentation/evidence reconciliation:
+  - `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, and `README.md` were
+    updated with state-neutral evidence wording for the `[220, 100]`
+    provider/budget shape and preserved public-claim boundary
+  - `PLAN.md` and `BUILDLOG.md` record the accepted workspace-only tranche and
+    next routing
+- Scope guard:
+  - this reconciliation edits docs/continuity only
+  - no source files, eval fixtures, task JSON, run specs, tests, staging,
+    commits, or push were modified or performed by this docs-sync slice
+- Routing decision:
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - release-unit audit later cleared first-pass
+  - full regression later cleared first-pass with `709 passed`
+  - corrected commit-gating is the active next gate
+  - route next to corrected commit-gating only over the same ten-file release
+    unit
+  - do not route back to findings-first control review, release-unit audit, or
+    full regression absent new findings
+  - staging, local commit creation, and push remain blocked before corrected
+    commit-gating clears
+  - push remains Ryan-gated
+- Acceptance status: 1 correction
+
+## 2026-05-02 -- Tranche Batching Throughput Discipline Release Sync
 
 - Memorialized tranche batching / throughput discipline in `AGENTS.md` so
   future control lanes use one consistent process rule.
@@ -21,12 +203,24 @@ Most recent supersession entries override older architectural decisions when the
     accumulated tranche
   - any finding pauses advancement; batching cannot carry issues forward
   - Ryan approval remains required for new backlog items and push
+- Repo-backed release truth during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `125f088 Codify tranche batching discipline`
+  - worktree clean at intake before this continuity-sync edit
+  - latest pushed process-doc authority is
+    `125f088 Codify tranche batching discipline`
+  - latest pushed code/eval release authority remains
+    `ad9db8d Expand dir eval budget coverage`
+  - prior pushed code/eval release authority was
+    `43d0439 Expand getattr AttributeError eval budget coverage`
+  - live git refs and worktree state remain authoritative for future control
+    intake
 - Routing decision:
-  - this bounded process-doc slice edits only `AGENTS.md`, `PLAN.md`, and
-    `BUILDLOG.md`
+  - the tranche batching / throughput discipline process-doc release is
+    complete and pushed at `125f088 Codify tranche batching discipline`
+  - release unit was `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`
   - control review accepted the process-doc slice first-pass
-  - current accepted workspace-only process-doc release unit is `AGENTS.md`,
-    `PLAN.md`, and `BUILDLOG.md`
   - after one correction, the corrected process-doc release unit passed the
     dedicated read-only release-unit audit rerun first-pass over `AGENTS.md`,
     `PLAN.md`, and `BUILDLOG.md`
@@ -37,14 +231,23 @@ Most recent supersession entries override older architectural decisions when the
     - `pytest tests/ -v` passed with `709 passed`
   - the first commit-gating review rejected the release unit with stale routing
     findings in `PLAN.md` and `BUILDLOG.md`
-  - route next to corrected commit-gating review over `AGENTS.md`, `PLAN.md`,
-    and `BUILDLOG.md`
-  - the release unit is audit-cleared and full-regression-cleared, but not
-    commit-gating-cleared, not staged, not committed, and not pushed
-  - do not route back to full regression or forward to staging, local commit
-    creation, or push before corrected commit-gating clears
-  - push remains Ryan-gated
+  - corrected commit-gating completed
+  - local commit creation completed at `125f088`
+  - Ryan-authorized push completed at `125f088`
+  - release-gate status is no-active-gate for `125f088`
+  - do not route `125f088` back to release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or push absent new findings
+  - no active route remains to audit, full regression, commit-gating, staging,
+    local commit creation, or push for `125f088` absent new findings
+  - next route is bounded post-125f088 North Star planning/control
+  - `ad9db8d Expand dir eval budget coverage` remains the latest pushed
+    code/eval release authority and remains no-active-gate
   - do not reopen `ad9db8d` or earlier pushed releases absent new findings
+- Scope guard:
+  - this bounded post-push continuity sync edits only `PLAN.md` and
+    `BUILDLOG.md`
+  - no source, tests, eval assets, `AGENTS.md`, `ARCHITECTURE.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `README.md` are in scope
 - Acceptance status: 1 correction
 
 ## 2026-05-02 -- REFLECTIVE_BUILTIN dir(obj) Budget-pressure Release Sync

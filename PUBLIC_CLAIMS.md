@@ -90,18 +90,25 @@ stays scoped to repo-local evidence only.
   providers at budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`; the current internal eval-only
-  `oracle_signal_delattr_probe_matrix` is limited to 1 task x 1 budget x 3
-  providers at budget `220`, against providers `context_ir`,
+  `oracle_signal_delattr_probe_matrix` is limited to 1 task x 2 budgets x 3
+  providers at budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
-  `mutation_outcome=deleted_attribute`; the current internal eval-only
+  `mutation_outcome=deleted_attribute`; fixture, task, query, and runtime
+  payload remain unchanged across both budget rows; selector and selected-unit
+  primary truth remain `unsupported/opaque`; runtime provenance remains
+  additive only; baseline providers remain empty at both budgets; public
+  comparative claims remain bounded to the existing quad matrix; the current
+  internal eval-only
   `oracle_signal_setattr_probe_matrix` is narrow `RUNTIME_MUTATION` /
-  `setattr(obj, name, value)` evidence limited to 1 task x 1 budget x 3
-  providers at budget `220`, against providers `context_ir`,
+  `setattr(obj, name, value)` evidence limited to 1 task x 2 budgets x 3
+  providers at budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
-  `mutation_outcome=returned_none`; selector/runtime-mutation surface and
-  selected-unit primary truth remain `unsupported/opaque`, runtime provenance
-  remains additive only, and public comparative claims remain bounded to the
-  existing quad matrix; the internal
+  `mutation_outcome=returned_none`; fixture, task, query, and runtime payload
+  remain unchanged across both budget rows; selector/runtime-mutation surface
+  and selected-unit primary truth remain `unsupported/opaque`; runtime
+  provenance remains additive only; baseline providers remain empty at both
+  budgets; and public comparative claims remain bounded to the existing quad
+  matrix; the internal
   `oracle_signal_dir_probe_matrix` is limited to 1 task x 2 budgets x 3
   providers at budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with unchanged
@@ -498,21 +505,25 @@ stays scoped to repo-local evidence only.
   `lookup_outcome=returned_namespace`.
   For the current internal eval-only `RUNTIME_MUTATION` /
   `delattr(obj, name)` matrix, the only accepted provider/budget wording is
-  `oracle_signal_delattr_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`, with runtime payload
-  `mutation_outcome=deleted_attribute`; selector and selected-unit primary
-  truth remain `unsupported/opaque`, and runtime provenance remains additive
-  only.
+  `oracle_signal_delattr_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `mutation_outcome=deleted_attribute`; fixture, task, query, and runtime
+  payload remain unchanged across both budget rows; selector and selected-unit
+  primary truth remain `unsupported/opaque`; runtime provenance remains
+  additive only; baseline providers remain empty at both budgets; and public
+  comparative claims remain bounded to the existing quad matrix.
   For the current internal eval-only `RUNTIME_MUTATION` /
   `setattr(obj, name, value)` matrix, the only accepted provider/budget wording
-  is `oracle_signal_setattr_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`, with runtime payload
-  `mutation_outcome=returned_none`; selector/runtime-mutation surface and
-  selected-unit primary truth remain `unsupported/opaque`, runtime provenance
-  remains additive only, and public comparative claims remain bounded to the
-  existing quad matrix.
+  is `oracle_signal_setattr_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
+  `mutation_outcome=returned_none`; fixture, task, query, and runtime payload
+  remain unchanged across both budget rows; selector/runtime-mutation surface
+  and selected-unit primary truth remain `unsupported/opaque`; runtime
+  provenance remains additive only; baseline providers remain empty at both
+  budgets; and public comparative claims remain bounded to the existing quad
+  matrix.
   For the internal `dir(obj)` matrix, the only accepted provider/budget wording
   is `oracle_signal_dir_probe_matrix`: 1 task x 2 budgets x 3 providers at
   budgets `[220, 100]`, against providers `context_ir`,
