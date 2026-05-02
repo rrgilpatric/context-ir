@@ -146,6 +146,30 @@ slice is **workspace-only accepted**. The control lane may accumulate multiple
 accepted slices into one coherent release unit, and must not automatically
 stage, commit, or push after every accepted slice.
 
+### Tranche Batching / Throughput Discipline
+
+Implementation slices remain bounded and sequential. Batching is a release
+discipline, not permission to run broad or parallel implementation work.
+
+Multiple accepted low-risk slices may accumulate into one coherent release
+unit before release gates run. Good batching candidates share the same risk
+class, same layer, existing implementation pattern, or focused eval, test, or
+doc-change shape.
+
+Bad batching candidates must be excluded from low-risk batching and handled
+as their own release unit: source/contract changes; new runtime-family forms;
+public/API/MCP/schema/scoring/compiler/winner-selection changes; and any slice
+with unresolved findings.
+
+For a clean accumulated tranche, docs reconciliation, release-unit audit, full
+regression, commit-gating, local commit creation, and push authorization may
+run once over the accumulated release unit rather than once per accepted
+slice.
+
+Any finding pauses advancement. Batching cannot carry issues forward or bury
+them inside a later release unit. Ryan approval remains required for new
+backlog items and for push.
+
 ---
 
 ## Control State Bundle
