@@ -61,8 +61,11 @@ internal
 `REFLECTIVE_BUILTIN` / `getattr(obj, name, default)` value-return branch
 evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
 `getattr(obj, name)` runtime-backed evidence, and the `90dcc15` / `762dd51`
-`hasattr(obj, name)` runtime-backed evidence. These reflective pilots, the
-current internal `vars(obj)` pilot, the current internal zero-argument
+`hasattr(obj, name)` runtime-backed evidence. The current internal eval-only
+`oracle_signal_getattr_attribute_error_probe_matrix` evidence is a narrow
+`REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` branch
+pilot. These reflective pilots, the current internal `vars(obj)` pilot, the
+current internal zero-argument
 `vars()` pilot, the current internal `globals()` pilot, the current internal
 `locals()` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
 `dir(obj)` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
@@ -233,6 +236,16 @@ expansion for the existing getattr-family run specs:
 existing task only: 1 task x 2 budgets x 3 providers at budgets `100` and
 `220`. This is internal eval evidence for existing reflective probes only; it
 does not create generalized `getattr` support or widen public/runtime APIs.
+The current internal eval-only raised-`AttributeError` branch evidence covers
+only `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x
+3 providers at budget 220, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is exactly `getattr(obj, name)`, with `AttributeError` caught so
+`render_probe_digest()` is deterministic. The runtime payload is
+`lookup_outcome=raised_attribute_error`; primary selector and selected-unit
+truth remain `unsupported/opaque`, runtime provenance remains additive only,
+no dependency edge or selected symbol is created from the missing attribute,
+and public comparative claims remain bounded to the existing quad matrix.
 
 Proven by current unit and integration tests:
 
@@ -278,9 +291,11 @@ Proven by current unit and integration tests:
 - Internal eval runtime-outcome accounting is supported for normalized runtime
   provenance payload fields, so summary/report output can distinguish outcome
   counts such as `lookup_outcome=returned_default_value` and
-  `lookup_outcome=returned_value`, and the current internal `vars(obj)` and
-  zero-argument `vars()` pilots plus the current internal `RUNTIME_MUTATION` /
-  `globals()` and `locals()` pilots record
+  `lookup_outcome=returned_value`, while the current internal eval-only
+  raised-`AttributeError` branch pilot records
+  `lookup_outcome=raised_attribute_error`, and the current internal
+  `vars(obj)` and zero-argument `vars()` pilots plus the current internal
+  `RUNTIME_MUTATION` / `globals()` and `locals()` pilots record
   `lookup_outcome=returned_namespace`, while the current internal eval-only
   `RUNTIME_MUTATION` / `delattr(obj, name)` pilot records
   `mutation_outcome=deleted_attribute`, and the current internal eval-only
@@ -364,6 +379,9 @@ Proven by current unit and integration tests:
   - the narrow internal eval-only `REFLECTIVE_BUILTIN` /
     `getattr(obj, name, default)` value-return sibling pilot for the
     `oracle_signal_getattr_default_value_probe` task
+  - the current internal eval-only `REFLECTIVE_BUILTIN` /
+    `getattr(obj, name)` raised-`AttributeError` branch pilot for
+    `oracle_signal_getattr_attribute_error_probe_matrix`
   - the narrow internal `REFLECTIVE_BUILTIN` / `vars(obj)` pilot for the
     `oracle_signal_vars_probe` task
   - the narrow internal `REFLECTIVE_BUILTIN` / zero-argument `vars()` pilot for
@@ -496,6 +514,17 @@ Proven by current unit and integration tests:
   benchmark widening.
 - The three existing getattr-family provider/budget matrices now cover budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers.
+- The current internal eval-only `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` branch pilot covers only
+  `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x
+  3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+  is exactly `getattr(obj, name)`, with `AttributeError` caught so
+  `render_probe_digest()` is deterministic. Runtime payload is
+  `lookup_outcome=raised_attribute_error`; primary selector and selected-unit
+  truth remain `unsupported/opaque`, runtime provenance remains additive only,
+  no dependency edge or selected symbol is created from the missing attribute,
+  and public comparative claims remain bounded to the existing quad matrix.
 - The current internal `vars(obj)` pilot covers only
   `oracle_signal_vars_probe`: 1 task x 2 budgets x 3 providers at budgets
   `100` and `220`, against providers `context_ir`,
@@ -635,8 +664,9 @@ Architecturally intended but not yet evaluated:
   `loader.import_module(name)` sibling evidence,
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
-  internal pilots, plus the current one-argument `vars(obj)`, zero-argument
-  `vars()`, one-argument `dir(obj)`, zero-argument `dir()`, and
+  internal pilots, plus the current eval-only raised-`AttributeError` branch
+  `getattr(obj, name)` pilot, plus the current one-argument `vars(obj)`,
+  zero-argument `vars()`, one-argument `dir(obj)`, zero-argument `dir()`, and
   `RUNTIME_MUTATION` / `globals()`, `locals()`, `delattr(obj, name)`, and
   `setattr(obj, name, value)` internal pilots, plus the current internal
   eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site
@@ -671,7 +701,9 @@ Architecturally intended but not yet evaluated:
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   fixtures, tasks, run specs, and additive runtime provenance, plus the current
-  internal one-argument `vars(obj)` fixture, task, run spec, and additive
+  eval-only raised-`AttributeError` branch `getattr(obj, name)` fixture, task,
+  run spec, and additive runtime provenance, plus the current internal
+  one-argument `vars(obj)` fixture, task, run spec, and additive
   runtime provenance, and the current internal zero-argument `vars()` fixture,
   task, run spec, and additive runtime provenance, plus the current internal
   `RUNTIME_MUTATION` / `globals()` fixture, task, run spec, and additive
@@ -824,6 +856,17 @@ Architecturally intended but not yet evaluated:
 - Narrow getattr-family provider/budget evidence: the three existing
   getattr-family matrices cover budgets `100` and `220`, and each remains
   1 task x 2 budgets x 3 providers.
+- Narrow raised-`AttributeError` `getattr(obj, name)` provider/budget
+  evidence: the current internal eval-only
+  `oracle_signal_getattr_attribute_error_probe_matrix` covers only 1 task x 1
+  budget x 3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with fixture
+  boundary exactly `getattr(obj, name)`, caught `AttributeError` for
+  deterministic `render_probe_digest()`, runtime payload
+  `lookup_outcome=raised_attribute_error`, primary selector and selected-unit
+  truth `unsupported/opaque`, additive-only runtime provenance, no dependency
+  edge or selected symbol created from the missing attribute, and public
+  comparative claims bounded to the existing quad matrix.
 - Narrow `vars(obj)` provider/budget evidence: the internal
   `oracle_signal_vars_probe_matrix` covers only 1 task x 2 budgets x 3
   providers at budgets `100` and `220`, against providers `context_ir`,
@@ -964,8 +1007,19 @@ The following claims are allowed because current repo artifacts support them:
   `DYNAMIC_IMPORT` provider/budget matrix and the narrow
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
-  pilots. The three getattr-family provider/budget matrices cover budgets
-  `100` and `220`, and each remains 1 task x 2 budgets x 3 providers. The
+  pilots, plus the current eval-only raised-`AttributeError` branch
+  `getattr(obj, name)` pilot. The three getattr-family provider/budget
+  matrices cover budgets `100` and `220`, and each remains 1 task x 2 budgets
+  x 3 providers. The current internal eval-only raised-`AttributeError` branch
+  pilot covers only `oracle_signal_getattr_attribute_error_probe_matrix`: 1
+  task x 1 budget x 3 providers at budget `220`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`;
+  fixture boundary is exactly `getattr(obj, name)`, with `AttributeError`
+  caught so `render_probe_digest()` is deterministic; runtime payload is
+  `lookup_outcome=raised_attribute_error`; primary selector and selected-unit
+  truth remain `unsupported/opaque`, runtime provenance remains additive only,
+  no dependency edge or selected symbol is created from the missing attribute,
+  and public comparative claims remain bounded to the existing quad matrix. The
   current internal `REFLECTIVE_BUILTIN` / `vars(obj)` pilot covers only
   `oracle_signal_vars_probe`: 1 task x 2 budgets x 3 providers at budgets
   `100` and `220`, against providers `context_ir`, `lexical_top_k_files`, and
@@ -1149,7 +1203,8 @@ The following claims are not currently allowed:
   internal
   `REFLECTIVE_BUILTIN` pilots include `hasattr(obj, name)`,
   `getattr(obj, name)`, eval-only default-return and value-return
-  `getattr(obj, name, default)`, one-argument `vars(obj)`, zero-argument
+  `getattr(obj, name, default)`, the eval-only raised-`AttributeError` branch
+  `getattr(obj, name)` pilot, one-argument `vars(obj)`, zero-argument
   `vars()`, one-argument `dir(obj)`, and zero-argument `dir()`. The narrow
   internal `RUNTIME_MUTATION` pilots include `globals()`, `locals()`,
   `delattr(obj, name)`, and `setattr(obj, name, value)`. These pilots do not
@@ -1233,8 +1288,10 @@ Next smallest eval slices for the post-milestone program:
    `REFLECTIVE_BUILTIN` /
    `hasattr(obj, name)`,
    `getattr(obj, name)`, and eval-only default-return and value-return
-   `getattr(obj, name, default)` pilots, plus the current internal one-argument
-   `vars(obj)`, zero-argument `vars()`, one-argument `dir(obj)`,
+   `getattr(obj, name, default)` pilots, plus the current eval-only
+   raised-`AttributeError` branch `getattr(obj, name)` pilot, plus the
+   current internal one-argument `vars(obj)`, zero-argument `vars()`,
+   one-argument `dir(obj)`,
    zero-argument `dir()`, `RUNTIME_MUTATION` / `globals()`, `locals()`,
    `delattr(obj, name)`, and `setattr(obj, name, value)` pilots, and the
    current internal eval-only

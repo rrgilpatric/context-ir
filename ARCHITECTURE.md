@@ -23,6 +23,18 @@ imported-name `import_module(name)`, and imported-alias
 evidence and value-return sibling evidence. The three existing getattr-family
 provider/budget matrices each remain one existing task only: 1 task x 2 budgets
 x 3 providers at budgets `100` and `220`. The current internal
+eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError`
+branch pilot remains one task only through
+`oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x 3
+providers at budget `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary is
+exactly `getattr(obj, name)`, with `AttributeError` caught so
+`render_probe_digest()` is deterministic. The runtime payload is
+`lookup_outcome=raised_attribute_error`; primary selector and selected-unit
+truth remain `unsupported/opaque`, runtime provenance remains additive only,
+no dependency edge or selected symbol is created from the missing attribute,
+and public comparative claims remain bounded to the existing quad matrix. The
+current internal
 `REFLECTIVE_BUILTIN` / `vars(obj)` pilot remains one task only:
 `oracle_signal_vars_probe`, 1 task x 2 budgets x 3 providers at budgets `100`
 and `220`, against providers `context_ir`, `lexical_top_k_files`, and
@@ -333,7 +345,9 @@ around rendering density.
   `hasattr(obj, name)` and
   `getattr(obj, name)` pilot attachments, plus eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, plus the
-  current internal one-argument `vars(obj)` and zero-argument `vars()` pilots,
+  current internal eval-only raised-`AttributeError` branch pilot for exactly
+  `getattr(obj, name)`, plus the current internal one-argument `vars(obj)` and
+  zero-argument `vars()` pilots,
   plus the current internal one-argument `dir(obj)` pilot, plus the current
   internal zero-argument `dir()` pilot, plus the current internal eval-only
   `RUNTIME_MUTATION` / `globals()`, `locals()`, and
@@ -352,7 +366,18 @@ around rendering density.
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`. In each case, selector and selected-unit
   primary truth still `unsupported/opaque` and runtime-backed provenance remains
-  additive only. The current internal `globals()` pilot covers only
+  additive only. The current internal eval-only raised-`AttributeError`
+  branch pilot for `getattr(obj, name)` covers only
+  `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x
+  3 providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; the fixture boundary
+  is exactly `getattr(obj, name)`, with `AttributeError` caught so
+  `render_probe_digest()` is deterministic; runtime payload is
+  `lookup_outcome=raised_attribute_error`; primary selector and selected-unit
+  truth remain `unsupported/opaque`, runtime provenance remains additive only,
+  no dependency edge or selected symbol is created from the missing attribute,
+  and public comparative claims remain bounded to the existing quad matrix.
+  The current internal `globals()` pilot covers only
   `oracle_signal_globals_probe_matrix`: 1 task x 2 budgets x 3 providers at
   budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with

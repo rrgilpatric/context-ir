@@ -2,6 +2,73 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-01 -- REFLECTIVE_BUILTIN getattr AttributeError Post-regression Routing Correction
+
+- Corrected stale post-regression routing for the workspace-only accepted
+  internal eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)`
+  raised-`AttributeError` candidate after the first commit-gating review
+  rejected `PLAN.md` and `BUILDLOG.md` with P1 stale-routing findings.
+- Repo-backed truth at correction intake:
+  - branch `main`
+  - live `HEAD` and `origin/main` must be verified from git rather than
+    treated as pinned by this continuity entry
+  - nothing staged
+  - latest pushed code/eval release authority is
+    `6ac1e28 Add builtins-alias dynamic import eval probe`
+  - the accepted eval-only pilot assets are workspace-only
+- Workspace-only accepted eval-only pilot files:
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/main.py`
+  - `evals/tasks/oracle_signal_getattr_attribute_error_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+- Gate truth recorded by this correction:
+  - implementation accepted first-pass as workspace-only state
+  - docs/evidence/continuity reconciliation accepted after 2 corrections
+  - Release-unit audit cleared first-pass
+  - Full regression cleared first-pass:
+    - `ruff check` passed
+    - `ruff format --check` passed
+    - `mypy --strict` passed
+    - `pytest tests/ -v` passed with `709 passed`
+  - first commit-gating review rejected with P1 stale-routing findings in
+    `PLAN.md` and `BUILDLOG.md`
+  - corrected commit-gating is the active next gate
+- Evidence boundary:
+  - matrix is `oracle_signal_getattr_attribute_error_probe_matrix`
+  - shape is 1 task x 1 budget x 3 providers at budget 220
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is exactly `getattr(obj, name)`, with `AttributeError`
+    caught so `render_probe_digest()` is deterministic
+  - runtime payload is `lookup_outcome=raised_attribute_error`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no dependency edge or selected symbol is created from the missing attribute
+- Files updated in this stale-routing correction:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-facing docs remain state-neutral for this pilot:
+  - no workspace-only, not-pushed, push-pending, or accepted-workspace wording
+    belongs in `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, or
+    `README.md`
+  - this correction does not edit release-facing docs
+- Preserved non-goals:
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening
+  - no generalized reflective-builtin support
+  - no dependency edge or selected symbol from the missing attribute
+  - no source, tests, eval fixtures, task JSON, or run spec JSON edited by
+    this correction
+- Routing decision:
+  - route next to corrected commit-gating over the exact accumulated
+    workspace-only candidate
+  - do not route this candidate back to docs-reconciliation review,
+    release-unit audit, or full regression absent new findings
+  - staging, local commit creation, and push are not authorized
+  - push remains Ryan-gated
+- Acceptance status: first-pass for this routing correction
+
 ## 2026-05-01 -- DYNAMIC_IMPORT builtins-alias Release
 
 - Completed and pushed the internal eval-only `DYNAMIC_IMPORT` /
@@ -5429,7 +5496,7 @@ Most recent supersession entries override older architectural decisions when the
   - correct `PLAN.md` so `6435434` is the current docs-only branch tip and `9a52b46` is the latest code/test release authority
   - demote the execution-lane `hasattr(obj, name)` planning output to a non-authoritative recommendation pending control-lane review
   - remove implementation authorization for the `hasattr` pilot from `PLAN.md`
-  - route next to findings-first control review of the non-authoritative recommendation before any implementation prompt
+  - send the non-authoritative recommendation to findings-first control review before any implementation prompt
 - Acceptance decision:
   - accept this continuity correction first-pass
   - do not revert pushed commits without a concrete defect or explicit Ryan revert request

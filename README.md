@@ -32,8 +32,10 @@ infrastructure and a current four-asset signal evidence surface documented in
 `DYNAMIC_IMPORT` and narrow `REFLECTIVE_BUILTIN` selectors exercised via
 `hasattr(obj, name)`, `getattr(obj, name)`, and narrow internal eval-only
 default-return and value-return branches of `getattr(obj, name, default)`, plus
-a current internal one-argument `vars(obj)` pilot and a current internal
-zero-argument `vars()` pilot, and a current internal eval-only
+a current internal eval-only raised-`AttributeError` branch pilot for exactly
+`getattr(obj, name)`, plus a current internal one-argument `vars(obj)` pilot
+and a current internal zero-argument `vars()` pilot, and a current internal
+eval-only
 `RUNTIME_MUTATION` / `globals()` pilot and `locals()` pilot, plus the current
 internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot, plus
 narrow internal eval-only `RUNTIME_MUTATION` /
@@ -68,7 +70,17 @@ benchmark widening.
 The public-safe quad-matrix comparative boundary remains unchanged, and public
 comparative claims remain bounded to the existing quad matrix. The three
 existing getattr-family pilot matrices cover only 1 task x 2 budgets x 3
-providers at budgets `100` and `220`; the current internal `vars(obj)` pilot
+providers at budgets `100` and `220`; the current internal eval-only
+raised-`AttributeError` branch pilot covers only
+`oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x 3
+providers at budget `220`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary
+exactly `getattr(obj, name)`, caught `AttributeError` for deterministic
+`render_probe_digest()`, runtime payload
+`lookup_outcome=raised_attribute_error`, primary selector and selected-unit
+truth `unsupported/opaque`, additive-only runtime provenance, no dependency
+edge or selected symbol created from the missing attribute, and no public
+claim widening; the current internal `vars(obj)` pilot
 covers only 1 task x 2 budgets x 3 providers at budgets `100` and `220`,
 against providers `context_ir`, `lexical_top_k_files`, and
 `import_neighborhood_files`, with `lookup_outcome=returned_namespace`. The
@@ -320,8 +332,10 @@ The repo does contain narrow internal runtime-backed eval evidence for selected
 unsupported `DYNAMIC_IMPORT` cases and narrow `REFLECTIVE_BUILTIN` pilots over
 `hasattr(obj, name)`, `getattr(obj, name)`, and the eval-only default-return
 and value-return branches of `getattr(obj, name, default)` selectors, plus the
-current internal one-argument `vars(obj)` selector and zero-argument `vars()`
-selector, plus the current internal eval-only `RUNTIME_MUTATION` / `globals()`
+current internal eval-only raised-`AttributeError` branch `getattr(obj, name)`
+pilot, plus the current internal one-argument `vars(obj)` selector and
+zero-argument `vars()` selector, plus the current internal eval-only
+`RUNTIME_MUTATION` / `globals()`
 and `locals()` pilots, plus the current internal eval-only `RUNTIME_MUTATION` /
 `delattr(obj, name)` pilot, plus the current narrow internal eval-only
 `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
@@ -370,6 +384,10 @@ The root-module alias dynamic-import sibling evidence is bounded to
 `oracle_signal_dynamic_import_root_alias_probe_matrix` and the exact
 `import importlib as loader`, `name = "plugins.weather"`, and
 `loader.import_module(name)` fixture described in `EVAL.md`.
+The raised-`AttributeError` `getattr(obj, name)` evidence is bounded to
+`oracle_signal_getattr_attribute_error_probe_matrix` and the exact
+`getattr(obj, name)` fixture with caught `AttributeError` described in
+`EVAL.md`.
 That evidence is additive internal provenance on
 otherwise unsupported/opaque selectors, mutation surfaces, metaclass keyword
 sites, preserved `EXEC_OR_EVAL` unsupported findings, and selected units;
@@ -481,9 +499,11 @@ Current evidence includes:
 - narrow internal runtime-backed pilots for `DYNAMIC_IMPORT` and
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and the
   eval-only default-return and value-return branches of
-  `getattr(obj, name, default)`, plus the current internal one-argument
-  `vars(obj)` and zero-argument `vars()` pilots, plus the current internal
-  eval-only `RUNTIME_MUTATION` / `globals()` and `locals()` pilots, plus the
+  `getattr(obj, name, default)`, plus the current internal eval-only
+  raised-`AttributeError` branch `getattr(obj, name)` pilot, plus the current
+  internal one-argument `vars(obj)` and zero-argument `vars()` pilots, plus the
+  current internal eval-only `RUNTIME_MUTATION` / `globals()` and `locals()`
+  pilots, plus the
   current internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot,
   plus the current narrow internal eval-only `RUNTIME_MUTATION` /
   `setattr(obj, name, value)` evidence, plus the current internal one-argument
@@ -508,6 +528,17 @@ Current evidence includes:
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and
   runtime-backed provenance additive only
+- the current internal eval-only raised-`AttributeError` branch
+  `getattr(obj, name)` pilot remains
+  `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 1 budget x 3
+  providers at budget `220`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; the fixture boundary
+  is exactly `getattr(obj, name)`, with `AttributeError` caught so
+  `render_probe_digest()` is deterministic; the runtime payload is
+  `lookup_outcome=raised_attribute_error`; primary selector and selected-unit
+  truth still `unsupported/opaque`, runtime provenance additive only, no
+  dependency edge or selected symbol is created from the missing attribute, and
+  public comparative claims remain bounded to the existing quad matrix
 - the current internal `vars(obj)` pilot remains 1 task x 2 budgets x 3 providers
   at budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with

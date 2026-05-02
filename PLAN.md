@@ -40,10 +40,13 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-release truth verified for this continuity sync is branch `main`, with `HEAD`
-and `origin/main` at
-`6ac1e28 Add builtins-alias dynamic import eval probe`, with a clean worktree
-and nothing staged at intake.
+release truth verified for this continuity sync is branch `main`; live `HEAD`
+and `origin/main` must be read from git rather than pinned here. The latest
+pushed code/eval release authority is
+`6ac1e28 Add builtins-alias dynamic import eval probe`. At post-regression
+correction intake, nothing was staged and the workspace-only accepted
+eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)`
+raised-`AttributeError` pilot assets were present.
 
 `6ac1e28 Add builtins-alias dynamic import eval probe` is the latest pushed
 release authority for the internal eval-only `DYNAMIC_IMPORT` /
@@ -58,6 +61,39 @@ imported-alias dynamic import eval probe`, `ee71a82 Add imported-name dynamic
 import eval probe`, `397c7dd Add builtin dynamic import eval probe`, and
 `14b362e Add dynamic import root runtime eval pilot` remain earlier released
 dynamic-import authorities and must not be reopened absent new findings.
+
+The current workspace-only accepted internal eval-only `REFLECTIVE_BUILTIN` /
+`getattr(obj, name)` raised-`AttributeError` pilot is:
+
+- Matrix: `oracle_signal_getattr_attribute_error_probe_matrix`
+- Shape: 1 task x 1 budget x 3 providers at budget 220
+- Providers: `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`
+- Fixture boundary: exactly `getattr(obj, name)`, with `AttributeError`
+  caught so `render_probe_digest()` is deterministic
+- Runtime payload: `lookup_outcome=raised_attribute_error`
+- Primary selector and selected-unit truth remain `unsupported/opaque`
+- Runtime provenance remains additive only
+- No dependency edge or selected symbol is created from the missing attribute
+- Accepted eval-only pilot files:
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_attribute_error_probe/main.py`
+  - `evals/tasks/oracle_signal_getattr_attribute_error_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+
+No public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark claim widening is authorized. Release-facing docs remain
+state-neutral for this pilot. The implementation was accepted first-pass as
+workspace-only state. The docs/evidence/continuity reconciliation was accepted
+after 2 corrections. Release-unit audit cleared first-pass. Full regression
+cleared first-pass with `ruff check`, `ruff format --check`, `mypy --strict`,
+and `pytest tests/ -v` reporting `709 passed`. The first commit-gating review
+rejected with P1 stale-routing findings in `PLAN.md` and `BUILDLOG.md`.
+Corrected commit-gating is the active next gate. Do not route this candidate
+back to docs-reconciliation review, release-unit audit, or full regression
+absent new findings. Staging, local commit creation, and push are not
+authorized; push remains Ryan-gated.
 
 The completed and pushed internal eval-only `DYNAMIC_IMPORT` /
 builtins-alias `loader.__import__(name)` release at `6ac1e28` is:
@@ -106,8 +142,8 @@ push completed at `6ac1e28`.
 
 There is no active release gate for `6ac1e28`: do not route back to
 release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push for this tranche absent new findings. The next route is a
-bounded post-`DYNAMIC_IMPORT` North Star planning spike.
+creation, or push for this tranche absent new findings. The current route is
+corrected commit-gating for the workspace-only accepted `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` candidate.
 
 The completed and pushed internal eval-only `DYNAMIC_IMPORT` / root-module
 alias `loader.import_module(name)` sibling pilot was released at
@@ -770,18 +806,37 @@ sequencing for `c1a12d7` absent new findings.
 - [x] PLAN-only stale-route correction for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release candidate accepted first-pass
 - [x] Corrected commit-gating review for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release unit cleared first-pass
 - [x] Local commit creation and Ryan-authorized push for internal `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` release unit completed at `6ac1e28`
+- [x] Internal eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)`
+  raised-`AttributeError` pilot implementation accepted first-pass as
+  workspace-only state for `oracle_signal_getattr_attribute_error_probe_matrix`
+- [x] Docs/evidence/continuity reconciliation for internal
+  `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` pilot
+  accepted after 2 corrections
+- [x] Release-unit audit for internal `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` pilot cleared first-pass
+- [x] Full regression gate for internal `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` pilot cleared first-pass with
+  `709 passed`
+- [x] First commit-gating review for internal `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` pilot rejected with P1
+  stale-routing findings in `PLAN.md` and `BUILDLOG.md`
+- [ ] Corrected commit-gating review for internal `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` pilot
 
 ## What Is In Progress
 
-- No active workspace-only implementation or release candidate is open.
+- Active workspace-only state is the accepted internal eval-only
+  `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` pilot
+  plus accepted docs/evidence/continuity reconciliation, release-unit audit,
+  and full regression clearance.
 - Latest pushed release authority is
   `6ac1e28 Add builtins-alias dynamic import eval probe`.
-- The active next lane is a bounded post-`DYNAMIC_IMPORT` North Star planning
-  spike. The spike should choose the next smallest evidence-building
-  capability wedge that best advances broad Python hybrid static + runtime
-  coverage while preserving tier separation.
-- Do not route back to release-unit audit, full regression, commit-gating,
-  staging, local commit creation, or push for `6ac1e28` absent new findings.
+- The active next lane is corrected commit-gating over the exact accumulated
+  workspace-only `getattr(obj, name)` raised-`AttributeError` candidate.
+- Do not route this candidate back to docs-reconciliation review,
+  release-unit audit, or full regression absent new findings.
+- Staging, local commit creation, and push are not authorized; push remains
+  Ryan-gated.
 - Prior completed builtins-alias release state:
   - source/contract prerequisite and eval-only sibling accepted first-pass
   - docs/evidence/continuity reconciliation accepted after one correction
@@ -1425,17 +1480,20 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next route: bounded post-`DYNAMIC_IMPORT` North Star planning spike.
+Immediate next route: corrected commit-gating review over the exact
+workspace-only accepted internal eval-only `REFLECTIVE_BUILTIN` /
+`getattr(obj, name)` raised-`AttributeError` candidate.
 The released `DYNAMIC_IMPORT` sibling tranche now includes root-module
 `importlib.import_module(name)`, builtin `__import__(name)`, imported-name
 `import_module(name)`, imported-alias `load_module(name)`, root-module alias
 `loader.import_module(name)`, builtins-attribute `builtins.__import__(name)`,
 and builtins-alias `loader.__import__(name)` evidence. The planning spike
 should decide whether to continue `DYNAMIC_IMPORT` coverage or pivot to the
-next highest-leverage hybrid-runtime capability wedge. Do not route to
-implementation, release-unit audit, full regression, commit-gating, staging,
-local commit creation, or push until that planning decision is accepted. Do
-not widen
+next highest-leverage hybrid-runtime capability wedge after this candidate is
+resolved. Do not route this candidate back to docs-reconciliation review,
+release-unit audit, or full regression absent new findings. Do not stage,
+create a local commit, or push until corrected commit-gating clears; push
+remains Ryan-gated. Do not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark scope.
 
