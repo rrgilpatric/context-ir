@@ -2,6 +2,79 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-02 -- b8e126e Runtime Mutation Release and Continuity Methodology Sync
+
+- Supersedes earlier current routing text for the internal eval-only
+  `RUNTIME_MUTATION` / `delattr(obj, name)` and
+  `setattr(obj, name, value)` budget-pressure expansion tranche.
+- Repo-backed release truth verified during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b8e126e Expand runtime mutation eval budget coverage`
+  - worktree clean at intake before this docs-only continuity edit
+  - latest pushed code/eval release authority is
+    `b8e126e Expand runtime mutation eval budget coverage`
+  - latest pushed process-doc authority remains
+    `125f088 Codify tranche batching discipline`
+  - prior pushed code/eval authority remains
+    `ad9db8d Expand dir eval budget coverage`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `b8e126e`:
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `709 passed`
+  - commit-gating completed
+  - local commit creation completed at `b8e126e`
+  - Ryan-authorized push completed at `b8e126e`
+  - release status is no-active-gate
+- Released tranche:
+  - `oracle_signal_delattr_probe_matrix` expanded from `[220]` to `[220, 100]`
+  - `oracle_signal_setattr_probe_matrix` expanded from `[220]` to `[220, 100]`
+  - each matrix remains 1 task x 2 budgets x 3 providers
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixtures, tasks, queries, and runtime payloads are unchanged
+  - `delattr` runtime payload remains `mutation_outcome=deleted_attribute`
+  - `setattr` runtime payload remains `mutation_outcome=returned_none`
+  - selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - baseline providers remain empty at both budgets
+  - no source/API/MCP/package-export/schema/scoring/optimizer/compiler/
+    winner-selection/product/public benchmark widening is authorized
+- Routing decision:
+  - do not route `b8e126e` back to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - do not route `125f088`, `ad9db8d`, or earlier pushed releases back to
+    release handling absent new findings
+  - next route is bounded post-b8e126e North Star planning/control, not
+    implementation and not release handling
+- Methodology memorialized in `AGENTS.md`:
+  - for clean low-risk accumulated tranches allowed by tranche batching rules,
+    a combined read-only release-gate lane may run release-unit audit, then full
+    regression, then commit-gating in sequence
+  - the lane must use stop-on-first-finding discipline
+  - the lane must report each gate result explicitly
+  - the lane must not edit, stage, commit, or push
+  - the lane does not replace implementation-slice review, the quality gate, or
+    Ryan approval
+- Continuity write-amplification guidance memorialized:
+  - prefer one canonical active release-state block for current routing
+  - historical BUILDLOG entries may remain as history when a newer supersession
+    entry clearly overrides them
+  - this historical supersession guidance means stale historical mentions are
+    not rewritten unless they can actively misroute current work
+  - post-push continuity may be folded into the next process, continuity, or
+    substantive tranche unless stale committed routing would mislead a fresh
+    controller
+- Scope guard:
+  - this continuity sync edits only `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs beyond the three
+    in-scope control-state docs, release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or push were performed
+- Acceptance status: first-pass
+
 ## 2026-05-02 -- RUNTIME_MUTATION delattr/setattr Corrected Commit-Gating Route
 
 - Supersedes the earlier current routing text for the docs/evidence/continuity

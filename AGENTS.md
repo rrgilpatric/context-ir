@@ -166,6 +166,16 @@ regression, commit-gating, local commit creation, and push authorization may
 run once over the accumulated release unit rather than once per accepted
 slice.
 
+For a clean low-risk accumulated tranche allowed by these tranche batching
+rules, the control lane may use a combined read-only release-gate lane: a
+single read-only release-gate lane that runs release-unit audit, then full
+regression, then commit-gating in sequence. This lane must follow
+stop-on-first-finding discipline: if any gate finds an issue, it stops and
+returns the finding without running later gates. It must report each gate
+result explicitly. It must not edit files, stage changes, create commits, or
+push. It does not replace implementation-slice review, the quality gate, or
+Ryan approval for advancement, new backlog items, or push.
+
 Any finding pauses advancement. Batching cannot carry issues forward or bury
 them inside a later release unit. Ryan approval remains required for new
 backlog items and for push.
@@ -456,7 +466,16 @@ Live `HEAD`, `origin/main`, branch, and worktree state are verified from git by 
 
 Standalone docs-only continuity commits are allowed only for materially wrong routing, safety, or process defects, or with explicit Ryan authorization. They are not allowed merely to record that the previous docs-only continuity commit was pushed.
 
-Post-push continuity notes may be folded into the next substantive tranche unless they are needed to prevent misrouting.
+Prefer one canonical active release-state block for current routing. Historical
+BUILDLOG entries may remain as history when a newer supersession entry clearly
+overrides them. Do not rewrite every stale historical mention unless it can
+actively misroute current work. This historical supersession guidance keeps
+continuity updates from turning into write-amplification while preserving a
+clear current route for fresh controllers.
+
+Post-push continuity notes may be folded into the next process, continuity, or
+substantive tranche unless stale committed routing would mislead a fresh
+controller.
 
 ---
 

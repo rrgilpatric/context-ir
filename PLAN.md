@@ -38,65 +38,37 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
+### Canonical Active Release-State Block
+
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-release truth verified for this docs/evidence reconciliation is branch
-`main`; `HEAD` and `origin/main` are at
-`125f088 Codify tranche batching discipline`; nothing is staged; no untracked
-files are present; and the expected dirty workspace/release-unit files are the
-full ten-file tranche:
+release truth verified for this continuity sync is branch `main`; `HEAD` and
+`origin/main` are at
+`b8e126e Expand runtime mutation eval budget coverage`. The worktree was clean
+at intake before this docs-only continuity edit. Live git refs and worktree
+state remain authoritative for future control intake.
 
-- `ARCHITECTURE.md`
-- `BUILDLOG.md`
-- `EVAL.md`
-- `PLAN.md`
-- `PUBLIC_CLAIMS.md`
-- `README.md`
-- `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
-- `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
-- `tests/test_eval_signal_delattr_probe.py`
-- `tests/test_eval_signal_setattr_probe.py`
+Current release status is no-active-gate. The latest pushed code/eval release
+authority is `b8e126e Expand runtime mutation eval budget coverage`. The latest
+pushed process-doc authority remains
+`125f088 Codify tranche batching discipline`. The prior pushed code/eval
+authority remains `ad9db8d Expand dir eval budget coverage`.
 
-The latest pushed process-doc
-authority is `125f088 Codify tranche batching discipline`. The latest pushed
-code/eval release authority remains
-`ad9db8d Expand dir eval budget coverage`. The prior pushed code/eval
-release authority was
-`43d0439 Expand getattr AttributeError eval budget coverage`. Live git refs
-and worktree state remain authoritative for future control intake.
+The completed and pushed internal eval-only `RUNTIME_MUTATION` /
+`delattr(obj, name)` and `setattr(obj, name, value)` budget-pressure expansion
+release at `b8e126e Expand runtime mutation eval budget coverage` is:
 
-The completed and pushed process-doc release at
-`125f088 Codify tranche batching discipline` is:
-
-- Release unit: `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`
-- Scope: codified tranche batching / throughput discipline for low-risk
-  accumulated release units while preserving sequential implementation slices,
-  findings-first gates, Ryan authorization requirements, and push discipline
-- No source, test, eval asset, release-facing-doc, public/API/MCP/
-  package-export/schema/scoring/optimizer/compiler/winner-selection/product/
-  public benchmark claim widening is authorized by this process-doc release
-
-Release state for `125f088`: the process-doc slice was accepted first-pass by
-control review. After one correction, the corrected process-doc release unit
-passed the dedicated read-only release-unit audit rerun first-pass over
-`AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`. Full regression then cleared
-first-pass with `ruff check`, `ruff format --check`, `mypy --strict`, and
-`pytest tests/ -v` reporting `709 passed`. The first commit-gating review
-rejected the release unit with stale routing findings in `PLAN.md` and
-`BUILDLOG.md`; corrected commit-gating completed; local commit creation
-completed at `125f088`; and Ryan-authorized push completed at `125f088`.
-
-Release-gate status is no-active-gate for `125f088`: do not route back to
-release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push for this tranche absent new findings. No active route
-remains to audit, full regression, commit-gating, staging, local commit
-creation, or push for `125f088` absent new findings. This process-doc release
-does not reopen `ad9db8d` or earlier pushed releases.
-
-Current accepted workspace-only eval/evidence tranche: budget-pressure
-expansion for the existing internal eval-only `RUNTIME_MUTATION` /
-`delattr(obj, name)` and `setattr(obj, name, value)` probe matrices.
-
+- Release unit:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
+  - `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
+  - `tests/test_eval_signal_delattr_probe.py`
+  - `tests/test_eval_signal_setattr_probe.py`
 - `oracle_signal_delattr_probe_matrix` expands from `[220]` to `[220, 100]`
 - `oracle_signal_setattr_probe_matrix` expands from `[220]` to `[220, 100]`
 - Each matrix remains 1 task x 2 budgets x 3 providers
@@ -110,39 +82,40 @@ expansion for the existing internal eval-only `RUNTIME_MUTATION` /
 - Baseline providers remain empty at both budgets
 - No source/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
-- This accepted tranche supersedes older historical routing notes that rejected
+- This release supersedes older historical routing notes that rejected
   `delattr` budget `100` expansion before a specific comparison need existed
 
-The `RUNTIME_MUTATION` delattr/setattr budget-pressure tranche passed
-release-unit audit first-pass and full regression first-pass. Full regression
-commands passed:
+Release state for `b8e126e`: docs/evidence/continuity reconciliation was
+accepted after one correction; release-unit audit cleared first-pass; full
+regression cleared first-pass with `ruff check src/ tests/`,
+`ruff format --check src/ tests/`, `mypy --strict src/`, and
+`pytest tests/ -v` reporting `709 passed`; commit-gating completed; local
+commit creation completed at `b8e126e`; and Ryan-authorized push completed at
+`b8e126e`.
 
-- `ruff check src/ tests/`
-- `ruff format --check src/ tests/`
-- `mypy --strict src/`
-- `pytest tests/ -v` with `709 passed`
+Release-gate status is no-active-gate for `b8e126e`: do not route back to docs
+review, release-unit audit, full regression, commit-gating, staging, local
+commit creation, or push for this tranche absent new findings. No active route
+remains to docs review, release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push for `b8e126e` absent new findings.
 
-The ten-file release unit remains unchanged:
+The active next route is bounded post-b8e126e North Star planning/control, not
+implementation and not release handling. Do not reopen `b8e126e`,
+`125f088`, `ad9db8d`, or earlier pushed releases absent new findings.
 
-- `ARCHITECTURE.md`
-- `BUILDLOG.md`
-- `EVAL.md`
-- `PLAN.md`
-- `PUBLIC_CLAIMS.md`
-- `README.md`
-- `evals/run_specs/oracle_signal_delattr_probe_matrix.json`
-- `evals/run_specs/oracle_signal_setattr_probe_matrix.json`
-- `tests/test_eval_signal_delattr_probe.py`
-- `tests/test_eval_signal_setattr_probe.py`
-
-Active next route is commit-gating only. This release unit is audit-cleared
-and full-regression-cleared, but not commit-gating-cleared, not staged, not
-committed, and not pushed. Do not route to staging, local commit creation, or
-push before commit-gating clears. Push remains Ryan-gated.
+The completed and pushed process-doc release at
+`125f088 Codify tranche batching discipline` remains the pushed process-doc
+authority. It codified tranche batching / throughput discipline for low-risk
+accumulated release units while preserving sequential implementation slices,
+findings-first gates, Ryan authorization requirements, and push discipline.
+Release-gate status is no-active-gate for `125f088`: do not route it back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 The completed and pushed internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)`
 budget-pressure expansion release at
-`ad9db8d Expand dir eval budget coverage` is:
+`ad9db8d Expand dir eval budget coverage` remains the prior code/eval
+authority:
 
 - Matrix: `oracle_signal_dir_probe_matrix`
 - Shape: `[220, 100]`: 1 task x 2 budgets x 3 providers
@@ -996,78 +969,32 @@ sequencing for `c1a12d7` absent new findings.
   delattr/setattr budget-pressure tranche cleared first-pass with
   `ruff check`, `ruff format --check`, `mypy --strict`, and
   `pytest tests/ -v` reporting `709 passed`
+- [x] Commit-gating review for the `RUNTIME_MUTATION` delattr/setattr
+  budget-pressure tranche completed
+- [x] Local commit creation and Ryan-authorized push for the
+  `RUNTIME_MUTATION` delattr/setattr budget-pressure release unit completed at
+  `b8e126e`
 
 ## What Is In Progress
 
-- Active release state is complete and pushed for the tranche-batching /
-  throughput discipline process-doc release at
-  `125f088 Codify tranche batching discipline`.
-- Latest pushed process-doc authority is
-  `125f088 Codify tranche batching discipline`; latest pushed code/eval
-  authority remains `ad9db8d Expand dir eval budget coverage`; the prior
-  pushed code/eval authority was
-  `43d0439 Expand getattr AttributeError eval budget coverage`.
-- Branch is `main`; `HEAD` and `origin/main` are `125f088`; nothing is
-  staged; no untracked files are present; and the expected
-  dirty/release-unit file set is the full ten-file tranche:
-  `ARCHITECTURE.md`, `BUILDLOG.md`, `EVAL.md`, `PLAN.md`,
-  `PUBLIC_CLAIMS.md`, `README.md`,
-  `evals/run_specs/oracle_signal_delattr_probe_matrix.json`,
-  `evals/run_specs/oracle_signal_setattr_probe_matrix.json`,
-  `tests/test_eval_signal_delattr_probe.py`, and
-  `tests/test_eval_signal_setattr_probe.py`.
-- Release-gate status is no-active-gate for `125f088`. Do not route `125f088`
-  back to release-unit audit, full regression, commit-gating, staging, local
-  commit creation, or push absent new findings.
-- No active route remains to audit, full regression, commit-gating, staging,
-  local commit creation, or push for `125f088` absent new findings.
-- The tranche batching / throughput discipline process-doc slice was accepted
-  first-pass by control review.
-- After one correction, the corrected process-doc release unit passed the
-  dedicated read-only release-unit audit rerun first-pass over `AGENTS.md`,
-  `PLAN.md`, and `BUILDLOG.md`.
-- Full regression for the process-doc release unit cleared first-pass with
-  `ruff check`, `ruff format --check`, `mypy --strict`, and `pytest tests/ -v`
-  reporting `709 passed`.
-- The first commit-gating review rejected the process-doc release unit with
-  stale routing findings in `PLAN.md` and `BUILDLOG.md`.
-- Corrected commit-gating, local commit creation, and Ryan-authorized push for
-  the process-doc release are complete at `125f088`.
-- Current accepted workspace-only eval/evidence tranche expands both
-  `oracle_signal_delattr_probe_matrix` and
-  `oracle_signal_setattr_probe_matrix` from `[220]` to `[220, 100]`.
-- Each matrix remains 1 task x 2 budgets x 3 providers, against providers
-  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`.
-- Fixtures, tasks, queries, and runtime payloads are unchanged; `delattr`
-  runtime payload remains `mutation_outcome=deleted_attribute`; `setattr`
-  runtime payload remains `mutation_outcome=returned_none`.
-- Selector and selected-unit truth remain `unsupported/opaque`; runtime
-  provenance remains additive only; baseline providers remain empty at both
-  budgets.
-- No source/API/MCP/package-export/schema/scoring/optimizer/compiler/
-  winner-selection/product/public benchmark widening is authorized.
-- This accepted tranche supersedes older historical routing notes that rejected
-  `delattr` budget `100` expansion before a specific comparison need existed.
-- The `RUNTIME_MUTATION` delattr/setattr budget-pressure tranche passed
-  release-unit audit first-pass and full regression first-pass.
-- Full regression commands passed:
-  - `ruff check src/ tests/`
-  - `ruff format --check src/ tests/`
-  - `mypy --strict src/`
-  - `pytest tests/ -v` with `709 passed`
-- The ten-file release unit remains: `ARCHITECTURE.md`, `BUILDLOG.md`,
-  `EVAL.md`, `PLAN.md`, `PUBLIC_CLAIMS.md`, `README.md`,
-  `evals/run_specs/oracle_signal_delattr_probe_matrix.json`,
-  `evals/run_specs/oracle_signal_setattr_probe_matrix.json`,
-  `tests/test_eval_signal_delattr_probe.py`, and
-  `tests/test_eval_signal_setattr_probe.py`.
-- Current routing is commit-gating only for the audit-cleared and
-  full-regression-cleared `RUNTIME_MUTATION` delattr/setattr budget-pressure
-  tranche.
-- This release unit is audit-cleared and full-regression-cleared, but not
-  commit-gating-cleared, not staged, not committed, and not pushed.
-- Do not route to staging, local commit creation, or push before commit-gating
-  clears. Push remains Ryan-gated.
+- No implementation slice is currently in progress or authorized.
+- Current release status is no-active-gate. The latest pushed code/eval release
+  authority is `b8e126e Expand runtime mutation eval budget coverage`; the
+  latest pushed process-doc authority remains
+  `125f088 Codify tranche batching discipline`; the prior pushed code/eval
+  authority remains `ad9db8d Expand dir eval budget coverage`.
+- Fresh control lanes should use the canonical active release-state block above
+  for current routing, and should treat older conflicting routing notes as
+  historical when superseded by that block or by newer BUILDLOG entries.
+- Active next route is bounded post-b8e126e North Star planning/control, not
+  implementation and not release handling.
+
+## Historical Superseded Routing Notes
+
+The following older routing notes remain as historical context only. They do not
+override the canonical active release-state block above or newer BUILDLOG
+supersession entries.
+
 - Prior code/eval release state is complete and pushed for the internal
   eval-only
   `REFLECTIVE_BUILTIN` / `dir(obj)` budget-pressure expansion at
@@ -1747,82 +1674,23 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is Next
 
-Immediate next route: commit-gating only for the audit-cleared and
-full-regression-cleared `RUNTIME_MUTATION` / `delattr(obj, name)` and
-`setattr(obj, name, value)` budget expansion tranche. The tranche passed
-release-unit audit first-pass and full regression first-pass. Full regression
-commands passed: `ruff check src/ tests/`, `ruff format --check src/ tests/`,
-`mypy --strict src/`, and `pytest tests/ -v` with `709 passed`. The ten-file
-release unit remains:
-`ARCHITECTURE.md`, `BUILDLOG.md`, `EVAL.md`, `PLAN.md`,
-`PUBLIC_CLAIMS.md`, `README.md`,
-`evals/run_specs/oracle_signal_delattr_probe_matrix.json`,
-`evals/run_specs/oracle_signal_setattr_probe_matrix.json`,
-`tests/test_eval_signal_delattr_probe.py`, and
-`tests/test_eval_signal_setattr_probe.py`.
+Immediate next route: bounded post-b8e126e North Star planning/control. This
+is a control/planning lane only, not implementation and not release handling.
+It should choose the next smallest authorized capability or evidence move after
+the pushed `RUNTIME_MUTATION` delattr/setattr budget-pressure release.
 
-The accepted workspace-only eval/evidence tranche expands
-`oracle_signal_delattr_probe_matrix` and
-`oracle_signal_setattr_probe_matrix` to `[220, 100]`: each remains 1 task x 2
-budgets x 3 providers, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`; fixtures, tasks,
-queries, and runtime payloads are unchanged; runtime payloads remain
-`mutation_outcome=deleted_attribute` and `mutation_outcome=returned_none`;
-selector and selected-unit truth remain `unsupported/opaque`; runtime
-provenance remains additive only; baseline providers remain empty at both
-budgets; and no source/API/MCP/package-export/schema/scoring/optimizer/
-compiler/winner-selection/product/public benchmark widening is authorized.
-This accepted tranche supersedes older historical routing notes that rejected
-`delattr` budget `100` expansion before a specific comparison need existed.
+Release status is no-active-gate. `b8e126e Expand runtime mutation eval budget
+coverage` is complete and pushed; do not route it back to docs review,
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
-This release unit is audit-cleared and full-regression-cleared, but not
-commit-gating-cleared, not staged, not committed, and not pushed. Do not route
-to staging, local commit creation, or push before commit-gating clears. Push
-remains Ryan-gated.
-
-The tranche batching / throughput discipline process-doc release is complete
-and pushed at `125f088 Codify tranche batching discipline`. It passed the
-dedicated read-only release-unit audit rerun first-pass after one correction,
-full regression with `709 passed`, corrected commit-gating, local commit
-creation, and Ryan-authorized push. Release-gate status is no-active-gate for
-`125f088`; do not route back to release-unit audit, full regression,
-commit-gating, staging, local commit creation, or push for this process-doc
-tranche absent new findings.
-
-`ad9db8d Expand dir eval budget coverage` remains the latest pushed code/eval
-release authority. Release-gate status is no-active-gate for `ad9db8d`: docs
-reconciliation, release-unit audit, full regression, commit-gating, local
-commit creation, and Ryan-authorized push are complete for that tranche. Do
-not route `ad9db8d` back to docs review, release-unit audit, full regression,
-commit-gating, staging, local commit creation, or push absent new findings.
-
-The completed and pushed `dir(obj)` budget-pressure expansion released
-`oracle_signal_dir_probe_matrix` at `[220, 100]`: 1 task x 2 budgets x 3
-providers, against providers `context_ir`, `lexical_top_k_files`, and
-`import_neighborhood_files`. Fixture, task, query, and runtime payload remain
-unchanged; runtime payload remains `listing_entry_count=74`; selector and
-selected-unit truth remain `unsupported/opaque`; runtime provenance remains
-additive only; baseline providers remain empty at both budgets; and no
-source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark widening is authorized. Docs/evidence/continuity reconciliation,
-release-unit audit, full regression with `709 passed`, commit-gating, local
-commit creation, and Ryan-authorized push are complete.
-
-The released `DYNAMIC_IMPORT` sibling tranche now includes root-module
-`importlib.import_module(name)`, builtin `__import__(name)`, imported-name
-`import_module(name)`, imported-alias `load_module(name)`, root-module alias
-`loader.import_module(name)`, builtins-attribute `builtins.__import__(name)`,
-and builtins-alias `loader.__import__(name)` evidence. The released
-`REFLECTIVE_BUILTIN` tranche now includes zero-argument `dir()`,
-`dir(obj)`, zero-argument `vars()`, `vars(obj)`, defaulted
-`getattr(obj, name, default)`, and `getattr(obj, name)`
-raised-`AttributeError` evidence, with the AttributeError matrix now released
-as `[220, 100]` and the `dir(obj)` matrix now released as `[220, 100]`. Do not
-route `ad9db8d` or `43d0439` back to docs review, release-unit audit, full
-regression, commit-gating, staging, local commit creation, or push absent new
-findings. Do not widen
-public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark scope.
+`125f088 Codify tranche batching discipline` remains the pushed process-doc
+authority and is no-active-gate. `ad9db8d Expand dir eval budget coverage`
+remains the prior pushed code/eval authority and is no-active-gate. Do not
+reopen `b8e126e`, `125f088`, `ad9db8d`, or earlier pushed releases absent new
+findings. Do not widen public/API/MCP/package-export/schema/scoring/optimizer/
+compiler/winner-selection/product/public benchmark scope without a separately
+authorized planning decision.
 
 Completed post-5bd0616 planning decision:
 
@@ -2556,6 +2424,12 @@ not pending release gates.
 
 ## What Should Not Be Reopened
 
+- The accepted pushed `b8e126e` `RUNTIME_MUTATION` / `delattr(obj, name)` and
+  `setattr(obj, name, value)` budget-pressure expansion release unit unless a
+  later findings-based review proves a concrete defect
+- The accepted pushed `125f088` tranche batching / throughput discipline
+  process-doc release unit unless a later findings-based review proves a
+  concrete defect
 - The accepted pushed `ad9db8d` `REFLECTIVE_BUILTIN` / `dir(obj)`
   budget-pressure expansion release unit unless a later findings-based review
   proves a concrete defect
