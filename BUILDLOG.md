@@ -2,6 +2,128 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-02 -- REFLECTIVE_BUILTIN dir(obj) Budget-pressure Docs Reconciliation
+
+- Reconciled docs and continuity for the accepted workspace-only internal
+  eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` budget-pressure expansion.
+- Repo-backed release truth remains unchanged:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `43d0439 Expand getattr AttributeError eval budget coverage`
+  - latest pushed code/eval release authority remains
+    `43d0439 Expand getattr AttributeError eval budget coverage`
+  - existing `PLAN.md` and `BUILDLOG.md` changes are accepted post-push
+    continuity state
+  - the current `dir(obj)` expansion is accepted workspace-only
+    implementation state, not pushed release state
+- Accepted workspace-only implementation state:
+  - implementation files are
+    `evals/run_specs/oracle_signal_dir_probe_matrix.json` and
+    `tests/test_eval_signal_dir_probe.py`
+  - matrix is `oracle_signal_dir_probe_matrix`
+  - shape expands from `[220]` to `[220, 100]`: 1 task x 2 budgets x 3
+    providers
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture, task, query, and runtime payload remain unchanged
+  - runtime payload remains `listing_entry_count=74`
+  - selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - baseline providers remain empty at both budgets
+  - no source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening is included
+- Docs/evidence/continuity files reconciled in this slice:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-facing docs remain state-neutral:
+  - no workspace-only, not-pushed, push-pending, or accepted-workspace wording
+    is added to `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, or
+    `README.md`
+  - public comparative claims remain bounded to the existing quad matrix
+- Explicit non-actions:
+  - no source, tests, run specs, fixtures, task JSON, `AGENTS.md`, public/API/
+    MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/
+    product/public benchmark, full-regression, commit-gating, staging, local
+    commit creation, or push work was performed in this docs slice
+  - the tranche-batching methodology was not changed in this slice
+- Scoped validation passed:
+  - `git diff --cached --name-status` returned no staged files
+  - `git diff --check` passed
+  - `git diff --name-status` showed only `ARCHITECTURE.md`, `BUILDLOG.md`,
+    `EVAL.md`, `PLAN.md`, `PUBLIC_CLAIMS.md`, `README.md`, and the two
+    accepted workspace-only implementation files
+  - `rg -n "workspace-only|not pushed|push pending|accepted workspace" ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`
+    returned no matches
+  - positive `rg` checks confirmed `oracle_signal_dir_probe_matrix`,
+    `[220, 100]`, 1 task x 2 budgets x 3 providers,
+    `listing_entry_count=74`, `unsupported/opaque`, additive runtime
+    provenance, empty baseline providers, and public-claim boundary wording
+- Routing decision:
+  - docs/evidence/continuity reconciliation is accepted first-pass
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `709 passed`
+  - active next route is commit-gating over the exact workspace-only
+    `dir(obj)` budget-pressure release unit
+  - staging, local commit creation, and push are not authorized before
+    commit-gating clears
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-02 -- REFLECTIVE_BUILTIN getattr AttributeError Budget-pressure Release Sync
+
+- Completed and pushed the internal eval-only `REFLECTIVE_BUILTIN` /
+  `getattr(obj, name)` raised-`AttributeError` budget-pressure expansion at
+  `43d0439 Expand getattr AttributeError eval budget coverage`.
+- Repo-backed release truth during this continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `43d0439 Expand getattr AttributeError eval budget coverage`
+  - worktree clean at intake before this continuity-sync edit
+  - latest pushed code/eval release authority is
+    `43d0439 Expand getattr AttributeError eval budget coverage`
+  - prior pushed code/eval release authority was
+    `5bd0616 Add getattr AttributeError eval probe`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Released matrix:
+  - matrix is `oracle_signal_getattr_attribute_error_probe_matrix`
+  - shape is `[220, 100]`: 1 task x 2 budgets x 3 providers at budgets 220
+    and 100
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture, task, query, and runtime payload remain unchanged
+  - runtime payload remains `lookup_outcome=raised_attribute_error`
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - baseline providers remain empty at both budgets
+  - no missing-attribute dependency edge or selected symbol is created
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+    benchmark widening is included
+- Release state:
+  - docs/evidence/continuity reconciliation accepted first-pass
+  - release-unit audit cleared first-pass
+  - full regression cleared first-pass with `709 passed`
+  - commit-gating completed
+  - local commit creation completed at `43d0439`
+  - Ryan-authorized push completed at `43d0439`
+- Routing decision:
+  - release-gate status is no-active-gate for `43d0439`
+  - do not route `43d0439` back to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - no active route remains to commit-gating, staging, local commit creation,
+    or push for `43d0439` absent new findings
+  - next route is bounded post-43d0439 North Star planning/control
+- Scope guard:
+  - this continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, `ARCHITECTURE.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `README.md` are in scope
+- Acceptance status: first-pass
+
 ## 2026-05-02 -- REFLECTIVE_BUILTIN getattr AttributeError Budget-pressure Docs Reconciliation
 
 - Reconciled docs and continuity for the accepted workspace-only
@@ -1466,7 +1588,7 @@ Most recent supersession entries override older architectural decisions when the
     public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
     benchmark widening is authorized
 - Routing decision:
-  - route next to release-unit audit
+  - proceed to release-unit audit as the next gate
   - full regression, commit-gating, local commit creation, and push remain
     blocked until the release-unit audit is reviewed and accepted
   - push remains Ryan-gated
@@ -2378,8 +2500,8 @@ Most recent supersession entries override older architectural decisions when the
   - run a dedicated findings-first release-unit audit over the accumulated
     workspace-only `delattr(obj, name)` release candidate after control review
     accepts this docs reconciliation
-  - do not route to full regression, commit-gating, staging, local commit
-    creation, or push before release-unit audit clears
+  - full regression, commit-gating, staging, local commit creation, and push
+    remain blocked until that release-unit audit clears
 - Acceptance status: first-pass
 
 ## 2026-04-26 -- Dir(obj) Pushed Release Authority Correction

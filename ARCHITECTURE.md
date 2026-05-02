@@ -77,13 +77,18 @@ selected-unit primary truth remain `unsupported/opaque`, runtime provenance
 remains additive only, and public comparative claims remain bounded to the
 existing quad matrix.
 The current internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` pilot remains
-one task only through `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3
-providers at budget `220`, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`. The runtime proof
-boundary is a durable dir listing artifact via `durable_payload_reference`;
-optional `listing_entry_count` is additive summary only. Selector and
-selected-unit primary truth remain `unsupported/opaque`, and runtime-backed
-provenance is additive only.
+one task only through `oracle_signal_dir_probe_matrix`: 1 task x 2 budgets x 3
+providers at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture, task,
+query, and runtime payload remain unchanged across both budget rows; runtime
+payload remains `listing_entry_count=74`. The runtime proof boundary is a
+durable dir listing artifact via `durable_payload_reference`, and
+`listing_entry_count` is additive summary only. Selector and selected-unit
+primary truth remain `unsupported/opaque`, runtime-backed provenance is
+additive only, baseline providers remain empty at both budgets, and public
+comparative claims remain bounded to the existing quad matrix. No
+source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening is included.
 The current internal eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()`
 pilot remains one task only through `oracle_signal_dir_zero_probe_matrix`: 1
 task x 1 budget x 3 providers at budget `220`, against providers
@@ -415,12 +420,16 @@ around rendering density.
   remains additive only, and public comparative claims remain bounded to the
   existing quad matrix.
   The current internal `dir(obj)` pilot covers only
-  `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at budget
-  `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`; durable listing proof is carried by
-  `durable_payload_reference`, optional `listing_entry_count` is additive
-  summary only, selector and selected-unit primary truth remain
-  `unsupported/opaque`, and runtime-backed provenance is additive only.
+  `oracle_signal_dir_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture, task,
+  query, and runtime payload remain unchanged across both budget rows; runtime
+  payload remains `listing_entry_count=74`; durable listing proof is carried
+  by `durable_payload_reference`; `listing_entry_count` is additive summary
+  only; selector and selected-unit primary truth remain `unsupported/opaque`;
+  runtime-backed provenance is additive only; baseline providers remain empty
+  at both budgets; and public comparative claims remain bounded to the
+  existing quad matrix.
   The current internal zero-argument `dir()` pilot covers only
   `oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
   budget `220`, against providers `context_ir`, `lexical_top_k_files`, and

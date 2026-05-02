@@ -102,11 +102,18 @@ stays scoped to repo-local evidence only.
   selected-unit primary truth remain `unsupported/opaque`, runtime provenance
   remains additive only, and public comparative claims remain bounded to the
   existing quad matrix; the internal
-  `oracle_signal_dir_probe_matrix` is limited to 1 task x 1 budget x 3
-  providers at budget `220`, against providers `context_ir`,
-  `lexical_top_k_files`, and `import_neighborhood_files`, with durable listing
-  proof carried by `durable_payload_reference` and optional
-  `listing_entry_count` as additive summary only; the internal
+  `oracle_signal_dir_probe_matrix` is limited to 1 task x 2 budgets x 3
+  providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with unchanged
+  fixture, task, query, and runtime payload across both budget rows; runtime
+  payload remains `listing_entry_count=74`; durable listing proof is carried
+  by `durable_payload_reference`; `listing_entry_count` is additive summary
+  only; selector and selected-unit primary truth remain `unsupported/opaque`;
+  runtime provenance remains additive only; baseline providers remain empty at
+  both budgets; public comparative claims remain bounded to the existing quad
+  matrix; and no
+  source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included; the internal
   `oracle_signal_dir_zero_probe_matrix` is limited to 1 task x 1 budget x 3
   providers at budget `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with runtime proof
@@ -507,11 +514,16 @@ stays scoped to repo-local evidence only.
   remains additive only, and public comparative claims remain bounded to the
   existing quad matrix.
   For the internal `dir(obj)` matrix, the only accepted provider/budget wording
-  is `oracle_signal_dir_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`; the runtime proof boundary is a durable dir
-  listing artifact via `durable_payload_reference`, and optional
-  `listing_entry_count` is additive summary only.
+  is `oracle_signal_dir_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture, task,
+  query, and runtime payload remain unchanged across both budget rows; runtime
+  payload remains `listing_entry_count=74`; the runtime proof boundary is a
+  durable dir listing artifact via `durable_payload_reference`;
+  `listing_entry_count` is additive summary only; selector and selected-unit
+  primary truth remain `unsupported/opaque`; runtime provenance remains
+  additive only; baseline providers remain empty at both budgets; and public
+  comparative claims remain bounded to the existing quad matrix.
   For the internal zero-argument `dir()` matrix, the only accepted
   provider/budget wording is `oracle_signal_dir_zero_probe_matrix`: 1 task x 1
   budget x 3 providers at budget `220`, against providers `context_ir`,
@@ -700,4 +712,5 @@ stays scoped to repo-local evidence only.
 | AC3c | The current internal `oracle_signal_dynamic_import_builtins_attr_probe_matrix` covers only narrow eval-only `DYNAMIC_IMPORT` / builtins-attribute `builtins.__import__(name)` sibling evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary `import builtins`, `name = "plugins.weather"`, and exactly `builtins.__import__(name)`, bounded `sys.modules[name]` retrieval only, runtime payload `imported_module=plugins.weather`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, and no dependency edge or selected symbol created from `plugins.weather`; it excludes the separate builtins-alias `loader.__import__(name)` form, bare `__import__(name)` expansion, shadowed/rebound/aliased forms, wrong-arity forms, literal `builtins.__import__("plugins.weather")` expansion, fromlist/globals/locals forms, namespace mutation, generated-code dependency modeling, and generalized dynamic import support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dynamic_import_builtins_attr_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_builtins_attr_probe_matrix.json) |
 | AC3d | The current internal `oracle_signal_dynamic_import_builtins_alias_probe_matrix` covers only narrow eval-only `DYNAMIC_IMPORT` / builtins-alias `loader.__import__(name)` sibling evidence as 1 task x 1 budget x 3 providers at budget 220, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary `import builtins as loader`, `name = "plugins.weather"`, and exactly `loader.__import__(name)`, bounded `sys.modules[name]` retrieval only, runtime payload `imported_module=plugins.weather`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, and no dependency edge or selected symbol created from `plugins.weather`; it excludes other builtins alias names, unaliased `builtins.__import__(name)` expansion in this matrix, bare `__import__(name)` expansion, shadowed/rebound/non-builtins forms, wrong-arity forms, literal `loader.__import__("plugins.weather")` expansion, fromlist/globals/locals forms, namespace mutation, generated-code dependency modeling, and generalized dynamic import support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json) |
 | AC3e | The current internal `oracle_signal_getattr_attribute_error_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` branch evidence as 1 task x 2 budgets x 3 providers at budgets 220 and 100, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with unchanged fixture, task, query, and runtime payload across both budget rows; fixture boundary exactly `getattr(obj, name)`, caught `AttributeError` for deterministic `render_probe_digest()`, runtime payload `lookup_outcome=raised_attribute_error`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, baseline providers empty at both budgets, and no missing-attribute dependency edge or selected symbol created; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json](evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json) |
+| AC3f | The current internal `oracle_signal_dir_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` evidence as 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with unchanged fixture, task, query, and runtime payload across both budget rows; runtime payload remains `listing_entry_count=74`, durable listing proof is carried by `durable_payload_reference`, selector and selected-unit primary truth remain `unsupported/opaque`, runtime provenance remains additive only, and baseline providers remain empty at both budgets; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dir_probe_matrix.json](evals/run_specs/oracle_signal_dir_probe_matrix.json) |
 | AC4 | The only allowed comparative claim is the fixed-scope quad-matrix claim: within that matrix only, `context_ir` wins all `8/8` task-budget rows and leads the provider-average aggregate. | [EVAL.md](EVAL.md#supported-claims-today), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |
