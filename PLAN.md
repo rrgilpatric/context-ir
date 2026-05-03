@@ -40,16 +40,45 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed code/eval release authority is
-`546a4da Add reflective builtin branch eval probes`. It supersedes the older
-post-`5537a81` workspace-only release-gate route for active control routing
-only. Live git refs and worktree state must still be verified from git during
-control intake.
+Current workspace-only accepted source/test tranche is the internal runtime
+probe-request planning contract. It supersedes the post-`e8adbf8` North Star
+planning route for active control routing only. Live git refs and worktree
+state must still be verified from git during control intake.
 
-Repo-backed truth verified during this post-push continuity sync: branch
-`main`, `HEAD` and `origin/main` at
-`546a4da Add reflective builtin branch eval probes`, worktree clean, and
-nothing staged.
+Repo-backed truth verified during this control acceptance: branch `main`,
+`HEAD` and `origin/main` at
+`e8adbf8 Sync reflective builtin release routing`, nothing staged, and
+expected dirty workspace files:
+
+- `src/context_ir/runtime_probe_requests.py`
+- `tests/test_runtime_probe_requests.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Accepted workspace-only implementation state:
+
+- `derive_runtime_probe_requests(program)` emits deterministic planned-only
+  requests for already-attachable unsupported runtime boundaries
+- Request records include unsupported subject kind/id, source site, reason
+  code, boundary text, runtime family/form labels, replay target/selector
+  seeds, and explicit `planned_not_executed` status
+- Covered families are current attachable `DYNAMIC_IMPORT`,
+  `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, `EXEC_OR_EVAL`, and
+  `METACLASS_BEHAVIOR` boundaries
+- The function does not execute probes, attach runtime provenance, mutate
+  unsupported/frontier/provenance state, or widen public/package-root/MCP
+  surfaces
+- Focused validation passed: ruff check, ruff format check, strict mypy over
+  `src/`, focused pytest for `tests/test_runtime_probe_requests.py`, and
+  `git diff --check`
+- Acceptance status: first-pass
+
+This tranche is not release-unit-audit-cleared, not full-regression-cleared,
+not commit-gating-cleared, not staged, not locally committed, and not pushed.
+
+Latest pushed continuity authority is
+`e8adbf8 Sync reflective builtin release routing`. Latest pushed code/eval
+release authority is `546a4da Add reflective builtin branch eval probes`.
 
 The completed and pushed release unit is the full 16-file internal eval-only
 `REFLECTIVE_BUILTIN` tranche:
@@ -136,8 +165,10 @@ Release state for `546a4da`:
 
 Current route:
 
-- Route next to bounded post-`546a4da` North Star planning/control, not
-  implementation
+- Route next to a combined read-only release gate over the exact four-file
+  runtime probe-request planning tranche
+- The gate must run release-unit audit, full regression, and commit-gating in
+  sequence with stop-on-first-finding discipline
 - Release-gate status is no-active-gate for
   `546a4da Add reflective builtin branch eval probes`
 - Do not route `546a4da` back to docs review, release-unit audit, focused
@@ -146,6 +177,8 @@ Current route:
 - No active route remains to release-unit audit, focused validation, full
   regression, commit-gating, staging, local commit creation, or push for
   `546a4da` absent new findings
+- Do not route to another implementation slice before this source/contract
+  release unit clears release gates or a findings-based correction is accepted
 - Push remains Ryan-gated for any future release
 
 Most recent pushed code/eval release authority is
@@ -1151,18 +1184,25 @@ sequencing for `c1a12d7` absent new findings.
   `546a4da Add reflective builtin branch eval probes` passed with no findings
 - [x] Local commit creation and Ryan-authorized push for
   `546a4da Add reflective builtin branch eval probes` completed
+- [x] Runtime probe-request planning implementation accepted first-pass in
+  workspace-only state
 
 ## What Is In Progress
 
-- No implementation slice, release-unit audit, focused validation, full
-  regression, commit-gating, staging, local commit creation, or push is
-  currently in progress for `546a4da Add reflective builtin branch eval probes`.
+- The internal runtime probe-request planning tranche is accepted in workspace
+  and pending release gates as a four-file unit:
+  - `src/context_ir/runtime_probe_requests.py`
+  - `tests/test_runtime_probe_requests.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- No implementation slice, staging, local commit creation, or push is currently
+  in progress for this tranche.
 - The 16-file internal eval-only `REFLECTIVE_BUILTIN` tranche is completed and
   pushed at `546a4da`; release-gate status is no-active-gate.
 - The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
   completed and pushed at `d73cde4`; release-gate status is no-active-gate.
-- Active next route is bounded post-`546a4da` North Star planning/control, not
-  implementation.
+- Active next route is a combined read-only release gate over the four-file
+  runtime probe-request planning tranche, not implementation.
 - Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
@@ -1858,8 +1898,20 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`546a4da` North Star planning/control, not
-implementation.
+Immediate next route: combined read-only release gate over the exact four-file
+runtime probe-request planning tranche:
+
+- `src/context_ir/runtime_probe_requests.py`
+- `tests/test_runtime_probe_requests.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The release gate must run release-unit audit, then full regression, then
+commit-gating with stop-on-first-finding discipline. It must not edit files,
+stage, commit, push, or rewrite continuity.
+
+Do not route to another implementation slice before this source/contract
+release unit clears release gates or a findings-based correction is accepted.
 
 Do not route `546a4da Add reflective builtin branch eval probes` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,

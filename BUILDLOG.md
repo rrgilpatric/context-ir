@@ -2,6 +2,51 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- Runtime Probe Request Planning Implementation Review
+
+- Reviewed the returned implementation slice for internal runtime probe-request
+  planning.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `e8adbf8 Sync reflective builtin release routing`
+  - nothing staged at intake
+  - expected dirty files were:
+    - `src/context_ir/runtime_probe_requests.py`
+    - `tests/test_runtime_probe_requests.py`
+- Accepted implementation state:
+  - added `derive_runtime_probe_requests(program)` as an internal planned-only
+    contract
+  - request records carry unsupported subject kind/id, source site, reason
+    code, boundary text, runtime family/form labels, replay target/selector
+    seeds, and explicit `planned_not_executed` status
+  - requests are deterministically ordered and enforce one request per source
+    site
+  - covered forms are the current attachable `DYNAMIC_IMPORT`,
+    `REFLECTIVE_BUILTIN`, `RUNTIME_MUTATION`, `EXEC_OR_EVAL`, and
+    `METACLASS_BEHAVIOR` unsupported boundaries
+  - unsupported/frontier/provenance state is not mutated
+  - no runtime execution, runtime provenance attachment behavior, eval fixture,
+    task, run spec, public/package-root API, MCP, scoring, optimizer,
+    compiler, winner-selection, schema, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py -v`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- 546a4da Reflective Builtin Branch Eval Release Sync
 
 - Synced post-push continuity for
