@@ -2,6 +2,43 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- 2e448ea Diagnostic Runtime Probe Request Bridge Release Sync
+
+- Synced post-push continuity for
+  `2e448ea Add diagnostic runtime probe request bridge`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `2e448ea Add diagnostic runtime probe request bridge`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `2e448ea`:
+  - latest pushed source/contract release authority is
+    `2e448ea Add diagnostic runtime probe request bridge`
+  - prior pushed continuity authority is
+    `38f3841 Sync runtime probe request release routing`
+  - prior pushed source/contract release authority is
+    `f6c66e4 Add runtime probe request planning contract`
+  - release-gate status is no-active-gate
+- Released tranche:
+  - four-file internal diagnostic runtime probe-request bridge:
+    `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - combined read-only release gate passed with no findings
+  - full regression passed with `pytest tests/ -v` reporting `729 passed`
+  - commit-gating passed and approved the exact four-file unit
+  - local commit creation and Ryan-authorized push completed
+- Routing decision:
+  - do not route `2e448ea` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit creation,
+    or push absent new findings
+  - route next to the bounded diagnose/recompile bridge-consumption
+    implementation slice
+  - push remains Ryan-gated for any future release
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- Diagnostic Runtime Probe Request Bridge Implementation Review
 
 - Reviewed the returned implementation slice for deriving planned runtime probe
