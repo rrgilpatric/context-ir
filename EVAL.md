@@ -594,25 +594,47 @@ Proven by current unit and integration tests:
   source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is included.
 - The current internal eval-only `REFLECTIVE_BUILTIN` / zero-argument `dir()`
-  pilot covers only `oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x
-  3 providers at budget `220`, against providers `context_ir`,
-  `lexical_top_k_files`, and `import_neighborhood_files`. Runtime proof
-  requires non-empty `durable_payload_reference`; optional
-  `listing_entry_count` is additive summary only. Primary selector and
-  selected-unit truth remain `unsupported/opaque`, runtime provenance remains
-  additive only, and public comparative claims remain bounded to the existing
-  quad matrix.
+  pilot covers only `oracle_signal_dir_zero_probe_matrix`: 1 task x 2 budgets
+  x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. Runtime payload
+  remains `listing_entry_count=3`; runtime proof remains via non-empty
+  `durable_payload_reference`; `listing_entry_count` is additive summary only.
+  Baseline providers remain empty at both budgets. At budgets `220` and `100`,
+  `context_ir` selects the same units:
+  `def:main.py:main.probe_directory`,
+  `def:main.py:main.render_probe_digest`, and
+  `unsupported:call:main.py:2:11`. Primary selector and selected-unit truth
+  remain `unsupported/opaque` where applicable, runtime provenance remains
+  additive only, no `dir()` output dependency edge or selected symbol is
+  introduced, and public comparative claims remain bounded to the existing
+  quad matrix. No
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
 - The current internal eval-only `METACLASS_BEHAVIOR` pilot covers only
-  `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1 budget x 3
-  providers at budget `220`, against providers `context_ir`,
-  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
-  `class_creation_outcome=created_class`; `durable_payload_reference` is
-  required and non-empty, optional `created_class_qualified_name` and
-  `selected_metaclass_qualified_name` fields are additive summary only,
-  attachment is limited to the preserved full `metaclass=...` keyword-site
-  unsupported construct, selector and selected-unit primary truth remain
-  `unsupported/opaque`, runtime provenance remains additive only, and public
-  comparative claims remain bounded to the existing quad matrix.
+  `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 2 budgets x 3
+  providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. Runtime payload
+  remains `class_creation_outcome=created_class`,
+  `created_class_qualified_name=main.Example`, and
+  `selected_metaclass_qualified_name=main.Meta`; `durable_payload_reference`
+  is required and non-empty, and the qualified-name fields are additive
+  summary only. Baseline providers remain empty at both budgets. At budget
+  `220`, `context_ir` selects `def:main.py:main.Example`,
+  `def:main.py:main.Base`,
+  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, and
+  `frontier:base:main.py:5:11:def:main.py:main.Meta:1`. At budget `100`,
+  `context_ir` selects `def:main.py:main.Example`,
+  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, and
+  `frontier:base:main.py:5:11:def:main.py:main.Meta:1`, omitting
+  `def:main.py:main.Base`. Attachment is limited to the preserved full
+  `metaclass=...` keyword-site unsupported construct, selector and
+  selected-unit primary truth remain `unsupported/opaque` where applicable,
+  runtime provenance remains additive only, no selected
+  `def:main.py:main.Meta` symbol, metaclass dependency edge, or other selected
+  symbol is introduced beyond the listed units, and public comparative claims
+  remain bounded to the existing quad matrix. No
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
 - The current internal eval-only `EXEC_OR_EVAL` /
   `eval(source)` evidence covers only `oracle_signal_eval_probe_matrix`: 1
   task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers
@@ -969,25 +991,47 @@ Architecturally intended but not yet evaluated:
   source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is included.
 - Narrow zero-argument `dir()` provider/budget evidence: the internal
-  `oracle_signal_dir_zero_probe_matrix` covers only 1 task x 1 budget x 3
-  providers at budget `220`, against providers `context_ir`,
-  `lexical_top_k_files`, and `import_neighborhood_files`; runtime proof
-  requires non-empty `durable_payload_reference`, optional
-  `listing_entry_count` is additive summary only, primary selector and
-  selected-unit truth remain `unsupported/opaque`, runtime provenance remains
-  additive only, and public comparative claims remain bounded to the existing
-  quad matrix.
+  `oracle_signal_dir_zero_probe_matrix` covers only 1 task x 2 budgets x 3
+  providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; runtime payload
+  remains `listing_entry_count=3`; runtime proof remains via non-empty
+  `durable_payload_reference`; `listing_entry_count` is additive summary only;
+  baseline providers remain empty at both budgets; at budgets `220` and `100`,
+  `context_ir` selects the same units:
+  `def:main.py:main.probe_directory`,
+  `def:main.py:main.render_probe_digest`, and
+  `unsupported:call:main.py:2:11`; primary selector and selected-unit truth
+  remain `unsupported/opaque` where applicable, runtime provenance remains
+  additive only, no `dir()` output dependency edge or selected symbol is
+  introduced, and public comparative claims remain bounded to the existing
+  quad matrix. No
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
 - Narrow `METACLASS_BEHAVIOR` provider/budget evidence: the internal
-  `oracle_signal_metaclass_behavior_probe_matrix` covers only 1 task x 1
-  budget x 3 providers at budget `220`, against providers `context_ir`,
-  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
-  `class_creation_outcome=created_class`; `durable_payload_reference` is
-  required and non-empty, optional `created_class_qualified_name` and
-  `selected_metaclass_qualified_name` fields are additive summary only,
-  attachment is limited to the preserved full `metaclass=...` keyword-site
-  unsupported construct, selector and selected-unit primary truth remain
-  `unsupported/opaque`, runtime provenance remains additive only, and public
-  comparative claims remain bounded to the existing quad matrix.
+  `oracle_signal_metaclass_behavior_probe_matrix` covers only 1 task x 2
+  budgets x 3 providers at budgets `[220, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`;
+  runtime payload remains `class_creation_outcome=created_class`,
+  `created_class_qualified_name=main.Example`, and
+  `selected_metaclass_qualified_name=main.Meta`; `durable_payload_reference`
+  is required and non-empty, and the qualified-name fields are additive
+  summary only; baseline providers remain empty at both budgets; at budget
+  `220`, `context_ir` selects `def:main.py:main.Example`,
+  `def:main.py:main.Base`,
+  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, and
+  `frontier:base:main.py:5:11:def:main.py:main.Meta:1`; at budget `100`,
+  `context_ir` selects `def:main.py:main.Example`,
+  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, and
+  `frontier:base:main.py:5:11:def:main.py:main.Meta:1`, omitting
+  `def:main.py:main.Base`; attachment is limited to the preserved full
+  `metaclass=...` keyword-site unsupported construct, selector and
+  selected-unit primary truth remain `unsupported/opaque` where applicable,
+  runtime provenance remains additive only, no selected
+  `def:main.py:main.Meta` symbol, metaclass dependency edge, or other selected
+  symbol is introduced beyond the listed units, and public comparative claims
+  remain bounded to the existing quad matrix. No
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
 - Narrow `eval(source)` provider/budget evidence: the current
   internal eval-only `EXEC_OR_EVAL` evidence covers only
   `oracle_signal_eval_probe_matrix`: 1 task x 2 budgets x 3 providers at
@@ -1141,22 +1185,47 @@ The following claims are allowed because current repo artifacts support them:
   benchmark widening is included. The current internal eval-only
   `REFLECTIVE_BUILTIN` /
   zero-argument `dir()` pilot covers only
-  `oracle_signal_dir_zero_probe_matrix`: 1 task x 1 budget x 3 providers at
-  budget `220`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`; runtime proof requires non-empty
-  `durable_payload_reference`, optional `listing_entry_count` is additive
-  summary only, primary selector and selected-unit truth remain
-  `unsupported/opaque`, runtime provenance remains additive only, and public
-  comparative claims remain bounded to the existing quad matrix. The current
+  `oracle_signal_dir_zero_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; runtime payload
+  remains `listing_entry_count=3`; runtime proof remains via non-empty
+  `durable_payload_reference`; `listing_entry_count` is additive summary only;
+  baseline providers remain empty at both budgets; at budgets `220` and `100`,
+  `context_ir` selects the same units:
+  `def:main.py:main.probe_directory`,
+  `def:main.py:main.render_probe_digest`, and
+  `unsupported:call:main.py:2:11`; primary selector and selected-unit truth
+  remain `unsupported/opaque` where applicable, runtime provenance remains
+  additive only, no `dir()` output dependency edge or selected symbol is
+  introduced, and public comparative claims remain bounded to the existing
+  quad matrix. No
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included. The current
   internal eval-only `METACLASS_BEHAVIOR` pilot
-  covers only `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 1
-  budget x 3 providers at budget `220`, against providers `context_ir`,
-  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime payload
-  `class_creation_outcome=created_class`; `durable_payload_reference` is
-  required and non-empty, optional `created_class_qualified_name` and
-  `selected_metaclass_qualified_name` fields are additive summary only, and
-  attachment is limited to the preserved full `metaclass=...` keyword-site
-  unsupported construct. The current internal eval-only
+  covers only `oracle_signal_metaclass_behavior_probe_matrix`: 1 task x 2
+  budgets x 3 providers at budgets `[220, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`;
+  runtime payload remains `class_creation_outcome=created_class`,
+  `created_class_qualified_name=main.Example`, and
+  `selected_metaclass_qualified_name=main.Meta`; `durable_payload_reference`
+  is required and non-empty, and the qualified-name fields are additive
+  summary only; baseline providers remain empty at both budgets; at budget
+  `220`, `context_ir` selects `def:main.py:main.Example`,
+  `def:main.py:main.Base`,
+  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, and
+  `frontier:base:main.py:5:11:def:main.py:main.Meta:1`; at budget `100`,
+  `context_ir` selects `def:main.py:main.Example`,
+  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, and
+  `frontier:base:main.py:5:11:def:main.py:main.Meta:1`, omitting
+  `def:main.py:main.Base`; attachment is limited to the preserved full
+  `metaclass=...` keyword-site unsupported construct, selector and
+  selected-unit primary truth remain `unsupported/opaque` where applicable,
+  runtime provenance remains additive only, no selected
+  `def:main.py:main.Meta` symbol, metaclass dependency edge, or other selected
+  symbol is introduced beyond the listed units, and public comparative claims
+  remain bounded to the existing quad matrix. No
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included. The current internal eval-only
   `EXEC_OR_EVAL` / `eval(source)` evidence covers only
   `oracle_signal_eval_probe_matrix`: 1 task x 2 budgets x 3 providers at
   budgets `[220, 100]`, against providers `context_ir`,

@@ -36,7 +36,7 @@ RUN_SPEC_PATH = (
     / "run_specs"
     / "oracle_signal_metaclass_behavior_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -49,7 +49,25 @@ BASELINE_PROVIDERS = (
 QUERY = (
     "Fix Example metaclass=Meta class creation behavior and keep digest output aligned"
 )
+EXAMPLE_UNIT_ID = "def:main.py:main.Example"
+BASE_UNIT_ID = "def:main.py:main.Base"
+METACLASS_SYMBOL_UNIT_ID = "def:main.py:main.Meta"
 UNSUPPORTED_UNIT_ID = "unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1"
+METACLASS_SITE_ID = "site:metaclass:main.py:9:20:def:main.py:main.Example:1"
+METACLASS_FRONTIER_UNIT_ID = "frontier:base:main.py:5:11:def:main.py:main.Meta:1"
+CONTEXT_IR_SELECTED_UNIT_IDS_BY_BUDGET = {
+    100: (
+        EXAMPLE_UNIT_ID,
+        UNSUPPORTED_UNIT_ID,
+        METACLASS_FRONTIER_UNIT_ID,
+    ),
+    220: (
+        EXAMPLE_UNIT_ID,
+        BASE_UNIT_ID,
+        UNSUPPORTED_UNIT_ID,
+        METACLASS_FRONTIER_UNIT_ID,
+    ),
+}
 
 
 def _parsed_ledger_records(ledger_path: Path) -> list[dict[str, object]]:
@@ -85,6 +103,59 @@ def _resolved_selectors(record: dict[str, object]) -> list[dict[str, object]]:
     return cast(list[dict[str, object]], record["resolved_selectors"])
 
 
+def _assert_context_ir_metaclass_record(
+    record: dict[str, object],
+    *,
+    budget: int,
+    expected_selected_unit_ids: tuple[str, ...],
+) -> None:
+    """Assert one context_ir metaclass behavior ledger record."""
+    metrics = cast(dict[str, object], record["metrics"])
+    runtime_provenance_records = cast(
+        list[dict[str, object]],
+        record["runtime_provenance_records"],
+    )
+    selected_units = _selected_units(record)
+    unsupported_selector = next(
+        selector
+        for selector in _resolved_selectors(record)
+        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
+    )
+    unsupported_unit = next(
+        unit for unit in selected_units if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+    )
+
+    assert record["spec_version"] == "v1"
+    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+    assert record["budget"] == budget
+    assert tuple(cast(list[str], record["selected_unit_ids"])) == (
+        expected_selected_unit_ids
+    )
+    assert METACLASS_SYMBOL_UNIT_ID not in expected_selected_unit_ids
+    assert all(unit["unit_id"] != METACLASS_SYMBOL_UNIT_ID for unit in selected_units)
+    assert metrics["uncertainty_honesty"] == 1.0
+    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selector["primary_evidence_origin"] == (
+        "unsupported_reason_code"
+    )
+    assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
+    assert unsupported_selector["has_attached_runtime_provenance"] is True
+    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
+    assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
+    assert unsupported_unit["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        unsupported_unit["attached_runtime_provenance_record_ids"],
+    )
+    assert len(runtime_provenance_records) == 1
+    assert runtime_provenance_records[0]["normalized_payload"] == {
+        "class_creation_outcome": "created_class",
+        "created_class_qualified_name": "main.Example",
+        "selected_metaclass_qualified_name": "main.Meta",
+    }
+
+
 def test_metaclass_behavior_probe_task_resolves_expected_selectors() -> None:
     """The isolated metaclass probe resolves the intended selectors."""
     setup = setup_eval_oracle_task(TASK_PATH)
@@ -117,10 +188,23 @@ def test_metaclass_behavior_probe_task_resolves_expected_selectors() -> None:
     assert unsupported.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
     assert unsupported.has_attached_runtime_provenance is True
     assert unsupported.attached_runtime_provenance_record_ids
+    assert all(
+        selector.resolved_unit_id != METACLASS_SYMBOL_UNIT_ID
+        for selector in setup.resolved_selectors
+    )
+    assert all(
+        METACLASS_SYMBOL_UNIT_ID
+        not in (dependency.source_symbol_id, dependency.target_symbol_id)
+        for dependency in setup.semantic_program.proven_dependencies
+    )
+    assert all(
+        dependency.evidence_site_id != METACLASS_SITE_ID
+        for dependency in setup.semantic_program.proven_dependencies
+    )
 
 
 def test_metaclass_behavior_probe_run_spec_loads_budget_matrix() -> None:
-    """The metaclass probe run spec is one task x one budget x three providers."""
+    """The metaclass probe run spec is one task x two budgets x three providers."""
     spec = eval_runs.load_eval_run_spec(RUN_SPEC_PATH)
 
     assert spec.plan_id == "oracle_signal_metaclass_behavior_probe_matrix"
@@ -192,57 +276,32 @@ def test_metaclass_behavior_probe_run_preserves_unsupported_primary_truth(
     }
 
     for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
-            records,
-            provider_name=provider_name,
-            budget=220,
-        )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+        for budget in PROBE_BUDGETS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
 
-    record = _record_for(
+    record_220 = _record_for(
         records,
         provider_name=eval_providers.CONTEXT_IR_PROVIDER,
         budget=220,
     )
-    metrics = cast(dict[str, object], record["metrics"])
-    runtime_provenance_records = cast(
-        list[dict[str, object]],
-        record["runtime_provenance_records"],
+    _assert_context_ir_metaclass_record(
+        record_220,
+        budget=220,
+        expected_selected_unit_ids=CONTEXT_IR_SELECTED_UNIT_IDS_BY_BUDGET[220],
     )
-    unsupported_selector = next(
-        selector
-        for selector in _resolved_selectors(record)
-        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
+    record_100 = _record_for(
+        records,
+        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+        budget=100,
     )
-    unsupported_unit = next(
-        unit
-        for unit in _selected_units(record)
-        if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+    _assert_context_ir_metaclass_record(
+        record_100,
+        budget=100,
+        expected_selected_unit_ids=CONTEXT_IR_SELECTED_UNIT_IDS_BY_BUDGET[100],
     )
-
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert record["budget"] == 220
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert metrics["uncertainty_honesty"] == 1.0
-    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_selector["primary_evidence_origin"] == (
-        "unsupported_reason_code"
-    )
-    assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_selector["has_attached_runtime_provenance"] is True
-    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
-    assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_unit["has_attached_runtime_provenance"] is True
-    assert cast(
-        list[str],
-        unsupported_unit["attached_runtime_provenance_record_ids"],
-    )
-    assert len(runtime_provenance_records) == 1
-    assert runtime_provenance_records[0]["normalized_payload"] == {
-        "class_creation_outcome": "created_class",
-        "created_class_qualified_name": "main.Example",
-        "selected_metaclass_qualified_name": "main.Meta",
-    }

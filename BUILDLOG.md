@@ -2,6 +2,81 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- Dir Zero and Metaclass Budget-pressure Docs Sync
+
+- Completed docs/evidence/continuity reconciliation for the accepted
+  workspace-only internal eval-only zero-argument `dir()` and metaclass
+  behavior budget-pressure tranche.
+- Repo-backed truth verified for this reconciliation:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `642b6f9 Sync exec eval release routing`
+  - nothing staged
+  - expected dirty implementation files at intake were:
+    - `evals/run_specs/oracle_signal_dir_zero_probe_matrix.json`
+    - `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
+    - `tests/test_eval_signal_dir_zero_probe.py`
+    - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- Accepted workspace-only implementation state recorded:
+  - `oracle_signal_dir_zero_probe_matrix` expanded from `[220]` to
+    `[220, 100]`
+  - `oracle_signal_metaclass_behavior_probe_matrix` expanded from `[220]` to
+    `[220, 100]`
+  - each matrix is 1 task x 2 budgets x 3 providers
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - `dir()` runtime payload remains `listing_entry_count=3`
+  - `dir()` `context_ir` selected units are identical at budgets `220` and
+    `100`:
+    - `def:main.py:main.probe_directory`
+    - `def:main.py:main.render_probe_digest`
+    - `unsupported:call:main.py:2:11`
+  - metaclass runtime payload remains
+    `class_creation_outcome=created_class`,
+    `created_class_qualified_name=main.Example`, and
+    `selected_metaclass_qualified_name=main.Meta`
+  - metaclass budget `220` selected units:
+    - `def:main.py:main.Example`
+    - `def:main.py:main.Base`
+    - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
+    - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
+  - metaclass budget `100` selected units:
+    - `def:main.py:main.Example`
+    - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
+    - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
+  - budget `100` intentionally omits `def:main.py:main.Base`
+  - baseline providers remain empty at both budgets for both matrices
+  - selector and selected-unit truth remain `unsupported/opaque` where
+    applicable
+  - runtime provenance remains additive only
+  - no selected `def:main.py:main.Meta` symbol, metaclass dependency edge,
+    `dir()` output dependency edge, or selected symbol is introduced beyond
+    the listed selected units
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- Documentation/evidence reconciliation:
+  - `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, and `README.md` use
+    state-neutral release-facing wording for the two-matrix `[220, 100]`
+    provider/budget shape, runtime payloads, selected units, empty baselines,
+    unsupported/opaque truth boundary, additive runtime provenance, no
+    dependency-edge or selected-symbol widening, and preserved public
+    comparative claim boundary
+  - `PLAN.md` and `BUILDLOG.md` record the accepted workspace-only
+    implementation state and the next route
+- Scope guard:
+  - this reconciliation edits docs/continuity only
+  - no source files, fixtures, task JSON, run specs, tests, `AGENTS.md`,
+    staging, commits, push, full regression, or release gates were modified or
+    performed by this docs-sync slice
+- Routing decision:
+  - route next to findings-first control review of this docs/evidence/
+    continuity reconciliation only
+  - do not pre-route to release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push
+  - push remains Ryan-gated and is not the active next route
+- Acceptance status: implementation accepted workspace-only first-pass; docs/
+  evidence/continuity reconciliation awaiting findings-first control review
+
 ## 2026-05-03 -- 21f2dc5 EXEC_OR_EVAL Budget-pressure Release Sync
 
 - Supersedes earlier current routing text for the accepted workspace-only

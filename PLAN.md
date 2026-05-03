@@ -42,57 +42,75 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-release truth verified for this post-push continuity sync is branch `main`;
-`HEAD` and `origin/main` are at
-`21f2dc5 Expand exec and eval budget coverage`. The worktree was clean at
-intake before this docs-only continuity edit. Live git refs and worktree state
-remain authoritative for future control intake.
+truth verified for this docs/evidence/continuity reconciliation is branch
+`main`; `HEAD` and `origin/main` are at
+`642b6f9 Sync exec eval release routing`; nothing is staged. Live git refs and
+worktree state remain authoritative for future control intake.
 
-Current active release state is the completed and pushed internal eval-only
-`EXEC_OR_EVAL` eval/exec budget-pressure tranche at
-`21f2dc5 Expand exec and eval budget coverage`. Release-gate status is
-no-active-gate.
+Current active release state is the accepted workspace-only internal eval-only
+budget-pressure tranche for zero-argument `dir()` and metaclass behavior. The
+accepted implementation files are:
 
-The pushed `EXEC_OR_EVAL` eval/exec budget-pressure release is:
+- `evals/run_specs/oracle_signal_dir_zero_probe_matrix.json`
+- `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
+- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
 
-- Eval assets and tests:
-  - `evals/run_specs/oracle_signal_eval_probe_matrix.json`
-  - `evals/run_specs/oracle_signal_exec_probe_matrix.json`
-  - `tests/test_eval_signal_eval_probe.py`
-  - `tests/test_eval_signal_exec_probe.py`
-- `oracle_signal_eval_probe_matrix` expanded from `[220]` to `[220, 100]`
-- `oracle_signal_exec_probe_matrix` expanded from `[220]` to `[220, 100]`
-- Each matrix is 1 task x 2 budgets x 3 providers at `[220, 100]`
+Accepted workspace-only implementation truth:
+
+- `oracle_signal_dir_zero_probe_matrix` expanded from `[220]` to `[220, 100]`
+- `oracle_signal_metaclass_behavior_probe_matrix` expanded from `[220]` to
+  `[220, 100]`
+- Each matrix is 1 task x 2 budgets x 3 providers
 - Providers remain `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`
-- Fixtures, tasks, queries, source-shape/hash/proof boundaries, and runtime
-  payloads are unchanged
-- Eval payload remains `evaluation_outcome=returned_value` and
-  `result_type=builtins.str`
-- Exec payload remains `execution_outcome=completed` and
-  `statement_kind=pass`
-- Baseline providers remain empty at both budgets
-- At both budgets, `context_ir` selects the same unsupported/opaque boundary
-  unit with additive runtime provenance
-- No generated-code dependency edge or selected symbol is introduced
+- `dir()` runtime payload remains `listing_entry_count=3`
+- `dir()` `context_ir` selected units are identical at budgets `220` and
+  `100`:
+  - `def:main.py:main.probe_directory`
+  - `def:main.py:main.render_probe_digest`
+  - `unsupported:call:main.py:2:11`
+- Metaclass runtime payload remains
+  `class_creation_outcome=created_class`,
+  `created_class_qualified_name=main.Example`, and
+  `selected_metaclass_qualified_name=main.Meta`
+- Metaclass budget `220` selected units:
+  - `def:main.py:main.Example`
+  - `def:main.py:main.Base`
+  - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
+  - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
+- Metaclass budget `100` selected units:
+  - `def:main.py:main.Example`
+  - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
+  - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
+- Budget `100` intentionally omits `def:main.py:main.Base`
+- Baseline providers remain empty at both budgets for both matrices
+- Selector and selected-unit truth remain `unsupported/opaque` where
+  applicable
+- Runtime provenance remains additive only
+- No selected `def:main.py:main.Meta` symbol, metaclass dependency edge,
+  `dir()` output dependency edge, or selected symbol is introduced beyond the
+  listed selected units
 - No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
 
-Release gates completed for `21f2dc5`: docs reconciliation accepted; combined
-release-unit audit completed; full regression cleared with `709 passed`;
-commit-gating completed; local commit creation completed at `21f2dc5`; and
-Ryan-authorized push completed at `21f2dc5`.
+Current docs/evidence/continuity reconciliation is limited to
+`ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`, and
+`BUILDLOG.md`. Route next to findings-first control review of this
+docs/evidence/continuity reconciliation only. Do not route to release-unit
+audit, full regression, commit-gating, staging, local commit creation, or push
+before that control review accepts this reconciliation.
 
-No active route remains to docs review, release-unit audit, full regression,
-commit-gating, staging, local commit creation, or push for `21f2dc5` absent
-new findings. The next route is bounded post-21f2dc5 North Star
-planning/control. Do not open a new implementation route or release gate for
-`21f2dc5` absent new findings.
+Prior pushed continuity authority is
+`642b6f9 Sync exec eval release routing`. Prior pushed code/eval authority is
+`21f2dc5 Expand exec and eval budget coverage`, which is no-active-gate. Do
+not route `21f2dc5` back to docs review, release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
-`9fffc5e Sync dynamic import release routing` is the prior pushed continuity
-authority. The completed and pushed internal eval-only `DYNAMIC_IMPORT`
-sibling budget-pressure release at
-`c2c1898 Expand dynamic import sibling eval budget coverage` is the prior
+`9fffc5e Sync dynamic import release routing` remains an older pushed
+continuity authority. The completed and pushed internal eval-only
+`DYNAMIC_IMPORT` sibling budget-pressure release at
+`c2c1898 Expand dynamic import sibling eval budget coverage` remains an older
 pushed code/eval authority and is no-active-gate. Latest pushed process-doc
 authority remains `98edc4a Codify release gate continuity controls`.
 
@@ -1050,9 +1068,12 @@ sequencing for `c1a12d7` absent new findings.
   push is currently in progress or authorized.
 - The `EXEC_OR_EVAL` eval/exec budget-pressure release is pushed at
   `21f2dc5` and has release-gate status no-active-gate.
-- Active next route is bounded post-21f2dc5 North Star planning/control, not
-  docs review, release-unit audit, full regression, commit-gating, staging,
-  local commit creation, push, or implementation.
+- Active next route is findings-first control review of the accepted
+  workspace-only zero-argument `dir()` plus `METACLASS_BEHAVIOR`
+  budget-pressure docs/evidence/continuity reconciliation. Do not route to
+  release-unit audit, full regression, commit-gating, staging, local commit
+  creation, push, or implementation before that control review accepts the
+  reconciliation.
 - Fresh control lanes should use the canonical active release-state block above
   for current routing, and should treat older conflicting routing notes as
   historical when superseded by that block or by newer BUILDLOG entries.
@@ -1742,12 +1763,18 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-21f2dc5 North Star planning/control.
+Immediate next route: findings-first control review of the accepted
+workspace-only zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure
+docs/evidence/continuity reconciliation.
 
 `21f2dc5 Expand exec and eval budget coverage` is complete and pushed, with
 release status no-active-gate. Do not route `21f2dc5` back to docs review,
 release-unit audit, full regression, commit-gating, staging, local commit
 creation, or push absent new findings.
+
+Do not route this current reconciliation to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push before findings-first
+control review accepts it.
 
 `9fffc5e Sync dynamic import release routing` is the prior pushed continuity
 authority. `c2c1898 Expand dynamic import sibling eval budget coverage` is the

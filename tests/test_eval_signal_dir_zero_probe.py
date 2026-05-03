@@ -28,7 +28,7 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_dir_zero_probe.json"
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_dir_zero_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -40,6 +40,11 @@ BASELINE_PROVIDERS = (
 )
 QUERY = "Fix probe_directory unsupported dir() listing"
 UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+CONTEXT_IR_SELECTED_UNIT_IDS = (
+    "def:main.py:main.probe_directory",
+    "def:main.py:main.render_probe_digest",
+    UNSUPPORTED_UNIT_ID,
+)
 
 
 def _parsed_ledger_records(ledger_path: Path) -> list[dict[str, object]]:
@@ -73,6 +78,57 @@ def _selected_units(record: dict[str, object]) -> list[dict[str, object]]:
 def _resolved_selectors(record: dict[str, object]) -> list[dict[str, object]]:
     """Return structured resolved-selector metadata from one raw ledger record."""
     return cast(list[dict[str, object]], record["resolved_selectors"])
+
+
+def _assert_context_ir_runtime_record(
+    record: dict[str, object],
+    *,
+    budget: int,
+) -> None:
+    """Assert one context-ir run preserves unsupported truth plus runtime support."""
+    metrics = cast(dict[str, object], record["metrics"])
+    runtime_provenance_records = cast(
+        list[dict[str, object]],
+        record["runtime_provenance_records"],
+    )
+    selected_units = _selected_units(record)
+    unsupported_selector = next(
+        selector
+        for selector in _resolved_selectors(record)
+        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
+    )
+    unsupported_unit = next(
+        unit for unit in selected_units if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+    )
+
+    assert record["spec_version"] == "v1"
+    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+    assert record["budget"] == budget
+    assert tuple(cast(list[str], record["selected_unit_ids"])) == (
+        CONTEXT_IR_SELECTED_UNIT_IDS
+    )
+    assert tuple(unit["unit_id"] for unit in selected_units) == (
+        CONTEXT_IR_SELECTED_UNIT_IDS
+    )
+    assert metrics["uncertainty_honesty"] == 1.0
+    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_selector["primary_evidence_origin"] == (
+        "unsupported_reason_code"
+    )
+    assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
+    assert unsupported_selector["has_attached_runtime_provenance"] is True
+    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
+    assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
+    assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
+    assert unsupported_unit["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        unsupported_unit["attached_runtime_provenance_record_ids"],
+    )
+    assert len(runtime_provenance_records) == 1
+    assert runtime_provenance_records[0]["normalized_payload"] == {
+        "listing_entry_count": "3",
+    }
 
 
 def test_dir_zero_probe_task_resolves_expected_selectors_deterministically() -> None:
@@ -168,56 +224,26 @@ def test_dir_zero_probe_run_executes_with_additive_runtime_provenance(
         for budget in PROBE_BUDGETS
     }
 
-    for provider_name in BASELINE_PROVIDERS:
-        baseline_record = _record_for(
-            records,
-            provider_name=provider_name,
-            budget=220,
-        )
-        assert baseline_record["selected_unit_ids"] == []
-        assert _selected_units(baseline_record) == []
+    for budget in PROBE_BUDGETS:
+        for provider_name in BASELINE_PROVIDERS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
 
-    record = _record_for(
+    record_220 = _record_for(
         records,
         provider_name=eval_providers.CONTEXT_IR_PROVIDER,
         budget=220,
     )
-    metrics = cast(dict[str, object], record["metrics"])
-    runtime_provenance_records = cast(
-        list[dict[str, object]],
-        record["runtime_provenance_records"],
-    )
-    unsupported_selector = next(
-        selector
-        for selector in _resolved_selectors(record)
-        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
-    )
-    unsupported_unit = next(
-        unit
-        for unit in _selected_units(record)
-        if unit["unit_id"] == UNSUPPORTED_UNIT_ID
+    record_100 = _record_for(
+        records,
+        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+        budget=100,
     )
 
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert record["budget"] == 220
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert metrics["uncertainty_honesty"] == 1.0
-    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_selector["primary_evidence_origin"] == (
-        "unsupported_reason_code"
-    )
-    assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_selector["has_attached_runtime_provenance"] is True
-    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
-    assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_unit["has_attached_runtime_provenance"] is True
-    assert cast(
-        list[str],
-        unsupported_unit["attached_runtime_provenance_record_ids"],
-    )
-    assert len(runtime_provenance_records) == 1
-    assert runtime_provenance_records[0]["normalized_payload"] == {
-        "listing_entry_count": "3",
-    }
+    _assert_context_ir_runtime_record(record_220, budget=220)
+    _assert_context_ir_runtime_record(record_100, budget=100)
