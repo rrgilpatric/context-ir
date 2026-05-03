@@ -2,6 +2,53 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- Diagnostic Runtime Probe Request Bridge Implementation Review
+
+- Reviewed the returned implementation slice for deriving planned runtime probe
+  requests from semantic diagnostic boundaries.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `38f3841 Sync runtime probe request release routing`
+  - nothing staged
+  - expected dirty files were:
+    - `src/context_ir/runtime_probe_requests.py`
+    - `tests/test_runtime_probe_requests.py`
+- Accepted implementation state:
+  - added `derive_diagnostic_runtime_probe_requests(program, diagnostic)` as an
+    internal bridge from `SemanticDiagnosticResult` to planned runtime probe
+    requests
+  - the bridge derives existing planned requests, then filters them to grounded
+    diagnostic boundary units that still need runtime-backed support
+  - planned-only semantics, deterministic ordering, attachable-only behavior,
+    and `planned_not_executed` request status are preserved
+  - statically proved units, already runtime-supported boundaries, frontier
+    items without attachable unsupported probe requests, and unsupported
+    boundaries that are not attachable do not produce requests
+  - no probe execution, runtime provenance attachment, `SemanticProgram`
+    mutation, `SemanticDiagnosticResult` mutation, analyzer/tool-facade
+    behavior, MCP, package-root API, eval fixture, task, run spec, schema,
+    scoring, optimizer, compiler, winner-selection, product, public benchmark,
+    or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py -v`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - do not route to the diagnose/recompile bridge-consumption implementation
+    slice before release gates clear or a findings-based correction is
+    accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- f6c66e4 Runtime Probe Request Planning Release Sync
 
 - Synced post-push continuity for

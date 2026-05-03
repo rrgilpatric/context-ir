@@ -40,19 +40,56 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed source/contract release authority is
-`f6c66e4 Add runtime probe request planning contract`. It supersedes the
-workspace-only post-`e8adbf8` runtime probe-request release-gate route for
-active control routing only. Live git refs and worktree state must still be
-verified from git during control intake.
+Current workspace-only accepted source/test tranche is the internal diagnostic
+runtime probe-request bridge. It supersedes the pushed post-`f6c66e4` North
+Star planning/control route for active control routing only. Live git refs and
+worktree state must still be verified from git during control intake.
 
-Repo-backed release truth verified during post-push continuity sync: branch
-`main`, `HEAD` and `origin/main` at
-`f6c66e4 Add runtime probe request planning contract`, clean worktree, and
-nothing staged.
+Repo-backed truth verified during this control acceptance: branch `main`,
+`HEAD` and `origin/main` at
+`38f3841 Sync runtime probe request release routing`, nothing staged, and
+expected dirty workspace files:
 
-Released internal runtime probe-request planning contract:
+- `src/context_ir/runtime_probe_requests.py`
+- `tests/test_runtime_probe_requests.py`
+- `PLAN.md`
+- `BUILDLOG.md`
 
+Accepted workspace-only implementation state:
+
+- `derive_diagnostic_runtime_probe_requests(program, diagnostic)` derives
+  existing planned runtime probe requests and filters them to grounded
+  diagnostic boundary units that still need runtime-backed support
+- The bridge preserves `derive_runtime_probe_requests(program)` planned-only
+  request semantics, deterministic ordering, attachable-only behavior, and
+  `planned_not_executed` status
+- It ignores statically proved diagnostic units, already runtime-supported
+  boundaries, frontier items without attachable unsupported probe requests, and
+  unsupported boundaries that are not attachable
+- It does not execute probes, attach runtime provenance, mutate
+  `SemanticProgram`, mutate `SemanticDiagnosticResult`, or widen analyzer,
+  tool facade, package-root API, MCP, eval, schema, scoring, optimizer,
+  compiler, winner-selection, product, public benchmark, or public-claim
+  surfaces
+- Focused validation passed: ruff check, ruff format check, strict mypy over
+  `src/`, focused pytest for `tests/test_runtime_probe_requests.py`, and
+  `git diff --check`
+- Acceptance status: first-pass
+
+This tranche is not release-unit-audit-cleared, not full-regression-cleared,
+not commit-gating-cleared, not staged, not locally committed, and not pushed.
+
+Latest pushed continuity authority is
+`38f3841 Sync runtime probe request release routing`. Latest pushed
+source/contract release authority is
+`f6c66e4 Add runtime probe request planning contract`.
+
+Prior pushed runtime probe-request planning contract:
+
+- Repo-backed release truth verified during post-push continuity sync: branch
+  `main`, `HEAD` and `origin/main` at
+  `f6c66e4 Add runtime probe request planning contract`, clean worktree, and
+  nothing staged.
 - `derive_runtime_probe_requests(program)` emits deterministic planned-only
   requests for already-attachable unsupported runtime boundaries
 - Request records include unsupported subject kind/id, source site, reason
@@ -73,11 +110,6 @@ Released internal runtime probe-request planning contract:
   - Gate 3 commit-gating passed and approved the exact four-file unit
 - Local commit creation and Ryan-authorized push completed at
   `f6c66e4 Add runtime probe request planning contract`
-
-Release-gate status is no-active-gate for
-`f6c66e4 Add runtime probe request planning contract`. Do not route `f6c66e4`
-back to docs review, release-unit audit, focused validation, full regression,
-commit-gating, staging, local commit creation, or push absent new findings.
 
 Prior pushed code/eval release authority is
 `546a4da Add reflective builtin branch eval probes`.
@@ -167,8 +199,10 @@ Release state for `546a4da`:
 
 Current route:
 
-- Route next to bounded post-`f6c66e4` North Star planning/control to choose
-  the next smallest meaningful capability slice
+- Route next to a combined read-only release gate over the exact four-file
+  diagnostic runtime probe-request bridge tranche
+- The gate must run release-unit audit, full regression, and commit-gating in
+  sequence with stop-on-first-finding discipline
 - Release-gate status is no-active-gate for
   `f6c66e4 Add runtime probe request planning contract`
 - Do not route `f6c66e4` back to docs review, release-unit audit, focused
@@ -182,9 +216,14 @@ Current route:
 - No active route remains to release-unit audit, focused validation, full
   regression, commit-gating, staging, local commit creation, or push for
   `f6c66e4` or `546a4da` absent new findings
+- Do not route to the diagnose/recompile bridge-consumption implementation
+  slice before this source/contract tranche clears release gates or a
+  findings-based correction is accepted
 - Push remains Ryan-gated for any future release
 
-Most recent pushed source/contract release authority is
+Latest pushed continuity authority is
+`38f3841 Sync runtime probe request release routing`. Latest pushed
+source/contract release authority is
 `f6c66e4 Add runtime probe request planning contract`. Prior pushed code/eval
 release authority is `546a4da Add reflective builtin branch eval probes`.
 Prior pushed continuity authority is
@@ -1196,9 +1235,19 @@ sequencing for `c1a12d7` absent new findings.
   findings
 - [x] Local commit creation and Ryan-authorized push for
   `f6c66e4 Add runtime probe request planning contract` completed
+- [x] Diagnostic runtime probe-request bridge implementation accepted
+  first-pass in workspace-only state
 
 ## What Is In Progress
 
+- The internal diagnostic runtime probe-request bridge tranche is accepted in
+  workspace and pending release gates as a four-file unit:
+  - `src/context_ir/runtime_probe_requests.py`
+  - `tests/test_runtime_probe_requests.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- No implementation slice, staging, local commit creation, or push is currently
+  in progress for this tranche.
 - The internal runtime probe-request planning tranche is completed and pushed
   at `f6c66e4`:
   - `src/context_ir/runtime_probe_requests.py`
@@ -1212,8 +1261,8 @@ sequencing for `c1a12d7` absent new findings.
   pushed at `546a4da`; release-gate status is no-active-gate.
 - The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
   completed and pushed at `d73cde4`; release-gate status is no-active-gate.
-- Active next route is bounded post-`f6c66e4` North Star planning/control, not
-  release gates for completed pushed work.
+- Active next route is a combined read-only release gate over the four-file
+  diagnostic runtime probe-request bridge tranche, not implementation.
 - Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
@@ -1909,9 +1958,21 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`f6c66e4` North Star planning/control to
-choose the next smallest meaningful capability slice after the pushed internal
-runtime probe-request planning contract.
+Immediate next route: combined read-only release gate over the exact four-file
+diagnostic runtime probe-request bridge tranche:
+
+- `src/context_ir/runtime_probe_requests.py`
+- `tests/test_runtime_probe_requests.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The release gate must run release-unit audit, then full regression, then
+commit-gating with stop-on-first-finding discipline. It must not edit files,
+stage, commit, push, or rewrite continuity.
+
+Do not route to the diagnose/recompile bridge-consumption implementation slice
+before this source/contract release unit clears release gates or a
+findings-based correction is accepted.
 
 Do not route `f6c66e4 Add runtime probe request planning contract` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,

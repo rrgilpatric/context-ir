@@ -9,6 +9,7 @@ import context_ir.runtime_acquisition as runtime_acquisition
 from context_ir.semantic_types import (
     CallSiteFact,
     MetaclassKeywordFact,
+    SemanticDiagnosticResult,
     SemanticProgram,
     SemanticSubjectKind,
     SourceSite,
@@ -228,6 +229,23 @@ def derive_runtime_probe_requests(
     return tuple(sorted(requests_by_site.values(), key=_request_sort_key))
 
 
+def derive_diagnostic_runtime_probe_requests(
+    program: SemanticProgram,
+    diagnostic: SemanticDiagnosticResult,
+) -> tuple[RuntimeProbeRequest, ...]:
+    """Derive planned probe requests for diagnostic boundaries needing runtime."""
+    requestable_subject_ids = {
+        boundary.unit_id
+        for boundary in diagnostic.boundary_classifications
+        if boundary.needs_runtime_backed_support
+    }
+    return tuple(
+        request
+        for request in derive_runtime_probe_requests(program)
+        if request.subject_id in requestable_subject_ids
+    )
+
+
 def _add_request(
     requests_by_site: dict[_SourceSiteIdentity, RuntimeProbeRequest],
     request: RuntimeProbeRequest,
@@ -381,5 +399,6 @@ __all__ = [
     "RuntimeProbeFamily",
     "RuntimeProbeRequest",
     "RuntimeProbeRequestStatus",
+    "derive_diagnostic_runtime_probe_requests",
     "derive_runtime_probe_requests",
 ]
