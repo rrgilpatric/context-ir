@@ -40,22 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current workspace-only accepted source/test tranche is the internal runtime
-probe-request planning contract. It supersedes the post-`e8adbf8` North Star
-planning route for active control routing only. Live git refs and worktree
-state must still be verified from git during control intake.
+Current pushed source/contract release authority is
+`f6c66e4 Add runtime probe request planning contract`. It supersedes the
+workspace-only post-`e8adbf8` runtime probe-request release-gate route for
+active control routing only. Live git refs and worktree state must still be
+verified from git during control intake.
 
-Repo-backed truth verified during this control acceptance: branch `main`,
-`HEAD` and `origin/main` at
-`e8adbf8 Sync reflective builtin release routing`, nothing staged, and
-expected dirty workspace files:
+Repo-backed release truth verified during post-push continuity sync: branch
+`main`, `HEAD` and `origin/main` at
+`f6c66e4 Add runtime probe request planning contract`, clean worktree, and
+nothing staged.
 
-- `src/context_ir/runtime_probe_requests.py`
-- `tests/test_runtime_probe_requests.py`
-- `PLAN.md`
-- `BUILDLOG.md`
-
-Accepted workspace-only implementation state:
+Released internal runtime probe-request planning contract:
 
 - `derive_runtime_probe_requests(program)` emits deterministic planned-only
   requests for already-attachable unsupported runtime boundaries
@@ -68,17 +64,23 @@ Accepted workspace-only implementation state:
 - The function does not execute probes, attach runtime provenance, mutate
   unsupported/frontier/provenance state, or widen public/package-root/MCP
   surfaces
-- Focused validation passed: ruff check, ruff format check, strict mypy over
-  `src/`, focused pytest for `tests/test_runtime_probe_requests.py`, and
-  `git diff --check`
-- Acceptance status: first-pass
+- Implementation review accepted the slice first-pass
+- Combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - focused validation passed, including targeted pytest reporting `2 passed`
+  - Gate 2 full regression passed with `pytest tests/ -v` reporting
+    `725 passed`
+  - Gate 3 commit-gating passed and approved the exact four-file unit
+- Local commit creation and Ryan-authorized push completed at
+  `f6c66e4 Add runtime probe request planning contract`
 
-This tranche is not release-unit-audit-cleared, not full-regression-cleared,
-not commit-gating-cleared, not staged, not locally committed, and not pushed.
+Release-gate status is no-active-gate for
+`f6c66e4 Add runtime probe request planning contract`. Do not route `f6c66e4`
+back to docs review, release-unit audit, focused validation, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
-Latest pushed continuity authority is
-`e8adbf8 Sync reflective builtin release routing`. Latest pushed code/eval
-release authority is `546a4da Add reflective builtin branch eval probes`.
+Prior pushed code/eval release authority is
+`546a4da Add reflective builtin branch eval probes`.
 
 The completed and pushed release unit is the full 16-file internal eval-only
 `REFLECTIVE_BUILTIN` tranche:
@@ -165,10 +167,13 @@ Release state for `546a4da`:
 
 Current route:
 
-- Route next to a combined read-only release gate over the exact four-file
-  runtime probe-request planning tranche
-- The gate must run release-unit audit, full regression, and commit-gating in
-  sequence with stop-on-first-finding discipline
+- Route next to bounded post-`f6c66e4` North Star planning/control to choose
+  the next smallest meaningful capability slice
+- Release-gate status is no-active-gate for
+  `f6c66e4 Add runtime probe request planning contract`
+- Do not route `f6c66e4` back to docs review, release-unit audit, focused
+  validation, full regression, commit-gating, staging, local commit creation,
+  or push absent new findings
 - Release-gate status is no-active-gate for
   `546a4da Add reflective builtin branch eval probes`
 - Do not route `546a4da` back to docs review, release-unit audit, focused
@@ -176,15 +181,15 @@ Current route:
   or push absent new findings
 - No active route remains to release-unit audit, focused validation, full
   regression, commit-gating, staging, local commit creation, or push for
-  `546a4da` absent new findings
-- Do not route to another implementation slice before this source/contract
-  release unit clears release gates or a findings-based correction is accepted
+  `f6c66e4` or `546a4da` absent new findings
 - Push remains Ryan-gated for any future release
 
-Most recent pushed code/eval release authority is
-`546a4da Add reflective builtin branch eval probes`. Prior pushed continuity
-authority is `5537a81 Sync original dynamic import release routing`. Prior
-code/eval release authority is
+Most recent pushed source/contract release authority is
+`f6c66e4 Add runtime probe request planning contract`. Prior pushed code/eval
+release authority is `546a4da Add reflective builtin branch eval probes`.
+Prior pushed continuity authority is
+`5537a81 Sync original dynamic import release routing`. Prior code/eval
+release authority is
 `d73cde4 Expand original dynamic import budget coverage`; earlier pushed
 code/eval release authority is
 `e2f3dcf Expand dir-zero and metaclass budget coverage`; prior pushed
@@ -1186,23 +1191,29 @@ sequencing for `c1a12d7` absent new findings.
   `546a4da Add reflective builtin branch eval probes` completed
 - [x] Runtime probe-request planning implementation accepted first-pass in
   workspace-only state
+- [x] Combined release gate for
+  `f6c66e4 Add runtime probe request planning contract` passed with no
+  findings
+- [x] Local commit creation and Ryan-authorized push for
+  `f6c66e4 Add runtime probe request planning contract` completed
 
 ## What Is In Progress
 
-- The internal runtime probe-request planning tranche is accepted in workspace
-  and pending release gates as a four-file unit:
+- The internal runtime probe-request planning tranche is completed and pushed
+  at `f6c66e4`:
   - `src/context_ir/runtime_probe_requests.py`
   - `tests/test_runtime_probe_requests.py`
   - `PLAN.md`
   - `BUILDLOG.md`
+- Release-gate status is no-active-gate for `f6c66e4`.
 - No implementation slice, staging, local commit creation, or push is currently
-  in progress for this tranche.
+  in progress.
 - The 16-file internal eval-only `REFLECTIVE_BUILTIN` tranche is completed and
   pushed at `546a4da`; release-gate status is no-active-gate.
 - The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
   completed and pushed at `d73cde4`; release-gate status is no-active-gate.
-- Active next route is a combined read-only release gate over the four-file
-  runtime probe-request planning tranche, not implementation.
+- Active next route is bounded post-`f6c66e4` North Star planning/control, not
+  release gates for completed pushed work.
 - Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
@@ -1898,20 +1909,13 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate over the exact four-file
-runtime probe-request planning tranche:
+Immediate next route: bounded post-`f6c66e4` North Star planning/control to
+choose the next smallest meaningful capability slice after the pushed internal
+runtime probe-request planning contract.
 
-- `src/context_ir/runtime_probe_requests.py`
-- `tests/test_runtime_probe_requests.py`
-- `PLAN.md`
-- `BUILDLOG.md`
-
-The release gate must run release-unit audit, then full regression, then
-commit-gating with stop-on-first-finding discipline. It must not edit files,
-stage, commit, push, or rewrite continuity.
-
-Do not route to another implementation slice before this source/contract
-release unit clears release gates or a findings-based correction is accepted.
+Do not route `f6c66e4 Add runtime probe request planning contract` back to docs
+review, release-unit audit, focused validation, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
 
 Do not route `546a4da Add reflective builtin branch eval probes` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,

@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- f6c66e4 Runtime Probe Request Planning Release Sync
+
+- Synced post-push continuity for
+  `f6c66e4 Add runtime probe request planning contract`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `f6c66e4 Add runtime probe request planning contract`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `f6c66e4`:
+  - latest pushed source/contract release authority is
+    `f6c66e4 Add runtime probe request planning contract`
+  - prior pushed code/eval release authority is
+    `546a4da Add reflective builtin branch eval probes`
+  - release-gate status is no-active-gate
+- Released tranche:
+  - four-file internal runtime probe-request planning contract:
+    `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - combined read-only release gate passed with no findings
+  - full regression passed with `pytest tests/ -v` reporting `725 passed`
+  - commit-gating passed and approved the exact four-file unit
+  - local commit creation and Ryan-authorized push completed
+- Routing decision:
+  - do not route `f6c66e4` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit creation,
+    or push absent new findings
+  - route next to bounded post-`f6c66e4` North Star planning/control to choose
+    the next smallest meaningful capability slice
+  - push remains Ryan-gated for any future release
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- Runtime Probe Request Planning Implementation Review
 
 - Reviewed the returned implementation slice for internal runtime probe-request
