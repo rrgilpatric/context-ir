@@ -2,6 +2,57 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- EXEC_OR_EVAL Budget-pressure Docs Sync
+
+- Completed docs/evidence/continuity reconciliation for the accepted
+  workspace-only internal eval-only `EXEC_OR_EVAL` budget-pressure tranche.
+- Repo-backed truth verified for this reconciliation:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `9fffc5e Sync dynamic import release routing`
+  - nothing staged
+  - expected dirty implementation files at intake were the two run specs and
+    two tests for the `EXEC_OR_EVAL` budget-pressure tranche
+- Accepted workspace-only implementation state recorded:
+  - `oracle_signal_eval_probe_matrix` expanded from `[220]` to `[220, 100]`
+  - `oracle_signal_exec_probe_matrix` expanded from `[220]` to `[220, 100]`
+  - each matrix is 1 task x 2 budgets x 3 providers at `[220, 100]`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixtures, tasks, queries, source-shape/hash/proof boundaries, and runtime
+    payloads are unchanged
+  - eval payload remains `evaluation_outcome=returned_value` and
+    `result_type=builtins.str`
+  - exec payload remains `execution_outcome=completed` and
+    `statement_kind=pass`
+  - baseline providers remain empty at both budgets
+  - at both budgets, `context_ir` selects the same unsupported/opaque boundary
+    unit with additive runtime provenance
+  - no generated-code dependency edge or selected symbol is introduced
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- Documentation/evidence reconciliation:
+  - `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, and `README.md` use
+    state-neutral release-facing wording for the two-matrix `[220, 100]`
+    provider/budget shape, unchanged payload/proof boundaries, empty baselines,
+    same selected unsupported/opaque unit at both budgets, additive runtime
+    provenance, no generated-code dependency edge or selected symbol, and the
+    preserved public comparative claim boundary
+  - `PLAN.md` and `BUILDLOG.md` record the accepted workspace-only
+    implementation first-pass and the next route
+- Scope guard:
+  - this reconciliation edits docs/continuity only
+  - no source files, eval fixtures, task JSON, run specs, tests, staging,
+    commits, or push were modified or performed by this docs-sync slice
+- Routing decision:
+  - route next to findings-first control review of this docs/evidence/
+    continuity reconciliation only
+  - do not pre-route to release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push
+  - push remains Ryan-gated and is not the active next route
+- Acceptance status: implementation accepted workspace-only first-pass; docs/
+  evidence/continuity reconciliation awaiting findings-first control review
+
 ## 2026-05-03 -- c2c1898 Dynamic Import Sibling Budget-pressure Release Sync
 
 - Supersedes earlier current routing text for the accepted workspace-only

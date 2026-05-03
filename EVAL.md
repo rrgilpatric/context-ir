@@ -615,7 +615,7 @@ Proven by current unit and integration tests:
   comparative claims remain bounded to the existing quad matrix.
 - The current internal eval-only `EXEC_OR_EVAL` /
   `eval(source)` evidence covers only `oracle_signal_eval_probe_matrix`: 1
-  task x 1 budget x 3 providers at budget 220, against providers
+  task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers
   `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. The
   runtime payload/proof boundary is `evaluation_outcome=returned_value`,
   `source_shape=literal_expression`, valid `source_sha256`, and non-empty
@@ -623,14 +623,17 @@ Proven by current unit and integration tests:
   additive summary only. Runtime provenance attaches only to the preserved
   `EXEC_OR_EVAL` unsupported finding for `eval(source)`. Primary selector and
   selected-unit truth remain `unsupported/opaque`, additive runtime provenance
-  remains separate from primary truth, and public comparative claims remain
-  bounded to the existing quad matrix. It does not add generalized eval
-  support, exec support, `eval(source, globals)` support,
+  remains separate from primary truth, baseline providers remain empty at both
+  budgets, and at both budgets `context_ir` selects the same
+  unsupported/opaque boundary unit with additive runtime provenance. No
+  generated-code dependency edge or selected symbol is introduced, and public
+  comparative claims remain bounded to the existing quad matrix. It does not
+  add generalized eval support, exec support, `eval(source, globals)` support,
   `eval(source, globals, locals)` support, generated-code dependency modeling,
   or namespace mutation modeling.
 - The current internal eval-only `EXEC_OR_EVAL` /
   `exec(source)` evidence covers only `oracle_signal_exec_probe_matrix`: 1
-  task x 1 budget x 3 providers at budget 220, against providers
+  task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers
   `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. The
   fixture/call boundary is `source = "pass"` and exactly `exec(source)`; the
   executed source parses as exactly one `ast.Pass`. This evidence does not
@@ -643,10 +646,12 @@ Proven by current unit and integration tests:
   summary only. Runtime provenance attaches only to the preserved
   `EXEC_OR_EVAL` unsupported finding for `exec(source)`. Primary selector and
   selected-unit truth remain `unsupported/opaque`, additive runtime provenance
-  remains separate from primary truth, no dependency edge or symbol is created
-  from executed source, no namespace mutation modeling is added, no
-  generated-code dependency modeling is added, and public comparative claims
-  remain bounded to the existing quad matrix.
+  remains separate from primary truth, baseline providers remain empty at both
+  budgets, and at both budgets `context_ir` selects the same
+  unsupported/opaque boundary unit with additive runtime provenance. No
+  generated-code dependency edge or selected symbol is introduced, no namespace
+  mutation modeling is added, and public comparative claims remain bounded to
+  the existing quad matrix.
 - In those runtime-backed pilots, the dynamic selector, reflective selector,
   runtime-mutation surface, metaclass-behavior keyword site, or preserved
   `EXEC_OR_EVAL` unsupported finding for `eval(source)` or `exec(source)`,
@@ -985,22 +990,27 @@ Architecturally intended but not yet evaluated:
   comparative claims remain bounded to the existing quad matrix.
 - Narrow `eval(source)` provider/budget evidence: the current
   internal eval-only `EXEC_OR_EVAL` evidence covers only
-  `oracle_signal_eval_probe_matrix`: 1 task x 1 budget x 3 providers at budget
-  220, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`. The runtime payload/proof boundary is
+  `oracle_signal_eval_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. The runtime
+  payload/proof boundary is
   `evaluation_outcome=returned_value`, `source_shape=literal_expression`,
   valid `source_sha256`, and non-empty `durable_payload_reference`; optional
   `result_type=builtins.str` is additive summary only. Runtime provenance
   attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
   `eval(source)`. Primary selector and selected-unit truth remain
   `unsupported/opaque`, additive runtime provenance remains separate from
-  primary truth, and public comparative claims remain bounded to the existing
-  quad matrix.
+  primary truth, baseline providers remain empty at both budgets, and at both
+  budgets `context_ir` selects the same unsupported/opaque boundary unit with
+  additive runtime provenance. No generated-code dependency edge or selected
+  symbol is introduced, and public comparative claims remain bounded to the
+  existing quad matrix.
 - Narrow `exec(source)` provider/budget evidence: the current
   internal eval-only `EXEC_OR_EVAL` evidence covers only
-  `oracle_signal_exec_probe_matrix`: 1 task x 1 budget x 3 providers at budget
-  220, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`. The fixture/call boundary is
+  `oracle_signal_exec_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. The fixture/call
+  boundary is
   `source = "pass"` and exactly `exec(source)`; the executed source parses as
   exactly one `ast.Pass`. This evidence does not cover `exec("pass")`,
   `exec(source + suffix)`, `exec(source=source)`, `exec(source, globals)`,
@@ -1011,10 +1021,12 @@ Architecturally intended but not yet evaluated:
   additive summary only. Runtime provenance attaches only to the preserved
   `EXEC_OR_EVAL` unsupported finding for `exec(source)`. Primary selector and
   selected-unit truth remain `unsupported/opaque`, additive runtime provenance
-  remains separate from primary truth, no dependency edge or symbol is created
-  from executed source, no namespace mutation modeling is added, no
-  generated-code dependency modeling is added, and public comparative claims
-  remain bounded to the existing quad matrix.
+  remains separate from primary truth, baseline providers remain empty at both
+  budgets, and at both budgets `context_ir` selects the same
+  unsupported/opaque boundary unit with additive runtime provenance. No
+  generated-code dependency edge or selected symbol is introduced, no namespace
+  mutation modeling is added, and public comparative claims remain bounded to
+  the existing quad matrix.
 - Historical prior surface: the accepted pair/triple signal matrices remain
   useful historical internal evidence, but they are not the current top
   surface.
@@ -1146,24 +1158,32 @@ The following claims are allowed because current repo artifacts support them:
   attachment is limited to the preserved full `metaclass=...` keyword-site
   unsupported construct. The current internal eval-only
   `EXEC_OR_EVAL` / `eval(source)` evidence covers only
-  `oracle_signal_eval_probe_matrix`: 1 task x 1 budget x 3 providers at budget
-  220, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`, with runtime payload/proof boundary
+  `oracle_signal_eval_probe_matrix`: 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`, with runtime
+  payload/proof boundary
   `evaluation_outcome=returned_value`, `source_shape=literal_expression`,
   valid `source_sha256`, and non-empty `durable_payload_reference`; optional
   `result_type=builtins.str` is additive summary only, and runtime provenance
   attaches only to the preserved `EXEC_OR_EVAL` unsupported finding for
-  `eval(source)`. The current internal eval-only `EXEC_OR_EVAL` /
+  `eval(source)`. Baseline providers remain empty at both budgets; at both
+  budgets `context_ir` selects the same unsupported/opaque boundary unit with
+  additive runtime provenance; and no generated-code dependency edge or
+  selected symbol is introduced. The current internal eval-only `EXEC_OR_EVAL` /
   `exec(source)` evidence covers only `oracle_signal_exec_probe_matrix`: 1
-  task x 1 budget x 3 providers at budget 220, against providers
+  task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers
   `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with
-  fixture/call boundary `source = "pass"` and exactly `exec(source)`,
-  executed source parsing as exactly one `ast.Pass`, runtime proof boundary
+  fixture/call boundary `source = "pass"` and exactly `exec(source)`, executed
+  source parsing as exactly one `ast.Pass`, runtime proof boundary
   `execution_outcome=completed`, `source_shape=literal_statement`, valid
   `source_sha256` for exact `"pass"`, and non-empty
   `durable_payload_reference`; optional `statement_kind=pass` is additive
   summary only, and runtime provenance attaches only to the preserved
-  `EXEC_OR_EVAL` unsupported finding for `exec(source)`. The current internal
+  `EXEC_OR_EVAL` unsupported finding for `exec(source)`. Baseline providers
+  remain empty at both budgets; at both budgets `context_ir` selects the same
+  unsupported/opaque boundary unit with additive runtime provenance; and no
+  generated-code dependency edge or selected symbol is introduced. The current
+  internal
   eval-only `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)`
   sibling evidence covers only
   `oracle_signal_dynamic_import_root_probe_matrix`: 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
