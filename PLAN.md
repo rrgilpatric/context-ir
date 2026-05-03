@@ -42,10 +42,10 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-truth verified for this corrected `DYNAMIC_IMPORT` original budget-pressure
-release-unit continuity state is branch `main`; `HEAD` and `origin/main` are
-at `8aa38d5 Sync dir-zero metaclass release routing`; nothing is staged. The
-current workspace release unit is the full nine-file tranche:
+truth verified from live git for this post-push continuity state is branch
+`main`; `HEAD` and `origin/main` are at
+`d73cde4 Expand original dynamic import budget coverage`; nothing is staged.
+The completed and pushed release unit is the full nine-file tranche:
 
 - `ARCHITECTURE.md`
 - `BUILDLOG.md`
@@ -60,12 +60,12 @@ current workspace release unit is the full nine-file tranche:
 Live git refs and worktree state remain authoritative for future control
 intake.
 
-Current active release state is the accepted workspace-only internal eval-only
+Current release state is the completed and pushed internal eval-only
 `DYNAMIC_IMPORT` original probe budget-pressure expansion plus corrected
-docs/evidence/continuity and helper-test reconciliation. The active release
-unit is the full nine-file tranche listed above.
+docs/evidence/continuity and helper-test reconciliation. The release unit is
+the full nine-file tranche listed above.
 
-Accepted workspace-only implementation truth:
+Accepted implementation truth:
 
 - `oracle_signal_dynamic_import_probe_matrix` is exactly 1 task x 3 budgets x
   3 providers
@@ -91,12 +91,12 @@ Accepted workspace-only implementation truth:
   `plugins/weather.py` unit is introduced
 - No public/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
-- Implementation acceptance status: first-pass workspace-only
+- Implementation acceptance status: first-pass
 
 Release-unit reconciliation state:
 
 - Docs/evidence/continuity reconciliation needed one correction and is now
-  accepted for forward release-gate routing
+  accepted
 - Full-regression helper correction in `tests/test_eval_runs.py` was accepted
   first-pass
 - Documentation and continuity files in this release unit are
@@ -105,26 +105,33 @@ Release-unit reconciliation state:
 - Release-facing docs remain state-neutral
 - Public comparative claims remain bounded to the existing public claim
   boundary
-- No release-unit audit, full regression, commit-gating, staging, local commit
-  creation, or push has been run or cleared for this nine-file tranche
+- Release-unit audit completed
+- Focused validation completed
+- Full regression completed with `pytest tests/ -v` reporting `710 passed`
+- Commit-gating completed
+- Local commit creation completed at
+  `d73cde4 Expand original dynamic import budget coverage`
+- Ryan-authorized push completed at
+  `d73cde4 Expand original dynamic import budget coverage`
 
 Current route:
 
-- Route next to the corrected combined read-only release gate over the full
-  nine-file tranche listed above
-- The corrected combined read-only release gate must run release-unit audit,
-  then full regression, then commit-gating in sequence with
-  stop-on-first-finding discipline, and must not edit files, stage, commit, or
-  push
-- Do not route backward to docs/evidence/continuity control review absent new
-  findings
-- Do not pre-record release-unit audit, full regression, commit-gating,
-  staging, local commit creation, or push as cleared
-- Staging, local commit creation, and push remain blocked; push remains
-  Ryan-gated
+- Route next to bounded post-d73cde4 North Star planning/control, not
+  implementation
+- Release-gate status is no-active-gate for
+  `d73cde4 Expand original dynamic import budget coverage`
+- Do not route `d73cde4` back to docs review, release-unit audit, focused
+  validation, full regression, commit-gating, staging, local commit creation,
+  or push absent new findings
+- No active route remains to release-unit audit, focused validation, full
+  regression, commit-gating, staging, local commit creation, or push for
+  `d73cde4` absent new findings
+- Push remains Ryan-gated for any future release
 
-Most recent pushed code/eval release authority remains
-`e2f3dcf Expand dir-zero and metaclass budget coverage`; most recent pushed
+Most recent pushed code/eval release authority is
+`d73cde4 Expand original dynamic import budget coverage`. Prior pushed
+code/eval release authority is
+`e2f3dcf Expand dir-zero and metaclass budget coverage`; prior pushed
 continuity authority is `8aa38d5 Sync dir-zero metaclass release routing`.
 There is no active route back to release-unit audit, full regression,
 commit-gating, staging, local commit creation, or push for `e2f3dcf` absent new
@@ -1103,21 +1110,30 @@ sequencing for `c1a12d7` absent new findings.
   `e2f3dcf Expand dir-zero and metaclass budget coverage` passed
 - [x] Local commit creation and Ryan-authorized push for
   `e2f3dcf Expand dir-zero and metaclass budget coverage` completed
+- [x] Release-unit audit for
+  `d73cde4 Expand original dynamic import budget coverage` completed
+- [x] Focused validation for
+  `d73cde4 Expand original dynamic import budget coverage` completed
+- [x] Full regression gate for
+  `d73cde4 Expand original dynamic import budget coverage` passed with
+  `pytest tests/ -v` reporting `710 passed`
+- [x] Commit-gating review for
+  `d73cde4 Expand original dynamic import budget coverage` completed
+- [x] Local commit creation and Ryan-authorized push for
+  `d73cde4 Expand original dynamic import budget coverage` completed
 
 ## What Is In Progress
 
 - No implementation slice, staging, local commit creation, or push is currently
   in progress or authorized.
-- No release-unit audit, full regression, or commit-gating gate has been run or
-  cleared for the current `DYNAMIC_IMPORT` original budget-pressure release
-  unit.
-- The current nine-file tranche is the accepted workspace-only
-  `DYNAMIC_IMPORT` original budget-pressure implementation plus corrected
-  docs/evidence/continuity and helper-test reconciliation. The tranche files
-  are the nine files named in the canonical active release-state block above.
-- Active next route is the corrected combined read-only release gate over the
-  full nine-file tranche. Staging, local commit creation, and push remain
-  blocked; push remains Ryan-gated.
+- No release-unit audit, focused validation, full regression, commit-gating,
+  staging, local commit creation, or push gate is active for
+  `d73cde4 Expand original dynamic import budget coverage`.
+- The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
+  completed and pushed at `d73cde4`; release-gate status is no-active-gate.
+- Active next route is bounded post-d73cde4 North Star planning/control, not
+  implementation.
+- Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
   historical pushed authority, not the active route. Do not route `e2f3dcf`
@@ -1812,30 +1828,34 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: corrected combined read-only release gate over the full
-nine-file `DYNAMIC_IMPORT` original budget-pressure tranche.
+Immediate next route: bounded post-d73cde4 North Star planning/control, not
+implementation.
+
+`d73cde4 Expand original dynamic import budget coverage` is complete and
+pushed, with release status no-active-gate. It is the current pushed code/eval
+release authority. Do not route `d73cde4` back to docs review, release-unit
+audit, focused validation, full regression, commit-gating, staging, local
+commit creation, or push absent new findings.
 
 `e2f3dcf Expand dir-zero and metaclass budget coverage` is complete and pushed,
-with release status no-active-gate. It is historical pushed authority, not the
-active route. Do not route `e2f3dcf` back to docs review, release-unit audit,
-full regression, commit-gating, staging, local commit creation, or push absent
-new findings.
+with release status no-active-gate. It is the prior pushed code/eval authority,
+not the active route. Do not route `e2f3dcf` back to docs review,
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
-The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
-accepted workspace-only state for implementation, corrected
-docs/evidence/continuity, and the `tests/test_eval_runs.py` helper correction.
-The corrected combined read-only release gate has not run or cleared. Staging,
-local commit creation, and push remain blocked; push remains Ryan-gated.
-
-`642b6f9 Sync exec eval release routing` is the prior pushed continuity
-authority. `21f2dc5 Expand exec and eval budget coverage` is the prior pushed
-code/eval authority and is no-active-gate. `9fffc5e Sync dynamic import release
-routing`, `c2c1898 Expand dynamic import sibling eval budget coverage`,
-`98edc4a Codify release gate continuity controls`, `b8e126e Expand runtime
-mutation eval budget coverage`, and `ad9db8d Expand dir eval budget coverage`
-remain older pushed authorities and are no-active-gate. Do not reopen
-`e2f3dcf`, `642b6f9`, `21f2dc5`, `c2c1898`, `9fffc5e`, `98edc4a`, `b8e126e`,
-`ad9db8d`, or earlier pushed releases absent new findings. Do not widen
+`8aa38d5 Sync dir-zero metaclass release routing` is the prior pushed
+continuity authority. `642b6f9 Sync exec eval release routing` is the earlier
+pushed continuity authority. `21f2dc5 Expand exec and eval budget coverage` is
+the earlier pushed code/eval authority and is no-active-gate.
+`9fffc5e Sync dynamic import release routing`,
+`c2c1898 Expand dynamic import sibling eval budget coverage`,
+`98edc4a Codify release gate continuity controls`,
+`b8e126e Expand runtime mutation eval budget coverage`, and
+`ad9db8d Expand dir eval budget coverage` remain older pushed authorities and
+are no-active-gate. Do not reopen `d73cde4`, `e2f3dcf`, `8aa38d5`, `642b6f9`,
+`21f2dc5`, `c2c1898`, `9fffc5e`, `98edc4a`, `b8e126e`, `ad9db8d`, or earlier
+pushed releases absent new findings. Push remains Ryan-gated for any future
+release. Do not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/
 winner-selection/product/public benchmark scope without a separately
 authorized planning decision.
@@ -2572,6 +2592,10 @@ not pending release gates.
 
 ## What Should Not Be Reopened
 
+- The accepted pushed `d73cde4` `DYNAMIC_IMPORT` original budget-pressure
+  release unit, or any docs review, release-unit audit, focused validation,
+  full regression, commit-gating, staging, local commit creation, or push route
+  for it, unless a later findings-based review proves a concrete defect
 - The accepted pushed `e2f3dcf` zero-argument `dir()` plus
   `METACLASS_BEHAVIOR` budget-pressure release unit, or any docs review,
   release-unit audit, full regression, commit-gating, staging, local commit

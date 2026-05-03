@@ -2,8 +2,62 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- d73cde4 Original Dynamic Import Release Sync
+
+- Synced post-push continuity for
+  `d73cde4 Expand original dynamic import budget coverage`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d73cde4 Expand original dynamic import budget coverage`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `d73cde4`:
+  - latest pushed code/eval release authority is
+    `d73cde4 Expand original dynamic import budget coverage`
+  - prior pushed code/eval authority is
+    `e2f3dcf Expand dir-zero and metaclass budget coverage`
+  - prior pushed continuity authority is
+    `8aa38d5 Sync dir-zero metaclass release routing`
+  - release-gate status is no-active-gate
+- Completed gates for `d73cde4`:
+  - release-unit audit completed
+  - focused validation completed
+  - full regression passed with `710 passed`
+  - commit-gating completed
+  - local commit creation completed at
+    `d73cde4 Expand original dynamic import budget coverage`
+  - Ryan-authorized push completed at
+    `d73cde4 Expand original dynamic import budget coverage`
+- Routing decision:
+  - remove the active route back to the corrected combined read-only release
+    gate for the `DYNAMIC_IMPORT` original budget-pressure tranche
+  - route next to bounded post-d73cde4 North Star planning/control, not
+    implementation
+  - do not route `d73cde4` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit
+    creation, or push absent new findings
+  - no active route remains to release-unit audit, focused validation, full
+    regression, commit-gating, staging, local commit creation, or push for
+    `d73cde4` absent new findings
+  - push remains Ryan-gated for any future release
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    API/MCP/package exports, schema, scoring, optimizer, compiler,
+    winner-selection, product/public benchmark surfaces, regression,
+    release-unit audit, commit-gating, staging, local commit creation, or push
+    were modified or performed
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- Dynamic Import Original Budget-pressure Corrected Release Routing
 
+- Superseded by
+  `d73cde4 Expand original dynamic import budget coverage` post-push release
+  sync above; the release-gate routing in this entry is historical and is not
+  the active route.
 - Corrected stale continuity for the accepted workspace-only internal
   eval-only `DYNAMIC_IMPORT` original probe budget-pressure release unit.
 - Repo-backed truth verified for this correction:
