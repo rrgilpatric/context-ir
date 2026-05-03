@@ -2,6 +2,70 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- c2c1898 Dynamic Import Sibling Budget-pressure Release Sync
+
+- Supersedes earlier current routing text for the accepted workspace-only
+  internal eval-only `DYNAMIC_IMPORT` sibling budget-pressure tranche.
+- Repo-backed release truth verified during this post-push continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `c2c1898 Expand dynamic import sibling eval budget coverage`
+  - no files were staged at intake before this docs-only continuity edit
+  - latest pushed code/eval release authority is
+    `c2c1898 Expand dynamic import sibling eval budget coverage`
+  - latest pushed process-doc authority remains
+    `98edc4a Codify release gate continuity controls`
+  - prior pushed code/eval release authority remains
+    `b8e126e Expand runtime mutation eval budget coverage`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `c2c1898`:
+  - implementation accepted after 1 correction
+  - docs/evidence/continuity review completed after 1 correction
+  - combined read-only release gate completed with release-unit audit, full
+    regression, and commit-gating results reported explicitly
+  - full regression cleared with `709 passed`
+  - commit-gating completed
+  - local commit creation completed at `c2c1898`
+  - Ryan-authorized push completed at `c2c1898`
+  - release status is no-active-gate
+- Released tranche:
+  - seven `DYNAMIC_IMPORT` sibling matrices expanded from `[220]` to
+    `[220, 100]`
+  - each matrix is 1 task x 2 budgets x 3 providers
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture, task, query, and runtime payload boundaries are unchanged
+  - runtime payload remains `imported_module=plugins.weather`
+  - baseline providers remain empty at both budgets
+  - at budget `220`, `context_ir` selects the unsupported/opaque boundary unit
+    with additive runtime provenance
+  - at budget `100`, `context_ir` preserves the resolved
+    `unsupported/opaque` selector and additive runtime provenance, but does not
+    select the unsupported boundary unit
+  - no `plugins/weather.py` selected unit, dependency edge, or selected symbol
+    is introduced
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- Routing decision:
+  - route next to bounded post-c2c1898 North Star planning/control
+  - do not route `c2c1898` back to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - no active route remains to docs review, audit, regression, commit-gating,
+    staging, local commit creation, or push for `c2c1898` absent new findings
+  - preserve `98edc4a Codify release gate continuity controls` as the pushed
+    process-doc authority
+  - preserve `b8e126e Expand runtime mutation eval budget coverage` as the
+    prior pushed code/eval authority
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, audit,
+    regression, commit-gating, staging, local commit creation, or push were
+    performed
+- Acceptance status: first-pass
+
 ## 2026-05-02 -- DYNAMIC_IMPORT Sibling Budget-pressure Docs Sync
 
 - Completed docs/evidence/continuity reconciliation for the accepted

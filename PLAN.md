@@ -42,26 +42,31 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-release truth verified for this docs/evidence/continuity reconciliation is
-branch `main`; `HEAD` and `origin/main` are at
-`98edc4a Codify release gate continuity controls`. No files were staged at
-intake. The worktree contained the accepted workspace-only `DYNAMIC_IMPORT`
-sibling budget-pressure implementation across seven run specs and seven tests
-before this docs/evidence/continuity edit. Live git refs and worktree state
-remain authoritative for future control intake.
+release truth verified for this post-push continuity sync is branch `main`;
+`HEAD` and `origin/main` are at
+`c2c1898 Expand dynamic import sibling eval budget coverage`. No files were
+staged at intake before this docs-only continuity edit. Live git refs and
+worktree state remain authoritative for future control intake.
 
-Current active release state is docs/evidence/continuity reconciliation in
-progress for the accepted workspace-only internal eval-only `DYNAMIC_IMPORT`
-sibling budget-pressure tranche. The implementation tranche was accepted after
-1 correction. Latest pushed code/eval release authority remains
-`b8e126e Expand runtime mutation eval budget coverage`; latest pushed
-process-doc authority is
-`98edc4a Codify release gate continuity controls`.
+Current release status is no-active-gate for
+`c2c1898 Expand dynamic import sibling eval budget coverage`. The completed
+and pushed internal eval-only `DYNAMIC_IMPORT` sibling budget-pressure release
+at `c2c1898` is the latest pushed code/eval release authority. Latest pushed
+process-doc authority remains
+`98edc4a Codify release gate continuity controls`. Prior pushed code/eval
+authority remains `b8e126e Expand runtime mutation eval budget coverage`.
 
-The accepted workspace-only `DYNAMIC_IMPORT` sibling budget-pressure
-implementation is:
+The completed and pushed `DYNAMIC_IMPORT` sibling budget-pressure release at
+`c2c1898` is:
 
-- Implementation files:
+- Release-facing/control-state docs:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+- Eval assets and tests:
   - `evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json`
   - `evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json`
   - `evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json`
@@ -100,23 +105,25 @@ implementation is:
 - No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
 
-Docs/evidence/continuity reconciliation scope for this lane is limited to:
+Release state for `c2c1898`: implementation was accepted after 1 correction;
+docs/evidence/continuity review completed after 1 correction; the combined
+read-only release gate completed with release-unit audit, full regression, and
+commit-gating results reported explicitly; full regression cleared with
+`pytest tests/ -v` reporting `709 passed`; commit-gating completed; local
+commit creation completed at `c2c1898`; and Ryan-authorized push completed at
+`c2c1898`.
 
-- `ARCHITECTURE.md`
-- `EVAL.md`
-- `PUBLIC_CLAIMS.md`
-- `README.md`
-- `PLAN.md`
-- `BUILDLOG.md`
-
-Routing decision: route next to findings-first control review of this
-docs/evidence/continuity reconciliation only. Do not pre-route to release-unit
-audit, full regression, commit-gating, staging, local commit creation, or push.
-Push remains Ryan-gated and is not the active next route.
+Routing decision: route next to bounded post-c2c1898 North Star
+planning/control. Do not route `c2c1898` back to docs review, release-unit
+audit, full regression, commit-gating, staging, local commit creation, or push
+absent new findings. No active route remains to docs review, audit,
+regression, commit-gating, staging, local commit creation, or push for
+`c2c1898` absent new findings.
 
 The completed and pushed internal eval-only `RUNTIME_MUTATION` /
 `delattr(obj, name)` and `setattr(obj, name, value)` budget-pressure expansion
-release at `b8e126e Expand runtime mutation eval budget coverage` is:
+release at `b8e126e Expand runtime mutation eval budget coverage` remains the
+prior pushed code/eval authority and is:
 
 - Release unit:
   - `ARCHITECTURE.md`
@@ -158,17 +165,18 @@ review, release-unit audit, full regression, commit-gating, staging, local
 commit creation, or push for this tranche absent new findings. No active route
 remains to docs review, release-unit audit, full regression, commit-gating,
 staging, local commit creation, or push for `b8e126e` absent new findings.
-Do not reopen `b8e126e`, `125f088`, `ad9db8d`, or earlier pushed releases
-absent new findings.
+Do not reopen `c2c1898`, `b8e126e`, `98edc4a`, `ad9db8d`, or earlier pushed
+releases absent new findings.
 
 The completed and pushed process-doc release at
-`125f088 Codify tranche batching discipline` remains the pushed process-doc
-authority. It codified tranche batching / throughput discipline for low-risk
-accumulated release units while preserving sequential implementation slices,
-findings-first gates, Ryan authorization requirements, and push discipline.
-Release-gate status is no-active-gate for `125f088`: do not route it back to
-release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push absent new findings.
+`98edc4a Codify release gate continuity controls` remains the pushed
+process-doc authority. It preserves the tranche batching / throughput
+discipline codified by `125f088` and adds release gate continuity controls
+while preserving sequential implementation slices, findings-first gates, Ryan
+authorization requirements, and push discipline. Release-gate status is
+no-active-gate for `98edc4a`: do not route it back to release-unit audit, full
+regression, commit-gating, staging, local commit creation, or push absent new
+findings.
 
 The completed and pushed internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)`
 budget-pressure expansion release at
@@ -1032,21 +1040,32 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Local commit creation and Ryan-authorized push for the
   `RUNTIME_MUTATION` delattr/setattr budget-pressure release unit completed at
   `b8e126e`
+- [x] Internal eval-only `DYNAMIC_IMPORT` sibling budget-pressure expansion
+  across seven run specs and seven tests accepted after 1 correction as
+  workspace-only state
+- [x] Docs/evidence/continuity review for the `DYNAMIC_IMPORT` sibling
+  budget-pressure release unit completed after 1 correction
+- [x] Combined read-only release gate for the `DYNAMIC_IMPORT` sibling
+  budget-pressure release unit completed
+- [x] Full regression gate for the `DYNAMIC_IMPORT` sibling budget-pressure
+  release unit cleared with `pytest tests/ -v` reporting `709 passed`
+- [x] Commit-gating review for the `DYNAMIC_IMPORT` sibling budget-pressure
+  release unit completed
+- [x] Local commit creation and Ryan-authorized push for
+  `c2c1898 Expand dynamic import sibling eval budget coverage` completed
 
 ## What Is In Progress
 
-- No implementation slice is currently in progress or authorized.
-- Current active release state is docs/evidence/continuity reconciliation
-  pending findings-first control review for the accepted workspace-only
-  `DYNAMIC_IMPORT` sibling budget-pressure tranche. The current 20-file tranche
-  is not release-unit-audit-cleared, not full-regression-cleared, not
-  commit-gating-cleared, not staged, not committed, and not pushed.
+- No implementation slice or release gate is currently in progress or
+  authorized.
+- Current release status is no-active-gate for
+  `c2c1898 Expand dynamic import sibling eval budget coverage`.
+- Active next route is bounded post-c2c1898 North Star planning/control, not
+  docs review, release-unit audit, full regression, commit-gating, staging,
+  local commit creation, or push for `c2c1898` absent new findings.
 - Fresh control lanes should use the canonical active release-state block above
   for current routing, and should treat older conflicting routing notes as
   historical when superseded by that block or by newer BUILDLOG entries.
-- Active next route is findings-first control review of the
-  docs/evidence/continuity reconciliation. Do not route to post-`b8e126e`
-  North Star planning/control while this current 20-file tranche is active.
 
 ## Historical Superseded Routing Notes
 
@@ -1733,31 +1752,21 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: findings-first control review of the
-docs/evidence/continuity reconciliation for the accepted workspace-only
-internal eval-only `DYNAMIC_IMPORT` sibling budget-pressure tranche.
+Immediate next route: bounded post-c2c1898 North Star planning/control.
 
-The current 20-file tranche remains active in the workspace. It is not
-release-unit-audit-cleared, not full-regression-cleared, not
-commit-gating-cleared, not staged, not committed, and not pushed. The control
-review must decide whether the docs/evidence/continuity reconciliation is
-accepted, rejected with findings, or held for Ryan before any later release
-gate is routed.
+`c2c1898 Expand dynamic import sibling eval budget coverage` is complete and
+pushed, with release status no-active-gate. Do not route `c2c1898` back to
+docs review, release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push absent new findings.
 
-Do not route to post-`b8e126e` North Star planning/control while this current
-20-file tranche is active. Do not pre-route to release-unit audit, full
-regression, commit-gating, staging, local commit creation, or push before the
-docs/evidence/continuity control review is accepted. Push remains Ryan-gated
-and is not the active next route.
-
-`b8e126e Expand runtime mutation eval budget coverage` remains complete and
-pushed, with no active release gate absent new findings. `125f088 Codify
-tranche batching discipline` remains the pushed process-doc authority and is
-no-active-gate. `ad9db8d Expand dir eval budget coverage` remains the prior
-pushed code/eval authority and is no-active-gate. Do not reopen `b8e126e`,
-`125f088`, `ad9db8d`, or earlier pushed releases absent new findings. Do not
-widen public/API/MCP/package-export/schema/scoring/optimizer/compiler/
-winner-selection/product/public benchmark scope without a separately
+`98edc4a Codify release gate continuity controls` remains the pushed
+process-doc authority and is no-active-gate. `b8e126e Expand runtime mutation
+eval budget coverage` remains the prior pushed code/eval authority and is
+no-active-gate. `ad9db8d Expand dir eval budget coverage` remains an earlier
+pushed code/eval authority and is no-active-gate. Do not reopen `c2c1898`,
+`98edc4a`, `b8e126e`, `ad9db8d`, or earlier pushed releases absent new
+findings. Do not widen public/API/MCP/package-export/schema/scoring/optimizer/
+compiler/winner-selection/product/public benchmark scope without a separately
 authorized planning decision.
 
 Completed post-5bd0616 planning decision:
