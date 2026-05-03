@@ -40,6 +40,92 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+Current accumulated internal eval-only `REFLECTIVE_BUILTIN` tranche supersedes
+the older post-`5537a81` planning route for active control routing only. Live
+git refs and worktree state must still be verified from git during control
+intake.
+
+Repo-backed truth verified during this reconciliation: branch `main`, `HEAD`
+and `origin/main` at `5537a81 Sync original dynamic import release routing`,
+and nothing staged at intake.
+
+Accumulated tranche pending findings-first control review:
+
+- Six docs:
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Five `hasattr_false` eval/test assets:
+  - `evals/fixtures/oracle_signal_hasattr_false_probe/main.py`
+  - `evals/fixtures/oracle_signal_hasattr_false_probe/eval_runtime_observations.json`
+  - `evals/tasks/oracle_signal_hasattr_false_probe.json`
+  - `evals/run_specs/oracle_signal_hasattr_false_probe_matrix.json`
+  - `tests/test_eval_signal_hasattr_false_probe.py`
+- Five `vars_type_error` eval/test assets:
+  - `evals/fixtures/oracle_signal_vars_type_error_probe/main.py`
+  - `evals/fixtures/oracle_signal_vars_type_error_probe/eval_runtime_observations.json`
+  - `evals/tasks/oracle_signal_vars_type_error_probe.json`
+  - `evals/run_specs/oracle_signal_vars_type_error_probe_matrix.json`
+  - `tests/test_eval_signal_vars_type_error_probe.py`
+
+`hasattr(obj, name)` false-branch implementation/evidence state:
+
+- Matrix `oracle_signal_hasattr_false_probe_matrix` is exactly 1 task x 2
+  budgets x 3 providers
+- Budgets are `[220, 100]`
+- Providers are `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`
+- Fixture call boundary is exactly `hasattr(obj, name)`
+- Runtime payload is exactly `attribute_present=false`
+- Deterministic digest is `hasattr_false:missing`
+- Selector and selected-unit primary truth remain `unsupported/opaque`
+- Runtime provenance is additive runtime provenance only
+- Empty baselines remain empty at both budgets
+- Missing-attribute no-edge/no-symbol/no-unit boundary: no
+  missing-attribute dependency edge, selected symbol, or selected unit is
+  introduced
+- No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
+  winner-selection/product/public benchmark widening is authorized
+
+`vars(obj)` raised-`TypeError` implementation/evidence state:
+
+- Matrix `oracle_signal_vars_type_error_probe_matrix` is exactly 1 task x 2
+  budgets x 3 providers
+- Budgets are `[220, 100]`
+- Providers are `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`
+- Fixture boundary is exactly `vars(obj)`
+- Runtime payload is exactly `lookup_outcome=raised_type_error`
+- Deterministic digest is `vars_type_error:raised_type_error`
+- Selector primary truth remains `unsupported/opaque`
+- Runtime provenance is additive runtime provenance only
+- Empty baselines remain empty at both budgets
+- Failed-namespace no-edge/no-symbol/no-unit boundary: no namespace
+  dependency edge, selected symbol, or selected unit is introduced from the
+  failed `vars()` lookup
+- Dependency guard uses `site:call:main.py:2:11`
+- No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
+  winner-selection/product/public benchmark widening is authorized
+
+Current docs/evidence/continuity reconciliation scope:
+
+- Edited files are only `ARCHITECTURE.md`, `EVAL.md`,
+  `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`, and `BUILDLOG.md`
+- Release-facing docs must stay state-neutral and public comparative claims
+  must remain bounded to the existing public claim boundary
+- Next route is findings-first control review of the full accumulated 16-file
+  tranche only
+- Do not route to release-unit audit, full regression, commit-gating, staging,
+  local commit creation, or push before control review acceptance
+- No source, fixtures, task JSON, run specs, tests, API/MCP/package exports,
+  schema, scoring, optimizer, compiler, winner-selection, product/public
+  benchmark surfaces, release-unit audit, full regression, commit-gating,
+  staging, local commit creation, or push are authorized for this
+  reconciliation
+
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
 truth verified from live git for this post-push continuity state is branch
@@ -1124,15 +1210,26 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is In Progress
 
-- No implementation slice, staging, local commit creation, or push is currently
-  in progress or authorized.
+- The accumulated workspace-only internal eval-only `REFLECTIVE_BUILTIN` tranche
+  is awaiting findings-first control review as one full 16-file tranche:
+  - six docs: `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`,
+    `PLAN.md`, and `BUILDLOG.md`
+  - five `hasattr_false` eval/test assets, including
+    `oracle_signal_hasattr_false_probe_matrix`
+  - five `vars_type_error` eval/test assets, including
+    `oracle_signal_vars_type_error_probe_matrix`
+- No implementation slice, release-unit audit, focused validation, full
+  regression, commit-gating, staging, local commit creation, or push is
+  currently in progress or authorized for the accumulated tranche before
+  control review acceptance.
 - No release-unit audit, focused validation, full regression, commit-gating,
   staging, local commit creation, or push gate is active for
   `d73cde4 Expand original dynamic import budget coverage`.
 - The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
   completed and pushed at `d73cde4`; release-gate status is no-active-gate.
-- Active next route is bounded post-d73cde4 North Star planning/control, not
-  implementation.
+- Active next route is findings-first control review of the full accumulated
+  internal eval-only `REFLECTIVE_BUILTIN` tranche, not the `hasattr(obj, name)`
+  false-branch pilot by itself.
 - Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
@@ -1828,8 +1925,17 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-d73cde4 North Star planning/control, not
-implementation.
+Immediate next route: findings-first control review of the full accumulated
+workspace-only internal eval-only `REFLECTIVE_BUILTIN` tranche, including
+`oracle_signal_hasattr_false_probe_matrix`,
+`oracle_signal_vars_type_error_probe_matrix`, and the full 16-file tranche of
+six docs, five `hasattr_false` eval/test assets, and five `vars_type_error`
+eval/test assets.
+
+Do not route only the `hasattr(obj, name)` false-branch pilot. Do not route the
+accumulated tranche to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push before findings-first control review is
+accepted.
 
 `d73cde4 Expand original dynamic import budget coverage` is complete and
 pushed, with release status no-active-gate. It is the current pushed code/eval

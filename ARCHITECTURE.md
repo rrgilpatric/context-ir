@@ -37,8 +37,23 @@ baseline providers remain empty at both budgets, no missing-attribute
 dependency edge or selected symbol is created, and public comparative claims
 remain bounded to the existing quad matrix. No
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark widening is included. The
-current internal
+benchmark widening is included.
+The current internal eval-only `REFLECTIVE_BUILTIN` /
+`hasattr(obj, name)` false-branch pilot remains one task only through
+`oracle_signal_hasattr_false_probe_matrix`: 1 task x 2 budgets x 3 providers
+at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture call
+boundary is exactly `hasattr(obj, name)`, the runtime payload is exactly
+`attribute_present=false`, and the deterministic fixture digest is
+`hasattr_false:missing`. Selector and selected-unit primary truth remain
+`unsupported/opaque`, runtime provenance is additive runtime provenance only, and
+empty baselines remain empty at both budgets. This is a missing-attribute
+no-edge/no-symbol/no-unit boundary: no missing-attribute dependency edge,
+selected symbol, or selected unit is introduced. The no-widening boundary
+preserves public comparative claims at the existing quad matrix and includes
+no source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+The current internal
 `REFLECTIVE_BUILTIN` / `vars(obj)` pilot remains one task only:
 `oracle_signal_vars_probe`, 1 task x 2 budgets x 3 providers at budgets `100`
 and `220`, against providers `context_ir`, `lexical_top_k_files`, and
@@ -49,6 +64,23 @@ task only through `oracle_signal_vars_zero_probe_matrix`: 1 task x 2 budgets x
 `lexical_top_k_files`, and `import_neighborhood_files`, with
 `lookup_outcome=returned_namespace`; selector and selected-unit primary truth
 remain `unsupported/opaque`, and runtime-backed provenance is additive only.
+The current internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)`
+raised-`TypeError` branch pilot remains one task only through
+`oracle_signal_vars_type_error_probe_matrix`: 1 task x 2 budgets x 3 providers
+at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is exactly `vars(obj)`, the runtime payload is exactly
+`lookup_outcome=raised_type_error`, and the deterministic fixture digest is
+`vars_type_error:raised_type_error`. Selector primary truth remains
+`unsupported/opaque`, runtime provenance is additive runtime provenance only, and
+empty baselines remain empty at both budgets. This is a failed-namespace
+lookup no-edge/no-symbol/no-unit boundary: no namespace dependency edge,
+selected symbol, or selected unit is introduced from the failed `vars()`
+lookup, and the dependency guard uses `site:call:main.py:2:11`. The
+no-widening boundary preserves public comparative claims at the existing quad
+matrix and includes no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
 The current internal eval-only `RUNTIME_MUTATION` / `globals()` pilot remains
 one task only through `oracle_signal_globals_probe_matrix`: 1 task x 2 budgets x
 3 providers at budgets `100` and `220`, against providers `context_ir`,
@@ -422,11 +454,21 @@ around rendering density.
   the current builtins-alias `loader.__import__(name)` sibling pilot, plus
   `REFLECTIVE_BUILTIN` /
   `hasattr(obj, name)` and
-  `getattr(obj, name)` pilot attachments, plus eval-only default-return and
+  `getattr(obj, name)` pilot attachments, including the current internal
+  eval-only `hasattr(obj, name)` false-branch
+  `oracle_signal_hasattr_false_probe_matrix` at 1 task x 2 budgets x 3
+  providers for budgets `[220, 100]` with exact runtime payload
+  `attribute_present=false`, deterministic digest `hasattr_false:missing`,
+  `unsupported/opaque` selector and selected-unit primary truth, additive
+  runtime provenance only, empty baselines, a missing-attribute
+  no-edge/no-symbol/no-unit boundary, and no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening, plus eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, plus the
   current internal eval-only raised-`AttributeError` branch pilot for exactly
   `getattr(obj, name)`, plus the current internal one-argument `vars(obj)` and
-  zero-argument `vars()` pilots,
+  zero-argument `vars()` pilots, plus the current internal eval-only
+  raised-`TypeError` branch pilot for `vars(obj)`,
   plus the current internal one-argument `dir(obj)` pilot, plus the current
   internal zero-argument `dir()` pilot, plus the current internal eval-only
   `RUNTIME_MUTATION` / `globals()`, `locals()`, and
@@ -458,6 +500,20 @@ around rendering density.
   baseline providers remain empty at both budgets, no missing-attribute
   dependency edge or selected symbol is created, and public comparative claims
   remain bounded to the existing quad matrix. No
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
+  The current internal eval-only raised-`TypeError` branch pilot for
+  `vars(obj)` covers only `oracle_signal_vars_type_error_probe_matrix`: 1 task
+  x 2 budgets x 3 providers at budgets `[220, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`; the
+  fixture boundary is exactly `vars(obj)`; runtime payload is exactly
+  `lookup_outcome=raised_type_error`; deterministic digest is
+  `vars_type_error:raised_type_error`; selector primary truth remains
+  `unsupported/opaque`; runtime provenance is additive runtime provenance only;
+  empty baselines remain empty at both budgets; no namespace dependency edge,
+  selected symbol, or selected unit is introduced from the failed `vars()`
+  lookup; the dependency guard uses `site:call:main.py:2:11`; and public
+  comparative claims remain bounded to the existing quad matrix. No
   source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is included.
   The current internal `globals()` pilot covers only

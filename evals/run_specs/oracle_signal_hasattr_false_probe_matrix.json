@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_signal_hasattr_false_probe_matrix",
+  "cases": [
+    {
+      "case_id": "signal_hasattr_false_probe",
+      "task_path": "evals/tasks/oracle_signal_hasattr_false_probe.json",
+      "query": "reflective_builtin",
+      "budgets": [220, 100],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}

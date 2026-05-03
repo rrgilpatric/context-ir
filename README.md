@@ -30,11 +30,13 @@ infrastructure and a current four-asset signal evidence surface documented in
 `EVAL.md`; those artifacts are internal evidence, not external benchmark proof.
 `EVAL.md` also records narrow internal runtime-backed pilots for
 `DYNAMIC_IMPORT` and narrow `REFLECTIVE_BUILTIN` selectors exercised via
+`hasattr(obj, name)`, the current internal eval-only false branch of
 `hasattr(obj, name)`, `getattr(obj, name)`, and narrow internal eval-only
 default-return and value-return branches of `getattr(obj, name, default)`, plus
 a current internal eval-only raised-`AttributeError` branch pilot for exactly
 `getattr(obj, name)`, plus a current internal one-argument `vars(obj)` pilot
-and a current internal zero-argument `vars()` pilot, and a current internal
+and a current internal zero-argument `vars()` pilot, plus a current internal
+eval-only `vars(obj)` raised-`TypeError` branch pilot, and a current internal
 eval-only
 `RUNTIME_MUTATION` / `globals()` pilot and `locals()` pilot, plus the current
 internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot, plus
@@ -88,7 +90,34 @@ benchmark widening; the current internal `vars(obj)` pilot
 covers only 1 task x 2 budgets x 3 providers at budgets `100` and `220`,
 against providers `context_ir`, `lexical_top_k_files`, and
 `import_neighborhood_files`, with `lookup_outcome=returned_namespace`. The
-current internal zero-argument `vars()` pilot covers only
+current internal eval-only `hasattr(obj, name)` false-branch pilot covers only
+`oracle_signal_hasattr_false_probe_matrix`: 1 task x 2 budgets x 3 providers
+at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`; fixture call boundary
+exactly `hasattr(obj, name)`; runtime payload exactly
+`attribute_present=false`; deterministic fixture digest
+`hasattr_false:missing`; selector and selected-unit primary truth
+`unsupported/opaque`; additive runtime provenance only; empty baselines at both
+budgets; missing-attribute no-edge/no-symbol/no-unit boundary with no
+missing-attribute dependency edge, selected symbol, or selected unit; public
+comparative claims bounded to the existing quad matrix; and no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+The current internal eval-only `vars(obj)` raised-`TypeError` branch pilot
+covers only `oracle_signal_vars_type_error_probe_matrix`: 1 task x 2 budgets x
+3 providers at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+exactly `vars(obj)`; runtime payload exactly
+`lookup_outcome=raised_type_error`; deterministic fixture digest
+`vars_type_error:raised_type_error`; selector primary truth `unsupported/opaque`;
+additive runtime provenance only; empty baselines at both budgets; failed-namespace
+no-edge/no-symbol/no-unit boundary with no namespace dependency edge, selected
+symbol, or selected unit from the failed `vars()` lookup; dependency guard
+`site:call:main.py:2:11`; public comparative claims bounded to the existing
+quad matrix; and no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening.
+The current internal zero-argument `vars()` pilot covers only
 `oracle_signal_vars_zero_probe_matrix`: 1 task x 2 budgets x 3 providers at
 budgets `100` and `220`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`, with
@@ -405,11 +434,13 @@ Unsupported limits include:
 
 The repo does contain narrow internal runtime-backed eval evidence for selected
 unsupported `DYNAMIC_IMPORT` cases and narrow `REFLECTIVE_BUILTIN` pilots over
+`hasattr(obj, name)`, the current eval-only false branch of
 `hasattr(obj, name)`, `getattr(obj, name)`, and the eval-only default-return
 and value-return branches of `getattr(obj, name, default)` selectors, plus the
 current internal eval-only raised-`AttributeError` branch `getattr(obj, name)`
 pilot, plus the current internal one-argument `vars(obj)` selector and
 zero-argument `vars()` selector, plus the current internal eval-only
+`vars(obj)` raised-`TypeError` branch pilot, plus the current internal eval-only
 `RUNTIME_MUTATION` / `globals()`
 and `locals()` pilots, plus the current internal eval-only `RUNTIME_MUTATION` /
 `delattr(obj, name)` pilot, plus the current narrow internal eval-only
@@ -572,11 +603,13 @@ Current evidence includes:
 - capability-tier and provider-scoped selected-unit accounting in the internal
   eval evidence path
 - narrow internal runtime-backed pilots for `DYNAMIC_IMPORT` and
-  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and the
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, the current eval-only false
+  branch of `hasattr(obj, name)`, `getattr(obj, name)`, and the
   eval-only default-return and value-return branches of
   `getattr(obj, name, default)`, plus the current internal eval-only
   raised-`AttributeError` branch `getattr(obj, name)` pilot, plus the current
   internal one-argument `vars(obj)` and zero-argument `vars()` pilots, plus the
+  current internal eval-only `vars(obj)` raised-`TypeError` branch pilot, plus the
   current internal eval-only `RUNTIME_MUTATION` / `globals()` and `locals()`
   pilots, plus the
   current internal eval-only `RUNTIME_MUTATION` / `delattr(obj, name)` pilot,
@@ -642,6 +675,19 @@ Current evidence includes:
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`, selector and selected-unit primary truth
   still `unsupported/opaque`, and runtime-backed provenance additive only
+- the current internal eval-only `vars(obj)` raised-`TypeError` branch pilot
+  remains `oracle_signal_vars_type_error_probe_matrix`: 1 task x 2 budgets x 3
+  providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+  exactly `vars(obj)`; runtime payload exactly
+  `lookup_outcome=raised_type_error`; deterministic fixture digest
+  `vars_type_error:raised_type_error`; selector primary truth `unsupported/opaque`;
+  additive runtime provenance only; empty baselines at both budgets; no namespace
+  dependency edge, selected symbol, or selected unit from the failed `vars()`
+  lookup; dependency guard `site:call:main.py:2:11`; public comparative claims
+  bounded to the existing quad matrix; and no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included
 - the current internal zero-argument `vars()` pilot remains
   `oracle_signal_vars_zero_probe_matrix`: 1 task x 2 budgets x 3 providers at
   budgets `100` and `220`, against providers `context_ir`,

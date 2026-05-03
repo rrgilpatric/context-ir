@@ -2,6 +2,92 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- Reflective Builtin Internal Eval Tranche Reconciliation
+
+- Reconciled docs/evidence/continuity for the accumulated internal eval-only
+  `REFLECTIVE_BUILTIN` tranche containing:
+  - `oracle_signal_hasattr_false_probe_matrix`
+  - `oracle_signal_vars_type_error_probe_matrix`
+- Repo-backed truth verified during this reconciliation:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `5537a81 Sync original dynamic import release routing`
+  - nothing staged at intake
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Full accumulated 16-file tranche routed to findings-first control review:
+  - six docs:
+    - `ARCHITECTURE.md`
+    - `EVAL.md`
+    - `PUBLIC_CLAIMS.md`
+    - `README.md`
+    - `PLAN.md`
+    - `BUILDLOG.md`
+  - five `hasattr_false` eval/test assets:
+    - `evals/fixtures/oracle_signal_hasattr_false_probe/main.py`
+    - `evals/fixtures/oracle_signal_hasattr_false_probe/eval_runtime_observations.json`
+    - `evals/tasks/oracle_signal_hasattr_false_probe.json`
+    - `evals/run_specs/oracle_signal_hasattr_false_probe_matrix.json`
+    - `tests/test_eval_signal_hasattr_false_probe.py`
+  - five `vars_type_error` eval/test assets:
+    - `evals/fixtures/oracle_signal_vars_type_error_probe/main.py`
+    - `evals/fixtures/oracle_signal_vars_type_error_probe/eval_runtime_observations.json`
+    - `evals/tasks/oracle_signal_vars_type_error_probe.json`
+    - `evals/run_specs/oracle_signal_vars_type_error_probe_matrix.json`
+    - `tests/test_eval_signal_vars_type_error_probe.py`
+- `hasattr(obj, name)` false-branch implementation/evidence state recorded:
+  - `oracle_signal_hasattr_false_probe_matrix` is exactly 1 task x 2 budgets
+    x 3 providers
+  - budgets are `[220, 100]`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture call boundary is exactly `hasattr(obj, name)`
+  - runtime payload is exactly `attribute_present=false`
+  - deterministic digest is `hasattr_false:missing`
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance is additive runtime provenance only
+  - empty baselines remain empty at both budgets
+  - missing-attribute no-edge/no-symbol/no-unit boundary: no
+    missing-attribute dependency edge, selected symbol, or selected unit is
+    introduced
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- `vars(obj)` raised-`TypeError` implementation/evidence state recorded:
+  - `oracle_signal_vars_type_error_probe_matrix` is exactly 1 task x 2
+    budgets x 3 providers
+  - budgets are `[220, 100]`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is exactly `vars(obj)`
+  - runtime payload is exactly `lookup_outcome=raised_type_error`
+  - deterministic digest is `vars_type_error:raised_type_error`
+  - selector primary truth remains `unsupported/opaque`
+  - runtime provenance is additive runtime provenance only
+  - empty baselines remain empty at both budgets
+  - failed-namespace no-edge/no-symbol/no-unit boundary: no namespace
+    dependency edge, selected symbol, or selected unit is introduced from the
+    failed `vars()` lookup
+  - dependency guard uses `site:call:main.py:2:11`
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- Documentation/evidence reconciliation:
+  - edited only `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`,
+    `README.md`, `PLAN.md`, and `BUILDLOG.md`
+  - release-facing docs use state-neutral internal eval-only wording
+  - public comparative claims remain bounded to the existing public claim
+    boundary
+  - no source, fixtures, task JSON, run specs, tests, API/MCP/package exports,
+    schema, scoring, optimizer, compiler, winner-selection, or product/public
+    benchmark surfaces were edited
+- Routing decision:
+  - route next to findings-first control review of the full accumulated
+    16-file tranche only
+  - do not route to release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push before control review acceptance
+  - push remains Ryan-gated for any future release
+- Acceptance status: held for findings-first control review of the full
+  accumulated 16-file tranche
+
 ## 2026-05-03 -- d73cde4 Original Dynamic Import Release Sync
 
 - Synced post-push continuity for

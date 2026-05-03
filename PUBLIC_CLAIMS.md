@@ -26,11 +26,14 @@ stays scoped to repo-local evidence only.
   [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json).
   Later internal runtime-backed evidence is limited to narrow
   `DYNAMIC_IMPORT` plus `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)`
-  and `getattr(obj, name)`, plus narrow internal eval-only default-return and
+  including the current internal eval-only false branch of
+  `hasattr(obj, name)`, and `getattr(obj, name)`, plus narrow internal
+  eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, and the current
   internal eval-only raised-`AttributeError` branch pilot for exactly
   `getattr(obj, name)`, and the current
   internal one-argument `vars(obj)` and zero-argument `vars()` pilots, plus the
+  current internal eval-only `vars(obj)` raised-`TypeError` branch pilot, plus the
   current internal eval-only `RUNTIME_MUTATION` / `globals()` and `locals()`
   pilots, plus the current internal eval-only `RUNTIME_MUTATION` /
   `delattr(obj, name)` pilot, plus the current narrow internal eval-only
@@ -72,6 +75,37 @@ stays scoped to repo-local evidence only.
   symbol, or selected `plugins/weather.py` unit is introduced, and public
   comparative claims remain bounded to the existing quad matrix. No
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
+  The current internal eval-only `REFLECTIVE_BUILTIN` /
+  `oracle_signal_hasattr_false_probe_matrix` covers only a
+  `hasattr(obj, name)` false-branch pilot as 1 task x 2 budgets x 3 providers
+  at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture call boundary
+  exactly `hasattr(obj, name)`; runtime payload exactly
+  `attribute_present=false`; deterministic fixture digest
+  `hasattr_false:missing`; selector and selected-unit primary truth
+  `unsupported/opaque`; runtime provenance is additive runtime provenance only;
+  empty baselines remain empty at both budgets; the missing-attribute
+  no-edge/no-symbol/no-unit boundary introduces no missing-attribute dependency
+  edge, selected symbol, or selected unit; public comparative claims remain
+  bounded to the existing quad matrix; and no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
+  The current internal eval-only `REFLECTIVE_BUILTIN` /
+  `oracle_signal_vars_type_error_probe_matrix` covers only a `vars(obj)`
+  raised-`TypeError` branch pilot as 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+  exactly `vars(obj)`; runtime payload exactly
+  `lookup_outcome=raised_type_error`; deterministic fixture digest
+  `vars_type_error:raised_type_error`; selector primary truth `unsupported/opaque`;
+  runtime provenance is additive runtime provenance only; empty baselines remain
+  empty at both budgets; the failed-namespace no-edge/no-symbol/no-unit
+  boundary introduces no namespace dependency edge, selected symbol, or
+  selected unit from the failed `vars()` lookup; dependency guard uses
+  `site:call:main.py:2:11`; public comparative claims remain bounded to the
+  existing quad matrix; and no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is included.
   The seven current `DYNAMIC_IMPORT` sibling matrices
   (`oracle_signal_dynamic_import_root_probe_matrix`,
@@ -121,6 +155,17 @@ stays scoped to repo-local evidence only.
   providers at budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
   `lookup_outcome=returned_namespace`; the internal
+  `oracle_signal_vars_type_error_probe_matrix` is limited to 1 task x 2
+  budgets x 3 providers at budgets `[220, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with
+  fixture boundary exactly `vars(obj)`, runtime payload exactly
+  `lookup_outcome=raised_type_error`, deterministic fixture digest
+  `vars_type_error:raised_type_error`, selector primary truth `unsupported/opaque`,
+  additive runtime provenance only, empty baselines at both budgets, no namespace
+  dependency edge, selected symbol, or selected unit from the failed `vars()`
+  lookup, dependency guard `site:call:main.py:2:11`, and no
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening; the internal
   `oracle_signal_globals_probe_matrix` is limited to 1 task x 2 budgets x 3
   providers at budgets `100` and `220`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`, with
@@ -464,6 +509,35 @@ stays scoped to repo-local evidence only.
   selecting the unsupported boundary unit, no `plugins/weather.py` selected
   unit, dependency edge, or selected symbol is introduced, and public
   comparative claims remain bounded to the existing quad matrix.
+  For the current internal eval-only `REFLECTIVE_BUILTIN` /
+  `hasattr(obj, name)` false-branch matrix, the only accepted
+  provider/budget wording is `oracle_signal_hasattr_false_probe_matrix`: 1 task
+  x 2 budgets x 3 providers at budgets `[220, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`;
+  fixture call boundary exactly `hasattr(obj, name)`; runtime payload exactly
+  `attribute_present=false`; deterministic fixture digest
+  `hasattr_false:missing`; selector and selected-unit primary truth
+  `unsupported/opaque`; additive runtime provenance only; empty
+  baselines at both budgets; missing-attribute no-edge/no-symbol/no-unit
+  boundary with no missing-attribute dependency edge, selected symbol, or
+  selected unit; public comparative claims bounded to the existing quad
+  matrix; and no source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening.
+  For the current internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)`
+  raised-`TypeError` branch matrix, the only accepted provider/budget wording
+  is `oracle_signal_vars_type_error_probe_matrix`: 1 task x 2 budgets x 3
+  providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+  exactly `vars(obj)`; runtime payload exactly
+  `lookup_outcome=raised_type_error`; deterministic fixture digest
+  `vars_type_error:raised_type_error`; selector primary truth `unsupported/opaque`;
+  additive runtime provenance only; empty baselines at both
+  budgets; failed-namespace no-edge/no-symbol/no-unit boundary with no
+  namespace dependency edge, selected symbol, or selected unit from the failed
+  `vars()` lookup; dependency guard `site:call:main.py:2:11`; public
+  comparative claims bounded to the existing quad matrix; and no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening.
   For the narrow internal eval-only
   `DYNAMIC_IMPORT` / builtin
   `__import__(name)` sibling matrix, the only accepted provider/budget wording
@@ -726,6 +800,19 @@ stays scoped to repo-local evidence only.
   generalized hybrid static + runtime claim.
 - For reflective-builtin pilot wording, preserve that selector and
   selected-unit primary truth remains `unsupported/opaque`; for the
+  `hasattr(obj, name)` false-branch matrix, runtime payload is only
+  `attribute_present=false`, the deterministic fixture digest is
+  `hasattr_false:missing`, runtime provenance is additive runtime provenance only,
+  empty baselines remain empty at both budgets, and the missing-attribute
+  no-edge/no-symbol/no-unit boundary introduces no dependency edge, selected
+  symbol, or selected unit; for the
+  `vars(obj)` raised-`TypeError` matrix, runtime payload is only
+  `lookup_outcome=raised_type_error`, the deterministic fixture digest is
+  `vars_type_error:raised_type_error`, runtime provenance is additive
+  provenance only, empty baselines remain empty at both budgets, no namespace
+  dependency edge, selected symbol, or selected unit is introduced from the
+  failed `vars()` lookup, and the dependency guard uses
+  `site:call:main.py:2:11`; for the
   `getattr(obj, name)` raised-`AttributeError` branch matrix, runtime payload
   is only `lookup_outcome=raised_attribute_error`, runtime provenance is
   additive only, and no dependency edge or selected symbol is created from the
@@ -847,4 +934,6 @@ stays scoped to repo-local evidence only.
 | AC3g | The seven current `DYNAMIC_IMPORT` sibling budget-pressure matrices (`oracle_signal_dynamic_import_root_probe_matrix`, `oracle_signal_dynamic_import_builtin_probe_matrix`, `oracle_signal_dynamic_import_imported_name_probe_matrix`, `oracle_signal_dynamic_import_imported_alias_probe_matrix`, `oracle_signal_dynamic_import_root_alias_probe_matrix`, `oracle_signal_dynamic_import_builtins_attr_probe_matrix`, and `oracle_signal_dynamic_import_builtins_alias_probe_matrix`) are each limited to 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`; fixture, task, query, and runtime payload boundaries are unchanged, runtime payload remains `imported_module=plugins.weather`, baseline providers remain empty at both budgets, budget `220` selects the unsupported/opaque boundary unit with additive runtime provenance, budget `100` preserves the resolved `unsupported/opaque` selector and additive runtime provenance without selecting the unsupported boundary unit, no `plugins/weather.py` selected unit, dependency edge, or selected symbol is introduced, and public comparative claims remain bounded to the existing quad matrix. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_root_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_builtin_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_imported_name_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_imported_alias_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_root_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_root_alias_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_builtins_attr_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_builtins_attr_probe_matrix.json), [evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_builtins_alias_probe_matrix.json) |
 | AC3e | The current internal `oracle_signal_getattr_attribute_error_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` branch evidence as 1 task x 2 budgets x 3 providers at budgets 220 and 100, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with unchanged fixture, task, query, and runtime payload across both budget rows; fixture boundary exactly `getattr(obj, name)`, caught `AttributeError` for deterministic `render_probe_digest()`, runtime payload `lookup_outcome=raised_attribute_error`, primary selector and selected-unit truth `unsupported/opaque`, additive-only runtime provenance, baseline providers empty at both budgets, and no missing-attribute dependency edge or selected symbol created; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json](evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json) |
 | AC3f | The current internal `oracle_signal_dir_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` evidence as 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with unchanged fixture, task, query, and runtime payload across both budget rows; runtime payload remains `listing_entry_count=74`, durable listing proof is carried by `durable_payload_reference`, selector and selected-unit primary truth remain `unsupported/opaque`, runtime provenance remains additive only, and baseline providers remain empty at both budgets; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dir_probe_matrix.json](evals/run_specs/oracle_signal_dir_probe_matrix.json) |
+| AC3h | The current internal `oracle_signal_hasattr_false_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` false-branch evidence as 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture call boundary exactly `hasattr(obj, name)`, runtime payload exactly `attribute_present=false`, deterministic fixture digest `hasattr_false:missing`, selector and selected-unit primary truth `unsupported/opaque`, additive runtime provenance only, and empty baselines at both budgets. The missing-attribute no-edge/no-symbol/no-unit boundary introduces no missing-attribute dependency edge, selected symbol, or selected unit; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_hasattr_false_probe_matrix.json](evals/run_specs/oracle_signal_hasattr_false_probe_matrix.json) |
+| AC3i | The current internal `oracle_signal_vars_type_error_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` raised-`TypeError` branch evidence as 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary exactly `vars(obj)`, runtime payload exactly `lookup_outcome=raised_type_error`, deterministic fixture digest `vars_type_error:raised_type_error`, selector primary truth `unsupported/opaque`, additive runtime provenance only, and empty baselines at both budgets. The failed-namespace no-edge/no-symbol/no-unit boundary introduces no namespace dependency edge, selected symbol, or selected unit from the failed `vars()` lookup; dependency guard uses `site:call:main.py:2:11`; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_vars_type_error_probe_matrix.json](evals/run_specs/oracle_signal_vars_type_error_probe_matrix.json) |
 | AC4 | The only allowed comparative claim is the fixed-scope quad-matrix claim: within that matrix only, `context_ir` wins all `8/8` task-budget rows and leads the provider-average aggregate. | [EVAL.md](EVAL.md#supported-claims-today), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |

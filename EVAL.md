@@ -13,7 +13,10 @@ the current four-asset signal quad matrix.
 Evidence authority is split by artifact type. The `oracle_signal_vars_probe`
 evidence described below is a narrow internal `vars(obj)` pilot, and the
 `oracle_signal_vars_zero_probe` evidence described below is a narrow internal
-zero-argument `vars()` pilot. The `oracle_signal_globals_probe_matrix`
+zero-argument `vars()` pilot. The
+`oracle_signal_vars_type_error_probe_matrix` evidence described below is a
+narrow internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` raised-`TypeError`
+branch pilot. The `oracle_signal_globals_probe_matrix`
 evidence described below is a narrow internal eval-only `RUNTIME_MUTATION` /
 `globals()` pilot. The `oracle_signal_locals_probe_matrix` evidence described
 below is a narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot. The
@@ -64,11 +67,42 @@ internal
 evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
 `getattr(obj, name)` runtime-backed evidence, and the `90dcc15` / `762dd51`
 `hasattr(obj, name)` runtime-backed evidence. The current internal eval-only
+`oracle_signal_hasattr_false_probe_matrix` evidence is a narrow
+`REFLECTIVE_BUILTIN` / `hasattr(obj, name)` false-branch pilot: 1 task x 2
+budgets x 3 providers at budgets `[220, 100]`, against providers
+`context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. The
+fixture call boundary is exactly `hasattr(obj, name)`, runtime payload is
+exactly `attribute_present=false`, and the deterministic fixture digest is
+`hasattr_false:missing`. Selector and selected-unit primary truth remain
+`unsupported/opaque`; runtime provenance is additive runtime provenance only;
+empty baselines remain empty at both budgets. This is a missing-attribute
+no-edge/no-symbol/no-unit boundary: no missing-attribute dependency edge,
+selected symbol, or selected unit is introduced. The no-widening boundary
+preserves public comparative claims at the existing quad matrix and includes
+no source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening. The current internal eval-only
+`oracle_signal_vars_type_error_probe_matrix` evidence is a narrow
+`REFLECTIVE_BUILTIN` / `vars(obj)` raised-`TypeError` branch pilot: 1 task x 2
+budgets x 3 providers at budgets `[220, 100]`, against providers
+`context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. The
+fixture boundary is exactly `vars(obj)`, runtime payload is exactly
+`lookup_outcome=raised_type_error`, and the deterministic fixture digest is
+`vars_type_error:raised_type_error`. Selector primary truth remains
+`unsupported/opaque`; runtime provenance is additive runtime provenance only;
+empty baselines remain empty at both budgets. This is a failed-namespace
+lookup no-edge/no-symbol/no-unit boundary: no namespace dependency edge,
+selected symbol, or selected unit is introduced from the failed `vars()`
+lookup, and the dependency guard uses `site:call:main.py:2:11`. The
+no-widening boundary preserves public comparative claims at the existing quad
+matrix and includes no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening. The current internal eval-only
 `oracle_signal_getattr_attribute_error_probe_matrix` evidence is a narrow
 `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError` branch
 pilot. These reflective pilots, the current internal `vars(obj)` pilot, the
-current internal zero-argument
-`vars()` pilot, the current internal `globals()` pilot, the current internal
+current internal zero-argument `vars()` pilot, the current internal eval-only
+`vars(obj)` raised-`TypeError` branch pilot, the current internal `globals()`
+pilot, the current internal
 `locals()` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
 `dir(obj)` pilot, the current internal eval-only `REFLECTIVE_BUILTIN` /
 zero-argument `dir()` pilot, the current internal eval-only
@@ -432,6 +466,9 @@ Proven by current unit and integration tests:
     `oracle_signal_dynamic_import_root_alias_probe_matrix`
   - the `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` internal pilot for the
     `oracle_signal_hasattr_probe` task
+  - the current internal eval-only `REFLECTIVE_BUILTIN` /
+    `hasattr(obj, name)` false-branch pilot for
+    `oracle_signal_hasattr_false_probe_matrix`
   - the `REFLECTIVE_BUILTIN` / `getattr(obj, name)` internal pilot for the
     `oracle_signal_getattr_probe` task
   - the narrow internal eval-only `REFLECTIVE_BUILTIN` /
@@ -447,6 +484,9 @@ Proven by current unit and integration tests:
     `oracle_signal_vars_probe` task
   - the narrow internal `REFLECTIVE_BUILTIN` / zero-argument `vars()` pilot for
     the `oracle_signal_vars_zero_probe` task
+  - the current internal eval-only `REFLECTIVE_BUILTIN` / `vars(obj)`
+    raised-`TypeError` branch pilot for
+    `oracle_signal_vars_type_error_probe_matrix`
   - the narrow internal eval-only `RUNTIME_MUTATION` / `globals()` pilot for
     the `oracle_signal_globals_probe` task
   - the narrow internal eval-only `RUNTIME_MUTATION` / `locals()` pilot for the
@@ -761,11 +801,13 @@ Architecturally intended but not yet evaluated:
   evidence, the current imported-alias `load_module(name)` sibling evidence,
   and the current root-module alias
   `loader.import_module(name)` sibling evidence,
-  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
+  `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, the current eval-only
+  false-branch `hasattr(obj, name)` evidence, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   internal pilots, plus the current eval-only raised-`AttributeError` branch
   `getattr(obj, name)` pilot, plus the current one-argument `vars(obj)`,
-  zero-argument `vars()`, one-argument `dir(obj)`, zero-argument `dir()`, and
+  zero-argument `vars()`, current eval-only raised-`TypeError` branch
+  `vars(obj)` pilot, one-argument `dir(obj)`, zero-argument `dir()`, and
   `RUNTIME_MUTATION` / `globals()`, `locals()`, `delattr(obj, name)`, and
   `setattr(obj, name, value)` internal pilots, plus the current internal
   eval-only `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site
@@ -800,11 +842,17 @@ Architecturally intended but not yet evaluated:
   `REFLECTIVE_BUILTIN` / `hasattr(obj, name)`, `getattr(obj, name)`, and
   eval-only default-return and value-return `getattr(obj, name, default)`
   fixtures, tasks, run specs, and additive runtime provenance, plus the current
+  eval-only `hasattr(obj, name)` false-branch
+  `oracle_signal_hasattr_false_probe_matrix` fixture, task, run spec, and
+  additive provenance, plus the current
   eval-only raised-`AttributeError` branch `getattr(obj, name)` fixture, task,
   run spec, and additive runtime provenance, plus the current internal
   one-argument `vars(obj)` fixture, task, run spec, and additive
   runtime provenance, and the current internal zero-argument `vars()` fixture,
   task, run spec, and additive runtime provenance, plus the current internal
+  eval-only `vars(obj)` raised-`TypeError`
+  `oracle_signal_vars_type_error_probe_matrix` fixture, task, run spec, and
+  additive provenance, plus the current internal
   `RUNTIME_MUTATION` / `globals()` fixture, task, run spec, and additive
   runtime provenance, plus the current internal `RUNTIME_MUTATION` /
   `locals()` fixture, task, run spec, and additive runtime provenance, plus the
@@ -959,6 +1007,38 @@ Architecturally intended but not yet evaluated:
   `plugins/weather.py` selected unit, dependency edge, selected symbol, or
   source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is introduced.
+- Narrow `hasattr(obj, name)` false-branch provider/budget evidence: the
+  current internal eval-only `oracle_signal_hasattr_false_probe_matrix` covers
+  only 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against
+  providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`, with fixture call boundary exactly
+  `hasattr(obj, name)`, runtime payload exactly `attribute_present=false`, and
+  deterministic fixture digest `hasattr_false:missing`. Selector and
+  selected-unit truth remain `unsupported/opaque`, runtime provenance is
+  additive runtime provenance only, and empty baselines remain empty at both
+  budgets.
+  The missing-attribute no-edge/no-symbol/no-unit boundary introduces no
+  missing-attribute dependency edge, selected symbol, or selected unit. The
+  no-widening boundary preserves public comparative claims at the existing
+  quad matrix and includes no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening.
+- Narrow `vars(obj)` raised-`TypeError` provider/budget evidence: the current
+  internal eval-only `oracle_signal_vars_type_error_probe_matrix` covers only
+  1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with
+  fixture boundary exactly `vars(obj)`, runtime payload exactly
+  `lookup_outcome=raised_type_error`, and deterministic fixture digest
+  `vars_type_error:raised_type_error`. Selector primary truth remains
+  `unsupported/opaque`, runtime provenance is additive runtime provenance only,
+  and empty baselines remain empty at both budgets. The failed-namespace
+  lookup no-edge/no-symbol/no-unit boundary introduces no namespace dependency
+  edge, selected symbol, or selected unit from the failed `vars()` lookup, and
+  the dependency guard uses `site:call:main.py:2:11`. The no-widening boundary
+  preserves public comparative claims at the existing quad matrix and includes
+  no
+  source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening.
 - Narrow getattr-family provider/budget evidence: the three existing
   getattr-family matrices cover budgets `100` and `220`, and each remains
   1 task x 2 budgets x 3 providers.
@@ -1428,6 +1508,7 @@ The following claims are not currently allowed:
   `loader.import_module(name)` sibling evidence. The narrow
   internal
   `REFLECTIVE_BUILTIN` pilots include `hasattr(obj, name)`,
+  the eval-only `hasattr(obj, name)` false branch,
   `getattr(obj, name)`, eval-only default-return and value-return
   `getattr(obj, name, default)`, the eval-only raised-`AttributeError` branch
   `getattr(obj, name)` pilot, one-argument `vars(obj)`, zero-argument
@@ -1513,6 +1594,7 @@ Next smallest eval slices for the post-milestone program:
    plus the current builtins-alias `loader.__import__(name)` sibling evidence,
    `REFLECTIVE_BUILTIN` /
    `hasattr(obj, name)`,
+   the current eval-only false-branch `hasattr(obj, name)` evidence,
    `getattr(obj, name)`, and eval-only default-return and value-return
    `getattr(obj, name, default)` pilots, plus the current eval-only
    raised-`AttributeError` branch `getattr(obj, name)` pilot, plus the
