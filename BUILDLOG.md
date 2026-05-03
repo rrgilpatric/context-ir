@@ -2,8 +2,97 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- 546a4da Reflective Builtin Branch Eval Release Sync
+
+- Synced post-push continuity for
+  `546a4da Add reflective builtin branch eval probes`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `546a4da Add reflective builtin branch eval probes`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `546a4da`:
+  - latest pushed code/eval release authority is
+    `546a4da Add reflective builtin branch eval probes`
+  - prior pushed continuity authority is
+    `5537a81 Sync original dynamic import release routing`
+  - prior pushed code/eval authority is
+    `d73cde4 Expand original dynamic import budget coverage`
+  - release-gate status is no-active-gate
+- Released tranche:
+  - full 16-file internal eval-only `REFLECTIVE_BUILTIN` tranche
+  - six docs: `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`,
+    `PLAN.md`, and `BUILDLOG.md`
+  - five `hasattr_false` eval/test assets for
+    `oracle_signal_hasattr_false_probe_matrix`
+  - five `vars_type_error` eval/test assets for
+    `oracle_signal_vars_type_error_probe_matrix`
+- Accepted `hasattr(obj, name)` false-branch state:
+  - matrix is exactly 1 task x 2 budgets x 3 providers
+  - budgets are `[220, 100]`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture call boundary is exactly `hasattr(obj, name)`
+  - runtime payload is exactly `attribute_present=false`
+  - deterministic digest is `hasattr_false:missing`
+  - selector and selected-unit primary truth remain `unsupported/opaque`
+  - runtime provenance is additive runtime provenance only
+  - empty baselines remain empty at both budgets
+  - no missing-attribute dependency edge, selected symbol, or selected unit is
+    introduced
+- Accepted `vars(obj)` raised-`TypeError` state:
+  - matrix is exactly 1 task x 2 budgets x 3 providers
+  - budgets are `[220, 100]`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture boundary is exactly `vars(obj)`
+  - runtime payload is exactly `lookup_outcome=raised_type_error`
+  - deterministic digest is `vars_type_error:raised_type_error`
+  - selector primary truth remains `unsupported/opaque`
+  - runtime provenance is additive runtime provenance only
+  - empty baselines remain empty at both budgets
+  - no namespace dependency edge, selected symbol, or selected unit is
+    introduced from the failed `vars()` lookup
+  - dependency guard uses `site:call:main.py:2:11`
+- Completed gates for `546a4da`:
+  - docs/evidence/continuity reconciliation accepted after one correction
+  - combined release-unit audit passed with no findings
+  - focused validation passed with targeted pytest reporting `13 passed`
+  - full regression passed with `pytest tests/ -v` reporting `723 passed`
+  - commit-gating passed
+  - local commit creation completed at
+    `546a4da Add reflective builtin branch eval probes`
+  - Ryan-authorized push completed at
+    `546a4da Add reflective builtin branch eval probes`
+- Routing decision:
+  - remove the active route back to findings-first control review, release-unit
+    audit, focused validation, full regression, commit-gating, staging, local
+    commit creation, or push for the 16-file `REFLECTIVE_BUILTIN` tranche
+  - route next to bounded post-`546a4da` North Star planning/control, not
+    implementation
+  - do not route `546a4da` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit creation,
+    or push absent new findings
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
+    winner-selection/product/public benchmark widening is authorized
+  - push remains Ryan-gated for any future release
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, run specs,
+    fixtures, tasks, regression, audit, commit-gating, staging, local commit
+    creation, or push were performed
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- Reflective Builtin Internal Eval Tranche Reconciliation
 
+- Superseded by
+  `546a4da Add reflective builtin branch eval probes` post-push release sync
+  above; the findings-first control review and release-gate routing in this
+  entry is historical and is not the active route.
 - Reconciled docs/evidence/continuity for the accumulated internal eval-only
   `REFLECTIVE_BUILTIN` tranche containing:
   - `oracle_signal_hasattr_false_probe_matrix`

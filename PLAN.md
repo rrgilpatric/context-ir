@@ -40,16 +40,19 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current accumulated internal eval-only `REFLECTIVE_BUILTIN` tranche supersedes
-the older post-`5537a81` planning route for active control routing only. Live
-git refs and worktree state must still be verified from git during control
-intake.
+Current pushed code/eval release authority is
+`546a4da Add reflective builtin branch eval probes`. It supersedes the older
+post-`5537a81` workspace-only release-gate route for active control routing
+only. Live git refs and worktree state must still be verified from git during
+control intake.
 
-Repo-backed truth verified during this reconciliation: branch `main`, `HEAD`
-and `origin/main` at `5537a81 Sync original dynamic import release routing`,
-and nothing staged at intake.
+Repo-backed truth verified during this post-push continuity sync: branch
+`main`, `HEAD` and `origin/main` at
+`546a4da Add reflective builtin branch eval probes`, worktree clean, and
+nothing staged.
 
-Accumulated tranche pending findings-first control review:
+The completed and pushed release unit is the full 16-file internal eval-only
+`REFLECTIVE_BUILTIN` tranche:
 
 - Six docs:
   - `ARCHITECTURE.md`
@@ -110,112 +113,46 @@ Accumulated tranche pending findings-first control review:
 - No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
 
-Current docs/evidence/continuity reconciliation scope:
+Release state for `546a4da`:
 
-- Edited files are only `ARCHITECTURE.md`, `EVAL.md`,
-  `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`, and `BUILDLOG.md`
-- Release-facing docs must stay state-neutral and public comparative claims
-  must remain bounded to the existing public claim boundary
-- Next route is findings-first control review of the full accumulated 16-file
-  tranche only
-- Do not route to release-unit audit, full regression, commit-gating, staging,
-  local commit creation, or push before control review acceptance
-- No source, fixtures, task JSON, run specs, tests, API/MCP/package exports,
-  schema, scoring, optimizer, compiler, winner-selection, product/public
-  benchmark surfaces, release-unit audit, full regression, commit-gating,
-  staging, local commit creation, or push are authorized for this
-  reconciliation
-
-Live git refs and worktree state must be verified from git during control
-intake rather than treated as an always-current committed field. Repo-backed
-truth verified from live git for this post-push continuity state is branch
-`main`; `HEAD` and `origin/main` are at
-`d73cde4 Expand original dynamic import budget coverage`; nothing is staged.
-The completed and pushed release unit is the full nine-file tranche:
-
-- `ARCHITECTURE.md`
-- `BUILDLOG.md`
-- `EVAL.md`
-- `PLAN.md`
-- `PUBLIC_CLAIMS.md`
-- `README.md`
-- `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
-- `tests/test_eval_signal_dynamic_import_probe.py`
-- `tests/test_eval_runs.py`
-
-Live git refs and worktree state remain authoritative for future control
-intake.
-
-Current release state is the completed and pushed internal eval-only
-`DYNAMIC_IMPORT` original probe budget-pressure expansion plus corrected
-docs/evidence/continuity and helper-test reconciliation. The release unit is
-the full nine-file tranche listed above.
-
-Accepted implementation truth:
-
-- `oracle_signal_dynamic_import_probe_matrix` is exactly 1 task x 3 budgets x
-  3 providers
-- Budgets are `[220, 180, 100]`
-- Providers remain `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`
-- Fixture, task, query, and runtime payload are unchanged
-- Runtime payload remains `imported_module=plugins.weather`
-- Baseline providers remain empty at all budgets
-- Budget `100` `context_ir` selects only:
-  - `def:main.py:main.load_weather_plugin`
-  - `def:main.py:main.render_probe_digest`
-  - `frontier:call:main.py:6:11`
-- Budget `100` does not select `unsupported:call:main.py:5:13`
-- Budget `100` does not select `plugins/weather.py`
-- Unsupported selector truth remains `unsupported/opaque` with
-  `unsupported_reason_code`, `opaque_boundary`, and attached runtime
-  provenance
-- Runtime provenance remains additive only
-- Budget `100` winner is `context_ir`
-- Budget `180` and `220` winners remain `import_neighborhood_files`
-- No `plugins.weather` dependency edge, selected symbol, or selected
-  `plugins/weather.py` unit is introduced
-- No public/API/MCP/package-export/schema/scoring/optimizer/compiler/
-  winner-selection/product/public benchmark widening is authorized
-- Implementation acceptance status: first-pass
-
-Release-unit reconciliation state:
-
-- Docs/evidence/continuity reconciliation needed one correction and is now
-  accepted
-- Full-regression helper correction in `tests/test_eval_runs.py` was accepted
-  first-pass
-- Documentation and continuity files in this release unit are
-  `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`,
-  and `BUILDLOG.md`
+- Implementation review accepted the accumulated eval-only tranche in
+  workspace
+- Docs/evidence/continuity reconciliation was accepted after one correction
+- Combined read-only release gate passed:
+  - Gate 1 release-unit audit passed with no findings
+  - focused validation passed with targeted pytest reporting `13 passed`
+  - Gate 2 full regression passed with `pytest tests/ -v` reporting
+    `723 passed`
+  - Gate 3 commit-gating passed and approved the exact 16-file unit
+- Local commit creation completed at
+  `546a4da Add reflective builtin branch eval probes`
+- Ryan-authorized push completed at
+  `546a4da Add reflective builtin branch eval probes`
 - Release-facing docs remain state-neutral
 - Public comparative claims remain bounded to the existing public claim
   boundary
-- Release-unit audit completed
-- Focused validation completed
-- Full regression completed with `pytest tests/ -v` reporting `710 passed`
-- Commit-gating completed
-- Local commit creation completed at
-  `d73cde4 Expand original dynamic import budget coverage`
-- Ryan-authorized push completed at
-  `d73cde4 Expand original dynamic import budget coverage`
+- No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
+  winner-selection/product/public benchmark widening is authorized
 
 Current route:
 
-- Route next to bounded post-d73cde4 North Star planning/control, not
+- Route next to bounded post-`546a4da` North Star planning/control, not
   implementation
 - Release-gate status is no-active-gate for
-  `d73cde4 Expand original dynamic import budget coverage`
-- Do not route `d73cde4` back to docs review, release-unit audit, focused
+  `546a4da Add reflective builtin branch eval probes`
+- Do not route `546a4da` back to docs review, release-unit audit, focused
   validation, full regression, commit-gating, staging, local commit creation,
   or push absent new findings
 - No active route remains to release-unit audit, focused validation, full
   regression, commit-gating, staging, local commit creation, or push for
-  `d73cde4` absent new findings
+  `546a4da` absent new findings
 - Push remains Ryan-gated for any future release
 
 Most recent pushed code/eval release authority is
-`d73cde4 Expand original dynamic import budget coverage`. Prior pushed
+`546a4da Add reflective builtin branch eval probes`. Prior pushed continuity
+authority is `5537a81 Sync original dynamic import release routing`. Prior
+code/eval release authority is
+`d73cde4 Expand original dynamic import budget coverage`; earlier pushed
 code/eval release authority is
 `e2f3dcf Expand dir-zero and metaclass budget coverage`; prior pushed
 continuity authority is `8aa38d5 Sync dir-zero metaclass release routing`.
@@ -1207,29 +1144,25 @@ sequencing for `c1a12d7` absent new findings.
   `d73cde4 Expand original dynamic import budget coverage` completed
 - [x] Local commit creation and Ryan-authorized push for
   `d73cde4 Expand original dynamic import budget coverage` completed
+- [x] Internal eval-only `REFLECTIVE_BUILTIN` `hasattr(obj, name)` false-branch
+  and `vars(obj)` raised-`TypeError` tranche released at
+  `546a4da Add reflective builtin branch eval probes`
+- [x] Combined release gate for
+  `546a4da Add reflective builtin branch eval probes` passed with no findings
+- [x] Local commit creation and Ryan-authorized push for
+  `546a4da Add reflective builtin branch eval probes` completed
 
 ## What Is In Progress
 
-- The accumulated workspace-only internal eval-only `REFLECTIVE_BUILTIN` tranche
-  is awaiting findings-first control review as one full 16-file tranche:
-  - six docs: `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`,
-    `PLAN.md`, and `BUILDLOG.md`
-  - five `hasattr_false` eval/test assets, including
-    `oracle_signal_hasattr_false_probe_matrix`
-  - five `vars_type_error` eval/test assets, including
-    `oracle_signal_vars_type_error_probe_matrix`
 - No implementation slice, release-unit audit, focused validation, full
   regression, commit-gating, staging, local commit creation, or push is
-  currently in progress or authorized for the accumulated tranche before
-  control review acceptance.
-- No release-unit audit, focused validation, full regression, commit-gating,
-  staging, local commit creation, or push gate is active for
-  `d73cde4 Expand original dynamic import budget coverage`.
+  currently in progress for `546a4da Add reflective builtin branch eval probes`.
+- The 16-file internal eval-only `REFLECTIVE_BUILTIN` tranche is completed and
+  pushed at `546a4da`; release-gate status is no-active-gate.
 - The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
   completed and pushed at `d73cde4`; release-gate status is no-active-gate.
-- Active next route is findings-first control review of the full accumulated
-  internal eval-only `REFLECTIVE_BUILTIN` tranche, not the `hasattr(obj, name)`
-  false-branch pilot by itself.
+- Active next route is bounded post-`546a4da` North Star planning/control, not
+  implementation.
 - Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
@@ -1925,20 +1858,19 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: findings-first control review of the full accumulated
-workspace-only internal eval-only `REFLECTIVE_BUILTIN` tranche, including
-`oracle_signal_hasattr_false_probe_matrix`,
-`oracle_signal_vars_type_error_probe_matrix`, and the full 16-file tranche of
-six docs, five `hasattr_false` eval/test assets, and five `vars_type_error`
-eval/test assets.
+Immediate next route: bounded post-`546a4da` North Star planning/control, not
+implementation.
 
-Do not route only the `hasattr(obj, name)` false-branch pilot. Do not route the
-accumulated tranche to release-unit audit, full regression, commit-gating,
-staging, local commit creation, or push before findings-first control review is
-accepted.
+Do not route `546a4da Add reflective builtin branch eval probes` back to docs
+review, release-unit audit, focused validation, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
+
+`546a4da Add reflective builtin branch eval probes` is complete and pushed,
+with release status no-active-gate. It is the current pushed code/eval release
+authority.
 
 `d73cde4 Expand original dynamic import budget coverage` is complete and
-pushed, with release status no-active-gate. It is the current pushed code/eval
+pushed, with release status no-active-gate. It is the prior pushed code/eval
 release authority. Do not route `d73cde4` back to docs review, release-unit
 audit, focused validation, full regression, commit-gating, staging, local
 commit creation, or push absent new findings.
@@ -1958,10 +1890,10 @@ the earlier pushed code/eval authority and is no-active-gate.
 `98edc4a Codify release gate continuity controls`,
 `b8e126e Expand runtime mutation eval budget coverage`, and
 `ad9db8d Expand dir eval budget coverage` remain older pushed authorities and
-are no-active-gate. Do not reopen `d73cde4`, `e2f3dcf`, `8aa38d5`, `642b6f9`,
-`21f2dc5`, `c2c1898`, `9fffc5e`, `98edc4a`, `b8e126e`, `ad9db8d`, or earlier
-pushed releases absent new findings. Push remains Ryan-gated for any future
-release. Do not widen
+are no-active-gate. Do not reopen `546a4da`, `d73cde4`, `e2f3dcf`, `8aa38d5`,
+`642b6f9`, `21f2dc5`, `c2c1898`, `9fffc5e`, `98edc4a`, `b8e126e`, `ad9db8d`,
+or earlier pushed releases absent new findings. Push remains Ryan-gated for any
+future release. Do not widen
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/
 winner-selection/product/public benchmark scope without a separately
 authorized planning decision.
