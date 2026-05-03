@@ -2,6 +2,90 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- e2f3dcf Dir-zero and Metaclass Release Sync
+
+- Supersedes earlier current routing text for the accepted workspace-only
+  internal eval-only zero-argument `dir()` and metaclass behavior
+  budget-pressure tranche.
+- Repo-backed release truth verified during this post-push continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `e2f3dcf Expand dir-zero and metaclass budget coverage`
+  - worktree clean at intake before this docs-only continuity edit
+  - latest pushed code/eval authority is
+    `e2f3dcf Expand dir-zero and metaclass budget coverage`
+  - prior pushed continuity authority was
+    `642b6f9 Sync exec eval release routing`
+  - prior pushed code/eval authority was
+    `21f2dc5 Expand exec and eval budget coverage`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `e2f3dcf`:
+  - implementation accepted first-pass
+  - docs/evidence/continuity reconciliation accepted after 1 correction
+  - combined release-unit audit passed
+  - full regression passed with `709 passed`
+  - commit-gating passed
+  - local commit created at `e2f3dcf`
+  - Ryan-authorized push completed at `e2f3dcf`
+  - release status is no-active-gate
+- Released tranche:
+  - `oracle_signal_dir_zero_probe_matrix` expanded from `[220]` to
+    `[220, 100]`
+  - `oracle_signal_metaclass_behavior_probe_matrix` expanded from `[220]` to
+    `[220, 100]`
+  - each matrix is 1 task x 2 budgets x 3 providers
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - `dir()` runtime payload remains `listing_entry_count=3`
+  - `dir()` `context_ir` selected units are identical at budgets `220` and
+    `100`:
+    - `def:main.py:main.probe_directory`
+    - `def:main.py:main.render_probe_digest`
+    - `unsupported:call:main.py:2:11`
+  - metaclass runtime payload remains
+    `class_creation_outcome=created_class`,
+    `created_class_qualified_name=main.Example`, and
+    `selected_metaclass_qualified_name=main.Meta`
+  - metaclass budget `220` selected units:
+    - `def:main.py:main.Example`
+    - `def:main.py:main.Base`
+    - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
+    - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
+  - metaclass budget `100` selected units:
+    - `def:main.py:main.Example`
+    - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
+    - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
+  - budget `100` intentionally omits `def:main.py:main.Base`
+  - baseline providers remain empty at both budgets for both matrices
+  - selector and selected-unit truth remain `unsupported/opaque` where
+    applicable
+  - runtime provenance remains additive only
+  - no selected `def:main.py:main.Meta` symbol, metaclass dependency edge,
+    `dir()` output dependency edge, or selected symbol is introduced beyond
+    the listed selected units
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- Routing decision:
+  - route next to bounded post-e2f3dcf North Star planning/control
+  - do not route `e2f3dcf` back to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - no active route remains to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push for
+    `e2f3dcf` absent new findings
+  - preserve `642b6f9 Sync exec eval release routing` as the prior pushed
+    continuity authority
+  - preserve `21f2dc5 Expand exec and eval budget coverage` as the prior pushed
+    code/eval authority
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, run specs,
+    fixtures, tasks, regression, audit, commit-gating, staging, local commit
+    creation, or push were performed
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- Dir Zero and Metaclass Budget-pressure Docs Sync
 
 - Completed docs/evidence/continuity reconciliation for the accepted

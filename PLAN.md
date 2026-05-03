@@ -42,21 +42,23 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-truth verified for this docs/evidence/continuity reconciliation is branch
-`main`; `HEAD` and `origin/main` are at
-`642b6f9 Sync exec eval release routing`; nothing is staged. Live git refs and
+truth verified for this post-push continuity sync is branch `main`; `HEAD` and
+`origin/main` are at
+`e2f3dcf Expand dir-zero and metaclass budget coverage`; the worktree was
+clean at intake before this docs-only continuity edit. Live git refs and
 worktree state remain authoritative for future control intake.
 
-Current active release state is the accepted workspace-only internal eval-only
-budget-pressure tranche for zero-argument `dir()` and metaclass behavior. The
-accepted implementation files are:
+Current active release state is the completed and pushed internal eval-only
+budget-pressure tranche for zero-argument `dir()` and metaclass behavior at
+`e2f3dcf Expand dir-zero and metaclass budget coverage`. The released
+implementation files are:
 
 - `evals/run_specs/oracle_signal_dir_zero_probe_matrix.json`
 - `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
 - `tests/test_eval_signal_dir_zero_probe.py`
 - `tests/test_eval_signal_metaclass_behavior_probe.py`
 
-Accepted workspace-only implementation truth:
+Released implementation truth:
 
 - `oracle_signal_dir_zero_probe_matrix` expanded from `[220]` to `[220, 100]`
 - `oracle_signal_metaclass_behavior_probe_matrix` expanded from `[220]` to
@@ -94,12 +96,21 @@ Accepted workspace-only implementation truth:
 - No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
 
-Current docs/evidence/continuity reconciliation is limited to
-`ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`, and
-`BUILDLOG.md`. Route next to findings-first control review of this
-docs/evidence/continuity reconciliation only. Do not route to release-unit
-audit, full regression, commit-gating, staging, local commit creation, or push
-before that control review accepts this reconciliation.
+Release state for `e2f3dcf`:
+
+- Implementation accepted first-pass
+- Docs/evidence/continuity reconciliation accepted after 1 correction
+- Combined release-unit audit passed
+- Full regression passed with `709 passed`
+- Commit-gating passed
+- Local commit created at `e2f3dcf`
+- Ryan-authorized push completed at `e2f3dcf`
+- Release-gate status is no-active-gate
+
+No active route remains to docs review, release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push for `e2f3dcf` absent
+new findings. The next route is bounded post-e2f3dcf North Star
+planning/control.
 
 Prior pushed continuity authority is
 `642b6f9 Sync exec eval release routing`. Prior pushed code/eval authority is
@@ -117,7 +128,7 @@ authority remains `98edc4a Codify release gate continuity controls`.
 The completed and pushed internal eval-only `RUNTIME_MUTATION` /
 `delattr(obj, name)` and `setattr(obj, name, value)` budget-pressure expansion
 release at `b8e126e Expand runtime mutation eval budget coverage` remains the
-prior pushed code/eval authority and is:
+older pushed code/eval authority and is:
 
 - Release unit:
   - `ARCHITECTURE.md`
@@ -174,7 +185,7 @@ findings.
 
 The completed and pushed internal eval-only `REFLECTIVE_BUILTIN` / `dir(obj)`
 budget-pressure expansion release at
-`ad9db8d Expand dir eval budget coverage` remains the prior code/eval
+`ad9db8d Expand dir eval budget coverage` remains an older code/eval
 authority:
 
 - Matrix: `oracle_signal_dir_probe_matrix`
@@ -205,21 +216,21 @@ local commit creation, or push for this tranche absent new findings. No active
 route remains to commit-gating, staging, local commit creation, or push for
 `ad9db8d` absent new findings.
 
-`43d0439 Expand getattr AttributeError eval budget coverage` is the prior
+`43d0439 Expand getattr AttributeError eval budget coverage` is an older
 pushed code/eval release authority for the internal eval-only
 `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError`
 budget-pressure expansion at `[220, 100]`: 1 task x 2 budgets x 3 providers.
 There is no active release gate for `43d0439` absent new findings.
 
-`5bd0616 Add getattr AttributeError eval probe` is the prior pushed code/eval
+`5bd0616 Add getattr AttributeError eval probe` is an older pushed code/eval
 release authority for the initial internal eval-only `REFLECTIVE_BUILTIN` /
 `getattr(obj, name)` raised-`AttributeError` pilot at budget 220. `6ac1e28 Add
 builtins-alias dynamic import eval probe` remains the earlier pushed release
 authority for the internal eval-only `DYNAMIC_IMPORT` /
 builtins-alias `loader.__import__(name)` probe. `3dfc355 Add
-builtins-attribute dynamic import eval probe` remains the prior pushed
+builtins-attribute dynamic import eval probe` remains an older pushed
 builtins-attribute release authority. `b85f038 Add root-alias dynamic import
-eval probe` remains the prior root-module alias dynamic-import release
+eval probe` remains an older root-module alias dynamic-import release
 authority. `4030845 Add imported-alias dynamic import eval probe`,
 `ee71a82 Add imported-name dynamic import eval probe`, `397c7dd Add builtin
 dynamic import eval probe`, and `14b362e Add dynamic import root runtime eval
@@ -1061,19 +1072,29 @@ sequencing for `c1a12d7` absent new findings.
   budget-pressure release unit completed
 - [x] Local commit creation and Ryan-authorized push for
   `21f2dc5 Expand exec and eval budget coverage` completed
+- [x] Internal eval-only zero-argument `dir()` and `METACLASS_BEHAVIOR`
+  budget-pressure tranche implementation accepted first-pass
+- [x] Docs/evidence/continuity reconciliation for the zero-argument `dir()` and
+  `METACLASS_BEHAVIOR` budget-pressure tranche accepted after 1 correction
+- [x] Combined release-unit audit for
+  `e2f3dcf Expand dir-zero and metaclass budget coverage` passed
+- [x] Full regression gate for
+  `e2f3dcf Expand dir-zero and metaclass budget coverage` passed with
+  `pytest tests/ -v` reporting `709 passed`
+- [x] Commit-gating review for
+  `e2f3dcf Expand dir-zero and metaclass budget coverage` passed
+- [x] Local commit creation and Ryan-authorized push for
+  `e2f3dcf Expand dir-zero and metaclass budget coverage` completed
 
 ## What Is In Progress
 
 - No implementation slice, release gate, staging, local commit creation, or
   push is currently in progress or authorized.
-- The `EXEC_OR_EVAL` eval/exec budget-pressure release is pushed at
-  `21f2dc5` and has release-gate status no-active-gate.
-- Active next route is findings-first control review of the accepted
-  workspace-only zero-argument `dir()` plus `METACLASS_BEHAVIOR`
-  budget-pressure docs/evidence/continuity reconciliation. Do not route to
-  release-unit audit, full regression, commit-gating, staging, local commit
-  creation, push, or implementation before that control review accepts the
-  reconciliation.
+- The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
+  is pushed at `e2f3dcf` and has release-gate status no-active-gate.
+- Active next route is bounded post-e2f3dcf North Star planning/control. Do not
+  route `e2f3dcf` back to docs review, release-unit audit, full regression,
+  commit-gating, staging, local commit creation, or push absent new findings.
 - Fresh control lanes should use the canonical active release-state block above
   for current routing, and should treat older conflicting routing notes as
   historical when superseded by that block or by newer BUILDLOG entries.
@@ -1763,31 +1784,25 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: findings-first control review of the accepted
-workspace-only zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure
-docs/evidence/continuity reconciliation.
+Immediate next route: bounded post-e2f3dcf North Star planning/control.
 
-`21f2dc5 Expand exec and eval budget coverage` is complete and pushed, with
-release status no-active-gate. Do not route `21f2dc5` back to docs review,
+`e2f3dcf Expand dir-zero and metaclass budget coverage` is complete and pushed,
+with release status no-active-gate. Do not route `e2f3dcf` back to docs review,
 release-unit audit, full regression, commit-gating, staging, local commit
 creation, or push absent new findings.
 
-Do not route this current reconciliation to release-unit audit, full regression,
-commit-gating, staging, local commit creation, or push before findings-first
-control review accepts it.
-
-`9fffc5e Sync dynamic import release routing` is the prior pushed continuity
-authority. `c2c1898 Expand dynamic import sibling eval budget coverage` is the
-prior pushed code/eval authority and is no-active-gate. `98edc4a Codify
-release gate continuity controls` remains the pushed process-doc authority and
-is no-active-gate. `b8e126e Expand runtime mutation eval budget coverage`
-remains an earlier pushed code/eval authority and is no-active-gate.
-`ad9db8d Expand dir eval budget coverage` remains an earlier pushed code/eval
-authority and is no-active-gate. Do not reopen `21f2dc5`, `c2c1898`,
-`9fffc5e`, `98edc4a`, `b8e126e`, `ad9db8d`, or earlier pushed releases absent
-new findings. Do not widen public/API/MCP/package-export/schema/scoring/
-optimizer/compiler/winner-selection/product/public benchmark scope without a
-separately authorized planning decision.
+`642b6f9 Sync exec eval release routing` is the prior pushed continuity
+authority. `21f2dc5 Expand exec and eval budget coverage` is the prior pushed
+code/eval authority and is no-active-gate. `9fffc5e Sync dynamic import release
+routing`, `c2c1898 Expand dynamic import sibling eval budget coverage`,
+`98edc4a Codify release gate continuity controls`, `b8e126e Expand runtime
+mutation eval budget coverage`, and `ad9db8d Expand dir eval budget coverage`
+remain older pushed authorities and are no-active-gate. Do not reopen
+`e2f3dcf`, `642b6f9`, `21f2dc5`, `c2c1898`, `9fffc5e`, `98edc4a`, `b8e126e`,
+`ad9db8d`, or earlier pushed releases absent new findings. Do not widen
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/
+winner-selection/product/public benchmark scope without a separately
+authorized planning decision.
 
 Completed post-5bd0616 planning decision:
 
@@ -2521,6 +2536,11 @@ not pending release gates.
 
 ## What Should Not Be Reopened
 
+- The accepted pushed `e2f3dcf` zero-argument `dir()` plus
+  `METACLASS_BEHAVIOR` budget-pressure release unit, or any docs review,
+  release-unit audit, full regression, commit-gating, staging, local commit
+  creation, or push route for it, unless a later findings-based review proves a
+  concrete defect
 - The accepted pushed `21f2dc5` `EXEC_OR_EVAL` eval/exec budget-pressure
   release unit, or any docs review, release-unit audit, full regression,
   commit-gating, staging, local commit creation, or push route for it, unless
