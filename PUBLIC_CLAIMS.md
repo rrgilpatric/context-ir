@@ -53,6 +53,26 @@ stays scoped to repo-local evidence only.
   `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling evidence, plus
   the current internal eval-only `DYNAMIC_IMPORT` /
   root-module alias `loader.import_module(name)` sibling evidence.
+  The current internal eval-only original `DYNAMIC_IMPORT` provider/budget
+  matrix (`oracle_signal_dynamic_import_probe_matrix`) is limited to 1 task x
+  3 budgets x 3 providers at budgets `[220, 180, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`; the
+  fixture, task, query, and runtime payload remain unchanged, runtime payload
+  remains `imported_module=plugins.weather`, and baseline providers remain
+  empty at all budgets. Budget `100` non-selection is explicit: `context_ir`
+  selects only `def:main.py:main.load_weather_plugin`,
+  `def:main.py:main.render_probe_digest`, and
+  `frontier:call:main.py:6:11`; it does not select
+  `unsupported:call:main.py:5:13` or any `plugins/weather.py` unit.
+  Unsupported selector truth remains `unsupported/opaque` with
+  `unsupported_reason_code`, `opaque_boundary`, and attached runtime
+  provenance; runtime provenance remains additive only. Budget `100` winner
+  is `context_ir`, while budgets `180` and `220` winners remain
+  `import_neighborhood_files`. No `plugins.weather` dependency edge, selected
+  symbol, or selected `plugins/weather.py` unit is introduced, and public
+  comparative claims remain bounded to the existing quad matrix. No
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is included.
   The seven current `DYNAMIC_IMPORT` sibling matrices
   (`oracle_signal_dynamic_import_root_probe_matrix`,
   `oracle_signal_dynamic_import_builtin_probe_matrix`,
@@ -337,6 +357,7 @@ stays scoped to repo-local evidence only.
   Evidence: [EVAL.md](EVAL.md#current-evidence-status),
   [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md),
   [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json),
+  [evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json](evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json),
   [evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json](evals/run_specs/oracle_signal_getattr_attribute_error_probe_matrix.json),
   [evals/run_specs/oracle_signal_vars_zero_probe_matrix.json](evals/run_specs/oracle_signal_vars_zero_probe_matrix.json),
   [evals/run_specs/oracle_signal_globals_probe_matrix.json](evals/run_specs/oracle_signal_globals_probe_matrix.json),
@@ -410,6 +431,27 @@ stays scoped to repo-local evidence only.
   plus the current internal eval-only `DYNAMIC_IMPORT` / imported-alias
   `load_module(name)` sibling evidence, plus the current internal eval-only `DYNAMIC_IMPORT` / root-module alias
   `loader.import_module(name)` sibling evidence.
+  For the original `DYNAMIC_IMPORT` provider/budget matrix, the only accepted
+  provider/budget wording is `oracle_signal_dynamic_import_probe_matrix`: 1
+  task x 3 budgets x 3 providers at budgets `[220, 180, 100]`, against
+  providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`; fixture, task, query, and runtime payload
+  remain unchanged; runtime payload remains `imported_module=plugins.weather`;
+  baseline providers remain empty at all budgets; budget `100` non-selection
+  is explicit because `context_ir` selects only
+  `def:main.py:main.load_weather_plugin`,
+  `def:main.py:main.render_probe_digest`, and
+  `frontier:call:main.py:6:11`, does not select
+  `unsupported:call:main.py:5:13`, and does not select
+  `plugins/weather.py`; unsupported selector truth remains
+  `unsupported/opaque` with `unsupported_reason_code`, `opaque_boundary`, and
+  attached runtime provenance; runtime provenance remains additive only;
+  budget `100` winner is `context_ir`, while budgets `180` and `220` winners
+  remain `import_neighborhood_files`; no `plugins.weather` dependency edge,
+  selected symbol, selected `plugins/weather.py` unit, or
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is introduced; public comparative claims remain bounded
+  to the existing quad matrix.
   For the seven current `DYNAMIC_IMPORT` sibling matrices, the shared
   provider/budget wording is 1 task x 2 budgets x 3 providers at budgets
   `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and

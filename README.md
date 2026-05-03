@@ -218,6 +218,26 @@ unsupported/opaque boundary unit with additive runtime provenance. No
 generated-code dependency edge or selected symbol is introduced, no namespace
 mutation modeling is added, and public comparative claims remain bounded to
 the existing quad matrix.
+The current internal eval-only `DYNAMIC_IMPORT` original provider/budget
+evidence covers only `oracle_signal_dynamic_import_probe_matrix`: 1 task x 3
+budgets x 3 providers at budgets `[220, 180, 100]`, against providers
+`context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`. The
+fixture, task, query, and runtime payload remain unchanged; runtime payload is
+`imported_module=plugins.weather`. Baseline providers remain empty at all
+budgets. Budget `100` non-selection is explicit: `context_ir` selects only
+`def:main.py:main.load_weather_plugin`,
+`def:main.py:main.render_probe_digest`, and
+`frontier:call:main.py:6:11`; it does not select
+`unsupported:call:main.py:5:13` or any `plugins/weather.py` unit. The
+unsupported selector remains `unsupported/opaque` with
+`unsupported_reason_code`, `opaque_boundary`, and attached runtime provenance.
+Runtime provenance remains additive only. Budget `100` winner is
+`context_ir`; budgets `180` and `220` winners remain
+`import_neighborhood_files`. No `plugins.weather` dependency edge, selected
+symbol, or selected `plugins/weather.py` unit is introduced, and public
+comparative claims remain bounded to the existing quad matrix. No
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening is included.
 The current internal eval-only `DYNAMIC_IMPORT` / root-module
 `importlib.import_module(name)` sibling evidence covers only
 `oracle_signal_dynamic_import_root_probe_matrix`: 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
@@ -579,6 +599,25 @@ Current evidence includes:
   `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling evidence, plus
   the current internal eval-only `DYNAMIC_IMPORT` /
   root-module alias `loader.import_module(name)` sibling evidence
+- the current internal eval-only original `DYNAMIC_IMPORT` provider/budget
+  evidence remains `oracle_signal_dynamic_import_probe_matrix`: 1 task x 3
+  budgets x 3 providers at budgets `[220, 180, 100]`, against providers
+  `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`; the
+  fixture, task, query, and runtime payload remain unchanged; runtime payload
+  remains `imported_module=plugins.weather`; baseline providers remain empty
+  at all budgets; budget `100` non-selection is explicit because `context_ir`
+  selects only `def:main.py:main.load_weather_plugin`,
+  `def:main.py:main.render_probe_digest`, and
+  `frontier:call:main.py:6:11`, does not select
+  `unsupported:call:main.py:5:13`, and does not select
+  `plugins/weather.py`; unsupported selector truth remains
+  `unsupported/opaque` with `unsupported_reason_code`, `opaque_boundary`, and
+  attached runtime provenance; runtime provenance remains additive only;
+  budget `100` winner is `context_ir`, while budgets `180` and `220` winners
+  remain `import_neighborhood_files`; no `plugins.weather` dependency edge,
+  selected symbol, selected `plugins/weather.py` unit, or
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening is introduced
 - three existing getattr-family provider/budget matrices limited to budgets
   `100` and `220`; each remains 1 task x 2 budgets x 3 providers, with
   selector and selected-unit primary truth still `unsupported/opaque` and

@@ -173,6 +173,28 @@ unsupported/opaque boundary unit with additive runtime provenance. No
 generated-code dependency edge or selected symbol is introduced, no namespace
 mutation modeling is added, and public comparative claims remain bounded to
 the existing quad matrix.
+The current internal eval-only `DYNAMIC_IMPORT` original provider/budget
+evidence remains one task only through
+`oracle_signal_dynamic_import_probe_matrix`: 1 task x 3 budgets x 3 providers
+at budgets `[220, 180, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture, task,
+query, and runtime payload remain unchanged; runtime payload remains
+`imported_module=plugins.weather`. Baseline providers remain empty at all
+budgets. Budget `100` non-selection is explicit: `context_ir` selects only
+`def:main.py:main.load_weather_plugin`,
+`def:main.py:main.render_probe_digest`, and
+`frontier:call:main.py:6:11`; it does not select
+`unsupported:call:main.py:5:13` or any `plugins/weather.py` unit.
+Unsupported selector truth remains `unsupported/opaque` with
+`unsupported_reason_code`, `opaque_boundary`, and attached runtime
+provenance. Runtime provenance remains additive only. Winner behavior is
+budget-specific: budget `100` winner is `context_ir`, while budgets `180` and
+`220` winners remain `import_neighborhood_files`. No `plugins.weather`
+dependency edge, selected symbol, or selected `plugins/weather.py` unit is
+introduced, and public comparative claims remain bounded to the existing quad
+matrix. No
+public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening is included.
 The current internal eval-only `DYNAMIC_IMPORT` / root-module
 `importlib.import_module(name)` sibling evidence is narrow and remains one task
 only through `oracle_signal_dynamic_import_root_probe_matrix`: 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
@@ -389,7 +411,10 @@ around rendering density.
 - statically proved: facts established from the accepted static semantic pipeline inside the supported subset
 - runtime-backed: repository-backed facts supported by reproducible runtime
   evidence or probes; current internal evidence is limited to narrow additive
-  `DYNAMIC_IMPORT` evidence, including the current root-module
+  `DYNAMIC_IMPORT` evidence, including the original
+  `oracle_signal_dynamic_import_probe_matrix` provider/budget evidence at 1
+  task x 3 budgets x 3 providers for budgets `[220, 180, 100]`, plus the
+  current root-module
   `importlib.import_module(name)` sibling pilot and the narrow builtin
   `__import__(name)` sibling pilot, plus the current imported-name
   `import_module(name)` sibling pilot, plus the current imported-alias

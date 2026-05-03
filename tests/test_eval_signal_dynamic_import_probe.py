@@ -25,7 +25,7 @@ TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_dynamic_import_probe.
 RUN_SPEC_PATH = (
     REPO_ROOT / "evals" / "run_specs" / "oracle_signal_dynamic_import_probe_matrix.json"
 )
-PROBE_BUDGETS = (220, 180)
+PROBE_BUDGETS = (220, 180, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
@@ -38,6 +38,13 @@ BASELINE_PROVIDERS = (
 QUERY = (
     'Fix unsupported dynamic import import_module("plugins.weather") '
     "while keeping probe digest output aligned"
+)
+UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
+UNSUPPORTED_SITE_ID = "site:call:main.py:5:13"
+BUDGET_100_CONTEXT_IR_SELECTED_UNIT_IDS = (
+    "def:main.py:main.load_weather_plugin",
+    "def:main.py:main.render_probe_digest",
+    "frontier:call:main.py:6:11",
 )
 
 
@@ -69,6 +76,11 @@ def _selected_units(record: dict[str, object]) -> list[dict[str, object]]:
     return cast(list[dict[str, object]], provider_metadata["selected_units"])
 
 
+def _resolved_selectors(record: dict[str, object]) -> list[dict[str, object]]:
+    """Return structured resolved-selector metadata from one raw ledger record."""
+    return cast(list[dict[str, object]], record["resolved_selectors"])
+
+
 def test_dynamic_import_probe_task_resolves_expected_selectors_deterministically() -> (
     None
 ):
@@ -84,13 +96,56 @@ def test_dynamic_import_probe_task_resolves_expected_selectors_deterministically
     assert [resolved.resolved_unit_id for resolved in setup.resolved_selectors] == [
         "def:main.py:main.load_weather_plugin",
         "def:main.py:main.render_probe_digest",
-        "unsupported:call:main.py:5:13",
+        UNSUPPORTED_UNIT_ID,
     ]
 
     unsupported = setup.resolved_selectors[2]
     assert unsupported.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
     assert unsupported.has_attached_runtime_provenance is True
     assert unsupported.attached_runtime_provenance_record_ids
+
+
+def test_dynamic_import_probe_keeps_imported_module_out_of_static_edges() -> None:
+    """Runtime evidence does not turn plugins.weather into static proof."""
+    setup = setup_eval_oracle_task(TASK_PATH)
+    program = setup.semantic_program
+    symbols_by_id = program.resolved_symbols
+    load_weather_symbol_id = next(
+        symbol.symbol_id
+        for symbol in symbols_by_id.values()
+        if symbol.qualified_name == "main.load_weather_plugin"
+    )
+    weather_symbol_ids = {
+        symbol.symbol_id
+        for symbol in symbols_by_id.values()
+        if symbol.definition_site.file_path == "plugins/weather.py"
+    }
+
+    assert weather_symbol_ids
+    assert all(
+        resolved_import.target_qualified_name != "plugins.weather"
+        for resolved_import in program.resolved_imports
+    )
+    assert all(
+        UNSUPPORTED_UNIT_ID
+        not in (dependency.source_symbol_id, dependency.target_symbol_id)
+        for dependency in program.proven_dependencies
+    )
+    assert all(
+        dependency.evidence_site_id != UNSUPPORTED_SITE_ID
+        for dependency in program.proven_dependencies
+    )
+    assert all(
+        not (
+            dependency.source_symbol_id == load_weather_symbol_id
+            and dependency.target_symbol_id in weather_symbol_ids
+        )
+        for dependency in program.proven_dependencies
+    )
+    assert all(
+        selector.resolved_unit_id not in weather_symbol_ids
+        for selector in setup.resolved_selectors
+    )
 
 
 def test_dynamic_import_probe_run_spec_loads_cleanly_through_runner() -> None:
@@ -151,6 +206,17 @@ def test_dynamic_import_probe_run_executes_with_runtime_backed_raw_fields(
             assert baseline_record["selected_unit_ids"] == []
             assert _selected_units(baseline_record) == []
 
+    for raw_record in records:
+        runtime_provenance_records = cast(
+            list[dict[str, object]],
+            raw_record["runtime_provenance_records"],
+        )
+
+        assert len(runtime_provenance_records) == 1
+        assert runtime_provenance_records[0]["normalized_payload"] == {
+            "imported_module": "plugins.weather"
+        }
+
     record = _record_for(
         records,
         provider_name=eval_providers.CONTEXT_IR_PROVIDER,
@@ -165,15 +231,74 @@ def test_dynamic_import_probe_run_executes_with_runtime_backed_raw_fields(
 
     assert record["spec_version"] == "v1"
     assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert "unsupported:call:main.py:5:13" in cast(
-        list[str], record["selected_unit_ids"]
-    )
+    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
     assert metrics["uncertainty_honesty"] == 1.0
     assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
     assert unsupported_unit["has_attached_runtime_provenance"] is True
     assert cast(
         list[str],
         unsupported_unit["attached_runtime_provenance_record_ids"],
+    )
+
+    budget_100_record = _record_for(
+        records,
+        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+        budget=100,
+    )
+    budget_100_metrics = cast(dict[str, object], budget_100_record["metrics"])
+    budget_100_selected_units = _selected_units(budget_100_record)
+    budget_100_unsupported_selector = next(
+        selector
+        for selector in _resolved_selectors(budget_100_record)
+        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
+    )
+
+    assert budget_100_record["selected_files"] == []
+    assert (
+        tuple(cast(list[str], budget_100_record["selected_unit_ids"]))
+        == BUDGET_100_CONTEXT_IR_SELECTED_UNIT_IDS
+    )
+    assert [unit["unit_id"] for unit in budget_100_selected_units] == list(
+        BUDGET_100_CONTEXT_IR_SELECTED_UNIT_IDS
+    )
+    assert all(
+        "plugins/weather.py" not in cast(str, unit["unit_id"])
+        for unit in budget_100_selected_units
+    )
+    assert all(
+        unit["has_attached_runtime_provenance"] is False
+        and unit["attached_runtime_provenance_record_ids"] == []
+        for unit in budget_100_selected_units
+    )
+    assert budget_100_metrics["uncertainty_honesty"] == 0.25
+    assert budget_100_metrics["aggregate_score"] == 0.0375
+    assert budget_100_metrics["omitted_expected_uncertainty_ids"] == [
+        UNSUPPORTED_UNIT_ID
+    ]
+    assert budget_100_metrics["selected_matched_selector_ids"] == [
+        "def:main.py:main.load_weather_plugin",
+        "def:main.py:main.render_probe_digest",
+    ]
+    assert budget_100_metrics["too_shallow_selector_ids"] == [
+        "def:main.py:main.load_weather_plugin",
+        "def:main.py:main.render_probe_digest",
+    ]
+    assert UNSUPPORTED_UNIT_ID not in cast(
+        list[str], budget_100_record["selected_unit_ids"]
+    )
+    assert budget_100_unsupported_selector["primary_capability_tier"] == (
+        "unsupported/opaque"
+    )
+    assert budget_100_unsupported_selector["primary_evidence_origin"] == (
+        "unsupported_reason_code"
+    )
+    assert budget_100_unsupported_selector["primary_replay_status"] == (
+        "opaque_boundary"
+    )
+    assert budget_100_unsupported_selector["has_attached_runtime_provenance"] is True
+    assert cast(
+        list[str],
+        budget_100_unsupported_selector["attached_runtime_provenance_record_ids"],
     )
 
 
@@ -219,10 +344,10 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
     )
     report = eval_report.build_eval_report(ledger_path)
 
-    assert unsupported_selector_aggregate.selector_count == 6
-    assert unsupported_selector_aggregate.satisfied_count == 6
-    assert runtime_expectation_aggregate.selector_count == 6
-    assert runtime_expectation_aggregate.satisfied_count == 6
+    assert unsupported_selector_aggregate.selector_count == 9
+    assert unsupported_selector_aggregate.satisfied_count == 9
+    assert runtime_expectation_aggregate.selector_count == 9
+    assert runtime_expectation_aggregate.satisfied_count == 9
     assert tuple(
         (
             aggregate.primary_capability_tier,
@@ -231,8 +356,8 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
         )
         for aggregate in summary.selected_unit_tier_aggregates
     ) == (
-        ("statically_proved", 5, 0),
-        ("heuristic/frontier", 2, 0),
+        ("statically_proved", 7, 0),
+        ("heuristic/frontier", 3, 0),
         ("unsupported/opaque", 2, 2),
     )
     assert unsupported_selected_unit_aggregate.selected_unit_count == 2
@@ -245,7 +370,7 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
         )
         for aggregate in summary.provider_selected_unit_aggregates
     ) == (
-        (eval_providers.CONTEXT_IR_PROVIDER, 9, 2),
+        (eval_providers.CONTEXT_IR_PROVIDER, 12, 2),
         (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER, 0, 0),
         (eval_providers.LEXICAL_TOP_K_FILES_PROVIDER, 0, 0),
     )
@@ -258,8 +383,8 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
         )
         for aggregate in summary.provider_selected_unit_tier_aggregates
     ) == (
-        (eval_providers.CONTEXT_IR_PROVIDER, "statically_proved", 5, 0),
-        (eval_providers.CONTEXT_IR_PROVIDER, "heuristic/frontier", 2, 0),
+        (eval_providers.CONTEXT_IR_PROVIDER, "statically_proved", 7, 0),
+        (eval_providers.CONTEXT_IR_PROVIDER, "heuristic/frontier", 3, 0),
         (eval_providers.CONTEXT_IR_PROVIDER, "unsupported/opaque", 2, 2),
     )
     assert provider_unsupported_selected_unit_aggregate.selected_unit_count == 2
@@ -271,6 +396,7 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
         (result.budget, result.winner_provider_names)
         for result in summary.task_budget_results
     ) == (
+        (100, (eval_providers.CONTEXT_IR_PROVIDER,)),
         (180, (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,)),
         (220, (eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,)),
     )
@@ -280,12 +406,13 @@ def test_dynamic_import_probe_summary_surfaces_internal_capability_accounting(
         assert "## Capability-Tier Accounting" in markdown
         assert "### Selected Units by Provider" in markdown
         assert "### Selected Units by Provider and Actual Primary Tier" in markdown
-        assert "| yes | 6 | 6 |" in markdown
+        assert "| yes | 9 | 9 |" in markdown
         assert "| unsupported/opaque | 2 | 2 |" in markdown
-        assert "| context_ir | 9 | 2 |" in markdown
+        assert "| context_ir | 12 | 2 |" in markdown
         assert "| import_neighborhood_files | 0 | 0 |" in markdown
         assert "| lexical_top_k_files | 0 | 0 |" in markdown
         assert "| context_ir | unsupported/opaque | 2 | 2 |" in markdown
+        assert "| oracle_signal_dynamic_import_probe | 100 | context_ir |" in markdown
         assert (
             "| oracle_signal_dynamic_import_probe | 180 | import_neighborhood_files |"
         ) in markdown

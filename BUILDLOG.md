@@ -2,6 +2,91 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- Dynamic Import Original Budget-pressure Corrected Release Routing
+
+- Corrected stale continuity for the accepted workspace-only internal
+  eval-only `DYNAMIC_IMPORT` original probe budget-pressure release unit.
+- Repo-backed truth verified for this correction:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `8aa38d5 Sync dir-zero metaclass release routing`
+  - nothing staged
+  - current workspace release unit is the full nine-file tranche:
+    - `ARCHITECTURE.md`
+    - `BUILDLOG.md`
+    - `EVAL.md`
+    - `PLAN.md`
+    - `PUBLIC_CLAIMS.md`
+    - `README.md`
+    - `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+    - `tests/test_eval_signal_dynamic_import_probe.py`
+    - `tests/test_eval_runs.py`
+- Accepted workspace-only implementation state recorded:
+  - `oracle_signal_dynamic_import_probe_matrix` is exactly 1 task x 3 budgets
+    x 3 providers
+  - budgets are `[220, 180, 100]`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture, task, query, and runtime payload are unchanged
+  - runtime payload remains `imported_module=plugins.weather`
+  - baseline providers remain empty at all budgets
+  - budget `100` `context_ir` selects only:
+    - `def:main.py:main.load_weather_plugin`
+    - `def:main.py:main.render_probe_digest`
+    - `frontier:call:main.py:6:11`
+  - budget `100` does not select `unsupported:call:main.py:5:13`
+  - budget `100` does not select `plugins/weather.py`
+  - unsupported selector truth remains `unsupported/opaque` with
+    `unsupported_reason_code`, `opaque_boundary`, and attached runtime
+    provenance
+  - runtime provenance remains additive only
+  - budget `100` winner is `context_ir`
+  - budget `180` and `220` winners remain `import_neighborhood_files`
+  - no `plugins.weather` dependency edge, selected symbol, or selected
+    `plugins/weather.py` unit is introduced
+  - no public/API/MCP/package-export/schema/scoring/optimizer/compiler/
+    winner-selection/product/public benchmark widening is authorized
+- Acceptance status recorded:
+  - implementation accepted workspace-only first-pass
+  - docs/evidence/continuity reconciliation needed one correction and is now
+    accepted for forward release-gate routing
+  - full-regression helper correction in `tests/test_eval_runs.py` accepted
+    first-pass
+- Documentation/evidence reconciliation:
+  - `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, and `README.md` use
+    state-neutral release-facing wording for the `[220, 180, 100]`
+    provider/budget shape, unchanged fixture/task/query/runtime payload,
+    `imported_module=plugins.weather`, empty baselines, budget `100`
+    non-selection, unsupported/opaque selector truth, additive runtime
+    provenance, winner behavior, no `plugins.weather` dependency edge or
+    selected symbol, no selected `plugins/weather.py` unit, and preserved
+    public comparative claim boundary
+  - `PLAN.md` and `BUILDLOG.md` record the corrected full nine-file tranche
+    and the next route
+- Scope guard:
+  - this correction edits only `PLAN.md` and `BUILDLOG.md`
+  - no `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, run
+    specs, tests, source, fixtures, task JSON, API/MCP/package exports, schema,
+    scoring, optimizer, compiler, winner-selection, product/public benchmark
+    surfaces, staging, commits, push, full regression, release-unit audit, or
+    commit-gating were modified or performed by this correction
+- Routing decision:
+  - route next to the corrected combined read-only release gate over the full
+    nine-file tranche
+  - the corrected combined read-only release gate must run release-unit audit,
+    then full regression, then commit-gating in sequence with
+    stop-on-first-finding discipline, and must not edit files, stage, commit,
+    or push
+  - do not route backward to docs/evidence/continuity control review absent new
+    findings
+  - do not pre-record release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push as cleared
+  - staging, local commit creation, and push remain blocked; push remains
+    Ryan-gated
+- Acceptance status: continuity correction completed; release-unit audit, full
+  regression, commit-gating, staging, local commit creation, and push are not
+  cleared
+
 ## 2026-05-03 -- e2f3dcf Dir-zero and Metaclass Release Sync
 
 - Supersedes earlier current routing text for the accepted workspace-only

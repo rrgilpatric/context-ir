@@ -42,75 +42,93 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-truth verified for this post-push continuity sync is branch `main`; `HEAD` and
-`origin/main` are at
-`e2f3dcf Expand dir-zero and metaclass budget coverage`; the worktree was
-clean at intake before this docs-only continuity edit. Live git refs and
-worktree state remain authoritative for future control intake.
+truth verified for this corrected `DYNAMIC_IMPORT` original budget-pressure
+release-unit continuity state is branch `main`; `HEAD` and `origin/main` are
+at `8aa38d5 Sync dir-zero metaclass release routing`; nothing is staged. The
+current workspace release unit is the full nine-file tranche:
 
-Current active release state is the completed and pushed internal eval-only
-budget-pressure tranche for zero-argument `dir()` and metaclass behavior at
-`e2f3dcf Expand dir-zero and metaclass budget coverage`. The released
-implementation files are:
+- `ARCHITECTURE.md`
+- `BUILDLOG.md`
+- `EVAL.md`
+- `PLAN.md`
+- `PUBLIC_CLAIMS.md`
+- `README.md`
+- `evals/run_specs/oracle_signal_dynamic_import_probe_matrix.json`
+- `tests/test_eval_signal_dynamic_import_probe.py`
+- `tests/test_eval_runs.py`
 
-- `evals/run_specs/oracle_signal_dir_zero_probe_matrix.json`
-- `evals/run_specs/oracle_signal_metaclass_behavior_probe_matrix.json`
-- `tests/test_eval_signal_dir_zero_probe.py`
-- `tests/test_eval_signal_metaclass_behavior_probe.py`
+Live git refs and worktree state remain authoritative for future control
+intake.
 
-Released implementation truth:
+Current active release state is the accepted workspace-only internal eval-only
+`DYNAMIC_IMPORT` original probe budget-pressure expansion plus corrected
+docs/evidence/continuity and helper-test reconciliation. The active release
+unit is the full nine-file tranche listed above.
 
-- `oracle_signal_dir_zero_probe_matrix` expanded from `[220]` to `[220, 100]`
-- `oracle_signal_metaclass_behavior_probe_matrix` expanded from `[220]` to
-  `[220, 100]`
-- Each matrix is 1 task x 2 budgets x 3 providers
+Accepted workspace-only implementation truth:
+
+- `oracle_signal_dynamic_import_probe_matrix` is exactly 1 task x 3 budgets x
+  3 providers
+- Budgets are `[220, 180, 100]`
 - Providers remain `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`
-- `dir()` runtime payload remains `listing_entry_count=3`
-- `dir()` `context_ir` selected units are identical at budgets `220` and
-  `100`:
-  - `def:main.py:main.probe_directory`
+- Fixture, task, query, and runtime payload are unchanged
+- Runtime payload remains `imported_module=plugins.weather`
+- Baseline providers remain empty at all budgets
+- Budget `100` `context_ir` selects only:
+  - `def:main.py:main.load_weather_plugin`
   - `def:main.py:main.render_probe_digest`
-  - `unsupported:call:main.py:2:11`
-- Metaclass runtime payload remains
-  `class_creation_outcome=created_class`,
-  `created_class_qualified_name=main.Example`, and
-  `selected_metaclass_qualified_name=main.Meta`
-- Metaclass budget `220` selected units:
-  - `def:main.py:main.Example`
-  - `def:main.py:main.Base`
-  - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
-  - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
-- Metaclass budget `100` selected units:
-  - `def:main.py:main.Example`
-  - `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`
-  - `frontier:base:main.py:5:11:def:main.py:main.Meta:1`
-- Budget `100` intentionally omits `def:main.py:main.Base`
-- Baseline providers remain empty at both budgets for both matrices
-- Selector and selected-unit truth remain `unsupported/opaque` where
-  applicable
+  - `frontier:call:main.py:6:11`
+- Budget `100` does not select `unsupported:call:main.py:5:13`
+- Budget `100` does not select `plugins/weather.py`
+- Unsupported selector truth remains `unsupported/opaque` with
+  `unsupported_reason_code`, `opaque_boundary`, and attached runtime
+  provenance
 - Runtime provenance remains additive only
-- No selected `def:main.py:main.Meta` symbol, metaclass dependency edge,
-  `dir()` output dependency edge, or selected symbol is introduced beyond the
-  listed selected units
-- No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
+- Budget `100` winner is `context_ir`
+- Budget `180` and `220` winners remain `import_neighborhood_files`
+- No `plugins.weather` dependency edge, selected symbol, or selected
+  `plugins/weather.py` unit is introduced
+- No public/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
+- Implementation acceptance status: first-pass workspace-only
 
-Release state for `e2f3dcf`:
+Release-unit reconciliation state:
 
-- Implementation accepted first-pass
-- Docs/evidence/continuity reconciliation accepted after 1 correction
-- Combined release-unit audit passed
-- Full regression passed with `709 passed`
-- Commit-gating passed
-- Local commit created at `e2f3dcf`
-- Ryan-authorized push completed at `e2f3dcf`
-- Release-gate status is no-active-gate
+- Docs/evidence/continuity reconciliation needed one correction and is now
+  accepted for forward release-gate routing
+- Full-regression helper correction in `tests/test_eval_runs.py` was accepted
+  first-pass
+- Documentation and continuity files in this release unit are
+  `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, `PLAN.md`,
+  and `BUILDLOG.md`
+- Release-facing docs remain state-neutral
+- Public comparative claims remain bounded to the existing public claim
+  boundary
+- No release-unit audit, full regression, commit-gating, staging, local commit
+  creation, or push has been run or cleared for this nine-file tranche
 
-No active route remains to docs review, release-unit audit, full regression,
-commit-gating, staging, local commit creation, or push for `e2f3dcf` absent
-new findings. The next route is bounded post-e2f3dcf North Star
-planning/control.
+Current route:
+
+- Route next to the corrected combined read-only release gate over the full
+  nine-file tranche listed above
+- The corrected combined read-only release gate must run release-unit audit,
+  then full regression, then commit-gating in sequence with
+  stop-on-first-finding discipline, and must not edit files, stage, commit, or
+  push
+- Do not route backward to docs/evidence/continuity control review absent new
+  findings
+- Do not pre-record release-unit audit, full regression, commit-gating,
+  staging, local commit creation, or push as cleared
+- Staging, local commit creation, and push remain blocked; push remains
+  Ryan-gated
+
+Most recent pushed code/eval release authority remains
+`e2f3dcf Expand dir-zero and metaclass budget coverage`; most recent pushed
+continuity authority is `8aa38d5 Sync dir-zero metaclass release routing`.
+There is no active route back to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push for `e2f3dcf` absent new
+findings.
 
 Prior pushed continuity authority is
 `642b6f9 Sync exec eval release routing`. Prior pushed code/eval authority is
@@ -1088,13 +1106,23 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is In Progress
 
-- No implementation slice, release gate, staging, local commit creation, or
-  push is currently in progress or authorized.
+- No implementation slice, staging, local commit creation, or push is currently
+  in progress or authorized.
+- No release-unit audit, full regression, or commit-gating gate has been run or
+  cleared for the current `DYNAMIC_IMPORT` original budget-pressure release
+  unit.
+- The current nine-file tranche is the accepted workspace-only
+  `DYNAMIC_IMPORT` original budget-pressure implementation plus corrected
+  docs/evidence/continuity and helper-test reconciliation. The tranche files
+  are the nine files named in the canonical active release-state block above.
+- Active next route is the corrected combined read-only release gate over the
+  full nine-file tranche. Staging, local commit creation, and push remain
+  blocked; push remains Ryan-gated.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
-  is pushed at `e2f3dcf` and has release-gate status no-active-gate.
-- Active next route is bounded post-e2f3dcf North Star planning/control. Do not
-  route `e2f3dcf` back to docs review, release-unit audit, full regression,
-  commit-gating, staging, local commit creation, or push absent new findings.
+  is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
+  historical pushed authority, not the active route. Do not route `e2f3dcf`
+  back to docs review, release-unit audit, full regression, commit-gating,
+  staging, local commit creation, or push absent new findings.
 - Fresh control lanes should use the canonical active release-state block above
   for current routing, and should treat older conflicting routing notes as
   historical when superseded by that block or by newer BUILDLOG entries.
@@ -1784,12 +1812,20 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-e2f3dcf North Star planning/control.
+Immediate next route: corrected combined read-only release gate over the full
+nine-file `DYNAMIC_IMPORT` original budget-pressure tranche.
 
 `e2f3dcf Expand dir-zero and metaclass budget coverage` is complete and pushed,
-with release status no-active-gate. Do not route `e2f3dcf` back to docs review,
-release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push absent new findings.
+with release status no-active-gate. It is historical pushed authority, not the
+active route. Do not route `e2f3dcf` back to docs review, release-unit audit,
+full regression, commit-gating, staging, local commit creation, or push absent
+new findings.
+
+The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
+accepted workspace-only state for implementation, corrected
+docs/evidence/continuity, and the `tests/test_eval_runs.py` helper correction.
+The corrected combined read-only release gate has not run or cleared. Staging,
+local commit creation, and push remain blocked; push remains Ryan-gated.
 
 `642b6f9 Sync exec eval release routing` is the prior pushed continuity
 authority. `21f2dc5 Expand exec and eval budget coverage` is the prior pushed
