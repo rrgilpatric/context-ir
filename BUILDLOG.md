@@ -2,6 +2,69 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-03 -- 21f2dc5 EXEC_OR_EVAL Budget-pressure Release Sync
+
+- Supersedes earlier current routing text for the accepted workspace-only
+  internal eval-only `EXEC_OR_EVAL` eval/exec budget-pressure tranche.
+- Repo-backed release truth verified during this post-push continuity sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `21f2dc5 Expand exec and eval budget coverage`
+  - worktree clean at intake before this docs-only continuity edit
+  - latest pushed code/eval authority is
+    `21f2dc5 Expand exec and eval budget coverage`
+  - prior pushed continuity authority was
+    `9fffc5e Sync dynamic import release routing`
+  - prior pushed code/eval authority was
+    `c2c1898 Expand dynamic import sibling eval budget coverage`
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `21f2dc5`:
+  - docs reconciliation accepted
+  - combined release-unit audit completed
+  - full regression cleared with `709 passed`
+  - commit-gating completed
+  - local commit creation completed at `21f2dc5`
+  - Ryan-authorized push completed at `21f2dc5`
+  - release status is no-active-gate
+- Released tranche:
+  - `oracle_signal_eval_probe_matrix` expanded from `[220]` to `[220, 100]`
+  - `oracle_signal_exec_probe_matrix` expanded from `[220]` to `[220, 100]`
+  - each matrix is 1 task x 2 budgets x 3 providers
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixtures, tasks, queries, source-shape/hash/proof boundaries, and runtime
+    payloads are unchanged
+  - eval payload remains `evaluation_outcome=returned_value` and
+    `result_type=builtins.str`
+  - exec payload remains `execution_outcome=completed` and
+    `statement_kind=pass`
+  - baseline providers remain empty at both budgets
+  - at both budgets, `context_ir` selects the same unsupported/opaque boundary
+    unit with additive runtime provenance
+  - no generated-code dependency edge or selected symbol is introduced
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- Routing decision:
+  - route next to bounded post-21f2dc5 North Star planning/control
+  - do not route `21f2dc5` back to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - no active route remains to docs review, release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push for
+    `21f2dc5` absent new findings
+  - preserve `9fffc5e Sync dynamic import release routing` as the prior pushed
+    continuity authority
+  - preserve `c2c1898 Expand dynamic import sibling eval budget coverage` as
+    the prior pushed code/eval authority
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, run specs,
+    regression, audit, commit-gating, staging, local commit creation, or push
+    were performed
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- EXEC_OR_EVAL Budget-pressure Docs Sync
 
 - Completed docs/evidence/continuity reconciliation for the accepted

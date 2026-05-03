@@ -42,20 +42,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Live git refs and worktree state must be verified from git during control
 intake rather than treated as an always-current committed field. Repo-backed
-release truth verified for this docs/evidence/continuity reconciliation is
-branch `main`; `HEAD` and `origin/main` are at
-`9fffc5e Sync dynamic import release routing`. No files were staged at intake
-before this docs-only reconciliation. Live git refs and worktree state remain
-authoritative for future control intake.
+release truth verified for this post-push continuity sync is branch `main`;
+`HEAD` and `origin/main` are at
+`21f2dc5 Expand exec and eval budget coverage`. The worktree was clean at
+intake before this docs-only continuity edit. Live git refs and worktree state
+remain authoritative for future control intake.
 
-Current active state is the accepted workspace-only internal eval-only
-`EXEC_OR_EVAL` budget-pressure tranche. The implementation was accepted
-first-pass and is awaiting findings-first control review of this
-docs/evidence/continuity reconciliation only. Do not pre-route this tranche to
-release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push.
+Current active release state is the completed and pushed internal eval-only
+`EXEC_OR_EVAL` eval/exec budget-pressure tranche at
+`21f2dc5 Expand exec and eval budget coverage`. Release-gate status is
+no-active-gate.
 
-The accepted workspace-only `EXEC_OR_EVAL` budget-pressure implementation is:
+The pushed `EXEC_OR_EVAL` eval/exec budget-pressure release is:
 
 - Eval assets and tests:
   - `evals/run_specs/oracle_signal_eval_probe_matrix.json`
@@ -80,27 +78,23 @@ The accepted workspace-only `EXEC_OR_EVAL` budget-pressure implementation is:
 - No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
 
-This docs/evidence/continuity reconciliation edits only:
+Release gates completed for `21f2dc5`: docs reconciliation accepted; combined
+release-unit audit completed; full regression cleared with `709 passed`;
+commit-gating completed; local commit creation completed at `21f2dc5`; and
+Ryan-authorized push completed at `21f2dc5`.
 
-- `ARCHITECTURE.md`
-- `BUILDLOG.md`
-- `EVAL.md`
-- `PLAN.md`
-- `PUBLIC_CLAIMS.md`
-- `README.md`
+No active route remains to docs review, release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push for `21f2dc5` absent
+new findings. The next route is bounded post-21f2dc5 North Star
+planning/control. Do not open a new implementation route or release gate for
+`21f2dc5` absent new findings.
 
-Routing decision: route next to findings-first control review of this
-docs/evidence/continuity reconciliation only. Do not pre-route to
-release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push. Push remains Ryan-gated and is not the active next route.
-
-The completed and pushed internal eval-only `DYNAMIC_IMPORT` sibling
-budget-pressure release at `c2c1898 Expand dynamic import sibling eval budget
-coverage` remains the latest pushed code/eval release authority.
-`9fffc5e Sync dynamic import release routing` is the latest pushed continuity
-authority. Latest pushed process-doc authority remains
-`98edc4a Codify release gate continuity controls`. Prior pushed code/eval
-authority remains `b8e126e Expand runtime mutation eval budget coverage`.
+`9fffc5e Sync dynamic import release routing` is the prior pushed continuity
+authority. The completed and pushed internal eval-only `DYNAMIC_IMPORT`
+sibling budget-pressure release at
+`c2c1898 Expand dynamic import sibling eval budget coverage` is the prior
+pushed code/eval authority and is no-active-gate. Latest pushed process-doc
+authority remains `98edc4a Codify release gate continuity controls`.
 
 The completed and pushed internal eval-only `RUNTIME_MUTATION` /
 `delattr(obj, name)` and `setattr(obj, name, value)` budget-pressure expansion
@@ -1038,17 +1032,27 @@ sequencing for `c1a12d7` absent new findings.
   release unit completed
 - [x] Local commit creation and Ryan-authorized push for
   `c2c1898 Expand dynamic import sibling eval budget coverage` completed
+- [x] Docs reconciliation for the internal `EXEC_OR_EVAL` eval/exec
+  budget-pressure tranche accepted
+- [x] Combined release-unit audit for the internal `EXEC_OR_EVAL` eval/exec
+  budget-pressure release unit completed
+- [x] Full regression gate for the internal `EXEC_OR_EVAL` eval/exec
+  budget-pressure release unit cleared with `pytest tests/ -v` reporting
+  `709 passed`
+- [x] Commit-gating review for the internal `EXEC_OR_EVAL` eval/exec
+  budget-pressure release unit completed
+- [x] Local commit creation and Ryan-authorized push for
+  `21f2dc5 Expand exec and eval budget coverage` completed
 
 ## What Is In Progress
 
-- No implementation slice or release gate is currently in progress or
-  authorized.
-- The accepted workspace-only `EXEC_OR_EVAL` budget-pressure implementation is
-  awaiting findings-first control review of this docs/evidence/continuity
-  reconciliation only.
-- Active next route is that docs/evidence/continuity review, not release-unit
-  audit, full regression, commit-gating, staging, local commit creation, or
-  push.
+- No implementation slice, release gate, staging, local commit creation, or
+  push is currently in progress or authorized.
+- The `EXEC_OR_EVAL` eval/exec budget-pressure release is pushed at
+  `21f2dc5` and has release-gate status no-active-gate.
+- Active next route is bounded post-21f2dc5 North Star planning/control, not
+  docs review, release-unit audit, full regression, commit-gating, staging,
+  local commit creation, push, or implementation.
 - Fresh control lanes should use the canonical active release-state block above
   for current routing, and should treat older conflicting routing notes as
   historical when superseded by that block or by newer BUILDLOG entries.
@@ -1738,29 +1742,25 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: findings-first control review of the accepted
-workspace-only `EXEC_OR_EVAL` budget-pressure docs/evidence/continuity
-reconciliation only.
+Immediate next route: bounded post-21f2dc5 North Star planning/control.
 
-`c2c1898 Expand dynamic import sibling eval budget coverage` is complete and
-pushed, with release status no-active-gate. Do not route `c2c1898` back to
-docs review, release-unit audit, full regression, commit-gating, staging,
-local commit creation, or push absent new findings.
+`21f2dc5 Expand exec and eval budget coverage` is complete and pushed, with
+release status no-active-gate. Do not route `21f2dc5` back to docs review,
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
-Do not pre-route the `EXEC_OR_EVAL` budget-pressure tranche to release-unit
-audit, full regression, commit-gating, staging, local commit creation, or push.
-Those gates require a clean findings-first control review decision first.
-
-`9fffc5e Sync dynamic import release routing` is the latest pushed continuity
-authority. `98edc4a Codify release gate continuity controls` remains the
-pushed process-doc authority and is no-active-gate. `b8e126e Expand runtime
-mutation eval budget coverage` remains the prior pushed code/eval authority
-and is no-active-gate. `ad9db8d Expand dir eval budget coverage` remains an
-earlier pushed code/eval authority and is no-active-gate. Do not reopen
-`c2c1898`, `9fffc5e`, `98edc4a`, `b8e126e`, `ad9db8d`, or earlier pushed
-releases absent new findings. Do not widen public/API/MCP/package-export/
-schema/scoring/optimizer/compiler/winner-selection/product/public benchmark
-scope without a separately authorized planning decision.
+`9fffc5e Sync dynamic import release routing` is the prior pushed continuity
+authority. `c2c1898 Expand dynamic import sibling eval budget coverage` is the
+prior pushed code/eval authority and is no-active-gate. `98edc4a Codify
+release gate continuity controls` remains the pushed process-doc authority and
+is no-active-gate. `b8e126e Expand runtime mutation eval budget coverage`
+remains an earlier pushed code/eval authority and is no-active-gate.
+`ad9db8d Expand dir eval budget coverage` remains an earlier pushed code/eval
+authority and is no-active-gate. Do not reopen `21f2dc5`, `c2c1898`,
+`9fffc5e`, `98edc4a`, `b8e126e`, `ad9db8d`, or earlier pushed releases absent
+new findings. Do not widen public/API/MCP/package-export/schema/scoring/
+optimizer/compiler/winner-selection/product/public benchmark scope without a
+separately authorized planning decision.
 
 Completed post-5bd0616 planning decision:
 
@@ -2494,6 +2494,12 @@ not pending release gates.
 
 ## What Should Not Be Reopened
 
+- The accepted pushed `21f2dc5` `EXEC_OR_EVAL` eval/exec budget-pressure
+  release unit, or any docs review, release-unit audit, full regression,
+  commit-gating, staging, local commit creation, or push route for it, unless
+  a later findings-based review proves a concrete defect
+- The accepted pushed `c2c1898` `DYNAMIC_IMPORT` sibling budget-pressure
+  release unit unless a later findings-based review proves a concrete defect
 - The accepted pushed `b8e126e` `RUNTIME_MUTATION` / `delattr(obj, name)` and
   `setattr(obj, name, value)` budget-pressure expansion release unit unless a
   later findings-based review proves a concrete defect
