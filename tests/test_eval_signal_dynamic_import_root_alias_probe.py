@@ -36,9 +36,13 @@ RUN_SPEC_PATH = (
     / "run_specs"
     / "oracle_signal_dynamic_import_root_alias_probe_matrix.json"
 )
-PROBE_BUDGETS = (220,)
+PROBE_BUDGETS = (220, 100)
 PROBE_PROVIDERS = (
     eval_providers.CONTEXT_IR_PROVIDER,
+    eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
+    eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
+)
+BASELINE_PROVIDERS = (
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
     eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
 )
@@ -110,8 +114,8 @@ def test_dynamic_import_root_alias_probe_task_resolves_expected_selectors() -> N
     assert unsupported.attached_runtime_provenance_record_ids
 
 
-def test_dynamic_import_root_alias_probe_run_spec_loads_single_budget_matrix() -> None:
-    """The run spec stays at 1 task x 1 budget x 3 providers."""
+def test_dynamic_import_root_alias_probe_run_spec_loads_two_budget_matrix() -> None:
+    """The run spec stays at 1 task x 2 budgets x 3 providers."""
     spec = eval_runs.load_eval_run_spec(RUN_SPEC_PATH)
 
     assert spec.plan_id == "oracle_signal_dynamic_import_root_alias_probe_matrix"
@@ -319,50 +323,75 @@ def test_dynamic_import_root_alias_probe_run_executes_with_runtime_provenance(
         for budget in PROBE_BUDGETS
     }
 
-    record = _record_for(
-        records,
-        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
-        budget=220,
-    )
-    metrics = cast(dict[str, object], record["metrics"])
-    runtime_provenance_records = cast(
-        list[dict[str, object]],
-        record["runtime_provenance_records"],
-    )
-    selected_units = _selected_units(record)
-    unsupported_selector = next(
-        selector
-        for selector in _resolved_selectors(record)
-        if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
-    )
-    unsupported_unit = next(
-        unit for unit in selected_units if unit["unit_id"] == UNSUPPORTED_UNIT_ID
-    )
+    for provider_name in BASELINE_PROVIDERS:
+        for budget in PROBE_BUDGETS:
+            baseline_record = _record_for(
+                records,
+                provider_name=provider_name,
+                budget=budget,
+            )
+            assert baseline_record["selected_unit_ids"] == []
+            assert _selected_units(baseline_record) == []
 
-    assert record["spec_version"] == "v1"
-    assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
-    assert record["budget"] == 220
-    assert UNSUPPORTED_UNIT_ID in cast(list[str], record["selected_unit_ids"])
-    assert all(
-        "plugins/weather.py" not in cast(str, unit["unit_id"])
-        for unit in selected_units
-    )
-    assert metrics["uncertainty_honesty"] == 1.0
-    assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_selector["primary_evidence_origin"] == (
-        "unsupported_reason_code"
-    )
-    assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_selector["has_attached_runtime_provenance"] is True
-    assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
-    assert unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
-    assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
-    assert unsupported_unit["has_attached_runtime_provenance"] is True
-    assert cast(
-        list[str],
-        unsupported_unit["attached_runtime_provenance_record_ids"],
-    )
-    assert len(runtime_provenance_records) == 1
-    assert runtime_provenance_records[0]["normalized_payload"] == {
-        "imported_module": "plugins.weather"
-    }
+    for budget in PROBE_BUDGETS:
+        record = _record_for(
+            records,
+            provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+            budget=budget,
+        )
+        metrics = cast(dict[str, object], record["metrics"])
+        runtime_provenance_records = cast(
+            list[dict[str, object]],
+            record["runtime_provenance_records"],
+        )
+        selected_units = _selected_units(record)
+        unsupported_selector = next(
+            (
+                selector
+                for selector in _resolved_selectors(record)
+                if selector["resolved_unit_id"] == UNSUPPORTED_UNIT_ID
+            ),
+            None,
+        )
+        unsupported_unit = next(
+            (unit for unit in selected_units if unit["unit_id"] == UNSUPPORTED_UNIT_ID),
+            None,
+        )
+        selected_unit_ids = cast(list[str], record["selected_unit_ids"])
+
+        assert record["spec_version"] == "v1"
+        assert record["provider_name"] == eval_providers.CONTEXT_IR_PROVIDER
+        assert record["budget"] == budget
+        assert unsupported_selector is not None
+        if budget == 220:
+            assert UNSUPPORTED_UNIT_ID in selected_unit_ids
+            assert unsupported_unit is not None
+            assert metrics["uncertainty_honesty"] == 1.0
+        if budget == 100:
+            assert UNSUPPORTED_UNIT_ID not in selected_unit_ids
+            assert unsupported_unit is None
+        assert all(
+            "plugins/weather.py" not in cast(str, unit["unit_id"])
+            for unit in selected_units
+        )
+        assert unsupported_selector["primary_capability_tier"] == "unsupported/opaque"
+        assert unsupported_selector["primary_evidence_origin"] == (
+            "unsupported_reason_code"
+        )
+        assert unsupported_selector["primary_replay_status"] == "opaque_boundary"
+        assert unsupported_selector["has_attached_runtime_provenance"] is True
+        if unsupported_unit is not None:
+            assert unsupported_unit["primary_capability_tier"] == "unsupported/opaque"
+            assert (
+                unsupported_unit["primary_evidence_origin"] == "unsupported_reason_code"
+            )
+            assert unsupported_unit["primary_replay_status"] == "opaque_boundary"
+            assert unsupported_unit["has_attached_runtime_provenance"] is True
+            assert cast(
+                list[str],
+                unsupported_unit["attached_runtime_provenance_record_ids"],
+            )
+        assert len(runtime_provenance_records) == 1
+        assert runtime_provenance_records[0]["normalized_payload"] == {
+            "imported_module": "plugins.weather"
+        }

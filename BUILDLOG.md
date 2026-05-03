@@ -2,6 +2,68 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-02 -- DYNAMIC_IMPORT Sibling Budget-pressure Docs Sync
+
+- Completed docs/evidence/continuity reconciliation for the accepted
+  workspace-only internal eval-only `DYNAMIC_IMPORT` sibling budget-pressure
+  tranche.
+- Repo-backed truth verified for this reconciliation:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `98edc4a Codify release gate continuity controls`
+  - nothing staged
+  - expected dirty implementation files at intake were the seven run specs and
+    seven tests for the `DYNAMIC_IMPORT` sibling budget-pressure tranche
+- Accepted workspace-only implementation state recorded:
+  - `oracle_signal_dynamic_import_root_probe_matrix` expanded from `[220]` to
+    `[220, 100]`
+  - `oracle_signal_dynamic_import_builtin_probe_matrix` expanded from `[220]`
+    to `[220, 100]`
+  - `oracle_signal_dynamic_import_imported_name_probe_matrix` expanded from
+    `[220]` to `[220, 100]`
+  - `oracle_signal_dynamic_import_imported_alias_probe_matrix` expanded from
+    `[220]` to `[220, 100]`
+  - `oracle_signal_dynamic_import_root_alias_probe_matrix` expanded from
+    `[220]` to `[220, 100]`
+  - `oracle_signal_dynamic_import_builtins_attr_probe_matrix` expanded from
+    `[220]` to `[220, 100]`
+  - `oracle_signal_dynamic_import_builtins_alias_probe_matrix` expanded from
+    `[220]` to `[220, 100]`
+  - each matrix is 1 task x 2 budgets x 3 providers at `[220, 100]`
+  - providers remain `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - fixture, task, query, and runtime payload boundaries are unchanged
+  - runtime payload remains `imported_module=plugins.weather`
+  - baseline providers remain empty at both budgets
+  - at budget `220`, `context_ir` selects the unsupported/opaque boundary unit
+    with additive runtime provenance
+  - at budget `100`, `context_ir` preserves the resolved
+    `unsupported/opaque` selector and additive runtime provenance, but does not
+    select the unsupported boundary unit
+  - no `plugins/weather.py` selected unit, dependency edge, or selected symbol
+    is introduced
+  - no source/runtime/API/MCP/package-export/schema/scoring/optimizer/
+    compiler/winner-selection/product/public benchmark widening is authorized
+- Documentation/evidence reconciliation:
+  - `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, and `README.md` now use
+    state-neutral release-facing wording for the seven-matrix `[220, 100]`
+    provider/budget shape, budget-100 non-selection behavior, empty baselines,
+    and preserved public comparative claim boundary
+  - `PLAN.md` and `BUILDLOG.md` record the accepted workspace-only
+    implementation after 1 correction and the next routing
+- Scope guard:
+  - this reconciliation edits docs/continuity only
+  - no source files, eval fixtures, task JSON, run specs, tests, staging,
+    commits, or push were modified or performed by this docs-sync slice
+- Routing decision:
+  - route next to findings-first control review of this docs/evidence/
+    continuity reconciliation only
+  - do not pre-route to release-unit audit, full regression, commit-gating,
+    staging, local commit creation, or push
+  - push remains Ryan-gated and is not the active next route
+- Acceptance status: 1 correction for the accepted implementation; docs/
+  evidence/continuity reconciliation awaiting findings-first control review
+
 ## 2026-05-02 -- b8e126e Runtime Mutation Release and Continuity Methodology Sync
 
 - Supersedes earlier current routing text for the internal eval-only
