@@ -2,6 +2,60 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- Planned Runtime Probe Request ID Implementation Review
+
+- Reviewed the returned implementation slice for stable planned runtime probe
+  request identity.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `bea0a1a Sync diagnostic probe request surface routing`
+  - nothing staged at intake
+  - no untracked files
+  - expected dirty files were:
+    - `src/context_ir/runtime_probe_requests.py`
+    - `tests/test_runtime_probe_requests.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `RuntimeProbeRequest.request_id` is a computed property, preserving
+    constructor call sites
+  - request IDs are SHA-256 based and derived from canonical planned-request
+    identity fields only
+  - identity inputs cover subject identity, source site, reason code, boundary
+    text, family/form labels, and replay target/selector seeds
+  - IDs are deterministic across repeated derivation from the same program and
+    unique across a derived request set
+  - diagnostic-filtered requests preserve the same IDs as their underlying
+    planned requests
+  - tests cover repeated-derivation stability, uniqueness, diagnostic
+    filtering preservation, and ID presence across all currently supported
+    runtime probe families
+  - no probe execution, execution-result contract, observation-admission
+    contract, runtime provenance attachment, status widening,
+    `SemanticProgram` mutation, diagnostic mutation, unsupported/frontier/
+    provenance mutation, compile/recompile behavior, analyzer/tool-facade
+    behavior, MCP, package-root export, eval, schema, scoring, optimizer,
+    compiler, winner-selection, product, public benchmark, or public-claim
+    surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
+    reporting `27 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- a819cf5 Diagnostic Runtime Probe Request Surface Release Sync
 
 - Synced post-push continuity for

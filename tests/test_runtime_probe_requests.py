@@ -164,6 +164,8 @@ def test_derive_runtime_probe_requests_plans_attachable_runtime_boundaries(
     second_requests = runtime_probe_requests.derive_runtime_probe_requests(program)
 
     requests_by_text = {request.boundary_text: request for request in first_requests}
+    first_request_ids = [request.request_id for request in first_requests]
+    second_request_ids = [request.request_id for request in second_requests]
     source_site_fragments = [
         (
             request.source_site.file_path,
@@ -176,6 +178,14 @@ def test_derive_runtime_probe_requests_plans_attachable_runtime_boundaries(
     ]
 
     assert first_requests == second_requests
+    assert first_request_ids == second_request_ids
+    assert len(first_request_ids) == len(set(first_request_ids))
+    assert all(
+        request_id.startswith("runtime_probe:") for request_id in first_request_ids
+    )
+    assert {
+        request.family_label for request in first_requests if request.request_id
+    } == set(runtime_probe_requests.RuntimeProbeFamily)
     assert source_site_fragments == sorted(source_site_fragments)
     assert len(source_site_fragments) == len(set(source_site_fragments))
     assert program.unsupported_constructs == original_unsupported
@@ -363,6 +373,10 @@ def test_derive_diagnostic_runtime_probe_requests_returns_attachable_omitted_bou
     )
     program = _derived_program(tmp_path)
     unsupported_id = _unsupported_id_for(program, "importlib.import_module(name)")
+    planned_requests_by_subject_id = {
+        request.subject_id: request
+        for request in runtime_probe_requests.derive_runtime_probe_requests(program)
+    }
     diagnostic = _diagnostic_result(
         (
             _diagnostic_boundary(
@@ -383,6 +397,10 @@ def test_derive_diagnostic_runtime_probe_requests_returns_attachable_omitted_bou
     assert len(requests) == 1
     assert requests[0].subject_id == unsupported_id
     assert requests[0].boundary_text == "importlib.import_module(name)"
+    assert (
+        requests[0].request_id
+        == planned_requests_by_subject_id[unsupported_id].request_id
+    )
     assert (
         requests[0].status
         is runtime_probe_requests.RuntimeProbeRequestStatus.PLANNED_NOT_EXECUTED
@@ -531,6 +549,9 @@ def test_derive_diagnostic_runtime_probe_requests_is_deterministic_and_pure(
     original_planned_requests = runtime_probe_requests.derive_runtime_probe_requests(
         program
     )
+    original_request_ids_by_subject_id = {
+        request.subject_id: request.request_id for request in original_planned_requests
+    }
     original_unsupported = list(program.unsupported_constructs)
     original_frontier = list(program.unresolved_frontier)
     original_provenance_records = list(program.provenance_records)
@@ -548,6 +569,10 @@ def test_derive_diagnostic_runtime_probe_requests_is_deterministic_and_pure(
     )
 
     assert first_requests == second_requests
+    assert [request.request_id for request in first_requests] == [
+        original_request_ids_by_subject_id[request.subject_id]
+        for request in first_requests
+    ]
     assert first_requests == tuple(
         request
         for request in original_planned_requests

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
 from enum import Enum
 
@@ -67,6 +69,16 @@ class RuntimeProbeRequest:
             raise ValueError("replay_selector_seed must be non-empty")
         if self.status is not RuntimeProbeRequestStatus.PLANNED_NOT_EXECUTED:
             raise ValueError("runtime probe requests must be planned-only")
+
+    @property
+    def request_id(self) -> str:
+        """Return the stable internal identity for this planned probe request."""
+        serialized_identity = json.dumps(
+            _request_identity_parts(self),
+            separators=(",", ":"),
+        )
+        digest = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()
+        return f"runtime_probe:{digest}"
 
 
 def derive_runtime_probe_requests(
@@ -376,6 +388,28 @@ def _source_site_fragment(site: SourceSite) -> str:
     return (
         f"{site.file_path}:{span.start_line}:{span.start_column}:"
         f"{span.end_line}:{span.end_column}"
+    )
+
+
+def _request_identity_parts(
+    request: RuntimeProbeRequest,
+) -> tuple[tuple[str, str], ...]:
+    """Return canonical planned-request fields used for stable ID derivation."""
+    span = request.source_site.span
+    return (
+        ("subject_kind", request.subject_kind.value),
+        ("subject_id", request.subject_id),
+        ("source_file_path", request.source_site.file_path),
+        ("source_start_line", str(span.start_line)),
+        ("source_start_column", str(span.start_column)),
+        ("source_end_line", str(span.end_line)),
+        ("source_end_column", str(span.end_column)),
+        ("reason_code", request.reason_code.value),
+        ("boundary_text", request.boundary_text),
+        ("family_label", request.family_label.value),
+        ("form_label", request.form_label),
+        ("replay_target_seed", request.replay_target_seed),
+        ("replay_selector_seed", request.replay_selector_seed),
     )
 
 

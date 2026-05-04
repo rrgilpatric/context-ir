@@ -40,6 +40,79 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+Workspace-only accepted source/contract tranche:
+stable planned runtime probe request identity. This supersedes the
+post-`a819cf5` North Star planning route for active control routing only. Live
+git refs and worktree state must still be verified from git during control
+intake.
+
+Repo-backed truth verified during implementation review on 2026-05-04:
+branch `main`, `HEAD` and `origin/main` at
+`bea0a1a Sync diagnostic probe request surface routing`, nothing staged, no
+untracked files, dirty tracked files exactly:
+
+- `src/context_ir/runtime_probe_requests.py`
+- `tests/test_runtime_probe_requests.py`
+
+Accepted workspace-only implementation state:
+
+- `RuntimeProbeRequest.request_id` is a computed stable internal identity for
+  planned runtime probe requests
+- Request IDs are SHA-256 based and derived from canonical planned-request
+  identity fields only: subject identity, source site, reason code, boundary
+  text, family/form labels, and replay target/selector seeds
+- Constructor call sites are unchanged
+- IDs are deterministic across repeated derivation from the same program and
+  unique across a derived request set
+- Diagnostic-filtered requests preserve the same IDs as their underlying
+  planned requests
+- Tests cover repeated-derivation stability, uniqueness, diagnostic filtering
+  preservation, and ID presence across all currently supported runtime probe
+  families
+- The slice does not execute probes, add execution-result or
+  observation-admission contracts, attach runtime provenance, add statuses,
+  mutate `SemanticProgram`, mutate diagnostics, mutate unsupported/frontier/
+  provenance state, change compile/recompile behavior, or widen analyzer,
+  tool facade, MCP, package-root exports, eval, schema, scoring, optimizer,
+  compiler, winner-selection, product, public benchmark, or public-claim
+  surfaces
+
+Control-lane validation passed:
+
+- `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+- `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+- `.venv/bin/python -m mypy --strict src/`
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
+  reporting `27 passed`
+- `git diff --check`
+
+Release state for the request-ID tranche:
+
+- Accepted first-pass in workspace-only state
+- Not release-unit-audit-cleared
+- Not full-regression-cleared
+- Not commit-gating-cleared
+- Not staged
+- Not locally committed
+- Not pushed
+- Push remains Ryan-gated
+
+Current route:
+
+- Route next to a combined read-only release gate over the exact four-file
+  source/contract release unit:
+  - `src/context_ir/runtime_probe_requests.py`
+  - `tests/test_runtime_probe_requests.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The release gate must run Gate 1 release-unit audit, then Gate 2 full
+  regression, then Gate 3 commit-gating
+- It must stop on first finding, report findings first, and report each gate
+  explicitly
+- It must not edit files, stage, commit, push, or rewrite continuity
+- Do not route to another implementation slice before this tranche is
+  release-gate-cleared or a findings-based correction is accepted
+
 Current pushed source/contract release authority is
 `a819cf5 Surface diagnostic runtime probe requests`. It supersedes the
 workspace-only post-`e94cd5d` diagnose/recompile planned runtime probe request
@@ -87,10 +160,11 @@ Release-gate status is no-active-gate for
 back to docs review, release-unit audit, focused validation, full regression,
 commit-gating, staging, local commit creation, or push absent new findings.
 
-Current route:
+Prior route superseded by the workspace-only accepted request-ID tranche above:
 
-- Route next to bounded post-`a819cf5` North Star planning/control to choose
-  the next smallest meaningful capability slice
+- The bounded post-`a819cf5` North Star planning/control decision is complete;
+  it selected stable planned runtime probe request identity as the next
+  smallest meaningful capability slice
 - Do not route `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs
   review, release-unit audit, focused validation, full regression,
   commit-gating, staging, local commit creation, or push absent new findings
@@ -1318,6 +1392,16 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is In Progress
 
+- The stable planned runtime probe request identity tranche is accepted
+  first-pass in workspace-only state:
+  - `src/context_ir/runtime_probe_requests.py`
+  - `tests/test_runtime_probe_requests.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-gate status is not cleared for this request-ID tranche.
+- Active next route is the combined read-only release gate over the exact
+  four-file request-ID release unit, not another implementation slice.
+- Push remains Ryan-gated for any future release.
 - The diagnose/recompile planned runtime probe request consumption tranche is
   completed and pushed at `a819cf5`:
   - `src/context_ir/semantic_diagnostics.py`
@@ -1350,10 +1434,6 @@ sequencing for `c1a12d7` absent new findings.
   pushed at `546a4da`; release-gate status is no-active-gate.
 - The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
   completed and pushed at `d73cde4`; release-gate status is no-active-gate.
-- Active next route is bounded post-`a819cf5` North Star planning/control to
-  choose the next smallest meaningful capability slice, not release gates for
-  completed pushed work.
-- Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
   historical pushed authority, not the active route. Do not route `e2f3dcf`
@@ -2048,19 +2128,34 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`a819cf5` North Star planning/control to
-choose the next smallest meaningful capability slice.
+Immediate next route: combined read-only release gate over the exact four-file
+stable planned runtime probe request identity tranche:
+
+- `src/context_ir/runtime_probe_requests.py`
+- `tests/test_runtime_probe_requests.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The gate must run Gate 1 release-unit audit, then Gate 2 full regression, then
+Gate 3 commit-gating. It must stop on first finding, report findings first,
+report each gate explicitly, and must not edit files, stage, commit, push, or
+rewrite continuity.
+
+The accepted request-ID tranche adds a deterministic computed
+`RuntimeProbeRequest.request_id` for planned runtime probe requests. It remains
+workspace-only, not release-gate-cleared, not staged, not locally committed,
+and not pushed.
 
 The completed diagnose/recompile bridge-consumption tranche is pushed at
 `a819cf5 Surface diagnostic runtime probe requests` and has release-gate status
 no-active-gate. It should not be reopened absent new findings.
 
-The next planning/control lane should select the next smallest meaningful step
-toward controlled runtime acquisition consumption while preserving the current
-holds: no probe execution, runtime provenance attachment, analyzer/tool-facade,
-MCP, package-root API, eval, schema, scoring, optimizer, compiler,
-winner-selection, product, public benchmark, or public-claim widening unless
-Ryan explicitly authorizes that scope.
+The release gate and any later release sequencing must preserve the current
+holds: no probe execution, execution-result contract, observation-admission
+contract, runtime provenance attachment, analyzer/tool-facade, MCP,
+package-root API, eval, schema, scoring, optimizer, compiler, winner-selection,
+product, public benchmark, or public-claim widening unless Ryan explicitly
+authorizes that scope.
 
 Do not route `a819cf5 Surface diagnostic runtime probe requests` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,
