@@ -2,6 +2,50 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- 7c46f48 Semantic Diagnostic Probe Plan Release Sync
+
+- Synced post-push continuity for
+  `7c46f48 Surface semantic diagnostic probe plans`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `7c46f48 Surface semantic diagnostic probe plans`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `7c46f48`:
+  - latest pushed source/contract release authority is
+    `7c46f48 Surface semantic diagnostic probe plans`
+  - prior pushed continuity authority is
+    `b427d52 Sync diagnostic probe request plan routing`
+  - prior pushed source/contract release authority is
+    `97dc0f6 Add diagnostic runtime probe request plans`
+  - release-gate status is no-active-gate
+- Released tranche:
+  - five-file semantic diagnostic runtime probe request plan surfacing unit:
+    `src/context_ir/semantic_types.py`,
+    `src/context_ir/semantic_diagnostics.py`,
+    `tests/test_semantic_diagnostics.py`, `PLAN.md`, and `BUILDLOG.md`
+  - combined read-only release gate passed with no findings
+  - focused validation passed with targeted pytest reporting `37 passed`
+  - full regression passed with `pytest tests/ -v` reporting `742 passed`
+  - commit-gating passed and approved the exact five-file unit
+  - local commit creation and Ryan-authorized push completed
+- Routing decision:
+  - do not route `7c46f48` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit creation,
+    or push absent new findings
+  - route next to bounded post-`7c46f48` North Star planning/control to choose
+    the next smallest meaningful capability slice
+  - push remains Ryan-gated for any future release
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, regression,
+    audit, or commit-gating work was performed
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- Semantic Diagnostic Runtime Probe Request Plan Review
 
 - Reviewed the returned implementation slice for surfacing the deterministic
