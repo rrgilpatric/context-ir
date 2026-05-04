@@ -2,6 +2,49 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- 744bf0e Runtime Probe Request Plan Release Sync
+
+- Synced post-push continuity for
+  `744bf0e Add runtime probe request plans`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `744bf0e Add runtime probe request plans`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `744bf0e`:
+  - latest pushed source/contract release authority is
+    `744bf0e Add runtime probe request plans`
+  - prior pushed continuity authority is
+    `642edad Sync runtime probe request indexing routing`
+  - prior pushed source/contract release authority is
+    `3df02c6 Index runtime probe requests by ID`
+  - release-gate status is no-active-gate
+- Released tranche:
+  - four-file planned runtime probe request plan unit:
+    `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - combined read-only release gate passed with no findings
+  - focused validation passed with targeted pytest reporting `33 passed`
+  - full regression passed with `pytest tests/ -v` reporting `738 passed`
+  - commit-gating passed and approved the exact four-file unit
+  - local commit creation and Ryan-authorized push completed
+- Routing decision:
+  - do not route `744bf0e` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit creation,
+    or push absent new findings
+  - route next to bounded post-`744bf0e` North Star planning/control to choose
+    the next smallest meaningful capability slice
+  - push remains Ryan-gated for any future release
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, regression,
+    audit, or commit-gating work was performed
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- Planned Runtime Probe Request Plan Review
 
 - Reviewed the returned implementation slice for the planned-only runtime
