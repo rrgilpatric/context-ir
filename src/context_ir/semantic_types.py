@@ -14,7 +14,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from context_ir.runtime_probe_requests import RuntimeProbeRequest
+    from context_ir.runtime_probe_requests import (
+        RuntimeProbeRequest,
+        RuntimeProbeRequestPlan,
+    )
 
 
 class ProofStatus(Enum):
@@ -1220,11 +1223,21 @@ class SemanticDiagnosticResult:
     reason: str
     boundary_classifications: tuple[SemanticDiagnosticBoundary, ...] = ()
     planned_runtime_probe_requests: tuple[RuntimeProbeRequest, ...] = ()
+    planned_runtime_probe_request_plan: RuntimeProbeRequestPlan | None = None
 
     def __post_init__(self) -> None:
         """Keep grounded classifications disjoint and reasoned."""
         if not self.reason:
             raise ValueError("reason must be non-empty")
+        if (
+            self.planned_runtime_probe_request_plan is not None
+            and self.planned_runtime_probe_request_plan.requests
+            != self.planned_runtime_probe_requests
+        ):
+            raise ValueError(
+                "planned_runtime_probe_request_plan requests must match "
+                "planned_runtime_probe_requests"
+            )
 
         grounded = set(self.grounded_unit_ids)
         omitted = set(self.omitted_unit_ids)

@@ -40,69 +40,64 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed source/contract release authority is
-`97dc0f6 Add diagnostic runtime probe request plans`. It supersedes the
-workspace-only diagnostic runtime probe request plan bridge release-gate route
-for active control routing only. Live git refs and worktree state must still
-be verified from git during control intake.
+Current pushed source/contract release authority remains
+`97dc0f6 Add diagnostic runtime probe request plans`. Current pushed
+continuity authority is `b427d52 Sync diagnostic probe request plan routing`.
+Live git refs and worktree state must still be verified from git during
+control intake.
 
-Repo-backed release truth verified during post-push continuity sync: branch
-`main`, `HEAD` and `origin/main` at
-`97dc0f6 Add diagnostic runtime probe request plans`, clean worktree, and
-nothing staged.
+Current workspace-only accepted tranche:
 
-Released diagnostic runtime probe request plan bridge:
-
-- `derive_diagnostic_runtime_probe_request_plan(program, diagnostic)` composes
-  existing diagnostic request derivation with
-  `build_runtime_probe_request_plan(...)`
-- The bridge returns a `RuntimeProbeRequestPlan` for the diagnostic-filtered
-  planned request set
-- Diagnostic-filtered request ordering and request IDs are preserved
-- Plan IDs are stable across repeated construction from equivalent diagnostic
-  state
-- Empty diagnostic-filtered request sets return a valid deterministic empty
-  plan
-- Runtime-supported and non-attachable diagnostic boundaries remain
-  requestless and produce empty plans
-- The helper is exported only from module-local
-  `context_ir.runtime_probe_requests.__all__`; no package-root export is added
-- Tests cover ordered request/request-ID preservation, stable diagnostic
-  `plan_id`, deterministic empty plans, runtime-supported skips,
-  non-attachable skips, and purity checks
-- The slice does not execute probes, add execution-result or
-  observation-admission contracts, attach runtime provenance, add statuses,
-  change request-ID or plan-ID derivation, mutate `SemanticDiagnosticResult`,
-  wire diagnose/recompile, mutate `SemanticProgram`, mutate diagnostics, mutate
-  unsupported/frontier/provenance state, or widen analyzer, tool facade, MCP,
-  package-root exports, eval, schema, scoring, optimizer, compiler,
-  winner-selection, product, public benchmark, or public-claim surfaces
-- Implementation review accepted the slice first-pass
-- Combined read-only release gate passed with no findings:
-  - Gate 1 release-unit audit passed
-  - focused validation passed, including targeted pytest reporting `36 passed`
-  - Gate 2 full regression passed with `pytest tests/ -v` reporting
-    `741 passed`
-  - Gate 3 commit-gating passed and approved the exact four-file unit
-- Control-lane focused validation before release gate passed:
-  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
-  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+- `SemanticDiagnosticResult` now has optional
+  `planned_runtime_probe_request_plan`
+- the new field is typed through `TYPE_CHECKING` to avoid runtime import cycles
+- `SemanticDiagnosticResult` rejects mismatches between
+  `planned_runtime_probe_request_plan.requests` and
+  `planned_runtime_probe_requests`
+- `diagnose_semantic_miss(...)` derives the deterministic diagnostic request
+  plan and sets `planned_runtime_probe_requests` from `plan.requests`
+- ungrounded and requestless diagnostics expose the deterministic empty plan
+- `recompile_semantic_context(...)` carries the diagnostic plan through
+  `result.diagnostic`
+- tests cover non-empty plans, empty plans, stable request IDs and plan IDs,
+  mismatch rejection, and recompile carry-through
+- no probe execution, execution-result contract, observation-admission
+  contract, runtime provenance attachment, status widening,
+  request-ID/plan-ID derivation change, `RuntimeProbeRequestPlan` contract
+  change, `SemanticProgram` mutation, analyzer/tool facade, MCP,
+  package-root export, eval, schema, scoring, optimizer, compiler,
+  winner-selection, product, public benchmark, or public-claim surface changed
+- Implementation review accepted the slice first-pass in workspace-only state
+- Control-lane focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
   - `.venv/bin/python -m mypy --strict src/`
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
-    reporting `36 passed`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_semantic_diagnostics.py tests/test_runtime_probe_requests.py -v`
+    reporting `37 passed`
   - `git diff --check`
-- Local commit creation and Ryan-authorized push completed at
-  `97dc0f6 Add diagnostic runtime probe request plans`
 
-Release-gate status is no-active-gate for
-`97dc0f6 Add diagnostic runtime probe request plans`. Do not route `97dc0f6`
-back to docs review, release-unit audit, focused validation, full regression,
-commit-gating, staging, local commit creation, or push absent new findings.
+Current release unit is exactly five files:
+
+- `src/context_ir/semantic_types.py`
+- `src/context_ir/semantic_diagnostics.py`
+- `tests/test_semantic_diagnostics.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Release state for this five-file tranche: workspace-only accepted, not
+release-unit-audit-cleared, not full-regression-cleared, not
+commit-gating-cleared, not staged, not locally committed, and not pushed.
 
 Current route:
 
-- Route next to bounded post-`97dc0f6` North Star planning/control to choose
-  the next smallest meaningful capability slice
+- Route next to a combined read-only release gate over the exact five-file
+  `SemanticDiagnosticResult.planned_runtime_probe_request_plan` tranche
+- Gate 1 release-unit audit must run before Gate 2 full regression, and Gate 2
+  must pass before Gate 3 commit-gating
+- The release-gate lane must stop on first finding and must not edit files,
+  stage, commit, push, or rewrite continuity
+- Do not route to another implementation slice before release gates clear or a
+  findings-based correction is accepted
 - Do not route `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`,
   `2e448ea`, `f6c66e4`, or `546a4da` back to docs review, release-unit audit,
   focused validation, full regression, commit-gating, staging, local commit
@@ -1565,22 +1560,32 @@ sequencing for `c1a12d7` absent new findings.
   `97dc0f6 Add diagnostic runtime probe request plans` passed with no findings
 - [x] Local commit creation and Ryan-authorized push for
   `97dc0f6 Add diagnostic runtime probe request plans` completed
+- [x] Semantic diagnostic runtime probe request plan surfacing implementation
+  accepted first-pass in workspace-only state
+- [ ] Combined release gate for the exact five-file
+  `SemanticDiagnosticResult.planned_runtime_probe_request_plan` tranche
+- [ ] Local commit creation and Ryan-authorized push for the
+  `SemanticDiagnosticResult.planned_runtime_probe_request_plan` tranche
 
 ## What Is In Progress
 
-- The diagnostic runtime probe request plan bridge tranche is completed and
-  pushed at `97dc0f6`:
-  - `src/context_ir/runtime_probe_requests.py`
-  - `tests/test_runtime_probe_requests.py`
+- The `SemanticDiagnosticResult.planned_runtime_probe_request_plan` tranche is
+  accepted first-pass in workspace-only state:
+  - `src/context_ir/semantic_types.py`
+  - `src/context_ir/semantic_diagnostics.py`
+  - `tests/test_semantic_diagnostics.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- Release-gate status is no-active-gate for `97dc0f6`.
-- No implementation slice, staging, local commit creation, or push is currently
-  in progress.
-- Active next route is bounded post-`97dc0f6` North Star planning/control to
-  choose the next smallest meaningful capability slice, not release gates for
-  completed pushed work.
+- Release-gate status for this five-file tranche is not
+  release-unit-audit-cleared, not full-regression-cleared, and not
+  commit-gating-cleared.
+- Nothing is staged; local commit creation and push are not authorized until
+  release gates clear and the normal release sequence reaches those steps.
+- Active next route is the combined read-only release gate for the exact
+  five-file tranche, not another implementation slice.
 - Push remains Ryan-gated for any future release.
+- The diagnostic runtime probe request plan bridge tranche is completed and
+  pushed at `97dc0f6` with release-gate status no-active-gate.
 - The planned runtime probe request plan tranche is completed and pushed at
   `744bf0e` with release-gate status no-active-gate.
 - The planned runtime probe request ID indexing tranche is completed and
@@ -2313,8 +2318,22 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`97dc0f6` North Star planning/control to
-choose the next smallest meaningful capability slice.
+Immediate next route: combined read-only release gate for the exact five-file
+`SemanticDiagnosticResult.planned_runtime_probe_request_plan` tranche:
+
+- `src/context_ir/semantic_types.py`
+- `src/context_ir/semantic_diagnostics.py`
+- `tests/test_semantic_diagnostics.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The tranche is accepted first-pass in workspace-only state. It is not
+release-unit-audit-cleared, not full-regression-cleared, not
+commit-gating-cleared, not staged, not locally committed, and not pushed.
+
+The gate must run Gate 1 release-unit audit, then Gate 2 full regression, then
+Gate 3 commit-gating; stop on first finding; and perform no edits, staging,
+commits, pushes, or continuity rewrites.
 
 The diagnostic runtime probe request plan bridge tranche is pushed at
 `97dc0f6 Add diagnostic runtime probe request plans` and has release-gate
@@ -2336,13 +2355,14 @@ The completed diagnose/recompile bridge-consumption tranche is pushed at
 `a819cf5 Surface diagnostic runtime probe requests` and has release-gate status
 no-active-gate. It should not be reopened absent new findings.
 
-The next planning/control lane should choose the next smallest meaningful step
-toward controlled runtime acquisition consumption while preserving the current
-holds: no probe execution, execution-result contract, observation-admission
-contract, runtime provenance attachment, analyzer/tool-facade, MCP,
-package-root API, eval, schema, scoring, optimizer, compiler, winner-selection,
-product, public benchmark, or public-claim widening unless Ryan explicitly
-authorizes that scope.
+After this five-file tranche is release-gate-cleared, locally committed, and
+Ryan-authorized for push, the next planning/control lane should choose the next
+smallest meaningful step toward controlled runtime acquisition consumption
+while preserving the current holds: no probe execution, execution-result
+contract, observation-admission contract, runtime provenance attachment,
+analyzer/tool-facade, MCP, package-root API, eval, schema, scoring, optimizer,
+compiler, winner-selection, product, public benchmark, or public-claim
+widening unless Ryan explicitly authorizes that scope.
 
 Do not route `97dc0f6 Add diagnostic runtime probe request plans` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,

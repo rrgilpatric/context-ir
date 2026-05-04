@@ -7,7 +7,9 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 from enum import Enum
 
-from context_ir.runtime_probe_requests import derive_diagnostic_runtime_probe_requests
+from context_ir.runtime_probe_requests import (
+    derive_diagnostic_runtime_probe_request_plan,
+)
 from context_ir.semantic_compiler import compile_semantic_context
 from context_ir.semantic_renderer import RenderDetail
 from context_ir.semantic_scorer import (
@@ -86,13 +88,16 @@ def diagnose_semantic_miss(
         unit_records=unit_records,
     )
     if not grounded_unit_ids:
-        return SemanticDiagnosticResult(
-            grounded_unit_ids=(),
-            omitted_unit_ids=(),
-            too_shallow_unit_ids=(),
-            sufficiently_represented_unit_ids=(),
-            recommended_expansions=(),
-            reason="Could not ground the evidence to accepted semantic unit IDs.",
+        return _with_runtime_probe_request_plan(
+            program,
+            SemanticDiagnosticResult(
+                grounded_unit_ids=(),
+                omitted_unit_ids=(),
+                too_shallow_unit_ids=(),
+                sufficiently_represented_unit_ids=(),
+                recommended_expansions=(),
+                reason="Could not ground the evidence to accepted semantic unit IDs.",
+            ),
         )
 
     previous_detail_by_unit_id = {
@@ -142,12 +147,22 @@ def diagnose_semantic_miss(
         ),
         boundary_classifications=boundary_classifications,
     )
+    return _with_runtime_probe_request_plan(program, diagnostic)
+
+
+def _with_runtime_probe_request_plan(
+    program: SemanticProgram,
+    diagnostic: SemanticDiagnosticResult,
+) -> SemanticDiagnosticResult:
+    """Attach the deterministic planned-only runtime probe request plan."""
+    planned_request_plan = derive_diagnostic_runtime_probe_request_plan(
+        program,
+        diagnostic,
+    )
     return replace(
         diagnostic,
-        planned_runtime_probe_requests=derive_diagnostic_runtime_probe_requests(
-            program,
-            diagnostic,
-        ),
+        planned_runtime_probe_requests=planned_request_plan.requests,
+        planned_runtime_probe_request_plan=planned_request_plan,
     )
 
 
