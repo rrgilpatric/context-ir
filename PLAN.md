@@ -40,21 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only accepted source/contract tranche:
-stable planned runtime probe request identity. This supersedes the
-post-`a819cf5` North Star planning route for active control routing only. Live
-git refs and worktree state must still be verified from git during control
-intake.
+Current pushed source/contract release authority is
+`49fa461 Add runtime probe request identities`. It supersedes the
+workspace-only post-`bea0a1a` stable planned runtime probe request identity
+release-gate route for active control routing only. Live git refs and worktree
+state must still be verified from git during control intake.
 
-Repo-backed truth verified during implementation review on 2026-05-04:
-branch `main`, `HEAD` and `origin/main` at
-`bea0a1a Sync diagnostic probe request surface routing`, nothing staged, no
-untracked files, dirty tracked files exactly:
+Repo-backed release truth verified during post-push continuity sync: branch
+`main`, `HEAD` and `origin/main` at
+`49fa461 Add runtime probe request identities`, clean worktree, and nothing
+staged.
 
-- `src/context_ir/runtime_probe_requests.py`
-- `tests/test_runtime_probe_requests.py`
-
-Accepted workspace-only implementation state:
+Released stable planned runtime probe request identity:
 
 - `RuntimeProbeRequest.request_id` is a computed stable internal identity for
   planned runtime probe requests
@@ -76,44 +73,31 @@ Accepted workspace-only implementation state:
   tool facade, MCP, package-root exports, eval, schema, scoring, optimizer,
   compiler, winner-selection, product, public benchmark, or public-claim
   surfaces
+- Implementation review accepted the slice first-pass
+- Combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - focused validation passed, including targeted pytest reporting `27 passed`
+  - Gate 2 full regression passed with `pytest tests/ -v` reporting
+    `732 passed`
+  - Gate 3 commit-gating passed and approved the exact four-file unit
+- Local commit creation and Ryan-authorized push completed at
+  `49fa461 Add runtime probe request identities`
 
-Control-lane validation passed:
-
-- `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
-- `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
-- `.venv/bin/python -m mypy --strict src/`
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
-  reporting `27 passed`
-- `git diff --check`
-
-Release state for the request-ID tranche:
-
-- Accepted first-pass in workspace-only state
-- Not release-unit-audit-cleared
-- Not full-regression-cleared
-- Not commit-gating-cleared
-- Not staged
-- Not locally committed
-- Not pushed
-- Push remains Ryan-gated
+Release-gate status is no-active-gate for
+`49fa461 Add runtime probe request identities`. Do not route `49fa461` back to
+docs review, release-unit audit, focused validation, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
 Current route:
 
-- Route next to a combined read-only release gate over the exact four-file
-  source/contract release unit:
-  - `src/context_ir/runtime_probe_requests.py`
-  - `tests/test_runtime_probe_requests.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- The release gate must run Gate 1 release-unit audit, then Gate 2 full
-  regression, then Gate 3 commit-gating
-- It must stop on first finding, report findings first, and report each gate
-  explicitly
-- It must not edit files, stage, commit, push, or rewrite continuity
-- Do not route to another implementation slice before this tranche is
-  release-gate-cleared or a findings-based correction is accepted
+- Route next to bounded post-`49fa461` North Star planning/control to choose
+  the next smallest meaningful capability slice
+- Do not route `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back
+  to docs review, release-unit audit, focused validation, full regression,
+  commit-gating, staging, local commit creation, or push absent new findings
+- Push remains Ryan-gated for any future release
 
-Current pushed source/contract release authority is
+Prior pushed source/contract release authority is
 `a819cf5 Surface diagnostic runtime probe requests`. It supersedes the
 workspace-only post-`e94cd5d` diagnose/recompile planned runtime probe request
 consumption release-gate route for active control routing only. Live git refs
@@ -160,13 +144,14 @@ Release-gate status is no-active-gate for
 back to docs review, release-unit audit, focused validation, full regression,
 commit-gating, staging, local commit creation, or push absent new findings.
 
-Prior route superseded by the workspace-only accepted request-ID tranche above:
+Prior route superseded by the pushed `49fa461` request-ID release above:
 
 - The bounded post-`a819cf5` North Star planning/control decision is complete;
   it selected stable planned runtime probe request identity as the next
-  smallest meaningful capability slice
-- Do not route `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs
-  review, release-unit audit, focused validation, full regression,
+  smallest meaningful capability slice; that slice is now released at
+  `49fa461 Add runtime probe request identities`
+- Do not route `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back
+  to docs review, release-unit audit, focused validation, full regression,
   commit-gating, staging, local commit creation, or push absent new findings
 - Push remains Ryan-gated for any future release
 
@@ -357,15 +342,16 @@ Prior route superseded by the pushed `a819cf5` release state above:
   or push absent new findings
 - No active route remains to release-unit audit, focused validation, full
   regression, commit-gating, staging, local commit creation, or push for
-  `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` absent new findings
+  `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` absent new findings
 - Push remains Ryan-gated for any future release
 
 Latest pushed source/contract release authority is
-`a819cf5 Surface diagnostic runtime probe requests`. Prior pushed continuity
-authority is `e94cd5d Sync diagnostic probe bridge release routing`. Prior
+`49fa461 Add runtime probe request identities`. Prior pushed continuity
+authority is `bea0a1a Sync diagnostic probe request surface routing`. Prior
 pushed source/contract release authority is
-`2e448ea Add diagnostic runtime probe request bridge`; earlier pushed
-source/contract release authority is
+`a819cf5 Surface diagnostic runtime probe requests`; earlier pushed
+source/contract release authorities are
+`2e448ea Add diagnostic runtime probe request bridge` and
 `f6c66e4 Add runtime probe request planning contract`. Prior pushed code/eval
 release authority is `546a4da Add reflective builtin branch eval probes`.
 Prior pushed continuity authority is
@@ -1389,18 +1375,27 @@ sequencing for `c1a12d7` absent new findings.
   `a819cf5 Surface diagnostic runtime probe requests` passed with no findings
 - [x] Local commit creation and Ryan-authorized push for
   `a819cf5 Surface diagnostic runtime probe requests` completed
+- [x] Stable planned runtime probe request identity implementation accepted
+  first-pass in workspace-only state
+- [x] Combined release gate for
+  `49fa461 Add runtime probe request identities` passed with no findings
+- [x] Local commit creation and Ryan-authorized push for
+  `49fa461 Add runtime probe request identities` completed
 
 ## What Is In Progress
 
-- The stable planned runtime probe request identity tranche is accepted
-  first-pass in workspace-only state:
+- The stable planned runtime probe request identity tranche is completed and
+  pushed at `49fa461`:
   - `src/context_ir/runtime_probe_requests.py`
   - `tests/test_runtime_probe_requests.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- Release-gate status is not cleared for this request-ID tranche.
-- Active next route is the combined read-only release gate over the exact
-  four-file request-ID release unit, not another implementation slice.
+- Release-gate status is no-active-gate for `49fa461`.
+- No implementation slice, staging, local commit creation, or push is currently
+  in progress.
+- Active next route is bounded post-`49fa461` North Star planning/control to
+  choose the next smallest meaningful capability slice, not release gates for
+  completed pushed work.
 - Push remains Ryan-gated for any future release.
 - The diagnose/recompile planned runtime probe request consumption tranche is
   completed and pushed at `a819cf5`:
@@ -2128,34 +2123,28 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate over the exact four-file
-stable planned runtime probe request identity tranche:
+Immediate next route: bounded post-`49fa461` North Star planning/control to
+choose the next smallest meaningful capability slice.
 
-- `src/context_ir/runtime_probe_requests.py`
-- `tests/test_runtime_probe_requests.py`
-- `PLAN.md`
-- `BUILDLOG.md`
-
-The gate must run Gate 1 release-unit audit, then Gate 2 full regression, then
-Gate 3 commit-gating. It must stop on first finding, report findings first,
-report each gate explicitly, and must not edit files, stage, commit, push, or
-rewrite continuity.
-
-The accepted request-ID tranche adds a deterministic computed
-`RuntimeProbeRequest.request_id` for planned runtime probe requests. It remains
-workspace-only, not release-gate-cleared, not staged, not locally committed,
-and not pushed.
+The stable planned runtime probe request identity tranche is pushed at
+`49fa461 Add runtime probe request identities` and has release-gate status
+no-active-gate. It should not be reopened absent new findings.
 
 The completed diagnose/recompile bridge-consumption tranche is pushed at
 `a819cf5 Surface diagnostic runtime probe requests` and has release-gate status
 no-active-gate. It should not be reopened absent new findings.
 
-The release gate and any later release sequencing must preserve the current
+The next planning/control lane should choose the next smallest meaningful step
+toward controlled runtime acquisition consumption while preserving the current
 holds: no probe execution, execution-result contract, observation-admission
 contract, runtime provenance attachment, analyzer/tool-facade, MCP,
 package-root API, eval, schema, scoring, optimizer, compiler, winner-selection,
 product, public benchmark, or public-claim widening unless Ryan explicitly
 authorizes that scope.
+
+Do not route `49fa461 Add runtime probe request identities` back to docs review,
+release-unit audit, focused validation, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
 
 Do not route `a819cf5 Surface diagnostic runtime probe requests` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,
