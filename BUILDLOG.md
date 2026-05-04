@@ -2,6 +2,64 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- Planned Runtime Probe Request Plan Review
+
+- Reviewed the returned implementation slice for the planned-only runtime
+  probe request batch envelope.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `642edad Sync runtime probe request indexing routing`
+  - nothing staged at intake
+  - no untracked files
+  - expected dirty files were:
+    - `src/context_ir/runtime_probe_requests.py`
+    - `tests/test_runtime_probe_requests.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `RuntimeProbeRequestPlan` is a frozen internal planned-only request batch
+    envelope
+  - internal contract version is `runtime_probe_request_plan:v1`
+  - `build_runtime_probe_request_plan(requests)` preserves input request order
+    as a tuple
+  - plans expose ordered `request_ids` from stable
+    `RuntimeProbeRequest.request_id`
+  - `plan_id` is deterministic over the contract version and ordered request
+    IDs
+  - duplicate request IDs raise `ValueError` through the existing request ID
+    indexer path
+  - empty plans are valid and deterministic
+  - the plan type and helper are exported only from module-local
+    `context_ir.runtime_probe_requests.__all__`; no package-root export is
+    added
+  - tests cover full plans, empty plans, duplicate-ID rejection,
+    diagnostic-filtered plans, ID/order stability, and input purity
+  - no probe execution, execution-result contract, observation-admission
+    contract, runtime provenance attachment, status widening, request-ID
+    derivation change, `SemanticProgram` mutation, diagnostic mutation,
+    unsupported/frontier/provenance mutation, compile/recompile behavior,
+    analyzer/tool-facade behavior, MCP, package-root export, eval, schema,
+    scoring, optimizer, compiler, winner-selection, product, public benchmark,
+    or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
+    reporting `33 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- 3df02c6 Runtime Probe Request ID Indexing Release Sync
 
 - Synced post-push continuity for

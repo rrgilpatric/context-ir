@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 import context_ir.runtime_acquisition as runtime_acquisition
@@ -21,6 +21,7 @@ from context_ir.semantic_types import (
 )
 
 _SourceSiteIdentity = tuple[str, int, int, int, int]
+_RUNTIME_PROBE_REQUEST_PLAN_CONTRACT_VERSION = "runtime_probe_request_plan:v1"
 
 
 class RuntimeProbeRequestStatus(Enum):
@@ -80,6 +81,33 @@ class RuntimeProbeRequest:
         )
         digest = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()
         return f"runtime_probe:{digest}"
+
+
+@dataclass(frozen=True)
+class RuntimeProbeRequestPlan:
+    """Deterministic internal envelope for a planned-only runtime probe batch."""
+
+    requests: tuple[RuntimeProbeRequest, ...]
+    request_ids: tuple[str, ...]
+    plan_id: str
+    contract_version: str = field(
+        default=_RUNTIME_PROBE_REQUEST_PLAN_CONTRACT_VERSION,
+        init=False,
+    )
+
+    def __post_init__(self) -> None:
+        """Reject plan envelopes whose stable IDs drift from the request batch."""
+        index_runtime_probe_requests_by_id(self.requests)
+        expected_request_ids = tuple(request.request_id for request in self.requests)
+        if self.request_ids != expected_request_ids:
+            raise ValueError(
+                "runtime probe request plan request_ids must match requests"
+            )
+        if self.plan_id != _runtime_probe_request_plan_id(self.request_ids):
+            raise ValueError(
+                "runtime probe request plan_id must match contract version "
+                "and request_ids"
+            )
 
 
 def derive_runtime_probe_requests(
@@ -259,6 +287,20 @@ def derive_diagnostic_runtime_probe_requests(
     )
 
 
+def build_runtime_probe_request_plan(
+    requests: Iterable[RuntimeProbeRequest],
+) -> RuntimeProbeRequestPlan:
+    """Build a deterministic planned-only request batch envelope."""
+    ordered_requests = tuple(requests)
+    requests_by_id = index_runtime_probe_requests_by_id(ordered_requests)
+    request_ids = tuple(requests_by_id)
+    return RuntimeProbeRequestPlan(
+        requests=ordered_requests,
+        request_ids=request_ids,
+        plan_id=_runtime_probe_request_plan_id(request_ids),
+    )
+
+
 def index_runtime_probe_requests_by_id(
     requests: Iterable[RuntimeProbeRequest],
 ) -> dict[str, RuntimeProbeRequest]:
@@ -427,6 +469,19 @@ def _request_identity_parts(
     )
 
 
+def _runtime_probe_request_plan_id(request_ids: tuple[str, ...]) -> str:
+    """Return the stable internal identity for one ordered request batch."""
+    serialized_identity = json.dumps(
+        (
+            ("contract_version", _RUNTIME_PROBE_REQUEST_PLAN_CONTRACT_VERSION),
+            ("request_ids", request_ids),
+        ),
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()
+    return f"runtime_probe_request_plan:{digest}"
+
+
 def _request_sort_key(
     request: RuntimeProbeRequest,
 ) -> tuple[str, int, int, int, int, str, str]:
@@ -446,7 +501,9 @@ def _request_sort_key(
 __all__ = [
     "RuntimeProbeFamily",
     "RuntimeProbeRequest",
+    "RuntimeProbeRequestPlan",
     "RuntimeProbeRequestStatus",
+    "build_runtime_probe_request_plan",
     "derive_diagnostic_runtime_probe_requests",
     "derive_runtime_probe_requests",
     "index_runtime_probe_requests_by_id",

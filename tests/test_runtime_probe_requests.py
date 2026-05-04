@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import textwrap
 from pathlib import Path
 
@@ -110,6 +112,21 @@ def _diagnostic_result(
         reason="Test diagnostic result.",
         boundary_classifications=boundaries,
     )
+
+
+def _expected_plan_id(
+    plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+) -> str:
+    """Return the expected stable request-plan ID for test assertions."""
+    serialized_identity = json.dumps(
+        (
+            ("contract_version", plan.contract_version),
+            ("request_ids", plan.request_ids),
+        ),
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()
+    return f"runtime_probe_request_plan:{digest}"
 
 
 def test_derive_runtime_probe_requests_plans_attachable_runtime_boundaries(
@@ -416,6 +433,99 @@ def test_index_runtime_probe_requests_by_id_rejects_duplicate_ids(
         runtime_probe_requests.index_runtime_probe_requests_by_id(duplicate_requests)
 
 
+def test_build_runtime_probe_request_plan_wraps_full_plan_deterministically(
+    tmp_path: Path,
+) -> None:
+    """Runtime probe request plans preserve full planned batches deterministically."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str, source: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    first_requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    second_requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    original_requests = tuple(first_requests)
+    original_request_ids = tuple(request.request_id for request in first_requests)
+    original_unsupported = list(program.unsupported_constructs)
+    original_frontier = list(program.unresolved_frontier)
+    original_provenance_records = list(program.provenance_records)
+
+    first_plan = runtime_probe_requests.build_runtime_probe_request_plan(first_requests)
+    second_plan = runtime_probe_requests.build_runtime_probe_request_plan(
+        second_requests
+    )
+
+    assert first_plan.contract_version == "runtime_probe_request_plan:v1"
+    assert first_plan.requests == first_requests
+    assert first_plan.request_ids == original_request_ids
+    assert first_plan.plan_id == _expected_plan_id(first_plan)
+    assert first_plan.plan_id == second_plan.plan_id
+    assert first_plan.requests == second_plan.requests
+    assert [request.boundary_text for request in first_plan.requests] == [
+        "importlib.import_module(name)",
+        "getattr(obj, name)",
+        "exec(source)",
+    ]
+    assert all(
+        plan_request is request
+        for plan_request, request in zip(
+            first_plan.requests, first_requests, strict=True
+        )
+    )
+    assert first_requests == original_requests
+    assert (
+        tuple(request.request_id for request in first_requests) == original_request_ids
+    )
+    assert program.unsupported_constructs == original_unsupported
+    assert program.unresolved_frontier == original_frontier
+    assert program.provenance_records == original_provenance_records
+
+
+def test_build_runtime_probe_request_plan_rejects_duplicate_request_ids(
+    tmp_path: Path,
+) -> None:
+    """Runtime probe request plans reject duplicate stable request IDs."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    duplicate_requests = (requests[0], requests[0])
+
+    with pytest.raises(ValueError, match="duplicate runtime probe request_id"):
+        runtime_probe_requests.build_runtime_probe_request_plan(duplicate_requests)
+
+
+def test_build_runtime_probe_request_plan_allows_empty_plan() -> None:
+    """Empty runtime probe request plans are valid and deterministic."""
+    first_plan = runtime_probe_requests.build_runtime_probe_request_plan(())
+    second_plan = runtime_probe_requests.build_runtime_probe_request_plan([])
+
+    assert first_plan.contract_version == "runtime_probe_request_plan:v1"
+    assert first_plan.requests == ()
+    assert first_plan.request_ids == ()
+    assert first_plan.plan_id.startswith("runtime_probe_request_plan:")
+    assert first_plan.plan_id == _expected_plan_id(first_plan)
+    assert first_plan == second_plan
+
+
 def test_derive_diagnostic_runtime_probe_requests_returns_attachable_omitted_boundary(
     tmp_path: Path,
 ) -> None:
@@ -667,3 +777,75 @@ def test_derive_diagnostic_runtime_probe_requests_is_deterministic_and_pure(
         original_request_ids_by_subject_id[request.subject_id]
         for request in first_requests
     }
+
+
+def test_build_runtime_probe_request_plan_wraps_diagnostic_filtered_requests_purely(
+    tmp_path: Path,
+) -> None:
+    """Diagnostic-filtered request plans keep request IDs, ordering, and inputs."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str, source: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    import_id = _unsupported_id_for(program, "importlib.import_module(name)")
+    exec_id = _unsupported_id_for(program, "exec(source)")
+    diagnostic = _diagnostic_result(
+        (
+            _diagnostic_boundary(
+                exec_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+            _diagnostic_boundary(
+                import_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+        )
+    )
+    original_unsupported = list(program.unsupported_constructs)
+    original_frontier = list(program.unresolved_frontier)
+    original_provenance_records = list(program.provenance_records)
+    original_diagnostics = list(program.diagnostics)
+    original_boundary_classifications = diagnostic.boundary_classifications
+    original_grounded_unit_ids = diagnostic.grounded_unit_ids
+
+    requests = runtime_probe_requests.derive_diagnostic_runtime_probe_requests(
+        program,
+        diagnostic,
+    )
+    original_request_ids = tuple(request.request_id for request in requests)
+    plan = runtime_probe_requests.build_runtime_probe_request_plan(requests)
+
+    assert plan.requests == requests
+    assert plan.request_ids == original_request_ids
+    assert plan.plan_id == _expected_plan_id(plan)
+    assert [request.boundary_text for request in plan.requests] == [
+        "importlib.import_module(name)",
+        "exec(source)",
+    ]
+    assert all(
+        plan_request is request
+        for plan_request, request in zip(plan.requests, requests, strict=True)
+    )
+    assert tuple(request.request_id for request in requests) == original_request_ids
+    assert program.unsupported_constructs == original_unsupported
+    assert program.unresolved_frontier == original_frontier
+    assert program.provenance_records == original_provenance_records
+    assert program.diagnostics == original_diagnostics
+    assert diagnostic.boundary_classifications == original_boundary_classifications
+    assert diagnostic.grounded_unit_ids == original_grounded_unit_ids
