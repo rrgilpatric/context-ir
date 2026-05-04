@@ -2,6 +2,51 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- a819cf5 Diagnostic Runtime Probe Request Surface Release Sync
+
+- Synced post-push continuity for
+  `a819cf5 Surface diagnostic runtime probe requests`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `a819cf5 Surface diagnostic runtime probe requests`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `a819cf5`:
+  - latest pushed source/contract release authority is
+    `a819cf5 Surface diagnostic runtime probe requests`
+  - prior pushed continuity authority is
+    `e94cd5d Sync diagnostic probe bridge release routing`
+  - prior pushed source/contract release authority is
+    `2e448ea Add diagnostic runtime probe request bridge`
+  - release-gate status is no-active-gate
+- Released tranche:
+  - five-file diagnose/recompile planned runtime probe request consumption
+    unit: `src/context_ir/semantic_diagnostics.py`,
+    `src/context_ir/semantic_types.py`, `tests/test_semantic_diagnostics.py`,
+    `PLAN.md`, and `BUILDLOG.md`
+  - combined read-only release gate passed with no findings
+  - focused validation passed with targeted pytest reporting `27 passed`
+  - full regression passed with `pytest tests/ -v` reporting `732 passed`
+  - commit-gating passed and approved the exact five-file unit
+  - local commit creation and Ryan-authorized push completed
+- Routing decision:
+  - do not route `a819cf5` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit creation,
+    or push absent new findings
+  - route next to bounded post-`a819cf5` North Star planning/control to choose
+    the next smallest meaningful capability slice
+  - push remains Ryan-gated for any future release
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, regression,
+    audit, commit-gating, staging, local commit creation, or push were
+    performed
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- Diagnose/Recompile Planned Runtime Probe Request Consumption Review
 
 - Reviewed the returned implementation slice for consuming planned runtime

@@ -40,22 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only accepted source/contract tranche:
-diagnose/recompile planned runtime probe request consumption. This supersedes
-the post-`2e448ea` bridge-consumption implementation route for active control
-routing only. Live git refs and worktree state must still be verified from git
-during control intake.
+Current pushed source/contract release authority is
+`a819cf5 Surface diagnostic runtime probe requests`. It supersedes the
+workspace-only post-`e94cd5d` diagnose/recompile planned runtime probe request
+consumption release-gate route for active control routing only. Live git refs
+and worktree state must still be verified from git during control intake.
 
-Repo-backed truth verified during implementation review on 2026-05-04:
-branch `main`, `HEAD` and `origin/main` at
-`e94cd5d Sync diagnostic probe bridge release routing`, nothing staged, no
-untracked files, dirty tracked files exactly:
+Repo-backed release truth verified during post-push continuity sync: branch
+`main`, `HEAD` and `origin/main` at
+`a819cf5 Surface diagnostic runtime probe requests`, clean worktree, and
+nothing staged.
 
-- `src/context_ir/semantic_diagnostics.py`
-- `src/context_ir/semantic_types.py`
-- `tests/test_semantic_diagnostics.py`
-
-Accepted workspace-only implementation state:
+Released diagnose/recompile planned runtime probe request consumption:
 
 - `SemanticDiagnosticResult` now carries
   `planned_runtime_probe_requests` as a planned-only diagnostic result
@@ -76,45 +72,31 @@ Accepted workspace-only implementation state:
   add selected symbols or units, or widen analyzer, tool facade, package-root
   export, MCP, eval, schema, scoring, optimizer, compiler, winner-selection,
   product, public benchmark, or public-claim surfaces
+- Implementation review accepted the slice first-pass
+- Combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - focused validation passed, including targeted pytest reporting `27 passed`
+  - Gate 2 full regression passed with `pytest tests/ -v` reporting
+    `732 passed`
+  - Gate 3 commit-gating passed and approved the exact five-file unit
+- Local commit creation and Ryan-authorized push completed at
+  `a819cf5 Surface diagnostic runtime probe requests`
 
-Control-lane validation passed:
-
-- `.venv/bin/python -m ruff check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
-- `.venv/bin/python -m ruff format --check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
-- `.venv/bin/python -m mypy --strict src/`
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_semantic_diagnostics.py tests/test_runtime_probe_requests.py -v`
-  reporting `27 passed`
-- `git diff --check`
-
-Release state for the bridge-consumption tranche:
-
-- Accepted first-pass in workspace-only state
-- Not release-unit-audit-cleared
-- Not full-regression-cleared
-- Not commit-gating-cleared
-- Not staged
-- Not locally committed
-- Not pushed
-- Push remains Ryan-gated
+Release-gate status is no-active-gate for
+`a819cf5 Surface diagnostic runtime probe requests`. Do not route `a819cf5`
+back to docs review, release-unit audit, focused validation, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
 Current route:
 
-- Route next to a combined read-only release gate over the exact five-file
-  source/contract release unit:
-  - `src/context_ir/semantic_diagnostics.py`
-  - `src/context_ir/semantic_types.py`
-  - `tests/test_semantic_diagnostics.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- The release gate must run Gate 1 release-unit audit, then Gate 2 full
-  regression, then Gate 3 commit-gating
-- It must stop on first finding, report findings first, and report each gate
-  explicitly
-- It must not edit files, stage, commit, push, or rewrite continuity
-- Do not route to another implementation slice before this tranche is
-  release-gate-cleared or a findings-based correction is accepted
+- Route next to bounded post-`a819cf5` North Star planning/control to choose
+  the next smallest meaningful capability slice
+- Do not route `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs
+  review, release-unit audit, focused validation, full regression,
+  commit-gating, staging, local commit creation, or push absent new findings
+- Push remains Ryan-gated for any future release
 
-Current pushed source/contract release authority is
+Prior pushed source/contract release authority is
 `2e448ea Add diagnostic runtime probe request bridge`. It supersedes the
 workspace-only post-`38f3841` diagnostic runtime probe-request release-gate
 route for active control routing only. Live git refs and worktree state must
@@ -274,11 +256,16 @@ Release state for `546a4da`:
 - No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
 
-Prior route superseded by the workspace-only accepted bridge-consumption
-tranche above:
+Prior route superseded by the pushed `a819cf5` release state above:
 
 - The bounded diagnose/recompile bridge-consumption implementation slice has
-  completed and been accepted workspace-only
+  completed, passed release gates, been locally committed, and been pushed at
+  `a819cf5 Surface diagnostic runtime probe requests`
+- Release-gate status is no-active-gate for
+  `a819cf5 Surface diagnostic runtime probe requests`
+- Do not route `a819cf5` back to docs review, release-unit audit, focused
+  validation, full regression, commit-gating, staging, local commit creation,
+  or push absent new findings
 - Release-gate status is no-active-gate for
   `2e448ea Add diagnostic runtime probe request bridge`
 - Do not route `2e448ea` back to docs review, release-unit audit, focused
@@ -296,12 +283,14 @@ tranche above:
   or push absent new findings
 - No active route remains to release-unit audit, focused validation, full
   regression, commit-gating, staging, local commit creation, or push for
-  `2e448ea`, `f6c66e4`, or `546a4da` absent new findings
+  `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` absent new findings
 - Push remains Ryan-gated for any future release
 
 Latest pushed source/contract release authority is
-`2e448ea Add diagnostic runtime probe request bridge`. Prior pushed continuity
-authority is `38f3841 Sync runtime probe request release routing`. Prior pushed
+`a819cf5 Surface diagnostic runtime probe requests`. Prior pushed continuity
+authority is `e94cd5d Sync diagnostic probe bridge release routing`. Prior
+pushed source/contract release authority is
+`2e448ea Add diagnostic runtime probe request bridge`; earlier pushed
 source/contract release authority is
 `f6c66e4 Add runtime probe request planning contract`. Prior pushed code/eval
 release authority is `546a4da Add reflective builtin branch eval probes`.
@@ -1320,11 +1309,27 @@ sequencing for `c1a12d7` absent new findings.
   `2e448ea Add diagnostic runtime probe request bridge` passed with no findings
 - [x] Local commit creation and Ryan-authorized push for
   `2e448ea Add diagnostic runtime probe request bridge` completed
+- [x] Diagnose/recompile planned runtime probe request consumption
+  implementation accepted first-pass in workspace-only state
+- [x] Combined release gate for
+  `a819cf5 Surface diagnostic runtime probe requests` passed with no findings
+- [x] Local commit creation and Ryan-authorized push for
+  `a819cf5 Surface diagnostic runtime probe requests` completed
 
 ## What Is In Progress
 
-- The internal diagnostic runtime probe-request bridge tranche is completed
-  and pushed at `2e448ea`:
+- The diagnose/recompile planned runtime probe request consumption tranche is
+  completed and pushed at `a819cf5`:
+  - `src/context_ir/semantic_diagnostics.py`
+  - `src/context_ir/semantic_types.py`
+  - `tests/test_semantic_diagnostics.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-gate status is no-active-gate for `a819cf5`.
+- No implementation slice, staging, local commit creation, or push is currently
+  in progress.
+- The internal diagnostic runtime probe-request bridge tranche is completed and
+  pushed at `2e448ea`:
   - `src/context_ir/runtime_probe_requests.py`
   - `tests/test_runtime_probe_requests.py`
   - `PLAN.md`
@@ -1345,8 +1350,9 @@ sequencing for `c1a12d7` absent new findings.
   pushed at `546a4da`; release-gate status is no-active-gate.
 - The current nine-file `DYNAMIC_IMPORT` original budget-pressure tranche is
   completed and pushed at `d73cde4`; release-gate status is no-active-gate.
-- Active next route is the bounded diagnose/recompile bridge-consumption
-  implementation slice, not release gates for completed pushed work.
+- Active next route is bounded post-`a819cf5` North Star planning/control to
+  choose the next smallest meaningful capability slice, not release gates for
+  completed pushed work.
 - Push remains Ryan-gated for any future release.
 - The zero-argument `dir()` plus `METACLASS_BEHAVIOR` budget-pressure release
   is pushed at `e2f3dcf` and has release-gate status no-active-gate. It is
@@ -2042,15 +2048,23 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded diagnose/recompile bridge-consumption
-implementation slice.
+Immediate next route: bounded post-`a819cf5` North Star planning/control to
+choose the next smallest meaningful capability slice.
 
-The slice should consume
-`derive_diagnostic_runtime_probe_requests(program, diagnostic)` from the
-diagnose/recompile path without executing probes, attaching runtime provenance,
-or widening analyzer, tool-facade, MCP, package-root API, eval, schema,
-scoring, optimizer, compiler, winner-selection, product, public benchmark, or
-public-claim surfaces.
+The completed diagnose/recompile bridge-consumption tranche is pushed at
+`a819cf5 Surface diagnostic runtime probe requests` and has release-gate status
+no-active-gate. It should not be reopened absent new findings.
+
+The next planning/control lane should select the next smallest meaningful step
+toward controlled runtime acquisition consumption while preserving the current
+holds: no probe execution, runtime provenance attachment, analyzer/tool-facade,
+MCP, package-root API, eval, schema, scoring, optimizer, compiler,
+winner-selection, product, public benchmark, or public-claim widening unless
+Ryan explicitly authorizes that scope.
+
+Do not route `a819cf5 Surface diagnostic runtime probe requests` back to docs
+review, release-unit audit, focused validation, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
 
 Do not route `2e448ea Add diagnostic runtime probe request bridge` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,
