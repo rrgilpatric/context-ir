@@ -2,6 +2,49 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- 6d5fc47 Runtime Probe Plan Source-Site Index Release Sync
+
+- Synced post-push continuity for
+  `6d5fc47 Index runtime probe plans by source site`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `6d5fc47 Index runtime probe plans by source site`
+  - worktree clean at intake before this docs-only continuity edit
+  - nothing staged
+  - live git refs and worktree state remain authoritative for future control
+    intake
+- Release state for `6d5fc47`:
+  - latest pushed source/contract release authority is
+    `6d5fc47 Index runtime probe plans by source site`
+  - prior pushed continuity authority is
+    `4ba06ad Sync semantic diagnostic probe plan routing`
+  - prior pushed source/contract release authority is
+    `7c46f48 Surface semantic diagnostic probe plans`
+  - release-gate status is no-active-gate
+- Released tranche:
+  - four-file planned runtime probe request plan source-site indexing unit:
+    `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - combined read-only release gate passed with no findings
+  - focused validation passed with targeted pytest reporting `41 passed`
+  - full regression passed with `pytest tests/ -v` reporting `746 passed`
+  - commit-gating passed and approved the exact four-file unit
+  - local commit creation and Ryan-authorized push completed
+- Routing decision:
+  - do not route `6d5fc47` back to docs review, release-unit audit, focused
+    validation, full regression, commit-gating, staging, local commit creation,
+    or push absent new findings
+  - route next to bounded post-`6d5fc47` North Star planning/control to choose
+    the next smallest meaningful capability slice
+  - push remains Ryan-gated for any future release
+- Scope guard:
+  - this post-push continuity sync edits only `PLAN.md` and `BUILDLOG.md`
+  - no source, tests, eval assets, release-facing docs, `AGENTS.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `README.md`, regression,
+    audit, or commit-gating work was performed
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- Planned Runtime Probe Request Plan Source-Site Index Review
 
 - Reviewed the returned implementation slice for planned-side source-site
