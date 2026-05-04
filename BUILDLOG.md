@@ -2,6 +2,62 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- Diagnose/Recompile Planned Runtime Probe Request Consumption Review
+
+- Reviewed the returned implementation slice for consuming planned runtime
+  probe requests from the diagnose/recompile path.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `e94cd5d Sync diagnostic probe bridge release routing`
+  - nothing staged at intake
+  - no untracked files
+  - expected dirty files were:
+    - `src/context_ir/semantic_diagnostics.py`
+    - `src/context_ir/semantic_types.py`
+    - `tests/test_semantic_diagnostics.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `SemanticDiagnosticResult` now carries
+    `planned_runtime_probe_requests` as a planned-only diagnostic result
+    contract
+  - the result contract is typed without runtime import cycles and guarded so
+    planned requests must target grounded diagnostic boundaries that still
+    need runtime-backed support
+  - `diagnose_semantic_miss(...)` calls the existing
+    `derive_diagnostic_runtime_probe_requests(program, diagnostic)` bridge
+    after boundary classification
+  - `recompile_semantic_context(...)` carries the diagnostic result through
+    unchanged via `result.diagnostic`
+  - tests cover attachable omitted dynamic import, attached runtime support,
+    non-attachable unsupported boundaries, heuristic frontier, statically
+    proved units, ungrounded evidence, and mutation-free recompile
+    carry-through
+  - no probe execution, runtime provenance attachment, `SemanticProgram`
+    mutation, previous compile-result mutation, dependency edge creation,
+    selected symbol/unit creation, analyzer/tool-facade behavior, package-root
+    export, MCP, eval, schema, scoring, optimizer, compiler, winner-selection,
+    product, public benchmark, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_semantic_diagnostics.py tests/test_runtime_probe_requests.py -v`
+    reporting `27 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact five-file
+    unit: `src/context_ir/semantic_diagnostics.py`,
+    `src/context_ir/semantic_types.py`, `tests/test_semantic_diagnostics.py`,
+    `PLAN.md`, and `BUILDLOG.md`
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-03 -- 2e448ea Diagnostic Runtime Probe Request Bridge Release Sync
 
 - Synced post-push continuity for

@@ -6,6 +6,7 @@ import textwrap
 from pathlib import Path
 
 import context_ir.runtime_acquisition as runtime_acquisition
+import context_ir.runtime_probe_requests as runtime_probe_requests
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
@@ -160,6 +161,41 @@ def _write_unsupported_program(tmp_path: Path) -> None:
     (tmp_path / "main.py").write_text(
         "from pkg.helpers import *\n",
         encoding="utf-8",
+    )
+
+
+def _write_dynamic_import_program(tmp_path: Path) -> None:
+    """Write a semantic fixture with one attachable dynamic import boundary."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
+def _compile_result_omitting(unit_id: str, *, query: str) -> SemanticCompileResult:
+    """Return a minimal prior compile result that omitted one unit."""
+    return SemanticCompileResult(
+        document="# Context",
+        optimization=SemanticOptimizationResult(
+            selections=(),
+            omitted_unit_ids=(unit_id,),
+            warnings=(),
+            total_tokens=0,
+            budget=64,
+            confidence=0.0,
+        ),
+        omitted_unit_ids=(unit_id,),
+        total_tokens=2,
+        budget=64,
+        confidence=0.0,
+        compile_context=SemanticCompileContext(query=query),
     )
 
 
@@ -550,21 +586,39 @@ def test_diagnose_semantic_miss_uses_warning_trace_summary_for_omitted_unsupport
     assert "attached runtime-backed provenance were omitted" in result.reason
 
 
+def test_diagnose_semantic_miss_plans_runtime_probe_for_omitted_attachable_unsupported(
+    tmp_path: Path,
+) -> None:
+    """Omitted attachable unsupported diagnostics expose a planned probe request."""
+    _write_dynamic_import_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    unsupported_id = _unsupported_id_for(program, "importlib.import_module(name)")
+
+    result = diagnose_semantic_miss(
+        _compile_result_omitting(unsupported_id, query="dynamic import"),
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="importlib.import_module(name)",
+        ),
+        program,
+    )
+
+    assert result.omitted_unit_ids == (unsupported_id,)
+    assert len(result.planned_runtime_probe_requests) == 1
+    request = result.planned_runtime_probe_requests[0]
+    assert request.subject_id == unsupported_id
+    assert request.boundary_text == "importlib.import_module(name)"
+    assert (
+        request.status
+        is runtime_probe_requests.RuntimeProbeRequestStatus.PLANNED_NOT_EXECUTED
+    )
+
+
 def test_diagnose_semantic_miss_uses_additive_wording_for_importlib_runtime_support(
     tmp_path: Path,
 ) -> None:
     """Importlib runtime-backed unsupported units stay additive in diagnostics."""
-    (tmp_path / "main.py").write_text(
-        textwrap.dedent(
-            """
-            import importlib
-
-            def run(name: str) -> None:
-                importlib.import_module(name)
-            """
-        ).lstrip(),
-        encoding="utf-8",
-    )
+    _write_dynamic_import_program(tmp_path)
 
     base_program = _semantic_program(tmp_path)
     construct = next(
@@ -624,7 +678,59 @@ def test_diagnose_semantic_miss_uses_additive_wording_for_importlib_runtime_supp
     )
     assert boundary.has_attached_runtime_provenance is True
     assert boundary.trace_summary == trace_summary
+    assert result.planned_runtime_probe_requests == ()
     assert "attached runtime-backed provenance were omitted" in result.reason
+
+
+def test_diagnose_semantic_miss_skips_non_attachable_and_heuristic_boundaries(
+    tmp_path: Path,
+) -> None:
+    """Unsupported non-attachable and heuristic diagnostics stay requestless."""
+    unsupported_dir = tmp_path / "unsupported"
+    unsupported_dir.mkdir()
+    (unsupported_dir / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> None:
+                getattr()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    unsupported_program = _semantic_program(unsupported_dir)
+    unsupported_id = _unsupported_id_for(unsupported_program, "getattr()")
+
+    unsupported_result = diagnose_semantic_miss(
+        _compile_result_omitting(unsupported_id, query="getattr"),
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="getattr()",
+        ),
+        unsupported_program,
+    )
+
+    frontier_dir = tmp_path / "frontier"
+    frontier_dir.mkdir()
+    _write_sample_program(frontier_dir)
+    frontier_program = _semantic_program(frontier_dir)
+    frontier_id = _frontier_id_for(frontier_program, "missing_call")
+
+    frontier_result = diagnose_semantic_miss(
+        _compile_result_omitting(frontier_id, query="missing call"),
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="missing_call",
+        ),
+        frontier_program,
+    )
+
+    assert unsupported_result.omitted_unit_ids == (unsupported_id,)
+    unsupported_boundary = _boundary_for(unsupported_result, unsupported_id)
+    assert unsupported_boundary.needs_runtime_backed_support
+    assert unsupported_result.planned_runtime_probe_requests == ()
+    assert frontier_result.omitted_unit_ids == (frontier_id,)
+    assert _boundary_for(frontier_result, frontier_id).needs_runtime_backed_support
+    assert frontier_result.planned_runtime_probe_requests == ()
 
 
 def test_diagnose_semantic_miss_recommends_grounded_units_and_dependencies(
@@ -647,6 +753,7 @@ def test_diagnose_semantic_miss_recommends_grounded_units_and_dependencies(
     )
 
     assert result.omitted_unit_ids == (run_id,)
+    assert result.planned_runtime_probe_requests == ()
     assert run_id in result.recommended_expansions
     assert helper_id in result.recommended_expansions
 
@@ -672,6 +779,7 @@ def test_diagnose_semantic_miss_returns_honest_result_for_ungrounded_evidence(
     assert result.omitted_unit_ids == ()
     assert result.too_shallow_unit_ids == ()
     assert result.recommended_expansions == ()
+    assert result.planned_runtime_probe_requests == ()
     assert "Could not ground" in result.reason
 
 
@@ -786,6 +894,50 @@ def test_recompile_semantic_context_returns_separate_result_without_mutation(
     assert program.proven_dependencies == dependencies_before
     assert program.unresolved_frontier == unresolved_before
     assert program.unsupported_constructs == unsupported_before
+    assert program.diagnostics == diagnostics_before
+    assert previous_result.optimization == previous_optimization
+    assert previous_result.document == previous_document
+    assert previous_result.compile_context == previous_context
+
+
+def test_recompile_semantic_context_carries_planned_requests_without_runtime_mutation(
+    tmp_path: Path,
+) -> None:
+    """Recompile exposes diagnostic planned requests without runtime side effects."""
+    _write_dynamic_import_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    unsupported_id = _unsupported_id_for(program, "importlib.import_module(name)")
+    previous_result = _compile_result_omitting(
+        unsupported_id,
+        query="dynamic import",
+    )
+    unsupported_before = list(program.unsupported_constructs)
+    provenance_before = list(program.provenance_records)
+    diagnostics_before = list(program.diagnostics)
+    previous_optimization = previous_result.optimization
+    previous_document = previous_result.document
+    previous_context = previous_result.compile_context
+
+    result = recompile_semantic_context(
+        previous_result,
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="importlib.import_module(name)",
+        ),
+        delta_budget=96,
+        program=program,
+    )
+
+    assert len(result.diagnostic.planned_runtime_probe_requests) == 1
+    request = result.diagnostic.planned_runtime_probe_requests[0]
+    assert request.subject_id == unsupported_id
+    assert request.boundary_text == "importlib.import_module(name)"
+    assert (
+        request.status
+        is runtime_probe_requests.RuntimeProbeRequestStatus.PLANNED_NOT_EXECUTED
+    )
+    assert program.unsupported_constructs == unsupported_before
+    assert program.provenance_records == provenance_before
     assert program.diagnostics == diagnostics_before
     assert previous_result.optimization == previous_optimization
     assert previous_result.document == previous_document

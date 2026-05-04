@@ -40,6 +40,80 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+Workspace-only accepted source/contract tranche:
+diagnose/recompile planned runtime probe request consumption. This supersedes
+the post-`2e448ea` bridge-consumption implementation route for active control
+routing only. Live git refs and worktree state must still be verified from git
+during control intake.
+
+Repo-backed truth verified during implementation review on 2026-05-04:
+branch `main`, `HEAD` and `origin/main` at
+`e94cd5d Sync diagnostic probe bridge release routing`, nothing staged, no
+untracked files, dirty tracked files exactly:
+
+- `src/context_ir/semantic_diagnostics.py`
+- `src/context_ir/semantic_types.py`
+- `tests/test_semantic_diagnostics.py`
+
+Accepted workspace-only implementation state:
+
+- `SemanticDiagnosticResult` now carries
+  `planned_runtime_probe_requests` as a planned-only diagnostic result
+  contract
+- The result contract is typed without runtime import cycles and guarded so
+  planned requests must target grounded diagnostic boundaries that still need
+  runtime-backed support
+- `diagnose_semantic_miss(...)` derives planned runtime probe requests through
+  the existing `derive_diagnostic_runtime_probe_requests(program, diagnostic)`
+  bridge after boundary classification
+- `recompile_semantic_context(...)` carries the diagnostic result through
+  unchanged via `result.diagnostic`
+- Tests cover attachable omitted dynamic import, attached runtime support,
+  non-attachable unsupported boundaries, heuristic frontier, statically proved
+  units, ungrounded evidence, and mutation-free recompile carry-through
+- The slice does not execute probes, attach runtime provenance, mutate
+  `SemanticProgram`, mutate previous compile results, create dependency edges,
+  add selected symbols or units, or widen analyzer, tool facade, package-root
+  export, MCP, eval, schema, scoring, optimizer, compiler, winner-selection,
+  product, public benchmark, or public-claim surfaces
+
+Control-lane validation passed:
+
+- `.venv/bin/python -m ruff check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
+- `.venv/bin/python -m ruff format --check src/context_ir/semantic_types.py src/context_ir/semantic_diagnostics.py tests/test_semantic_diagnostics.py`
+- `.venv/bin/python -m mypy --strict src/`
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_semantic_diagnostics.py tests/test_runtime_probe_requests.py -v`
+  reporting `27 passed`
+- `git diff --check`
+
+Release state for the bridge-consumption tranche:
+
+- Accepted first-pass in workspace-only state
+- Not release-unit-audit-cleared
+- Not full-regression-cleared
+- Not commit-gating-cleared
+- Not staged
+- Not locally committed
+- Not pushed
+- Push remains Ryan-gated
+
+Current route:
+
+- Route next to a combined read-only release gate over the exact five-file
+  source/contract release unit:
+  - `src/context_ir/semantic_diagnostics.py`
+  - `src/context_ir/semantic_types.py`
+  - `tests/test_semantic_diagnostics.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The release gate must run Gate 1 release-unit audit, then Gate 2 full
+  regression, then Gate 3 commit-gating
+- It must stop on first finding, report findings first, and report each gate
+  explicitly
+- It must not edit files, stage, commit, push, or rewrite continuity
+- Do not route to another implementation slice before this tranche is
+  release-gate-cleared or a findings-based correction is accepted
+
 Current pushed source/contract release authority is
 `2e448ea Add diagnostic runtime probe request bridge`. It supersedes the
 workspace-only post-`38f3841` diagnostic runtime probe-request release-gate
@@ -200,10 +274,11 @@ Release state for `546a4da`:
 - No source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/
   winner-selection/product/public benchmark widening is authorized
 
-Current route:
+Prior route superseded by the workspace-only accepted bridge-consumption
+tranche above:
 
-- Route next to the bounded diagnose/recompile bridge-consumption implementation
-  slice
+- The bounded diagnose/recompile bridge-consumption implementation slice has
+  completed and been accepted workspace-only
 - Release-gate status is no-active-gate for
   `2e448ea Add diagnostic runtime probe request bridge`
 - Do not route `2e448ea` back to docs review, release-unit audit, focused

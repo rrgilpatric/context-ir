@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 
+from context_ir.runtime_probe_requests import derive_diagnostic_runtime_probe_requests
 from context_ir.semantic_compiler import compile_semantic_context
 from context_ir.semantic_renderer import RenderDetail
 from context_ir.semantic_scorer import (
@@ -129,7 +130,7 @@ def diagnose_semantic_miss(
         program=program,
         unit_records=unit_records,
     )
-    return SemanticDiagnosticResult(
+    diagnostic = SemanticDiagnosticResult(
         grounded_unit_ids=grounded_unit_ids,
         omitted_unit_ids=omitted_unit_ids,
         too_shallow_unit_ids=too_shallow_unit_ids,
@@ -140,6 +141,13 @@ def diagnose_semantic_miss(
             boundary_classifications=boundary_classifications,
         ),
         boundary_classifications=boundary_classifications,
+    )
+    return replace(
+        diagnostic,
+        planned_runtime_probe_requests=derive_diagnostic_runtime_probe_requests(
+            program,
+            diagnostic,
+        ),
     )
 
 

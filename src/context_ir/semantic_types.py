@@ -11,6 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from context_ir.runtime_probe_requests import RuntimeProbeRequest
 
 
 class ProofStatus(Enum):
@@ -1215,6 +1219,7 @@ class SemanticDiagnosticResult:
     recommended_expansions: tuple[str, ...]
     reason: str
     boundary_classifications: tuple[SemanticDiagnosticBoundary, ...] = ()
+    planned_runtime_probe_requests: tuple[RuntimeProbeRequest, ...] = ()
 
     def __post_init__(self) -> None:
         """Keep grounded classifications disjoint and reasoned."""
@@ -1229,6 +1234,15 @@ class SemanticDiagnosticResult:
             raise ValueError("grounded_unit_ids must be unique")
         if len(self.recommended_expansions) != len(set(self.recommended_expansions)):
             raise ValueError("recommended_expansions must be unique")
+        planned_request_subject_ids = tuple(
+            request.subject_id for request in self.planned_runtime_probe_requests
+        )
+        if len(planned_request_subject_ids) != len(set(planned_request_subject_ids)):
+            raise ValueError("planned_runtime_probe_requests must target unique units")
+        if not set(planned_request_subject_ids).issubset(grounded):
+            raise ValueError(
+                "planned_runtime_probe_requests must target grounded unit IDs"
+            )
         if omitted & too_shallow:
             raise ValueError("omitted and too_shallow unit IDs must be disjoint")
         if omitted & sufficient:
@@ -1239,6 +1253,10 @@ class SemanticDiagnosticResult:
         if classified != grounded:
             raise ValueError(
                 "grounded_unit_ids must equal the union of classified unit IDs"
+            )
+        if planned_request_subject_ids and not self.boundary_classifications:
+            raise ValueError(
+                "planned_runtime_probe_requests require boundary_classifications"
             )
         if not self.boundary_classifications:
             return
@@ -1251,6 +1269,15 @@ class SemanticDiagnosticResult:
             raise ValueError(
                 "boundary_classifications must cover every grounded semantic unit"
             )
+        boundary_by_unit_id = {
+            boundary.unit_id: boundary for boundary in self.boundary_classifications
+        }
+        for subject_id in planned_request_subject_ids:
+            if not boundary_by_unit_id[subject_id].needs_runtime_backed_support:
+                raise ValueError(
+                    "planned_runtime_probe_requests must target boundaries that need "
+                    "runtime-backed support"
+                )
         for boundary in self.boundary_classifications:
             if boundary.status is SemanticDiagnosticUnitStatus.OMITTED:
                 expected_ids = omitted
