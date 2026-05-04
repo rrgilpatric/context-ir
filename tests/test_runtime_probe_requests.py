@@ -5,6 +5,8 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
+import pytest
+
 import context_ir.runtime_probe_requests as runtime_probe_requests
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
@@ -356,6 +358,64 @@ def test_derive_runtime_probe_requests_excludes_non_attachable_boundaries(
     assert requested_texts.isdisjoint(unsupported_by_text)
 
 
+def test_index_runtime_probe_requests_by_id_returns_ordered_full_plan(
+    tmp_path: Path,
+) -> None:
+    """Runtime probe request indexing preserves full-plan request identity order."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str, source: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+
+    requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    original_requests = tuple(requests)
+    original_unsupported = list(program.unsupported_constructs)
+    original_frontier = list(program.unresolved_frontier)
+    original_provenance_records = list(program.provenance_records)
+    requests_by_id = runtime_probe_requests.index_runtime_probe_requests_by_id(requests)
+
+    assert requests_by_id == {request.request_id: request for request in requests}
+    assert list(requests_by_id) == [request.request_id for request in requests]
+    assert list(requests_by_id.values()) == list(requests)
+    assert requests == original_requests
+    assert program.unsupported_constructs == original_unsupported
+    assert program.unresolved_frontier == original_frontier
+    assert program.provenance_records == original_provenance_records
+
+
+def test_index_runtime_probe_requests_by_id_rejects_duplicate_ids(
+    tmp_path: Path,
+) -> None:
+    """Runtime probe request indexing rejects ambiguous duplicate request IDs."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    duplicate_requests = (requests[0], requests[0])
+
+    with pytest.raises(ValueError, match="duplicate runtime probe request_id"):
+        runtime_probe_requests.index_runtime_probe_requests_by_id(duplicate_requests)
+
+
 def test_derive_diagnostic_runtime_probe_requests_returns_attachable_omitted_boundary(
     tmp_path: Path,
 ) -> None:
@@ -593,3 +653,17 @@ def test_derive_diagnostic_runtime_probe_requests_is_deterministic_and_pure(
     assert program.diagnostics == original_diagnostics
     assert diagnostic.boundary_classifications == original_boundary_classifications
     assert diagnostic.grounded_unit_ids == original_grounded_unit_ids
+
+    diagnostic_requests_by_id = (
+        runtime_probe_requests.index_runtime_probe_requests_by_id(first_requests)
+    )
+    assert diagnostic_requests_by_id == {
+        request.request_id: request for request in first_requests
+    }
+    assert list(diagnostic_requests_by_id) == [
+        request.request_id for request in first_requests
+    ]
+    assert set(diagnostic_requests_by_id) == {
+        original_request_ids_by_subject_id[request.subject_id]
+        for request in first_requests
+    }

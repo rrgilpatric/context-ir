@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
 
@@ -258,6 +259,19 @@ def derive_diagnostic_runtime_probe_requests(
     )
 
 
+def index_runtime_probe_requests_by_id(
+    requests: Iterable[RuntimeProbeRequest],
+) -> dict[str, RuntimeProbeRequest]:
+    """Return planned runtime probe requests keyed by stable request ID."""
+    requests_by_id: dict[str, RuntimeProbeRequest] = {}
+    for request in requests:
+        request_id = request.request_id
+        if request_id in requests_by_id:
+            raise ValueError(f"duplicate runtime probe request_id: {request_id}")
+        requests_by_id[request_id] = request
+    return requests_by_id
+
+
 def _add_request(
     requests_by_site: dict[_SourceSiteIdentity, RuntimeProbeRequest],
     request: RuntimeProbeRequest,
@@ -435,4 +449,5 @@ __all__ = [
     "RuntimeProbeRequestStatus",
     "derive_diagnostic_runtime_probe_requests",
     "derive_runtime_probe_requests",
+    "index_runtime_probe_requests_by_id",
 ]
