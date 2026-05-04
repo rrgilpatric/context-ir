@@ -287,6 +287,16 @@ def derive_diagnostic_runtime_probe_requests(
     )
 
 
+def derive_diagnostic_runtime_probe_request_plan(
+    program: SemanticProgram,
+    diagnostic: SemanticDiagnosticResult,
+) -> RuntimeProbeRequestPlan:
+    """Derive a planned-only request plan for diagnostic runtime boundaries."""
+    return build_runtime_probe_request_plan(
+        derive_diagnostic_runtime_probe_requests(program, diagnostic)
+    )
+
+
 def build_runtime_probe_request_plan(
     requests: Iterable[RuntimeProbeRequest],
 ) -> RuntimeProbeRequestPlan:
@@ -504,6 +514,7 @@ __all__ = [
     "RuntimeProbeRequestPlan",
     "RuntimeProbeRequestStatus",
     "build_runtime_probe_request_plan",
+    "derive_diagnostic_runtime_probe_request_plan",
     "derive_diagnostic_runtime_probe_requests",
     "derive_runtime_probe_requests",
     "index_runtime_probe_requests_by_id",

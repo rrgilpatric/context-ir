@@ -849,3 +849,235 @@ def test_build_runtime_probe_request_plan_wraps_diagnostic_filtered_requests_pur
     assert program.diagnostics == original_diagnostics
     assert diagnostic.boundary_classifications == original_boundary_classifications
     assert diagnostic.grounded_unit_ids == original_grounded_unit_ids
+
+
+def test_derive_diagnostic_runtime_probe_request_plan_wraps_filtered_requests_purely(
+    tmp_path: Path,
+) -> None:
+    """Diagnostic request-plan derivation preserves filtered request order and IDs."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str, source: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    import_id = _unsupported_id_for(program, "importlib.import_module(name)")
+    exec_id = _unsupported_id_for(program, "exec(source)")
+    diagnostic = _diagnostic_result(
+        (
+            _diagnostic_boundary(
+                exec_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+            _diagnostic_boundary(
+                import_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+        )
+    )
+    equivalent_diagnostic = _diagnostic_result(
+        (
+            _diagnostic_boundary(
+                exec_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+            _diagnostic_boundary(
+                import_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+        )
+    )
+    original_unsupported = list(program.unsupported_constructs)
+    original_frontier = list(program.unresolved_frontier)
+    original_provenance_records = list(program.provenance_records)
+    original_diagnostics = list(program.diagnostics)
+    original_boundary_classifications = diagnostic.boundary_classifications
+    original_grounded_unit_ids = diagnostic.grounded_unit_ids
+
+    requests = runtime_probe_requests.derive_diagnostic_runtime_probe_requests(
+        program,
+        diagnostic,
+    )
+    original_request_ids = tuple(request.request_id for request in requests)
+    first_plan = runtime_probe_requests.derive_diagnostic_runtime_probe_request_plan(
+        program,
+        diagnostic,
+    )
+    second_plan = runtime_probe_requests.derive_diagnostic_runtime_probe_request_plan(
+        program,
+        equivalent_diagnostic,
+    )
+
+    assert first_plan.requests == requests
+    assert first_plan.request_ids == original_request_ids
+    assert first_plan.plan_id == _expected_plan_id(first_plan)
+    assert first_plan.plan_id == second_plan.plan_id
+    assert first_plan.request_ids == second_plan.request_ids
+    assert [request.boundary_text for request in first_plan.requests] == [
+        "importlib.import_module(name)",
+        "exec(source)",
+    ]
+    assert tuple(request.request_id for request in requests) == original_request_ids
+    assert (
+        runtime_probe_requests.derive_diagnostic_runtime_probe_requests(
+            program,
+            diagnostic,
+        )
+        == requests
+    )
+    assert program.unsupported_constructs == original_unsupported
+    assert program.unresolved_frontier == original_frontier
+    assert program.provenance_records == original_provenance_records
+    assert program.diagnostics == original_diagnostics
+    assert diagnostic.boundary_classifications == original_boundary_classifications
+    assert diagnostic.grounded_unit_ids == original_grounded_unit_ids
+
+
+def test_derive_diagnostic_runtime_probe_request_plan_allows_empty_filtered_plan(
+    tmp_path: Path,
+) -> None:
+    """Diagnostic filtering can produce a valid deterministic empty request plan."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    symbol_id = _symbol_id_for(program, "main.run")
+    diagnostic = _diagnostic_result(
+        (
+            _diagnostic_boundary(
+                symbol_id,
+                boundary_kind=SemanticDiagnosticBoundaryKind.STATICALLY_PROVED,
+                primary_capability_tier=CapabilityTier.STATICALLY_PROVED,
+                status=SemanticDiagnosticUnitStatus.SUFFICIENTLY_REPRESENTED,
+            ),
+        )
+    )
+
+    first_plan = runtime_probe_requests.derive_diagnostic_runtime_probe_request_plan(
+        program,
+        diagnostic,
+    )
+    second_plan = runtime_probe_requests.derive_diagnostic_runtime_probe_request_plan(
+        program,
+        diagnostic,
+    )
+
+    assert runtime_probe_requests.derive_runtime_probe_requests(program)
+    assert first_plan.requests == ()
+    assert first_plan.request_ids == ()
+    assert first_plan.plan_id == _expected_plan_id(first_plan)
+    assert first_plan == second_plan
+    assert first_plan == runtime_probe_requests.build_runtime_probe_request_plan(())
+
+
+def test_derive_diagnostic_runtime_probe_request_plan_skips_empty_probe_cases(
+    tmp_path: Path,
+) -> None:
+    """Runtime-supported and non-attachable diagnostic boundaries stay requestless."""
+    runtime_supported_dir = tmp_path / "runtime_supported"
+    runtime_supported_dir.mkdir()
+    (runtime_supported_dir / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    runtime_supported_program = _derived_program(runtime_supported_dir)
+    runtime_supported_id = _unsupported_id_for(
+        runtime_supported_program,
+        "importlib.import_module(name)",
+    )
+    runtime_supported_diagnostic = _diagnostic_result(
+        (
+            _diagnostic_boundary(
+                runtime_supported_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+                has_attached_runtime_provenance=True,
+            ),
+        )
+    )
+
+    non_attachable_dir = tmp_path / "non_attachable"
+    non_attachable_dir.mkdir()
+    (non_attachable_dir / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> None:
+                getattr()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    non_attachable_program = _derived_program(non_attachable_dir)
+    non_attachable_id = _unsupported_id_for(non_attachable_program, "getattr()")
+    non_attachable_diagnostic = _diagnostic_result(
+        (
+            _diagnostic_boundary(
+                non_attachable_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+        )
+    )
+
+    runtime_supported_plan = (
+        runtime_probe_requests.derive_diagnostic_runtime_probe_request_plan(
+            runtime_supported_program,
+            runtime_supported_diagnostic,
+        )
+    )
+    non_attachable_plan = (
+        runtime_probe_requests.derive_diagnostic_runtime_probe_request_plan(
+            non_attachable_program,
+            non_attachable_diagnostic,
+        )
+    )
+    empty_plan = runtime_probe_requests.build_runtime_probe_request_plan(())
+
+    assert runtime_probe_requests.derive_runtime_probe_requests(
+        runtime_supported_program
+    )
+    assert runtime_supported_plan == empty_plan
+    assert (
+        runtime_probe_requests.derive_runtime_probe_requests(non_attachable_program)
+        == ()
+    )
+    assert non_attachable_plan == empty_plan
