@@ -2,6 +2,114 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- Runtime Observation Admission Read Model Review
+
+- Reviewed the returned implementation slice for matching already-collected
+  runtime observations to planned runtime probe requests.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `fce09b0 Sync runtime probe plan source-site routing`
+  - nothing staged at intake
+  - expected pre-existing dirty control files were `PLAN.md` and `BUILDLOG.md`
+  - expected new implementation files were:
+    - `src/context_ir/runtime_observation_admission.py`
+    - `tests/test_runtime_observation_admission.py`
+  - no other untracked files
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `RuntimeObservationAdmission` is a frozen internal read model pairing one
+    planned runtime probe request with one already-collected typed runtime
+    observation
+  - `admit_runtime_observations_for_plan(plan, observations)` admits only
+    observations whose source-site identity is present in the
+    `RuntimeProbeRequestPlan`
+  - admissions are returned deterministically in plan request order
+  - partial observation batches are accepted without requiring every planned
+    request to have an observation
+  - empty plan plus empty observations returns empty admissions
+  - unmatched observation source sites raise `ValueError`
+  - duplicate observation source sites raise `ValueError`
+  - request and observation object identity are preserved
+  - the helper does not mutate the plan, requests, observations, or
+    `SemanticProgram`
+  - request IDs, plan IDs, plan order, planned-only status, and empty-plan
+    behavior are preserved
+  - tests cover full, partial, and empty admission; unmatched and duplicate
+    observation sites; identity preservation; no mutation; and no request/plan
+    ID drift
+  - the helper is exported only from module-local
+    `context_ir.runtime_observation_admission.__all__`; no package-root export
+    is added
+  - no probe execution, execution-result contract, runtime provenance
+    attachment, analyzer/tool-facade behavior, package-root API, MCP, eval,
+    schema, scoring, optimizer, compiler, winner-selection, product, public
+    benchmark, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py -v`
+    reporting `26 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_admission.py`,
+    `tests/test_runtime_observation_admission.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-04 -- Post-6d5fc47 Observation Admission Authorization
+
+- Reviewed the next move after the completed and pushed
+  `6d5fc47 Index runtime probe plans by source site` release and
+  `fce09b0 Sync runtime probe plan source-site routing` continuity sync.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `fce09b0 Sync runtime probe plan source-site routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Ryan explicitly authorized opening a bounded internal observation-admission
+  contract slice.
+- Authorized next implementation slice:
+  - add an internal planned-observation admission read model
+  - admit already-collected typed runtime observations only when their
+    source-site identity matches a request in a `RuntimeProbeRequestPlan`
+  - return deterministic admitted matches without executing probes, attaching
+    provenance, or mutating requests, plans, observations, or programs
+  - reject duplicate observation source-site ambiguity and observations whose
+    source site is not present in the plan
+- Scope guard:
+  - no probe execution, execution-result contract, runtime provenance
+    attachment, analyzer/tool-facade behavior, package-root API, MCP, eval,
+    schema, scoring, optimizer, compiler, winner-selection, product, public
+    benchmark, or public-claim change is authorized
+  - runtime observation payload-family validation and provenance attachment
+    remain later slices unless separately authorized and routed
+- Alternatives considered:
+  - direct probe execution
+  - direct provenance attachment from planned observations
+  - analyzer/tool-facade observation gating
+  - package-root or MCP exposure
+- Reasoning:
+  - the planned-side chain now has stable requests, request IDs, plans,
+    diagnostic exposure, and source-site lookup
+  - the next meaningful gap is controlled consumption of already-collected
+    observations against that plan
+  - keeping this as a pure read-model admission contract gives future
+    acquisition gating a safe internal boundary before any execution or
+    provenance-attachment wiring
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- 6d5fc47 Runtime Probe Plan Source-Site Index Release Sync
 
 - Synced post-push continuity for

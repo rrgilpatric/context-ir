@@ -51,6 +51,72 @@ Repo-backed release truth verified during post-push continuity sync: branch
 `6d5fc47 Index runtime probe plans by source site`, clean worktree, and
 nothing staged.
 
+Current workspace-only accepted tranche:
+
+- `runtime_observation_admission.RuntimeObservationAdmission` is a frozen
+  internal read model pairing one planned runtime probe request with one
+  already-collected typed runtime observation
+- `admit_runtime_observations_for_plan(plan, observations)` admits only
+  observations whose source-site identity is present in the
+  `RuntimeProbeRequestPlan`
+- admissions are returned deterministically in plan request order
+- partial observation batches are accepted without requiring every planned
+  request to have an observation
+- empty plan plus empty observations returns empty admissions
+- unmatched observation source sites raise `ValueError`
+- duplicate observation source sites raise `ValueError`
+- request and observation object identity are preserved
+- the helper does not mutate the plan, requests, observations, or
+  `SemanticProgram`
+- request IDs, plan IDs, plan order, planned-only status, and empty-plan
+  behavior are preserved
+- tests cover full, partial, and empty admission; unmatched and duplicate
+  observation sites; identity preservation; no mutation; and no request/plan
+  ID drift
+- the helper is exported only from module-local
+  `context_ir.runtime_observation_admission.__all__`; no package-root export
+  is added
+- no probe execution, execution-result contract, runtime provenance attachment,
+  analyzer/tool-facade behavior, package-root API, MCP, eval, schema, scoring,
+  optimizer, compiler, winner-selection, product, public benchmark, or
+  public-claim surface changed
+- implementation review accepted the slice first-pass in workspace-only state
+- control-lane focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py -v`
+    reporting `26 passed`
+  - `git diff --check`
+
+Current release unit is exactly four files:
+
+- `src/context_ir/runtime_observation_admission.py`
+- `tests/test_runtime_observation_admission.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Release state for this four-file tranche: workspace-only accepted, not
+release-unit-audit-cleared, not full-regression-cleared, not
+commit-gating-cleared, not staged, not locally committed, and not pushed.
+
+Current route:
+
+- Route next to a combined read-only release gate over the exact four-file
+  internal runtime observation admission read-model tranche
+- Gate 1 release-unit audit must run before Gate 2 full regression, and Gate 2
+  must pass before Gate 3 commit-gating
+- The release-gate lane must stop on first finding and must not edit files,
+  stage, commit, push, or rewrite continuity
+- Do not route to another implementation slice before release gates clear or a
+  findings-based correction is accepted
+- Do not route `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`, `97dc0f6`,
+  `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or
+  `546a4da` back to docs review, release-unit audit, focused validation, full
+  regression, commit-gating, staging, local commit creation, or push absent new
+  findings
+- Push remains Ryan-gated for any future release
+
 Released planned runtime probe request plan source-site indexing:
 
 - `index_runtime_probe_request_plan_by_source_site(plan)` indexes a
@@ -91,16 +157,6 @@ Release-gate status is no-active-gate for
 `6d5fc47 Index runtime probe plans by source site`. Do not route `6d5fc47`
 back to docs review, release-unit audit, focused validation, full regression,
 commit-gating, staging, local commit creation, or push absent new findings.
-
-Current route:
-
-- Route next to bounded post-`6d5fc47` North Star planning/control to choose
-  the next smallest meaningful capability slice
-- Do not route `6d5fc47`, `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`,
-  `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back
-  to docs review, release-unit audit, focused validation, full regression,
-  commit-gating, staging, local commit creation, or push absent new findings
-- Push remains Ryan-gated for any future release
 
 Released semantic diagnostic runtime probe request plan surfacing:
 
@@ -1615,9 +1671,30 @@ sequencing for `c1a12d7` absent new findings.
   request plan source-site indexing tranche
 - [x] Local commit creation and Ryan-authorized push for the planned runtime
   probe request plan source-site indexing tranche
+- [x] Ryan authorized bounded internal observation-admission contract scope
+- [x] Runtime observation admission read-model implementation accepted
+  first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file internal runtime
+  observation admission read-model tranche
+- [ ] Local commit creation and Ryan-authorized push for the internal runtime
+  observation admission read-model tranche
 
 ## What Is In Progress
 
+- The internal runtime observation admission read-model tranche is accepted
+  first-pass in workspace-only state:
+  - `src/context_ir/runtime_observation_admission.py`
+  - `tests/test_runtime_observation_admission.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-gate status for this four-file tranche is not
+  release-unit-audit-cleared, not full-regression-cleared, and not
+  commit-gating-cleared.
+- Nothing is staged; local commit creation and push are not authorized until
+  release gates clear and the normal release sequence reaches those steps.
+- Active next route is the combined read-only release gate for the exact
+  four-file tranche, not another implementation slice.
+- Push remains Ryan-gated for any future release.
 - The planned runtime probe request plan source-site indexing tranche is
   completed and pushed at `6d5fc47`:
   - `src/context_ir/runtime_probe_requests.py`
@@ -1625,12 +1702,6 @@ sequencing for `c1a12d7` absent new findings.
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `6d5fc47`.
-- No implementation slice, staging, local commit creation, or push is currently
-  in progress.
-- Active next route is bounded post-`6d5fc47` North Star planning/control to
-  choose the next smallest meaningful capability slice, not release gates for
-  completed pushed work.
-- Push remains Ryan-gated for any future release.
 - The `SemanticDiagnosticResult.planned_runtime_probe_request_plan` tranche is
   completed and pushed at `7c46f48`:
   - `src/context_ir/semantic_types.py`
@@ -2371,8 +2442,31 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`6d5fc47` North Star planning/control to
-choose the next smallest meaningful capability slice.
+Immediate next route: combined read-only release gate for the exact four-file
+internal runtime observation admission read-model tranche:
+
+- `src/context_ir/runtime_observation_admission.py`
+- `tests/test_runtime_observation_admission.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The tranche is accepted first-pass in workspace-only state. It is not
+release-unit-audit-cleared, not full-regression-cleared, not
+commit-gating-cleared, not staged, not locally committed, and not pushed.
+
+The gate must run Gate 1 release-unit audit, then Gate 2 full regression, then
+Gate 3 commit-gating; stop on first finding; and perform no edits, staging,
+commits, pushes, or continuity rewrites.
+
+Ryan explicitly authorized opening this narrow observation-admission scope
+after `fce09b0`. The authorized scope is limited to an internal read-model
+contract: an already-collected typed runtime observation may be admitted only
+when its source-site identity matches a request in a `RuntimeProbeRequestPlan`.
+The slice must not execute probes, attach provenance, change analyzer or
+tool-facade behavior, expose package-root or MCP APIs, or widen eval, schema,
+scoring, optimizer, compiler, winner-selection, product, public benchmark, or
+public-claim surfaces. The implementation slice is now accepted first-pass in
+workspace-only state.
 
 The post-`7c46f48` North Star planning/control spike is accepted. It selected
 `index_runtime_probe_request_plan_by_source_site(plan)` in
@@ -2408,13 +2502,11 @@ The completed diagnose/recompile bridge-consumption tranche is pushed at
 `a819cf5 Surface diagnostic runtime probe requests` and has release-gate status
 no-active-gate. It should not be reopened absent new findings.
 
-The next planning/control lane should choose the next smallest meaningful step
-toward controlled runtime acquisition consumption while preserving the current
-holds: no probe execution, execution-result contract, observation-admission
-contract, runtime provenance attachment, analyzer/tool-facade, MCP,
-package-root API, eval, schema, scoring, optimizer, compiler, winner-selection,
-product, public benchmark, or public-claim widening unless Ryan explicitly
-authorizes that scope.
+The current release-gate lane must preserve the remaining holds: no probe
+execution, execution-result contract, runtime provenance attachment,
+analyzer/tool-facade behavior, package-root API, MCP, eval, schema, scoring,
+optimizer, compiler, winner-selection, product, public benchmark, or
+public-claim widening.
 
 Do not route `6d5fc47 Index runtime probe plans by source site` back to docs
 review, release-unit audit, focused validation, full regression, commit-gating,
