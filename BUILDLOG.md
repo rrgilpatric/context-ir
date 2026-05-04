@@ -2,6 +2,116 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- Planned Runtime Probe Request Plan Source-Site Index Review
+
+- Reviewed the returned implementation slice for planned-side source-site
+  indexing of runtime probe request plans.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `4ba06ad Sync semantic diagnostic probe plan routing`
+  - nothing staged at intake
+  - no untracked files
+  - expected dirty files were:
+    - `PLAN.md`
+    - `BUILDLOG.md`
+    - `src/context_ir/runtime_probe_requests.py`
+    - `tests/test_runtime_probe_requests.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `index_runtime_probe_request_plan_by_source_site(plan)` indexes a
+    `RuntimeProbeRequestPlan` by the same source-site identity tuple used by
+    runtime acquisition matching
+  - the helper preserves request object identity and plan insertion order
+  - full plans, diagnostic-filtered plans, and empty plans are supported
+  - duplicate source-site ambiguity raises `ValueError`
+  - request IDs, plan IDs, plan order, planned-only status, and empty-plan
+    behavior are preserved
+  - tests cover full, diagnostic-filtered, and empty plans; duplicate sites;
+    request/plan ID stability; planned-only status; object identity; insertion
+    order; and non-mutation of the plan
+  - the helper is exported only from module-local
+    `context_ir.runtime_probe_requests.__all__`; no package-root export is
+    added
+  - no probe execution, execution-result contract, observation-admission
+    contract, runtime provenance attachment, analyzer/tool-facade behavior,
+    package-root API, MCP, eval, schema, scoring, optimizer, compiler,
+    winner-selection, product, public benchmark, or public-claim surface
+    changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_requests.py tests/test_runtime_probe_requests.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
+    reporting `41 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_probe_requests.py`,
+    `tests/test_runtime_probe_requests.py`, `PLAN.md`, and `BUILDLOG.md`
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-04 -- Post-7c46f48 North Star Planning Decision
+
+- Reviewed the read-only spike for the next controlled runtime acquisition
+  step after the completed and pushed
+  `7c46f48 Surface semantic diagnostic probe plans` release.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `4ba06ad Sync semantic diagnostic probe plan routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted spike findings:
+  - pushed work should not be reopened absent new findings
+  - diagnostic request plans are stable, deterministic, planned-only, and now
+    exposed on semantic diagnostics
+  - runtime acquisition still accepts typed observations directly and matches
+    eligible constructs by source site before attaching provenance
+  - analyzer and tool-facade surfaces still forward observation batches
+    directly
+  - opening execution-result or observation-admission scope requires explicit
+    Ryan authorization
+- Planning decision:
+  - next implementation slice is the planned-side
+    `index_runtime_probe_request_plan_by_source_site(plan)` helper in
+    `src/context_ir/runtime_probe_requests.py`
+  - the helper should return planned requests keyed by the existing source-site
+    identity convention used by runtime request derivation and runtime
+    acquisition matching
+  - duplicate source-site ambiguity should raise `ValueError`
+  - tests should cover full, diagnostic-filtered, and empty plans, insertion
+    order, object identity preservation, duplicate rejection, no mutation, and
+    no request-ID or plan-ID drift
+- Scope guard:
+  - no probe execution, execution-result contract, observation-admission
+    contract, runtime provenance attachment, analyzer/tool-facade behavior,
+    package-root export, MCP, eval, schema, scoring, optimizer, compiler,
+    winner-selection, product, public benchmark, or public-claim change is
+    authorized by this planning decision
+- Alternatives considered:
+  - observation-admission contract implementation
+  - execution-result contract implementation
+  - direct runtime provenance attachment changes
+  - analyzer/tool-facade/API/MCP exposure
+- Reasoning:
+  - a source-site index is smaller than observation admission because it only
+    builds planned-side lookup infrastructure and does not consume
+    observations
+  - it is the lookup future acquisition gating needs before Ryan decides
+    whether to authorize observation-admission scope
+  - it reuses existing source-site identity semantics instead of introducing a
+    new public or package-root contract
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- 7c46f48 Semantic Diagnostic Probe Plan Release Sync
 
 - Synced post-push continuity for

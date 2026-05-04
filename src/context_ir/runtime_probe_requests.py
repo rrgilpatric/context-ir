@@ -324,6 +324,23 @@ def index_runtime_probe_requests_by_id(
     return requests_by_id
 
 
+def index_runtime_probe_request_plan_by_source_site(
+    plan: RuntimeProbeRequestPlan,
+) -> dict[_SourceSiteIdentity, RuntimeProbeRequest]:
+    """Return planned request-plan entries keyed by runtime source-site identity."""
+    requests_by_source_site: dict[_SourceSiteIdentity, RuntimeProbeRequest] = {}
+    for request in plan.requests:
+        source_site_identity = runtime_acquisition._source_site_identity(
+            request.source_site
+        )
+        if source_site_identity in requests_by_source_site:
+            raise ValueError(
+                "multiple runtime probe request-plan entries share the same source site"
+            )
+        requests_by_source_site[source_site_identity] = request
+    return requests_by_source_site
+
+
 def _add_request(
     requests_by_site: dict[_SourceSiteIdentity, RuntimeProbeRequest],
     request: RuntimeProbeRequest,
@@ -517,5 +534,6 @@ __all__ = [
     "derive_diagnostic_runtime_probe_request_plan",
     "derive_diagnostic_runtime_probe_requests",
     "derive_runtime_probe_requests",
+    "index_runtime_probe_request_plan_by_source_site",
     "index_runtime_probe_requests_by_id",
 ]

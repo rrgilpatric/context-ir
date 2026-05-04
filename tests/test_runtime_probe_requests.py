@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import textwrap
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -127,6 +128,20 @@ def _expected_plan_id(
     )
     digest = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()
     return f"runtime_probe_request_plan:{digest}"
+
+
+def _request_source_site_identity(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+) -> tuple[str, int, int, int, int]:
+    """Return the runtime matching identity for one request source site."""
+    span = request.source_site.span
+    return (
+        request.source_site.file_path,
+        span.start_line,
+        span.start_column,
+        span.end_line,
+        span.end_column,
+    )
 
 
 def test_derive_runtime_probe_requests_plans_attachable_runtime_boundaries(
@@ -431,6 +446,188 @@ def test_index_runtime_probe_requests_by_id_rejects_duplicate_ids(
 
     with pytest.raises(ValueError, match="duplicate runtime probe request_id"):
         runtime_probe_requests.index_runtime_probe_requests_by_id(duplicate_requests)
+
+
+def test_index_runtime_probe_request_plan_by_source_site_returns_ordered_full_plan(
+    tmp_path: Path,
+) -> None:
+    """Source-site indexing preserves full-plan request identity and order."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str, source: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    plan = runtime_probe_requests.build_runtime_probe_request_plan(requests)
+    original_requests = plan.requests
+    original_request_ids = plan.request_ids
+    original_plan_id = plan.plan_id
+
+    requests_by_source_site = (
+        runtime_probe_requests.index_runtime_probe_request_plan_by_source_site(plan)
+    )
+
+    assert requests_by_source_site == {
+        _request_source_site_identity(request): request for request in plan.requests
+    }
+    assert list(requests_by_source_site) == [
+        _request_source_site_identity(request) for request in plan.requests
+    ]
+    assert list(requests_by_source_site.values()) == list(plan.requests)
+    assert all(
+        indexed_request is request
+        for indexed_request, request in zip(
+            requests_by_source_site.values(),
+            plan.requests,
+            strict=True,
+        )
+    )
+    assert [request.boundary_text for request in requests_by_source_site.values()] == [
+        "importlib.import_module(name)",
+        "getattr(obj, name)",
+        "exec(source)",
+    ]
+    assert all(
+        request.status
+        is runtime_probe_requests.RuntimeProbeRequestStatus.PLANNED_NOT_EXECUTED
+        for request in requests_by_source_site.values()
+    )
+    assert plan.requests == original_requests
+    assert plan.request_ids == original_request_ids
+    assert plan.plan_id == original_plan_id
+    assert (
+        tuple(request.request_id for request in plan.requests) == original_request_ids
+    )
+
+
+def test_index_runtime_probe_request_plan_by_source_site_supports_filtered_plan(
+    tmp_path: Path,
+) -> None:
+    """Source-site indexing keeps diagnostic-filtered plan order and IDs."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str, source: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    import_id = _unsupported_id_for(program, "importlib.import_module(name)")
+    exec_id = _unsupported_id_for(program, "exec(source)")
+    diagnostic = _diagnostic_result(
+        (
+            _diagnostic_boundary(
+                exec_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+            _diagnostic_boundary(
+                import_id,
+                boundary_kind=(
+                    SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+                ),
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            ),
+        )
+    )
+    plan = runtime_probe_requests.derive_diagnostic_runtime_probe_request_plan(
+        program,
+        diagnostic,
+    )
+    original_request_ids = plan.request_ids
+    original_plan_id = plan.plan_id
+
+    requests_by_source_site = (
+        runtime_probe_requests.index_runtime_probe_request_plan_by_source_site(plan)
+    )
+
+    assert list(requests_by_source_site) == [
+        _request_source_site_identity(request) for request in plan.requests
+    ]
+    assert list(requests_by_source_site.values()) == list(plan.requests)
+    assert all(
+        indexed_request is request
+        for indexed_request, request in zip(
+            requests_by_source_site.values(),
+            plan.requests,
+            strict=True,
+        )
+    )
+    assert [request.boundary_text for request in requests_by_source_site.values()] == [
+        "importlib.import_module(name)",
+        "exec(source)",
+    ]
+    assert plan.request_ids == original_request_ids
+    assert plan.plan_id == original_plan_id
+    assert (
+        tuple(request.request_id for request in plan.requests) == original_request_ids
+    )
+
+
+def test_index_runtime_probe_request_plan_by_source_site_supports_empty_plan() -> None:
+    """Source-site indexing preserves the deterministic empty-plan contract."""
+    plan = runtime_probe_requests.build_runtime_probe_request_plan(())
+    original_request_ids = plan.request_ids
+    original_plan_id = plan.plan_id
+
+    requests_by_source_site = (
+        runtime_probe_requests.index_runtime_probe_request_plan_by_source_site(plan)
+    )
+
+    assert requests_by_source_site == {}
+    assert plan.requests == ()
+    assert plan.request_ids == original_request_ids
+    assert plan.plan_id == original_plan_id
+    assert plan.plan_id == _expected_plan_id(plan)
+
+
+def test_index_runtime_probe_request_plan_by_source_site_rejects_duplicate_sites(
+    tmp_path: Path,
+) -> None:
+    """Source-site indexing rejects ambiguous planned-side source matches."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    duplicate_site_request = replace(
+        requests[1],
+        source_site=requests[0].source_site,
+    )
+    ambiguous_plan = runtime_probe_requests.build_runtime_probe_request_plan(
+        (requests[0], duplicate_site_request)
+    )
+
+    with pytest.raises(ValueError, match="share the same source site"):
+        runtime_probe_requests.index_runtime_probe_request_plan_by_source_site(
+            ambiguous_plan
+        )
 
 
 def test_build_runtime_probe_request_plan_wraps_full_plan_deterministically(
