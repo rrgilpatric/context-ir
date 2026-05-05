@@ -356,12 +356,16 @@ Current route:
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
-- The next control action is to issue one bounded internal implementation
-  prompt for non-executing runtime probe execution-input materialization.
-  The slice may prepare typed execution work items from planned request plans
-  and repository snapshot metadata, but it must not execute probes or widen
-  public, facade, MCP, JSON/schema, eval, scoring, optimizer, compiler,
-  package-root, product, benchmark, or public-claim surfaces.
+- Runtime probe execution-input materialization is accepted first-pass in
+  workspace-only state and is not release-unit-audit-cleared,
+  full-regression-cleared, commit-gating-cleared, staged, locally committed, or
+  pushed.
+- Next active gate is a combined read-only release gate over the exact
+  four-file runtime probe execution-input materialization release unit:
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
+  No staging, local commit, push, or next implementation slice is authorized
+  before the gate returns clean or a findings-based correction is accepted.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2012,18 +2016,34 @@ sequencing for `c1a12d7` absent new findings.
   recompile bridge release unit
 - [x] Local commit creation and Ryan-authorized push for the runtime probe
   result-batch recompile bridge release unit
+- [x] Post-`591c09b` planning/control selected the internal non-executing
+  runtime probe execution-input materialization boundary
+- [x] Runtime probe execution-input materialization implementation slice
+  accepted first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file runtime probe
+  execution-input materialization release unit
 
 ## What Is In Progress
 
+- Runtime probe execution-input materialization implementation is accepted
+  first-pass in workspace-only state.
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Next active gate is a combined read-only release gate over that exact
+  four-file unit. No staging, local commit, push, or next implementation slice
+  is authorized before the gate returns clean or a findings-based correction is
+  accepted.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Latest pushed continuity authority is
   `5913bf0 Sync runtime probe batch recompile release routing`.
 - Release-gate status is no-active-gate for `591c09b`.
-- No release gate, staging, local commit, or push is active.
-- Next implementation route is one bounded internal non-executing runtime
-  probe execution-input materialization slice. It must preserve all existing
-  public/API/MCP/facade/schema/eval/claim holds and must not execute probes.
+- Runtime probe execution-input materialization is the active workspace-only
+  accepted release candidate and must complete the combined read-only release
+  gate before staging, local commit, push, or any next implementation route.
 - Runtime probe execution-result/replay-artifact contract is completed and
   pushed at `eb6def0`.
 - Runtime probe result admission bridge is completed and pushed at `ccd417a`.
@@ -2852,15 +2872,27 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: issue one bounded implementation-lane prompt for internal
-runtime probe execution-input materialization.
+Immediate next route: combined read-only release gate for the exact four-file
+runtime probe execution-input materialization release unit:
 
-This is a non-executing bridge slice. It should add typed internal work-item
+- `src/context_ir/runtime_probe_execution.py`
+- `tests/test_runtime_probe_execution.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The gate must run release-unit audit, then full regression, then
+commit-gating, stopping on the first finding. It must not edit files, stage,
+commit, push, or rewrite continuity. No new implementation slice is authorized
+before this release gate returns clean or a findings-based correction is
+accepted.
+
+The accepted workspace-only slice adds internal non-executing typed work-item
 materialization from `RuntimeProbeRequestPlan` plus repository snapshot metadata
-to replay-ready execution inputs, preserving plan ID, request IDs, request
-object identity, source-site identity, family/form labels, replay target/selector
-seeds, and deterministic plan order. It must not execute probes, collect
-runtime observations, admit results, attach provenance, recompile, serialize
+to replay-ready execution inputs. It preserves plan ID, request IDs, request
+object identity, source-site identity, family/form labels, replay target and
+selector seeds, and deterministic plan order through
+`RuntimeProbeReplayArtifact`. It does not execute probes, collect runtime
+observations, admit results, attach provenance, recompile, serialize
 JSON/schema, widen `tool_facade.py`, `mcp_server.py`, `context_ir/__init__.py`,
 or touch eval, scoring, optimizer, compiler, package-root, product, benchmark,
 or public-claim surfaces.

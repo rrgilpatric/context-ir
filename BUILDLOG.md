@@ -2,6 +2,66 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Execution-Input Materialization Review
+
+- Reviewed the returned internal non-executing runtime probe execution-input
+  materialization implementation slice.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - local `HEAD` at `2ab2bb0 Sync runtime probe batch post-push routing`
+  - `origin/main` at `5913bf0 Sync runtime probe batch recompile release routing`
+  - local ahead commit is docs-only continuity
+  - returned slice files are untracked:
+    `src/context_ir/runtime_probe_execution.py` and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no tracked implementation drift before this continuity update
+  - `git diff --check` clean
+- Accepted implementation state:
+  - `RuntimeProbeExecutionInput` is a frozen internal non-executing work item
+    for one planned runtime probe request
+  - `RuntimeProbeExecutionInputBatch` is a frozen ordered internal batch for
+    one runtime request plan
+  - `materialize_runtime_probe_execution_input_batch(...)` materializes
+    replay-ready inputs from a `RuntimeProbeRequestPlan`,
+    `RepositorySnapshotBasis`, probe contract revision, and explicit runtime
+    assumptions
+  - materialization preserves plan ID, request IDs, request object identity,
+    source-site identity, family/form labels, replay target and selector seeds,
+    deterministic plan order, and the existing `RuntimeProbeReplayArtifact`
+    replay metadata contract
+  - replay inputs carry plan/request identity, subject identity, source
+    site/span, reason code, boundary text, family/form, replay target seed, and
+    replay selector seed
+  - plan/request drift, duplicate request IDs, blank probe metadata, empty
+    runtime assumptions, replay metadata drift, and batch/input plan mismatch
+    reject through typed constructors or materialization gates
+  - empty request plans remain valid and deterministic when explicit runtime
+    assumptions and probe metadata are supplied
+  - the helper remains internal to `context_ir.runtime_probe_execution`; no
+    package-root, tool facade, MCP, JSON/schema, serialization, eval, scoring,
+    optimizer, compiler, winner-selection, product, benchmark, or public-claim
+    surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_requests.py tests/test_runtime_probe_results.py tests/test_runtime_observation_admission.py tests/test_runtime_observation_recompile.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `177 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes should be handled as their own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_probe_execution.py`,
+    `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Batch Recompile Post-Push Routing Sync
 
 - Ryan-authorized push for the runtime probe result-batch recompile bridge was
