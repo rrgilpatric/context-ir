@@ -2,6 +2,40 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- f5c8df0 Runtime Observation Admission Compatibility Release Sync
+
+- Synced post-push continuity for
+  `f5c8df0 Validate runtime observation admission compatibility`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `f5c8df0 Validate runtime observation admission compatibility`
+  - clean worktree at intake before this docs-only continuity edit
+  - nothing staged
+  - no untracked files
+- Release state now recorded:
+  - runtime observation admission compatibility validation tranche completed
+    and pushed at `f5c8df0`
+  - release-gate status is no-active-gate
+  - combined read-only release gate passed with no findings
+  - focused validation passed, including targeted pytest reporting `86 passed`
+  - full regression passed, including full pytest reporting `791 passed`
+  - commit-gating passed over the exact four-file release unit:
+    `src/context_ir/runtime_observation_admission.py`,
+    `tests/test_runtime_observation_admission.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+- Routing decision:
+  - supersede the workspace-only runtime observation admission compatibility
+    validation release-gate route for active control routing
+  - route next to bounded post-`f5c8df0` North Star planning/control to choose
+    the next smallest meaningful capability slice
+  - do not route `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
+    `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
+    `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to release sequencing
+    absent new findings
+  - push remains Ryan-gated for any future release
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Observation Admission Compatibility Validation Review
 
 - Reviewed the returned implementation slice for validating runtime observation

@@ -40,67 +40,19 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed source/contract release authority remains
-`8706f2e Add diagnostic runtime observation admission bridge`. It supersedes
-the workspace-only diagnostic runtime observation admission bridge release-gate
-route for active control routing only. Live git refs and worktree state must
-still be verified from git during control intake.
+Current pushed source/contract release authority is
+`f5c8df0 Validate runtime observation admission compatibility`. It supersedes
+the workspace-only runtime observation admission compatibility validation
+release-gate route for active control routing only. Live git refs and worktree
+state must still be verified from git during control intake.
 
 Repo-backed release truth verified during post-push continuity sync: branch
 `main`, `HEAD` and `origin/main` at
-`8706f2e Add diagnostic runtime observation admission bridge`, clean worktree,
-nothing staged, and no untracked files.
+`f5c8df0 Validate runtime observation admission compatibility`, clean worktree
+at intake before this docs-only continuity edit, nothing staged, and no
+untracked files.
 
-Released diagnostic runtime observation admission bridge:
-
-- `admit_runtime_observations_for_diagnostic(diagnostic, observations)` is a
-  module-local diagnostic bridge in
-  `context_ir.runtime_observation_admission`
-- the helper requires `diagnostic.planned_runtime_probe_request_plan`
-- diagnostics without an attached runtime probe request plan raise
-  `ValueError`
-- admitted observations delegate directly to the released
-  `admit_runtime_observations_for_plan(...)` plan-level helper
-- deterministic plan order, plan IDs, request IDs, request object identity,
-  observation object identity, and empty-plan behavior are preserved
-- unmatched observation source sites and duplicate observation source sites
-  still reject through the existing plan-level admission path
-- diagnostic, plan, request, and observation inputs are not mutated
-- the helper is exported only from module-local
-  `context_ir.runtime_observation_admission.__all__`; no package-root export
-  is added
-- no runtime probe request or plan rederivation from a program, probe
-  execution, execution-result contract, runtime provenance attachment,
-  analyzer/tool-facade behavior, package-root API, MCP, eval, schema, scoring,
-  optimizer, compiler, winner-selection, product, public benchmark, or
-  public-claim surface changed
-- implementation review accepted the slice first-pass
-- control-lane focused validation passed:
-  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
-  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
-  - `.venv/bin/python -m mypy --strict src/`
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
-    reporting `55 passed`
-  - `git diff --check`
-- combined read-only release gate passed with no findings:
-  - Gate 1 release-unit audit passed for the exact four-file release unit
-  - focused validation passed, including targeted pytest reporting `55 passed`
-  - Gate 2 full regression passed, including full pytest reporting `760 passed`
-  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
-    no extra drift, and clean `git diff --check`
-- local commit creation and Ryan-authorized push completed at
-  `8706f2e Add diagnostic runtime observation admission bridge`
-
-Released four-file unit:
-
-- `src/context_ir/runtime_observation_admission.py`
-- `tests/test_runtime_observation_admission.py`
-- `PLAN.md`
-- `BUILDLOG.md`
-
-Release-gate status is no-active-gate for `8706f2e`.
-
-Workspace-only accepted runtime observation admission compatibility validation:
+Released runtime observation admission compatibility validation:
 
 - plan-level admission rejects same-source-site observations whose typed
   runtime observation class does not match the planned request family/form
@@ -130,6 +82,7 @@ Workspace-only accepted runtime observation admission compatibility validation:
   analyzer/tool-facade behavior, package-root API, MCP, eval, schema, scoring,
   optimizer, compiler, winner-selection, product, public benchmark, or
   public-claim surface changed
+- implementation review accepted the slice first-pass
 - control-lane focused validation passed:
   - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
   - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
@@ -137,32 +90,33 @@ Workspace-only accepted runtime observation admission compatibility validation:
   - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
     reporting `86 passed`
   - `git diff --check`
-- release state is workspace-only accepted; not release-unit-audit-cleared, not
-  full-regression-cleared, not commit-gating-cleared, not staged, not locally
-  committed, and not pushed
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting `86 passed`
+  - Gate 2 full regression passed, including full pytest reporting `791 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, and clean `git diff --check`
+- local commit creation and Ryan-authorized push completed at
+  `f5c8df0 Validate runtime observation admission compatibility`
 
-Proposed four-file release unit:
+Released four-file unit:
 
 - `src/context_ir/runtime_observation_admission.py`
 - `tests/test_runtime_observation_admission.py`
 - `PLAN.md`
 - `BUILDLOG.md`
 
+Release-gate status is no-active-gate for `f5c8df0`.
+
 Current route:
 
-- Route next to a combined read-only release gate over the exact four-file
-  runtime observation admission compatibility validation tranche
-- The gate must run release-unit audit, then full regression, then
-  commit-gating, stopping on the first finding
-- The gate must not edit files, stage changes, create commits, push, or rewrite
-  continuity
-- Only after a clean release-gate result should the next action become local
-  commit sequencing
-- Do not route `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`,
-  `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`,
-  `2e448ea`, `f6c66e4`, or `546a4da` back to docs review, release-unit
-  audit, focused validation, full regression, commit-gating, staging, local
-  commit creation, or push absent new findings
+- Route next to bounded post-`f5c8df0` North Star planning/control to choose
+  the next smallest meaningful capability slice
+- Do not route `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
+  `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
+  `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs review,
+  release-unit audit, focused validation, full regression, commit-gating,
+  staging, local commit creation, or push absent new findings
 - Push remains Ryan-gated for any future release
 
 Released planned runtime probe request plan source-site indexing:
@@ -1738,9 +1692,9 @@ sequencing for `c1a12d7` absent new findings.
   admission compatibility validation
 - [x] Runtime observation admission compatibility validation implementation
   accepted first-pass in workspace-only state
-- [ ] Combined release gate for the exact four-file runtime observation
+- [x] Combined release gate for the exact four-file runtime observation
   admission compatibility validation tranche
-- [ ] Local commit creation and Ryan-authorized push for the runtime observation
+- [x] Local commit creation and Ryan-authorized push for the runtime observation
   admission compatibility validation tranche
 
 ## What Is In Progress
@@ -1749,6 +1703,15 @@ sequencing for `c1a12d7` absent new findings.
   read-model tranche.
 - No release gate is active for the pushed diagnostic runtime observation
   admission bridge tranche.
+- No release gate is active for the pushed runtime observation admission
+  compatibility validation tranche.
+- The runtime observation admission compatibility validation tranche is
+  completed and pushed at `f5c8df0`:
+  - `src/context_ir/runtime_observation_admission.py`
+  - `tests/test_runtime_observation_admission.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-gate status is no-active-gate for `f5c8df0`.
 - The diagnostic runtime observation admission bridge tranche is completed and
   pushed at `8706f2e`:
   - `src/context_ir/runtime_observation_admission.py`
@@ -1756,18 +1719,8 @@ sequencing for `c1a12d7` absent new findings.
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `8706f2e`.
-- Runtime observation admission compatibility validation is accepted
-  first-pass in workspace-only state:
-  - `src/context_ir/runtime_observation_admission.py`
-  - `tests/test_runtime_observation_admission.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- Active next route is a combined read-only release gate over the exact
-  four-file runtime observation admission compatibility validation tranche.
-- The tranche is not release-unit-audit-cleared, not full-regression-cleared,
-  not commit-gating-cleared, not staged, not locally committed, and not pushed.
-- The gate must not edit files, stage changes, create commits, push, or rewrite
-  continuity.
+- Active next route is bounded post-`f5c8df0` North Star planning/control to
+  choose the next smallest meaningful capability slice.
 - The released tranche remains a read-model bridge only: no probe execution,
   execution-result contract, runtime provenance attachment, analyzer or
   tool-facade behavior, package-root API, MCP, eval, schema, scoring,
@@ -2528,82 +2481,15 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate for the exact four-file
-runtime observation admission compatibility validation tranche.
+Immediate next route: bounded post-`f5c8df0` North Star planning/control to
+choose the next smallest meaningful capability slice. No implementation slice
+is authorized until control selects and routes one under the normal quality
+gate.
 
-Release unit:
-
-- `src/context_ir/runtime_observation_admission.py`
-- `tests/test_runtime_observation_admission.py`
-- `PLAN.md`
-- `BUILDLOG.md`
-
-Gate requirements:
-
-- run Gate 1 release-unit audit first, then Gate 2 full regression, then Gate 3
-  commit-gating
-- stop on the first finding
-- report findings first and each gate result explicitly
-- do not edit files, stage changes, create commits, push, or rewrite
-  continuity
-
-Gate 1 release-unit audit must verify:
-
-- live repo truth, exact four-file dirty set, nothing staged, no untracked
-  files, no extra drift, and clean `git diff --check`
-- admission compatibility validation rejects source-site-matched observations
-  whose runtime observation type does not match the planned request
-  family/form
-- accepted current mappings remain exactly:
-  - `dynamic_import:*` -> `DynamicImportRuntimeObservation`
-  - `reflective_builtin:hasattr/2` -> `HasattrRuntimeObservation`
-  - `reflective_builtin:getattr/2` and `reflective_builtin:getattr/3` ->
-    `GetattrRuntimeObservation`
-  - `reflective_builtin:vars/0` and `reflective_builtin:vars/1` ->
-    `VarsRuntimeObservation`
-  - `reflective_builtin:dir/0` and `reflective_builtin:dir/1` ->
-    `DirRuntimeObservation`
-  - `runtime_mutation:globals/0` -> `GlobalsRuntimeObservation`
-  - `runtime_mutation:locals/0` -> `LocalsRuntimeObservation`
-  - `runtime_mutation:setattr/3` -> `SetattrRuntimeObservation`
-  - `runtime_mutation:delattr/2` -> `DelattrRuntimeObservation`
-  - `exec_or_eval:exec/1` -> `ExecRuntimeObservation`
-  - `exec_or_eval:eval/1` -> `EvalRuntimeObservation`
-  - `metaclass_behavior:keyword` -> `MetaclassBehaviorRuntimeObservation`
-- unknown non-wildcard mapped forms reject instead of passing by family alone
-- source-site admission, duplicate/unmatched observation rejection,
-  deterministic plan order, plan IDs, request IDs, request object identity,
-  observation object identity, diagnostic bridge behavior, empty-plan behavior,
-  missing-plan rejection, and no-mutation guarantees are preserved
-- no runtime probe request or plan rederivation from a program, probe
-  execution, execution-result contract, runtime provenance attachment,
-  analyzer/tool-facade behavior, package-root API, MCP, eval, schema, scoring,
-  optimizer, compiler, winner-selection, product, public benchmark, or
-  public-claim surface changed
-
-Focused validation for Gate 1:
-
-- `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
-- `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
-- `.venv/bin/python -m mypy --strict src/`
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
-- `git diff --check`
-
-Gate 2 full regression, only if Gate 1 passes:
-
-- `.venv/bin/python -m ruff check src/ tests/`
-- `.venv/bin/python -m ruff format --check src/ tests/`
-- `.venv/bin/python -m mypy --strict src/`
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
-
-Gate 3 commit-gating, only if Gate 2 passes:
-
-- reverify exact dirty/untracked file set
-- reverify nothing staged
-- reverify no drift
-- reverify clean `git diff --check`
-- decide whether the exact four-file unit is commit-ready to stage locally, but
-  do not stage
+The runtime observation admission compatibility validation tranche is pushed
+at `f5c8df0 Validate runtime observation admission compatibility` and has
+release-gate status no-active-gate. It should not be reopened absent new
+findings.
 
 The diagnostic runtime observation admission bridge tranche is pushed at
 `8706f2e Add diagnostic runtime observation admission bridge` and has
