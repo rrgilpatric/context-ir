@@ -12,6 +12,7 @@ from context_ir.runtime_probe_requests import (
     RuntimeProbeRequestPlan,
     index_runtime_probe_request_plan_by_source_site,
 )
+from context_ir.semantic_types import SemanticDiagnosticResult
 
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
 
@@ -76,6 +77,20 @@ def admit_runtime_observations_for_plan(
     return tuple(admissions)
 
 
+def admit_runtime_observations_for_diagnostic(
+    diagnostic: SemanticDiagnosticResult,
+    observations: Iterable[RuntimeObservation],
+) -> tuple[RuntimeObservationAdmission, ...]:
+    """Admit observations against a diagnostic's attached runtime request plan."""
+    plan = diagnostic.planned_runtime_probe_request_plan
+    if plan is None:
+        raise ValueError(
+            "planned_runtime_probe_request_plan is required for runtime observation "
+            "admission"
+        )
+    return admit_runtime_observations_for_plan(plan, observations)
+
+
 def _index_runtime_observations_by_source_site(
     observations: Iterable[RuntimeObservation],
 ) -> dict[_SourceSiteIdentity, RuntimeObservation]:
@@ -94,5 +109,6 @@ def _index_runtime_observations_by_source_site(
 __all__ = [
     "RuntimeObservation",
     "RuntimeObservationAdmission",
+    "admit_runtime_observations_for_diagnostic",
     "admit_runtime_observations_for_plan",
 ]

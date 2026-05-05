@@ -2,6 +2,108 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-04 -- Diagnostic Runtime Observation Admission Bridge Review
+
+- Reviewed the returned implementation slice for admitting already-collected
+  runtime observations against a diagnostic's attached request plan.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `7b18371 Sync runtime observation admission routing`
+  - nothing staged at intake
+  - expected pre-existing dirty control files were `PLAN.md` and `BUILDLOG.md`
+  - implementation files changed were:
+    - `src/context_ir/runtime_observation_admission.py`
+    - `tests/test_runtime_observation_admission.py`
+  - no untracked files
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `admit_runtime_observations_for_diagnostic(diagnostic, observations)` is a
+    module-local diagnostic bridge
+  - the helper requires `diagnostic.planned_runtime_probe_request_plan`
+  - diagnostics without an attached runtime probe request plan raise
+    `ValueError`
+  - admitted observations delegate directly to the released
+    `admit_runtime_observations_for_plan(...)` plan-level helper
+  - deterministic plan order, plan IDs, request IDs, request object identity,
+    observation object identity, and empty-plan behavior are preserved
+  - unmatched observation source sites and duplicate observation source sites
+    still reject through the existing plan-level admission path
+  - diagnostic, plan, request, and observation inputs are not mutated
+  - the helper is exported only from module-local
+    `context_ir.runtime_observation_admission.__all__`; no package-root export
+    is added
+  - no runtime probe request or plan rederivation from a program, probe
+    execution, execution-result contract, runtime provenance attachment,
+    analyzer/tool-facade behavior, package-root API, MCP, eval, schema,
+    scoring, optimizer, compiler, winner-selection, product, public benchmark,
+    or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
+    reporting `55 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_admission.py`,
+    `tests/test_runtime_observation_admission.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-04 -- Post-b0a5ec5 Diagnostic Observation Admission Routing
+
+- Reviewed the next move after the completed and pushed
+  `b0a5ec5 Add runtime observation admission read model` release and
+  `7b18371 Sync runtime observation admission routing` continuity sync.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `7b18371 Sync runtime observation admission routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+- Ryan authorized proceeding to the next bounded North Star step.
+- Authorized next implementation slice:
+  - add a diagnostic-level runtime observation admission helper in
+    `src/context_ir/runtime_observation_admission.py`
+  - admit already-collected typed runtime observations against a
+    `SemanticDiagnosticResult` by using the diagnostic's existing
+    `planned_runtime_probe_request_plan`
+  - delegate to the released
+    `admit_runtime_observations_for_plan(...)` plan-level helper
+  - preserve diagnostic/request/plan/observation object identity and
+    deterministic plan order
+  - reject diagnostics that do not carry an attached runtime probe request plan
+  - preserve empty-plan behavior and the existing plan-level unmatched and
+    duplicate observation rejection
+- Scope guard:
+  - no runtime probe request or plan rederivation from a program
+  - no probe execution, execution-result contract, runtime provenance
+    attachment, analyzer/tool-facade behavior, package-root API, MCP, eval,
+    schema, scoring, optimizer, compiler, winner-selection, product, public
+    benchmark, or public-claim change is authorized
+- Alternatives considered:
+  - wiring admission into analyzer or tool-facade behavior
+  - attaching admitted observations as runtime-backed provenance
+  - defining execution-result or replay-artifact contracts
+  - rederiving plans from `SemanticProgram` inside the admission bridge
+- Reasoning:
+  - the system now has deterministic diagnostic request plans and a released
+    plan-level observation admission read model
+  - the smallest useful consumption step is to bridge those two surfaces while
+    keeping admission planned-only and side-effect-free
+  - this avoids jumping from read-model admission into attachment or execution
+    before the diagnostic contract can prove it consumes only its own plan
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- b0a5ec5 Runtime Observation Admission Release Sync
 
 - Synced post-push continuity for
