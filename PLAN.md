@@ -46,6 +46,50 @@ authority is `5913bf0 Sync runtime probe batch recompile release routing`. Live 
 refs and worktree state must still be verified from git during control intake;
 do not infer them from committed prose.
 
+Runtime probe execution-input materialization local release candidate:
+
+- `RuntimeProbeExecutionInput` is a frozen internal non-executing work item for
+  one planned runtime probe request
+- `RuntimeProbeExecutionInputBatch` is a frozen ordered internal batch for one
+  runtime request plan
+- `materialize_runtime_probe_execution_input_batch(...)` materializes
+  replay-ready inputs from a `RuntimeProbeRequestPlan`,
+  `RepositorySnapshotBasis`, probe contract revision, and explicit runtime
+  assumptions
+- materialization preserves plan ID, request IDs, request object identity,
+  source-site identity, family/form labels, replay target and selector seeds,
+  deterministic plan order, and the existing `RuntimeProbeReplayArtifact`
+  replay metadata contract
+- replay inputs carry plan/request identity, subject identity, source site/span,
+  reason code, boundary text, family/form, replay target seed, and replay
+  selector seed
+- plan/request drift, duplicate request IDs, blank probe metadata, empty runtime
+  assumptions, replay metadata drift, and batch/input plan mismatch reject
+  through typed constructors or materialization gates
+- empty request plans remain valid and deterministic when explicit runtime
+  assumptions and probe metadata are supplied
+- the helper remains internal to `context_ir.runtime_probe_execution`; no
+  package-root, tool facade, MCP, JSON/schema, serialization, eval, scoring,
+  optimizer, compiler, winner-selection, product, benchmark, or public-claim
+  surface changed
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting
+    `177 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `857 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, no untracked drift, and clean `git diff --check`
+- local commit creation completed at
+  `cfed3c7 Add runtime probe execution input materialization`
+- release files are `src/context_ir/runtime_probe_execution.py` and
+  `tests/test_runtime_probe_execution.py`, plus control continuity in
+  `PLAN.md` and `BUILDLOG.md`
+- `cfed3c7` is locally committed and not pushed unless live git shows
+  `origin/main` contains it
+- push remains Ryan-gated
+
 Runtime probe result-batch recompile bridge release:
 
 - `RuntimeProbeResultBatchRecompileApplication` is a frozen internal envelope
@@ -356,16 +400,14 @@ Current route:
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
-- Runtime probe execution-input materialization is accepted first-pass in
-  workspace-only state and is not release-unit-audit-cleared,
-  full-regression-cleared, commit-gating-cleared, staged, locally committed, or
-  pushed.
-- Next active gate is a combined read-only release gate over the exact
-  four-file runtime probe execution-input materialization release unit:
-  `src/context_ir/runtime_probe_execution.py`,
-  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
-  No staging, local commit, push, or next implementation slice is authorized
-  before the gate returns clean or a findings-based correction is accepted.
+- Runtime probe execution-input materialization is release-gate-cleared and
+  locally committed at
+  `cfed3c7 Add runtime probe execution input materialization`.
+- If live git shows `cfed3c7` is still ahead of `origin/main`, the next control
+  action is Ryan's explicit push/hold decision, not another implementation,
+  release-gate, staging, or local commit lane.
+- If live git shows `origin/main` already contains `cfed3c7`, treat the release
+  as pushed and no-active-gate.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2020,30 +2062,31 @@ sequencing for `c1a12d7` absent new findings.
   runtime probe execution-input materialization boundary
 - [x] Runtime probe execution-input materialization implementation slice
   accepted first-pass in workspace-only state
-- [ ] Combined release gate for the exact four-file runtime probe
+- [x] Combined release gate for the exact four-file runtime probe
+  execution-input materialization release unit
+- [x] Local commit creation for the runtime probe execution-input
+  materialization release unit
+- [ ] Ryan push/hold decision for the locally committed runtime probe
   execution-input materialization release unit
 
 ## What Is In Progress
 
-- Runtime probe execution-input materialization implementation is accepted
-  first-pass in workspace-only state.
-- Proposed release unit:
+- Runtime probe execution-input materialization is release-gate-cleared and
+  locally committed at
+  `cfed3c7 Add runtime probe execution input materialization`.
+- Locally committed release unit:
   - `src/context_ir/runtime_probe_execution.py`
   - `tests/test_runtime_probe_execution.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- Next active gate is a combined read-only release gate over that exact
-  four-file unit. No staging, local commit, push, or next implementation slice
-  is authorized before the gate returns clean or a findings-based correction is
-  accepted.
+- Release-gate status is no-active-gate for `cfed3c7`.
+- Push remains Ryan-gated. No next implementation or planning lane is
+  authorized before Ryan's explicit push/hold decision for `cfed3c7`.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Latest pushed continuity authority is
   `5913bf0 Sync runtime probe batch recompile release routing`.
 - Release-gate status is no-active-gate for `591c09b`.
-- Runtime probe execution-input materialization is the active workspace-only
-  accepted release candidate and must complete the combined read-only release
-  gate before staging, local commit, push, or any next implementation route.
 - Runtime probe execution-result/replay-artifact contract is completed and
   pushed at `eb6def0`.
 - Runtime probe result admission bridge is completed and pushed at `ccd417a`.
@@ -2872,21 +2915,17 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate for the exact four-file
-runtime probe execution-input materialization release unit:
+Immediate next route: Ryan push/hold decision for the locally committed runtime
+probe execution-input materialization release unit.
 
-- `src/context_ir/runtime_probe_execution.py`
-- `tests/test_runtime_probe_execution.py`
-- `PLAN.md`
-- `BUILDLOG.md`
+The release unit is release-gate-cleared and locally committed at
+`cfed3c7 Add runtime probe execution input materialization`. If live git shows
+`cfed3c7` is still ahead of `origin/main`, do not route to another
+implementation, planning, release-gate, staging, or local commit lane before
+Ryan's explicit push/hold decision. If Ryan authorizes push, reverify live git
+state and push `main`; if Ryan holds, record the hold.
 
-The gate must run release-unit audit, then full regression, then
-commit-gating, stopping on the first finding. It must not edit files, stage,
-commit, push, or rewrite continuity. No new implementation slice is authorized
-before this release gate returns clean or a findings-based correction is
-accepted.
-
-The accepted workspace-only slice adds internal non-executing typed work-item
+The locally committed slice adds internal non-executing typed work-item
 materialization from `RuntimeProbeRequestPlan` plus repository snapshot metadata
 to replay-ready execution inputs. It preserves plan ID, request IDs, request
 object identity, source-site identity, family/form labels, replay target and

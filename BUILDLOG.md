@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Execution-Input Materialization Local Commit Routing
+
+- Reviewed the accepted combined read-only release-gate result and completed
+  local commit sequencing for the runtime probe execution-input
+  materialization release unit.
+- Gate result accepted:
+  - findings: none
+  - Gate 1 release-unit audit passed for the exact four-file unit
+  - focused validation passed, including targeted pytest reporting `177 passed`
+  - Gate 2 full regression passed, including full pytest reporting `857 passed`
+  - Gate 3 commit-gating passed with the exact dirty/tracked and untracked file
+    set, nothing staged, no extra drift, and clean `git diff --check`
+- Local commit sequencing completed:
+  - staged exactly the four-file release unit:
+    `src/context_ir/runtime_probe_execution.py`,
+    `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+  - verified no unstaged drift, no untracked drift, and clean staged whitespace
+  - created local commit
+    `cfed3c7 Add runtime probe execution input materialization`
+- Post-commit repo state before Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` at
+    `cfed3c7 Add runtime probe execution input materialization`
+  - `origin/main` at
+    `5913bf0 Sync runtime probe batch recompile release routing`
+  - local commits ahead of `origin/main` are docs-only continuity
+    `2ab2bb0` plus source/contract release candidate `cfed3c7`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `cfed3c7` as release-gate-cleared and locally committed
+  - do not route `cfed3c7` back to release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or implementation absent new
+    findings
+  - do not route another implementation or planning lane before Ryan's
+    explicit push/hold decision for `cfed3c7`
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Execution-Input Materialization Review
 
 - Reviewed the returned internal non-executing runtime probe execution-input
