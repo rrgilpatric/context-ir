@@ -41,17 +41,55 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`95f7545 Apply diagnostic runtime observations`. It supersedes the
-workspace-only diagnostic runtime observation application release-gate route
-for active control routing only. Live git refs and worktree state must still
-be verified from git during control intake.
+`74aadd7 Refresh diagnostic runtime trace support`. It supersedes the
+workspace-only diagnostic trace-refresh release-gate route for active control
+routing only. Live git refs and worktree state must still be verified from git
+during control intake.
 
 Repo-backed release truth verified during post-push continuity sync: branch
 `main`, `HEAD` and `origin/main` at
-`95f7545 Apply diagnostic runtime observations`, clean worktree at intake
+`74aadd7 Refresh diagnostic runtime trace support`, clean worktree at intake
 before this docs-only continuity edit, nothing staged, and no untracked files.
 
-Released diagnostic runtime observation application:
+Released diagnostic trace refresh:
+
+- `diagnose_semantic_miss(previous_result, evidence, current_program)` now
+  classifies runtime support from the supplied current `SemanticProgram` using
+  diagnose-visible provenance
+- `previous_result` remains the source for prior selected detail, preserving
+  prior depth/status semantics
+- runtime-backed support remains additive: unsupported and frontier boundaries
+  keep their primary non-proof tiers
+- stale prior warning or selection trace summaries no longer make
+  post-application diagnostics deny or fabricate current runtime support
+- already satisfied diagnostic runtime requests are not planned again
+- recompile with an updated program compiles that updated program and carries
+  attached runtime support in selected trace summaries when selected
+- no probe execution, execution-result contract, runtime observation
+  collection, analyzer/tool-facade behavior, package-root API, MCP, eval,
+  schema, scoring policy, compiler contract, winner-selection, product,
+  public benchmark, or public-claim surface changed
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact five-file release unit
+  - focused validation passed, including targeted pytest reporting `101 passed`
+  - Gate 2 full regression passed, including full pytest reporting `806 passed`
+  - Gate 3 commit-gating passed with the exact five-file unit, nothing staged,
+    no extra drift, and clean `git diff --check`
+- local commit creation and Ryan-authorized push completed at
+  `74aadd7 Refresh diagnostic runtime trace support`
+
+Released five-file unit:
+
+- `src/context_ir/semantic_diagnostics.py`
+- `src/context_ir/semantic_optimizer.py`
+- `tests/test_semantic_diagnostics.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Release-gate status is no-active-gate for `74aadd7`.
+
+Prior released diagnostic runtime observation application:
 
 - `RuntimeObservationApplication` is a frozen internal result envelope in
   `src/context_ir/runtime_observation_admission.py`
@@ -100,25 +138,9 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
-- Post-`95f7545` runtime-applied recompile consumption spike is accepted
-  first-pass. The spike found a narrow stale-trace routing issue: after
-  `RuntimeObservationApplication` attaches runtime-backed provenance to an
-  updated `SemanticProgram`, `diagnose_semantic_miss(previous_result,
-  evidence, updated_program)` still derives runtime-support status from
-  `previous_result` trace summaries.
-- Diagnostic trace-refresh implementation is accepted first-pass in
-  workspace-only state.
-- Route next to a combined read-only release gate over the exact five-file
-  diagnostic trace-refresh release unit:
-  - `src/context_ir/semantic_diagnostics.py`
-  - `src/context_ir/semantic_optimizer.py`
-  - `tests/test_semantic_diagnostics.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- The release gate must run release-unit audit, full regression, and
-  commit-gating in order, stopping on the first finding. It must not edit
-  files, stage, commit, push, or rewrite continuity.
-- Do not route `95f7545`, `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`,
+- Route next to bounded post-`74aadd7` North Star planning/control to choose
+  the next smallest meaningful capability slice
+- Do not route `74aadd7`, `95f7545`, `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`,
   `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`,
   `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back
   to docs review, release-unit audit, focused validation, full regression,
@@ -1722,23 +1744,21 @@ sequencing for `c1a12d7` absent new findings.
   first-pass
 - [x] Diagnostic trace-refresh implementation slice accepted first-pass in
   workspace-only state
-- [ ] Combined release gate for the exact five-file diagnostic trace-refresh
+- [x] Combined release gate for the exact five-file diagnostic trace-refresh
   release unit
+- [x] Local commit creation and Ryan-authorized push for the diagnostic
+  trace-refresh release unit
 
 ## What Is In Progress
 
-- Diagnostic trace-refresh implementation is accepted first-pass in
-  workspace-only state.
-- Combined read-only release gate is the next route for the exact five-file
-  diagnostic trace-refresh release unit:
+- No release gate is active for the pushed diagnostic trace-refresh tranche.
+- The diagnostic trace-refresh tranche is completed and pushed at `74aadd7`:
   - `src/context_ir/semantic_diagnostics.py`
   - `src/context_ir/semantic_optimizer.py`
   - `tests/test_semantic_diagnostics.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- The diagnostic trace-refresh tranche is not release-unit-audit-cleared, not
-  full-regression-cleared, not commit-gating-cleared, not staged, not locally
-  committed, and not pushed.
+- Release-gate status is no-active-gate for `74aadd7`.
 - No release gate is active for the pushed diagnostic runtime observation
   application tranche.
 - The diagnostic runtime observation application tranche is completed and
@@ -2540,21 +2560,14 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate for the exact five-file
-diagnostic trace-refresh release unit. The gate must run release-unit audit,
-then full regression, then commit-gating, and must stop on the first finding.
-It must not edit files, stage, commit, push, or rewrite continuity.
+Immediate next route: bounded post-`74aadd7` North Star planning/control to
+choose the next smallest meaningful capability slice. No implementation slice
+is authorized until control selects and routes one under the normal quality
+gate.
 
-The accepted diagnostic trace-refresh slice makes
-`diagnose_semantic_miss(previous_result, evidence, current_program)` classify
-runtime support from the supplied current `SemanticProgram` while preserving
-`previous_result` as the source for prior selection depth/status. It verifies
-the post-application path: compile before observation, apply an admitted
-observation to get `updated_program`, then diagnose/recompile with
-`updated_program`. Accepted behavior includes attached-runtime boundary
-classification, no duplicate planned runtime request for already satisfied
-boundaries, updated-program compile trace support when selected, and no input
-mutation.
+The diagnostic trace-refresh tranche is pushed at
+`74aadd7 Refresh diagnostic runtime trace support` and has release-gate status
+no-active-gate. It should not be reopened absent new findings.
 
 The diagnostic runtime observation application tranche is pushed at
 `95f7545 Apply diagnostic runtime observations` and has release-gate status
