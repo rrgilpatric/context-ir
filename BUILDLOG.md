@@ -2,6 +2,119 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Observation Admission Compatibility Validation Review
+
+- Reviewed the returned implementation slice for validating runtime observation
+  compatibility before admission.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `69e7ced Sync diagnostic observation admission routing`
+  - nothing staged
+  - no untracked files
+  - dirty files were exactly:
+    - `BUILDLOG.md`
+    - `PLAN.md`
+    - `src/context_ir/runtime_observation_admission.py`
+    - `tests/test_runtime_observation_admission.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - plan-level admission now rejects same-source-site observations whose typed
+    runtime observation class does not match the planned request family/form
+  - compatibility mapping remains internal and deterministic
+  - accepted current mappings are:
+    - `dynamic_import:*` -> `DynamicImportRuntimeObservation`
+    - `reflective_builtin:hasattr/2` -> `HasattrRuntimeObservation`
+    - `reflective_builtin:getattr/2` and `reflective_builtin:getattr/3` ->
+      `GetattrRuntimeObservation`
+    - `reflective_builtin:vars/0` and `reflective_builtin:vars/1` ->
+      `VarsRuntimeObservation`
+    - `reflective_builtin:dir/0` and `reflective_builtin:dir/1` ->
+      `DirRuntimeObservation`
+    - `runtime_mutation:globals/0` -> `GlobalsRuntimeObservation`
+    - `runtime_mutation:locals/0` -> `LocalsRuntimeObservation`
+    - `runtime_mutation:setattr/3` -> `SetattrRuntimeObservation`
+    - `runtime_mutation:delattr/2` -> `DelattrRuntimeObservation`
+    - `exec_or_eval:exec/1` -> `ExecRuntimeObservation`
+    - `exec_or_eval:eval/1` -> `EvalRuntimeObservation`
+    - `metaclass_behavior:keyword` -> `MetaclassBehaviorRuntimeObservation`
+  - unknown non-wildcard mapped forms reject instead of falling through by
+    family alone
+  - source-site admission, duplicate/unmatched observation rejection,
+    deterministic plan order, plan IDs, request IDs, request object identity,
+    observation object identity, diagnostic bridge behavior, empty-plan
+    behavior, missing-plan rejection, and no-mutation guarantees are preserved
+  - no runtime probe request or plan rederivation from a program, probe
+    execution, execution-result contract, runtime provenance attachment,
+    analyzer/tool-facade behavior, package-root API, MCP, eval, schema,
+    scoring, optimizer, compiler, winner-selection, product, public benchmark,
+    or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
+    reporting `86 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_admission.py`,
+    `tests/test_runtime_observation_admission.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-04 -- Post-8706f2e Admission Compatibility Routing
+
+- Reviewed the next move after the completed and pushed
+  `8706f2e Add diagnostic runtime observation admission bridge` release and
+  `69e7ced Sync diagnostic observation admission routing` continuity sync.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `69e7ced Sync diagnostic observation admission routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+- Ryan authorized proceeding to the next bounded North Star step.
+- Authorized next implementation slice:
+  - add runtime observation admission compatibility validation in
+    `src/context_ir/runtime_observation_admission.py`
+  - reject an admission when the typed runtime observation does not match the
+    planned request family/form
+  - preserve source-site admission, deterministic plan order, plan IDs,
+    request IDs, request object identity, observation object identity,
+    diagnostic bridge behavior, empty-plan behavior, missing-plan rejection,
+    unmatched observation rejection, duplicate observation rejection, and
+    no-mutation guarantees
+- Scope guard:
+  - no runtime probe request or plan rederivation from a program
+  - no probe execution, execution-result contract, runtime provenance
+    attachment, analyzer/tool-facade behavior, package-root API, MCP, eval,
+    schema, scoring, optimizer, compiler, winner-selection, product, public
+    benchmark, or public-claim change is authorized
+- Alternatives considered:
+  - direct attachment of admitted observations to runtime-backed provenance
+  - analyzer/tool-facade wiring for admitted observations
+  - execution-result or replay-artifact contract work
+  - family partitioning without validation
+- Reasoning:
+  - the diagnostic admission bridge now proves only that observations match
+    planned source sites
+  - before any safe attachment bridge, admission must also reject same-site
+    observations whose runtime observation type is incompatible with the
+    planned request family/form
+  - this is smaller and safer than provenance attachment because it remains an
+    internal read-model contract with no execution or program mutation
+- Acceptance status: first-pass
+
 ## 2026-05-04 -- 8706f2e Diagnostic Observation Admission Release Sync
 
 - Synced post-push continuity for

@@ -23,8 +23,103 @@ from context_ir.semantic_types import (
     SemanticDiagnosticResult,
     SemanticDiagnosticUnitStatus,
     SemanticProgram,
+    SemanticSubjectKind,
     SourceSite,
     SourceSpan,
+    UnresolvedReasonCode,
+)
+
+_RUNTIME_OBSERVATION_COMPATIBILITY_CASES = (
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        "dynamic_import:any_supported_form/9",
+        runtime_acquisition.DynamicImportRuntimeObservation,
+        runtime_acquisition.ExecRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        "reflective_builtin:hasattr/2",
+        runtime_acquisition.HasattrRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        "reflective_builtin:getattr/2",
+        runtime_acquisition.GetattrRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        "reflective_builtin:getattr/3",
+        runtime_acquisition.GetattrRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        "reflective_builtin:vars/0",
+        runtime_acquisition.VarsRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        "reflective_builtin:vars/1",
+        runtime_acquisition.VarsRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        "reflective_builtin:dir/0",
+        runtime_acquisition.DirRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        "reflective_builtin:dir/1",
+        runtime_acquisition.DirRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        "runtime_mutation:globals/0",
+        runtime_acquisition.GlobalsRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        "runtime_mutation:locals/0",
+        runtime_acquisition.LocalsRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        "runtime_mutation:setattr/3",
+        runtime_acquisition.SetattrRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        "runtime_mutation:delattr/2",
+        runtime_acquisition.DelattrRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+        "exec_or_eval:exec/1",
+        runtime_acquisition.ExecRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+        "exec_or_eval:eval/1",
+        runtime_acquisition.EvalRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR,
+        "metaclass_behavior:keyword",
+        runtime_acquisition.MetaclassBehaviorRuntimeObservation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    ),
 )
 
 
@@ -176,6 +271,76 @@ def _exec_observation(site: SourceSite) -> runtime_acquisition.ExecRuntimeObserv
     )
 
 
+def _runtime_observation_for_class(
+    site: SourceSite,
+    observation_class: type[runtime_observation_admission.RuntimeObservation],
+    probe_name: str,
+) -> runtime_observation_admission.RuntimeObservation:
+    """Create one typed runtime observation for compatibility-matrix tests."""
+    return observation_class(
+        site=site,
+        probe_identifier=f"probe:{probe_name}",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector=f"call:main.run:{probe_name}",
+    )
+
+
+def _source_site_for_form(form_label: str) -> SourceSite:
+    """Return a stable synthetic source site for one planned request form."""
+    site_fragment = form_label.replace(":", "_").replace("/", "_")
+    return SourceSite(
+        site_id=f"site:{site_fragment}",
+        file_path="main.py",
+        span=SourceSpan(
+            start_line=1,
+            start_column=0,
+            end_line=1,
+            end_column=len(form_label),
+        ),
+        snippet=form_label,
+    )
+
+
+def _reason_code_for_family(
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+) -> UnresolvedReasonCode:
+    """Return the unresolved reason code that corresponds to a request family."""
+    if family_label is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT:
+        return UnresolvedReasonCode.DYNAMIC_IMPORT
+    if family_label is runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN:
+        return UnresolvedReasonCode.REFLECTIVE_BUILTIN
+    if family_label is runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION:
+        return UnresolvedReasonCode.RUNTIME_MUTATION
+    if family_label is runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL:
+        return UnresolvedReasonCode.EXEC_OR_EVAL
+    if family_label is runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR:
+        return UnresolvedReasonCode.METACLASS_BEHAVIOR
+    raise ValueError(f"unsupported runtime probe family: {family_label.value}")
+
+
+def _planned_request_for_form(
+    *,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+    source_site: SourceSite,
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Build one planned request for compatibility-matrix tests."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=f"unsupported:{source_site.site_id}",
+        source_site=source_site,
+        reason_code=_reason_code_for_family(family_label),
+        boundary_text=form_label,
+        family_label=family_label,
+        form_label=form_label,
+        replay_target_seed="main.run",
+        replay_selector_seed=f"call:main.run:{form_label}",
+    )
+
+
 def _unplanned_site() -> SourceSite:
     """Return a source site that is not present in the test request plan."""
     return SourceSite(
@@ -271,6 +436,96 @@ def test_partial_observations_do_not_require_every_planned_request(
     ]
     assert admissions[0].observation is dynamic_observation
     assert admissions[1].observation is exec_observation
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label", "observation_class", "_wrong_observation_class"),
+    _RUNTIME_OBSERVATION_COMPATIBILITY_CASES,
+)
+def test_matching_observation_type_is_admitted_for_each_request_family_form(
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+    observation_class: type[runtime_observation_admission.RuntimeObservation],
+    _wrong_observation_class: type[runtime_observation_admission.RuntimeObservation],
+) -> None:
+    """Every currently mapped request family/form admits only its typed observation."""
+    source_site = _source_site_for_form(form_label)
+    request = _planned_request_for_form(
+        family_label=family_label,
+        form_label=form_label,
+        source_site=source_site,
+    )
+    plan = runtime_probe_requests.build_runtime_probe_request_plan((request,))
+    observation = _runtime_observation_for_class(
+        source_site,
+        observation_class,
+        form_label,
+    )
+
+    admissions = runtime_observation_admission.admit_runtime_observations_for_plan(
+        plan,
+        (observation,),
+    )
+
+    assert len(admissions) == 1
+    [admission] = admissions
+    assert admission.request is request
+    assert admission.observation is observation
+    assert admission.request_id == request.request_id
+    assert admission.plan_id == plan.plan_id
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label", "_observation_class", "wrong_observation_class"),
+    _RUNTIME_OBSERVATION_COMPATIBILITY_CASES,
+)
+def test_mismatched_observation_type_is_rejected_for_request_family_form(
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+    _observation_class: type[runtime_observation_admission.RuntimeObservation],
+    wrong_observation_class: type[runtime_observation_admission.RuntimeObservation],
+) -> None:
+    """A source-site match is not enough when the observation type is wrong."""
+    source_site = _source_site_for_form(form_label)
+    request = _planned_request_for_form(
+        family_label=family_label,
+        form_label=form_label,
+        source_site=source_site,
+    )
+    plan = runtime_probe_requests.build_runtime_probe_request_plan((request,))
+    observation = _runtime_observation_for_class(
+        source_site,
+        wrong_observation_class,
+        "wrong-type",
+    )
+
+    with pytest.raises(ValueError, match="does not match planned request family/form"):
+        runtime_observation_admission.admit_runtime_observations_for_plan(
+            plan,
+            (observation,),
+        )
+
+
+def test_unmapped_request_form_rejects_observation_even_when_family_matches() -> None:
+    """Unknown planned forms are not admitted through family-level fallback."""
+    source_site = _source_site_for_form("reflective_builtin:getattr/1")
+    request = _planned_request_for_form(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:getattr/1",
+        source_site=source_site,
+    )
+    plan = runtime_probe_requests.build_runtime_probe_request_plan((request,))
+    observation = _runtime_observation_for_class(
+        source_site,
+        runtime_acquisition.GetattrRuntimeObservation,
+        "getattr",
+    )
+
+    with pytest.raises(ValueError, match="does not match planned request family/form"):
+        runtime_observation_admission.admit_runtime_observations_for_plan(
+            plan,
+            (observation,),
+        )
 
 
 def test_empty_plan_and_empty_observations_return_empty_admissions() -> None:
