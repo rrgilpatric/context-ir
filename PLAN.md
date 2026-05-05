@@ -100,8 +100,24 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
-- Route next to bounded post-`95f7545` North Star planning/control to choose
-  the next smallest meaningful capability slice
+- Post-`95f7545` runtime-applied recompile consumption spike is accepted
+  first-pass. The spike found a narrow stale-trace routing issue: after
+  `RuntimeObservationApplication` attaches runtime-backed provenance to an
+  updated `SemanticProgram`, `diagnose_semantic_miss(previous_result,
+  evidence, updated_program)` still derives runtime-support status from
+  `previous_result` trace summaries.
+- Diagnostic trace-refresh implementation is accepted first-pass in
+  workspace-only state.
+- Route next to a combined read-only release gate over the exact five-file
+  diagnostic trace-refresh release unit:
+  - `src/context_ir/semantic_diagnostics.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_diagnostics.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The release gate must run release-unit audit, full regression, and
+  commit-gating in order, stopping on the first finding. It must not edit
+  files, stage, commit, push, or rewrite continuity.
 - Do not route `95f7545`, `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`,
   `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`,
   `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back
@@ -1702,9 +1718,27 @@ sequencing for `c1a12d7` absent new findings.
   observation application tranche
 - [x] Local commit creation and Ryan-authorized push for the diagnostic runtime
   observation application tranche
+- [x] Post-`95f7545` runtime-applied recompile consumption spike accepted
+  first-pass
+- [x] Diagnostic trace-refresh implementation slice accepted first-pass in
+  workspace-only state
+- [ ] Combined release gate for the exact five-file diagnostic trace-refresh
+  release unit
 
 ## What Is In Progress
 
+- Diagnostic trace-refresh implementation is accepted first-pass in
+  workspace-only state.
+- Combined read-only release gate is the next route for the exact five-file
+  diagnostic trace-refresh release unit:
+  - `src/context_ir/semantic_diagnostics.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_diagnostics.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The diagnostic trace-refresh tranche is not release-unit-audit-cleared, not
+  full-regression-cleared, not commit-gating-cleared, not staged, not locally
+  committed, and not pushed.
 - No release gate is active for the pushed diagnostic runtime observation
   application tranche.
 - The diagnostic runtime observation application tranche is completed and
@@ -2506,10 +2540,21 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`95f7545` North Star planning/control to
-choose the next smallest meaningful capability slice. No implementation slice
-is authorized until control selects and routes one under the normal quality
-gate.
+Immediate next route: combined read-only release gate for the exact five-file
+diagnostic trace-refresh release unit. The gate must run release-unit audit,
+then full regression, then commit-gating, and must stop on the first finding.
+It must not edit files, stage, commit, push, or rewrite continuity.
+
+The accepted diagnostic trace-refresh slice makes
+`diagnose_semantic_miss(previous_result, evidence, current_program)` classify
+runtime support from the supplied current `SemanticProgram` while preserving
+`previous_result` as the source for prior selection depth/status. It verifies
+the post-application path: compile before observation, apply an admitted
+observation to get `updated_program`, then diagnose/recompile with
+`updated_program`. Accepted behavior includes attached-runtime boundary
+classification, no duplicate planned runtime request for already satisfied
+boundaries, updated-program compile trace support when selected, and no input
+mutation.
 
 The diagnostic runtime observation application tranche is pushed at
 `95f7545 Apply diagnostic runtime observations` and has release-gate status

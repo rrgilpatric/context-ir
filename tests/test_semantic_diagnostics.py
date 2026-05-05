@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 import context_ir.runtime_acquisition as runtime_acquisition
+import context_ir.runtime_observation_admission as runtime_observation_admission
 import context_ir.runtime_probe_requests as runtime_probe_requests
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
@@ -271,6 +272,90 @@ def _dynamic_import_runtime_observation(
                 value="pkg.dynamic",
             ),
         ),
+    )
+
+
+def _diagnostic_state(
+    diagnostic: SemanticDiagnosticResult,
+) -> tuple[
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[str, ...],
+    str,
+    tuple[SemanticDiagnosticBoundary, ...],
+    tuple[runtime_probe_requests.RuntimeProbeRequest, ...],
+    runtime_probe_requests.RuntimeProbeRequestPlan | None,
+]:
+    """Return immutable diagnostic state relevant to runtime request planning."""
+    return (
+        diagnostic.grounded_unit_ids,
+        diagnostic.omitted_unit_ids,
+        diagnostic.too_shallow_unit_ids,
+        diagnostic.sufficiently_represented_unit_ids,
+        diagnostic.recommended_expansions,
+        diagnostic.reason,
+        diagnostic.boundary_classifications,
+        diagnostic.planned_runtime_probe_requests,
+        diagnostic.planned_runtime_probe_request_plan,
+    )
+
+
+def _request_state(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+) -> tuple[
+    str,
+    SemanticSubjectKind,
+    str,
+    object,
+    str,
+    runtime_probe_requests.RuntimeProbeRequestStatus,
+]:
+    """Return stable runtime request state for purity assertions."""
+    return (
+        request.request_id,
+        request.subject_kind,
+        request.subject_id,
+        request.source_site,
+        request.boundary_text,
+        request.status,
+    )
+
+
+def _plan_state(
+    plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+) -> tuple[
+    tuple[runtime_probe_requests.RuntimeProbeRequest, ...],
+    tuple[str, ...],
+    str,
+]:
+    """Return stable runtime request-plan state for purity assertions."""
+    return (plan.requests, plan.request_ids, plan.plan_id)
+
+
+def _dynamic_import_observation_state(
+    observation: runtime_acquisition.DynamicImportRuntimeObservation,
+) -> tuple[
+    object,
+    str,
+    str,
+    object,
+    tuple[RuntimeAttachmentLink, ...],
+    str,
+    str,
+    tuple[object, ...],
+]:
+    """Return stable dynamic-import observation state for purity assertions."""
+    return (
+        observation.site,
+        observation.probe_identifier,
+        observation.probe_contract_revision,
+        observation.repository_snapshot_basis,
+        observation.attachment_links,
+        observation.replay_target,
+        observation.replay_selector,
+        observation.normalized_payload,
     )
 
 
@@ -538,10 +623,10 @@ def test_diagnose_semantic_miss_distinguishes_omitted_too_shallow_and_sufficient
     )
 
 
-def test_diagnose_semantic_miss_uses_warning_trace_summary_for_omitted_unsupported(
+def test_diagnose_semantic_miss_ignores_stale_prior_warning_runtime_summary(
     tmp_path: Path,
 ) -> None:
-    """Warning trace summaries preserve attached runtime support additively."""
+    """Current program provenance, not stale prior warnings, controls support."""
     _write_unsupported_program(tmp_path)
     program = _semantic_program(tmp_path)
     unsupported_id = _unsupported_id_for(program, "from pkg.helpers import *")
@@ -590,12 +675,14 @@ def test_diagnose_semantic_miss_uses_warning_trace_summary_for_omitted_unsupport
     assert result.omitted_unit_ids == (unsupported_id,)
     assert boundary.status is SemanticDiagnosticUnitStatus.OMITTED
     assert boundary.boundary_kind is (
-        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
     )
     assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
-    assert boundary.has_attached_runtime_provenance is True
-    assert boundary.trace_summary == trace_summary
-    assert "attached runtime-backed provenance were omitted" in result.reason
+    assert boundary.has_attached_runtime_provenance is False
+    assert boundary.trace_summary != trace_summary
+    assert boundary.trace_summary is not None
+    assert boundary.trace_summary.has_attached_runtime_provenance is False
+    assert "without attached runtime-backed support" in result.reason
 
 
 def test_diagnose_semantic_miss_plans_runtime_probe_for_omitted_attachable_unsupported(
@@ -642,6 +729,133 @@ def test_diagnose_semantic_miss_plans_runtime_probe_for_omitted_attachable_unsup
         request.status
         is runtime_probe_requests.RuntimeProbeRequestStatus.PLANNED_NOT_EXECUTED
     )
+
+
+def test_diagnose_and_recompile_use_runtime_applied_current_program(
+    tmp_path: Path,
+) -> None:
+    """Applied runtime provenance satisfies diagnostic probe requests."""
+    _write_dynamic_import_program(tmp_path)
+    original_program = _semantic_program(tmp_path)
+    unsupported_id = _unsupported_id_for(
+        original_program,
+        "importlib.import_module(name)",
+    )
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence="importlib.import_module(name)",
+    )
+    previous_result = compile_semantic_context(
+        original_program,
+        "dynamic import",
+        budget=32,
+    )
+    previous_optimization = previous_result.optimization
+    previous_document = previous_result.document
+    previous_context = previous_result.compile_context
+    original_program_state = (
+        list(original_program.unsupported_constructs),
+        list(original_program.unresolved_frontier),
+        list(original_program.provenance_records),
+        list(original_program.diagnostics),
+    )
+
+    diagnostic = diagnose_semantic_miss(
+        previous_result,
+        miss_evidence,
+        original_program,
+    )
+
+    assert diagnostic.omitted_unit_ids == (unsupported_id,)
+    assert len(diagnostic.planned_runtime_probe_requests) == 1
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    request = diagnostic.planned_runtime_probe_requests[0]
+    observation = _dynamic_import_runtime_observation(request.source_site)
+    diagnostic_before = _diagnostic_state(diagnostic)
+    request_before = _request_state(request)
+    plan_before = _plan_state(plan)
+    observation_before = _dynamic_import_observation_state(observation)
+
+    application = (
+        runtime_observation_admission.apply_runtime_observations_for_diagnostic(
+            original_program,
+            diagnostic,
+            (observation,),
+        )
+    )
+    updated_program = application.updated_program
+    updated_program_state = (
+        list(updated_program.unsupported_constructs),
+        list(updated_program.unresolved_frontier),
+        list(updated_program.provenance_records),
+        list(updated_program.diagnostics),
+    )
+
+    post_diagnostic = diagnose_semantic_miss(
+        previous_result,
+        miss_evidence,
+        updated_program,
+    )
+    boundary = _boundary_for(post_diagnostic, unsupported_id)
+
+    assert boundary.status is SemanticDiagnosticUnitStatus.OMITTED
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert boundary.has_attached_runtime_provenance is True
+    assert boundary.trace_summary is not None
+    assert boundary.trace_summary.has_attached_runtime_provenance is True
+    assert post_diagnostic.planned_runtime_probe_requests == ()
+    assert post_diagnostic.planned_runtime_probe_request_plan == (
+        runtime_probe_requests.build_runtime_probe_request_plan(())
+    )
+
+    recompile_result = recompile_semantic_context(
+        previous_result,
+        miss_evidence,
+        delta_budget=160,
+        program=updated_program,
+    )
+    recompile_boundary = _boundary_for(recompile_result.diagnostic, unsupported_id)
+    selected_trace = next(
+        selection.trace_summary
+        for selection in recompile_result.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
+
+    assert recompile_boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert recompile_boundary.has_attached_runtime_provenance is True
+    assert recompile_result.diagnostic.planned_runtime_probe_requests == ()
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
+    assert selected_trace.attached_runtime_provenance_record_ids == tuple(
+        record.record_id for record in updated_program.provenance_records
+    )
+    assert unsupported_id in recompile_result.newly_selected_unit_ids
+    assert (
+        list(original_program.unsupported_constructs),
+        list(original_program.unresolved_frontier),
+        list(original_program.provenance_records),
+        list(original_program.diagnostics),
+    ) == original_program_state
+    assert (
+        list(updated_program.unsupported_constructs),
+        list(updated_program.unresolved_frontier),
+        list(updated_program.provenance_records),
+        list(updated_program.diagnostics),
+    ) == updated_program_state
+    assert previous_result.optimization == previous_optimization
+    assert previous_result.document == previous_document
+    assert previous_result.compile_context == previous_context
+    assert _diagnostic_state(diagnostic) == diagnostic_before
+    assert _request_state(request) == request_before
+    assert _plan_state(plan) == plan_before
+    assert _dynamic_import_observation_state(observation) == observation_before
 
 
 def test_semantic_diagnostic_result_rejects_mismatched_runtime_probe_plan(

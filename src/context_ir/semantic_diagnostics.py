@@ -11,6 +11,7 @@ from context_ir.runtime_probe_requests import (
     derive_diagnostic_runtime_probe_request_plan,
 )
 from context_ir.semantic_compiler import compile_semantic_context
+from context_ir.semantic_optimizer import _trace_summaries_by_subject
 from context_ir.semantic_renderer import RenderDetail
 from context_ir.semantic_scorer import (
     SemanticScoringResult,
@@ -19,6 +20,7 @@ from context_ir.semantic_scorer import (
 )
 from context_ir.semantic_types import (
     CapabilityTier,
+    DownstreamVisibility,
     ResolvedSymbol,
     SemanticCompileResult,
     SemanticDiagnosticBoundary,
@@ -27,10 +29,9 @@ from context_ir.semantic_types import (
     SemanticDiagnosticUnitStatus,
     SemanticMissEvidence,
     SemanticMissKind,
-    SemanticOptimizationWarning,
     SemanticProgram,
     SemanticRecompileResult,
-    SemanticSelectionRecord,
+    SemanticSubjectKind,
     SemanticUnitTraceSummary,
     UnresolvedAccess,
     UnsupportedConstruct,
@@ -62,6 +63,13 @@ class _UnitCategory(Enum):
     PROVEN_SYMBOL = "proven_symbol"
     UNRESOLVED_FRONTIER = "unresolved_frontier"
     UNSUPPORTED_CONSTRUCT = "unsupported_construct"
+
+
+_SUBJECT_KIND_BY_UNIT_CATEGORY: dict[_UnitCategory, SemanticSubjectKind] = {
+    _UnitCategory.PROVEN_SYMBOL: SemanticSubjectKind.SYMBOL,
+    _UnitCategory.UNRESOLVED_FRONTIER: SemanticSubjectKind.FRONTIER_ITEM,
+    _UnitCategory.UNSUPPORTED_CONSTRUCT: SemanticSubjectKind.UNSUPPORTED_FINDING,
+}
 
 
 @dataclass(frozen=True)
@@ -104,13 +112,16 @@ def diagnose_semantic_miss(
         selection.unit_id: selection.detail
         for selection in previous_result.optimization.selections
     }
-    trace_summary_by_unit_id = _trace_summary_by_unit_id(previous_result)
+    current_trace_summary_by_unit_id = _current_trace_summary_by_unit_id(
+        program=program,
+        unit_records=unit_records,
+    )
     boundary_classifications = tuple(
         _diagnostic_boundary(
             unit_id=unit_id,
             previous_detail=previous_detail_by_unit_id.get(unit_id),
             unit_record=unit_records[unit_id],
-            trace_summary=trace_summary_by_unit_id.get(unit_id),
+            trace_summary=current_trace_summary_by_unit_id.get(unit_id),
         )
         for unit_id in grounded_unit_ids
     )
@@ -416,38 +427,24 @@ def _is_absolute_path(normalized_path: str) -> bool:
     )
 
 
-def _trace_summary_by_unit_id(
-    previous_result: SemanticCompileResult,
+def _current_trace_summary_by_unit_id(
+    *,
+    program: SemanticProgram,
+    unit_records: dict[str, _UnitRecord],
 ) -> dict[str, SemanticUnitTraceSummary]:
-    """Return the best available trace summary for each prior unit."""
-    summaries: dict[str, SemanticUnitTraceSummary] = {}
-    summaries.update(_warning_trace_summaries(previous_result.optimization.warnings))
-    summaries.update(
-        _selection_trace_summaries(previous_result.optimization.selections)
+    """Return diagnose-visible trace summaries from current program provenance."""
+    trace_summaries_by_subject = _trace_summaries_by_subject(
+        program,
+        downstream_visibility=DownstreamVisibility.DIAGNOSE,
     )
+    summaries: dict[str, SemanticUnitTraceSummary] = {}
+    for unit_id, unit_record in unit_records.items():
+        subject_kind = _SUBJECT_KIND_BY_UNIT_CATEGORY[unit_record.category]
+        trace_summary = trace_summaries_by_subject.get((subject_kind, unit_id))
+        if trace_summary is None:
+            continue
+        summaries[unit_id] = trace_summary
     return summaries
-
-
-def _selection_trace_summaries(
-    selections: tuple[SemanticSelectionRecord, ...],
-) -> dict[str, SemanticUnitTraceSummary]:
-    """Index selection trace summaries by unit ID."""
-    return {
-        selection.unit_id: selection.trace_summary
-        for selection in selections
-        if selection.trace_summary is not None
-    }
-
-
-def _warning_trace_summaries(
-    warnings: tuple[SemanticOptimizationWarning, ...],
-) -> dict[str, SemanticUnitTraceSummary]:
-    """Index warning trace summaries by unit ID."""
-    return {
-        warning.unit_id: warning.trace_summary
-        for warning in warnings
-        if warning.unit_id is not None and warning.trace_summary is not None
-    }
 
 
 def _diagnostic_boundary(

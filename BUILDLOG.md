@@ -2,6 +2,104 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Diagnostic Trace Refresh Review
+
+- Reviewed the returned implementation slice for refreshing diagnostic trace
+  classification from the supplied current `SemanticProgram`.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `1603463 Sync diagnostic runtime observation routing`
+  - nothing staged
+  - no untracked files
+  - dirty files were exactly:
+    - `BUILDLOG.md`
+    - `PLAN.md`
+    - `src/context_ir/semantic_diagnostics.py`
+    - `src/context_ir/semantic_optimizer.py`
+    - `tests/test_semantic_diagnostics.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - diagnostics now build runtime-support classifications from the supplied
+    current `SemanticProgram` using diagnose-visible provenance
+  - `previous_result` remains the source of prior selected detail, preserving
+    prior depth/status semantics
+  - runtime-backed support remains additive: unsupported and frontier
+    boundaries keep their primary non-proof tiers
+  - stale prior warning or selection trace summaries no longer make
+    post-application diagnostics deny or fabricate current runtime support
+  - already satisfied diagnostic runtime requests are not planned again
+  - recompile with an updated program compiles that updated program and carries
+    attached runtime support in selected trace summaries when selected
+  - no probe execution, execution-result contract, runtime observation
+    collection, analyzer/tool-facade behavior, package-root API, MCP, eval,
+    schema, scoring policy, compiler contract, winner-selection, product,
+    public benchmark, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_diagnostics.py src/context_ir/semantic_optimizer.py tests/test_semantic_diagnostics.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_diagnostics.py src/context_ir/semantic_optimizer.py tests/test_semantic_diagnostics.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_semantic_diagnostics.py tests/test_runtime_observation_admission.py tests/test_runtime_probe_requests.py -v`
+    reporting `101 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact five-file
+    unit: `src/context_ir/semantic_diagnostics.py`,
+    `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_diagnostics.py`, `PLAN.md`, and `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-05 -- Post-95f7545 Diagnostic Trace Refresh Routing
+
+- Reviewed the read-only post-`95f7545` runtime-applied recompile consumption
+  spike.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `1603463 Sync diagnostic runtime observation routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted finding:
+  - `apply_runtime_observations_for_diagnostic(...)` correctly admits
+    observations, attaches runtime-backed provenance, and returns an updated
+    program without refreshing the diagnostic
+  - `diagnose_semantic_miss(previous_result, evidence, updated_program)`
+    grounds against the supplied program but derives runtime-support status
+    from `previous_result` trace summaries
+  - if the previous compile happened before runtime provenance was attached,
+    diagnostics can incorrectly remain at a missing-runtime boundary and plan
+    the same runtime request again
+  - `recompile_semantic_context(...)` compiles the supplied program, but its
+    returned diagnostic and boost policy can still be stale because diagnosis
+    happens from old trace summaries before compile
+- Routing decision:
+  - accept the spike first-pass
+  - route next to a bounded diagnostic trace-refresh implementation slice
+  - make diagnose/recompile classify attached runtime support from the
+    supplied current `SemanticProgram`
+  - preserve `previous_result` as the source of prior selection depth/status
+  - do not route to analyzer/tool-facade/API/MCP/package-root exports, probe
+    execution, execution-result contracts, observation collection, eval,
+    schema, scoring policy, compiler contract, winner-selection, product, or
+    public-claim work
+- Alternatives rejected:
+  - direct composition of application and recompile as-is, because it can
+    misreport boundaries and duplicate planned requests
+  - a new result envelope before trace refresh, because it widens contract
+    surface without fixing the stale trace source
+  - holding, because the issue is concrete and narrow
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- 95f7545 Diagnostic Runtime Observation Application Release Sync
 
 - Synced post-push continuity for

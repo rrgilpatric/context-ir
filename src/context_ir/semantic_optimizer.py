@@ -334,13 +334,15 @@ def _build_candidates(
 
 def _trace_summaries_by_subject(
     program: SemanticProgram,
+    *,
+    downstream_visibility: DownstreamVisibility = DownstreamVisibility.COMPILE,
 ) -> dict[tuple[SemanticSubjectKind, str], SemanticUnitTraceSummary]:
-    """Build deterministic compile-visible trace summaries for renderable units."""
+    """Build deterministic trace summaries for one downstream visibility surface."""
     records_by_subject: dict[
         tuple[SemanticSubjectKind, str], list[SemanticProvenanceRecord]
     ] = {}
     for record in program.provenance_records:
-        if DownstreamVisibility.COMPILE not in record.downstream_visibility:
+        if downstream_visibility not in record.downstream_visibility:
             continue
         records_by_subject.setdefault(
             (record.subject_kind, record.subject_id), []
