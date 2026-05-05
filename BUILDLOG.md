@@ -2,6 +2,114 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Observation Recompile Composition Review
+
+- Reviewed the returned implementation slice for composing diagnostic-gated
+  runtime observation application with refreshed semantic recompile.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ce58176 Sync diagnostic trace refresh routing`
+  - nothing staged
+  - pre-existing dirty control files were `PLAN.md` and `BUILDLOG.md`
+  - implementation files were untracked:
+    - `src/context_ir/runtime_observation_recompile.py`
+    - `tests/test_runtime_observation_recompile.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `RuntimeObservationRecompileApplication` is a frozen internal result
+    envelope in `src/context_ir/runtime_observation_recompile.py`
+  - `apply_runtime_observations_for_diagnostic_and_recompile(...)` composes
+    `apply_runtime_observations_for_diagnostic(...)` with
+    `recompile_semantic_context(...)`
+  - the helper applies observations through the existing diagnostic-gated
+    admission/application path, then recompiles with
+    `application.updated_program`
+  - optional `embed_fn` is forwarded to semantic recompile
+  - the returned envelope carries both the runtime observation application and
+    the semantic recompile result
+  - successful runtime observation satisfaction does not re-plan the already
+    satisfied diagnostic runtime request
+  - empty observations preserve existing empty-application behavior and
+    recompile the original program
+  - missing diagnostic plans, unmatched observation sites, duplicate
+    observation sites, family/form mismatches, negative budget deltas, and
+    missing prior compile context reject through existing gates
+  - input `SemanticProgram`, previous compile result, diagnostic, plan,
+    request, and observations are not mutated
+  - the new helper is exported only from module-local `__all__`; no
+    package-root, analyzer, tool-facade, or MCP surface is widened
+  - no probe execution, execution-result contract, runtime observation
+    collection, eval, schema, scoring policy, compiler contract, optimizer,
+    winner-selection, product, public benchmark, or public-claim surface
+    changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_observation_admission.py tests/test_semantic_diagnostics.py -v`
+    reporting `87 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_recompile.py`,
+    `tests/test_runtime_observation_recompile.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-05 -- Post-74aadd7 Runtime Observation Recompile Composition Routing
+
+- Reviewed the next move after the completed and pushed
+  `74aadd7 Refresh diagnostic runtime trace support` release and
+  `ce58176 Sync diagnostic trace refresh routing` continuity sync.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ce58176 Sync diagnostic trace refresh routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Ryan authorized proceeding to the next bounded North Star step.
+- Selected next implementation slice:
+  - add an internal module-local runtime observation recompile composition
+    helper
+  - compose `apply_runtime_observations_for_diagnostic(...)` with
+    `recompile_semantic_context(...)`
+  - return a frozen result envelope containing the runtime observation
+    application and the semantic recompile result
+  - require an existing diagnostic request plan through the released
+    diagnostic runtime observation application path
+  - recompile using `application.updated_program`, relying on the pushed
+    diagnostic trace refresh for honest runtime-support classification
+  - preserve plan order, request IDs, admission identity, recompile change
+    accounting, and input purity
+- Scope guard:
+  - no probe execution
+  - no execution-result contract
+  - no runtime observation collection
+  - no analyzer/tool-facade behavior change
+  - no package-root API or MCP exposure
+  - no eval, schema, scoring policy, compiler contract, optimizer,
+    winner-selection, product, public benchmark, or public-claim widening
+- Alternatives considered:
+  - wiring the flow into analyzer, tool facade, or MCP now; rejected as too
+    broad because those surfaces are still explicit holds
+  - defining execution-result/replay-artifact contracts now; rejected because
+    the next need is controlled consumption of already-collected typed
+    observations
+  - adding only another read model; rejected because admission, application,
+    and trace refresh already make the composition mechanically testable
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- 74aadd7 Diagnostic Trace Refresh Release Sync
 
 - Synced post-push continuity for

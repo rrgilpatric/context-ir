@@ -138,8 +138,20 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
-- Route next to bounded post-`74aadd7` North Star planning/control to choose
-  the next smallest meaningful capability slice
+- Post-`74aadd7` North Star planning/control selected the internal
+  runtime-observation recompile composition helper as the next smallest
+  meaningful capability slice.
+- Runtime observation recompile composition helper implementation is accepted
+  first-pass in workspace-only state.
+- Route next to a combined read-only release gate over the exact four-file
+  runtime observation recompile composition release unit:
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The release gate must run release-unit audit, full regression, and
+  commit-gating in order, stopping on the first finding. It must not edit
+  files, stage, commit, push, or rewrite continuity.
 - Do not route `74aadd7`, `95f7545`, `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`,
   `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`,
   `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back
@@ -1748,9 +1760,26 @@ sequencing for `c1a12d7` absent new findings.
   release unit
 - [x] Local commit creation and Ryan-authorized push for the diagnostic
   trace-refresh release unit
+- [x] Post-`74aadd7` North Star planning/control selected the internal runtime
+  observation recompile composition helper
+- [x] Runtime observation recompile composition helper implementation slice
+  accepted first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file runtime observation
+  recompile composition release unit
 
 ## What Is In Progress
 
+- Runtime observation recompile composition helper implementation is accepted
+  first-pass in workspace-only state.
+- Combined read-only release gate is the next route for the exact four-file
+  runtime observation recompile composition release unit:
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The runtime observation recompile composition tranche is not
+  release-unit-audit-cleared, not full-regression-cleared, not
+  commit-gating-cleared, not staged, not locally committed, and not pushed.
 - No release gate is active for the pushed diagnostic trace-refresh tranche.
 - The diagnostic trace-refresh tranche is completed and pushed at `74aadd7`:
   - `src/context_ir/semantic_diagnostics.py`
@@ -2560,10 +2589,20 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`74aadd7` North Star planning/control to
-choose the next smallest meaningful capability slice. No implementation slice
-is authorized until control selects and routes one under the normal quality
-gate.
+Immediate next route: combined read-only release gate for the exact four-file
+runtime observation recompile composition release unit. The gate must run
+release-unit audit, then full regression, then commit-gating, and must stop on
+the first finding. It must not edit files, stage, commit, push, or rewrite
+continuity.
+
+The accepted runtime observation recompile composition slice adds an internal
+module-local helper that composes already-admitted runtime observation
+application with refreshed semantic recompile and returns a frozen result
+envelope containing both outputs. It requires a diagnostic with an attached
+planned runtime probe request plan through the existing application path,
+admits and attaches observations through existing helpers, recompiles using
+`application.updated_program`, preserves input purity, and avoids duplicate
+runtime request planning when observations satisfy the boundary.
 
 The diagnostic trace-refresh tranche is pushed at
 `74aadd7 Refresh diagnostic runtime trace support` and has release-gate status
