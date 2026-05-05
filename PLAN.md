@@ -41,17 +41,61 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`8ac3b46 Add typed runtime recompile facade`. It supersedes the workspace-only
-typed facade runtime recompile release-gate route for active control routing
-only. Live git refs and worktree state must still be verified from git during
-control intake.
+`eb6def0 Add runtime probe result contracts`. It supersedes the
+workspace-only runtime probe execution-result/replay-artifact contract
+release-gate route for active control routing only. Live git refs and
+worktree state must still be verified from git during control intake.
 
 Repo-backed release truth verified during post-push continuity sync: branch
 `main`, `HEAD` and `origin/main` at
-`8ac3b46 Add typed runtime recompile facade`, clean worktree at intake
-before this docs-only continuity edit, nothing staged, and no untracked files.
+`eb6def0 Add runtime probe result contracts`, clean worktree at intake before
+this docs-only continuity edit, nothing staged, and no untracked files.
 
-Released typed facade runtime recompile:
+Released runtime probe execution-result/replay-artifact contract:
+
+- `RuntimeProbeReplayField` provides typed replay and payload fields without
+  `Any`
+- `RuntimeProbeReplayArtifact` records stable probe identity, probe contract
+  revision, repository snapshot basis, replay target/selector, replay inputs,
+  and runtime assumptions
+- `RuntimeProbeObservedResult` preserves `plan_id`, `request_id`, and carried
+  `RuntimeProbeRequest` identity, validates request-ID drift, requires replay
+  inputs/runtime assumptions, and requires normalized payload or durable
+  artifact reference
+- `RuntimeProbeNonProofResult` represents crash, timeout, missing-environment,
+  and setup-failure outcomes without making them admissible runtime-backed
+  proof
+- `RuntimeProbeResultBatch` keeps ordered mixed proof and non-proof outcomes
+  under one plan ID and rejects plan drift or duplicate request IDs
+- the new contract is frozen and exported only from module-local
+  `context_ir.runtime_probe_results.__all__`
+- no probe execution, `RuntimeObservation` conversion, provenance attachment,
+  `SemanticProgram` mutation, `tool_facade.py`, `mcp_server.py`,
+  `context_ir/__init__.py`, eval, JSON schema, public claims, package-root,
+  MCP, or public/API surface changed
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting
+    `111 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `833 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, and clean `git diff --check`
+- local commit creation and Ryan-authorized push completed at
+  `eb6def0 Add runtime probe result contracts`
+
+Released four-file unit:
+
+- `src/context_ir/runtime_probe_results.py`
+- `tests/test_runtime_probe_results.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Release-gate status is no-active-gate for `eb6def0`.
+
+Prior released typed facade runtime recompile:
+
 
 - `SemanticRuntimeObservationRecompileRequest` and
   `SemanticRuntimeObservationRecompileResponse` provide a frozen typed
@@ -227,36 +271,21 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
+- Runtime probe execution-result/replay-artifact contract is pushed at
+  `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
 - Post-`8ac3b46` execution-boundary spike is accepted first-pass.
-- Runtime probe execution-result/replay-artifact contract implementation is
-  accepted first-pass in workspace-only state.
-- Accepted workspace files are `src/context_ir/runtime_probe_results.py` and
-  `tests/test_runtime_probe_results.py`, plus control continuity in `PLAN.md`
-  and `BUILDLOG.md`.
-- The accepted slice added frozen module-local records for runtime probe
-  replay fields, replay artifacts, observed proof-bearing results, non-proof
-  failure results, and ordered result batches.
-- Observed outcomes preserve `RuntimeProbeRequest.request_id` and plan IDs,
-  require stable probe identity, probe contract revision, repository snapshot
-  basis, replay target/selector, replay inputs, runtime assumptions, and
-  normalized payload or durable artifact reference.
-- Non-proof outcomes such as crash, timeout, missing environment, and setup
-  failure are representable without becoming admissible runtime-backed proof.
-- The accepted slice did not execute probes, convert to typed
-  `RuntimeObservation`, attach provenance, mutate `SemanticProgram`, edit
-  `tool_facade.py`, `mcp_server.py`, or `context_ir/__init__.py`, or widen eval,
-  JSON schema, public claims, package-root, MCP, or public/API surfaces.
-- Route next to a combined read-only release gate over the exact four-file
-  runtime probe result contract release unit. The gate must run release-unit
-  audit, full regression, and commit-gating in order, stopping on the first
-  finding. Do not route another implementation slice before this gate returns.
-- Do not route `8ac3b46`, `b279b00`, `74aadd7`, `95f7545`, `35c440d`,
-  `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`,
-  `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`,
-  `2e448ea`, `f6c66e4`, or `546a4da` back to docs review, release-unit
-  audit, focused validation, full regression, commit-gating, staging, local
-  commit creation, or push absent new findings
+- Next active route is held pending Ryan authorization for a bounded
+  post-`eb6def0` planning/control lane to choose the next smallest safe
+  runtime-acquisition-loop step.
+- No new implementation, staging, local commit, or push is authorized while
+  that hold is active.
+- Do not route `eb6def0`, `8ac3b46`, `b279b00`, `74aadd7`, `95f7545`,
+  `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
+  `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
+  `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs review,
+  release-unit audit, focused validation, full regression, commit-gating,
+  staging, local commit creation, or push absent new findings
 - Push remains Ryan-gated for any future release
 
 Released planned runtime probe request plan source-site indexing:
@@ -1880,11 +1909,25 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Post-`8ac3b46` execution-boundary spike accepted first-pass
 - [x] Runtime probe execution-result/replay-artifact contract slice accepted
   first-pass in workspace-only state
-- [ ] Combined release gate for the exact four-file runtime probe result
+- [x] Combined release gate for the exact four-file runtime probe result
   contract release unit
+- [x] Local commit creation and Ryan-authorized push for the runtime probe
+  result contract release unit
 
 ## What Is In Progress
 
+- Runtime probe execution-result/replay-artifact contract is completed and
+  pushed at `eb6def0`:
+  - `src/context_ir/runtime_probe_results.py`
+  - `tests/test_runtime_probe_results.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release-gate status is no-active-gate for `eb6def0`.
+- Next active route is held pending Ryan authorization for a bounded
+  post-`eb6def0` planning/control lane to choose the next smallest safe
+  runtime-acquisition-loop step.
+- No new implementation, staging, local commit, or push is authorized while
+  that hold is active.
 - Typed facade runtime observation recompile is completed and pushed at
   `8ac3b46`:
   - `src/context_ir/tool_facade.py`
@@ -1892,17 +1935,6 @@ sequencing for `c1a12d7` absent new findings.
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `8ac3b46`.
-- Runtime probe execution-result/replay-artifact contract implementation is
-  accepted first-pass in workspace-only state.
-- Proposed release unit:
-  - `src/context_ir/runtime_probe_results.py`
-  - `tests/test_runtime_probe_results.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- Next active gate is a combined read-only release gate over that exact
-  four-file unit. No staging, local commit, push, or next implementation slice
-  is authorized before the gate returns clean or a findings-based correction is
-  accepted.
 - No release gate is active for the pushed runtime observation recompile
   composition tranche.
 - The runtime observation recompile composition tranche is completed and
@@ -2721,19 +2753,17 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate for the exact four-file
-runtime probe execution-result/replay-artifact contract release unit:
+Immediate next route: hold for Ryan authorization to open a bounded
+post-`eb6def0` planning/control lane.
 
-- `src/context_ir/runtime_probe_results.py`
-- `tests/test_runtime_probe_results.py`
-- `PLAN.md`
-- `BUILDLOG.md`
+The planning lane should choose the next smallest safe
+runtime-acquisition-loop step after the pushed runtime probe result contract.
+No new implementation, staging, local commit, or push is authorized while this
+hold is active.
 
-The gate must run release-unit audit, then full regression, then
-commit-gating, stopping on the first finding. It must not edit files, stage,
-commit, push, or rewrite continuity. No new implementation slice is authorized
-before this release gate returns clean or a findings-based correction is
-accepted.
+The runtime probe execution-result/replay-artifact contract tranche is pushed
+at `eb6def0 Add runtime probe result contracts` and has release-gate status
+no-active-gate. It should not be reopened absent new findings.
 
 The typed facade runtime recompile tranche is pushed at
 `8ac3b46 Add typed runtime recompile facade` and has release-gate status

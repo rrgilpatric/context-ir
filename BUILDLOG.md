@@ -2,6 +2,43 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- eb6def0 Runtime Probe Result Contract Release Sync
+
+- Synced post-push continuity for
+  `eb6def0 Add runtime probe result contracts`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `eb6def0 Add runtime probe result contracts`
+  - clean worktree at intake before this docs-only continuity edit
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state now recorded:
+  - runtime probe execution-result/replay-artifact contract tranche completed
+    and pushed at `eb6def0`
+  - release-gate status is no-active-gate
+  - combined read-only release gate passed with no findings
+  - focused validation passed, including targeted pytest reporting
+    `111 passed`
+  - full regression passed, including full pytest reporting `833 passed`
+  - commit-gating passed over the exact four-file release unit:
+    `src/context_ir/runtime_probe_results.py`,
+    `tests/test_runtime_probe_results.py`, `PLAN.md`, and `BUILDLOG.md`
+- Routing decision:
+  - supersede the workspace-only runtime probe result contract release-gate
+    route for active control routing
+  - hold next active routing pending Ryan authorization for a bounded
+    post-`eb6def0` planning/control lane to choose the next smallest safe
+    runtime-acquisition-loop step
+  - do not route `eb6def0`, `8ac3b46`, `b279b00`, `74aadd7`, `95f7545`,
+    `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
+    `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
+    `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to release sequencing
+    absent new findings
+  - push remains Ryan-gated for any future release
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Result Contract Review
 
 - Reviewed the returned internal runtime probe execution-result/replay-artifact
