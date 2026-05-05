@@ -108,10 +108,61 @@ Released four-file unit:
 
 Release-gate status is no-active-gate for `f5c8df0`.
 
+Current workspace-only accepted tranche:
+
+- `attach_admitted_runtime_observations(program, admissions)` is an internal
+  bridge in `src/context_ir/runtime_observation_admission.py`
+- the bridge consumes already-admitted `RuntimeObservationAdmission` objects
+  and delegates attachment through the existing family-specific
+  `runtime_acquisition.attach_*_runtime_provenance(...)` helpers
+- empty admission batches return the original `SemanticProgram` object
+- non-empty batches validate one `plan_id`
+- every admission validates `admission.request_id` against
+  `admission.request.request_id`
+- every admission validates request and observation source-site identity
+- every admission reuses the existing request/observation compatibility guard
+  before attachment
+- duplicate admission request IDs and duplicate admission source sites raise
+  `ValueError`
+- all current runtime observation families route through the existing
+  runtime-acquisition attachment helpers
+- attachments use existing additive runtime-backed provenance records
+- input `SemanticProgram`, admissions, requests, and observations are not
+  mutated
+- no analyzer/tool-facade behavior, package-root API, MCP, eval, schema,
+  scoring, optimizer, compiler, winner-selection, product, public benchmark,
+  or public-claim surface changed
+- no probe execution, execution-result contract, runtime observation
+  collection, new provenance schema, payload semantics, or eligibility breadth
+  was added
+- control-lane focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py -v`
+    reporting `118 passed`
+  - `git diff --check`
+- release state is workspace-only accepted; not release-unit-audit-cleared, not
+  full-regression-cleared, not commit-gating-cleared, not staged, not locally
+  committed, and not pushed
+
+Proposed four-file release unit:
+
+- `src/context_ir/runtime_observation_admission.py`
+- `tests/test_runtime_observation_admission.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
 Current route:
 
-- Route next to bounded post-`f5c8df0` North Star planning/control to choose
-  the next smallest meaningful capability slice
+- Route next to a combined read-only release gate over the exact four-file
+  admitted runtime observation provenance bridge tranche
+- The gate must run release-unit audit, then full regression, then
+  commit-gating, stopping on the first finding
+- The gate must not edit files, stage changes, create commits, push, or rewrite
+  continuity
+- Only after a clean release-gate result should the next action become local
+  commit sequencing
 - Do not route `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
   `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
   `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs review,
@@ -1696,6 +1747,14 @@ sequencing for `c1a12d7` absent new findings.
   admission compatibility validation tranche
 - [x] Local commit creation and Ryan-authorized push for the runtime observation
   admission compatibility validation tranche
+- [x] Post-`f5c8df0` North Star planning/control selected the internal
+  admitted-runtime-observation provenance attachment bridge
+- [x] Admitted runtime observation provenance attachment bridge implementation
+  accepted first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file admitted runtime
+  observation provenance bridge tranche
+- [ ] Local commit creation and Ryan-authorized push for the admitted runtime
+  observation provenance bridge tranche
 
 ## What Is In Progress
 
@@ -1719,8 +1778,18 @@ sequencing for `c1a12d7` absent new findings.
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `8706f2e`.
-- Active next route is bounded post-`f5c8df0` North Star planning/control to
-  choose the next smallest meaningful capability slice.
+- Admitted runtime observation provenance bridge implementation is accepted
+  first-pass in workspace-only state:
+  - `src/context_ir/runtime_observation_admission.py`
+  - `tests/test_runtime_observation_admission.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Active next route is a combined read-only release gate over the exact
+  four-file admitted runtime observation provenance bridge tranche.
+- The tranche is not release-unit-audit-cleared, not full-regression-cleared,
+  not commit-gating-cleared, not staged, not locally committed, and not pushed.
+- The gate must not edit files, stage changes, create commits, push, or rewrite
+  continuity.
 - The released tranche remains a read-model bridge only: no probe execution,
   execution-result contract, runtime provenance attachment, analyzer or
   tool-facade behavior, package-root API, MCP, eval, schema, scoring,
@@ -2481,10 +2550,75 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`f5c8df0` North Star planning/control to
-choose the next smallest meaningful capability slice. No implementation slice
-is authorized until control selects and routes one under the normal quality
-gate.
+Immediate next route: combined read-only release gate for the exact four-file
+admitted runtime observation provenance bridge tranche.
+
+Release unit:
+
+- `src/context_ir/runtime_observation_admission.py`
+- `tests/test_runtime_observation_admission.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Gate requirements:
+
+- run Gate 1 release-unit audit first, then Gate 2 full regression, then Gate 3
+  commit-gating
+- stop on the first finding
+- report findings first and each gate result explicitly
+- do not edit files, stage changes, create commits, push, or rewrite
+  continuity
+
+Gate 1 release-unit audit must verify:
+
+- live repo truth, exact four-file dirty set, nothing staged, no untracked
+  files, no extra drift, and clean `git diff --check`
+- `attach_admitted_runtime_observations(program, admissions)` consumes already
+  admitted `RuntimeObservationAdmission` objects and delegates attachment only
+  through existing family-specific
+  `runtime_acquisition.attach_*_runtime_provenance(...)` helpers
+- empty admission batches return the original `SemanticProgram` object
+- non-empty batches validate one `plan_id`
+- every admission validates `admission.request_id` against
+  `admission.request.request_id`
+- every admission validates request and observation source-site identity
+- every admission reuses the existing request/observation compatibility guard
+  before attachment
+- duplicate admission request IDs and duplicate admission source sites reject
+- all current runtime observation families route through existing
+  runtime-acquisition attachment helpers
+- existing additive runtime-backed provenance behavior is reused without
+  mutating input `SemanticProgram`, admissions, requests, or observations
+- no analyzer/tool-facade behavior, package-root API, MCP, eval, schema,
+  scoring, optimizer, compiler, winner-selection, product, public benchmark,
+  or public-claim surface changed
+- no probe execution, execution-result contract, runtime observation
+  collection, new provenance schema, payload semantics, or eligibility breadth
+  was added
+
+Focused validation for Gate 1:
+
+- `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+- `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+- `.venv/bin/python -m mypy --strict src/`
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py -v`
+- `git diff --check`
+
+Gate 2 full regression, only if Gate 1 passes:
+
+- `.venv/bin/python -m ruff check src/ tests/`
+- `.venv/bin/python -m ruff format --check src/ tests/`
+- `.venv/bin/python -m mypy --strict src/`
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+
+Gate 3 commit-gating, only if Gate 2 passes:
+
+- reverify exact dirty/untracked file set
+- reverify nothing staged
+- reverify no drift
+- reverify clean `git diff --check`
+- decide whether the exact four-file unit is commit-ready to stage locally, but
+  do not stage
 
 The runtime observation admission compatibility validation tranche is pushed
 at `f5c8df0 Validate runtime observation admission compatibility` and has

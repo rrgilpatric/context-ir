@@ -2,6 +2,123 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Admitted Runtime Observation Provenance Bridge Review
+
+- Reviewed the returned implementation slice for attaching already-admitted
+  runtime observations through the existing runtime acquisition provenance
+  helpers.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `68f4777 Sync runtime admission compatibility routing`
+  - nothing staged
+  - no untracked files
+  - dirty files were exactly:
+    - `BUILDLOG.md`
+    - `PLAN.md`
+    - `src/context_ir/runtime_observation_admission.py`
+    - `tests/test_runtime_observation_admission.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `attach_admitted_runtime_observations(program, admissions)` is an
+    internal bridge in `src/context_ir/runtime_observation_admission.py`
+  - empty admission batches return the original `SemanticProgram` object
+  - non-empty batches validate one `plan_id`
+  - every admission validates `admission.request_id` against
+    `admission.request.request_id`
+  - every admission validates request and observation source-site identity
+  - every admission reuses the existing request/observation compatibility
+    guard before attachment
+  - duplicate admission request IDs and duplicate admission source sites raise
+    `ValueError`
+  - all current runtime observation families are routed through existing
+    family-specific `runtime_acquisition.attach_*_runtime_provenance(...)`
+    helpers
+  - attachments use existing additive runtime-backed provenance records
+  - input `SemanticProgram`, admissions, requests, and observations are not
+    mutated
+  - no analyzer/tool-facade behavior, package-root API, MCP, eval, schema,
+    scoring, optimizer, compiler, winner-selection, product, public benchmark,
+    or public-claim surface changed
+  - no probe execution, execution-result contract, runtime observation
+    collection, new provenance schema, payload semantics, or eligibility
+    breadth was added
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py -v`
+    reporting `118 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_admission.py`,
+    `tests/test_runtime_observation_admission.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-05 -- Post-f5c8df0 Admitted Runtime Provenance Bridge Routing
+
+- Reviewed the next move after the completed and pushed
+  `f5c8df0 Validate runtime observation admission compatibility` release and
+  `68f4777 Sync runtime admission compatibility routing` continuity sync.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `68f4777 Sync runtime admission compatibility routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Ryan authorized proceeding to the next bounded North Star step.
+- Planning decision:
+  - next implementation slice is an internal admitted-runtime-observation
+    provenance attachment bridge
+  - add a module-local helper in
+    `src/context_ir/runtime_observation_admission.py` that consumes already
+    admitted `RuntimeObservationAdmission` objects and attaches runtime-backed
+    provenance by delegating to the existing family-specific helpers in
+    `runtime_acquisition.py`
+  - the helper must preserve the plan/admission gate by validating request ID,
+    request/observation source-site identity, request/observation
+    compatibility, one plan ID per batch, duplicate request IDs, and duplicate
+    source sites before attachment
+  - empty admissions should return the original `SemanticProgram` unchanged
+  - all current runtime observation families should be routed deterministically
+    through the existing attachment helpers
+- Scope guard:
+  - no probe execution, execution-result contract, runtime observation
+    collection, analyzer/tool-facade behavior, package-root API, MCP, eval,
+    schema, scoring, optimizer, compiler, winner-selection, product, public
+    benchmark, or public-claim change is authorized
+  - no new provenance schema, payload semantics, or eligibility breadth is
+    authorized; this slice may only reuse the existing runtime-acquisition
+    attachment behavior after the admission gate
+- Alternatives considered:
+  - direct analyzer/tool-facade rewiring to require admitted observations
+  - execution-result or replay-artifact contract work
+  - direct probe execution
+  - public/API/MCP runtime-observation exposure
+  - another read-only partitioning helper before attachment
+- Reasoning:
+  - request plans, diagnostic plans, source-site admission, diagnostic
+    admission, and family/form compatibility are now released
+  - existing runtime acquisition already knows how to attach typed observations
+    as additive runtime-backed provenance, but it is not yet guarded by the
+    planned admission chain
+  - an internal bridge over already-admitted observations is the smallest step
+    that connects those surfaces while avoiding execution, facade/API widening,
+    and new provenance semantics
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- f5c8df0 Runtime Observation Admission Compatibility Release Sync
 
 - Synced post-push continuity for

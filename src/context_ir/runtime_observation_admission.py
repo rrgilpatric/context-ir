@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TypeAlias
+from typing import TypeAlias, assert_never
 
 import context_ir.runtime_acquisition as runtime_acquisition
 from context_ir.runtime_probe_requests import (
@@ -13,7 +13,7 @@ from context_ir.runtime_probe_requests import (
     RuntimeProbeRequestPlan,
     index_runtime_probe_request_plan_by_source_site,
 )
-from context_ir.semantic_types import SemanticDiagnosticResult
+from context_ir.semantic_types import SemanticDiagnosticResult, SemanticProgram
 
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
 
@@ -114,6 +114,165 @@ def admit_runtime_observations_for_diagnostic(
             "admission"
         )
     return admit_runtime_observations_for_plan(plan, observations)
+
+
+def attach_admitted_runtime_observations(
+    program: SemanticProgram,
+    admissions: Iterable[RuntimeObservationAdmission],
+) -> SemanticProgram:
+    """Attach already-admitted observations through family-specific helpers."""
+    ordered_admissions = tuple(admissions)
+    if not ordered_admissions:
+        return program
+
+    _validate_runtime_observation_admissions(ordered_admissions)
+
+    dynamic_import_observations: list[
+        runtime_acquisition.DynamicImportRuntimeObservation
+    ] = []
+    eval_observations: list[runtime_acquisition.EvalRuntimeObservation] = []
+    exec_observations: list[runtime_acquisition.ExecRuntimeObservation] = []
+    hasattr_observations: list[runtime_acquisition.HasattrRuntimeObservation] = []
+    getattr_observations: list[runtime_acquisition.GetattrRuntimeObservation] = []
+    dir_observations: list[runtime_acquisition.DirRuntimeObservation] = []
+    vars_observations: list[runtime_acquisition.VarsRuntimeObservation] = []
+    globals_observations: list[runtime_acquisition.GlobalsRuntimeObservation] = []
+    locals_observations: list[runtime_acquisition.LocalsRuntimeObservation] = []
+    setattr_observations: list[runtime_acquisition.SetattrRuntimeObservation] = []
+    delattr_observations: list[runtime_acquisition.DelattrRuntimeObservation] = []
+    metaclass_observations: list[
+        runtime_acquisition.MetaclassBehaviorRuntimeObservation
+    ] = []
+
+    for admission in ordered_admissions:
+        observation = admission.observation
+        if isinstance(
+            observation,
+            runtime_acquisition.DynamicImportRuntimeObservation,
+        ):
+            dynamic_import_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.EvalRuntimeObservation):
+            eval_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.ExecRuntimeObservation):
+            exec_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.HasattrRuntimeObservation):
+            hasattr_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.GetattrRuntimeObservation):
+            getattr_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.DirRuntimeObservation):
+            dir_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.VarsRuntimeObservation):
+            vars_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.GlobalsRuntimeObservation):
+            globals_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.LocalsRuntimeObservation):
+            locals_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.SetattrRuntimeObservation):
+            setattr_observations.append(observation)
+        elif isinstance(observation, runtime_acquisition.DelattrRuntimeObservation):
+            delattr_observations.append(observation)
+        elif isinstance(
+            observation,
+            runtime_acquisition.MetaclassBehaviorRuntimeObservation,
+        ):
+            metaclass_observations.append(observation)
+        else:
+            assert_never(observation)
+
+    updated_program = runtime_acquisition.attach_dynamic_import_runtime_provenance(
+        program,
+        tuple(dynamic_import_observations),
+    )
+    updated_program = runtime_acquisition.attach_eval_runtime_provenance(
+        updated_program,
+        tuple(eval_observations),
+    )
+    updated_program = runtime_acquisition.attach_exec_runtime_provenance(
+        updated_program,
+        tuple(exec_observations),
+    )
+    updated_program = runtime_acquisition.attach_hasattr_runtime_provenance(
+        updated_program,
+        tuple(hasattr_observations),
+    )
+    updated_program = runtime_acquisition.attach_getattr_runtime_provenance(
+        updated_program,
+        tuple(getattr_observations),
+    )
+    updated_program = runtime_acquisition.attach_dir_runtime_provenance(
+        updated_program,
+        tuple(dir_observations),
+    )
+    updated_program = runtime_acquisition.attach_vars_runtime_provenance(
+        updated_program,
+        tuple(vars_observations),
+    )
+    updated_program = runtime_acquisition.attach_globals_runtime_provenance(
+        updated_program,
+        tuple(globals_observations),
+    )
+    updated_program = runtime_acquisition.attach_locals_runtime_provenance(
+        updated_program,
+        tuple(locals_observations),
+    )
+    updated_program = runtime_acquisition.attach_setattr_runtime_provenance(
+        updated_program,
+        tuple(setattr_observations),
+    )
+    updated_program = runtime_acquisition.attach_delattr_runtime_provenance(
+        updated_program,
+        tuple(delattr_observations),
+    )
+    return runtime_acquisition.attach_metaclass_behavior_runtime_provenance(
+        updated_program,
+        tuple(metaclass_observations),
+    )
+
+
+def _validate_runtime_observation_admissions(
+    admissions: tuple[RuntimeObservationAdmission, ...],
+) -> None:
+    """Reject admitted batches whose request, plan, or source-site identities drift."""
+    plan_ids = {admission.plan_id for admission in admissions}
+    if len(plan_ids) != 1:
+        raise ValueError(
+            "runtime observation admissions must belong to exactly one plan_id"
+        )
+
+    request_ids: set[str] = set()
+    source_site_identities: set[_SourceSiteIdentity] = set()
+    for admission in admissions:
+        if admission.request_id != admission.request.request_id:
+            raise ValueError(
+                "runtime observation admission request_id must match request.request_id"
+            )
+        if admission.request_id in request_ids:
+            raise ValueError("duplicate runtime observation admission request_id")
+        request_ids.add(admission.request_id)
+
+        request_source_site_identity = runtime_acquisition._source_site_identity(
+            admission.request.source_site
+        )
+        observation_source_site_identity = runtime_acquisition._source_site_identity(
+            admission.observation.site
+        )
+        if request_source_site_identity != observation_source_site_identity:
+            raise ValueError(
+                "runtime observation admission source site must match request "
+                "source site"
+            )
+        if request_source_site_identity in source_site_identities:
+            raise ValueError("duplicate runtime observation admission source site")
+        source_site_identities.add(request_source_site_identity)
+
+        if not _runtime_observation_matches_request(
+            admission.request,
+            admission.observation,
+        ):
+            raise ValueError(
+                "runtime observation type does not match planned request "
+                f"family/form: {admission.request.form_label}"
+            )
 
 
 def _index_runtime_observations_by_source_site(

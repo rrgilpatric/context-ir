@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import textwrap
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -160,6 +162,84 @@ def _runtime_plan(
     return program, plan
 
 
+def _all_family_runtime_plan(
+    tmp_path: Path,
+) -> tuple[SemanticProgram, runtime_probe_requests.RuntimeProbeRequestPlan]:
+    """Build a runtime probe request plan covering every current observation type."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            class Meta(type):
+                pass
+
+            class Example(metaclass=Meta):
+                pass
+
+            def run(
+                obj: object,
+                name: str,
+                source: str,
+                value: object,
+            ) -> None:
+                importlib.import_module(name)
+                hasattr(obj, name)
+                getattr(obj, name)
+                vars(obj)
+                dir(obj)
+                globals()
+                locals()
+                setattr(obj, name, value)
+                delattr(obj, name)
+                eval(source)
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _derived_program(tmp_path)
+    requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+    plan = runtime_probe_requests.build_runtime_probe_request_plan(requests)
+
+    assert {request.form_label for request in plan.requests} == {
+        "dynamic_import:importlib.import_module/1",
+        "reflective_builtin:hasattr/2",
+        "reflective_builtin:getattr/2",
+        "reflective_builtin:vars/1",
+        "reflective_builtin:dir/1",
+        "runtime_mutation:globals/0",
+        "runtime_mutation:locals/0",
+        "runtime_mutation:setattr/3",
+        "runtime_mutation:delattr/2",
+        "exec_or_eval:eval/1",
+        "exec_or_eval:exec/1",
+        "metaclass_behavior:keyword",
+    }
+    return program, plan
+
+
+def _runtime_plan_admissions(
+    tmp_path: Path,
+) -> tuple[
+    SemanticProgram,
+    runtime_probe_requests.RuntimeProbeRequestPlan,
+    tuple[runtime_observation_admission.RuntimeObservationAdmission, ...],
+]:
+    """Build a small valid admission batch for attachment validation tests."""
+    program, plan = _runtime_plan(tmp_path)
+    observations = (
+        _dynamic_import_observation(plan.requests[0].source_site),
+        _getattr_observation(plan.requests[1].source_site),
+        _exec_observation(plan.requests[2].source_site),
+    )
+    admissions = runtime_observation_admission.admit_runtime_observations_for_plan(
+        plan,
+        observations,
+    )
+    return program, plan, admissions
+
+
 def _diagnostic_for_plan(
     plan: runtime_probe_requests.RuntimeProbeRequestPlan,
 ) -> SemanticDiagnosticResult:
@@ -262,11 +342,229 @@ def _exec_observation(site: SourceSite) -> runtime_acquisition.ExecRuntimeObserv
         attachment_links=_attachment_links(site),
         replay_target="main.run",
         replay_selector="call:main.run:exec",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_statement",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=hashlib.sha256(b"pass").hexdigest(),
+            ),
+        ),
         normalized_payload=(
             runtime_acquisition._RuntimeObservationField(
                 key="execution_outcome",
                 value="completed",
             ),
+            runtime_acquisition._RuntimeObservationField(
+                key="statement_kind",
+                value="pass",
+            ),
+        ),
+        durable_payload_reference=f"artifact://exec-result/{site.site_id}.json",
+    )
+
+
+def _eval_observation(site: SourceSite) -> runtime_acquisition.EvalRuntimeObservation:
+    """Create one typed eval runtime observation."""
+    return runtime_acquisition.EvalRuntimeObservation(
+        site=site,
+        probe_identifier="probe:eval",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:eval",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_expression",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=hashlib.sha256(b'"runtime-value"').hexdigest(),
+            ),
+        ),
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="evaluation_outcome",
+                value="returned_value",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="result_type",
+                value="builtins.str",
+            ),
+        ),
+        durable_payload_reference=f"artifact://eval-result/{site.site_id}.json",
+    )
+
+
+def _hasattr_observation(
+    site: SourceSite,
+) -> runtime_acquisition.HasattrRuntimeObservation:
+    """Create one typed hasattr runtime observation."""
+    return runtime_acquisition.HasattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:hasattr",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:hasattr",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="attribute_present",
+                value="true",
+            ),
+        ),
+    )
+
+
+def _vars_observation(site: SourceSite) -> runtime_acquisition.VarsRuntimeObservation:
+    """Create one typed vars runtime observation."""
+    return runtime_acquisition.VarsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:vars",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:vars",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value="returned_namespace",
+            ),
+        ),
+    )
+
+
+def _dir_observation(site: SourceSite) -> runtime_acquisition.DirRuntimeObservation:
+    """Create one typed dir runtime observation."""
+    return runtime_acquisition.DirRuntimeObservation(
+        site=site,
+        probe_identifier="probe:dir",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:dir",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="listing_entry_count",
+                value="3",
+            ),
+        ),
+        durable_payload_reference=f"artifact://dir-listing/{site.site_id}.json",
+    )
+
+
+def _globals_observation(
+    site: SourceSite,
+) -> runtime_acquisition.GlobalsRuntimeObservation:
+    """Create one typed globals runtime observation."""
+    return runtime_acquisition.GlobalsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:globals",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:globals",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value="returned_namespace",
+            ),
+        ),
+    )
+
+
+def _locals_observation(
+    site: SourceSite,
+) -> runtime_acquisition.LocalsRuntimeObservation:
+    """Create one typed locals runtime observation."""
+    return runtime_acquisition.LocalsRuntimeObservation(
+        site=site,
+        probe_identifier="probe:locals",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:locals",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="lookup_outcome",
+                value="returned_namespace",
+            ),
+        ),
+    )
+
+
+def _setattr_observation(
+    site: SourceSite,
+) -> runtime_acquisition.SetattrRuntimeObservation:
+    """Create one typed setattr runtime observation."""
+    return runtime_acquisition.SetattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:setattr",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:setattr",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value="returned_none",
+            ),
+        ),
+        durable_payload_reference=f"artifact://passed-value/{site.site_id}.json",
+    )
+
+
+def _delattr_observation(
+    site: SourceSite,
+) -> runtime_acquisition.DelattrRuntimeObservation:
+    """Create one typed delattr runtime observation."""
+    return runtime_acquisition.DelattrRuntimeObservation(
+        site=site,
+        probe_identifier="probe:delattr",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.run",
+        replay_selector="call:main.run:delattr",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="mutation_outcome",
+                value="deleted_attribute",
+            ),
+        ),
+    )
+
+
+def _metaclass_observation(
+    site: SourceSite,
+) -> runtime_acquisition.MetaclassBehaviorRuntimeObservation:
+    """Create one typed metaclass runtime observation."""
+    return runtime_acquisition.MetaclassBehaviorRuntimeObservation(
+        site=site,
+        probe_identifier="probe:metaclass",
+        probe_contract_revision="2026-05-04.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        attachment_links=_attachment_links(site),
+        replay_target="main.Example",
+        replay_selector="class:main.Example:metaclass",
+        normalized_payload=(
+            runtime_acquisition._RuntimeObservationField(
+                key="class_creation_outcome",
+                value="created_class",
+            ),
+        ),
+        durable_payload_reference=(
+            f"artifact://metaclass-selection/{site.site_id}.json"
         ),
     )
 
@@ -286,6 +584,48 @@ def _runtime_observation_for_class(
         replay_target="main.run",
         replay_selector=f"call:main.run:{probe_name}",
     )
+
+
+def _attachable_observation_for_request(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+) -> runtime_observation_admission.RuntimeObservation:
+    """Create one attachable observation matching a planned request."""
+    site = request.source_site
+    form_label = request.form_label
+    if request.family_label is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT:
+        return _dynamic_import_observation(site)
+    if form_label == "reflective_builtin:hasattr/2":
+        return _hasattr_observation(site)
+    if form_label in {
+        "reflective_builtin:getattr/2",
+        "reflective_builtin:getattr/3",
+    }:
+        return _getattr_observation(site)
+    if form_label in {
+        "reflective_builtin:vars/0",
+        "reflective_builtin:vars/1",
+    }:
+        return _vars_observation(site)
+    if form_label in {
+        "reflective_builtin:dir/0",
+        "reflective_builtin:dir/1",
+    }:
+        return _dir_observation(site)
+    if form_label == "runtime_mutation:globals/0":
+        return _globals_observation(site)
+    if form_label == "runtime_mutation:locals/0":
+        return _locals_observation(site)
+    if form_label == "runtime_mutation:setattr/3":
+        return _setattr_observation(site)
+    if form_label == "runtime_mutation:delattr/2":
+        return _delattr_observation(site)
+    if form_label == "exec_or_eval:eval/1":
+        return _eval_observation(site)
+    if form_label == "exec_or_eval:exec/1":
+        return _exec_observation(site)
+    if form_label == "metaclass_behavior:keyword":
+        return _metaclass_observation(site)
+    raise ValueError(f"unsupported attachable request form: {form_label}")
 
 
 def _source_site_for_form(form_label: str) -> SourceSite:
@@ -831,3 +1171,246 @@ def test_diagnostic_helper_has_no_request_or_plan_id_drift(
     assert tuple(admission.request_id for admission in admissions) == (
         original_request_ids
     )
+
+
+def test_attach_admitted_runtime_observations_empty_batch_returns_input_program(
+    tmp_path: Path,
+) -> None:
+    """Empty admitted batches leave the semantic program object unchanged."""
+    program, _plan = _runtime_plan(tmp_path)
+
+    updated_program = (
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            (),
+        )
+    )
+
+    assert updated_program is program
+    assert program.provenance_records == []
+
+
+def test_attach_admitted_runtime_observations_routes_all_current_families(
+    tmp_path: Path,
+) -> None:
+    """Already-admitted observations attach through all existing family helpers."""
+    program, plan = _all_family_runtime_plan(tmp_path)
+    observations = tuple(
+        _attachable_observation_for_request(request) for request in plan.requests
+    )
+    admissions = runtime_observation_admission.admit_runtime_observations_for_plan(
+        plan,
+        reversed(observations),
+    )
+    original_unsupported = list(program.unsupported_constructs)
+    original_frontier = list(program.unresolved_frontier)
+    original_provenance_records = list(program.provenance_records)
+    original_admission_state = tuple(
+        (
+            admission.plan_id,
+            admission.request_id,
+            admission.request,
+            admission.observation,
+        )
+        for admission in admissions
+    )
+    original_request_state = tuple(
+        (
+            admission.request.request_id,
+            admission.request.source_site,
+            admission.request.form_label,
+            admission.request.status,
+        )
+        for admission in admissions
+    )
+    original_observation_state = tuple(
+        (
+            observation.site,
+            observation.probe_identifier,
+            observation.probe_contract_revision,
+            observation.repository_snapshot_basis,
+            observation.attachment_links,
+            observation.replay_target,
+            observation.replay_selector,
+            observation.replay_inputs,
+            observation.runtime_assumptions,
+            observation.normalized_payload,
+            observation.durable_payload_reference,
+        )
+        for observation in observations
+    )
+
+    updated_program = (
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            reversed(admissions),
+        )
+    )
+
+    assert updated_program is not program
+    assert program.unsupported_constructs == original_unsupported
+    assert program.unresolved_frontier == original_frontier
+    assert program.provenance_records == original_provenance_records
+    assert program.provenance_records == []
+    assert len(updated_program.provenance_records) == len(admissions)
+    assert {record.subject_id for record in updated_program.provenance_records} == {
+        admission.request.subject_id for admission in admissions
+    }
+    assert all(
+        record.capability_tier is CapabilityTier.RUNTIME_BACKED
+        for record in updated_program.provenance_records
+    )
+    assert (
+        tuple(
+            (
+                admission.plan_id,
+                admission.request_id,
+                admission.request,
+                admission.observation,
+            )
+            for admission in admissions
+        )
+        == original_admission_state
+    )
+    assert (
+        tuple(
+            (
+                admission.request.request_id,
+                admission.request.source_site,
+                admission.request.form_label,
+                admission.request.status,
+            )
+            for admission in admissions
+        )
+        == original_request_state
+    )
+    assert (
+        tuple(
+            (
+                observation.site,
+                observation.probe_identifier,
+                observation.probe_contract_revision,
+                observation.repository_snapshot_basis,
+                observation.attachment_links,
+                observation.replay_target,
+                observation.replay_selector,
+                observation.replay_inputs,
+                observation.runtime_assumptions,
+                observation.normalized_payload,
+                observation.durable_payload_reference,
+            )
+            for observation in observations
+        )
+        == original_observation_state
+    )
+
+
+def test_attach_admitted_runtime_observations_rejects_multiple_plan_ids(
+    tmp_path: Path,
+) -> None:
+    """Non-empty attachment batches must describe one admitted request plan."""
+    program, _plan, admissions = _runtime_plan_admissions(tmp_path)
+    drifted_admission = replace(admissions[1], plan_id="runtime_probe_plan:other")
+
+    with pytest.raises(ValueError, match="exactly one plan_id"):
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            (admissions[0], drifted_admission),
+        )
+
+
+def test_attach_admitted_runtime_observations_rejects_request_id_drift(
+    tmp_path: Path,
+) -> None:
+    """Attachment revalidates that each admission still matches its request ID."""
+    program, _plan, admissions = _runtime_plan_admissions(tmp_path)
+    drifted_admission = replace(admissions[0], request_id="runtime_probe:drifted")
+
+    with pytest.raises(ValueError, match="request_id must match"):
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            (drifted_admission,),
+        )
+
+
+def test_attach_admitted_runtime_observations_rejects_source_site_drift(
+    tmp_path: Path,
+) -> None:
+    """Attachment revalidates request and observation source-site identity."""
+    program, _plan, admissions = _runtime_plan_admissions(tmp_path)
+    drifted_admission = replace(
+        admissions[0],
+        observation=_dynamic_import_observation(_unplanned_site()),
+    )
+
+    with pytest.raises(ValueError, match="source site must match"):
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            (drifted_admission,),
+        )
+
+
+def test_attach_admitted_runtime_observations_rejects_incompatible_observation(
+    tmp_path: Path,
+) -> None:
+    """Attachment reuses the request/observation family-form compatibility guard."""
+    program, _plan, admissions = _runtime_plan_admissions(tmp_path)
+    drifted_admission = replace(
+        admissions[0],
+        observation=_exec_observation(admissions[0].request.source_site),
+    )
+
+    with pytest.raises(ValueError, match="does not match planned request family/form"):
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            (drifted_admission,),
+        )
+
+
+def test_attach_admitted_runtime_observations_rejects_duplicate_request_ids(
+    tmp_path: Path,
+) -> None:
+    """An admission batch cannot attach the same admitted request twice."""
+    program, _plan, admissions = _runtime_plan_admissions(tmp_path)
+
+    with pytest.raises(ValueError, match="duplicate.*request_id"):
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            (admissions[0], admissions[0]),
+        )
+
+
+def test_attach_admitted_runtime_observations_rejects_duplicate_source_sites(
+    tmp_path: Path,
+) -> None:
+    """Different admissions for the same source site are ambiguous."""
+    program, _plan = _runtime_plan(tmp_path)
+    source_site = _source_site_for_form("reflective_builtin:duplicate")
+    first_request = _planned_request_for_form(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:hasattr/2",
+        source_site=source_site,
+    )
+    second_request = _planned_request_for_form(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:getattr/2",
+        source_site=source_site,
+    )
+    first_admission = runtime_observation_admission.RuntimeObservationAdmission(
+        plan_id="runtime_probe_request_plan:test",
+        request_id=first_request.request_id,
+        request=first_request,
+        observation=_hasattr_observation(source_site),
+    )
+    second_admission = runtime_observation_admission.RuntimeObservationAdmission(
+        plan_id="runtime_probe_request_plan:test",
+        request_id=second_request.request_id,
+        request=second_request,
+        observation=_getattr_observation(source_site),
+    )
+
+    with pytest.raises(ValueError, match="duplicate.*source site"):
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            (first_admission, second_admission),
+        )
