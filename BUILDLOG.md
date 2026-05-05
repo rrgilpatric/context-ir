@@ -2,6 +2,36 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Batch Recompile Post-Push Routing Sync
+
+- Ryan-authorized push for the runtime probe result-batch recompile bridge was
+  completed before this sync.
+- Repo-backed truth verified during control intake:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `5913bf0 Sync runtime probe batch recompile release routing`
+  - latest pushed source/contract authority is
+    `591c09b Compose runtime probe result batch recompile`
+  - worktree clean, nothing staged, no untracked files, and
+    `git diff --check` clean before this continuity correction
+- Continuity correction:
+  - superseded stale active routing that still pointed at the already-cleared
+    runtime probe result admission release gate
+  - recorded `591c09b` as pushed and no-active-gate
+  - recorded `5913bf0` as the latest pushed continuity authority
+- Routing decision:
+  - do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
+    `74aadd7`, `95f7545`, or earlier pushed release anchors back to review,
+    release-unit audit, full regression, commit-gating, staging, local commit,
+    or push absent new findings
+  - next control action is one bounded internal implementation prompt for
+    non-executing runtime probe execution-input materialization
+  - the next slice may prepare typed execution work items from planned request
+    plans and repository snapshot metadata, but must not execute probes or
+    widen public, facade, MCP, JSON/schema, eval, scoring, optimizer, compiler,
+    package-root, product, benchmark, or public-claim surfaces
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Result-Batch Recompile Local Commit Routing
 
 - Reviewed the accepted combined read-only release-gate result and completed

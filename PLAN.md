@@ -41,12 +41,49 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`ccd417a Add runtime probe result admission bridge`. Latest pushed continuity
-authority is `6023220 Sync runtime probe admission release routing`. Live git
+`591c09b Compose runtime probe result batch recompile`. Latest pushed continuity
+authority is `5913bf0 Sync runtime probe batch recompile release routing`. Live git
 refs and worktree state must still be verified from git during control intake;
 do not infer them from committed prose.
 
-Runtime probe result admission bridge release:
+Runtime probe result-batch recompile bridge release:
+
+- `RuntimeProbeResultBatchRecompileApplication` is a frozen internal envelope
+  carrying result-batch admission, preserved non-proof results, runtime
+  observation application, and semantic recompile result
+- `apply_runtime_probe_result_batch_for_diagnostic_and_recompile(...)` requires
+  the diagnostic's planned runtime probe request plan, admits the
+  `RuntimeProbeResultBatch` through the existing result-batch admission bridge,
+  attaches only observed proof-bearing results, preserves non-proof results
+  separately, and recompiles with the updated program
+- non-proof-only and partial mixed batches keep non-proof results out of
+  runtime-backed proof while preserving deterministic plan-order admissions
+- existing plan, request, source-site, family/form, duplicate result, negative
+  budget, and missing compile-context gates propagate through the composed path
+- the helper remains internal to `context_ir.runtime_observation_recompile`;
+  package-root, tool facade, MCP, JSON/schema, serialization, eval, scoring,
+  optimizer, compiler, winner-selection, docs, and public-claim surfaces remain
+  unchanged
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting
+    `232 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `847 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, no untracked files, and clean `git diff --check`
+- local commit creation completed at
+  `591c09b Compose runtime probe result batch recompile`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `5913bf0 Sync runtime probe batch recompile release routing`
+- release files are
+  `src/context_ir/runtime_observation_recompile.py` and
+  `tests/test_runtime_observation_recompile.py`, plus control continuity in
+  `PLAN.md` and `BUILDLOG.md`
+- release-gate status is no-active-gate for `591c09b`
+
+Prior pushed runtime probe result admission bridge release:
 
 - `admit_runtime_probe_result_batch_for_plan(...)` bridges
   `RuntimeProbeResultBatch` into deterministic plan-ordered
@@ -89,50 +126,6 @@ Released four-file unit:
 - `BUILDLOG.md`
 
 Release-gate status is no-active-gate for `ccd417a`.
-
-Runtime probe result-batch recompile bridge local release candidate:
-
-- implementation review accepted the slice first-pass
-- combined read-only release gate passed with no findings:
-  - Gate 1 release-unit audit passed for the exact four-file release unit
-  - focused validation passed, including targeted pytest reporting
-    `232 passed`
-  - Gate 2 full regression passed, including full pytest reporting
-    `847 passed`
-  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
-    no extra drift, no untracked files, and clean `git diff --check`
-- local commit creation completed at
-  `591c09b Compose runtime probe result batch recompile`
-- Ryan authorized pushing this local release candidate; if live git shows
-  `origin/main` contains `591c09b`, treat this release as pushed and
-  no-active-gate
-- release files are
-  `src/context_ir/runtime_observation_recompile.py` and
-  `tests/test_runtime_observation_recompile.py`, plus control continuity in
-  `PLAN.md` and `BUILDLOG.md`
-- `RuntimeProbeResultBatchRecompileApplication` is a frozen internal envelope
-  carrying result-batch admission, preserved non-proof results, runtime
-  observation application, and semantic recompile result
-- `apply_runtime_probe_result_batch_for_diagnostic_and_recompile(...)` requires
-  the diagnostic's planned runtime probe request plan, admits the
-  `RuntimeProbeResultBatch` through the existing result-batch admission bridge,
-  attaches only observed proof-bearing results, preserves non-proof results
-  separately, and recompiles with the updated program
-- non-proof-only and partial mixed batches keep non-proof results out of
-  runtime-backed proof while preserving deterministic plan-order admissions
-- existing plan, request, source-site, family/form, duplicate result, negative
-  budget, and missing compile-context gates propagate through the composed path
-- the helper remains internal to `context_ir.runtime_observation_recompile`;
-  package-root, tool facade, MCP, JSON/schema, serialization, eval, scoring,
-  optimizer, compiler, winner-selection, docs, and public-claim surfaces remain
-  unchanged
-- control-lane focused validation before release gate passed:
-  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
-  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
-  - `.venv/bin/python -m mypy --strict src/`
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_observation_admission.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_acquisition.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
-    reporting `232 passed`
-  - `git diff --check`
 
 Prior pushed runtime probe execution-result/replay-artifact contract:
 
@@ -356,21 +349,19 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
+- Runtime probe result-batch recompile bridge is pushed at
+  `591c09b Compose runtime probe result batch recompile` with no active gate.
 - Runtime probe result admission bridge is pushed at
   `ccd417a Add runtime probe result admission bridge` with no active gate.
-- Runtime probe result-batch recompile bridge is release-gate-cleared and
-  locally committed at
-  `591c09b Compose runtime probe result batch recompile`; Ryan authorized push
-  in the active control turn.
-- If live git shows `591c09b` is still ahead of `origin/main`, the next control
-  action is the already authorized push, not another implementation,
-  release-gate, staging, or local commit lane.
-- If live git shows `origin/main` already contains `591c09b`, treat it as
-  pushed and no-active-gate; perform a post-push continuity sync only if the
-  active block would otherwise misroute a fresh controller.
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
+- The next control action is to issue one bounded internal implementation
+  prompt for non-executing runtime probe execution-input materialization.
+  The slice may prepare typed execution work items from planned request plans
+  and repository snapshot metadata, but it must not execute probes or widen
+  public, facade, MCP, JSON/schema, eval, scoring, optimizer, compiler,
+  package-root, product, benchmark, or public-claim surfaces.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2009,29 +2000,33 @@ sequencing for `c1a12d7` absent new findings.
   to typed-observation admission boundary
 - [x] Runtime probe result admission bridge implementation slice accepted after
   1 correction in workspace-only state
-- [ ] Combined release gate for the exact four-file runtime probe result
+- [x] Combined release gate for the exact four-file runtime probe result
   admission bridge release unit
+- [x] Local commit creation and Ryan-authorized push for the runtime probe
+  result admission bridge release unit
+- [x] Post-`ccd417a` planning/control selected the internal result-batch to
+  runtime recompile bridge
+- [x] Runtime probe result-batch recompile bridge implementation slice
+  accepted first-pass in workspace-only state
+- [x] Combined release gate for the exact four-file runtime probe result-batch
+  recompile bridge release unit
+- [x] Local commit creation and Ryan-authorized push for the runtime probe
+  result-batch recompile bridge release unit
 
 ## What Is In Progress
 
+- Runtime probe result-batch recompile bridge is completed and pushed at
+  `591c09b Compose runtime probe result batch recompile`.
+- Latest pushed continuity authority is
+  `5913bf0 Sync runtime probe batch recompile release routing`.
+- Release-gate status is no-active-gate for `591c09b`.
+- No release gate, staging, local commit, or push is active.
+- Next implementation route is one bounded internal non-executing runtime
+  probe execution-input materialization slice. It must preserve all existing
+  public/API/MCP/facade/schema/eval/claim holds and must not execute probes.
 - Runtime probe execution-result/replay-artifact contract is completed and
-  pushed at `eb6def0`:
-  - `src/context_ir/runtime_probe_results.py`
-  - `tests/test_runtime_probe_results.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- Release-gate status is no-active-gate for `eb6def0`.
-- Runtime probe result admission bridge implementation is accepted after
-  1 correction in workspace-only state.
-- Proposed release unit:
-  - `src/context_ir/runtime_observation_admission.py`
-  - `tests/test_runtime_observation_admission.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- Next active gate is a combined read-only release gate over that exact
-  four-file unit. No staging, local commit, push, or next implementation slice
-  is authorized before the gate returns clean or a findings-based correction is
-  accepted.
+  pushed at `eb6def0`.
+- Runtime probe result admission bridge is completed and pushed at `ccd417a`.
 - Typed facade runtime observation recompile is completed and pushed at
   `8ac3b46`:
   - `src/context_ir/tool_facade.py`
@@ -2857,19 +2852,26 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate for the exact four-file
-runtime probe result admission bridge release unit:
+Immediate next route: issue one bounded implementation-lane prompt for internal
+runtime probe execution-input materialization.
 
-- `src/context_ir/runtime_observation_admission.py`
-- `tests/test_runtime_observation_admission.py`
-- `PLAN.md`
-- `BUILDLOG.md`
+This is a non-executing bridge slice. It should add typed internal work-item
+materialization from `RuntimeProbeRequestPlan` plus repository snapshot metadata
+to replay-ready execution inputs, preserving plan ID, request IDs, request
+object identity, source-site identity, family/form labels, replay target/selector
+seeds, and deterministic plan order. It must not execute probes, collect
+runtime observations, admit results, attach provenance, recompile, serialize
+JSON/schema, widen `tool_facade.py`, `mcp_server.py`, `context_ir/__init__.py`,
+or touch eval, scoring, optimizer, compiler, package-root, product, benchmark,
+or public-claim surfaces.
 
-The gate must run release-unit audit, then full regression, then
-commit-gating, stopping on the first finding. It must not edit files, stage,
-commit, push, or rewrite continuity. No new implementation slice is authorized
-before this release gate returns clean or a findings-based correction is
-accepted.
+The runtime probe result-batch recompile tranche is pushed at
+`591c09b Compose runtime probe result batch recompile` and has release-gate
+status no-active-gate. It should not be reopened absent new findings.
+
+The runtime probe result admission bridge tranche is pushed at
+`ccd417a Add runtime probe result admission bridge` and has release-gate status
+no-active-gate. It should not be reopened absent new findings.
 
 The runtime probe execution-result/replay-artifact contract tranche is pushed
 at `eb6def0 Add runtime probe result contracts` and has release-gate status
