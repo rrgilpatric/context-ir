@@ -586,6 +586,25 @@ def _runtime_observation_for_class(
     )
 
 
+def _runtime_observation_state(
+    observation: runtime_observation_admission.RuntimeObservation,
+) -> tuple[object, ...]:
+    """Return observation fields that should not change during application."""
+    return (
+        observation.site,
+        observation.probe_identifier,
+        observation.probe_contract_revision,
+        observation.repository_snapshot_basis,
+        observation.attachment_links,
+        observation.replay_target,
+        observation.replay_selector,
+        observation.replay_inputs,
+        observation.runtime_assumptions,
+        observation.normalized_payload,
+        observation.durable_payload_reference,
+    )
+
+
 def _attachable_observation_for_request(
     request: runtime_probe_requests.RuntimeProbeRequest,
 ) -> runtime_observation_admission.RuntimeObservation:
@@ -1171,6 +1190,217 @@ def test_diagnostic_helper_has_no_request_or_plan_id_drift(
     assert tuple(admission.request_id for admission in admissions) == (
         original_request_ids
     )
+
+
+def test_apply_runtime_observations_for_diagnostic_admits_and_attaches_inputs_purely(
+    tmp_path: Path,
+) -> None:
+    """Runtime observation application composes diagnostic admission and attachment."""
+    program, plan = _runtime_plan(tmp_path)
+    diagnostic = _diagnostic_for_plan(plan)
+    exec_observation = _exec_observation(plan.requests[2].source_site)
+    dynamic_observation = _dynamic_import_observation(plan.requests[0].source_site)
+    getattr_observation = _getattr_observation(plan.requests[1].source_site)
+    observations = (exec_observation, dynamic_observation, getattr_observation)
+    original_program_state = (
+        list(program.unsupported_constructs),
+        list(program.unresolved_frontier),
+        list(program.provenance_records),
+    )
+    original_diagnostic_state = (
+        diagnostic.grounded_unit_ids,
+        diagnostic.omitted_unit_ids,
+        diagnostic.too_shallow_unit_ids,
+        diagnostic.sufficiently_represented_unit_ids,
+        diagnostic.recommended_expansions,
+        diagnostic.reason,
+        diagnostic.boundary_classifications,
+        diagnostic.planned_runtime_probe_requests,
+        diagnostic.planned_runtime_probe_request_plan,
+    )
+    original_request_state = tuple(
+        (
+            request.request_id,
+            request.subject_id,
+            request.source_site,
+            request.boundary_text,
+            request.status,
+        )
+        for request in plan.requests
+    )
+    original_observation_state = tuple(
+        _runtime_observation_state(observation) for observation in observations
+    )
+
+    application = (
+        runtime_observation_admission.apply_runtime_observations_for_diagnostic(
+            program,
+            diagnostic,
+            observations,
+        )
+    )
+
+    assert isinstance(
+        application,
+        runtime_observation_admission.RuntimeObservationApplication,
+    )
+    assert application.diagnostic is diagnostic
+    assert [
+        admission.request.boundary_text for admission in application.admissions
+    ] == [
+        "importlib.import_module(name)",
+        "getattr(obj, name)",
+        "exec(source)",
+    ]
+    assert [admission.request_id for admission in application.admissions] == list(
+        plan.request_ids
+    )
+    assert application.admissions[0].request is plan.requests[0]
+    assert application.admissions[1].request is plan.requests[1]
+    assert application.admissions[2].request is plan.requests[2]
+    assert application.admissions[0].observation is dynamic_observation
+    assert application.admissions[1].observation is getattr_observation
+    assert application.admissions[2].observation is exec_observation
+    assert application.updated_program is not program
+    assert len(application.updated_program.provenance_records) == 3
+    assert {
+        record.subject_id for record in application.updated_program.provenance_records
+    } == {request.subject_id for request in plan.requests}
+    assert all(
+        record.capability_tier is CapabilityTier.RUNTIME_BACKED
+        for record in application.updated_program.provenance_records
+    )
+    assert (
+        list(program.unsupported_constructs),
+        list(program.unresolved_frontier),
+        list(program.provenance_records),
+    ) == original_program_state
+    assert (
+        diagnostic.grounded_unit_ids,
+        diagnostic.omitted_unit_ids,
+        diagnostic.too_shallow_unit_ids,
+        diagnostic.sufficiently_represented_unit_ids,
+        diagnostic.recommended_expansions,
+        diagnostic.reason,
+        diagnostic.boundary_classifications,
+        diagnostic.planned_runtime_probe_requests,
+        diagnostic.planned_runtime_probe_request_plan,
+    ) == original_diagnostic_state
+    assert (
+        tuple(
+            (
+                request.request_id,
+                request.subject_id,
+                request.source_site,
+                request.boundary_text,
+                request.status,
+            )
+            for request in plan.requests
+        )
+        == original_request_state
+    )
+    assert (
+        tuple(_runtime_observation_state(observation) for observation in observations)
+        == original_observation_state
+    )
+
+
+def test_apply_runtime_observations_for_diagnostic_empty_admissions_returns_input(
+    tmp_path: Path,
+) -> None:
+    """Application preserves attachment's empty-admission object identity contract."""
+    program, plan = _runtime_plan(tmp_path)
+    diagnostic = _diagnostic_for_plan(plan)
+
+    application = (
+        runtime_observation_admission.apply_runtime_observations_for_diagnostic(
+            program,
+            diagnostic,
+            (),
+        )
+    )
+
+    assert application.diagnostic is diagnostic
+    assert application.admissions == ()
+    assert application.updated_program is program
+    assert program.provenance_records == []
+
+
+def test_apply_runtime_observations_for_diagnostic_requires_attached_plan(
+    tmp_path: Path,
+) -> None:
+    """Application rejects diagnostics that cannot gate observations by a plan."""
+    diagnostic = SemanticDiagnosticResult(
+        grounded_unit_ids=(),
+        omitted_unit_ids=(),
+        too_shallow_unit_ids=(),
+        sufficiently_represented_unit_ids=(),
+        recommended_expansions=(),
+        reason="No attached runtime plan.",
+    )
+    program, _plan = _runtime_plan(tmp_path)
+
+    with pytest.raises(ValueError, match="planned_runtime_probe_request_plan"):
+        runtime_observation_admission.apply_runtime_observations_for_diagnostic(
+            program,
+            diagnostic,
+            (),
+        )
+
+
+def test_apply_runtime_observations_for_diagnostic_rejects_unmatched_observation(
+    tmp_path: Path,
+) -> None:
+    """Application propagates diagnostic admission's source-site gate."""
+    program, plan = _runtime_plan(tmp_path)
+    diagnostic = _diagnostic_for_plan(plan)
+    observation = _dynamic_import_observation(_unplanned_site())
+
+    with pytest.raises(ValueError, match="not present in request plan"):
+        runtime_observation_admission.apply_runtime_observations_for_diagnostic(
+            program,
+            diagnostic,
+            (observation,),
+        )
+
+    assert program.provenance_records == []
+
+
+def test_apply_runtime_observations_for_diagnostic_rejects_duplicate_observation_sites(
+    tmp_path: Path,
+) -> None:
+    """Application propagates duplicate-observation rejection from admission."""
+    program, plan = _runtime_plan(tmp_path)
+    diagnostic = _diagnostic_for_plan(plan)
+    first_observation = _dynamic_import_observation(plan.requests[0].source_site)
+    second_observation = _getattr_observation(plan.requests[0].source_site)
+
+    with pytest.raises(ValueError, match="share the same source site"):
+        runtime_observation_admission.apply_runtime_observations_for_diagnostic(
+            program,
+            diagnostic,
+            (first_observation, second_observation),
+        )
+
+    assert program.provenance_records == []
+
+
+def test_apply_runtime_observations_for_diagnostic_rejects_family_form_mismatch(
+    tmp_path: Path,
+) -> None:
+    """Application propagates request/observation compatibility rejection."""
+    program, plan = _runtime_plan(tmp_path)
+    diagnostic = _diagnostic_for_plan(plan)
+    observation = _exec_observation(plan.requests[0].source_site)
+
+    with pytest.raises(ValueError, match="does not match planned request family/form"):
+        runtime_observation_admission.apply_runtime_observations_for_diagnostic(
+            program,
+            diagnostic,
+            (observation,),
+        )
+
+    assert program.provenance_records == []
 
 
 def test_attach_admitted_runtime_observations_empty_batch_returns_input_program(

@@ -62,6 +62,15 @@ class RuntimeObservationAdmission:
     observation: RuntimeObservation
 
 
+@dataclass(frozen=True)
+class RuntimeObservationApplication:
+    """Result of applying admitted runtime observations for one diagnostic."""
+
+    diagnostic: SemanticDiagnosticResult
+    admissions: tuple[RuntimeObservationAdmission, ...]
+    updated_program: SemanticProgram
+
+
 def admit_runtime_observations_for_plan(
     plan: RuntimeProbeRequestPlan,
     observations: Iterable[RuntimeObservation],
@@ -114,6 +123,21 @@ def admit_runtime_observations_for_diagnostic(
             "admission"
         )
     return admit_runtime_observations_for_plan(plan, observations)
+
+
+def apply_runtime_observations_for_diagnostic(
+    program: SemanticProgram,
+    diagnostic: SemanticDiagnosticResult,
+    observations: Iterable[RuntimeObservation],
+) -> RuntimeObservationApplication:
+    """Admit and attach runtime observations gated by a diagnostic request plan."""
+    admissions = admit_runtime_observations_for_diagnostic(diagnostic, observations)
+    updated_program = attach_admitted_runtime_observations(program, admissions)
+    return RuntimeObservationApplication(
+        diagnostic=diagnostic,
+        admissions=admissions,
+        updated_program=updated_program,
+    )
 
 
 def attach_admitted_runtime_observations(
@@ -370,6 +394,8 @@ def _exec_or_eval_observation_matches_request(
 __all__ = [
     "RuntimeObservation",
     "RuntimeObservationAdmission",
+    "RuntimeObservationApplication",
     "admit_runtime_observations_for_diagnostic",
     "admit_runtime_observations_for_plan",
+    "apply_runtime_observations_for_diagnostic",
 ]

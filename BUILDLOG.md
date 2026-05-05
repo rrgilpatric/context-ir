@@ -2,6 +2,63 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Diagnostic Runtime Observation Application Review
+
+- Reviewed the returned implementation slice for applying runtime observations
+  through a diagnostic's existing request plan.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b6ef1f8 Sync admitted runtime observation routing`
+  - nothing staged
+  - no untracked files
+  - dirty files were exactly:
+    - `src/context_ir/runtime_observation_admission.py`
+    - `tests/test_runtime_observation_admission.py`
+  - `git diff --check` was clean
+- Accepted implementation state:
+  - `RuntimeObservationApplication` is a frozen internal result envelope with
+    the diagnostic, admitted observations, and updated program
+  - `apply_runtime_observations_for_diagnostic(program, diagnostic, observations)`
+    composes `admit_runtime_observations_for_diagnostic(...)` with
+    `attach_admitted_runtime_observations(...)`
+  - application requires the diagnostic's planned runtime probe request plan
+    through the existing diagnostic admission path
+  - admissions preserve diagnostic plan order, request IDs, request object
+    identity, and observation object identity
+  - empty admitted batches return the original `SemanticProgram` object through
+    the existing attachment behavior
+  - missing plans, unmatched observation source sites, duplicate observation
+    source sites, and family/form mismatches reject through existing gates
+  - input `SemanticProgram`, `SemanticDiagnosticResult`, planned requests, and
+    observations are not mutated
+  - no probe execution, execution-result contract, runtime observation
+    collection, analyzer/tool-facade behavior, semantic recompile behavior,
+    package-root API, MCP, eval, schema, scoring, optimizer, compiler,
+    winner-selection, product, public benchmark, or public-claim surface
+    changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py tests/test_runtime_probe_requests.py tests/test_semantic_diagnostics.py -v`
+    reporting `165 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_admission.py`,
+    `tests/test_runtime_observation_admission.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- 35c440d Admitted Runtime Observation Bridge Release Sync
 
 - Synced post-push continuity for
