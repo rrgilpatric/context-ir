@@ -40,19 +40,13 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current local source/contract release candidate is
-`ccd417a Add runtime probe result admission bridge`. It is locally committed
-on `main` and remains Ryan-gated for push unless live git refs show it has
-already reached `origin/main`.
+Current pushed source/contract release authority is
+`ccd417a Add runtime probe result admission bridge`. Latest pushed continuity
+authority is `6023220 Sync runtime probe admission release routing`. Live git
+refs and worktree state must still be verified from git during control intake;
+do not infer them from committed prose.
 
-Latest pushed source/contract release authority remains
-`eb6def0 Add runtime probe result contracts` until the Ryan-gated push of
-`ccd417a` completes. Latest pushed continuity authority remains
-`4907f9e Sync runtime probe result release routing` until live git refs show a
-newer pushed continuity commit. Live git refs and worktree state must still be
-verified from git during control intake.
-
-Runtime probe result admission bridge local release candidate:
+Runtime probe result admission bridge release:
 
 - `admit_runtime_probe_result_batch_for_plan(...)` bridges
   `RuntimeProbeResultBatch` into deterministic plan-ordered
@@ -84,17 +78,17 @@ Runtime probe result admission bridge local release candidate:
     no extra drift, and clean `git diff --check`
 - local commit creation completed at
   `ccd417a Add runtime probe result admission bridge`
-- Ryan-authorized push has not been performed unless live git refs show
-  `origin/main` contains `ccd417a`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `6023220 Sync runtime probe admission release routing`
 
-Local release candidate four-file unit:
+Released four-file unit:
 
 - `src/context_ir/runtime_observation_admission.py`
 - `tests/test_runtime_observation_admission.py`
 - `PLAN.md`
 - `BUILDLOG.md`
 
-Release-gate status is local-commit-created and push-gated for `ccd417a`.
+Release-gate status is no-active-gate for `ccd417a`.
 
 Prior pushed runtime probe execution-result/replay-artifact contract:
 
@@ -318,16 +312,13 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
-- Runtime probe result admission bridge is release-gate-cleared and locally
-  committed at `ccd417a Add runtime probe result admission bridge`.
-- If live git shows `ccd417a` is still ahead of `origin/main`, the next control
-  action is Ryan-gated push authorization or explicit hold. Do not route a new
-  implementation, planning, release-gate, staging, or local commit lane before
-  that push/hold decision.
-- If live git shows `origin/main` already contains `ccd417a`, route to a
-  post-push continuity sync only if the committed active block would otherwise
-  mislead a fresh controller; otherwise fold the post-push note into the next
-  substantive continuity update.
+- Runtime probe result admission bridge is pushed at
+  `ccd417a Add runtime probe result admission bridge` with no active gate.
+- The next runtime-acquisition-loop control decision should choose the next
+  bounded internal slice after the pushed request-plan, result-contract, and
+  result-to-admission bridge sequence. Prefer one narrow planning/control lane
+  or implementation prompt; do not reopen pushed release gates absent new
+  findings.
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.

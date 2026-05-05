@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Result Admission Bridge Push Sync
+
+- Ryan authorized pushing the runtime probe result admission bridge release
+  after local commit creation and continuity routing sync.
+- Pre-push verification:
+  - branch `main`
+  - local `HEAD` at `6023220 Sync runtime probe admission release routing`
+  - `origin/main` at `4907f9e Sync runtime probe result release routing`
+  - local commits ahead of `origin/main` were exactly
+    `ccd417a Add runtime probe result admission bridge` and
+    `6023220 Sync runtime probe admission release routing`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Push completed:
+  - pushed `main` to `origin/main`
+  - remote advanced from `4907f9e` to `6023220`
+- Post-push verification:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `6023220 Sync runtime probe admission release routing`
+  - latest pushed source/contract authority is
+    `ccd417a Add runtime probe result admission bridge`
+  - latest pushed continuity authority is
+    `6023220 Sync runtime probe admission release routing`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `ccd417a` as pushed and no-active-gate
+  - treat the committed `6023220` local-candidate wording as superseded by this
+    post-push sync because it can otherwise misroute a fresh controller back to
+    a completed push gate
+  - next route may choose the next bounded runtime-acquisition-loop planning or
+    implementation lane, but must not reopen `ccd417a` release gates absent new
+    findings
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Result Admission Bridge Local Commit
 
 - Reviewed the external combined read-only release-gate result for the runtime
