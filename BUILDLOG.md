@@ -2,6 +2,115 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Result Contract Review
+
+- Reviewed the returned internal runtime probe execution-result/replay-artifact
+  contract implementation slice.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `be7bfc7 Sync typed facade runtime recompile routing`
+  - dirty tracked files exactly `PLAN.md` and `BUILDLOG.md`
+  - implementation files were untracked:
+    - `src/context_ir/runtime_probe_results.py`
+    - `tests/test_runtime_probe_results.py`
+  - nothing staged
+  - `git diff --check` clean
+- Accepted implementation state:
+  - `RuntimeProbeReplayField` provides typed key/value replay and payload
+    fields without `Any`
+  - `RuntimeProbeReplayArtifact` records probe identifier, probe contract
+    revision, repository snapshot basis, replay target/selector, replay
+    inputs, and runtime assumptions
+  - `RuntimeProbeObservedResult` preserves `plan_id`, `request_id`, and the
+    carried `RuntimeProbeRequest`, validates `request_id` against
+    `request.request_id`, requires replay inputs/runtime assumptions, and
+    requires normalized payload or a durable artifact reference
+  - `RuntimeProbeNonProofResult` represents crash, timeout,
+    missing-environment, and setup-failure outcomes without making them
+    admissible runtime-backed proof
+  - `RuntimeProbeResultBatch` keeps ordered mixed proof/non-proof results under
+    one plan ID and rejects plan drift or duplicate request IDs
+  - the new contract is frozen and exported only from module-local
+    `context_ir.runtime_probe_results.__all__`
+  - no probe execution, typed observation conversion, provenance attachment,
+    `SemanticProgram` mutation, `tool_facade.py`, `mcp_server.py`,
+    `context_ir/__init__.py`, eval, JSON schema, public claim, MCP,
+    package-root, or public/API surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_results.py tests/test_runtime_probe_results.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_results.py tests/test_runtime_probe_results.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_public_api.py tests/test_mcp_server.py -v`
+    reporting `111 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_probe_results.py`,
+    `tests/test_runtime_probe_results.py`, `PLAN.md`, and `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-05 -- Runtime Probe Result Contract Routing
+
+- Reviewed the read-only execution-boundary spike after the pushed
+  `8ac3b46 Add typed runtime recompile facade` release and
+  `be7bfc7 Sync typed facade runtime recompile routing` continuity sync.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `be7bfc7 Sync typed facade runtime recompile routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted spike findings:
+  - planned probe identity and deterministic request plans already exist in
+    `src/context_ir/runtime_probe_requests.py`
+  - typed observation admission/application already exists in
+    `src/context_ir/runtime_observation_admission.py`
+  - typed facade runtime observation recompile already exists in
+    `src/context_ir/tool_facade.py`
+  - the missing boundary is an internal execution-result/replay-artifact
+    contract between planned requests and typed observations
+  - the runtime-backed admissibility boundary still requires stable probe
+    identity, repository snapshot basis, replay inputs/assumptions,
+    reproducible outcome, and additive provenance only
+- Routing decision:
+  - accept the spike first-pass
+  - route next to a bounded internal `runtime_probe_results.py` contract slice
+  - the slice should add frozen execution-result/replay-artifact records that
+    preserve `RuntimeProbeRequest.request_id` and `RuntimeProbeRequestPlan.plan_id`
+  - observed outcomes must require probe identifier, probe contract revision,
+    repository snapshot basis, replay target/selector, replay inputs/runtime
+    assumptions, and normalized payload or durable artifact reference
+  - non-proof outcomes such as crash, timeout, or missing environment must be
+    representable without making them admissible runtime-backed proof
+  - implementation scope is limited to `src/context_ir/runtime_probe_results.py`
+    and `tests/test_runtime_probe_results.py`
+  - no probe execution, typed observation conversion, provenance attachment,
+    `SemanticProgram` mutation, `tool_facade.py`, `mcp_server.py`,
+    `context_ir/__init__.py`, eval, JSON schema, public claims, or public/API
+    surface work is authorized
+- Alternatives rejected:
+  - probe-runner request materialization, because the runner has no durable
+    output contract yet
+  - typed observation collection, because it would admit outputs before the
+    proof/result boundary exists
+  - JSON-safe facade serialization, because it would create external schema
+    too early
+  - MCP exposure, because it is external/product-surface widening and remains
+    explicitly held
+  - explicit hold, because a narrow internal contract slice is safe
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- 8ac3b46 Typed Facade Runtime Recompile Release Sync
 
 - Synced post-push continuity for

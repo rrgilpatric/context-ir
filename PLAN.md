@@ -228,19 +228,29 @@ Release-gate status is no-active-gate for `95f7545`.
 Current route:
 
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
-- Route next to a read-only execution-boundary spike before any probe-runner,
-  execution-result, JSON, MCP, package-root, or public-surface implementation.
-- The spike must decide the smallest safe next implementation slice toward
-  usable runtime acquisition after the typed facade recompile surface.
-- Candidate next slices to evaluate: internal execution-result/replay-artifact
-  contract, probe-runner request materialization, typed observation collection,
-  JSON-safe facade serialization, MCP exposure, or an explicit hold.
-- The spike must preserve the runtime-backed admissibility boundary in
-  `ARCHITECTURE.md`: stable probe identity, repository snapshot basis, replay
-  contract, reproducible outcome, additive provenance, and no silent upgrade
-  of unsupported/frontier truth.
-- No implementation is authorized until the spike returns and control accepts
-  a specific next slice.
+- Post-`8ac3b46` execution-boundary spike is accepted first-pass.
+- Runtime probe execution-result/replay-artifact contract implementation is
+  accepted first-pass in workspace-only state.
+- Accepted workspace files are `src/context_ir/runtime_probe_results.py` and
+  `tests/test_runtime_probe_results.py`, plus control continuity in `PLAN.md`
+  and `BUILDLOG.md`.
+- The accepted slice added frozen module-local records for runtime probe
+  replay fields, replay artifacts, observed proof-bearing results, non-proof
+  failure results, and ordered result batches.
+- Observed outcomes preserve `RuntimeProbeRequest.request_id` and plan IDs,
+  require stable probe identity, probe contract revision, repository snapshot
+  basis, replay target/selector, replay inputs, runtime assumptions, and
+  normalized payload or durable artifact reference.
+- Non-proof outcomes such as crash, timeout, missing environment, and setup
+  failure are representable without becoming admissible runtime-backed proof.
+- The accepted slice did not execute probes, convert to typed
+  `RuntimeObservation`, attach provenance, mutate `SemanticProgram`, edit
+  `tool_facade.py`, `mcp_server.py`, or `context_ir/__init__.py`, or widen eval,
+  JSON schema, public claims, package-root, MCP, or public/API surfaces.
+- Route next to a combined read-only release gate over the exact four-file
+  runtime probe result contract release unit. The gate must run release-unit
+  audit, full regression, and commit-gating in order, stopping on the first
+  finding. Do not route another implementation slice before this gate returns.
 - Do not route `8ac3b46`, `b279b00`, `74aadd7`, `95f7545`, `35c440d`,
   `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`,
   `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`,
@@ -1867,7 +1877,11 @@ sequencing for `c1a12d7` absent new findings.
   recompile release unit
 - [x] Local commit creation and Ryan-authorized push for the typed facade
   runtime recompile release unit
-- [ ] Post-`8ac3b46` execution-boundary spike
+- [x] Post-`8ac3b46` execution-boundary spike accepted first-pass
+- [x] Runtime probe execution-result/replay-artifact contract slice accepted
+  first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file runtime probe result
+  contract release unit
 
 ## What Is In Progress
 
@@ -1878,10 +1892,17 @@ sequencing for `c1a12d7` absent new findings.
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `8ac3b46`.
-- Next active route is a read-only execution-boundary spike. It should decide
-  the smallest safe implementation slice before any probe-runner,
-  execution-result/replay-artifact, JSON, MCP, package-root, or public-surface
-  implementation.
+- Runtime probe execution-result/replay-artifact contract implementation is
+  accepted first-pass in workspace-only state.
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_results.py`
+  - `tests/test_runtime_probe_results.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Next active gate is a combined read-only release gate over that exact
+  four-file unit. No staging, local commit, push, or next implementation slice
+  is authorized before the gate returns clean or a findings-based correction is
+  accepted.
 - No release gate is active for the pushed runtime observation recompile
   composition tranche.
 - The runtime observation recompile composition tranche is completed and
@@ -2700,23 +2721,19 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: read-only execution-boundary spike after the pushed
-typed facade runtime recompile release.
+Immediate next route: combined read-only release gate for the exact four-file
+runtime probe execution-result/replay-artifact contract release unit:
 
-The spike should decide the smallest safe next implementation slice toward a
-usable runtime-acquisition loop. It must compare at least:
+- `src/context_ir/runtime_probe_results.py`
+- `tests/test_runtime_probe_results.py`
+- `PLAN.md`
+- `BUILDLOG.md`
 
-- internal execution-result/replay-artifact contract
-- probe-runner request materialization
-- typed observation collection
-- JSON-safe facade serialization
-- MCP exposure
-- explicit hold
-
-No implementation is authorized during the spike. The spike must preserve the
-runtime-backed admissibility boundary: stable probe identity, repository
-snapshot basis, replay contract, reproducible outcome, additive provenance,
-and no silent upgrade of unsupported/frontier truth.
+The gate must run release-unit audit, then full regression, then
+commit-gating, stopping on the first finding. It must not edit files, stage,
+commit, push, or rewrite continuity. No new implementation slice is authorized
+before this release gate returns clean or a findings-based correction is
+accepted.
 
 The typed facade runtime recompile tranche is pushed at
 `8ac3b46 Add typed runtime recompile facade` and has release-gate status
