@@ -2,6 +2,40 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- b279b00 Runtime Observation Recompile Composition Release Sync
+
+- Synced post-push continuity for
+  `b279b00 Compose runtime observation recompile flow`.
+- Repo-backed release truth verified from live git during this sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b279b00 Compose runtime observation recompile flow`
+  - clean worktree at intake before this docs-only continuity edit
+  - nothing staged
+  - no untracked files
+- Release state now recorded:
+  - runtime observation recompile composition tranche completed and pushed at
+    `b279b00`
+  - release-gate status is no-active-gate
+  - combined read-only release gate passed with no findings
+  - focused validation passed, including targeted pytest reporting `87 passed`
+  - full regression passed, including full pytest reporting `811 passed`
+  - commit-gating passed over the exact four-file release unit:
+    `src/context_ir/runtime_observation_recompile.py`,
+    `tests/test_runtime_observation_recompile.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+- Routing decision:
+  - supersede the workspace-only runtime observation recompile composition
+    release-gate route for active control routing
+  - route next to bounded post-`b279b00` North Star planning/control to choose
+    the next smallest meaningful capability slice
+  - do not route `b279b00`, `74aadd7`, `95f7545`, `35c440d`, `f5c8df0`,
+    `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`,
+    `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`,
+    `f6c66e4`, or `546a4da` back to release sequencing absent new findings
+  - push remains Ryan-gated for any future release
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Observation Recompile Composition Review
 
 - Reviewed the returned implementation slice for composing diagnostic-gated

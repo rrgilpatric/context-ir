@@ -41,17 +41,63 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`74aadd7 Refresh diagnostic runtime trace support`. It supersedes the
-workspace-only diagnostic trace-refresh release-gate route for active control
-routing only. Live git refs and worktree state must still be verified from git
-during control intake.
+`b279b00 Compose runtime observation recompile flow`. It supersedes the
+workspace-only runtime observation recompile composition release-gate route for
+active control routing only. Live git refs and worktree state must still be
+verified from git during control intake.
 
 Repo-backed release truth verified during post-push continuity sync: branch
 `main`, `HEAD` and `origin/main` at
-`74aadd7 Refresh diagnostic runtime trace support`, clean worktree at intake
+`b279b00 Compose runtime observation recompile flow`, clean worktree at intake
 before this docs-only continuity edit, nothing staged, and no untracked files.
 
-Released diagnostic trace refresh:
+Released runtime observation recompile composition:
+
+- `RuntimeObservationRecompileApplication` is a frozen internal result
+  envelope in `src/context_ir/runtime_observation_recompile.py`
+- `apply_runtime_observations_for_diagnostic_and_recompile(...)` composes
+  `apply_runtime_observations_for_diagnostic(...)` with
+  `recompile_semantic_context(...)`
+- the helper applies observations through the existing diagnostic-gated
+  admission/application path, then recompiles with
+  `application.updated_program`
+- optional `embed_fn` is forwarded to semantic recompile
+- the returned envelope carries both the runtime observation application and
+  the semantic recompile result
+- successful runtime observation satisfaction does not re-plan the already
+  satisfied diagnostic runtime request
+- empty observations preserve existing empty-application behavior and
+  recompile the original program
+- missing diagnostic plans, unmatched observation sites, duplicate observation
+  sites, family/form mismatches, negative budget deltas, and missing prior
+  compile context reject through existing gates
+- input `SemanticProgram`, previous compile result, diagnostic, plan, request,
+  and observations are not mutated
+- the new helper is exported only from module-local `__all__`; no package-root,
+  analyzer, tool-facade, or MCP surface is widened
+- no probe execution, execution-result contract, runtime observation
+  collection, eval, schema, scoring policy, compiler contract, optimizer,
+  winner-selection, product, public benchmark, or public-claim surface changed
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting `87 passed`
+  - Gate 2 full regression passed, including full pytest reporting `811 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, and clean `git diff --check`
+- local commit creation and Ryan-authorized push completed at
+  `b279b00 Compose runtime observation recompile flow`
+
+Released four-file unit:
+
+- `src/context_ir/runtime_observation_recompile.py`
+- `tests/test_runtime_observation_recompile.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Release-gate status is no-active-gate for `b279b00`.
+
+Prior released diagnostic trace refresh:
 
 - `diagnose_semantic_miss(previous_result, evidence, current_program)` now
   classifies runtime support from the supplied current `SemanticProgram` using
@@ -138,25 +184,14 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
-- Post-`74aadd7` North Star planning/control selected the internal
-  runtime-observation recompile composition helper as the next smallest
-  meaningful capability slice.
-- Runtime observation recompile composition helper implementation is accepted
-  first-pass in workspace-only state.
-- Route next to a combined read-only release gate over the exact four-file
-  runtime observation recompile composition release unit:
-  - `src/context_ir/runtime_observation_recompile.py`
-  - `tests/test_runtime_observation_recompile.py`
-  - `PLAN.md`
-  - `BUILDLOG.md`
-- The release gate must run release-unit audit, full regression, and
-  commit-gating in order, stopping on the first finding. It must not edit
-  files, stage, commit, push, or rewrite continuity.
-- Do not route `74aadd7`, `95f7545`, `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`,
-  `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`,
-  `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back
-  to docs review, release-unit audit, focused validation, full regression,
-  commit-gating, staging, local commit creation, or push absent new findings
+- Route next to bounded post-`b279b00` North Star planning/control to choose
+  the next smallest meaningful capability slice
+- Do not route `b279b00`, `74aadd7`, `95f7545`, `35c440d`, `f5c8df0`,
+  `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`,
+  `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`,
+  `f6c66e4`, or `546a4da` back to docs review, release-unit audit, focused
+  validation, full regression, commit-gating, staging, local commit creation,
+  or push absent new findings
 - Push remains Ryan-gated for any future release
 
 Released planned runtime probe request plan source-site indexing:
@@ -1764,22 +1799,22 @@ sequencing for `c1a12d7` absent new findings.
   observation recompile composition helper
 - [x] Runtime observation recompile composition helper implementation slice
   accepted first-pass in workspace-only state
-- [ ] Combined release gate for the exact four-file runtime observation
+- [x] Combined release gate for the exact four-file runtime observation
   recompile composition release unit
+- [x] Local commit creation and Ryan-authorized push for the runtime
+  observation recompile composition release unit
 
 ## What Is In Progress
 
-- Runtime observation recompile composition helper implementation is accepted
-  first-pass in workspace-only state.
-- Combined read-only release gate is the next route for the exact four-file
-  runtime observation recompile composition release unit:
+- No release gate is active for the pushed runtime observation recompile
+  composition tranche.
+- The runtime observation recompile composition tranche is completed and
+  pushed at `b279b00`:
   - `src/context_ir/runtime_observation_recompile.py`
   - `tests/test_runtime_observation_recompile.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- The runtime observation recompile composition tranche is not
-  release-unit-audit-cleared, not full-regression-cleared, not
-  commit-gating-cleared, not staged, not locally committed, and not pushed.
+- Release-gate status is no-active-gate for `b279b00`.
 - No release gate is active for the pushed diagnostic trace-refresh tranche.
 - The diagnostic trace-refresh tranche is completed and pushed at `74aadd7`:
   - `src/context_ir/semantic_diagnostics.py`
@@ -2589,20 +2624,14 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate for the exact four-file
-runtime observation recompile composition release unit. The gate must run
-release-unit audit, then full regression, then commit-gating, and must stop on
-the first finding. It must not edit files, stage, commit, push, or rewrite
-continuity.
+Immediate next route: bounded post-`b279b00` North Star planning/control to
+choose the next smallest meaningful capability slice. No implementation slice
+is authorized until control selects and routes one under the normal quality
+gate.
 
-The accepted runtime observation recompile composition slice adds an internal
-module-local helper that composes already-admitted runtime observation
-application with refreshed semantic recompile and returns a frozen result
-envelope containing both outputs. It requires a diagnostic with an attached
-planned runtime probe request plan through the existing application path,
-admits and attaches observations through existing helpers, recompiles using
-`application.updated_program`, preserves input purity, and avoids duplicate
-runtime request planning when observations satisfy the boundary.
+The runtime observation recompile composition tranche is pushed at
+`b279b00 Compose runtime observation recompile flow` and has release-gate
+status no-active-gate. It should not be reopened absent new findings.
 
 The diagnostic trace-refresh tranche is pushed at
 `74aadd7 Refresh diagnostic runtime trace support` and has release-gate status
