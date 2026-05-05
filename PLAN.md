@@ -90,6 +90,39 @@ Released four-file unit:
 
 Release-gate status is no-active-gate for `ccd417a`.
 
+Runtime probe result-batch recompile bridge workspace state:
+
+- implementation review accepted the slice first-pass in workspace-only state
+- accepted workspace files are
+  `src/context_ir/runtime_observation_recompile.py` and
+  `tests/test_runtime_observation_recompile.py`, plus control continuity in
+  `PLAN.md` and `BUILDLOG.md`
+- `RuntimeProbeResultBatchRecompileApplication` is a frozen internal envelope
+  carrying result-batch admission, preserved non-proof results, runtime
+  observation application, and semantic recompile result
+- `apply_runtime_probe_result_batch_for_diagnostic_and_recompile(...)` requires
+  the diagnostic's planned runtime probe request plan, admits the
+  `RuntimeProbeResultBatch` through the existing result-batch admission bridge,
+  attaches only observed proof-bearing results, preserves non-proof results
+  separately, and recompiles with the updated program
+- non-proof-only and partial mixed batches keep non-proof results out of
+  runtime-backed proof while preserving deterministic plan-order admissions
+- existing plan, request, source-site, family/form, duplicate result, negative
+  budget, and missing compile-context gates propagate through the composed path
+- the helper remains internal to `context_ir.runtime_observation_recompile`;
+  package-root, tool facade, MCP, JSON/schema, serialization, eval, scoring,
+  optimizer, compiler, winner-selection, docs, and public-claim surfaces remain
+  unchanged
+- control-lane focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_observation_admission.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_acquisition.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `232 passed`
+  - `git diff --check`
+- this is not release-unit-audit clearance, full-regression clearance,
+  commit-gating clearance, local commit creation, or push readiness
+
 Prior pushed runtime probe execution-result/replay-artifact contract:
 
 Released runtime probe execution-result/replay-artifact contract:
@@ -314,11 +347,13 @@ Current route:
 
 - Runtime probe result admission bridge is pushed at
   `ccd417a Add runtime probe result admission bridge` with no active gate.
-- The next runtime-acquisition-loop control decision should choose the next
-  bounded internal slice after the pushed request-plan, result-contract, and
-  result-to-admission bridge sequence. Prefer one narrow planning/control lane
-  or implementation prompt; do not reopen pushed release gates absent new
-  findings.
+- Runtime probe result-batch recompile bridge implementation is accepted
+  first-pass in workspace-only state.
+- Route next to a combined read-only release gate over the exact four-file
+  runtime probe result-batch recompile bridge release unit. The gate must run
+  release-unit audit, full regression, and commit-gating in order, stopping on
+  the first finding. Do not route another implementation slice before this gate
+  returns.
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.

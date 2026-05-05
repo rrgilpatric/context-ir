@@ -2,6 +2,64 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Result-Batch Recompile Bridge Review
+
+- Reviewed the returned internal result-batch to recompile bridge
+  implementation slice.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - local `HEAD` at `37db0ca Sync runtime probe admission post-push state`
+  - `origin/main` at `6023220 Sync runtime probe admission release routing`
+  - local ahead commit is docs-only post-push continuity
+  - implementation files changed by the execution lane were
+    `src/context_ir/runtime_observation_recompile.py` and
+    `tests/test_runtime_observation_recompile.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted implementation state:
+  - `RuntimeProbeResultBatchRecompileApplication` is a frozen internal result
+    envelope carrying result-batch admission, preserved non-proof results,
+    runtime observation application, and semantic recompile result
+  - `apply_runtime_probe_result_batch_for_diagnostic_and_recompile(...)`
+    requires the diagnostic's planned runtime probe request plan
+  - the helper admits a `RuntimeProbeResultBatch` through
+    `admit_runtime_probe_result_batch_for_plan(...)`
+  - only observed proof-bearing results become attached runtime-backed
+    observations
+  - `RuntimeProbeNonProofResult` values are preserved separately and are never
+    admitted as runtime-backed proof
+  - non-proof-only and partial mixed batches preserve deterministic plan-order
+    admission behavior
+  - existing admission/application/recompile gates propagate for plan drift,
+    request/source-site/family/form mismatch, duplicate result IDs, negative
+    budget, and missing prior compile context
+  - the helper remains internal to `context_ir.runtime_observation_recompile`
+    and does not widen package-root, tool facade, MCP, JSON/schema,
+    serialization, eval, scoring, optimizer, compiler, winner-selection, docs,
+    or public-claim surfaces
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_observation_admission.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_acquisition.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `232 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/runtime composition changes should be handled as their own release
+    unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_recompile.py`,
+    `tests/test_runtime_observation_recompile.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Result Admission Bridge Push Sync
 
 - Ryan authorized pushing the runtime probe result admission bridge release

@@ -2,21 +2,28 @@
 
 from __future__ import annotations
 
+import hashlib
 import textwrap
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 
 import pytest
 
+import context_ir
 import context_ir.runtime_acquisition as runtime_acquisition
+import context_ir.runtime_observation_admission as runtime_observation_admission
+import context_ir.runtime_observation_recompile as runtime_observation_recompile
 import context_ir.runtime_probe_requests as runtime_probe_requests
+import context_ir.runtime_probe_results as runtime_probe_results
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
 from context_ir.runtime_observation_recompile import (
     RuntimeObservationRecompileApplication,
+    RuntimeProbeResultBatchRecompileApplication,
     apply_runtime_observations_for_diagnostic_and_recompile,
+    apply_runtime_probe_result_batch_for_diagnostic_and_recompile,
 )
 from context_ir.semantic_compiler import compile_semantic_context
 from context_ir.semantic_diagnostics import (
@@ -59,6 +66,23 @@ def _write_dynamic_import_program(tmp_path: Path) -> None:
 
             def run(name: str) -> None:
                 importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
+def _write_mixed_runtime_program(tmp_path: Path) -> None:
+    """Write a fixture with several attachable runtime probe boundaries."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(obj: object, name: str, source: str) -> None:
+                importlib.import_module(name)
+                getattr(obj, name)
+                exec(source)
             """
         ).lstrip(),
         encoding="utf-8",
@@ -110,6 +134,38 @@ def _runtime_recompile_fixture(
     )
 
 
+def _runtime_recompile_multi_request_fixture(
+    tmp_path: Path,
+) -> tuple[
+    SemanticProgram,
+    SemanticCompileResult,
+    SemanticMissEvidence,
+    SemanticDiagnosticResult,
+    runtime_probe_requests.RuntimeProbeRequestPlan,
+]:
+    """Build a diagnostic/recompile fixture with several planned requests."""
+    _write_mixed_runtime_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    previous_result = compile_semantic_context(
+        program,
+        "runtime boundary",
+        budget=48,
+    )
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.EDIT_TO_OMITTED_PATH,
+        evidence="main.py",
+    )
+    diagnostic = diagnose_semantic_miss(previous_result, miss_evidence, program)
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert [request.boundary_text for request in plan.requests] == [
+        "importlib.import_module(name)",
+        "getattr(obj, name)",
+        "exec(source)",
+    ]
+    return program, previous_result, miss_evidence, diagnostic, plan
+
+
 def _unsupported_id_for(program: SemanticProgram, construct_text: str) -> str:
     """Return the unsupported-construct ID for ``construct_text``."""
     return next(
@@ -151,6 +207,149 @@ def _attachment_links(site: SourceSite) -> tuple[RuntimeAttachmentLink, ...]:
     )
 
 
+def _probe_field(
+    key: str = "runtime_input",
+    value: str = "runtime-value",
+) -> runtime_probe_results.RuntimeProbeReplayField:
+    """Return one runtime probe replay/result field."""
+    return runtime_probe_results.RuntimeProbeReplayField(key=key, value=value)
+
+
+def _probe_fields_from_runtime_fields(
+    fields: tuple[runtime_acquisition._RuntimeObservationField, ...],
+) -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Convert existing typed observation fields into probe result fields."""
+    return tuple(_probe_field(field.key, field.value) for field in fields)
+
+
+def _runtime_fields_from_probe_fields(
+    fields: tuple[runtime_probe_results.RuntimeProbeReplayField, ...],
+) -> tuple[runtime_acquisition._RuntimeObservationField, ...]:
+    """Convert probe result fields into the existing typed observation shape."""
+    return tuple(
+        runtime_acquisition._RuntimeObservationField(
+            key=field.key,
+            value=field.value,
+        )
+        for field in fields
+    )
+
+
+def _replay_inputs_for_result(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+    observation: runtime_observation_admission.RuntimeObservation,
+) -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return non-empty replay inputs for an observed result contract."""
+    replay_inputs = _probe_fields_from_runtime_fields(observation.replay_inputs)
+    if replay_inputs:
+        return replay_inputs
+    return (_probe_field("request_id", request.request_id),)
+
+
+def _replay_artifact_for_result(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+    observation: runtime_observation_admission.RuntimeObservation,
+) -> runtime_probe_results.RuntimeProbeReplayArtifact:
+    """Build a replay artifact that mirrors an existing typed observation."""
+    return runtime_probe_results.RuntimeProbeReplayArtifact(
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=_replay_inputs_for_result(request, observation),
+        runtime_assumptions=(
+            _probe_field("python_version", "3.11"),
+            _probe_field("platform", "test"),
+        ),
+    )
+
+
+def _observed_probe_result_for_observation(
+    plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+    request: runtime_probe_requests.RuntimeProbeRequest,
+    observation: runtime_observation_admission.RuntimeObservation,
+) -> runtime_probe_results.RuntimeProbeObservedResult:
+    """Build an observed probe result carrying an existing observation's data."""
+    return runtime_probe_results.RuntimeProbeObservedResult(
+        plan_id=plan.plan_id,
+        request_id=request.request_id,
+        request=request,
+        replay_artifact=_replay_artifact_for_result(request, observation),
+        normalized_payload=_probe_fields_from_runtime_fields(
+            observation.normalized_payload
+        ),
+        durable_artifact_reference=observation.durable_payload_reference,
+    )
+
+
+def _non_proof_probe_result(
+    plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+    request: runtime_probe_requests.RuntimeProbeRequest,
+) -> runtime_probe_results.RuntimeProbeNonProofResult:
+    """Build a failed probe result for non-proof preservation tests."""
+    return runtime_probe_results.RuntimeProbeNonProofResult(
+        plan_id=plan.plan_id,
+        request_id=request.request_id,
+        request=request,
+        outcome=runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+        failure_summary="probe exceeded timeout",
+        failure_detail_fields=(_probe_field("timeout_seconds", "30"),),
+    )
+
+
+def _expected_probe_result_attachment_link(
+    result: runtime_probe_results.RuntimeProbeObservedResult,
+) -> RuntimeAttachmentLink:
+    """Return the deterministic attachment link expected from the result bridge."""
+    if result.durable_artifact_reference is None:
+        attachment_identity = f"{result.plan_id}:{result.request_id}"
+        description = "inline runtime probe result payload"
+    else:
+        attachment_identity = result.durable_artifact_reference
+        description = "durable runtime probe result artifact"
+    attachment_digest = hashlib.sha256(attachment_identity.encode("utf-8")).hexdigest()[
+        :24
+    ]
+    return RuntimeAttachmentLink(
+        attachment_id=f"runtime_probe_result:{attachment_digest}",
+        attachment_role="runtime_probe_result",
+        description=description,
+    )
+
+
+def _assert_observation_copied_probe_result(
+    observation: runtime_observation_admission.RuntimeObservation,
+    result: runtime_probe_results.RuntimeProbeObservedResult,
+) -> None:
+    """Assert the bridge copied the proof-bearing result contract fields."""
+    assert observation.site == result.request.source_site
+    assert observation.probe_identifier == result.replay_artifact.probe_identifier
+    assert (
+        observation.probe_contract_revision
+        == result.replay_artifact.probe_contract_revision
+    )
+    assert (
+        observation.repository_snapshot_basis
+        == result.replay_artifact.repository_snapshot_basis
+    )
+    assert observation.attachment_links == (
+        _expected_probe_result_attachment_link(result),
+    )
+    assert observation.replay_target == result.replay_artifact.replay_target
+    assert observation.replay_selector == result.replay_artifact.replay_selector
+    assert observation.replay_inputs == _runtime_fields_from_probe_fields(
+        result.replay_artifact.replay_inputs
+    )
+    assert observation.runtime_assumptions == _runtime_fields_from_probe_fields(
+        result.replay_artifact.runtime_assumptions
+    )
+    assert observation.normalized_payload == _runtime_fields_from_probe_fields(
+        result.normalized_payload
+    )
+    assert observation.durable_payload_reference == result.durable_artifact_reference
+
+
 def _dynamic_import_runtime_observation(
     site: SourceSite,
 ) -> runtime_acquisition.DynamicImportRuntimeObservation:
@@ -184,12 +383,27 @@ def _exec_runtime_observation(
         attachment_links=_attachment_links(site),
         replay_target="main.run",
         replay_selector="call:main.run:exec",
+        replay_inputs=(
+            runtime_acquisition._RuntimeObservationField(
+                key="source_shape",
+                value="literal_statement",
+            ),
+            runtime_acquisition._RuntimeObservationField(
+                key="source_sha256",
+                value=hashlib.sha256(b"pass").hexdigest(),
+            ),
+        ),
         normalized_payload=(
             runtime_acquisition._RuntimeObservationField(
                 key="execution_outcome",
                 value="completed",
             ),
+            runtime_acquisition._RuntimeObservationField(
+                key="statement_kind",
+                value="pass",
+            ),
         ),
+        durable_payload_reference=f"artifact://exec-result/{site.site_id}.json",
     )
 
 
@@ -312,6 +526,43 @@ def _observation_state(
     )
 
 
+def _observed_result_state(
+    result: runtime_probe_results.RuntimeProbeObservedResult,
+) -> tuple[object, ...]:
+    """Return observed probe result fields that should remain stable."""
+    return (
+        result.plan_id,
+        result.request_id,
+        result.request,
+        result.replay_artifact,
+        result.normalized_payload,
+        result.durable_artifact_reference,
+        result.outcome,
+    )
+
+
+def _non_proof_result_state(
+    result: runtime_probe_results.RuntimeProbeNonProofResult,
+) -> tuple[object, ...]:
+    """Return non-proof probe result fields that should remain stable."""
+    return (
+        result.plan_id,
+        result.request_id,
+        result.request,
+        result.outcome,
+        result.failure_summary,
+        result.replay_artifact,
+        result.failure_detail_fields,
+    )
+
+
+def _batch_state(
+    batch: runtime_probe_results.RuntimeProbeResultBatch,
+) -> tuple[object, ...]:
+    """Return result batch fields that should remain stable."""
+    return (batch.plan_id, batch.results)
+
+
 def test_runtime_observation_recompile_applies_and_recompiles_updated_program(
     tmp_path: Path,
 ) -> None:
@@ -385,6 +636,328 @@ def test_runtime_observation_recompile_applies_and_recompiles_updated_program(
     assert _plan_state(plan) == plan_before
     assert _request_state(request) == request_before
     assert _observation_state(observation) == observation_before
+
+
+def test_runtime_probe_result_batch_recompile_admits_observed_and_recompiles(
+    tmp_path: Path,
+) -> None:
+    """Observed result batches bridge into attachment before semantic recompile."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        observation,
+        unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+    observed = _observed_probe_result_for_observation(plan, request, observation)
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+    original_program_state = _program_state(program)
+    previous_state = _previous_result_state(previous_result)
+    diagnostic_before = _diagnostic_state(diagnostic)
+    plan_before = _plan_state(plan)
+    request_before = _request_state(request)
+    observation_before = _observation_state(observation)
+    observed_before = _observed_result_state(observed)
+    batch_before = _batch_state(batch)
+
+    result = apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        batch,
+        previous_result,
+        miss_evidence,
+        delta_budget=160,
+    )
+    application = result.observation_application
+    recompile_result = result.recompile_result
+    admitted_observation = application.admissions[0].observation
+    recompile_boundary = _boundary_for(recompile_result.diagnostic, unsupported_id)
+    selected_trace = next(
+        selection.trace_summary
+        for selection in recompile_result.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
+
+    assert isinstance(result, RuntimeProbeResultBatchRecompileApplication)
+    assert isinstance(application.updated_program, SemanticProgram)
+    assert isinstance(recompile_result, SemanticRecompileResult)
+    assert result.result_batch_admission.non_proof_results == ()
+    assert result.non_proof_results == ()
+    assert application.diagnostic is diagnostic
+    assert application.admissions == result.result_batch_admission.admissions
+    assert application.admissions[0].request is request
+    assert application.admissions[0].request_id == request.request_id
+    assert application.updated_program is not program
+    assert isinstance(
+        admitted_observation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    )
+    assert admitted_observation is not observation
+    _assert_observation_copied_probe_result(admitted_observation, observed)
+    assert recompile_boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert recompile_boundary.has_attached_runtime_provenance is True
+    assert selected_trace is not None
+    assert selected_trace.has_attached_runtime_provenance is True
+    assert selected_trace.attached_runtime_provenance_record_ids == tuple(
+        record.record_id for record in application.updated_program.provenance_records
+    )
+    assert unsupported_id in recompile_result.newly_selected_unit_ids
+    assert _program_state(program) == original_program_state
+    assert _previous_result_state(previous_result) == previous_state
+    assert _diagnostic_state(diagnostic) == diagnostic_before
+    assert _plan_state(plan) == plan_before
+    assert _request_state(request) == request_before
+    assert _observation_state(observation) == observation_before
+    assert _observed_result_state(observed) == observed_before
+    assert _batch_state(batch) == batch_before
+
+
+def test_runtime_probe_result_batch_recompile_preserves_non_proof_only_batch(
+    tmp_path: Path,
+) -> None:
+    """Non-proof-only batches remain separate and recompile the original program."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        _observation,
+        unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+    non_proof = _non_proof_probe_result(plan, request)
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(non_proof,),
+    )
+    non_proof_before = _non_proof_result_state(non_proof)
+    batch_before = _batch_state(batch)
+
+    result = apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        batch,
+        previous_result,
+        miss_evidence,
+        delta_budget=96,
+    )
+    expected_recompile = recompile_semantic_context(
+        previous_result,
+        miss_evidence,
+        delta_budget=96,
+        program=program,
+    )
+    boundary = _boundary_for(result.recompile_result.diagnostic, unsupported_id)
+
+    assert result.result_batch_admission.admissions == ()
+    assert result.result_batch_admission.non_proof_results == (non_proof,)
+    assert result.non_proof_results == (non_proof,)
+    assert all(
+        non_proof_result.is_admissible_runtime_backed_proof is False
+        for non_proof_result in result.non_proof_results
+    )
+    assert result.observation_application.diagnostic is diagnostic
+    assert result.observation_application.admissions == ()
+    assert result.observation_application.updated_program is program
+    assert result.recompile_result.diagnostic == expected_recompile.diagnostic
+    assert result.recompile_result.newly_selected_unit_ids == (
+        expected_recompile.newly_selected_unit_ids
+    )
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+    )
+    assert program.provenance_records == []
+    assert _non_proof_result_state(non_proof) == non_proof_before
+    assert _batch_state(batch) == batch_before
+
+    with pytest.raises(FrozenInstanceError):
+        result.non_proof_results = ()
+
+
+def test_runtime_probe_result_batch_recompile_preserves_plan_order_for_partial_batches(
+    tmp_path: Path,
+) -> None:
+    """Partial mixed batches are admitted by plan order, never result order."""
+    program, previous_result, miss_evidence, diagnostic, plan = (
+        _runtime_recompile_multi_request_fixture(tmp_path)
+    )
+    dynamic_observation = _dynamic_import_runtime_observation(
+        plan.requests[0].source_site
+    )
+    exec_observation = _exec_runtime_observation(plan.requests[2].source_site)
+    observed_dynamic = _observed_probe_result_for_observation(
+        plan,
+        plan.requests[0],
+        dynamic_observation,
+    )
+    observed_exec = _observed_probe_result_for_observation(
+        plan,
+        plan.requests[2],
+        exec_observation,
+    )
+    non_proof_getattr = _non_proof_probe_result(plan, plan.requests[1])
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed_exec, non_proof_getattr, observed_dynamic),
+    )
+
+    result = apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        batch,
+        previous_result,
+        miss_evidence,
+        delta_budget=96,
+    )
+
+    assert [
+        admission.request_id for admission in result.result_batch_admission.admissions
+    ] == [
+        plan.request_ids[0],
+        plan.request_ids[2],
+    ]
+    assert [
+        admission.request.boundary_text
+        for admission in result.observation_application.admissions
+    ] == [
+        "importlib.import_module(name)",
+        "exec(source)",
+    ]
+    assert result.observation_application.admissions == (
+        result.result_batch_admission.admissions
+    )
+    assert result.non_proof_results == (non_proof_getattr,)
+    assert result.result_batch_admission.non_proof_results == (non_proof_getattr,)
+    assert len(result.observation_application.updated_program.provenance_records) == 2
+    assert {
+        record.subject_id
+        for record in result.observation_application.updated_program.provenance_records
+    } == {plan.requests[0].subject_id, plan.requests[2].subject_id}
+    _assert_observation_copied_probe_result(
+        result.observation_application.admissions[0].observation,
+        observed_dynamic,
+    )
+    _assert_observation_copied_probe_result(
+        result.observation_application.admissions[1].observation,
+        observed_exec,
+    )
+    assert all(
+        non_proof_result.is_admissible_runtime_backed_proof is False
+        for non_proof_result in result.non_proof_results
+    )
+
+
+def test_runtime_probe_result_batch_recompile_propagates_admission_and_recompile_gates(
+    tmp_path: Path,
+) -> None:
+    """The batch helper lets existing admission and recompile validators fail."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        observation,
+        _unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+    observed = _observed_probe_result_for_observation(plan, request, observation)
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+
+    missing_plan = replace(diagnostic, planned_runtime_probe_request_plan=None)
+    with pytest.raises(ValueError, match="planned_runtime_probe_request_plan"):
+        apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+            program,
+            missing_plan,
+            batch,
+            previous_result,
+            miss_evidence,
+            delta_budget=96,
+        )
+
+    wrong_plan_batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id="runtime_probe_request_plan:other",
+        results=(),
+    )
+    with pytest.raises(ValueError, match="plan_id must match request plan"):
+        apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+            program,
+            diagnostic,
+            wrong_plan_batch,
+            previous_result,
+            miss_evidence,
+            delta_budget=96,
+        )
+
+    duplicate_batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+    object.__setattr__(duplicate_batch, "results", (observed, observed))
+    with pytest.raises(ValueError, match="duplicate runtime probe result request_id"):
+        apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+            program,
+            diagnostic,
+            duplicate_batch,
+            previous_result,
+            miss_evidence,
+            delta_budget=96,
+        )
+
+    with pytest.raises(ValueError, match="delta_budget must be >= 0"):
+        apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+            program,
+            diagnostic,
+            batch,
+            previous_result,
+            miss_evidence,
+            delta_budget=-1,
+        )
+
+    previous_without_context = replace(previous_result, compile_context=None)
+    with pytest.raises(ValueError, match="compile_context"):
+        apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+            program,
+            diagnostic,
+            batch,
+            previous_without_context,
+            miss_evidence,
+            delta_budget=96,
+        )
+
+
+def test_runtime_probe_result_batch_recompile_helper_is_internal() -> None:
+    """The batch recompile bridge stays off root and wildcard public surfaces."""
+    assert (
+        "apply_runtime_probe_result_batch_for_diagnostic_and_recompile"
+        not in runtime_observation_recompile.__all__
+    )
+    assert (
+        "RuntimeProbeResultBatchRecompileApplication"
+        not in runtime_observation_recompile.__all__
+    )
+    assert (
+        "apply_runtime_probe_result_batch_for_diagnostic_and_recompile"
+        not in context_ir.__all__
+    )
+    assert "RuntimeProbeResultBatchRecompileApplication" not in context_ir.__all__
+    assert not hasattr(
+        context_ir,
+        "apply_runtime_probe_result_batch_for_diagnostic_and_recompile",
+    )
+    assert not hasattr(context_ir, "RuntimeProbeResultBatchRecompileApplication")
 
 
 def test_runtime_observation_recompile_empty_observations_recompile_original_program(
