@@ -2,6 +2,149 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Typed Facade Runtime Recompile Review
+
+- Reviewed the returned typed facade runtime observation recompile
+  implementation slice.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `6f4dc10 Sync runtime recompile composition routing`
+  - dirty tracked files exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted implementation state:
+  - `SemanticRuntimeObservationRecompileRequest` and
+    `SemanticRuntimeObservationRecompileResponse` provide a frozen typed
+    facade surface for applying runtime observations before semantic recompile
+  - `recompile_repository_context_with_runtime_observations(...)` delegates to
+    `apply_runtime_observations_for_diagnostic_and_recompile(...)`
+  - delegation uses the previous facade response's `program` and
+    `compile_result`
+  - optional `embed_fn` is forwarded
+  - response mirror fields are guarded against object-identity drift from the
+    underlying runtime observation application and semantic recompile result
+  - existing admission, application, and recompile gates propagate through the
+    facade
+  - empty observations preserve original-program application behavior while
+    still recompiling
+  - successful runtime observation satisfaction does not re-plan the already
+    satisfied diagnostic runtime request
+  - `context_ir.mcp_server`, `context_ir.__init__`, package-root exports, and
+    JSON serialization remain unchanged
+  - no probe execution, runtime observation collection, execution-result
+    contract, schema, scoring policy, compiler contract, optimizer,
+    winner-selection, eval, product, benchmark, or public-claim surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/tool_facade.py tests/test_tool_facade.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/tool_facade.py tests/test_tool_facade.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_tool_facade.py tests/test_runtime_observation_recompile.py tests/test_mcp_server.py tests/test_public_api.py -v`
+    reporting `58 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice first-pass in workspace-only state
+  - source/typed facade contract changes are not low-risk batching candidates,
+    so this tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/tool_facade.py`, `tests/test_tool_facade.py`,
+    `PLAN.md`, and `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-05 -- Typed Facade Runtime Recompile Routing
+
+- Reviewed the read-only exposed-consumption boundary spike after the pushed
+  `b279b00 Compose runtime observation recompile flow` release and
+  `6f4dc10 Sync runtime recompile composition routing` continuity sync.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `6f4dc10 Sync runtime recompile composition routing`
+  - dirty tracked files exactly `PLAN.md` and `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted spike findings:
+  - the internal adapter layer is already covered by
+    `apply_runtime_observations_for_diagnostic_and_recompile(...)`
+  - `context_ir.tool_facade` is already the highest exposed hybrid entry point
+    and already accepts typed runtime observations for initial compile
+  - JSON/MCP is not safe as the next slice because it would create external
+    schema before an execution-result/probe-runner contract exists
+  - public/package-root widening remains off-limits
+- Routing decision:
+  - accept the spike first-pass
+  - route next to a bounded typed `tool_facade` request/response implementation
+    slice
+  - the slice should call
+    `apply_runtime_observations_for_diagnostic_and_recompile(...)` for an
+    existing `SemanticContextResponse`, diagnostic, typed runtime observations,
+    miss evidence, and delta budget
+  - implementation scope is limited to `src/context_ir/tool_facade.py` and
+    `tests/test_tool_facade.py`
+  - no `mcp_server.py`, `context_ir.__init__`, JSON serialization, probe
+    execution, observation collection, execution-result contract, schema,
+    scoring policy, compiler contract, optimizer, winner-selection, product,
+    eval, benchmark, or public-claim work is authorized
+- Alternatives rejected:
+  - JSON-safe serialization, because it would define external runtime
+    observation schema too early
+  - another internal adapter, because the internal composition helper already
+    exists and is tested
+  - a full hold pending execution-result/probe-runner work, because the typed
+    observation contract already exists for module-level facade usage
+  - MCP/package-root exposure, because current public boundaries explicitly
+    hold those surfaces closed
+- Acceptance status: first-pass
+
+## 2026-05-05 -- Post-b279b00 Exposed Consumption Boundary Routing
+
+- Reviewed the next move after the completed and pushed
+  `b279b00 Compose runtime observation recompile flow` release and
+  `6f4dc10 Sync runtime recompile composition routing` continuity sync.
+- Repo-backed truth verified during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `6f4dc10 Sync runtime recompile composition routing`
+  - clean worktree
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Ryan authorized proceeding to the next bounded North Star step.
+- Routing decision:
+  - route next to a read-only exposed-consumption boundary spike
+  - decide the smallest safe next implementation slice after the internal
+    runtime observation recompile composition helper
+  - specifically assess whether the next implementation should be
+    tool-facade request/response plumbing, JSON-safe serialization, another
+    internal adapter, or a hold pending an execution-result/probe-runner
+    contract
+  - no implementation slice is authorized until the spike returns and control
+    accepts the result
+- Scope guard:
+  - no file edits in the spike
+  - no probe execution
+  - no runtime observation collection
+  - no MCP or package-root exposure
+  - no public-claim or benchmark widening
+  - no schema, scoring policy, compiler contract, optimizer,
+    winner-selection, or product-surface change
+- Alternatives considered:
+  - wiring the runtime observation recompile flow directly into MCP now;
+    rejected as too broad because MCP exposure remains an explicit hold
+  - adding package-root exports now; rejected as premature public-surface
+    widening
+  - opening a broad tool-facade implementation immediately; deferred until a
+    read-only spike defines the narrow safe contract
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- b279b00 Runtime Observation Recompile Composition Release Sync
 
 - Synced post-push continuity for

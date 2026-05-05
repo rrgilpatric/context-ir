@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import textwrap
+from dataclasses import replace
 from pathlib import Path
+
+import pytest
 
 import context_ir
 import context_ir.compiler as legacy_compiler
@@ -12,20 +15,32 @@ import context_ir.optimizer as legacy_optimizer
 import context_ir.parser as legacy_parser
 import context_ir.renderer as legacy_renderer
 import context_ir.runtime_acquisition as runtime_acquisition
+import context_ir.runtime_observation_admission as runtime_observation_admission
+import context_ir.runtime_observation_recompile as runtime_observation_recompile
+import context_ir.runtime_probe_requests as runtime_probe_requests
 import context_ir.scorer as legacy_scorer
 import context_ir.semantic_types as semantic_types
 import context_ir.tool_facade as tool_facade
+from context_ir.semantic_diagnostics import diagnose_semantic_miss
 from context_ir.semantic_types import (
+    CapabilityTier,
     ReferenceContext,
     RepositorySnapshotBasis,
     RuntimeAttachmentLink,
     SelectionBasis,
     SemanticCompileContext,
     SemanticCompileResult,
+    SemanticDiagnosticBoundary,
+    SemanticDiagnosticBoundaryKind,
+    SemanticDiagnosticResult,
+    SemanticDiagnosticUnitStatus,
+    SemanticMissEvidence,
+    SemanticMissKind,
     SemanticOptimizationResult,
     SemanticOptimizationWarning,
     SemanticOptimizationWarningCode,
     SemanticProgram,
+    SemanticRecompileResult,
     SemanticSelectionRecord,
     SourceSite,
     SourceSpan,
@@ -36,7 +51,10 @@ from context_ir.semantic_types import (
 from context_ir.tool_facade import (
     SemanticContextRequest,
     SemanticContextResponse,
+    SemanticRuntimeObservationRecompileRequest,
+    SemanticRuntimeObservationRecompileResponse,
     compile_repository_context,
+    recompile_repository_context_with_runtime_observations,
 )
 
 
@@ -707,6 +725,460 @@ def _metaclass_behavior_runtime_observation_for_site(
         ),
         durable_payload_reference=durable_reference,
     )
+
+
+def _write_dynamic_import_program(tmp_path: Path) -> None:
+    """Write a fixture with one dynamic-import unsupported boundary."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run(name: str) -> None:
+                importlib.import_module(name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
+def _unsupported_id_for(program: SemanticProgram, construct_text: str) -> str:
+    """Return the unsupported construct ID for ``construct_text``."""
+    return next(
+        construct.construct_id
+        for construct in program.unsupported_constructs
+        if construct.construct_text == construct_text
+    )
+
+
+def _runtime_observation_recompile_facade_fixture(
+    tmp_path: Path,
+) -> tuple[
+    SemanticContextResponse,
+    SemanticMissEvidence,
+    SemanticDiagnosticResult,
+    runtime_probe_requests.RuntimeProbeRequestPlan,
+    runtime_probe_requests.RuntimeProbeRequest,
+    runtime_acquisition.DynamicImportRuntimeObservation,
+    str,
+]:
+    """Build a prior facade response with one planned runtime observation request."""
+    _write_dynamic_import_program(tmp_path)
+    previous_response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="dynamic import",
+            budget=32,
+        )
+    )
+    unsupported_id = _unsupported_id_for(
+        previous_response.program,
+        "importlib.import_module(name)",
+    )
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence="importlib.import_module(name)",
+    )
+    diagnostic = diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    assert diagnostic.omitted_unit_ids == (unsupported_id,)
+    assert len(diagnostic.planned_runtime_probe_requests) == 1
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    request = diagnostic.planned_runtime_probe_requests[0]
+    observation = _dynamic_import_runtime_observation_for_site(request.source_site)
+    return (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        observation,
+        unsupported_id,
+    )
+
+
+def _boundary_for(
+    result: SemanticDiagnosticResult,
+    unit_id: str,
+) -> SemanticDiagnosticBoundary:
+    """Return the diagnostic boundary classification for ``unit_id``."""
+    return next(
+        boundary
+        for boundary in result.boundary_classifications
+        if boundary.unit_id == unit_id
+    )
+
+
+def _unplanned_site() -> SourceSite:
+    """Return a source site outside the diagnostic request plan."""
+    return SourceSite(
+        site_id="site:unplanned",
+        file_path="main.py",
+        span=SourceSpan(
+            start_line=99,
+            start_column=0,
+            end_line=99,
+            end_column=12,
+        ),
+        snippet="missing()",
+    )
+
+
+def test_recompile_repository_context_with_runtime_observations_applies_and_mirrors(
+    tmp_path: Path,
+) -> None:
+    """The facade applies observations, recompiles, and mirrors nested results."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        request,
+        observation,
+        unsupported_id,
+    ) = _runtime_observation_recompile_facade_fixture(tmp_path)
+
+    response = recompile_repository_context_with_runtime_observations(
+        SemanticRuntimeObservationRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            runtime_observations=(observation,),
+            miss_evidence=miss_evidence,
+            delta_budget=160,
+        )
+    )
+    boundary = _boundary_for(response.diagnostic, unsupported_id)
+    selected_trace = next(
+        selection.trace_summary
+        for selection in response.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
+
+    assert isinstance(response, SemanticRuntimeObservationRecompileResponse)
+    assert response.observation_application is (
+        response.runtime_observation_recompile.observation_application
+    )
+    assert response.recompile_result is (
+        response.runtime_observation_recompile.recompile_result
+    )
+    assert response.observation_application.diagnostic is diagnostic
+    assert response.observation_application.admissions[0].request is request
+    assert response.observation_application.admissions[0].observation is observation
+    assert response.program is response.observation_application.updated_program
+    assert response.program is not previous_response.program
+    assert response.compile_result is response.recompile_result.compile_result
+    assert response.diagnostic is response.recompile_result.diagnostic
+    assert response.compile_budget == previous_response.compile_budget + 160
+    assert response.compile_total_tokens == response.compile_result.total_tokens
+    assert response.budget_delta == 160
+    assert response.newly_selected_unit_ids == (
+        response.recompile_result.newly_selected_unit_ids
+    )
+    assert response.upgraded_unit_ids == response.recompile_result.upgraded_unit_ids
+    assert response.diagnostic.planned_runtime_probe_requests == ()
+    assert response.diagnostic.planned_runtime_probe_request_plan == (
+        runtime_probe_requests.build_runtime_probe_request_plan(())
+    )
+    assert boundary.status is SemanticDiagnosticUnitStatus.OMITTED
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert boundary.has_attached_runtime_provenance is True
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
+    assert unsupported_id in response.newly_selected_unit_ids
+
+
+def test_recompile_repository_context_with_empty_observations_preserves_program(
+    tmp_path: Path,
+) -> None:
+    """Empty observations keep the original program and still recompile."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        _observation,
+        _unsupported_id,
+    ) = _runtime_observation_recompile_facade_fixture(tmp_path)
+
+    response = recompile_repository_context_with_runtime_observations(
+        SemanticRuntimeObservationRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            runtime_observations=(),
+            miss_evidence=miss_evidence,
+            delta_budget=96,
+        )
+    )
+
+    assert response.observation_application.admissions == ()
+    assert response.observation_application.updated_program is previous_response.program
+    assert response.program is previous_response.program
+    assert response.compile_result is not previous_response.compile_result
+    assert response.compile_budget == previous_response.compile_budget + 96
+    assert response.diagnostic.planned_runtime_probe_requests == (
+        diagnostic.planned_runtime_probe_requests
+    )
+    assert previous_response.program.provenance_records == []
+
+
+def test_recompile_repository_context_delegates_and_forwards_embed_fn(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade delegates with the previous response and optional embeddings."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        observation,
+        _unsupported_id,
+    ) = _runtime_observation_recompile_facade_fixture(tmp_path)
+    calls: list[
+        tuple[
+            SemanticProgram,
+            SemanticDiagnosticResult,
+            tuple[runtime_observation_admission.RuntimeObservation, ...],
+            SemanticCompileResult,
+            SemanticMissEvidence,
+            int,
+            tool_facade.EmbeddingFunction | None,
+        ]
+    ] = []
+
+    def embed_fn(texts: list[str]) -> list[list[float]]:
+        return [[1.0, 0.0] for _text in texts]
+
+    fake_observation_application = (
+        runtime_observation_admission.RuntimeObservationApplication(
+            diagnostic=diagnostic,
+            admissions=(),
+            updated_program=previous_response.program,
+        )
+    )
+    fake_recompile_result = SemanticRecompileResult(
+        compile_result=previous_response.compile_result,
+        diagnostic=diagnostic,
+        budget_delta=12,
+        newly_selected_unit_ids=(),
+        upgraded_unit_ids=(),
+    )
+    fake_result = runtime_observation_recompile.RuntimeObservationRecompileApplication(
+        observation_application=fake_observation_application,
+        recompile_result=fake_recompile_result,
+    )
+
+    def fake_apply(
+        program: SemanticProgram,
+        received_diagnostic: SemanticDiagnosticResult,
+        observations: tuple[runtime_observation_admission.RuntimeObservation, ...],
+        previous_result: SemanticCompileResult,
+        received_miss_evidence: SemanticMissEvidence,
+        delta_budget: int,
+        *,
+        embed_fn: tool_facade.EmbeddingFunction | None = None,
+    ) -> runtime_observation_recompile.RuntimeObservationRecompileApplication:
+        calls.append(
+            (
+                program,
+                received_diagnostic,
+                observations,
+                previous_result,
+                received_miss_evidence,
+                delta_budget,
+                embed_fn,
+            )
+        )
+        return fake_result
+
+    monkeypatch.setattr(
+        tool_facade,
+        "apply_runtime_observations_for_diagnostic_and_recompile",
+        fake_apply,
+    )
+
+    response = recompile_repository_context_with_runtime_observations(
+        SemanticRuntimeObservationRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            runtime_observations=(observation,),
+            miss_evidence=miss_evidence,
+            delta_budget=12,
+            embed_fn=embed_fn,
+        )
+    )
+
+    assert calls == [
+        (
+            previous_response.program,
+            diagnostic,
+            (observation,),
+            previous_response.compile_result,
+            miss_evidence,
+            12,
+            embed_fn,
+        )
+    ]
+    assert response.runtime_observation_recompile is fake_result
+    assert response.observation_application is fake_observation_application
+    assert response.recompile_result is fake_recompile_result
+
+
+def test_recompile_repository_context_propagates_existing_gates(
+    tmp_path: Path,
+) -> None:
+    """Application and recompile preconditions still reject through the facade."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        request,
+        observation,
+        _unsupported_id,
+    ) = _runtime_observation_recompile_facade_fixture(tmp_path)
+
+    missing_plan = replace(diagnostic, planned_runtime_probe_request_plan=None)
+    with pytest.raises(ValueError, match="planned_runtime_probe_request_plan"):
+        recompile_repository_context_with_runtime_observations(
+            SemanticRuntimeObservationRecompileRequest(
+                previous_response=previous_response,
+                diagnostic=missing_plan,
+                runtime_observations=(observation,),
+                miss_evidence=miss_evidence,
+                delta_budget=96,
+            )
+        )
+
+    with pytest.raises(ValueError, match="not present in request plan"):
+        recompile_repository_context_with_runtime_observations(
+            SemanticRuntimeObservationRecompileRequest(
+                previous_response=previous_response,
+                diagnostic=diagnostic,
+                runtime_observations=(
+                    _dynamic_import_runtime_observation_for_site(_unplanned_site()),
+                ),
+                miss_evidence=miss_evidence,
+                delta_budget=96,
+            )
+        )
+
+    with pytest.raises(ValueError, match="share the same source site"):
+        recompile_repository_context_with_runtime_observations(
+            SemanticRuntimeObservationRecompileRequest(
+                previous_response=previous_response,
+                diagnostic=diagnostic,
+                runtime_observations=(
+                    observation,
+                    _exec_runtime_observation_for_site(request.source_site),
+                ),
+                miss_evidence=miss_evidence,
+                delta_budget=96,
+            )
+        )
+
+    with pytest.raises(ValueError, match="does not match planned request family/form"):
+        recompile_repository_context_with_runtime_observations(
+            SemanticRuntimeObservationRecompileRequest(
+                previous_response=previous_response,
+                diagnostic=diagnostic,
+                runtime_observations=(
+                    _exec_runtime_observation_for_site(request.source_site),
+                ),
+                miss_evidence=miss_evidence,
+                delta_budget=96,
+            )
+        )
+
+    with pytest.raises(ValueError, match="delta_budget must be >= 0"):
+        recompile_repository_context_with_runtime_observations(
+            SemanticRuntimeObservationRecompileRequest(
+                previous_response=previous_response,
+                diagnostic=diagnostic,
+                runtime_observations=(observation,),
+                miss_evidence=miss_evidence,
+                delta_budget=-1,
+            )
+        )
+
+    previous_without_context = replace(
+        previous_response,
+        compile_result=replace(previous_response.compile_result, compile_context=None),
+    )
+    with pytest.raises(ValueError, match="compile_context"):
+        recompile_repository_context_with_runtime_observations(
+            SemanticRuntimeObservationRecompileRequest(
+                previous_response=previous_without_context,
+                diagnostic=diagnostic,
+                runtime_observations=(),
+                miss_evidence=miss_evidence,
+                delta_budget=96,
+            )
+        )
+
+
+def test_recompile_repository_context_response_rejects_broken_mirrors(
+    tmp_path: Path,
+) -> None:
+    """The recompile facade response enforces object-identity mirror fields."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        observation,
+        _unsupported_id,
+    ) = _runtime_observation_recompile_facade_fixture(tmp_path)
+    response = recompile_repository_context_with_runtime_observations(
+        SemanticRuntimeObservationRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            runtime_observations=(observation,),
+            miss_evidence=miss_evidence,
+            delta_budget=160,
+        )
+    )
+
+    with pytest.raises(ValueError, match="program must mirror"):
+        SemanticRuntimeObservationRecompileResponse(
+            runtime_observation_recompile=response.runtime_observation_recompile,
+            observation_application=response.observation_application,
+            recompile_result=response.recompile_result,
+            program=previous_response.program,
+            compile_result=response.compile_result,
+            diagnostic=response.diagnostic,
+            compile_total_tokens=response.compile_total_tokens,
+            compile_budget=response.compile_budget,
+            budget_delta=response.budget_delta,
+            newly_selected_unit_ids=response.newly_selected_unit_ids,
+            upgraded_unit_ids=response.upgraded_unit_ids,
+        )
+
+    with pytest.raises(ValueError, match="compile_budget must mirror"):
+        SemanticRuntimeObservationRecompileResponse(
+            runtime_observation_recompile=response.runtime_observation_recompile,
+            observation_application=response.observation_application,
+            recompile_result=response.recompile_result,
+            program=response.program,
+            compile_result=response.compile_result,
+            diagnostic=response.diagnostic,
+            compile_total_tokens=response.compile_total_tokens,
+            compile_budget=response.compile_budget + 1,
+            budget_delta=response.budget_delta,
+            newly_selected_unit_ids=response.newly_selected_unit_ids,
+            upgraded_unit_ids=response.upgraded_unit_ids,
+        )
 
 
 def test_compile_repository_context_returns_typed_response_for_simple_repo(
@@ -2467,10 +2939,19 @@ def test_tool_facade_does_not_change_package_root_exports() -> None:
         "EmbeddingFunction",
         "SemanticContextRequest",
         "SemanticContextResponse",
+        "SemanticRuntimeObservationRecompileRequest",
+        "SemanticRuntimeObservationRecompileResponse",
         "compile_repository_context",
+        "recompile_repository_context_with_runtime_observations",
     }
 
     assert facade_names.isdisjoint(context_ir.__all__)
     assert not hasattr(context_ir, "SemanticContextRequest")
     assert not hasattr(context_ir, "SemanticContextResponse")
+    assert not hasattr(context_ir, "SemanticRuntimeObservationRecompileRequest")
+    assert not hasattr(context_ir, "SemanticRuntimeObservationRecompileResponse")
     assert not hasattr(context_ir, "compile_repository_context")
+    assert not hasattr(
+        context_ir,
+        "recompile_repository_context_with_runtime_observations",
+    )

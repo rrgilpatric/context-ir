@@ -8,12 +8,23 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypeAlias, TypedDict
 
 from context_ir.analyzer import analyze_repository
+from context_ir.runtime_observation_admission import (
+    RuntimeObservation,
+    RuntimeObservationApplication,
+)
+from context_ir.runtime_observation_recompile import (
+    RuntimeObservationRecompileApplication,
+    apply_runtime_observations_for_diagnostic_and_recompile,
+)
 from context_ir.semantic_compiler import compile_semantic_context
 from context_ir.semantic_types import (
     ResolverDiagnostic,
     SemanticCompileResult,
+    SemanticDiagnosticResult,
+    SemanticMissEvidence,
     SemanticOptimizationWarning,
     SemanticProgram,
+    SemanticRecompileResult,
     SemanticSelectionRecord,
     SyntaxDiagnostic,
     UnresolvedAccess,
@@ -122,6 +133,70 @@ class SemanticContextResponse:
             raise ValueError("compile_budget must mirror compile_result")
 
 
+@dataclass(frozen=True)
+class SemanticRuntimeObservationRecompileRequest:
+    """Inputs for applying typed runtime observations before recompilation."""
+
+    previous_response: SemanticContextResponse
+    diagnostic: SemanticDiagnosticResult
+    runtime_observations: Sequence[RuntimeObservation]
+    miss_evidence: SemanticMissEvidence
+    delta_budget: int
+    embed_fn: EmbeddingFunction | None = None
+
+
+@dataclass(frozen=True)
+class SemanticRuntimeObservationRecompileResponse:
+    """Transparent facade result for runtime-observation recompilation."""
+
+    runtime_observation_recompile: RuntimeObservationRecompileApplication
+    observation_application: RuntimeObservationApplication
+    recompile_result: SemanticRecompileResult
+    program: SemanticProgram
+    compile_result: SemanticCompileResult
+    diagnostic: SemanticDiagnosticResult
+    compile_total_tokens: int
+    compile_budget: int
+    budget_delta: int
+    newly_selected_unit_ids: tuple[str, ...]
+    upgraded_unit_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        """Reject facade surfaces that diverge from the underlying recompile."""
+        if (
+            self.observation_application
+            is not self.runtime_observation_recompile.observation_application
+        ):
+            raise ValueError(
+                "observation_application must mirror runtime_observation_recompile"
+            )
+        if self.recompile_result is not (
+            self.runtime_observation_recompile.recompile_result
+        ):
+            raise ValueError(
+                "recompile_result must mirror runtime_observation_recompile"
+            )
+        if self.program is not self.observation_application.updated_program:
+            raise ValueError("program must mirror observation_application")
+        if self.compile_result is not self.recompile_result.compile_result:
+            raise ValueError("compile_result must mirror recompile_result")
+        if self.diagnostic is not self.recompile_result.diagnostic:
+            raise ValueError("diagnostic must mirror recompile_result")
+        if self.compile_total_tokens != self.compile_result.total_tokens:
+            raise ValueError("compile_total_tokens must mirror compile_result")
+        if self.compile_budget != self.compile_result.budget:
+            raise ValueError("compile_budget must mirror compile_result")
+        if self.budget_delta != self.recompile_result.budget_delta:
+            raise ValueError("budget_delta must mirror recompile_result")
+        if (
+            self.newly_selected_unit_ids
+            != self.recompile_result.newly_selected_unit_ids
+        ):
+            raise ValueError("newly_selected_unit_ids must mirror recompile_result")
+        if self.upgraded_unit_ids != self.recompile_result.upgraded_unit_ids:
+            raise ValueError("upgraded_unit_ids must mirror recompile_result")
+
+
 def compile_repository_context(
     request: SemanticContextRequest,
 ) -> SemanticContextResponse:
@@ -196,9 +271,45 @@ def compile_repository_context(
     )
 
 
+def recompile_repository_context_with_runtime_observations(
+    request: SemanticRuntimeObservationRecompileRequest,
+) -> SemanticRuntimeObservationRecompileResponse:
+    """Apply typed runtime observations and recompile a prior facade response."""
+    runtime_observation_recompile = (
+        apply_runtime_observations_for_diagnostic_and_recompile(
+            request.previous_response.program,
+            request.diagnostic,
+            request.runtime_observations,
+            request.previous_response.compile_result,
+            request.miss_evidence,
+            request.delta_budget,
+            embed_fn=request.embed_fn,
+        )
+    )
+    observation_application = runtime_observation_recompile.observation_application
+    recompile_result = runtime_observation_recompile.recompile_result
+    compile_result = recompile_result.compile_result
+    return SemanticRuntimeObservationRecompileResponse(
+        runtime_observation_recompile=runtime_observation_recompile,
+        observation_application=observation_application,
+        recompile_result=recompile_result,
+        program=observation_application.updated_program,
+        compile_result=compile_result,
+        diagnostic=recompile_result.diagnostic,
+        compile_total_tokens=compile_result.total_tokens,
+        compile_budget=compile_result.budget,
+        budget_delta=recompile_result.budget_delta,
+        newly_selected_unit_ids=recompile_result.newly_selected_unit_ids,
+        upgraded_unit_ids=recompile_result.upgraded_unit_ids,
+    )
+
+
 __all__ = [
     "EmbeddingFunction",
     "SemanticContextRequest",
     "SemanticContextResponse",
+    "SemanticRuntimeObservationRecompileRequest",
+    "SemanticRuntimeObservationRecompileResponse",
     "compile_repository_context",
+    "recompile_repository_context_with_runtime_observations",
 ]

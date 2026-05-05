@@ -184,8 +184,27 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
-- Route next to bounded post-`b279b00` North Star planning/control to choose
-  the next smallest meaningful capability slice
+- Post-`b279b00` North Star planning/control selected a read-only
+  surface-boundary spike as the next step before any exposed consumption
+  implementation.
+- Exposed-consumption boundary spike is accepted first-pass.
+- Typed `tool_facade` request/response implementation is accepted first-pass
+  in workspace-only state. The slice calls
+  `apply_runtime_observations_for_diagnostic_and_recompile(...)` for an
+  existing `SemanticContextResponse`, diagnostic, typed runtime observations,
+  miss evidence, and delta budget.
+- Accepted workspace files are `src/context_ir/tool_facade.py` and
+  `tests/test_tool_facade.py`, plus control continuity in `PLAN.md` and
+  `BUILDLOG.md`.
+- The accepted slice did not edit `mcp_server.py`, expose package-root APIs,
+  add JSON serialization, execute probes, collect runtime observations, define
+  an execution-result contract, or widen eval, schema, scoring policy,
+  compiler contract, optimizer, winner-selection, product, public benchmark,
+  or public-claim surfaces.
+- Route next to a combined read-only release gate over the exact four-file
+  typed facade runtime recompile release unit. The gate must run release-unit
+  audit, full regression, and commit-gating in order, stopping on the first
+  finding. Do not route another implementation slice before this gate returns.
 - Do not route `b279b00`, `74aadd7`, `95f7545`, `35c440d`, `f5c8df0`,
   `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`,
   `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`,
@@ -1803,9 +1822,27 @@ sequencing for `c1a12d7` absent new findings.
   recompile composition release unit
 - [x] Local commit creation and Ryan-authorized push for the runtime
   observation recompile composition release unit
+- [x] Post-`b279b00` North Star planning/control selected a read-only
+  exposed-consumption boundary spike
+- [x] Exposed-consumption boundary spike accepted first-pass
+- [x] Typed facade runtime observation recompile request/response slice
+  accepted first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file typed facade runtime
+  recompile release unit
 
 ## What Is In Progress
 
+- Typed facade runtime observation recompile request/response implementation is
+  accepted first-pass in workspace-only state.
+- Proposed release unit:
+  - `src/context_ir/tool_facade.py`
+  - `tests/test_tool_facade.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Next active gate is a combined read-only release gate over that exact
+  four-file unit. No staging, local commit, push, or next implementation slice
+  is authorized before the gate returns clean or a findings-based correction is
+  accepted.
 - No release gate is active for the pushed runtime observation recompile
   composition tranche.
 - The runtime observation recompile composition tranche is completed and
@@ -2624,10 +2661,19 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: bounded post-`b279b00` North Star planning/control to
-choose the next smallest meaningful capability slice. No implementation slice
-is authorized until control selects and routes one under the normal quality
-gate.
+Immediate next route: combined read-only release gate for the exact four-file
+typed facade runtime observation recompile release unit:
+
+- `src/context_ir/tool_facade.py`
+- `tests/test_tool_facade.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The gate must run release-unit audit, then full regression, then
+commit-gating, stopping on the first finding. It must not edit files, stage,
+commit, push, or rewrite continuity. No new implementation slice is authorized
+before this release gate returns clean or a findings-based correction is
+accepted.
 
 The runtime observation recompile composition tranche is pushed at
 `b279b00 Compose runtime observation recompile flow` and has release-gate
