@@ -40,16 +40,63 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed source/contract release authority is
-`eb6def0 Add runtime probe result contracts`. It supersedes the
-workspace-only runtime probe execution-result/replay-artifact contract
-release-gate route for active control routing only. Live git refs and
-worktree state must still be verified from git during control intake.
+Current local source/contract release candidate is
+`ccd417a Add runtime probe result admission bridge`. It is locally committed
+on `main` and remains Ryan-gated for push unless live git refs show it has
+already reached `origin/main`.
 
-Repo-backed release truth verified during post-push continuity sync: branch
-`main`, `HEAD` and `origin/main` at
-`eb6def0 Add runtime probe result contracts`, clean worktree at intake before
-this docs-only continuity edit, nothing staged, and no untracked files.
+Latest pushed source/contract release authority remains
+`eb6def0 Add runtime probe result contracts` until the Ryan-gated push of
+`ccd417a` completes. Latest pushed continuity authority remains
+`4907f9e Sync runtime probe result release routing` until live git refs show a
+newer pushed continuity commit. Live git refs and worktree state must still be
+verified from git during control intake.
+
+Runtime probe result admission bridge local release candidate:
+
+- `admit_runtime_probe_result_batch_for_plan(...)` bridges
+  `RuntimeProbeResultBatch` into deterministic plan-ordered
+  `RuntimeObservationAdmission` records
+- only proof-bearing `RuntimeProbeObservedResult` values become typed
+  `RuntimeObservation` values
+- `RuntimeProbeNonProofResult` values are preserved separately as non-proof and
+  are never admitted as runtime-backed proof
+- plan ID, request ID, carried request identity, source-site identity, and
+  family/form compatibility are revalidated
+- probe identity, probe contract revision, repository snapshot basis, replay
+  target/selector, replay inputs, runtime assumptions, normalized payload, and
+  durable artifact reference are copied into the existing typed observation
+  shape
+- required `RuntimeAttachmentLink` values are derived deterministically from
+  result identity or durable artifact reference
+- the bridge remains internal to
+  `context_ir.runtime_observation_admission`; package-root, facade, MCP, JSON
+  schema, serialization, eval, scoring, optimizer, compiler, winner-selection,
+  docs, and public-claim surfaces remain unchanged
+- implementation review accepted the slice after 1 correction
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting
+    `174 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `842 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, and clean `git diff --check`
+- local commit creation completed at
+  `ccd417a Add runtime probe result admission bridge`
+- Ryan-authorized push has not been performed unless live git refs show
+  `origin/main` contains `ccd417a`
+
+Local release candidate four-file unit:
+
+- `src/context_ir/runtime_observation_admission.py`
+- `tests/test_runtime_observation_admission.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Release-gate status is local-commit-created and push-gated for `ccd417a`.
+
+Prior pushed runtime probe execution-result/replay-artifact contract:
 
 Released runtime probe execution-result/replay-artifact contract:
 
@@ -271,36 +318,21 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
+- Runtime probe result admission bridge is release-gate-cleared and locally
+  committed at `ccd417a Add runtime probe result admission bridge`.
+- If live git shows `ccd417a` is still ahead of `origin/main`, the next control
+  action is Ryan-gated push authorization or explicit hold. Do not route a new
+  implementation, planning, release-gate, staging, or local commit lane before
+  that push/hold decision.
+- If live git shows `origin/main` already contains `ccd417a`, route to a
+  post-push continuity sync only if the committed active block would otherwise
+  mislead a fresh controller; otherwise fold the post-push note into the next
+  substantive continuity update.
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
-- Post-`8ac3b46` execution-boundary spike is accepted first-pass.
-- Ryan authorized post-`eb6def0` planning/control.
-- Post-`eb6def0` planning/control is accepted first-pass and selected the
-  internal execution-result to typed-observation admission boundary as the next
-  implementation slice.
-- Runtime probe result admission bridge implementation is accepted after
-  1 correction in workspace-only state.
-- Accepted workspace files are
-  `src/context_ir/runtime_observation_admission.py` and
-  `tests/test_runtime_observation_admission.py`, plus control continuity in
-  `PLAN.md` and `BUILDLOG.md`.
-- The accepted slice converts proof-bearing `RuntimeProbeObservedResult` /
-  `RuntimeProbeResultBatch` data into existing typed `RuntimeObservation`
-  admission and preserves non-proof results separately as non-proof.
-- It validates plan ID, request ID, request identity, source-site identity, and
-  family/form compatibility; preserves replay/probe/snapshot/payload data; and
-  derives required `RuntimeAttachmentLink` values deterministically from result
-  identity or durable artifact reference.
-- It did not execute probes, materialize a runner, collect typed observations,
-  or widen JSON schema, serialization, facade, MCP, package-root export, eval,
-  scoring, optimizer, compiler, winner-selection, docs, or public claims.
-- Route next to a combined read-only release gate over the exact four-file
-  runtime probe result admission bridge release unit. The gate must run
-  release-unit audit, full regression, and commit-gating in order, stopping on
-  the first finding. Do not route another implementation slice before this
-  gate returns.
-- Do not route `eb6def0`, `8ac3b46`, `b279b00`, `74aadd7`, `95f7545`,
+- Do not route `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`, `74aadd7`,
+  `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
   `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
   `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs review,

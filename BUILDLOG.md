@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Result Admission Bridge Local Commit
+
+- Reviewed the external combined read-only release-gate result for the runtime
+  probe result admission bridge release unit.
+- Gate result accepted:
+  - findings: none
+  - Gate 1 release-unit audit passed for the exact four-file unit
+  - focused validation passed, including targeted pytest reporting `174 passed`
+  - Gate 2 full regression passed, including full pytest reporting `842 passed`
+  - Gate 3 commit-gating passed with the exact dirty/tracked file set, nothing
+    staged, no untracked files, no ref drift, and clean `git diff --check`
+- Live repo state was reverified before staging:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `4907f9e Sync runtime probe result release routing`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_observation_admission.py`, and
+    `tests/test_runtime_observation_admission.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Local commit sequencing completed:
+  - staged exactly the four-file release unit
+  - verified no unstaged drift and clean staged whitespace
+  - created local commit
+    `ccd417a Add runtime probe result admission bridge`
+- Post-commit repo state:
+  - local `HEAD` is `ccd417a`
+  - `origin/main` remains `4907f9e`
+  - worktree was clean before this docs-only continuity correction
+  - nothing staged
+- Routing decision:
+  - treat `ccd417a` as the current local source/contract release candidate
+  - do not route `ccd417a` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - do not route another implementation or planning lane before Ryan's
+    explicit push/hold decision for `ccd417a`
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Result Admission Bridge Correction Review
 
 - Reviewed the narrow correction for the execution-result to typed-observation
