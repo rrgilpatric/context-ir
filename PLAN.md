@@ -275,11 +275,31 @@ Current route:
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
 - Post-`8ac3b46` execution-boundary spike is accepted first-pass.
-- Next active route is held pending Ryan authorization for a bounded
-  post-`eb6def0` planning/control lane to choose the next smallest safe
-  runtime-acquisition-loop step.
-- No new implementation, staging, local commit, or push is authorized while
-  that hold is active.
+- Ryan authorized post-`eb6def0` planning/control.
+- Post-`eb6def0` planning/control is accepted first-pass and selected the
+  internal execution-result to typed-observation admission boundary as the next
+  implementation slice.
+- Runtime probe result admission bridge implementation is accepted after
+  1 correction in workspace-only state.
+- Accepted workspace files are
+  `src/context_ir/runtime_observation_admission.py` and
+  `tests/test_runtime_observation_admission.py`, plus control continuity in
+  `PLAN.md` and `BUILDLOG.md`.
+- The accepted slice converts proof-bearing `RuntimeProbeObservedResult` /
+  `RuntimeProbeResultBatch` data into existing typed `RuntimeObservation`
+  admission and preserves non-proof results separately as non-proof.
+- It validates plan ID, request ID, request identity, source-site identity, and
+  family/form compatibility; preserves replay/probe/snapshot/payload data; and
+  derives required `RuntimeAttachmentLink` values deterministically from result
+  identity or durable artifact reference.
+- It did not execute probes, materialize a runner, collect typed observations,
+  or widen JSON schema, serialization, facade, MCP, package-root export, eval,
+  scoring, optimizer, compiler, winner-selection, docs, or public claims.
+- Route next to a combined read-only release gate over the exact four-file
+  runtime probe result admission bridge release unit. The gate must run
+  release-unit audit, full regression, and commit-gating in order, stopping on
+  the first finding. Do not route another implementation slice before this
+  gate returns.
 - Do not route `eb6def0`, `8ac3b46`, `b279b00`, `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
   `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
@@ -1913,6 +1933,12 @@ sequencing for `c1a12d7` absent new findings.
   contract release unit
 - [x] Local commit creation and Ryan-authorized push for the runtime probe
   result contract release unit
+- [x] Post-`eb6def0` planning/control selected the internal execution-result
+  to typed-observation admission boundary
+- [x] Runtime probe result admission bridge implementation slice accepted after
+  1 correction in workspace-only state
+- [ ] Combined release gate for the exact four-file runtime probe result
+  admission bridge release unit
 
 ## What Is In Progress
 
@@ -1923,11 +1949,17 @@ sequencing for `c1a12d7` absent new findings.
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `eb6def0`.
-- Next active route is held pending Ryan authorization for a bounded
-  post-`eb6def0` planning/control lane to choose the next smallest safe
-  runtime-acquisition-loop step.
-- No new implementation, staging, local commit, or push is authorized while
-  that hold is active.
+- Runtime probe result admission bridge implementation is accepted after
+  1 correction in workspace-only state.
+- Proposed release unit:
+  - `src/context_ir/runtime_observation_admission.py`
+  - `tests/test_runtime_observation_admission.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Next active gate is a combined read-only release gate over that exact
+  four-file unit. No staging, local commit, push, or next implementation slice
+  is authorized before the gate returns clean or a findings-based correction is
+  accepted.
 - Typed facade runtime observation recompile is completed and pushed at
   `8ac3b46`:
   - `src/context_ir/tool_facade.py`
@@ -2753,13 +2785,19 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: hold for Ryan authorization to open a bounded
-post-`eb6def0` planning/control lane.
+Immediate next route: combined read-only release gate for the exact four-file
+runtime probe result admission bridge release unit:
 
-The planning lane should choose the next smallest safe
-runtime-acquisition-loop step after the pushed runtime probe result contract.
-No new implementation, staging, local commit, or push is authorized while this
-hold is active.
+- `src/context_ir/runtime_observation_admission.py`
+- `tests/test_runtime_observation_admission.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The gate must run release-unit audit, then full regression, then
+commit-gating, stopping on the first finding. It must not edit files, stage,
+commit, push, or rewrite continuity. No new implementation slice is authorized
+before this release gate returns clean or a findings-based correction is
+accepted.
 
 The runtime probe execution-result/replay-artifact contract tranche is pushed
 at `eb6def0 Add runtime probe result contracts` and has release-gate status

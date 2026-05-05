@@ -9,9 +9,11 @@ from pathlib import Path
 
 import pytest
 
+import context_ir
 import context_ir.runtime_acquisition as runtime_acquisition
 import context_ir.runtime_observation_admission as runtime_observation_admission
 import context_ir.runtime_probe_requests as runtime_probe_requests
+import context_ir.runtime_probe_results as runtime_probe_results
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
@@ -186,7 +188,10 @@ def _all_family_runtime_plan(
                 importlib.import_module(name)
                 hasattr(obj, name)
                 getattr(obj, name)
+                getattr(obj, name, value)
+                vars()
                 vars(obj)
+                dir()
                 dir(obj)
                 globals()
                 locals()
@@ -206,7 +211,10 @@ def _all_family_runtime_plan(
         "dynamic_import:importlib.import_module/1",
         "reflective_builtin:hasattr/2",
         "reflective_builtin:getattr/2",
+        "reflective_builtin:getattr/3",
+        "reflective_builtin:vars/0",
         "reflective_builtin:vars/1",
+        "reflective_builtin:dir/0",
         "reflective_builtin:dir/1",
         "runtime_mutation:globals/0",
         "runtime_mutation:locals/0",
@@ -288,6 +296,149 @@ def _attachment_links(site: SourceSite) -> tuple[RuntimeAttachmentLink, ...]:
             description="runtime trace",
         ),
     )
+
+
+def _probe_field(
+    key: str = "runtime_input",
+    value: str = "runtime-value",
+) -> runtime_probe_results.RuntimeProbeReplayField:
+    """Return one runtime probe replay/result field."""
+    return runtime_probe_results.RuntimeProbeReplayField(key=key, value=value)
+
+
+def _probe_fields_from_runtime_fields(
+    fields: tuple[runtime_acquisition._RuntimeObservationField, ...],
+) -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Convert existing typed observation fields into probe result fields."""
+    return tuple(_probe_field(field.key, field.value) for field in fields)
+
+
+def _runtime_fields_from_probe_fields(
+    fields: tuple[runtime_probe_results.RuntimeProbeReplayField, ...],
+) -> tuple[runtime_acquisition._RuntimeObservationField, ...]:
+    """Convert probe result fields into the existing typed observation shape."""
+    return tuple(
+        runtime_acquisition._RuntimeObservationField(
+            key=field.key,
+            value=field.value,
+        )
+        for field in fields
+    )
+
+
+def _replay_inputs_for_result(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+    observation: runtime_observation_admission.RuntimeObservation,
+) -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return non-empty replay inputs for an observed result contract."""
+    replay_inputs = _probe_fields_from_runtime_fields(observation.replay_inputs)
+    if replay_inputs:
+        return replay_inputs
+    return (_probe_field("request_id", request.request_id),)
+
+
+def _replay_artifact_for_result(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+    observation: runtime_observation_admission.RuntimeObservation,
+) -> runtime_probe_results.RuntimeProbeReplayArtifact:
+    """Build a replay artifact that mirrors an existing typed observation."""
+    return runtime_probe_results.RuntimeProbeReplayArtifact(
+        probe_identifier=observation.probe_identifier,
+        probe_contract_revision=observation.probe_contract_revision,
+        repository_snapshot_basis=observation.repository_snapshot_basis,
+        replay_target=observation.replay_target,
+        replay_selector=observation.replay_selector,
+        replay_inputs=_replay_inputs_for_result(request, observation),
+        runtime_assumptions=(
+            _probe_field("python_version", "3.11"),
+            _probe_field("platform", "test"),
+        ),
+    )
+
+
+def _observed_probe_result_for_observation(
+    plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+    request: runtime_probe_requests.RuntimeProbeRequest,
+    observation: runtime_observation_admission.RuntimeObservation,
+) -> runtime_probe_results.RuntimeProbeObservedResult:
+    """Build an observed probe result carrying an existing observation's data."""
+    return runtime_probe_results.RuntimeProbeObservedResult(
+        plan_id=plan.plan_id,
+        request_id=request.request_id,
+        request=request,
+        replay_artifact=_replay_artifact_for_result(request, observation),
+        normalized_payload=_probe_fields_from_runtime_fields(
+            observation.normalized_payload
+        ),
+        durable_artifact_reference=observation.durable_payload_reference,
+    )
+
+
+def _non_proof_probe_result(
+    plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+    request: runtime_probe_requests.RuntimeProbeRequest,
+) -> runtime_probe_results.RuntimeProbeNonProofResult:
+    """Build a failed probe result for non-proof preservation tests."""
+    return runtime_probe_results.RuntimeProbeNonProofResult(
+        plan_id=plan.plan_id,
+        request_id=request.request_id,
+        request=request,
+        outcome=runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+        failure_summary="probe exceeded timeout",
+        failure_detail_fields=(_probe_field("timeout_seconds", "30"),),
+    )
+
+
+def _expected_probe_result_attachment_link(
+    result: runtime_probe_results.RuntimeProbeObservedResult,
+) -> RuntimeAttachmentLink:
+    """Return the deterministic attachment link expected from the bridge."""
+    if result.durable_artifact_reference is None:
+        attachment_identity = f"{result.plan_id}:{result.request_id}"
+        description = "inline runtime probe result payload"
+    else:
+        attachment_identity = result.durable_artifact_reference
+        description = "durable runtime probe result artifact"
+    attachment_digest = hashlib.sha256(attachment_identity.encode("utf-8")).hexdigest()[
+        :24
+    ]
+    return RuntimeAttachmentLink(
+        attachment_id=f"runtime_probe_result:{attachment_digest}",
+        attachment_role="runtime_probe_result",
+        description=description,
+    )
+
+
+def _assert_observation_copied_probe_result(
+    observation: runtime_observation_admission.RuntimeObservation,
+    result: runtime_probe_results.RuntimeProbeObservedResult,
+) -> None:
+    """Assert the bridge copied all proof-bearing result contract fields."""
+    assert observation.site == result.request.source_site
+    assert observation.probe_identifier == result.replay_artifact.probe_identifier
+    assert (
+        observation.probe_contract_revision
+        == result.replay_artifact.probe_contract_revision
+    )
+    assert (
+        observation.repository_snapshot_basis
+        == result.replay_artifact.repository_snapshot_basis
+    )
+    assert observation.attachment_links == (
+        _expected_probe_result_attachment_link(result),
+    )
+    assert observation.replay_target == result.replay_artifact.replay_target
+    assert observation.replay_selector == result.replay_artifact.replay_selector
+    assert observation.replay_inputs == _runtime_fields_from_probe_fields(
+        result.replay_artifact.replay_inputs
+    )
+    assert observation.runtime_assumptions == _runtime_fields_from_probe_fields(
+        result.replay_artifact.runtime_assumptions
+    )
+    assert observation.normalized_payload == _runtime_fields_from_probe_fields(
+        result.normalized_payload
+    )
+    assert observation.durable_payload_reference == result.durable_artifact_reference
 
 
 def _dynamic_import_observation(
@@ -795,6 +946,269 @@ def test_partial_observations_do_not_require_every_planned_request(
     ]
     assert admissions[0].observation is dynamic_observation
     assert admissions[1].observation is exec_observation
+
+
+def test_probe_result_batch_admission_converts_observed_and_preserves_non_proof(
+    tmp_path: Path,
+) -> None:
+    """Observed results become admissions while failed results remain non-proof."""
+    _program, plan = _runtime_plan(tmp_path)
+    observed = _observed_probe_result_for_observation(
+        plan,
+        plan.requests[0],
+        _dynamic_import_observation(plan.requests[0].source_site),
+    )
+    first_non_proof = _non_proof_probe_result(plan, plan.requests[1])
+    second_non_proof = _non_proof_probe_result(plan, plan.requests[2])
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(second_non_proof, observed, first_non_proof),
+    )
+
+    result = runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+        plan,
+        batch,
+    )
+
+    assert isinstance(
+        result,
+        runtime_observation_admission.RuntimeProbeResultBatchAdmission,
+    )
+    assert [admission.request.boundary_text for admission in result.admissions] == [
+        "importlib.import_module(name)",
+    ]
+    assert result.admissions[0].request is plan.requests[0]
+    assert result.admissions[0].request_id == plan.request_ids[0]
+    assert result.admissions[0].plan_id == plan.plan_id
+    assert isinstance(
+        result.admissions[0].observation,
+        runtime_acquisition.DynamicImportRuntimeObservation,
+    )
+    _assert_observation_copied_probe_result(
+        result.admissions[0].observation,
+        observed,
+    )
+    assert result.non_proof_results == (first_non_proof, second_non_proof)
+    assert all(
+        non_proof.is_admissible_runtime_backed_proof is False
+        for non_proof in result.non_proof_results
+    )
+
+
+def test_probe_result_batch_admission_covers_every_current_family_form(
+    tmp_path: Path,
+) -> None:
+    """The result bridge maps every current request family/form to typed admission."""
+    program, plan = _all_family_runtime_plan(tmp_path)
+    results_by_request_id = {
+        request.request_id: _observed_probe_result_for_observation(
+            plan,
+            request,
+            _attachable_observation_for_request(request),
+        )
+        for request in plan.requests
+    }
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=tuple(reversed(tuple(results_by_request_id.values()))),
+    )
+
+    result = runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+        plan,
+        batch,
+    )
+    updated_program = (
+        runtime_observation_admission.attach_admitted_runtime_observations(
+            program,
+            result.admissions,
+        )
+    )
+
+    assert result.non_proof_results == ()
+    assert [admission.request_id for admission in result.admissions] == list(
+        plan.request_ids
+    )
+    assert len(result.admissions) == len(plan.requests)
+    assert len(updated_program.provenance_records) == len(plan.requests)
+    assert all(
+        record.capability_tier is CapabilityTier.RUNTIME_BACKED
+        for record in updated_program.provenance_records
+    )
+    for admission in result.admissions:
+        expected_observation = _attachable_observation_for_request(admission.request)
+        source_result = results_by_request_id[admission.request_id]
+        assert isinstance(admission.observation, type(expected_observation))
+        _assert_observation_copied_probe_result(
+            admission.observation,
+            source_result,
+        )
+
+
+def test_probe_result_batch_admission_allows_partial_batches(tmp_path: Path) -> None:
+    """Missing request results are skipped consistently with typed observations."""
+    _program, plan = _runtime_plan(tmp_path)
+    observed = _observed_probe_result_for_observation(
+        plan,
+        plan.requests[2],
+        _exec_observation(plan.requests[2].source_site),
+    )
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+
+    result = runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+        plan,
+        batch,
+    )
+
+    assert [admission.request.boundary_text for admission in result.admissions] == [
+        "exec(source)",
+    ]
+    assert result.non_proof_results == ()
+    _assert_observation_copied_probe_result(
+        result.admissions[0].observation,
+        observed,
+    )
+
+
+def test_probe_result_batch_admission_accepts_durable_artifact_without_payload(
+    tmp_path: Path,
+) -> None:
+    """Observed proof can bridge durable payload references without inline payload."""
+    _program, plan = _runtime_plan(tmp_path)
+    request = plan.requests[0]
+    observation = _dynamic_import_observation(request.source_site)
+    observed = runtime_probe_results.RuntimeProbeObservedResult(
+        plan_id=plan.plan_id,
+        request_id=request.request_id,
+        request=request,
+        replay_artifact=_replay_artifact_for_result(request, observation),
+        durable_artifact_reference=(
+            "artifact://runtime-probe-results/dynamic-import/main-run.json"
+        ),
+    )
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+
+    result = runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+        plan,
+        batch,
+    )
+
+    admitted_observation = result.admissions[0].observation
+    assert admitted_observation.normalized_payload == ()
+    assert admitted_observation.durable_payload_reference == (
+        "artifact://runtime-probe-results/dynamic-import/main-run.json"
+    )
+    _assert_observation_copied_probe_result(admitted_observation, observed)
+
+
+def test_probe_result_batch_admission_rejects_batch_plan_id_drift(
+    tmp_path: Path,
+) -> None:
+    """Result batches cannot be admitted against a different request plan."""
+    _program, plan = _runtime_plan(tmp_path)
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id="runtime_probe_request_plan:other",
+        results=(),
+    )
+
+    with pytest.raises(ValueError, match="plan_id must match request plan"):
+        runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+            plan,
+            batch,
+        )
+
+
+def test_probe_result_batch_admission_rejects_result_plan_id_drift(
+    tmp_path: Path,
+) -> None:
+    """Each result's own plan ID is revalidated during bridge admission."""
+    _program, plan = _runtime_plan(tmp_path)
+    observed = _observed_probe_result_for_observation(
+        plan,
+        plan.requests[0],
+        _dynamic_import_observation(plan.requests[0].source_site),
+    )
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+    object.__setattr__(observed, "plan_id", "runtime_probe_request_plan:other")
+
+    with pytest.raises(ValueError, match="result plan_id must match"):
+        runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+            plan,
+            batch,
+        )
+
+
+def test_probe_result_batch_admission_rejects_unplanned_request_id(
+    tmp_path: Path,
+) -> None:
+    """Every carried probe result request ID must belong to the request plan."""
+    _program, plan = _runtime_plan(tmp_path)
+    unplanned_request = _planned_request_for_form(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        source_site=_unplanned_site(),
+    )
+    observed = _observed_probe_result_for_observation(
+        plan,
+        unplanned_request,
+        _dynamic_import_observation(unplanned_request.source_site),
+    )
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+
+    with pytest.raises(ValueError, match="request_id is not present"):
+        runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+            plan,
+            batch,
+        )
+
+
+def test_probe_result_batch_admission_rejects_unmapped_family_form() -> None:
+    """The bridge does not use a family-only fallback for proof admission."""
+    source_site = _source_site_for_form("reflective_builtin:getattr/1")
+    request = _planned_request_for_form(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:getattr/1",
+        source_site=source_site,
+    )
+    plan = runtime_probe_requests.build_runtime_probe_request_plan((request,))
+    observation = _getattr_observation(source_site)
+    observed = _observed_probe_result_for_observation(plan, request, observation)
+    batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=plan.plan_id,
+        results=(observed,),
+    )
+
+    with pytest.raises(ValueError, match="does not match planned request family/form"):
+        runtime_observation_admission.admit_runtime_probe_result_batch_for_plan(
+            plan,
+            batch,
+        )
+
+
+def test_probe_result_batch_admission_is_internal_not_package_root_export() -> None:
+    """The proof-only bridge remains module-local and absent from public exports."""
+    assert (
+        "admit_runtime_probe_result_batch_for_plan"
+        not in runtime_observation_admission.__all__
+    )
+    assert (
+        "RuntimeProbeResultBatchAdmission" not in runtime_observation_admission.__all__
+    )
+    assert "admit_runtime_probe_result_batch_for_plan" not in context_ir.__all__
+    assert "RuntimeProbeResultBatchAdmission" not in context_ir.__all__
+    assert not hasattr(context_ir, "admit_runtime_probe_result_batch_for_plan")
+    assert not hasattr(context_ir, "RuntimeProbeResultBatchAdmission")
 
 
 @pytest.mark.parametrize(

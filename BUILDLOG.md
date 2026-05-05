@@ -2,6 +2,158 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Result Admission Bridge Correction Review
+
+- Reviewed the narrow correction for the execution-result to typed-observation
+  admission bridge.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `4907f9e Sync runtime probe result release routing`
+  - pre-existing dirty control files were `PLAN.md` and `BUILDLOG.md`
+  - implementation files in the workspace release unit are
+    `src/context_ir/runtime_observation_admission.py` and
+    `tests/test_runtime_observation_admission.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Correction accepted:
+  - the all-family runtime plan in
+    `tests/test_runtime_observation_admission.py` now directly includes
+    `reflective_builtin:getattr/3`, `reflective_builtin:vars/0`, and
+    `reflective_builtin:dir/0`
+  - the result-batch bridge test now admits observed
+    `RuntimeProbeObservedResult` values for every current mapped request
+    family/form and verifies typed observation class plus copied
+    replay/probe/snapshot/payload fields through the existing assertions
+- Accepted implementation state:
+  - `admit_runtime_probe_result_batch_for_plan(...)` bridges
+    `RuntimeProbeResultBatch` into deterministic plan-ordered
+    `RuntimeObservationAdmission` records
+  - only `RuntimeProbeObservedResult` becomes a typed `RuntimeObservation`
+  - `RuntimeProbeNonProofResult` values are preserved separately and are never
+    admitted as runtime-backed proof
+  - plan ID, request ID, carried request identity, source-site identity, and
+    family/form compatibility are revalidated
+  - probe identifier, probe contract revision, repository snapshot basis,
+    replay target/selector, replay inputs, runtime assumptions, normalized
+    payload, and durable artifact reference are copied into the existing typed
+    observation shape
+  - required `RuntimeAttachmentLink` values are derived deterministically from
+    result identity or durable artifact reference
+  - the bridge remains internal to `context_ir.runtime_observation_admission`;
+    package-root and public exports remain unchanged
+  - no probe execution, runner materialization, typed observation collection,
+    JSON schema, serialization, facade, MCP, package-root export, eval,
+    scoring, optimizer, compiler, winner-selection, docs, or public-claim
+    surface changed
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_acquisition.py tests/test_runtime_observation_recompile.py -v`
+    reporting `174 passed`
+  - `git diff --check`
+- Routing decision:
+  - accept the implementation slice after 1 correction in workspace-only state
+  - source/contract changes are not low-risk batching candidates, so this
+    tranche should be handled as its own release unit
+  - route next to a combined read-only release gate over the exact four-file
+    unit: `src/context_ir/runtime_observation_admission.py`,
+    `tests/test_runtime_observation_admission.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - the release gate must run release-unit audit, full regression, and
+    commit-gating in order, stopping on the first finding
+  - do not route to another implementation slice before release gates clear or
+    a findings-based correction is accepted
+  - push remains Ryan-gated
+- Acceptance status: 1 correction
+
+## 2026-05-05 -- Runtime Probe Result Admission Bridge Review
+
+- Reviewed the returned execution-result to typed-observation admission bridge
+  implementation slice.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `4907f9e Sync runtime probe result release routing`
+  - pre-existing dirty control files were `PLAN.md` and `BUILDLOG.md`
+  - implementation files changed by the execution lane were
+    `src/context_ir/runtime_observation_admission.py` and
+    `tests/test_runtime_observation_admission.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_admission.py tests/test_runtime_observation_admission.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_admission.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_acquisition.py tests/test_runtime_observation_recompile.py -v`
+    reporting `174 passed`
+  - `git diff --check`
+- Finding:
+  - the result-bridge test named as covering every current family/form uses a
+    generated plan that omits current mapped forms `reflective_builtin:getattr/3`,
+    `reflective_builtin:vars/0`, and `reflective_builtin:dir/0`
+  - this violates the slice definition of done requiring coverage for every
+    current family/form in tests
+- Routing decision:
+  - hold acceptance pending a narrow correction pass
+  - correction scope should stay in `tests/test_runtime_observation_admission.py`
+    unless the test exposes an implementation defect
+  - no release gate, staging, local commit, push, or next implementation slice
+    is authorized before the correction returns and is reviewed
+- Acceptance status: held
+
+## 2026-05-05 -- Runtime Probe Result Admission Boundary Routing
+
+- Reviewed the bounded read-only post-`eb6def0` planning/control result.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `4907f9e Sync runtime probe result release routing`
+  - clean worktree before this continuity edit
+  - nothing staged
+  - `git diff --check` clean
+- Accepted planning finding:
+  - the safest next runtime-acquisition-loop step is an internal proof-only
+    bridge from `RuntimeProbeObservedResult` / `RuntimeProbeResultBatch` into
+    the existing typed `RuntimeObservation` admission path
+  - this is safer than runner materialization because it consumes the pushed
+    result contract without executing probes or creating external surfaces
+  - non-proof outcomes must remain non-proof and must not be admitted as
+    runtime-backed proof
+- Control clarification:
+  - existing typed observations require runtime attachment links before
+    provenance attachment
+  - the implementation must derive any required `RuntimeAttachmentLink`
+    deterministically from result identity or durable artifact reference, and
+    must not invent a new public proof surface
+- Routing decision:
+  - accept the planning/control result first-pass
+  - route next to one bounded internal implementation slice in
+    `src/context_ir/runtime_observation_admission.py` and
+    `tests/test_runtime_observation_admission.py`
+  - the slice must validate plan ID, request ID, request identity,
+    source-site identity, and family/form compatibility
+  - the slice must preserve replay/probe/snapshot/payload data and plan-order
+    determinism
+  - no probe execution, runner materialization, typed observation collection,
+    JSON schema, serialization, facade, MCP, package-root export, eval,
+    scoring, optimizer, compiler, winner-selection, docs, or public-claim work
+    is authorized in the implementation slice
+- Alternatives rejected:
+  - probe-runner request materialization, because it would produce outputs
+    before the result-to-admission boundary can consume them safely
+  - typed observation collection, because it bypasses the pushed result
+    contract and risks admitting hand-shaped observations
+  - JSON-safe serialization/schema, because it is external/schema surface
+    widening and needs explicit later authorization
+  - tool facade or MCP exposure, because public/API/MCP widening remains held
+  - explicit hold, because the internal conversion/admission bridge is narrow
+    and safe
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- eb6def0 Runtime Probe Result Contract Release Sync
 
 - Synced post-push continuity for
