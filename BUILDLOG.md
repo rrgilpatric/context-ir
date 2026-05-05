@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Result-Batch Recompile Local Commit Routing
+
+- Reviewed the accepted combined read-only release-gate result and completed
+  local commit sequencing for the runtime probe result-batch recompile bridge.
+- Gate result accepted:
+  - findings: none
+  - Gate 1 release-unit audit passed for the exact four-file unit
+  - focused validation passed, including targeted pytest reporting `232 passed`
+  - Gate 2 full regression passed, including full pytest reporting `847 passed`
+  - Gate 3 commit-gating passed with the exact dirty/tracked file set, nothing
+    staged, no untracked files, no ref drift, and clean `git diff --check`
+- Local commit sequencing completed:
+  - staged exactly the four-file release unit:
+    `src/context_ir/runtime_observation_recompile.py`,
+    `tests/test_runtime_observation_recompile.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - verified no unstaged drift and clean staged whitespace
+  - created local commit
+    `591c09b Compose runtime probe result batch recompile`
+- Post-commit repo state before Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` at `591c09b Compose runtime probe result batch recompile`
+  - `origin/main` at `6023220 Sync runtime probe admission release routing`
+  - local commits ahead of `origin/main` are docs-only post-push continuity
+    `37db0ca` plus source/contract release candidate `591c09b`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Ryan authorized pushing this local release candidate.
+- Routing decision:
+  - treat `591c09b` as release-gate-cleared and locally committed
+  - if live git shows `591c09b` is still ahead of `origin/main`, the next
+    control action is the already authorized push
+  - if live git shows `origin/main` contains `591c09b`, treat the runtime probe
+    result-batch recompile bridge as pushed and no-active-gate
+  - do not route `591c09b` back to release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or implementation absent new
+    findings
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Result-Batch Recompile Bridge Review
 
 - Reviewed the returned internal result-batch to recompile bridge

@@ -90,10 +90,23 @@ Released four-file unit:
 
 Release-gate status is no-active-gate for `ccd417a`.
 
-Runtime probe result-batch recompile bridge workspace state:
+Runtime probe result-batch recompile bridge local release candidate:
 
-- implementation review accepted the slice first-pass in workspace-only state
-- accepted workspace files are
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting
+    `232 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `847 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, no untracked files, and clean `git diff --check`
+- local commit creation completed at
+  `591c09b Compose runtime probe result batch recompile`
+- Ryan authorized pushing this local release candidate; if live git shows
+  `origin/main` contains `591c09b`, treat this release as pushed and
+  no-active-gate
+- release files are
   `src/context_ir/runtime_observation_recompile.py` and
   `tests/test_runtime_observation_recompile.py`, plus control continuity in
   `PLAN.md` and `BUILDLOG.md`
@@ -113,15 +126,13 @@ Runtime probe result-batch recompile bridge workspace state:
   package-root, tool facade, MCP, JSON/schema, serialization, eval, scoring,
   optimizer, compiler, winner-selection, docs, and public-claim surfaces remain
   unchanged
-- control-lane focused validation passed:
+- control-lane focused validation before release gate passed:
   - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
   - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
   - `.venv/bin/python -m mypy --strict src/`
   - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_observation_admission.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_acquisition.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
     reporting `232 passed`
   - `git diff --check`
-- this is not release-unit-audit clearance, full-regression clearance,
-  commit-gating clearance, local commit creation, or push readiness
 
 Prior pushed runtime probe execution-result/replay-artifact contract:
 
@@ -347,18 +358,21 @@ Current route:
 
 - Runtime probe result admission bridge is pushed at
   `ccd417a Add runtime probe result admission bridge` with no active gate.
-- Runtime probe result-batch recompile bridge implementation is accepted
-  first-pass in workspace-only state.
-- Route next to a combined read-only release gate over the exact four-file
-  runtime probe result-batch recompile bridge release unit. The gate must run
-  release-unit audit, full regression, and commit-gating in order, stopping on
-  the first finding. Do not route another implementation slice before this gate
-  returns.
+- Runtime probe result-batch recompile bridge is release-gate-cleared and
+  locally committed at
+  `591c09b Compose runtime probe result batch recompile`; Ryan authorized push
+  in the active control turn.
+- If live git shows `591c09b` is still ahead of `origin/main`, the next control
+  action is the already authorized push, not another implementation,
+  release-gate, staging, or local commit lane.
+- If live git shows `origin/main` already contains `591c09b`, treat it as
+  pushed and no-active-gate; perform a post-push continuity sync only if the
+  active block would otherwise misroute a fresh controller.
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
-- Do not route `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`, `74aadd7`,
-  `95f7545`,
+- Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
+  `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
   `7c46f48`, `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`,
   `a819cf5`, `2e448ea`, `f6c66e4`, or `546a4da` back to docs review,
