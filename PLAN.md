@@ -41,15 +41,58 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`b279b00 Compose runtime observation recompile flow`. It supersedes the
-workspace-only runtime observation recompile composition release-gate route for
-active control routing only. Live git refs and worktree state must still be
-verified from git during control intake.
+`8ac3b46 Add typed runtime recompile facade`. It supersedes the workspace-only
+typed facade runtime recompile release-gate route for active control routing
+only. Live git refs and worktree state must still be verified from git during
+control intake.
 
 Repo-backed release truth verified during post-push continuity sync: branch
 `main`, `HEAD` and `origin/main` at
-`b279b00 Compose runtime observation recompile flow`, clean worktree at intake
+`8ac3b46 Add typed runtime recompile facade`, clean worktree at intake
 before this docs-only continuity edit, nothing staged, and no untracked files.
+
+Released typed facade runtime recompile:
+
+- `SemanticRuntimeObservationRecompileRequest` and
+  `SemanticRuntimeObservationRecompileResponse` provide a frozen typed
+  `context_ir.tool_facade` surface for applying typed runtime observations
+  before semantic recompile
+- `recompile_repository_context_with_runtime_observations(...)` delegates to
+  `apply_runtime_observations_for_diagnostic_and_recompile(...)`
+- delegation uses the previous `SemanticContextResponse` program and compile
+  result
+- optional `embed_fn` is forwarded
+- response mirror fields are guarded against drift from the underlying runtime
+  observation application and semantic recompile result
+- existing admission, application, and recompile gates propagate through the
+  facade
+- empty observations preserve original-program application behavior while still
+  recompiling
+- successful runtime observation satisfaction does not re-plan the already
+  satisfied diagnostic runtime request
+- `context_ir.mcp_server`, `context_ir.__init__`, package-root exports, and
+  JSON serialization remain unchanged
+- no probe execution, runtime observation collection, execution-result
+  contract, schema, scoring policy, compiler contract, optimizer,
+  winner-selection, eval, product, benchmark, or public-claim surface changed
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting `58 passed`
+  - Gate 2 full regression passed, including full pytest reporting `816 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, and clean `git diff --check`
+- local commit creation and Ryan-authorized push completed at
+  `8ac3b46 Add typed runtime recompile facade`
+
+Released four-file unit:
+
+- `src/context_ir/tool_facade.py`
+- `tests/test_tool_facade.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+Release-gate status is no-active-gate for `8ac3b46`.
 
 Released runtime observation recompile composition:
 
@@ -184,33 +227,26 @@ Release-gate status is no-active-gate for `95f7545`.
 
 Current route:
 
-- Post-`b279b00` North Star planning/control selected a read-only
-  surface-boundary spike as the next step before any exposed consumption
-  implementation.
-- Exposed-consumption boundary spike is accepted first-pass.
-- Typed `tool_facade` request/response implementation is accepted first-pass
-  in workspace-only state. The slice calls
-  `apply_runtime_observations_for_diagnostic_and_recompile(...)` for an
-  existing `SemanticContextResponse`, diagnostic, typed runtime observations,
-  miss evidence, and delta budget.
-- Accepted workspace files are `src/context_ir/tool_facade.py` and
-  `tests/test_tool_facade.py`, plus control continuity in `PLAN.md` and
-  `BUILDLOG.md`.
-- The accepted slice did not edit `mcp_server.py`, expose package-root APIs,
-  add JSON serialization, execute probes, collect runtime observations, define
-  an execution-result contract, or widen eval, schema, scoring policy,
-  compiler contract, optimizer, winner-selection, product, public benchmark,
-  or public-claim surfaces.
-- Route next to a combined read-only release gate over the exact four-file
-  typed facade runtime recompile release unit. The gate must run release-unit
-  audit, full regression, and commit-gating in order, stopping on the first
-  finding. Do not route another implementation slice before this gate returns.
-- Do not route `b279b00`, `74aadd7`, `95f7545`, `35c440d`, `f5c8df0`,
-  `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`, `4ba06ad`,
-  `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`, `2e448ea`,
-  `f6c66e4`, or `546a4da` back to docs review, release-unit audit, focused
-  validation, full regression, commit-gating, staging, local commit creation,
-  or push absent new findings
+- Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
+- Route next to a read-only execution-boundary spike before any probe-runner,
+  execution-result, JSON, MCP, package-root, or public-surface implementation.
+- The spike must decide the smallest safe next implementation slice toward
+  usable runtime acquisition after the typed facade recompile surface.
+- Candidate next slices to evaluate: internal execution-result/replay-artifact
+  contract, probe-runner request materialization, typed observation collection,
+  JSON-safe facade serialization, MCP exposure, or an explicit hold.
+- The spike must preserve the runtime-backed admissibility boundary in
+  `ARCHITECTURE.md`: stable probe identity, repository snapshot basis, replay
+  contract, reproducible outcome, additive provenance, and no silent upgrade
+  of unsupported/frontier truth.
+- No implementation is authorized until the spike returns and control accepts
+  a specific next slice.
+- Do not route `8ac3b46`, `b279b00`, `74aadd7`, `95f7545`, `35c440d`,
+  `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`, `7c46f48`,
+  `4ba06ad`, `97dc0f6`, `744bf0e`, `3df02c6`, `49fa461`, `a819cf5`,
+  `2e448ea`, `f6c66e4`, or `546a4da` back to docs review, release-unit
+  audit, focused validation, full regression, commit-gating, staging, local
+  commit creation, or push absent new findings
 - Push remains Ryan-gated for any future release
 
 Released planned runtime probe request plan source-site indexing:
@@ -1827,22 +1863,25 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Exposed-consumption boundary spike accepted first-pass
 - [x] Typed facade runtime observation recompile request/response slice
   accepted first-pass in workspace-only state
-- [ ] Combined release gate for the exact four-file typed facade runtime
+- [x] Combined release gate for the exact four-file typed facade runtime
   recompile release unit
+- [x] Local commit creation and Ryan-authorized push for the typed facade
+  runtime recompile release unit
+- [ ] Post-`8ac3b46` execution-boundary spike
 
 ## What Is In Progress
 
-- Typed facade runtime observation recompile request/response implementation is
-  accepted first-pass in workspace-only state.
-- Proposed release unit:
+- Typed facade runtime observation recompile is completed and pushed at
+  `8ac3b46`:
   - `src/context_ir/tool_facade.py`
   - `tests/test_tool_facade.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- Next active gate is a combined read-only release gate over that exact
-  four-file unit. No staging, local commit, push, or next implementation slice
-  is authorized before the gate returns clean or a findings-based correction is
-  accepted.
+- Release-gate status is no-active-gate for `8ac3b46`.
+- Next active route is a read-only execution-boundary spike. It should decide
+  the smallest safe implementation slice before any probe-runner,
+  execution-result/replay-artifact, JSON, MCP, package-root, or public-surface
+  implementation.
 - No release gate is active for the pushed runtime observation recompile
   composition tranche.
 - The runtime observation recompile composition tranche is completed and
@@ -2661,19 +2700,27 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: combined read-only release gate for the exact four-file
-typed facade runtime observation recompile release unit:
+Immediate next route: read-only execution-boundary spike after the pushed
+typed facade runtime recompile release.
 
-- `src/context_ir/tool_facade.py`
-- `tests/test_tool_facade.py`
-- `PLAN.md`
-- `BUILDLOG.md`
+The spike should decide the smallest safe next implementation slice toward a
+usable runtime-acquisition loop. It must compare at least:
 
-The gate must run release-unit audit, then full regression, then
-commit-gating, stopping on the first finding. It must not edit files, stage,
-commit, push, or rewrite continuity. No new implementation slice is authorized
-before this release gate returns clean or a findings-based correction is
-accepted.
+- internal execution-result/replay-artifact contract
+- probe-runner request materialization
+- typed observation collection
+- JSON-safe facade serialization
+- MCP exposure
+- explicit hold
+
+No implementation is authorized during the spike. The spike must preserve the
+runtime-backed admissibility boundary: stable probe identity, repository
+snapshot basis, replay contract, reproducible outcome, additive provenance,
+and no silent upgrade of unsupported/frontier truth.
+
+The typed facade runtime recompile tranche is pushed at
+`8ac3b46 Add typed runtime recompile facade` and has release-gate status
+no-active-gate. It should not be reopened absent new findings.
 
 The runtime observation recompile composition tranche is pushed at
 `b279b00 Compose runtime observation recompile flow` and has release-gate
