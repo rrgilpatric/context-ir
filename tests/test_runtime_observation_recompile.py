@@ -13,6 +13,7 @@ import context_ir
 import context_ir.runtime_acquisition as runtime_acquisition
 import context_ir.runtime_observation_admission as runtime_observation_admission
 import context_ir.runtime_observation_recompile as runtime_observation_recompile
+import context_ir.runtime_probe_execution as runtime_probe_execution
 import context_ir.runtime_probe_requests as runtime_probe_requests
 import context_ir.runtime_probe_results as runtime_probe_results
 from context_ir.binder import bind_syntax
@@ -22,8 +23,10 @@ from context_ir.resolver import resolve_semantics
 from context_ir.runtime_observation_recompile import (
     RuntimeObservationRecompileApplication,
     RuntimeProbeResultBatchRecompileApplication,
+    RuntimeProbeRunnerCallableRecompileApplication,
     apply_runtime_observations_for_diagnostic_and_recompile,
     apply_runtime_probe_result_batch_for_diagnostic_and_recompile,
+    apply_runtime_probe_runner_for_diagnostic_and_recompile,
 )
 from context_ir.semantic_compiler import compile_semantic_context
 from context_ir.semantic_diagnostics import (
@@ -213,6 +216,59 @@ def _probe_field(
 ) -> runtime_probe_results.RuntimeProbeReplayField:
     """Return one runtime probe replay/result field."""
     return runtime_probe_results.RuntimeProbeReplayField(key=key, value=value)
+
+
+def _runner_runtime_assumptions() -> tuple[
+    runtime_probe_results.RuntimeProbeReplayField, ...
+]:
+    """Return explicit runtime assumptions for runner-callable bridge tests."""
+    return (
+        _probe_field("python_version", "3.11"),
+        _probe_field("dependency_mode", "offline-fixture"),
+    )
+
+
+def _runner_environment() -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return explicit environment fields for runner-callable bridge tests."""
+    return (
+        _probe_field("python_version", "3.11"),
+        _probe_field("platform", "linux-x86_64"),
+    )
+
+
+def _runner_assumptions() -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return explicit runner assumptions for runner-callable bridge tests."""
+    return (
+        _probe_field("network", "disabled"),
+        _probe_field("filesystem_mode", "read_only_fixture"),
+    )
+
+
+def _probe_execution_attempt(
+    runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    *,
+    outcome: runtime_probe_results.RuntimeProbeResultOutcome = (
+        runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    ),
+    normalized_payload: tuple[runtime_probe_results.RuntimeProbeReplayField, ...] = (),
+    durable_artifact_reference: str | None = None,
+    failure_summary: str | None = None,
+    failure_detail_fields: tuple[
+        runtime_probe_results.RuntimeProbeReplayField, ...
+    ] = (),
+) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+    """Return one runner attempt tied to the supplied runner request."""
+    return runtime_probe_execution.RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=outcome,
+        normalized_payload=normalized_payload,
+        durable_artifact_reference=durable_artifact_reference,
+        failure_summary=failure_summary,
+        failure_detail_fields=failure_detail_fields,
+    )
 
 
 def _probe_fields_from_runtime_fields(
@@ -856,6 +912,309 @@ def test_runtime_probe_result_batch_recompile_preserves_plan_order_for_partial_b
     )
 
 
+def test_runtime_probe_runner_callable_recompile_collects_and_recompiles(
+    tmp_path: Path,
+) -> None:
+    """Runner-callable bridge preserves preparation, attempt, and result identity."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        observation,
+        unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+    runtime_assumptions = _runner_runtime_assumptions()
+    runner_environment = _runner_environment()
+    runner_assumptions = _runner_assumptions()
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+    returned_attempts: list[runtime_probe_execution.RuntimeProbeExecutionAttempt] = []
+    embedded_batches: list[tuple[str, ...]] = []
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        attempt = _probe_execution_attempt(
+            runner_request,
+            normalized_payload=_probe_fields_from_runtime_fields(
+                observation.normalized_payload
+            ),
+            durable_artifact_reference=observation.durable_payload_reference,
+        )
+        returned_attempts.append(attempt)
+        return attempt
+
+    def embed_fn(texts: list[str]) -> list[list[float]]:
+        embedded_batches.append(tuple(texts))
+        return [[1.0, 0.0] for _text in texts]
+
+    result = apply_runtime_probe_runner_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        previous_result,
+        miss_evidence,
+        delta_budget=160,
+        repository_snapshot_basis=_snapshot_basis(),
+        probe_contract_revision="runtime-probe-contract:test.1",
+        runtime_assumptions=runtime_assumptions,
+        runner_contract_revision="runtime-probe-runner:test.1",
+        timeout_seconds=30,
+        runner_environment=runner_environment,
+        runner_assumptions=runner_assumptions,
+        runner=runner,
+        embed_fn=embed_fn,
+    )
+    preparation = result.runner_request_preparation
+    collection = result.runner_attempt_collection
+    recompile_application = result.result_batch_recompile_application
+    observed_result = collection.result_batch.results[0]
+    recompile_boundary = _boundary_for(
+        recompile_application.recompile_result.diagnostic,
+        unsupported_id,
+    )
+
+    assert isinstance(result, RuntimeProbeRunnerCallableRecompileApplication)
+    assert preparation.diagnostic is diagnostic
+    assert preparation.request_plan is plan
+    assert preparation.execution_input_batch.request_ids == plan.request_ids
+    assert preparation.runner_request_batch.request_ids == plan.request_ids
+    assert preparation.execution_input_batch.inputs[0].request is request
+    assert preparation.runner_request_batch.runner_requests[0].request is request
+    assert (
+        preparation.execution_input_batch.inputs[0].replay_artifact.runtime_assumptions
+        is runtime_assumptions
+    )
+    assert preparation.runner_request_batch.runner_environment is runner_environment
+    assert preparation.runner_request_batch.runner_assumptions is runner_assumptions
+    assert collection.runner_request_batch is preparation.runner_request_batch
+    assert tuple(calls) == preparation.runner_request_batch.runner_requests
+    assert collection.attempts == tuple(returned_attempts)
+    assert collection.attempts[0] is returned_attempts[0]
+    assert collection.result_batch.plan_id == plan.plan_id
+    assert observed_result.request is request
+    assert (
+        observed_result.replay_artifact
+        is preparation.runner_request_batch.runner_requests[0].replay_artifact
+    )
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert recompile_application.result_batch_admission.non_proof_results == ()
+    assert recompile_application.non_proof_results == ()
+    assert recompile_application.observation_application.diagnostic is diagnostic
+    assert recompile_application.observation_application.admissions[0].request is (
+        request
+    )
+    assert recompile_application.observation_application.updated_program is not program
+    _assert_observation_copied_probe_result(
+        recompile_application.observation_application.admissions[0].observation,
+        observed_result,
+    )
+    assert recompile_boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert (
+        unsupported_id in recompile_application.recompile_result.newly_selected_unit_ids
+    )
+    assert embedded_batches
+
+    with pytest.raises(FrozenInstanceError):
+        result.runner_attempt_collection = collection
+
+
+def test_runtime_probe_runner_callable_recompile_preserves_non_proof_results(
+    tmp_path: Path,
+) -> None:
+    """Runner non-proof results stay separate through result-batch recompile."""
+    program, previous_result, miss_evidence, diagnostic, plan = (
+        _runtime_recompile_multi_request_fixture(tmp_path)
+    )
+    dynamic_observation = _dynamic_import_runtime_observation(
+        plan.requests[0].source_site
+    )
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        if runner_request.request is not plan.requests[0]:
+            return _probe_execution_attempt(
+                runner_request,
+                outcome=runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+                failure_summary="probe exceeded timeout",
+                failure_detail_fields=(_probe_field("timeout_seconds", "30"),),
+            )
+        return _probe_execution_attempt(
+            runner_request,
+            normalized_payload=_probe_fields_from_runtime_fields(
+                dynamic_observation.normalized_payload
+            ),
+        )
+
+    result = apply_runtime_probe_runner_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        previous_result,
+        miss_evidence,
+        delta_budget=96,
+        repository_snapshot_basis=_snapshot_basis(),
+        probe_contract_revision="runtime-probe-contract:test.1",
+        runtime_assumptions=_runner_runtime_assumptions(),
+        runner_contract_revision="runtime-probe-runner:test.1",
+        timeout_seconds=30,
+        runner_environment=_runner_environment(),
+        runner_assumptions=_runner_assumptions(),
+        runner=runner,
+    )
+    result_batch = result.runner_attempt_collection.result_batch
+    recompile_application = result.result_batch_recompile_application
+    non_proof_result = result_batch.results[1]
+
+    assert isinstance(
+        non_proof_result,
+        runtime_probe_results.RuntimeProbeNonProofResult,
+    )
+    assert [
+        admission.request_id
+        for admission in recompile_application.result_batch_admission.admissions
+    ] == [
+        plan.request_ids[0],
+    ]
+    assert recompile_application.non_proof_results == (
+        non_proof_result,
+        result_batch.results[2],
+    )
+    assert recompile_application.non_proof_results[0] is non_proof_result
+    assert recompile_application.non_proof_results[1] is result_batch.results[2]
+    assert (
+        recompile_application.result_batch_admission.non_proof_results[0]
+        is non_proof_result
+    )
+    assert all(
+        non_proof.is_admissible_runtime_backed_proof is False
+        for non_proof in recompile_application.non_proof_results
+    )
+    _assert_observation_copied_probe_result(
+        recompile_application.observation_application.admissions[0].observation,
+        result_batch.results[0],
+    )
+
+
+def test_runtime_probe_runner_callable_recompile_supports_empty_plan(
+    tmp_path: Path,
+) -> None:
+    """Empty planned request batches do not invoke the runner callable."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        _observation,
+        _unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+    empty_plan = runtime_probe_requests.build_runtime_probe_request_plan(())
+    empty_diagnostic = replace(
+        diagnostic,
+        planned_runtime_probe_requests=(),
+        planned_runtime_probe_request_plan=empty_plan,
+    )
+    was_called = False
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        nonlocal was_called
+        was_called = True
+        return _probe_execution_attempt(
+            runner_request,
+            normalized_payload=(_probe_field("observed_module", "pkg.dynamic"),),
+        )
+
+    result = apply_runtime_probe_runner_for_diagnostic_and_recompile(
+        program,
+        empty_diagnostic,
+        previous_result,
+        miss_evidence,
+        delta_budget=96,
+        repository_snapshot_basis=_snapshot_basis(),
+        probe_contract_revision="runtime-probe-contract:test.1",
+        runtime_assumptions=_runner_runtime_assumptions(),
+        runner_contract_revision="runtime-probe-runner:test.1",
+        timeout_seconds=30,
+        runner_environment=_runner_environment(),
+        runner_assumptions=_runner_assumptions(),
+        runner=runner,
+    )
+    recompile_application = result.result_batch_recompile_application
+    expected_recompile = recompile_semantic_context(
+        previous_result,
+        miss_evidence,
+        delta_budget=96,
+        program=program,
+    )
+
+    assert was_called is False
+    assert result.runner_request_preparation.diagnostic is empty_diagnostic
+    assert result.runner_request_preparation.request_plan is empty_plan
+    assert result.runner_attempt_collection.attempts == ()
+    assert result.runner_attempt_collection.result_batch.results == ()
+    assert recompile_application.non_proof_results == ()
+    assert recompile_application.observation_application.diagnostic is empty_diagnostic
+    assert recompile_application.observation_application.admissions == ()
+    assert recompile_application.observation_application.updated_program is program
+    assert recompile_application.recompile_result.diagnostic == (
+        expected_recompile.diagnostic
+    )
+    assert recompile_application.recompile_result.newly_selected_unit_ids == (
+        expected_recompile.newly_selected_unit_ids
+    )
+
+
+def test_runtime_probe_runner_callable_recompile_propagates_runner_exceptions(
+    tmp_path: Path,
+) -> None:
+    """Runner exceptions propagate without being converted to probe results."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        request,
+        _observation,
+        _unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        raise RuntimeError("runner failed")
+
+    with pytest.raises(RuntimeError, match="runner failed"):
+        apply_runtime_probe_runner_for_diagnostic_and_recompile(
+            program,
+            diagnostic,
+            previous_result,
+            miss_evidence,
+            delta_budget=96,
+            repository_snapshot_basis=_snapshot_basis(),
+            probe_contract_revision="runtime-probe-contract:test.1",
+            runtime_assumptions=_runner_runtime_assumptions(),
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+            runner=runner,
+        )
+
+    assert len(calls) == 1
+    assert calls[0].request is request
+
+
 def test_runtime_probe_result_batch_recompile_propagates_admission_and_recompile_gates(
     tmp_path: Path,
 ) -> None:
@@ -939,7 +1298,7 @@ def test_runtime_probe_result_batch_recompile_propagates_admission_and_recompile
 
 
 def test_runtime_probe_result_batch_recompile_helper_is_internal() -> None:
-    """The batch recompile bridge stays off root and wildcard public surfaces."""
+    """The recompile bridges stay off root and wildcard public surfaces."""
     assert (
         "apply_runtime_probe_result_batch_for_diagnostic_and_recompile"
         not in runtime_observation_recompile.__all__
@@ -958,6 +1317,27 @@ def test_runtime_probe_result_batch_recompile_helper_is_internal() -> None:
         "apply_runtime_probe_result_batch_for_diagnostic_and_recompile",
     )
     assert not hasattr(context_ir, "RuntimeProbeResultBatchRecompileApplication")
+    assert (
+        "apply_runtime_probe_runner_for_diagnostic_and_recompile"
+        not in runtime_observation_recompile.__all__
+    )
+    assert (
+        "RuntimeProbeRunnerCallableRecompileApplication"
+        not in runtime_observation_recompile.__all__
+    )
+    assert (
+        "apply_runtime_probe_runner_for_diagnostic_and_recompile"
+        not in context_ir.__all__
+    )
+    assert "RuntimeProbeRunnerCallableRecompileApplication" not in context_ir.__all__
+    assert not hasattr(
+        context_ir,
+        "apply_runtime_probe_runner_for_diagnostic_and_recompile",
+    )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeRunnerCallableRecompileApplication",
+    )
 
 
 def test_runtime_observation_recompile_empty_observations_recompile_original_program(

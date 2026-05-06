@@ -2,6 +2,132 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  runtime probe diagnostic runner-callable recompile bridge unit.
+- Reverified live repo state before advancing:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ea11793 Sync runtime probe runner attempt collection post-push state`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_observation_recompile.py`, and
+    `tests/test_runtime_observation_recompile.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Gate result:
+  - Gate 1 release-unit audit passed with no findings
+  - focused validation passed, including targeted pytest reporting
+    `215 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `895 passed`
+  - Gate 3 commit-gating passed with exact dirty tracked set unchanged,
+    nothing staged, no untracked files, and clean `git diff --check`
+- Decision:
+  - the exact four-file unit is commit-ready to stage locally
+  - next control action is local commit sequencing
+  - push remains Ryan-gated after local commit creation
+- Acceptance status: first-pass
+
+## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Review
+
+- Reviewed the returned internal diagnostic runner-callable recompile bridge.
+- Verified repo-backed truth before acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ea11793 Sync runtime probe runner attempt collection post-push state`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_observation_recompile.py`, and
+    `tests/test_runtime_observation_recompile.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted implementation state:
+  - added a frozen internal
+    `RuntimeProbeRunnerCallableRecompileApplication` envelope
+  - added an internal helper composing diagnostic runner-request preparation,
+    runner-callable attempt collection, and result-batch recompile
+  - observed runner attempts flow through existing result-batch admission,
+    runtime observation application, and semantic recompile gates
+  - non-proof results remain separate and non-proof through the composed path
+  - runner exceptions propagate
+  - empty planned request batches remain deterministic without invoking the
+    runner
+  - the helper and envelope remain internal to
+    `context_ir.runtime_observation_recompile`; package-root, facade, MCP,
+    schema, eval, scoring, optimizer, compiler, benchmark, and public-claim
+    surfaces remain unchanged
+- Control-lane focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_observation_admission.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `215 passed`
+  - `git diff --check`
+- Decision:
+  - accepted first-pass in workspace-only state
+  - proposed release unit is exactly
+    `src/context_ir/runtime_observation_recompile.py`,
+    `tests/test_runtime_observation_recompile.py`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - next control action is a combined read-only release gate over that exact
+    four-file unit
+  - do not stage, commit, push, or route another implementation slice before
+    the release gate returns clean or Ryan explicitly redirects
+- Acceptance status: first-pass
+
+## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ea11793 Sync runtime probe runner attempt collection post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `32f6220 Collect runtime probe runner attempts`.
+- Routing decision:
+  - the next smallest meaningful runtime-probe execution-loop slice is an
+    internal diagnostic runner-callable recompile bridge
+  - this slice should compose the pushed diagnostic runner-request preparation
+    helper, the pushed runner-callable attempt collection helper, and the
+    pushed runtime probe result-batch recompile helper
+  - this slice should return a frozen internal envelope preserving diagnostic
+    preparation, runner attempt collection, and result-batch recompile
+    application
+  - this slice should stay inside
+    `src/context_ir/runtime_observation_recompile.py` and
+    `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md` and `BUILDLOG.md` are control-lane continuity state for this
+    route and should not be edited by the implementation lane
+- Why now:
+  - the request plan, diagnostic runner-request preparation, runner-callable
+    attempt collection, result admission, observation application, and
+    result-batch recompile contracts are all pushed
+  - before implementing subprocess or family/form-specific probe execution,
+    the internal execution loop needs one typed composition point that proves
+    runner-produced attempts can flow into existing recompile without bypassing
+    admission or non-proof preservation
+- Alternatives rejected:
+  - actual subprocess or in-process repository probe execution: still too
+    broad and safety-sensitive for this slice
+  - exception-to-result synthesis: failure outcomes should remain typed
+    non-proof attempts returned by the runner callable until a later explicit
+    failure-normalization slice
+  - family/form-specific probe logic: premature before the full internal
+    composition boundary exists
+  - admission or recompile rule changes: the point of this slice is
+    composition through pushed gates, not new semantics
+  - JSON/schema/serialization, facade, MCP, package-root, eval, scoring,
+    optimizer, compiler, product, benchmark, or public-claim exposure: still
+    held
+  - reopening `32f6220` release gates: no new finding supports reopening the
+    pushed runner-callable attempt collection release
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Runner-Callable Attempt Collection Push Sync
 
 - Ryan authorized pushing the runtime probe runner-callable attempt collection

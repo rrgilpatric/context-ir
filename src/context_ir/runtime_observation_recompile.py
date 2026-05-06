@@ -13,12 +13,21 @@ from context_ir.runtime_observation_admission import (
     apply_runtime_observations_for_diagnostic,
     attach_admitted_runtime_observations,
 )
+from context_ir.runtime_probe_execution import (
+    RuntimeProbeDiagnosticRunnerRequestPreparation,
+    RuntimeProbeRunnerAttemptCollection,
+    RuntimeProbeRunnerCallable,
+    collect_runtime_probe_execution_attempts_from_runner_requests,
+    prepare_runtime_probe_runner_requests_for_diagnostic,
+)
 from context_ir.runtime_probe_results import (
     RuntimeProbeNonProofResult,
+    RuntimeProbeReplayField,
     RuntimeProbeResultBatch,
 )
 from context_ir.semantic_diagnostics import recompile_semantic_context
 from context_ir.semantic_types import (
+    RepositorySnapshotBasis,
     SemanticCompileResult,
     SemanticDiagnosticResult,
     SemanticMissEvidence,
@@ -45,6 +54,15 @@ class RuntimeProbeResultBatchRecompileApplication:
     non_proof_results: tuple[RuntimeProbeNonProofResult, ...]
     observation_application: RuntimeObservationApplication
     recompile_result: SemanticRecompileResult
+
+
+@dataclass(frozen=True)
+class RuntimeProbeRunnerCallableRecompileApplication:
+    """Result of runner-callable probe execution before semantic recompile."""
+
+    runner_request_preparation: RuntimeProbeDiagnosticRunnerRequestPreparation
+    runner_attempt_collection: RuntimeProbeRunnerAttemptCollection
+    result_batch_recompile_application: RuntimeProbeResultBatchRecompileApplication
 
 
 def apply_runtime_observations_for_diagnostic_and_recompile(
@@ -119,6 +137,58 @@ def apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
         non_proof_results=result_batch_admission.non_proof_results,
         observation_application=observation_application,
         recompile_result=recompile_result,
+    )
+
+
+def apply_runtime_probe_runner_for_diagnostic_and_recompile(
+    program: SemanticProgram,
+    diagnostic: SemanticDiagnosticResult,
+    previous_result: SemanticCompileResult,
+    miss_evidence: SemanticMissEvidence,
+    delta_budget: int,
+    *,
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    probe_contract_revision: str,
+    runtime_assumptions: Iterable[RuntimeProbeReplayField],
+    runner_contract_revision: str,
+    timeout_seconds: int,
+    runner_environment: Iterable[RuntimeProbeReplayField],
+    runner_assumptions: Iterable[RuntimeProbeReplayField],
+    runner: RuntimeProbeRunnerCallable,
+    embed_fn: EmbeddingFunction | None = None,
+) -> RuntimeProbeRunnerCallableRecompileApplication:
+    """Prepare runner requests, collect attempts, admit results, then recompile."""
+    runner_request_preparation = prepare_runtime_probe_runner_requests_for_diagnostic(
+        diagnostic,
+        repository_snapshot_basis=repository_snapshot_basis,
+        probe_contract_revision=probe_contract_revision,
+        runtime_assumptions=runtime_assumptions,
+        runner_contract_revision=runner_contract_revision,
+        timeout_seconds=timeout_seconds,
+        runner_environment=runner_environment,
+        runner_assumptions=runner_assumptions,
+    )
+    runner_attempt_collection = (
+        collect_runtime_probe_execution_attempts_from_runner_requests(
+            runner_request_preparation.runner_request_batch,
+            runner,
+        )
+    )
+    result_batch_recompile_application = (
+        apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+            program,
+            diagnostic,
+            runner_attempt_collection.result_batch,
+            previous_result,
+            miss_evidence,
+            delta_budget,
+            embed_fn=embed_fn,
+        )
+    )
+    return RuntimeProbeRunnerCallableRecompileApplication(
+        runner_request_preparation=runner_request_preparation,
+        runner_attempt_collection=runner_attempt_collection,
+        result_batch_recompile_application=result_batch_recompile_application,
     )
 
 

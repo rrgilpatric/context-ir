@@ -486,9 +486,26 @@ Current route:
 - Ryan-authorized push is complete for the runner-callable attempt collection
   release, with `origin/main` advanced through
   `e9b5b5a Sync runtime probe runner attempt collection release routing`.
-- Next active route may choose the next bounded runtime-probe execution-loop
-  planning or implementation lane. Do not reopen `32f6220` release gates
-  absent new findings.
+- Runtime probe diagnostic runner-callable recompile bridge is workspace-only
+  accepted first-pass, release-unit-audit-cleared, full-regression-cleared, and
+  commit-gating-cleared. The proposed release unit is exactly
+  `src/context_ir/runtime_observation_recompile.py`,
+  `tests/test_runtime_observation_recompile.py`, `PLAN.md`, and
+  `BUILDLOG.md`.
+- Control-lane focused validation passed for that workspace-only unit:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_observation_admission.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `215 passed`
+  - `git diff --check`
+- The combined read-only release gate passed with no findings for that exact
+  four-file diagnostic runner-callable recompile bridge unit: Gate 1
+  release-unit audit passed, focused validation passed with `215 passed`,
+  Gate 2 full regression passed with `895 passed`, and Gate 3 commit-gating
+  passed.
+- Next active route is local commit sequencing for that exact four-file unit.
+  Push remains Ryan-gated after local commit creation.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2199,6 +2216,14 @@ sequencing for `c1a12d7` absent new findings.
   collection release unit
 - [x] Ryan-authorized push for the runtime probe runner-callable attempt
   collection release unit
+- [x] Post-`32f6220` planning/control selected the internal diagnostic
+  runner-callable recompile bridge
+- [x] Runtime probe diagnostic runner-callable recompile bridge implementation
+  slice accepted first-pass in workspace-only state
+- [x] Combined release gate for the exact four-file runtime probe diagnostic
+  runner-callable recompile bridge release unit
+- [ ] Local commit creation for the runtime probe diagnostic runner-callable
+  recompile bridge release unit
 
 ## What Is In Progress
 
@@ -2270,9 +2295,11 @@ sequencing for `c1a12d7` absent new findings.
   - Ryan-authorized push completed with `origin/main` advanced through
     `e9b5b5a Sync runtime probe runner attempt collection release routing`
   - release-gate status is no-active-gate for `32f6220`
-- The active next action may choose the next bounded runtime-probe
-  execution-loop planning or implementation lane. Do not reopen `32f6220`
-  release gates absent new findings.
+- The next implementation slice is an internal diagnostic runner-callable
+  recompile bridge in `src/context_ir/runtime_observation_recompile.py` and
+  `tests/test_runtime_observation_recompile.py`.
+- `PLAN.md` and `BUILDLOG.md` are dirty control-lane continuity state for this
+  route. They should not be edited by the implementation lane.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Release-gate status is no-active-gate for `591c09b`.
@@ -3104,8 +3131,9 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: choose the next bounded runtime-probe execution-loop
-planning or implementation lane.
+Immediate next route: perform local commit sequencing for the exact four-file
+internal diagnostic runner-callable recompile bridge unit. Push remains
+Ryan-gated after local commit creation.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3257,6 +3285,39 @@ Release state for the runner-callable attempt collection unit:
 - Ryan-authorized push completed with `origin/main` advanced through
   `e9b5b5a Sync runtime probe runner attempt collection release routing`
 - release-gate status is no-active-gate
+
+The runtime probe diagnostic runner-callable recompile bridge slice is
+workspace-only accepted first-pass. It adds a frozen internal envelope and
+helper that compose diagnostic runner-request preparation, runner-callable
+attempt collection, and the existing result-batch recompile helper. It accepts
+a `SemanticDiagnosticResult` with an attached
+`planned_runtime_probe_request_plan`, runtime probe preparation metadata, a
+typed `RuntimeProbeRunnerCallable`, and the existing semantic recompile inputs.
+It preserves diagnostic preparation, runner attempt collection, and
+result-batch recompile application identity; preserves non-proof results as
+non-proof; propagates runner exceptions; and leaves empty planned request
+batches deterministic without runner invocation. It does not implement
+subprocess execution, in-process repository probe execution,
+family/form-specific probe logic, timeout enforcement, exception-to-result
+synthesis, admission rule changes, recompile rule changes, facade/MCP/
+package-root export, schema, eval, scoring, optimizer, compiler, benchmark, or
+public claims.
+
+Release state for the diagnostic runner-callable recompile bridge unit:
+
+- proposed release unit is exactly:
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- workspace-only accepted
+- release-unit-audit-cleared
+- full-regression-cleared with `895 passed`
+- commit-gating-cleared
+- staged: no
+- locally committed: no
+- pushed: no
+- next required action: local commit creation
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate
