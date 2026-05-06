@@ -474,16 +474,16 @@ Current route:
 - Ryan-authorized push is complete for the diagnostic runner-request
   preparation release, with `origin/main` advanced through
   `74d84fb Sync runtime probe diagnostic runner request release routing`.
-- Runtime probe runner-callable attempt collection is accepted first-pass and
-  release-gate-cleared. The proposed release unit is exactly
+- Runtime probe runner-callable attempt collection is locally committed at
+  `32f6220 Collect runtime probe runner attempts`. The release unit is exactly
   `src/context_ir/runtime_probe_execution.py`,
   `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
 - The combined read-only release gate passed with no findings for that exact
   four-file runner-callable attempt collection unit: Gate 1 release-unit audit
   passed, focused validation passed with `211 passed`, Gate 2 full regression
   passed with `891 passed`, and Gate 3 commit-gating passed.
-- Next active route is local commit creation for that exact four-file unit. It
-  is not staged, not locally committed, and not pushed.
+- Next active route is Ryan's explicit push/hold decision for the local
+  runner-callable attempt collection release. It is not pushed.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2190,7 +2190,9 @@ sequencing for `c1a12d7` absent new findings.
   accepted first-pass in workspace-only state
 - [x] Combined release gate for the exact four-file runtime probe
   runner-callable attempt collection release unit
-- [ ] Local commit creation for the runtime probe runner-callable attempt
+- [x] Local commit creation for the runtime probe runner-callable attempt
+  collection release unit
+- [ ] Ryan-authorized push for the runtime probe runner-callable attempt
   collection release unit
 
 ## What Is In Progress
@@ -2251,17 +2253,19 @@ sequencing for `c1a12d7` absent new findings.
   - Ryan-authorized push completed with `origin/main` advanced through
     `74d84fb Sync runtime probe diagnostic runner request release routing`
   - release-gate status is no-active-gate for `fd0f6d8`
-- Runtime probe runner-callable attempt collection is accepted first-pass and
-  release-gate-cleared:
-  - proposed release unit is exactly `src/context_ir/runtime_probe_execution.py`,
+- Runtime probe runner-callable attempt collection is accepted first-pass,
+  release-gate-cleared, and locally committed:
+  - release unit is exactly `src/context_ir/runtime_probe_execution.py`,
     `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
   - release-unit audit passed with no findings
   - focused validation passed with `211 passed`
   - full regression passed with `891 passed`
   - commit-gating passed with the exact four-file unit
-  - nothing is staged, locally committed, or pushed for this unit
-- The active next action is local commit creation for the exact four-file
-  runner-callable attempt collection release unit.
+  - local commit is `32f6220 Collect runtime probe runner attempts`
+  - push remains Ryan-gated
+- The active next action is Ryan's explicit push/hold decision for the local
+  runner-callable attempt collection release. Do not push without explicit
+  Ryan authorization.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Release-gate status is no-active-gate for `591c09b`.
@@ -3093,9 +3097,8 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local source/contract release commit for the
-exact four-file internal runtime probe runner-callable attempt collection
-release unit.
+Immediate next route: hold for Ryan's explicit push/hold decision for the local
+runtime probe runner-callable attempt collection release.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3215,7 +3218,8 @@ Release state for the diagnostic runner-request preparation unit:
 - release-gate status is no-active-gate
 
 The runtime probe runner-callable attempt collection slice is workspace-only
-accepted first-pass and release-gate-cleared. It adds an internal strict
+accepted first-pass, release-gate-cleared, and locally committed at
+`32f6220 Collect runtime probe runner attempts`. It adds an internal strict
 runner-callable attempt collection boundary. It accepts a
 `RuntimeProbeRunnerRequestBatch` and a typed runner callable, validates the
 batch before invocation, calls the runner exactly once per
@@ -3242,7 +3246,8 @@ Release state for the runner-callable attempt collection unit:
 - release-unit-audit-cleared
 - full-regression-cleared with `891 passed`
 - commit-gating-cleared
-- not staged, not locally committed, and not pushed
+- locally committed at `32f6220`
+- not pushed
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate
