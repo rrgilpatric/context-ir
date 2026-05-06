@@ -45,6 +45,9 @@ Current pushed source/contract release authority is
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
 
+Local unpushed source/contract release candidate is
+`86be8d7 Assemble runtime probe execution attempts`. Push remains Ryan-gated.
+
 Runtime probe execution-input materialization release:
 
 - `RuntimeProbeExecutionInput` is a frozen internal non-executing work item for
@@ -89,7 +92,7 @@ Runtime probe execution-input materialization release:
   `PLAN.md` and `BUILDLOG.md`
 - release-gate status is no-active-gate for `cfed3c7`
 
-Workspace-only accepted runtime probe execution-attempt result assembly:
+Local runtime probe execution-attempt result assembly release candidate:
 
 - `RuntimeProbeExecutionAttempt` is a frozen internal normalized runner-output
   record for one materialized `RuntimeProbeExecutionInput`
@@ -112,11 +115,21 @@ Workspace-only accepted runtime probe execution-attempt result assembly:
   surfaces remain unchanged
 - implementation review accepted the slice first-pass in workspace-only state
 - focused validation passed, including targeted pytest reporting `189 passed`
-- proposed release unit is exactly
+- corrected combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed for the exact four-file release unit
+  - focused validation passed, including targeted pytest reporting `189 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `869 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no extra drift, no untracked files, no ref drift, and clean
+    `git diff --check`
+- local commit creation completed at
+  `86be8d7 Assemble runtime probe execution attempts`
+- release unit is exactly
   `src/context_ir/runtime_probe_execution.py`,
   `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
-- release-unit-audit, full-regression, commit-gating, staging, local commit,
-  and push remain pending; push remains Ryan-gated
+- release-unit-audit, full-regression, commit-gating, staging, and local commit
+  are complete for `86be8d7`; push remains Ryan-gated
 
 Runtime probe result-batch recompile bridge release:
 
@@ -431,16 +444,11 @@ Current route:
 - Runtime probe execution-input materialization is pushed at
   `cfed3c7 Add runtime probe execution input materialization` with no active
   gate.
-- Runtime probe execution-attempt result assembly is accepted first-pass in
-  workspace-only state. The proposed release unit is exactly
-  `src/context_ir/runtime_probe_execution.py`,
-  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
-- Next active route is a corrected combined read-only release gate for that
-  exact four-file unit. The gate must run release-unit audit, full regression,
-  and commit-gating in order, stop on first finding, and must not edit files,
-  stage, commit, push, or rewrite continuity. Validation commands must invoke
-  repo tooling through `.venv/bin/python -m`; ambient `mypy` resolves outside
-  the repo virtualenv and is not authoritative for this gate.
+- Runtime probe execution-attempt result assembly is release-gate-cleared and
+  locally committed at `86be8d7 Assemble runtime probe execution attempts`.
+  Push remains Ryan-gated.
+- Next active route is Ryan's explicit push/hold decision for `86be8d7`. Do
+  not route another implementation or planning lane before that decision.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2105,19 +2113,21 @@ sequencing for `c1a12d7` absent new findings.
   runtime probe execution-attempt to result-batch assembly boundary
 - [x] Runtime probe execution-attempt result assembly implementation slice
   accepted first-pass in workspace-only state
-- [ ] Combined release gate for the exact four-file runtime probe
+- [x] Combined release gate for the exact four-file runtime probe
   execution-attempt result assembly release unit
+- [x] Local commit creation for the runtime probe execution-attempt result
+  assembly release unit
+- [ ] Ryan-authorized push for the runtime probe execution-attempt result
+  assembly release unit
 
 ## What Is In Progress
 
-- Runtime probe execution-attempt result assembly is accepted first-pass in
-  workspace-only state.
-- The proposed release unit is exactly
+- Runtime probe execution-attempt result assembly is release-gate-cleared and
+  locally committed at `86be8d7 Assemble runtime probe execution attempts`.
+- The committed release unit is exactly
   `src/context_ir/runtime_probe_execution.py`,
   `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
-- The next gate is a corrected combined read-only release gate over that exact
-  four-file unit. It must use `.venv/bin/python -m mypy --strict src/`, not
-  ambient `mypy`.
+- Push remains Ryan-gated; no push has been performed.
 - Runtime probe execution-input materialization is completed and pushed at
   `cfed3c7 Add runtime probe execution input materialization`.
 - Released unit:
@@ -2126,9 +2136,9 @@ sequencing for `c1a12d7` absent new findings.
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `cfed3c7`.
-- No release gate, staging, local commit, or push is active.
-- Next control action may choose the next bounded runtime-probe execution-loop
-  planning or implementation lane.
+- No release gate, staging, or local commit is active for `86be8d7`.
+- Next control action is Ryan's explicit push/hold decision for `86be8d7`; do
+  not route another implementation or planning lane before that decision.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Latest pushed continuity authority is
@@ -2962,21 +2972,21 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: issue or confirm a combined read-only release-gate lane
-for the exact four-file runtime probe execution-attempt result assembly release
-unit:
+Immediate next route: Ryan's explicit push/hold decision for the locally
+committed runtime probe execution-attempt result assembly release candidate
+`86be8d7 Assemble runtime probe execution attempts`.
+
+Committed release unit:
 
 - `src/context_ir/runtime_probe_execution.py`
 - `tests/test_runtime_probe_execution.py`
 - `PLAN.md`
 - `BUILDLOG.md`
 
-The gate must run release-unit audit, then full regression, then commit-gating.
-It must stop on the first finding, report findings first, report each gate
-explicitly, and must not edit files, stage, commit, push, or rewrite
-continuity. Validation commands must invoke repo tooling through
-`.venv/bin/python -m`; ambient `mypy` resolves outside the repo virtualenv and
-is not authoritative for this gate.
+The corrected combined read-only release gate passed with no findings, full
+regression passed with `869 passed`, and local commit creation is complete.
+Push remains Ryan-gated. Do not route another implementation or planning lane
+before Ryan's explicit push/hold decision for `86be8d7`.
 
 The runtime probe execution-input materialization release is pushed at
 `cfed3c7 Add runtime probe execution input materialization` and has

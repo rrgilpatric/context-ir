@@ -2,6 +2,56 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Execution Attempt Result Assembly Local Commit Routing
+
+- Reviewed the accepted corrected combined read-only release-gate result and
+  completed local commit sequencing for the runtime probe execution-attempt
+  result assembly release unit.
+- Gate result accepted:
+  - findings: none
+  - Gate 1 release-unit audit passed for the exact four-file unit
+  - focused validation passed, including targeted pytest reporting `189 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `869 passed`
+  - Gate 3 commit-gating passed with the exact dirty/tracked file set, nothing
+    staged, no untracked files, no ref drift, and clean `git diff --check`
+- Live repo state was reverified before staging:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `502fc3c Sync runtime probe execution post-push state`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Local commit sequencing completed:
+  - staged exactly the four-file release unit
+  - verified no unstaged drift, no untracked drift, and clean staged whitespace
+  - created local commit
+    `86be8d7 Assemble runtime probe execution attempts`
+- Post-commit repo state before Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` at
+    `86be8d7 Assemble runtime probe execution attempts`
+  - `origin/main` at
+    `502fc3c Sync runtime probe execution post-push state`
+  - local commits ahead of `origin/main` are exactly source/contract release
+    candidate `86be8d7`
+  - worktree clean before this docs-only continuity sync
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `86be8d7` as release-gate-cleared and locally committed
+  - do not route `86be8d7` back to release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or implementation absent new
+    findings
+  - do not route another implementation or planning lane before Ryan's
+    explicit push/hold decision for `86be8d7`
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Execution Attempt Release Gate Command Correction
 
 - Reviewed returned combined read-only release-gate result for the runtime
