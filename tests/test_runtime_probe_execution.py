@@ -212,6 +212,35 @@ def _materialized_batch(
     )
 
 
+def _runner_environment() -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return explicit environment fields for non-executing runner requests."""
+    return (
+        _field("python_version", "3.11"),
+        _field("platform", "linux-x86_64"),
+    )
+
+
+def _runner_assumptions() -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return explicit assumption fields for non-executing runner requests."""
+    return (
+        _field("network", "disabled"),
+        _field("filesystem_mode", "read_only_fixture"),
+    )
+
+
+def _runner_request_batch(
+    input_batch: runtime_probe_execution.RuntimeProbeExecutionInputBatch,
+) -> runtime_probe_execution.RuntimeProbeRunnerRequestBatch:
+    """Return a runner-request batch for a materialized input batch."""
+    return runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+        input_batch,
+        runner_contract_revision="runtime-probe-runner:test.1",
+        timeout_seconds=30,
+        runner_environment=_runner_environment(),
+        runner_assumptions=_runner_assumptions(),
+    )
+
+
 def _execution_attempt(
     input_item: runtime_probe_execution.RuntimeProbeExecutionInput,
     *,
@@ -357,6 +386,297 @@ def test_materialize_runtime_probe_execution_inputs_preserves_plan_order_and_rep
     assert program.unsupported_constructs == original_unsupported
     assert program.unresolved_frontier == original_frontier
     assert program.provenance_records == original_provenance_records
+
+
+def test_materialize_runtime_probe_runner_requests_preserves_order_and_identities() -> (
+    None
+):
+    """Runner handoff requests preserve the replay-ready execution inputs exactly."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    third_request = _request(start_line=5)
+    plan = _plan(first_request, second_request, third_request)
+    input_batch = _materialized_batch(plan)
+    original_inputs = input_batch.inputs
+    runner_environment = _runner_environment()
+    runner_assumptions = _runner_assumptions()
+
+    first_batch = (
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=runner_environment,
+            runner_assumptions=runner_assumptions,
+        )
+    )
+    second_batch = (
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=runner_environment,
+            runner_assumptions=runner_assumptions,
+        )
+    )
+
+    assert first_batch == second_batch
+    assert first_batch.contract_version == "runtime_probe_runner_request_batch:v1"
+    assert first_batch.plan_id == input_batch.plan_id
+    assert first_batch.request_ids == input_batch.request_ids
+    assert first_batch.runner_contract_revision == "runtime-probe-runner:test.1"
+    assert first_batch.timeout_seconds == 30
+    assert first_batch.runner_environment == runner_environment
+    assert first_batch.runner_assumptions == runner_assumptions
+    assert input_batch.inputs is original_inputs
+    assert (
+        tuple(
+            runner_request.execution_input
+            for runner_request in first_batch.runner_requests
+        )
+        == input_batch.inputs
+    )
+    assert [
+        runner_request.request_id for runner_request in first_batch.runner_requests
+    ] == list(input_batch.request_ids)
+
+    for runner_request, input_item in zip(
+        first_batch.runner_requests,
+        input_batch.inputs,
+        strict=True,
+    ):
+        assert runner_request.plan_id == input_batch.plan_id
+        assert runner_request.request_id == input_item.request_id
+        assert runner_request.request is input_item.request
+        assert runner_request.execution_input is input_item
+        assert runner_request.replay_artifact is input_item.replay_artifact
+        assert runner_request.runner_contract_revision == "runtime-probe-runner:test.1"
+        assert runner_request.timeout_seconds == 30
+        assert runner_request.runner_environment == runner_environment
+        assert runner_request.runner_assumptions == runner_assumptions
+
+
+def test_materialize_runtime_probe_runner_requests_supports_empty_input_batch() -> None:
+    """Empty execution-input batches materialize to empty runner-request batches."""
+    input_batch = _materialized_batch(
+        runtime_probe_requests.build_runtime_probe_request_plan(())
+    )
+
+    runner_batch = _runner_request_batch(input_batch)
+
+    assert runner_batch.plan_id == input_batch.plan_id
+    assert runner_batch.request_ids == ()
+    assert runner_batch.runner_requests == ()
+
+
+def test_materialize_runtime_probe_runner_requests_rejects_bad_runner_metadata() -> (
+    None
+):
+    """Runner handoff metadata must be explicit, non-blank, and bounded."""
+    input_batch = _materialized_batch(_plan(_request()))
+    blank_environment = _field("platform", "linux-x86_64")
+    object.__setattr__(blank_environment, "value", " ")
+    blank_assumption = _field("network", "disabled")
+    object.__setattr__(blank_assumption, "key", " ")
+
+    with pytest.raises(ValueError, match="runner_contract_revision"):
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision=" ",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+        )
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=0,
+            runner_environment=_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+        )
+    with pytest.raises(ValueError, match="runner_environment"):
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=(),
+            runner_assumptions=_runner_assumptions(),
+        )
+    with pytest.raises(ValueError, match="runner_assumptions"):
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=(),
+        )
+    with pytest.raises(ValueError, match="runner_environment"):
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=(blank_environment,),
+            runner_assumptions=_runner_assumptions(),
+        )
+    with pytest.raises(ValueError, match="runner_assumptions"):
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            input_batch,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=(blank_assumption,),
+        )
+
+
+def test_materialize_runtime_probe_runner_requests_rejects_input_batch_drift() -> None:
+    """Runner materialization revalidates execution-input batch completeness."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    drifted_batch = _materialized_batch(_plan(first_request, second_request))
+    object.__setattr__(drifted_batch, "request_ids", ("runtime_probe:wrong",))
+    duplicate_batch = _materialized_batch(_plan(first_request, second_request))
+    object.__setattr__(
+        duplicate_batch,
+        "request_ids",
+        (duplicate_batch.inputs[0].request_id, duplicate_batch.inputs[0].request_id),
+    )
+    object.__setattr__(
+        duplicate_batch,
+        "inputs",
+        (duplicate_batch.inputs[0], duplicate_batch.inputs[0]),
+    )
+
+    with pytest.raises(ValueError, match="request_ids must match inputs"):
+        _runner_request_batch(drifted_batch)
+    with pytest.raises(ValueError, match="duplicate runtime probe execution"):
+        _runner_request_batch(duplicate_batch)
+
+
+def test_materialize_runtime_probe_runner_requests_rejects_blank_replay_tampering() -> (
+    None
+):
+    """Runner handoff requests reject replay fields blanked after construction."""
+    blank_replay_input_batch = _materialized_batch(_plan(_request(start_line=3)))
+    blank_replay_input = blank_replay_input_batch.inputs[0]
+    blank_replay_input_field = blank_replay_input.replay_artifact.replay_inputs[0]
+    object.__setattr__(blank_replay_input_field, "value", " ")
+    blank_assumption_batch = _materialized_batch(_plan(_request(start_line=4)))
+    blank_assumption_input = blank_assumption_batch.inputs[0]
+    blank_assumption_field = blank_assumption_input.replay_artifact.runtime_assumptions[
+        0
+    ]
+    object.__setattr__(blank_assumption_field, "key", " ")
+
+    with pytest.raises(ValueError, match="replay_inputs"):
+        _runner_request_batch(blank_replay_input_batch)
+    with pytest.raises(ValueError, match="runtime_assumptions"):
+        _runner_request_batch(blank_assumption_batch)
+
+
+def test_runtime_probe_runner_request_rejects_plan_input_and_replay_drift() -> None:
+    """Runner requests must point at the exact input and replay artifact objects."""
+    request = _request()
+    plan = _plan(request)
+    input_batch = _materialized_batch(plan)
+    input_item = input_batch.inputs[0]
+    equivalent_input = _materialized_batch(plan).inputs[0]
+
+    with pytest.raises(ValueError, match="plan_id must match execution input"):
+        runtime_probe_execution.RuntimeProbeRunnerRequest(
+            plan_id="runtime_probe_request_plan:wrong",
+            request_id=input_item.request_id,
+            request=input_item.request,
+            execution_input=input_item,
+            replay_artifact=input_item.replay_artifact,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+        )
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        runtime_probe_execution.RuntimeProbeRunnerRequest(
+            plan_id=input_item.plan_id,
+            request_id="runtime_probe:wrong",
+            request=input_item.request,
+            execution_input=input_item,
+            replay_artifact=input_item.replay_artifact,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+        )
+    with pytest.raises(ValueError, match="request must be execution input request"):
+        runtime_probe_execution.RuntimeProbeRunnerRequest(
+            plan_id=input_item.plan_id,
+            request_id=input_item.request_id,
+            request=_request(start_line=8),
+            execution_input=input_item,
+            replay_artifact=input_item.replay_artifact,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+        )
+    with pytest.raises(ValueError, match="replay_artifact"):
+        runtime_probe_execution.RuntimeProbeRunnerRequest(
+            plan_id=input_item.plan_id,
+            request_id=input_item.request_id,
+            request=input_item.request,
+            execution_input=equivalent_input,
+            replay_artifact=input_item.replay_artifact,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+        )
+
+
+def test_runtime_probe_runner_request_batch_rejects_order_and_duplicate_drift() -> None:
+    """Runner-request batches reject plan, order, and duplicate identity drift."""
+    input_batch = _materialized_batch(_plan(_request()))
+    runner_request = _runner_request_batch(input_batch).runner_requests[0]
+
+    with pytest.raises(ValueError, match="plan_id must match requests"):
+        runtime_probe_execution.RuntimeProbeRunnerRequestBatch(
+            plan_id="runtime_probe_request_plan:wrong",
+            request_ids=(runner_request.request_id,),
+            runner_requests=(runner_request,),
+            runner_contract_revision=runner_request.runner_contract_revision,
+            timeout_seconds=runner_request.timeout_seconds,
+            runner_environment=runner_request.runner_environment,
+            runner_assumptions=runner_request.runner_assumptions,
+        )
+    with pytest.raises(ValueError, match="request_ids must match requests"):
+        runtime_probe_execution.RuntimeProbeRunnerRequestBatch(
+            plan_id=runner_request.plan_id,
+            request_ids=("runtime_probe:wrong",),
+            runner_requests=(runner_request,),
+            runner_contract_revision=runner_request.runner_contract_revision,
+            timeout_seconds=runner_request.timeout_seconds,
+            runner_environment=runner_request.runner_environment,
+            runner_assumptions=runner_request.runner_assumptions,
+        )
+    with pytest.raises(ValueError, match="timeout_seconds must match requests"):
+        runtime_probe_execution.RuntimeProbeRunnerRequestBatch(
+            plan_id=runner_request.plan_id,
+            request_ids=(runner_request.request_id,),
+            runner_requests=(runner_request,),
+            runner_contract_revision=runner_request.runner_contract_revision,
+            timeout_seconds=runner_request.timeout_seconds + 1,
+            runner_environment=runner_request.runner_environment,
+            runner_assumptions=runner_request.runner_assumptions,
+        )
+    with pytest.raises(ValueError, match="duplicate runtime probe runner request_id"):
+        runtime_probe_execution.RuntimeProbeRunnerRequestBatch(
+            plan_id=runner_request.plan_id,
+            request_ids=(runner_request.request_id, runner_request.request_id),
+            runner_requests=(runner_request, runner_request),
+            runner_contract_revision=runner_request.runner_contract_revision,
+            timeout_seconds=runner_request.timeout_seconds,
+            runner_environment=runner_request.runner_environment,
+            runner_assumptions=runner_request.runner_assumptions,
+        )
 
 
 def test_assemble_runtime_probe_result_batch_preserves_order_and_identities() -> None:
@@ -800,6 +1120,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     request = _request()
     plan = _plan(request)
     input_item = _materialized_batch(plan).inputs[0]
+    runner_batch = _runner_request_batch(_materialized_batch(plan))
+    runner_request = runner_batch.runner_requests[0]
     attempt = _execution_attempt(
         input_item,
         normalized_payload=(_field("observed_module", "plugins.weather"),),
@@ -808,29 +1130,47 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
     with pytest.raises(FrozenInstanceError):
+        runner_request.plan_id = "runtime_probe_request_plan:mutated"
+    with pytest.raises(FrozenInstanceError):
+        runner_batch.plan_id = "runtime_probe_request_plan:mutated"
+    with pytest.raises(FrozenInstanceError):
         attempt.plan_id = "runtime_probe_request_plan:mutated"
 
     assert "RuntimeProbeExecutionAttempt" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInput" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInputBatch" in runtime_probe_execution.__all__
+    assert "RuntimeProbeRunnerRequest" in runtime_probe_execution.__all__
+    assert "RuntimeProbeRunnerRequestBatch" in runtime_probe_execution.__all__
     assert "assemble_runtime_probe_result_batch_from_execution_attempts" in (
         runtime_probe_execution.__all__
     )
     assert "materialize_runtime_probe_execution_input_batch" in (
         runtime_probe_execution.__all__
     )
+    assert "materialize_runtime_probe_runner_request_batch" in (
+        runtime_probe_execution.__all__
+    )
     assert "RuntimeProbeExecutionAttempt" not in context_ir.__all__
     assert "RuntimeProbeExecutionInput" not in context_ir.__all__
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
+    assert "RuntimeProbeRunnerRequest" not in context_ir.__all__
+    assert "RuntimeProbeRunnerRequestBatch" not in context_ir.__all__
     assert "assemble_runtime_probe_result_batch_from_execution_attempts" not in (
         context_ir.__all__
     )
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
+    assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
     assert not hasattr(context_ir, "RuntimeProbeExecutionAttempt")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInput")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
+    assert not hasattr(context_ir, "RuntimeProbeRunnerRequest")
+    assert not hasattr(context_ir, "RuntimeProbeRunnerRequestBatch")
     assert not hasattr(
         context_ir,
         "assemble_runtime_probe_result_batch_from_execution_attempts",
     )
     assert not hasattr(context_ir, "materialize_runtime_probe_execution_input_batch")
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_runner_request_batch",
+    )

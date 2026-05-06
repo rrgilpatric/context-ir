@@ -29,6 +29,9 @@ from context_ir.semantic_types import RepositorySnapshotBasis
 _RUNTIME_PROBE_EXECUTION_INPUT_BATCH_CONTRACT_VERSION = (
     "runtime_probe_execution_input_batch:v1"
 )
+_RUNTIME_PROBE_RUNNER_REQUEST_BATCH_CONTRACT_VERSION = (
+    "runtime_probe_runner_request_batch:v1"
+)
 _NON_PROOF_ATTEMPT_OUTCOMES = frozenset(
     {
         RuntimeProbeResultOutcome.CRASHED,
@@ -158,6 +161,118 @@ class RuntimeProbeExecutionInputBatch:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeRunnerRequest:
+    """Internal, non-executing handoff request for a future runtime probe runner."""
+
+    plan_id: str
+    request_id: str
+    request: RuntimeProbeRequest
+    execution_input: RuntimeProbeExecutionInput
+    replay_artifact: RuntimeProbeReplayArtifact
+    runner_contract_revision: str
+    timeout_seconds: int
+    runner_environment: tuple[RuntimeProbeReplayField, ...]
+    runner_assumptions: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject runner handoff requests whose replay contract has drifted."""
+        if not self.plan_id.strip():
+            raise ValueError("plan_id must be non-empty")
+        if not self.request_id.strip():
+            raise ValueError("request_id must be non-empty")
+        if self.plan_id != self.execution_input.plan_id:
+            raise ValueError(
+                "runtime probe runner request plan_id must match execution input"
+            )
+        if self.request_id != self.execution_input.request_id:
+            raise ValueError(
+                "runtime probe runner request request_id must match execution input"
+            )
+        if self.request is not self.execution_input.request:
+            raise ValueError(
+                "runtime probe runner request request must be execution input request"
+            )
+        if self.replay_artifact is not self.execution_input.replay_artifact:
+            raise ValueError(
+                "runtime probe runner request replay_artifact must be execution "
+                "input replay_artifact"
+            )
+        _validate_execution_input(self.execution_input)
+        _validate_runner_handoff_metadata(
+            runner_contract_revision=self.runner_contract_revision,
+            timeout_seconds=self.timeout_seconds,
+            runner_environment=self.runner_environment,
+            runner_assumptions=self.runner_assumptions,
+        )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeRunnerRequestBatch:
+    """Ordered internal runner-request batch for one execution-input batch."""
+
+    plan_id: str
+    request_ids: tuple[str, ...]
+    runner_requests: tuple[RuntimeProbeRunnerRequest, ...]
+    runner_contract_revision: str
+    timeout_seconds: int
+    runner_environment: tuple[RuntimeProbeReplayField, ...]
+    runner_assumptions: tuple[RuntimeProbeReplayField, ...]
+    contract_version: str = field(
+        default=_RUNTIME_PROBE_RUNNER_REQUEST_BATCH_CONTRACT_VERSION,
+        init=False,
+    )
+
+    def __post_init__(self) -> None:
+        """Reject runner-request batches whose order or identity has drifted."""
+        if not self.plan_id.strip():
+            raise ValueError("plan_id must be non-empty")
+        _validate_runner_handoff_metadata(
+            runner_contract_revision=self.runner_contract_revision,
+            timeout_seconds=self.timeout_seconds,
+            runner_environment=self.runner_environment,
+            runner_assumptions=self.runner_assumptions,
+        )
+        runner_request_ids = tuple(
+            runner_request.request_id for runner_request in self.runner_requests
+        )
+        if self.request_ids != runner_request_ids:
+            raise ValueError(
+                "runtime probe runner request batch request_ids must match requests"
+            )
+
+        seen_request_ids: set[str] = set()
+        for runner_request in self.runner_requests:
+            _validate_runner_request(runner_request)
+            if runner_request.plan_id != self.plan_id:
+                raise ValueError(
+                    "runtime probe runner request batch plan_id must match requests"
+                )
+            if runner_request.runner_contract_revision != self.runner_contract_revision:
+                raise ValueError(
+                    "runtime probe runner request batch runner_contract_revision "
+                    "must match requests"
+                )
+            if runner_request.timeout_seconds != self.timeout_seconds:
+                raise ValueError(
+                    "runtime probe runner request batch timeout_seconds must match "
+                    "requests"
+                )
+            if runner_request.runner_environment != self.runner_environment:
+                raise ValueError(
+                    "runtime probe runner request batch runner_environment must "
+                    "match requests"
+                )
+            if runner_request.runner_assumptions != self.runner_assumptions:
+                raise ValueError(
+                    "runtime probe runner request batch runner_assumptions must "
+                    "match requests"
+                )
+            if runner_request.request_id in seen_request_ids:
+                raise ValueError("duplicate runtime probe runner request_id")
+            seen_request_ids.add(runner_request.request_id)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeExecutionAttempt:
     """Internal normalized runner output for one non-executing probe input."""
 
@@ -239,6 +354,51 @@ def materialize_runtime_probe_execution_input_batch(
         plan_id=plan.plan_id,
         request_ids=plan.request_ids,
         inputs=inputs,
+    )
+
+
+def materialize_runtime_probe_runner_request_batch(
+    input_batch: RuntimeProbeExecutionInputBatch,
+    *,
+    runner_contract_revision: str,
+    timeout_seconds: int,
+    runner_environment: Iterable[RuntimeProbeReplayField],
+    runner_assumptions: Iterable[RuntimeProbeReplayField],
+) -> RuntimeProbeRunnerRequestBatch:
+    """Materialize replay-ready inputs into non-executing runner handoff requests."""
+    _validate_execution_input_batch(input_batch)
+
+    environment = tuple(runner_environment)
+    assumptions = tuple(runner_assumptions)
+    _validate_runner_handoff_metadata(
+        runner_contract_revision=runner_contract_revision,
+        timeout_seconds=timeout_seconds,
+        runner_environment=environment,
+        runner_assumptions=assumptions,
+    )
+
+    runner_requests = tuple(
+        RuntimeProbeRunnerRequest(
+            plan_id=input_item.plan_id,
+            request_id=input_item.request_id,
+            request=input_item.request,
+            execution_input=input_item,
+            replay_artifact=input_item.replay_artifact,
+            runner_contract_revision=runner_contract_revision,
+            timeout_seconds=timeout_seconds,
+            runner_environment=environment,
+            runner_assumptions=assumptions,
+        )
+        for input_item in input_batch.inputs
+    )
+    return RuntimeProbeRunnerRequestBatch(
+        plan_id=input_batch.plan_id,
+        request_ids=input_batch.request_ids,
+        runner_requests=runner_requests,
+        runner_contract_revision=runner_contract_revision,
+        timeout_seconds=timeout_seconds,
+        runner_environment=environment,
+        runner_assumptions=assumptions,
     )
 
 
@@ -343,6 +503,83 @@ def _index_execution_attempts_for_input_batch(
             "missing runtime probe execution attempt for input batch request_id"
         )
     return attempts_by_request_id
+
+
+def _validate_execution_input_batch(
+    input_batch: RuntimeProbeExecutionInputBatch,
+) -> None:
+    """Re-check an execution-input batch before handing it to a runner."""
+    RuntimeProbeExecutionInputBatch(
+        plan_id=input_batch.plan_id,
+        request_ids=input_batch.request_ids,
+        inputs=input_batch.inputs,
+    )
+    for input_item in input_batch.inputs:
+        _validate_execution_input(input_item)
+
+
+def _validate_execution_input(input_item: RuntimeProbeExecutionInput) -> None:
+    """Re-check one execution input and its replay fields for tampering."""
+    RuntimeProbeExecutionInput(
+        plan_id=input_item.plan_id,
+        request_id=input_item.request_id,
+        request=input_item.request,
+        source_site_identity=input_item.source_site_identity,
+        family_label=input_item.family_label,
+        form_label=input_item.form_label,
+        replay_target_seed=input_item.replay_target_seed,
+        replay_selector_seed=input_item.replay_selector_seed,
+        replay_artifact=input_item.replay_artifact,
+    )
+    _validate_replay_fields(
+        input_item.replay_artifact.replay_inputs,
+        field_name="replay_inputs",
+    )
+    _validate_replay_fields(
+        input_item.replay_artifact.runtime_assumptions,
+        field_name="runtime_assumptions",
+    )
+
+
+def _validate_runner_request(runner_request: RuntimeProbeRunnerRequest) -> None:
+    """Re-check one runner handoff request for tampering."""
+    RuntimeProbeRunnerRequest(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        replay_artifact=runner_request.replay_artifact,
+        runner_contract_revision=runner_request.runner_contract_revision,
+        timeout_seconds=runner_request.timeout_seconds,
+        runner_environment=runner_request.runner_environment,
+        runner_assumptions=runner_request.runner_assumptions,
+    )
+
+
+def _validate_runner_handoff_metadata(
+    *,
+    runner_contract_revision: str,
+    timeout_seconds: int,
+    runner_environment: tuple[RuntimeProbeReplayField, ...],
+    runner_assumptions: tuple[RuntimeProbeReplayField, ...],
+) -> None:
+    """Reject incomplete future-runner contract metadata."""
+    if not runner_contract_revision.strip():
+        raise ValueError("runner_contract_revision must be non-empty")
+    if timeout_seconds <= 0:
+        raise ValueError("timeout_seconds must be positive")
+    if not runner_environment:
+        raise ValueError("runtime probe runner requests require runner_environment")
+    if not runner_assumptions:
+        raise ValueError("runtime probe runner requests require runner_assumptions")
+    _validate_replay_fields(
+        runner_environment,
+        field_name="runner_environment",
+    )
+    _validate_replay_fields(
+        runner_assumptions,
+        field_name="runner_assumptions",
+    )
 
 
 def _runtime_probe_result_from_attempt(
@@ -511,6 +748,9 @@ __all__ = [
     "RuntimeProbeExecutionAttempt",
     "RuntimeProbeExecutionInput",
     "RuntimeProbeExecutionInputBatch",
+    "RuntimeProbeRunnerRequest",
+    "RuntimeProbeRunnerRequestBatch",
     "assemble_runtime_probe_result_batch_from_execution_attempts",
     "materialize_runtime_probe_execution_input_batch",
+    "materialize_runtime_probe_runner_request_batch",
 ]
