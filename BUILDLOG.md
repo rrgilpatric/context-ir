@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Execution Attempt Result Assembly Push Sync
+
+- Ryan authorized pushing the runtime probe execution-attempt result assembly
+  release after local commit creation and continuity routing sync.
+- Pre-push verification:
+  - branch `main`
+  - local `HEAD` at
+    `44b05c8 Sync runtime probe attempt release routing`
+  - `origin/main` at
+    `502fc3c Sync runtime probe execution post-push state`
+  - local commits ahead of `origin/main` were exactly source/contract release
+    `86be8d7 Assemble runtime probe execution attempts` and docs-only release
+    routing `44b05c8`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Push completed:
+  - pushed `main` to `origin/main`
+  - remote advanced from `502fc3c` to `44b05c8`
+- Post-push verification:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `44b05c8 Sync runtime probe attempt release routing`
+  - latest pushed source/contract authority is
+    `86be8d7 Assemble runtime probe execution attempts`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `86be8d7` as pushed and no-active-gate
+  - treat the committed `44b05c8` local-candidate wording as superseded by
+    this post-push sync because it can otherwise misroute a fresh controller
+    back to a completed push gate
+  - next route may choose the next bounded runtime-probe execution-loop
+    planning or implementation lane, but must not reopen `86be8d7` release
+    gates absent new findings
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Execution Attempt Result Assembly Local Commit Routing
 
 - Reviewed the accepted corrected combined read-only release-gate result and
