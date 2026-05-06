@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import textwrap
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 
 import pytest
@@ -21,7 +21,12 @@ from context_ir.runtime_probe_execution import (
     assemble_runtime_probe_result_batch_from_runner_request_attempts,
 )
 from context_ir.semantic_types import (
+    CapabilityTier,
     RepositorySnapshotBasis,
+    SemanticDiagnosticBoundary,
+    SemanticDiagnosticBoundaryKind,
+    SemanticDiagnosticResult,
+    SemanticDiagnosticUnitStatus,
     SemanticProgram,
     SemanticSubjectKind,
     SourceSite,
@@ -239,6 +244,79 @@ def _runner_request_batch(
         timeout_seconds=30,
         runner_environment=_runner_environment(),
         runner_assumptions=_runner_assumptions(),
+    )
+
+
+def _diagnostic_for_plan(
+    plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+) -> SemanticDiagnosticResult:
+    """Return a diagnostic with the supplied runtime request plan attached."""
+    boundaries = tuple(
+        SemanticDiagnosticBoundary(
+            unit_id=request.subject_id,
+            status=SemanticDiagnosticUnitStatus.OMITTED,
+            boundary_kind=(
+                SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
+            ),
+            primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+            has_attached_runtime_provenance=False,
+        )
+        for request in plan.requests
+    )
+    planned_subject_ids = tuple(request.subject_id for request in plan.requests)
+    return SemanticDiagnosticResult(
+        grounded_unit_ids=planned_subject_ids,
+        omitted_unit_ids=planned_subject_ids,
+        too_shallow_unit_ids=(),
+        sufficiently_represented_unit_ids=(),
+        recommended_expansions=(),
+        reason="Test diagnostic with an attached runtime request plan.",
+        boundary_classifications=boundaries,
+        planned_runtime_probe_requests=plan.requests,
+        planned_runtime_probe_request_plan=plan,
+    )
+
+
+def _prepare_runner_requests(
+    diagnostic: SemanticDiagnosticResult,
+    *,
+    probe_contract_revision: str = "runtime-probe-contract:test.1",
+    runtime_assumptions: tuple[
+        runtime_probe_results.RuntimeProbeReplayField,
+        ...,
+    ]
+    | None = None,
+    runner_contract_revision: str = "runtime-probe-runner:test.1",
+    timeout_seconds: int = 30,
+    runner_environment: tuple[
+        runtime_probe_results.RuntimeProbeReplayField,
+        ...,
+    ]
+    | None = None,
+    runner_assumptions: tuple[
+        runtime_probe_results.RuntimeProbeReplayField,
+        ...,
+    ]
+    | None = None,
+) -> runtime_probe_execution.RuntimeProbeDiagnosticRunnerRequestPreparation:
+    """Prepare the diagnostic-gated runner request boundary for tests."""
+    return runtime_probe_execution.prepare_runtime_probe_runner_requests_for_diagnostic(
+        diagnostic,
+        repository_snapshot_basis=_snapshot_basis(),
+        probe_contract_revision=probe_contract_revision,
+        runtime_assumptions=(
+            _runtime_assumptions()
+            if runtime_assumptions is None
+            else runtime_assumptions
+        ),
+        runner_contract_revision=runner_contract_revision,
+        timeout_seconds=timeout_seconds,
+        runner_environment=(
+            _runner_environment() if runner_environment is None else runner_environment
+        ),
+        runner_assumptions=(
+            _runner_assumptions() if runner_assumptions is None else runner_assumptions
+        ),
     )
 
 
@@ -466,6 +544,127 @@ def test_materialize_runtime_probe_runner_requests_preserves_order_and_identitie
         assert runner_request.timeout_seconds == 30
         assert runner_request.runner_environment == runner_environment
         assert runner_request.runner_assumptions == runner_assumptions
+
+
+def test_prepare_runtime_probe_runner_requests_for_diagnostic_preserves_boundary() -> (
+    None
+):
+    """Diagnostic preparation preserves the planned input and runner identities."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    third_request = _request(start_line=5)
+    plan = _plan(first_request, second_request, third_request)
+    diagnostic = _diagnostic_for_plan(plan)
+    snapshot_basis = _snapshot_basis()
+    runtime_assumptions = _runtime_assumptions()
+    runner_environment = _runner_environment()
+    runner_assumptions = _runner_assumptions()
+
+    preparation = (
+        runtime_probe_execution.prepare_runtime_probe_runner_requests_for_diagnostic(
+            diagnostic,
+            repository_snapshot_basis=snapshot_basis,
+            probe_contract_revision="runtime-probe-contract:test.1",
+            runtime_assumptions=runtime_assumptions,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=runner_environment,
+            runner_assumptions=runner_assumptions,
+        )
+    )
+
+    input_batch = preparation.execution_input_batch
+    runner_batch = preparation.runner_request_batch
+    assert preparation.diagnostic is diagnostic
+    assert preparation.request_plan is plan
+    assert input_batch.plan_id == plan.plan_id
+    assert runner_batch.plan_id == plan.plan_id
+    assert input_batch.request_ids == plan.request_ids
+    assert runner_batch.request_ids == plan.request_ids
+    assert [input_item.request_id for input_item in input_batch.inputs] == list(
+        plan.request_ids
+    )
+    assert [
+        runner_request.request_id for runner_request in runner_batch.runner_requests
+    ] == list(plan.request_ids)
+    assert runner_batch.runner_contract_revision == "runtime-probe-runner:test.1"
+    assert runner_batch.timeout_seconds == 30
+    assert runner_batch.runner_environment is runner_environment
+    assert runner_batch.runner_assumptions is runner_assumptions
+
+    for request, input_item, runner_request in zip(
+        plan.requests,
+        input_batch.inputs,
+        runner_batch.runner_requests,
+        strict=True,
+    ):
+        assert input_item.request is request
+        assert input_item.plan_id == plan.plan_id
+        assert input_item.request_id == request.request_id
+        assert input_item.replay_artifact.repository_snapshot_basis is snapshot_basis
+        assert input_item.replay_artifact.runtime_assumptions is runtime_assumptions
+        assert runner_request.request is request
+        assert runner_request.execution_input is input_item
+        assert runner_request.replay_artifact is input_item.replay_artifact
+        assert runner_request.runner_environment is runner_environment
+        assert runner_request.runner_assumptions is runner_assumptions
+
+
+def test_prepare_runtime_probe_runner_requests_for_diagnostic_rejects_plan_drift() -> (
+    None
+):
+    """Diagnostic preparation rejects missing, detached, or drifted request plans."""
+    request = _request()
+    plan = _plan(request)
+    diagnostic = _diagnostic_for_plan(plan)
+    missing_plan = replace(diagnostic, planned_runtime_probe_request_plan=None)
+    drifted_diagnostic = _diagnostic_for_plan(plan)
+    object.__setattr__(drifted_diagnostic, "planned_runtime_probe_requests", ())
+    identity_drifted_diagnostic = _diagnostic_for_plan(plan)
+    object.__setattr__(
+        identity_drifted_diagnostic,
+        "planned_runtime_probe_requests",
+        (_request(),),
+    )
+    drifted_plan = _plan(request)
+    object.__setattr__(drifted_plan, "request_ids", ("runtime_probe:wrong",))
+    drifted_plan_diagnostic = _diagnostic_for_plan(drifted_plan)
+    preparation = _prepare_runner_requests(diagnostic)
+    equivalent_plan = _plan(request)
+
+    with pytest.raises(ValueError, match="planned_runtime_probe_request_plan"):
+        _prepare_runner_requests(missing_plan)
+    with pytest.raises(ValueError, match="requests must match"):
+        _prepare_runner_requests(drifted_diagnostic)
+    with pytest.raises(ValueError, match="request identities"):
+        _prepare_runner_requests(identity_drifted_diagnostic)
+    with pytest.raises(ValueError, match="request_ids must match requests"):
+        _prepare_runner_requests(drifted_plan_diagnostic)
+    with pytest.raises(ValueError, match="request_plan must be diagnostic"):
+        runtime_probe_execution.RuntimeProbeDiagnosticRunnerRequestPreparation(
+            diagnostic=diagnostic,
+            request_plan=equivalent_plan,
+            execution_input_batch=preparation.execution_input_batch,
+            runner_request_batch=preparation.runner_request_batch,
+        )
+
+
+def test_prepare_runner_requests_for_diagnostic_rejects_bad_metadata() -> None:
+    """Diagnostic preparation propagates input and runner metadata validation."""
+    diagnostic = _diagnostic_for_plan(_plan(_request()))
+
+    with pytest.raises(ValueError, match="probe_contract_revision"):
+        _prepare_runner_requests(diagnostic, probe_contract_revision=" ")
+    with pytest.raises(ValueError, match="runtime_assumptions"):
+        _prepare_runner_requests(diagnostic, runtime_assumptions=())
+    with pytest.raises(ValueError, match="runner_contract_revision"):
+        _prepare_runner_requests(diagnostic, runner_contract_revision=" ")
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        _prepare_runner_requests(diagnostic, timeout_seconds=0)
+    with pytest.raises(ValueError, match="runner_environment"):
+        _prepare_runner_requests(diagnostic, runner_environment=())
+    with pytest.raises(ValueError, match="runner_assumptions"):
+        _prepare_runner_requests(diagnostic, runner_assumptions=())
 
 
 def test_materialize_runtime_probe_runner_requests_supports_empty_input_batch() -> None:
@@ -1388,6 +1587,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     """Execution records stay frozen and absent from package-root exports."""
     request = _request()
     plan = _plan(request)
+    diagnostic = _diagnostic_for_plan(plan)
+    preparation = _prepare_runner_requests(diagnostic)
     input_item = _materialized_batch(plan).inputs[0]
     runner_batch = _runner_request_batch(_materialized_batch(plan))
     runner_request = runner_batch.runner_requests[0]
@@ -1404,7 +1605,15 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         runner_batch.plan_id = "runtime_probe_request_plan:mutated"
     with pytest.raises(FrozenInstanceError):
         attempt.plan_id = "runtime_probe_request_plan:mutated"
+    with pytest.raises(FrozenInstanceError):
+        preparation.request_plan = (
+            runtime_probe_requests.build_runtime_probe_request_plan(())
+        )
 
+    assert (
+        "RuntimeProbeDiagnosticRunnerRequestPreparation"
+        in runtime_probe_execution.__all__
+    )
     assert "RuntimeProbeExecutionAttempt" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInput" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInputBatch" in runtime_probe_execution.__all__
@@ -1422,6 +1631,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_runner_request_batch" in (
         runtime_probe_execution.__all__
     )
+    assert "prepare_runtime_probe_runner_requests_for_diagnostic" in (
+        runtime_probe_execution.__all__
+    )
+    assert "RuntimeProbeDiagnosticRunnerRequestPreparation" not in context_ir.__all__
     assert "RuntimeProbeExecutionAttempt" not in context_ir.__all__
     assert "RuntimeProbeExecutionInput" not in context_ir.__all__
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
@@ -1435,6 +1648,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
+    assert (
+        "prepare_runtime_probe_runner_requests_for_diagnostic" not in context_ir.__all__
+    )
+    assert not hasattr(context_ir, "RuntimeProbeDiagnosticRunnerRequestPreparation")
     assert not hasattr(context_ir, "RuntimeProbeExecutionAttempt")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInput")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
@@ -1447,6 +1664,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "assemble_runtime_probe_result_batch_from_runner_request_attempts",
+    )
+    assert not hasattr(
+        context_ir,
+        "prepare_runtime_probe_runner_requests_for_diagnostic",
     )
     assert not hasattr(context_ir, "materialize_runtime_probe_execution_input_batch")
     assert not hasattr(

@@ -24,7 +24,7 @@ from context_ir.runtime_probe_results import (
     RuntimeProbeResultBatch,
     RuntimeProbeResultOutcome,
 )
-from context_ir.semantic_types import RepositorySnapshotBasis
+from context_ir.semantic_types import RepositorySnapshotBasis, SemanticDiagnosticResult
 
 _RUNTIME_PROBE_EXECUTION_INPUT_BATCH_CONTRACT_VERSION = (
     "runtime_probe_execution_input_batch:v1"
@@ -273,6 +273,70 @@ class RuntimeProbeRunnerRequestBatch:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeDiagnosticRunnerRequestPreparation:
+    """Internal diagnostic-gated, non-executing runner-request preparation."""
+
+    diagnostic: SemanticDiagnosticResult
+    request_plan: RuntimeProbeRequestPlan
+    execution_input_batch: RuntimeProbeExecutionInputBatch
+    runner_request_batch: RuntimeProbeRunnerRequestBatch
+
+    def __post_init__(self) -> None:
+        """Reject prepared runner requests that drift from the diagnostic plan."""
+        _validate_diagnostic_request_plan(self.diagnostic, self.request_plan)
+        _validate_execution_input_batch(self.execution_input_batch)
+        _validate_runner_request_batch(self.runner_request_batch)
+
+        if self.execution_input_batch.plan_id != self.request_plan.plan_id:
+            raise ValueError(
+                "runtime probe preparation execution input batch plan_id must "
+                "match diagnostic request plan"
+            )
+        if self.execution_input_batch.request_ids != self.request_plan.request_ids:
+            raise ValueError(
+                "runtime probe preparation execution input batch request_ids must "
+                "match diagnostic request plan"
+            )
+        if self.runner_request_batch.plan_id != self.request_plan.plan_id:
+            raise ValueError(
+                "runtime probe preparation runner request batch plan_id must match "
+                "diagnostic request plan"
+            )
+        if self.runner_request_batch.request_ids != self.request_plan.request_ids:
+            raise ValueError(
+                "runtime probe preparation runner request batch request_ids must "
+                "match diagnostic request plan"
+            )
+
+        for request, input_item, runner_request in zip(
+            self.request_plan.requests,
+            self.execution_input_batch.inputs,
+            self.runner_request_batch.runner_requests,
+            strict=True,
+        ):
+            if input_item.request is not request:
+                raise ValueError(
+                    "runtime probe preparation execution input request must be the "
+                    "diagnostic request plan request"
+                )
+            if runner_request.request is not request:
+                raise ValueError(
+                    "runtime probe preparation runner request must be the diagnostic "
+                    "request plan request"
+                )
+            if runner_request.execution_input is not input_item:
+                raise ValueError(
+                    "runtime probe preparation runner request must use the prepared "
+                    "execution input"
+                )
+            if runner_request.replay_artifact is not input_item.replay_artifact:
+                raise ValueError(
+                    "runtime probe preparation runner request replay_artifact must "
+                    "be the prepared execution input replay_artifact"
+                )
+
+
+@dataclass(frozen=True)
 class RuntimeProbeExecutionAttempt:
     """Internal normalized runner output for one non-executing probe input."""
 
@@ -399,6 +463,40 @@ def materialize_runtime_probe_runner_request_batch(
         timeout_seconds=timeout_seconds,
         runner_environment=environment,
         runner_assumptions=assumptions,
+    )
+
+
+def prepare_runtime_probe_runner_requests_for_diagnostic(
+    diagnostic: SemanticDiagnosticResult,
+    *,
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    probe_contract_revision: str,
+    runtime_assumptions: Iterable[RuntimeProbeReplayField],
+    runner_contract_revision: str,
+    timeout_seconds: int,
+    runner_environment: Iterable[RuntimeProbeReplayField],
+    runner_assumptions: Iterable[RuntimeProbeReplayField],
+) -> RuntimeProbeDiagnosticRunnerRequestPreparation:
+    """Prepare diagnostic-planned runner requests without executing probes."""
+    request_plan = _request_plan_for_diagnostic_preparation(diagnostic)
+    execution_input_batch = materialize_runtime_probe_execution_input_batch(
+        request_plan,
+        repository_snapshot_basis=repository_snapshot_basis,
+        probe_contract_revision=probe_contract_revision,
+        runtime_assumptions=runtime_assumptions,
+    )
+    runner_request_batch = materialize_runtime_probe_runner_request_batch(
+        execution_input_batch,
+        runner_contract_revision=runner_contract_revision,
+        timeout_seconds=timeout_seconds,
+        runner_environment=runner_environment,
+        runner_assumptions=runner_assumptions,
+    )
+    return RuntimeProbeDiagnosticRunnerRequestPreparation(
+        diagnostic=diagnostic,
+        request_plan=request_plan,
+        execution_input_batch=execution_input_batch,
+        runner_request_batch=runner_request_batch,
     )
 
 
@@ -634,6 +732,47 @@ def _validate_runner_request_batch(
         runner_environment=runner_request_batch.runner_environment,
         runner_assumptions=runner_request_batch.runner_assumptions,
     )
+
+
+def _request_plan_for_diagnostic_preparation(
+    diagnostic: SemanticDiagnosticResult,
+) -> RuntimeProbeRequestPlan:
+    """Return the diagnostic's attached request plan after revalidation."""
+    request_plan = diagnostic.planned_runtime_probe_request_plan
+    if request_plan is None:
+        raise ValueError(
+            "planned_runtime_probe_request_plan is required for runtime probe "
+            "runner request preparation"
+        )
+    _validate_diagnostic_request_plan(diagnostic, request_plan)
+    return request_plan
+
+
+def _validate_diagnostic_request_plan(
+    diagnostic: SemanticDiagnosticResult,
+    request_plan: RuntimeProbeRequestPlan,
+) -> None:
+    """Reject diagnostics whose attached runtime request plan has drifted."""
+    if request_plan is not diagnostic.planned_runtime_probe_request_plan:
+        raise ValueError(
+            "request_plan must be diagnostic.planned_runtime_probe_request_plan"
+        )
+    _validate_request_plan(request_plan)
+    if request_plan.requests != diagnostic.planned_runtime_probe_requests:
+        raise ValueError(
+            "planned_runtime_probe_request_plan requests must match "
+            "planned_runtime_probe_requests"
+        )
+    for plan_request, diagnostic_request in zip(
+        request_plan.requests,
+        diagnostic.planned_runtime_probe_requests,
+        strict=True,
+    ):
+        if plan_request is not diagnostic_request:
+            raise ValueError(
+                "planned_runtime_probe_request_plan requests must preserve "
+                "diagnostic request identities"
+            )
 
 
 def _validate_runner_request(runner_request: RuntimeProbeRunnerRequest) -> None:
@@ -886,6 +1025,7 @@ def _replay_inputs_for_request(
 
 
 __all__ = [
+    "RuntimeProbeDiagnosticRunnerRequestPreparation",
     "RuntimeProbeExecutionAttempt",
     "RuntimeProbeExecutionInput",
     "RuntimeProbeExecutionInputBatch",
@@ -895,4 +1035,5 @@ __all__ = [
     "assemble_runtime_probe_result_batch_from_runner_request_attempts",
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_runner_request_batch",
+    "prepare_runtime_probe_runner_requests_for_diagnostic",
 ]
