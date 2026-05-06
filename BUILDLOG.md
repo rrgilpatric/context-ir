@@ -2,6 +2,33 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Diagnostic Runner Preparation Release Routing
+
+- Local commit creation completed for the runtime probe diagnostic
+  runner-request preparation release unit.
+- Local commit:
+  - `fd0f6d8 Prepare runtime probe diagnostic runner requests`
+- Post-commit repo state before Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` at
+    `fd0f6d8 Prepare runtime probe diagnostic runner requests`
+  - `origin/main` at
+    `7543405 Sync runtime probe runner attempt post-push state`
+  - local branch ahead of `origin/main` by exactly the source/contract release
+    candidate `fd0f6d8`
+  - worktree clean before this docs-only continuity sync
+  - nothing staged
+  - no untracked files
+- Routing decision:
+  - treat `fd0f6d8` as release-gate-cleared and locally committed
+  - do not route `fd0f6d8` back to implementation, release-unit audit, full
+    regression, commit-gating, staging, or local commit creation absent new
+    findings
+  - do not route another implementation or planning lane before Ryan's
+    explicit push/hold decision for `fd0f6d8`
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Diagnostic Runner Preparation Local Commit Routing
 
 - Reviewed the returned combined read-only release-gate result for the runtime
