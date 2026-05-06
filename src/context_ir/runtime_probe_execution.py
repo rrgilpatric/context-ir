@@ -16,13 +16,26 @@ from context_ir.runtime_probe_requests import (
     build_runtime_probe_request_plan,
 )
 from context_ir.runtime_probe_results import (
+    RuntimeProbeNonProofResult,
+    RuntimeProbeObservedResult,
     RuntimeProbeReplayArtifact,
     RuntimeProbeReplayField,
+    RuntimeProbeResult,
+    RuntimeProbeResultBatch,
+    RuntimeProbeResultOutcome,
 )
 from context_ir.semantic_types import RepositorySnapshotBasis
 
 _RUNTIME_PROBE_EXECUTION_INPUT_BATCH_CONTRACT_VERSION = (
     "runtime_probe_execution_input_batch:v1"
+)
+_NON_PROOF_ATTEMPT_OUTCOMES = frozenset(
+    {
+        RuntimeProbeResultOutcome.CRASHED,
+        RuntimeProbeResultOutcome.TIMED_OUT,
+        RuntimeProbeResultOutcome.MISSING_ENVIRONMENT,
+        RuntimeProbeResultOutcome.SETUP_FAILED,
+    }
 )
 
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
@@ -144,6 +157,58 @@ class RuntimeProbeExecutionInputBatch:
             seen_request_ids.add(input_item.request_id)
 
 
+@dataclass(frozen=True)
+class RuntimeProbeExecutionAttempt:
+    """Internal normalized runner output for one non-executing probe input."""
+
+    plan_id: str
+    request_id: str
+    request: RuntimeProbeRequest
+    execution_input: RuntimeProbeExecutionInput
+    outcome: RuntimeProbeResultOutcome
+    normalized_payload: tuple[RuntimeProbeReplayField, ...] = ()
+    durable_artifact_reference: str | None = None
+    failure_summary: str | None = None
+    failure_detail_fields: tuple[RuntimeProbeReplayField, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Reject attempts whose normalized result metadata cannot be trusted."""
+        if self.plan_id != self.execution_input.plan_id:
+            raise ValueError(
+                "runtime probe execution attempt plan_id must match execution input"
+            )
+        if self.request_id != self.execution_input.request_id:
+            raise ValueError(
+                "runtime probe execution attempt request_id must match execution input"
+            )
+        if self.request is not self.execution_input.request:
+            raise ValueError(
+                "runtime probe execution attempt request must be execution input "
+                "request"
+            )
+
+        _validate_optional_reference(
+            self.durable_artifact_reference,
+            field_name="durable_artifact_reference",
+        )
+        _validate_replay_fields(
+            self.normalized_payload,
+            field_name="normalized_payload",
+        )
+        _validate_replay_fields(
+            self.failure_detail_fields,
+            field_name="failure_detail_fields",
+        )
+
+        if self.outcome is RuntimeProbeResultOutcome.OBSERVED:
+            _validate_observed_attempt_metadata(self)
+            return
+        if self.outcome in _NON_PROOF_ATTEMPT_OUTCOMES:
+            _validate_non_proof_attempt_metadata(self)
+            return
+        raise ValueError("runtime probe execution attempt outcome is not supported")
+
+
 def materialize_runtime_probe_execution_input_batch(
     plan: RuntimeProbeRequestPlan,
     *,
@@ -175,6 +240,22 @@ def materialize_runtime_probe_execution_input_batch(
         request_ids=plan.request_ids,
         inputs=inputs,
     )
+
+
+def assemble_runtime_probe_result_batch_from_execution_attempts(
+    input_batch: RuntimeProbeExecutionInputBatch,
+    attempts: Iterable[RuntimeProbeExecutionAttempt],
+) -> RuntimeProbeResultBatch:
+    """Convert a complete typed attempt set into an ordered result batch."""
+    attempts_by_request_id = _index_execution_attempts_for_input_batch(
+        input_batch,
+        attempts,
+    )
+    results = tuple(
+        _runtime_probe_result_from_attempt(attempts_by_request_id[request_id])
+        for request_id in input_batch.request_ids
+    )
+    return RuntimeProbeResultBatch(plan_id=input_batch.plan_id, results=results)
 
 
 def _materialize_runtime_probe_execution_input(
@@ -216,6 +297,127 @@ def _materialize_runtime_probe_execution_input(
             runtime_assumptions=runtime_assumptions,
         ),
     )
+
+
+def _index_execution_attempts_for_input_batch(
+    input_batch: RuntimeProbeExecutionInputBatch,
+    attempts: Iterable[RuntimeProbeExecutionAttempt],
+) -> dict[str, RuntimeProbeExecutionAttempt]:
+    """Return attempts keyed by request ID after validating batch completeness."""
+    inputs_by_request_id = {
+        input_item.request_id: input_item for input_item in input_batch.inputs
+    }
+    attempts_by_request_id: dict[str, RuntimeProbeExecutionAttempt] = {}
+
+    for attempt in attempts:
+        if attempt.request_id in attempts_by_request_id:
+            raise ValueError("duplicate runtime probe execution attempt request_id")
+        input_item = inputs_by_request_id.get(attempt.request_id)
+        if input_item is None:
+            raise ValueError(
+                "runtime probe execution attempt request_id is not present in "
+                "input batch"
+            )
+        if attempt.plan_id != input_batch.plan_id:
+            raise ValueError(
+                "runtime probe execution attempt plan_id must match input batch"
+            )
+        if attempt.execution_input is not input_item:
+            raise ValueError(
+                "runtime probe execution attempt input must be the planned batch input"
+            )
+        if attempt.request is not input_item.request:
+            raise ValueError(
+                "runtime probe execution attempt request must be the planned batch "
+                "request"
+            )
+        attempts_by_request_id[attempt.request_id] = attempt
+
+    missing_request_ids = tuple(
+        request_id
+        for request_id in input_batch.request_ids
+        if request_id not in attempts_by_request_id
+    )
+    if missing_request_ids:
+        raise ValueError(
+            "missing runtime probe execution attempt for input batch request_id"
+        )
+    return attempts_by_request_id
+
+
+def _runtime_probe_result_from_attempt(
+    attempt: RuntimeProbeExecutionAttempt,
+) -> RuntimeProbeResult:
+    """Build the externally admitted result contract for one normalized attempt."""
+    if attempt.outcome is RuntimeProbeResultOutcome.OBSERVED:
+        return RuntimeProbeObservedResult(
+            plan_id=attempt.plan_id,
+            request_id=attempt.request_id,
+            request=attempt.request,
+            replay_artifact=attempt.execution_input.replay_artifact,
+            normalized_payload=attempt.normalized_payload,
+            durable_artifact_reference=attempt.durable_artifact_reference,
+        )
+
+    if attempt.outcome in _NON_PROOF_ATTEMPT_OUTCOMES:
+        failure_summary = attempt.failure_summary
+        if failure_summary is None:
+            raise ValueError("non-proof runtime probe attempts require failure_summary")
+        return RuntimeProbeNonProofResult(
+            plan_id=attempt.plan_id,
+            request_id=attempt.request_id,
+            request=attempt.request,
+            outcome=attempt.outcome,
+            failure_summary=failure_summary,
+            replay_artifact=attempt.execution_input.replay_artifact,
+            failure_detail_fields=attempt.failure_detail_fields,
+        )
+
+    raise ValueError("runtime probe execution attempt outcome is not supported")
+
+
+def _validate_observed_attempt_metadata(
+    attempt: RuntimeProbeExecutionAttempt,
+) -> None:
+    """Reject observed attempts that carry only failure or empty proof metadata."""
+    if attempt.failure_summary is not None or attempt.failure_detail_fields:
+        raise ValueError(
+            "observed runtime probe execution attempts cannot carry failure metadata"
+        )
+    if not attempt.normalized_payload and attempt.durable_artifact_reference is None:
+        raise ValueError(
+            "observed runtime probe execution attempts require normalized_payload "
+            "or durable_artifact_reference"
+        )
+
+
+def _validate_non_proof_attempt_metadata(
+    attempt: RuntimeProbeExecutionAttempt,
+) -> None:
+    """Reject failed attempts that omit failure metadata or carry proof metadata."""
+    if not attempt.failure_summary or not attempt.failure_summary.strip():
+        raise ValueError("non-proof runtime probe attempts require failure_summary")
+    if attempt.normalized_payload or attempt.durable_artifact_reference is not None:
+        raise ValueError(
+            "non-proof runtime probe execution attempts cannot carry proof metadata"
+        )
+
+
+def _validate_replay_fields(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    field_name: str,
+) -> None:
+    """Reject replay fields whose frozen values have been tampered blank."""
+    for replay_field in fields:
+        if not replay_field.key.strip() or not replay_field.value.strip():
+            raise ValueError(f"{field_name} must not contain blank fields")
+
+
+def _validate_optional_reference(reference: str | None, *, field_name: str) -> None:
+    """Reject blank optional artifact references."""
+    if reference is not None and not reference.strip():
+        raise ValueError(f"{field_name} must be non-empty when provided")
 
 
 def _validate_request_plan(plan: RuntimeProbeRequestPlan) -> None:
@@ -306,7 +508,9 @@ def _replay_inputs_for_request(
 
 
 __all__ = [
+    "RuntimeProbeExecutionAttempt",
     "RuntimeProbeExecutionInput",
     "RuntimeProbeExecutionInputBatch",
+    "assemble_runtime_probe_result_batch_from_execution_attempts",
     "materialize_runtime_probe_execution_input_batch",
 ]

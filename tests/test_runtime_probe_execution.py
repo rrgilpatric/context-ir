@@ -16,6 +16,9 @@ from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
+from context_ir.runtime_probe_execution import (
+    assemble_runtime_probe_result_batch_from_execution_attempts,
+)
 from context_ir.semantic_types import (
     RepositorySnapshotBasis,
     SemanticProgram,
@@ -209,6 +212,44 @@ def _materialized_batch(
     )
 
 
+def _execution_attempt(
+    input_item: runtime_probe_execution.RuntimeProbeExecutionInput,
+    *,
+    outcome: runtime_probe_results.RuntimeProbeResultOutcome = (
+        runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    ),
+    normalized_payload: tuple[runtime_probe_results.RuntimeProbeReplayField, ...] = (),
+    durable_artifact_reference: str | None = None,
+    failure_summary: str | None = None,
+    failure_detail_fields: tuple[
+        runtime_probe_results.RuntimeProbeReplayField, ...
+    ] = (),
+) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+    """Return one normalized executor-output attempt tied to an input item."""
+    return runtime_probe_execution.RuntimeProbeExecutionAttempt(
+        plan_id=input_item.plan_id,
+        request_id=input_item.request_id,
+        request=input_item.request,
+        execution_input=input_item,
+        outcome=outcome,
+        normalized_payload=normalized_payload,
+        durable_artifact_reference=durable_artifact_reference,
+        failure_summary=failure_summary,
+        failure_detail_fields=failure_detail_fields,
+    )
+
+
+def _assemble_result_batch(
+    input_batch: runtime_probe_execution.RuntimeProbeExecutionInputBatch,
+    attempts: tuple[runtime_probe_execution.RuntimeProbeExecutionAttempt, ...],
+) -> runtime_probe_results.RuntimeProbeResultBatch:
+    """Assemble execution attempts through the public module-local helper."""
+    return assemble_runtime_probe_result_batch_from_execution_attempts(
+        input_batch,
+        attempts,
+    )
+
+
 def test_materialize_runtime_probe_execution_inputs_preserves_plan_order_and_replay(
     tmp_path: Path,
 ) -> None:
@@ -316,6 +357,290 @@ def test_materialize_runtime_probe_execution_inputs_preserves_plan_order_and_rep
     assert program.unsupported_constructs == original_unsupported
     assert program.unresolved_frontier == original_frontier
     assert program.provenance_records == original_provenance_records
+
+
+def test_assemble_runtime_probe_result_batch_preserves_order_and_identities() -> None:
+    """Complete attempts become results in input-batch order without mutation."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    third_request = _request(start_line=5)
+    plan = _plan(first_request, second_request, third_request)
+    batch = _materialized_batch(plan)
+    original_batch_inputs = batch.inputs
+    first_payload = (_field("observed_module", "plugins.weather"),)
+    first_attempt = _execution_attempt(
+        batch.inputs[0],
+        normalized_payload=first_payload,
+    )
+    second_attempt = _execution_attempt(
+        batch.inputs[1],
+        durable_artifact_reference=(
+            "artifact://runtime-probe-results/dynamic-import/main-run.json"
+        ),
+    )
+    third_attempt = _execution_attempt(
+        batch.inputs[2],
+        outcome=runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+        failure_summary="probe exceeded timeout",
+        failure_detail_fields=(_field("timeout_seconds", "30"),),
+    )
+
+    result_batch = _assemble_result_batch(
+        batch,
+        (third_attempt, second_attempt, first_attempt),
+    )
+
+    assert result_batch.plan_id == batch.plan_id
+    assert tuple(result.request_id for result in result_batch.results) == (
+        batch.request_ids
+    )
+    assert batch.inputs == original_batch_inputs
+    assert first_attempt.execution_input is batch.inputs[0]
+    assert second_attempt.execution_input is batch.inputs[1]
+    assert third_attempt.execution_input is batch.inputs[2]
+
+    first_result = result_batch.results[0]
+    assert isinstance(first_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert first_result.plan_id == batch.plan_id
+    assert first_result.request_id == batch.inputs[0].request_id
+    assert first_result.request is batch.inputs[0].request
+    assert first_result.replay_artifact is batch.inputs[0].replay_artifact
+    assert first_result.normalized_payload == first_payload
+    assert first_result.durable_artifact_reference is None
+    assert first_result.is_admissible_runtime_backed_proof is True
+
+    second_result = result_batch.results[1]
+    assert isinstance(second_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert second_result.request is batch.inputs[1].request
+    assert second_result.replay_artifact is batch.inputs[1].replay_artifact
+    assert second_result.normalized_payload == ()
+    assert second_result.durable_artifact_reference == (
+        "artifact://runtime-probe-results/dynamic-import/main-run.json"
+    )
+    assert second_result.is_admissible_runtime_backed_proof is True
+
+    third_result = result_batch.results[2]
+    assert isinstance(third_result, runtime_probe_results.RuntimeProbeNonProofResult)
+    assert third_result.request is batch.inputs[2].request
+    assert third_result.replay_artifact is batch.inputs[2].replay_artifact
+    assert (
+        third_result.outcome
+        is runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT
+    )
+    assert third_result.failure_summary == "probe exceeded timeout"
+    assert third_result.failure_detail_fields == (_field("timeout_seconds", "30"),)
+    assert third_result.is_admissible_runtime_backed_proof is False
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    (
+        runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+        runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+        runtime_probe_results.RuntimeProbeResultOutcome.MISSING_ENVIRONMENT,
+        runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED,
+    ),
+)
+def test_assemble_runtime_probe_result_batch_preserves_all_non_proof_outcomes(
+    outcome: runtime_probe_results.RuntimeProbeResultOutcome,
+) -> None:
+    """Every failed execution outcome remains non-proof in result assembly."""
+    request = _request()
+    batch = _materialized_batch(_plan(request))
+    attempt = _execution_attempt(
+        batch.inputs[0],
+        outcome=outcome,
+        failure_summary=f"runner reported {outcome.value}",
+    )
+
+    result_batch = _assemble_result_batch(
+        batch,
+        (attempt,),
+    )
+
+    result = result_batch.results[0]
+    assert isinstance(result, runtime_probe_results.RuntimeProbeNonProofResult)
+    assert result.outcome is outcome
+    assert result.is_admissible_runtime_backed_proof is False
+
+
+def test_assemble_runtime_probe_result_batch_supports_empty_input_batch() -> None:
+    """Empty input batches assemble deterministically into empty result batches."""
+    empty_plan = runtime_probe_requests.build_runtime_probe_request_plan(())
+    batch = _materialized_batch(empty_plan)
+
+    result_batch = _assemble_result_batch(
+        batch,
+        (),
+    )
+
+    assert result_batch.plan_id == batch.plan_id
+    assert result_batch.results == ()
+
+
+def test_assemble_runtime_probe_result_batch_rejects_incomplete_attempt_sets() -> None:
+    """Attempt assembly requires exactly one attempt for every batch input."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    batch = _materialized_batch(_plan(first_request, second_request))
+    planned_attempt = _execution_attempt(
+        batch.inputs[0],
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    duplicate_attempt = _execution_attempt(
+        batch.inputs[0],
+        normalized_payload=(_field("observed_module", "plugins.forecast"),),
+    )
+    unplanned_batch = _materialized_batch(_plan(_request(start_line=8)))
+    unplanned_attempt = _execution_attempt(
+        unplanned_batch.inputs[0],
+        normalized_payload=(_field("observed_module", "plugins.unplanned"),),
+    )
+
+    with pytest.raises(ValueError, match="missing runtime probe execution attempt"):
+        _assemble_result_batch(
+            batch,
+            (planned_attempt,),
+        )
+    with pytest.raises(ValueError, match="duplicate runtime probe execution attempt"):
+        _assemble_result_batch(
+            batch,
+            (planned_attempt, duplicate_attempt),
+        )
+    with pytest.raises(ValueError, match="not present in input batch"):
+        _assemble_result_batch(
+            batch,
+            (planned_attempt, unplanned_attempt),
+        )
+
+
+def test_assemble_runtime_probe_result_batch_rejects_plan_and_input_drift() -> None:
+    """Attempts must point at the exact planned batch input object."""
+    request = _request()
+    plan = _plan(request)
+    batch = _materialized_batch(plan)
+    equivalent_batch = _materialized_batch(plan)
+    wrong_input_attempt = _execution_attempt(
+        equivalent_batch.inputs[0],
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    drifted_attempt = _execution_attempt(
+        batch.inputs[0],
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    object.__setattr__(drifted_attempt, "plan_id", "runtime_probe_request_plan:wrong")
+
+    with pytest.raises(ValueError, match="planned batch input"):
+        _assemble_result_batch(
+            batch,
+            (wrong_input_attempt,),
+        )
+    with pytest.raises(ValueError, match="plan_id must match input batch"):
+        _assemble_result_batch(
+            batch,
+            (drifted_attempt,),
+        )
+
+
+def test_runtime_probe_execution_attempt_rejects_plan_input_drift() -> None:
+    """Attempt records cannot drift from the execution input they cite."""
+    request = _request()
+    batch = _materialized_batch(_plan(request))
+    input_item = batch.inputs[0]
+
+    with pytest.raises(ValueError, match="plan_id must match execution input"):
+        runtime_probe_execution.RuntimeProbeExecutionAttempt(
+            plan_id="runtime_probe_request_plan:wrong",
+            request_id=input_item.request_id,
+            request=input_item.request,
+            execution_input=input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+        )
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        runtime_probe_execution.RuntimeProbeExecutionAttempt(
+            plan_id=input_item.plan_id,
+            request_id="runtime_probe:wrong",
+            request=input_item.request,
+            execution_input=input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+        )
+    with pytest.raises(ValueError, match="request must be execution input request"):
+        runtime_probe_execution.RuntimeProbeExecutionAttempt(
+            plan_id=input_item.plan_id,
+            request_id=input_item.request_id,
+            request=_request(start_line=8),
+            execution_input=input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+        )
+
+
+def test_runtime_probe_execution_attempt_rejects_observed_failure_metadata() -> None:
+    """Observed attempts need proof metadata and cannot carry failure-only fields."""
+    request = _request()
+    input_item = _materialized_batch(_plan(request)).inputs[0]
+
+    with pytest.raises(ValueError, match="cannot carry failure metadata"):
+        _execution_attempt(
+            input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+            failure_summary="runner crashed after observing payload",
+        )
+    with pytest.raises(ValueError, match="normalized_payload or durable"):
+        _execution_attempt(
+            input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+            failure_summary=None,
+        )
+
+
+def test_runtime_probe_execution_attempt_rejects_failure_without_summary() -> None:
+    """Failure outcomes need a concrete failure summary and cannot carry proof."""
+    request = _request()
+    input_item = _materialized_batch(_plan(request)).inputs[0]
+
+    with pytest.raises(ValueError, match="failure_summary"):
+        _execution_attempt(
+            input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+        )
+    with pytest.raises(ValueError, match="failure_summary"):
+        _execution_attempt(
+            input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED,
+            failure_summary=" ",
+        )
+    with pytest.raises(ValueError, match="cannot carry proof metadata"):
+        _execution_attempt(
+            input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+            failure_summary="runner crashed",
+        )
+
+
+def test_runtime_probe_execution_attempt_rejects_blank_references_and_details() -> None:
+    """Attempt metadata rejects blank durable references and tampered detail fields."""
+    request = _request()
+    input_item = _materialized_batch(_plan(request)).inputs[0]
+    blank_detail = _field("exit_code", "1")
+    object.__setattr__(blank_detail, "value", " ")
+
+    with pytest.raises(ValueError, match="durable_artifact_reference"):
+        _execution_attempt(
+            input_item,
+            durable_artifact_reference=" ",
+        )
+    with pytest.raises(ValueError, match="failure_detail_fields"):
+        _execution_attempt(
+            input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+            failure_summary="runner crashed",
+            failure_detail_fields=(blank_detail,),
+        )
 
 
 def test_materialize_runtime_probe_execution_inputs_supports_empty_plan() -> None:
@@ -470,23 +795,42 @@ def test_runtime_probe_execution_input_batch_rejects_input_plan_mismatch() -> No
         )
 
 
-def test_runtime_probe_execution_input_contract_is_frozen_and_module_local() -> None:
-    """Execution-input records stay frozen and absent from package-root exports."""
+def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None:
+    """Execution records stay frozen and absent from package-root exports."""
     request = _request()
     plan = _plan(request)
     input_item = _materialized_batch(plan).inputs[0]
+    attempt = _execution_attempt(
+        input_item,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
 
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
+    with pytest.raises(FrozenInstanceError):
+        attempt.plan_id = "runtime_probe_request_plan:mutated"
 
+    assert "RuntimeProbeExecutionAttempt" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInput" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInputBatch" in runtime_probe_execution.__all__
+    assert "assemble_runtime_probe_result_batch_from_execution_attempts" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_execution_input_batch" in (
         runtime_probe_execution.__all__
     )
+    assert "RuntimeProbeExecutionAttempt" not in context_ir.__all__
     assert "RuntimeProbeExecutionInput" not in context_ir.__all__
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
+    assert "assemble_runtime_probe_result_batch_from_execution_attempts" not in (
+        context_ir.__all__
+    )
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
+    assert not hasattr(context_ir, "RuntimeProbeExecutionAttempt")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInput")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
+    assert not hasattr(
+        context_ir,
+        "assemble_runtime_probe_result_batch_from_execution_attempts",
+    )
     assert not hasattr(context_ir, "materialize_runtime_probe_execution_input_batch")

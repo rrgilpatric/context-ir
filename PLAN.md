@@ -89,6 +89,35 @@ Runtime probe execution-input materialization release:
   `PLAN.md` and `BUILDLOG.md`
 - release-gate status is no-active-gate for `cfed3c7`
 
+Workspace-only accepted runtime probe execution-attempt result assembly:
+
+- `RuntimeProbeExecutionAttempt` is a frozen internal normalized runner-output
+  record for one materialized `RuntimeProbeExecutionInput`
+- `assemble_runtime_probe_result_batch_from_execution_attempts(...)` converts
+  a complete typed attempt set for a `RuntimeProbeExecutionInputBatch` into
+  deterministic input-batch order `RuntimeProbeResultBatch`
+- observed attempts become `RuntimeProbeObservedResult` only when they carry
+  normalized payload or durable artifact reference
+- crashed, timed-out, missing-environment, and setup-failed attempts become
+  `RuntimeProbeNonProofResult` and remain non-proof
+- assembly preserves plan ID, request IDs, request object identity, planned
+  execution-input identity, replay artifact identity, input-batch order, and
+  result-batch identity
+- unplanned, duplicate, missing, plan-drifted, input-drifted, request-drifted,
+  blank, malformed, and unsupported attempt metadata rejects through typed
+  constructors or assembly gates
+- exports remain module-local to `context_ir.runtime_probe_execution.__all__`;
+  package-root, tool facade, MCP, JSON/schema, serialization, eval, scoring,
+  optimizer, compiler, winner-selection, product, benchmark, and public-claim
+  surfaces remain unchanged
+- implementation review accepted the slice first-pass in workspace-only state
+- focused validation passed, including targeted pytest reporting `189 passed`
+- proposed release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-unit-audit, full-regression, commit-gating, staging, local commit,
+  and push remain pending; push remains Ryan-gated
+
 Runtime probe result-batch recompile bridge release:
 
 - `RuntimeProbeResultBatchRecompileApplication` is a frozen internal envelope
@@ -402,9 +431,16 @@ Current route:
 - Runtime probe execution-input materialization is pushed at
   `cfed3c7 Add runtime probe execution input materialization` with no active
   gate.
-- Next control action may choose the next bounded runtime-probe execution-loop
-  planning or implementation lane, but must not reopen completed release gates
-  absent new findings.
+- Runtime probe execution-attempt result assembly is accepted first-pass in
+  workspace-only state. The proposed release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
+- Next active route is a corrected combined read-only release gate for that
+  exact four-file unit. The gate must run release-unit audit, full regression,
+  and commit-gating in order, stop on first finding, and must not edit files,
+  stage, commit, push, or rewrite continuity. Validation commands must invoke
+  repo tooling through `.venv/bin/python -m`; ambient `mypy` resolves outside
+  the repo virtualenv and is not authoritative for this gate.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2065,9 +2101,23 @@ sequencing for `c1a12d7` absent new findings.
   materialization release unit
 - [x] Ryan-authorized push for the runtime probe
   execution-input materialization release unit
+- [x] Post-`cfed3c7` planning/control selected the internal non-executing
+  runtime probe execution-attempt to result-batch assembly boundary
+- [x] Runtime probe execution-attempt result assembly implementation slice
+  accepted first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file runtime probe
+  execution-attempt result assembly release unit
 
 ## What Is In Progress
 
+- Runtime probe execution-attempt result assembly is accepted first-pass in
+  workspace-only state.
+- The proposed release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
+- The next gate is a corrected combined read-only release gate over that exact
+  four-file unit. It must use `.venv/bin/python -m mypy --strict src/`, not
+  ambient `mypy`.
 - Runtime probe execution-input materialization is completed and pushed at
   `cfed3c7 Add runtime probe execution input materialization`.
 - Released unit:
@@ -2912,21 +2962,32 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: choose the next bounded runtime-probe execution-loop lane
-after the pushed execution-input materialization release.
+Immediate next route: issue or confirm a combined read-only release-gate lane
+for the exact four-file runtime probe execution-attempt result assembly release
+unit:
+
+- `src/context_ir/runtime_probe_execution.py`
+- `tests/test_runtime_probe_execution.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The gate must run release-unit audit, then full regression, then commit-gating.
+It must stop on the first finding, report findings first, report each gate
+explicitly, and must not edit files, stage, commit, push, or rewrite
+continuity. Validation commands must invoke repo tooling through
+`.venv/bin/python -m`; ambient `mypy` resolves outside the repo virtualenv and
+is not authoritative for this gate.
 
 The runtime probe execution-input materialization release is pushed at
 `cfed3c7 Add runtime probe execution input materialization` and has
 release-gate status no-active-gate. It should not be reopened absent new
 findings.
 
-The released slice adds internal non-executing typed work-item
-materialization from `RuntimeProbeRequestPlan` plus repository snapshot metadata
-to replay-ready execution inputs. It preserves plan ID, request IDs, request
-object identity, source-site identity, family/form labels, replay target and
-selector seeds, and deterministic plan order through
-`RuntimeProbeReplayArtifact`. It does not execute probes, collect runtime
-observations, admit results, attach provenance, recompile, serialize
+The accepted workspace slice adds internal non-executing typed execution-attempt
+records tied to `RuntimeProbeExecutionInput` and a deterministic helper that
+converts a complete attempt set for a `RuntimeProbeExecutionInputBatch` into
+`RuntimeProbeResultBatch`. It does not execute probes, collect runtime
+observations, admit observations, attach provenance, recompile, serialize
 JSON/schema, widen `tool_facade.py`, `mcp_server.py`, `context_ir/__init__.py`,
 or touch eval, scoring, optimizer, compiler, package-root, product, benchmark,
 or public-claim surfaces.
