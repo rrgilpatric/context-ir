@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Diagnostic Runner Preparation Push Sync
+
+- Ryan authorized pushing the runtime probe diagnostic runner-request
+  preparation release after local commit creation and release-routing sync.
+- Pre-push verification:
+  - branch `main`
+  - local `HEAD` at
+    `74d84fb Sync runtime probe diagnostic runner request release routing`
+  - `origin/main` at
+    `7543405 Sync runtime probe runner attempt post-push state`
+  - local commits ahead of `origin/main` were exactly source/contract release
+    `fd0f6d8 Prepare runtime probe diagnostic runner requests` and docs-only
+    release routing `74d84fb`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Push completed:
+  - pushed `main` to `origin/main`
+  - remote advanced from `7543405` to `74d84fb`
+- Post-push verification:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `74d84fb Sync runtime probe diagnostic runner request release routing`
+  - latest pushed source/contract authority is
+    `fd0f6d8 Prepare runtime probe diagnostic runner requests`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `fd0f6d8` as pushed and no-active-gate
+  - treat the committed `74d84fb` local-candidate wording as superseded by
+    this post-push sync because it can otherwise misroute a fresh controller
+    back to a completed push gate
+  - next route may choose the next bounded runtime-probe execution-loop
+    planning or implementation lane, but must not reopen `fd0f6d8` release
+    gates absent new findings
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Diagnostic Runner Preparation Release Routing
 
 - Local commit creation completed for the runtime probe diagnostic

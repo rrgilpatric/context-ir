@@ -462,17 +462,21 @@ Current route:
 - Combined read-only release gate passed with no findings for that exact
   four-file runner-request attempt/result assembly unit, and Ryan-authorized
   push is complete.
-- Runtime probe diagnostic runner-request preparation is locally committed at
-  `fd0f6d8 Prepare runtime probe diagnostic runner requests`. The release unit
-  is exactly
+- Runtime probe diagnostic runner-request preparation is pushed at
+  `fd0f6d8 Prepare runtime probe diagnostic runner requests` with no active
+  gate. The release unit is exactly
   `src/context_ir/runtime_probe_execution.py`,
   `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
 - The combined read-only release gate passed with no findings for that exact
   four-file diagnostic runner-request preparation unit: Gate 1 release-unit
   audit passed, focused validation passed with `205 passed`, Gate 2 full
   regression passed with `885 passed`, and Gate 3 commit-gating passed.
-- Next active route is Ryan's explicit push/hold decision for the local
-  diagnostic runner-request preparation release. It is not pushed.
+- Ryan-authorized push is complete for the diagnostic runner-request
+  preparation release, with `origin/main` advanced through
+  `74d84fb Sync runtime probe diagnostic runner request release routing`.
+- Next active route may choose the next bounded runtime-probe execution-loop
+  planning or implementation lane. Do not reopen `fd0f6d8` release gates
+  absent new findings.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2171,7 +2175,7 @@ sequencing for `c1a12d7` absent new findings.
   runner-request preparation release unit
 - [x] Local commit creation for the runtime probe diagnostic runner-request
   preparation release unit
-- [ ] Ryan-authorized push for the runtime probe diagnostic runner-request
+- [x] Ryan-authorized push for the runtime probe diagnostic runner-request
   preparation release unit
 
 ## What Is In Progress
@@ -2221,7 +2225,7 @@ sequencing for `c1a12d7` absent new findings.
   execution-loop planning or implementation lane. Do not reopen `3363929`
   release gates absent new findings.
 - Runtime probe diagnostic runner-request preparation is accepted first-pass,
-  release-gate-cleared, and locally committed:
+  release-gate-cleared, locally committed, and pushed:
   - release unit is exactly `src/context_ir/runtime_probe_execution.py`,
     `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
   - release-unit audit passed with no findings
@@ -2229,10 +2233,12 @@ sequencing for `c1a12d7` absent new findings.
   - full regression passed with `885 passed`
   - commit-gating passed with the exact four-file unit
   - local commit is `fd0f6d8 Prepare runtime probe diagnostic runner requests`
-  - push remains Ryan-gated
-- The active next action is Ryan's explicit push/hold decision for the local
-  diagnostic runner-request preparation release. Do not push without explicit
-  Ryan authorization.
+  - Ryan-authorized push completed with `origin/main` advanced through
+    `74d84fb Sync runtime probe diagnostic runner request release routing`
+  - release-gate status is no-active-gate for `fd0f6d8`
+- The active next action may choose the next bounded runtime-probe
+  execution-loop planning or implementation lane. Do not reopen `fd0f6d8`
+  release gates absent new findings.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Release-gate status is no-active-gate for `591c09b`.
@@ -3064,8 +3070,8 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: hold for Ryan's explicit push/hold decision for the local
-runtime probe diagnostic runner-request preparation release.
+Immediate next route: choose the next bounded runtime-probe execution-loop
+planning or implementation lane.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3154,8 +3160,8 @@ and Gate 3 commit-gating passed.
 Ryan-authorized push is complete.
 
 The runtime probe diagnostic runner-request preparation slice is
-workspace-only accepted first-pass, release-gate-cleared, and locally
-committed at `fd0f6d8 Prepare runtime probe diagnostic runner requests`. It
+workspace-only accepted first-pass, release-gate-cleared, locally committed at
+`fd0f6d8 Prepare runtime probe diagnostic runner requests`, and pushed. It
 adds a frozen internal preparation envelope and helper that take a
 `SemanticDiagnosticResult` with an attached `planned_runtime_probe_request_plan`,
 materialize the corresponding `RuntimeProbeExecutionInputBatch`, and then
@@ -3180,7 +3186,9 @@ Release state for the diagnostic runner-request preparation unit:
 - full-regression-cleared with `885 passed`
 - commit-gating-cleared
 - locally committed at `fd0f6d8`
-- not pushed
+- Ryan-authorized push completed with `origin/main` advanced through
+  `74d84fb Sync runtime probe diagnostic runner request release routing`
+- release-gate status is no-active-gate
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate
