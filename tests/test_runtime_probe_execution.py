@@ -19,6 +19,7 @@ from context_ir.resolver import resolve_semantics
 from context_ir.runtime_probe_execution import (
     assemble_runtime_probe_result_batch_from_execution_attempts,
     assemble_runtime_probe_result_batch_from_runner_request_attempts,
+    collect_runtime_probe_execution_attempts_from_runner_requests,
 )
 from context_ir.semantic_types import (
     CapabilityTier,
@@ -1147,6 +1148,224 @@ def test_assemble_runner_request_results_rejects_bad_attempt_metadata() -> None:
         )
 
 
+def test_collect_runtime_probe_runner_attempts_invokes_runner_once_in_order() -> None:
+    """Runner-callable collection preserves request, attempt, and result identities."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    third_request = _request(start_line=5)
+    runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(first_request, second_request, third_request))
+    )
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+    returned_attempts: list[runtime_probe_execution.RuntimeProbeExecutionAttempt] = []
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        attempt = _execution_attempt(
+            runner_request.execution_input,
+            normalized_payload=(
+                _field("observed_request_id", runner_request.request_id),
+            ),
+        )
+        returned_attempts.append(attempt)
+        return attempt
+
+    collection = collect_runtime_probe_execution_attempts_from_runner_requests(
+        runner_batch,
+        runner,
+    )
+
+    assert isinstance(
+        collection,
+        runtime_probe_execution.RuntimeProbeRunnerAttemptCollection,
+    )
+    assert collection.runner_request_batch is runner_batch
+    assert tuple(calls) == runner_batch.runner_requests
+    assert all(
+        call is runner_request
+        for call, runner_request in zip(
+            calls,
+            runner_batch.runner_requests,
+            strict=True,
+        )
+    )
+    assert collection.attempts == tuple(returned_attempts)
+    assert all(
+        attempt is returned_attempt
+        for attempt, returned_attempt in zip(
+            collection.attempts,
+            returned_attempts,
+            strict=True,
+        )
+    )
+    assert collection.result_batch.plan_id == runner_batch.plan_id
+    assert tuple(result.request_id for result in collection.result_batch.results) == (
+        runner_batch.request_ids
+    )
+
+    for attempt, result, runner_request in zip(
+        collection.attempts,
+        collection.result_batch.results,
+        runner_batch.runner_requests,
+        strict=True,
+    ):
+        assert attempt.request_id == runner_request.request_id
+        assert attempt.request is runner_request.request
+        assert attempt.execution_input is runner_request.execution_input
+        assert attempt.execution_input.replay_artifact is runner_request.replay_artifact
+        assert result.request_id == runner_request.request_id
+        assert result.request is runner_request.request
+        assert result.replay_artifact is runner_request.replay_artifact
+
+
+def test_collect_runtime_probe_runner_attempts_supports_empty_batch() -> None:
+    """Empty runner-request batches do not invoke the runner callable."""
+    input_batch = _materialized_batch(
+        runtime_probe_requests.build_runtime_probe_request_plan(())
+    )
+    runner_batch = _runner_request_batch(input_batch)
+    was_called = False
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        nonlocal was_called
+        was_called = True
+        return _execution_attempt(runner_request.execution_input)
+
+    collection = collect_runtime_probe_execution_attempts_from_runner_requests(
+        runner_batch,
+        runner,
+    )
+
+    assert was_called is False
+    assert collection.runner_request_batch is runner_batch
+    assert collection.attempts == ()
+    assert collection.result_batch.plan_id == runner_batch.plan_id
+    assert collection.result_batch.results == ()
+
+
+def test_collect_runtime_probe_runner_attempts_revalidates_batch_before_runner() -> (
+    None
+):
+    """Tampered runner-request batches fail before any runner invocation."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(first_request, second_request))
+    )
+    object.__setattr__(
+        runner_batch,
+        "runner_requests",
+        tuple(reversed(runner_batch.runner_requests)),
+    )
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        return _execution_attempt(runner_request.execution_input)
+
+    with pytest.raises(ValueError, match="request_ids must match requests"):
+        collect_runtime_probe_execution_attempts_from_runner_requests(
+            runner_batch,
+            runner,
+        )
+
+    assert calls == []
+
+
+def test_collect_runtime_probe_runner_attempts_rejects_untyped_runner_output() -> None:
+    """Runner-callable collection accepts only typed execution attempts."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> object:
+        return {
+            "plan_id": runner_request.plan_id,
+            "request_id": runner_request.request_id,
+        }
+
+    with pytest.raises(ValueError, match="typed runtime probe execution attempts"):
+        collect_runtime_probe_execution_attempts_from_runner_requests(
+            runner_batch,
+            runner,
+        )
+
+
+def test_collect_runtime_probe_runner_attempts_propagates_runner_exceptions() -> None:
+    """Runner exceptions propagate without being synthesized into results."""
+    runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(_request(start_line=3), _request(start_line=4)))
+    )
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        raise RuntimeError("runner failed")
+
+    with pytest.raises(RuntimeError, match="runner failed"):
+        collect_runtime_probe_execution_attempts_from_runner_requests(
+            runner_batch,
+            runner,
+        )
+
+    assert calls == [runner_batch.runner_requests[0]]
+
+
+def test_runtime_probe_runner_attempt_collection_rejects_order_and_result_drift() -> (
+    None
+):
+    """The collection envelope enforces runner-request-gated assembly."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(first_request, second_request))
+    )
+    attempts = tuple(
+        _execution_attempt(
+            runner_request.execution_input,
+            normalized_payload=(
+                _field("observed_request_id", runner_request.request_id),
+            ),
+        )
+        for runner_request in runner_batch.runner_requests
+    )
+    result_batch = _assemble_runner_request_result_batch(runner_batch, attempts)
+    reversed_attempts = tuple(reversed(attempts))
+    reversed_attempt_result_batch = _assemble_runner_request_result_batch(
+        runner_batch,
+        reversed_attempts,
+    )
+    reversed_result_batch = runtime_probe_results.RuntimeProbeResultBatch(
+        plan_id=runner_batch.plan_id,
+        results=tuple(reversed(result_batch.results)),
+    )
+
+    with pytest.raises(ValueError, match="runner request order"):
+        runtime_probe_execution.RuntimeProbeRunnerAttemptCollection(
+            runner_request_batch=runner_batch,
+            attempts=reversed_attempts,
+            result_batch=reversed_attempt_result_batch,
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="result_batch must be in runner request order",
+    ):
+        runtime_probe_execution.RuntimeProbeRunnerAttemptCollection(
+            runner_request_batch=runner_batch,
+            attempts=attempts,
+            result_batch=reversed_result_batch,
+        )
+
+
 def test_assemble_runtime_probe_result_batch_preserves_order_and_identities() -> None:
     """Complete attempts become results in input-batch order without mutation."""
     first_request = _request(start_line=3)
@@ -1596,6 +1815,18 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         input_item,
         normalized_payload=(_field("observed_module", "plugins.weather"),),
     )
+    collection_attempt = _execution_attempt(
+        runner_request.execution_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    collection = runtime_probe_execution.RuntimeProbeRunnerAttemptCollection(
+        runner_request_batch=runner_batch,
+        attempts=(collection_attempt,),
+        result_batch=_assemble_runner_request_result_batch(
+            runner_batch,
+            (collection_attempt,),
+        ),
+    )
 
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
@@ -1605,6 +1836,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         runner_batch.plan_id = "runtime_probe_request_plan:mutated"
     with pytest.raises(FrozenInstanceError):
         attempt.plan_id = "runtime_probe_request_plan:mutated"
+    with pytest.raises(FrozenInstanceError):
+        collection.runner_request_batch = runner_batch
     with pytest.raises(FrozenInstanceError):
         preparation.request_plan = (
             runtime_probe_requests.build_runtime_probe_request_plan(())
@@ -1617,12 +1850,17 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionAttempt" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInput" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInputBatch" in runtime_probe_execution.__all__
+    assert "RuntimeProbeRunnerAttemptCollection" in runtime_probe_execution.__all__
+    assert "RuntimeProbeRunnerCallable" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerRequest" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerRequestBatch" in runtime_probe_execution.__all__
     assert "assemble_runtime_probe_result_batch_from_execution_attempts" in (
         runtime_probe_execution.__all__
     )
     assert "assemble_runtime_probe_result_batch_from_runner_request_attempts" in (
+        runtime_probe_execution.__all__
+    )
+    assert "collect_runtime_probe_execution_attempts_from_runner_requests" in (
         runtime_probe_execution.__all__
     )
     assert "materialize_runtime_probe_execution_input_batch" in (
@@ -1638,6 +1876,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionAttempt" not in context_ir.__all__
     assert "RuntimeProbeExecutionInput" not in context_ir.__all__
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
+    assert "RuntimeProbeRunnerAttemptCollection" not in context_ir.__all__
+    assert "RuntimeProbeRunnerCallable" not in context_ir.__all__
     assert "RuntimeProbeRunnerRequest" not in context_ir.__all__
     assert "RuntimeProbeRunnerRequestBatch" not in context_ir.__all__
     assert "assemble_runtime_probe_result_batch_from_execution_attempts" not in (
@@ -1645,6 +1885,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert "assemble_runtime_probe_result_batch_from_runner_request_attempts" not in (
         context_ir.__all__
+    )
+    assert (
+        "collect_runtime_probe_execution_attempts_from_runner_requests"
+        not in context_ir.__all__
     )
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
@@ -1655,6 +1899,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeExecutionAttempt")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInput")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
+    assert not hasattr(context_ir, "RuntimeProbeRunnerAttemptCollection")
+    assert not hasattr(context_ir, "RuntimeProbeRunnerCallable")
     assert not hasattr(context_ir, "RuntimeProbeRunnerRequest")
     assert not hasattr(context_ir, "RuntimeProbeRunnerRequestBatch")
     assert not hasattr(
@@ -1664,6 +1910,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "assemble_runtime_probe_result_batch_from_runner_request_attempts",
+    )
+    assert not hasattr(
+        context_ir,
+        "collect_runtime_probe_execution_attempts_from_runner_requests",
     )
     assert not hasattr(
         context_ir,

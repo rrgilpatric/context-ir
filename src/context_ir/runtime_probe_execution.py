@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import TypeAlias
 
@@ -388,6 +388,54 @@ class RuntimeProbeExecutionAttempt:
         raise ValueError("runtime probe execution attempt outcome is not supported")
 
 
+RuntimeProbeRunnerCallable: TypeAlias = Callable[
+    [RuntimeProbeRunnerRequest],
+    RuntimeProbeExecutionAttempt,
+]
+
+
+@dataclass(frozen=True)
+class RuntimeProbeRunnerAttemptCollection:
+    """Internal runner-callable boundary for validated probe attempts."""
+
+    runner_request_batch: RuntimeProbeRunnerRequestBatch
+    attempts: tuple[RuntimeProbeExecutionAttempt, ...]
+    result_batch: RuntimeProbeResultBatch
+
+    def __post_init__(self) -> None:
+        """Reject collections that bypass runner-request-gated assembly."""
+        _validate_runner_request_batch(self.runner_request_batch)
+        if not isinstance(self.attempts, tuple):
+            raise ValueError(
+                "runtime probe runner attempt collection attempts must be a tuple"
+            )
+        for attempt in self.attempts:
+            _validate_execution_attempt(attempt)
+
+        attempt_request_ids = tuple(attempt.request_id for attempt in self.attempts)
+        if attempt_request_ids != self.runner_request_batch.request_ids:
+            raise ValueError(
+                "runtime probe runner attempt collection attempts must be in "
+                "runner request order"
+            )
+
+        expected_result_batch = (
+            assemble_runtime_probe_result_batch_from_runner_request_attempts(
+                self.runner_request_batch,
+                self.attempts,
+            )
+        )
+        _validate_runner_attempt_collection_result_batch(
+            self.runner_request_batch,
+            self.result_batch,
+        )
+        if self.result_batch != expected_result_batch:
+            raise ValueError(
+                "runtime probe runner attempt collection result_batch must match "
+                "assembled runner-request attempts"
+            )
+
+
 def materialize_runtime_probe_execution_input_batch(
     plan: RuntimeProbeRequestPlan,
     *,
@@ -538,6 +586,30 @@ def assemble_runtime_probe_result_batch_from_runner_request_attempts(
     )
 
 
+def collect_runtime_probe_execution_attempts_from_runner_requests(
+    runner_request_batch: RuntimeProbeRunnerRequestBatch,
+    runner: RuntimeProbeRunnerCallable,
+) -> RuntimeProbeRunnerAttemptCollection:
+    """Invoke a typed runner once per runner request and assemble its results."""
+    _validate_runner_request_batch(runner_request_batch)
+    attempts = tuple(
+        _runtime_probe_execution_attempt_from_runner(
+            runner_request,
+            runner,
+        )
+        for runner_request in runner_request_batch.runner_requests
+    )
+    result_batch = assemble_runtime_probe_result_batch_from_runner_request_attempts(
+        runner_request_batch,
+        attempts,
+    )
+    return RuntimeProbeRunnerAttemptCollection(
+        runner_request_batch=runner_request_batch,
+        attempts=attempts,
+        result_batch=result_batch,
+    )
+
+
 def _materialize_runtime_probe_execution_input(
     *,
     plan_id: str,
@@ -577,6 +649,20 @@ def _materialize_runtime_probe_execution_input(
             runtime_assumptions=runtime_assumptions,
         ),
     )
+
+
+def _runtime_probe_execution_attempt_from_runner(
+    runner_request: RuntimeProbeRunnerRequest,
+    runner: RuntimeProbeRunnerCallable,
+) -> RuntimeProbeExecutionAttempt:
+    """Return one typed execution attempt from the supplied runner callable."""
+    attempt = runner(runner_request)
+    if not isinstance(attempt, RuntimeProbeExecutionAttempt):
+        raise ValueError(
+            "runtime probe runner callable must return typed runtime probe "
+            "execution attempts"
+        )
+    return attempt
 
 
 def _index_execution_attempts_for_runner_request_batch(
@@ -732,6 +818,48 @@ def _validate_runner_request_batch(
         runner_environment=runner_request_batch.runner_environment,
         runner_assumptions=runner_request_batch.runner_assumptions,
     )
+
+
+def _validate_runner_attempt_collection_result_batch(
+    runner_request_batch: RuntimeProbeRunnerRequestBatch,
+    result_batch: RuntimeProbeResultBatch,
+) -> None:
+    """Re-check collected result batch identity against runner requests."""
+    if not isinstance(result_batch, RuntimeProbeResultBatch):
+        raise ValueError(
+            "runtime probe runner attempt collection result_batch must be a result "
+            "batch"
+        )
+    RuntimeProbeResultBatch(
+        plan_id=result_batch.plan_id,
+        results=result_batch.results,
+    )
+    if result_batch.plan_id != runner_request_batch.plan_id:
+        raise ValueError(
+            "runtime probe runner attempt collection result_batch plan_id must match "
+            "runner request batch"
+        )
+    result_request_ids = tuple(result.request_id for result in result_batch.results)
+    if result_request_ids != runner_request_batch.request_ids:
+        raise ValueError(
+            "runtime probe runner attempt collection result_batch must be in runner "
+            "request order"
+        )
+    for result, runner_request in zip(
+        result_batch.results,
+        runner_request_batch.runner_requests,
+        strict=True,
+    ):
+        if result.request is not runner_request.request:
+            raise ValueError(
+                "runtime probe runner attempt collection result request must be "
+                "runner request request"
+            )
+        if result.replay_artifact is not runner_request.replay_artifact:
+            raise ValueError(
+                "runtime probe runner attempt collection result replay_artifact must "
+                "be runner request replay_artifact"
+            )
 
 
 def _request_plan_for_diagnostic_preparation(
@@ -1029,10 +1157,13 @@ __all__ = [
     "RuntimeProbeExecutionAttempt",
     "RuntimeProbeExecutionInput",
     "RuntimeProbeExecutionInputBatch",
+    "RuntimeProbeRunnerAttemptCollection",
+    "RuntimeProbeRunnerCallable",
     "RuntimeProbeRunnerRequest",
     "RuntimeProbeRunnerRequestBatch",
     "assemble_runtime_probe_result_batch_from_execution_attempts",
     "assemble_runtime_probe_result_batch_from_runner_request_attempts",
+    "collect_runtime_probe_execution_attempts_from_runner_requests",
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_runner_request_batch",
     "prepare_runtime_probe_runner_requests_for_diagnostic",
