@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Local Commit Routing
+
+- Local commit creation completed for the runtime probe diagnostic
+  runner-callable recompile bridge release unit.
+- Commit:
+  - `74fb275 Compose runtime probe runner callable recompile`
+- Post-commit repo state:
+  - branch `main`
+  - local `HEAD` at
+    `74fb275 Compose runtime probe runner callable recompile`
+  - `origin/main` at
+    `ea11793 Sync runtime probe runner attempt collection post-push state`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only routing sync
+  - nothing staged before this docs-only routing sync
+  - `git diff --check` clean
+- Release state:
+  - exact four-file source/contract unit is release-unit-audit-cleared,
+    full-regression-cleared, commit-gating-cleared, and locally committed
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Release Gate
 
 - Accepted the returned combined read-only release gate for the exact four-file

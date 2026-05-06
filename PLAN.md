@@ -504,8 +504,10 @@ Current route:
   release-unit audit passed, focused validation passed with `215 passed`,
   Gate 2 full regression passed with `895 passed`, and Gate 3 commit-gating
   passed.
-- Next active route is local commit sequencing for that exact four-file unit.
-  Push remains Ryan-gated after local commit creation.
+- Local commit creation completed at
+  `74fb275 Compose runtime probe runner callable recompile`.
+- Next active route is Ryan-authorized push sequencing for local commits.
+  Push remains Ryan-gated.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2222,7 +2224,9 @@ sequencing for `c1a12d7` absent new findings.
   slice accepted first-pass in workspace-only state
 - [x] Combined release gate for the exact four-file runtime probe diagnostic
   runner-callable recompile bridge release unit
-- [ ] Local commit creation for the runtime probe diagnostic runner-callable
+- [x] Local commit creation for the runtime probe diagnostic runner-callable
+  recompile bridge release unit
+- [ ] Ryan-authorized push for the runtime probe diagnostic runner-callable
   recompile bridge release unit
 
 ## What Is In Progress
@@ -3131,9 +3135,8 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: perform local commit sequencing for the exact four-file
-internal diagnostic runner-callable recompile bridge unit. Push remains
-Ryan-gated after local commit creation.
+Immediate next route: wait for Ryan authorization to push the local runtime
+probe diagnostic runner-callable recompile bridge commits.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3315,9 +3318,9 @@ Release state for the diagnostic runner-callable recompile bridge unit:
 - full-regression-cleared with `895 passed`
 - commit-gating-cleared
 - staged: no
-- locally committed: no
+- locally committed at `74fb275 Compose runtime probe runner callable recompile`
 - pushed: no
-- next required action: local commit creation
+- next required action: Ryan authorization to push
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate
