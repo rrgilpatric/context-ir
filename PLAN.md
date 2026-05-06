@@ -41,12 +41,11 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`591c09b Compose runtime probe result batch recompile`. Latest pushed continuity
-authority is `5913bf0 Sync runtime probe batch recompile release routing`. Live git
-refs and worktree state must still be verified from git during control intake;
-do not infer them from committed prose.
+`cfed3c7 Add runtime probe execution input materialization`. Live git refs and
+worktree state must still be verified from git during control intake; do not
+infer them from committed prose.
 
-Runtime probe execution-input materialization local release candidate:
+Runtime probe execution-input materialization release:
 
 - `RuntimeProbeExecutionInput` is a frozen internal non-executing work item for
   one planned runtime probe request
@@ -83,12 +82,12 @@ Runtime probe execution-input materialization local release candidate:
     no extra drift, no untracked drift, and clean `git diff --check`
 - local commit creation completed at
   `cfed3c7 Add runtime probe execution input materialization`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `d2e3e81 Sync runtime probe execution release routing`
 - release files are `src/context_ir/runtime_probe_execution.py` and
   `tests/test_runtime_probe_execution.py`, plus control continuity in
   `PLAN.md` and `BUILDLOG.md`
-- `cfed3c7` is locally committed and not pushed unless live git shows
-  `origin/main` contains it
-- push remains Ryan-gated
+- release-gate status is no-active-gate for `cfed3c7`
 
 Runtime probe result-batch recompile bridge release:
 
@@ -400,14 +399,12 @@ Current route:
 - Runtime probe execution-result/replay-artifact contract is pushed at
   `eb6def0` with no active gate.
 - Typed facade runtime recompile is pushed at `8ac3b46` with no active gate.
-- Runtime probe execution-input materialization is release-gate-cleared and
-  locally committed at
-  `cfed3c7 Add runtime probe execution input materialization`.
-- If live git shows `cfed3c7` is still ahead of `origin/main`, the next control
-  action is Ryan's explicit push/hold decision, not another implementation,
-  release-gate, staging, or local commit lane.
-- If live git shows `origin/main` already contains `cfed3c7`, treat the release
-  as pushed and no-active-gate.
+- Runtime probe execution-input materialization is pushed at
+  `cfed3c7 Add runtime probe execution input materialization` with no active
+  gate.
+- Next control action may choose the next bounded runtime-probe execution-loop
+  planning or implementation lane, but must not reopen completed release gates
+  absent new findings.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2066,22 +2063,22 @@ sequencing for `c1a12d7` absent new findings.
   execution-input materialization release unit
 - [x] Local commit creation for the runtime probe execution-input
   materialization release unit
-- [ ] Ryan push/hold decision for the locally committed runtime probe
+- [x] Ryan-authorized push for the runtime probe
   execution-input materialization release unit
 
 ## What Is In Progress
 
-- Runtime probe execution-input materialization is release-gate-cleared and
-  locally committed at
+- Runtime probe execution-input materialization is completed and pushed at
   `cfed3c7 Add runtime probe execution input materialization`.
-- Locally committed release unit:
+- Released unit:
   - `src/context_ir/runtime_probe_execution.py`
   - `tests/test_runtime_probe_execution.py`
   - `PLAN.md`
   - `BUILDLOG.md`
 - Release-gate status is no-active-gate for `cfed3c7`.
-- Push remains Ryan-gated. No next implementation or planning lane is
-  authorized before Ryan's explicit push/hold decision for `cfed3c7`.
+- No release gate, staging, local commit, or push is active.
+- Next control action may choose the next bounded runtime-probe execution-loop
+  planning or implementation lane.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Latest pushed continuity authority is
@@ -2915,17 +2912,15 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: Ryan push/hold decision for the locally committed runtime
-probe execution-input materialization release unit.
+Immediate next route: choose the next bounded runtime-probe execution-loop lane
+after the pushed execution-input materialization release.
 
-The release unit is release-gate-cleared and locally committed at
-`cfed3c7 Add runtime probe execution input materialization`. If live git shows
-`cfed3c7` is still ahead of `origin/main`, do not route to another
-implementation, planning, release-gate, staging, or local commit lane before
-Ryan's explicit push/hold decision. If Ryan authorizes push, reverify live git
-state and push `main`; if Ryan holds, record the hold.
+The runtime probe execution-input materialization release is pushed at
+`cfed3c7 Add runtime probe execution input materialization` and has
+release-gate status no-active-gate. It should not be reopened absent new
+findings.
 
-The locally committed slice adds internal non-executing typed work-item
+The released slice adds internal non-executing typed work-item
 materialization from `RuntimeProbeRequestPlan` plus repository snapshot metadata
 to replay-ready execution inputs. It preserves plan ID, request IDs, request
 object identity, source-site identity, family/form labels, replay target and

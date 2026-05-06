@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-05 -- Runtime Probe Execution-Input Materialization Push Sync
+
+- Ryan authorized pushing the runtime probe execution-input materialization
+  release after local commit creation and continuity routing sync.
+- Pre-push verification:
+  - branch `main`
+  - local `HEAD` at
+    `d2e3e81 Sync runtime probe execution release routing`
+  - `origin/main` at
+    `5913bf0 Sync runtime probe batch recompile release routing`
+  - local commits ahead of `origin/main` were exactly docs-only continuity
+    `2ab2bb0`, source/contract release
+    `cfed3c7 Add runtime probe execution input materialization`, and
+    docs-only release routing `d2e3e81`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Push completed:
+  - pushed `main` to `origin/main`
+  - remote advanced from `5913bf0` to `d2e3e81`
+- Post-push verification:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `d2e3e81 Sync runtime probe execution release routing`
+  - latest pushed source/contract authority is
+    `cfed3c7 Add runtime probe execution input materialization`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `cfed3c7` as pushed and no-active-gate
+  - treat the committed `d2e3e81` local-candidate wording as superseded by
+    this post-push sync because it can otherwise misroute a fresh controller
+    back to a completed push gate
+  - next route may choose the next bounded runtime-probe execution-loop
+    planning or implementation lane, but must not reopen `cfed3c7` release
+    gates absent new findings
+- Acceptance status: first-pass
+
 ## 2026-05-05 -- Runtime Probe Execution-Input Materialization Local Commit Routing
 
 - Reviewed the accepted combined read-only release-gate result and completed
