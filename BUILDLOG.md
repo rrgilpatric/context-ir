@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Runner-Callable Attempt Collection Push Sync
+
+- Ryan authorized pushing the runtime probe runner-callable attempt collection
+  release after local commit creation and release-routing sync.
+- Pre-push verification:
+  - branch `main`
+  - local `HEAD` at
+    `e9b5b5a Sync runtime probe runner attempt collection release routing`
+  - `origin/main` at
+    `12e6d40 Sync runtime probe diagnostic runner request post-push state`
+  - local commits ahead of `origin/main` were exactly source/contract release
+    `32f6220 Collect runtime probe runner attempts` and docs-only release
+    routing `e9b5b5a`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Push completed:
+  - pushed `main` to `origin/main`
+  - remote advanced from `12e6d40` to `e9b5b5a`
+- Post-push verification:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `e9b5b5a Sync runtime probe runner attempt collection release routing`
+  - latest pushed source/contract authority is
+    `32f6220 Collect runtime probe runner attempts`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `32f6220` as pushed and no-active-gate
+  - treat the committed `e9b5b5a` local-candidate wording as superseded by
+    this post-push sync because it can otherwise misroute a fresh controller
+    back to a completed push gate
+  - next route may choose the next bounded runtime-probe execution-loop
+    planning or implementation lane, but must not reopen `32f6220` release
+    gates absent new findings
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Runner-Callable Attempt Collection Release Routing
 
 - Local commit creation completed for the runtime probe runner-callable attempt
