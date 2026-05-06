@@ -41,7 +41,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`32f6220 Collect runtime probe runner attempts`. Live git refs and
+`74fb275 Compose runtime probe runner callable recompile`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
 
@@ -486,9 +486,9 @@ Current route:
 - Ryan-authorized push is complete for the runner-callable attempt collection
   release, with `origin/main` advanced through
   `e9b5b5a Sync runtime probe runner attempt collection release routing`.
-- Runtime probe diagnostic runner-callable recompile bridge is workspace-only
-  accepted first-pass, release-unit-audit-cleared, full-regression-cleared, and
-  commit-gating-cleared. The proposed release unit is exactly
+- Runtime probe diagnostic runner-callable recompile bridge is pushed at
+  `74fb275 Compose runtime probe runner callable recompile` with no active
+  gate. The release unit is exactly
   `src/context_ir/runtime_observation_recompile.py`,
   `tests/test_runtime_observation_recompile.py`, `PLAN.md`, and
   `BUILDLOG.md`.
@@ -506,8 +506,9 @@ Current route:
   passed.
 - Local commit creation completed at
   `74fb275 Compose runtime probe runner callable recompile`.
-- Next active route is Ryan-authorized push sequencing for local commits.
-  Push remains Ryan-gated.
+- Ryan-authorized push completed with `origin/main` advanced through
+  `f463df7 Sync runtime probe callable recompile release routing`.
+- Release-gate status is no-active-gate for `74fb275`.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2226,7 +2227,7 @@ sequencing for `c1a12d7` absent new findings.
   runner-callable recompile bridge release unit
 - [x] Local commit creation for the runtime probe diagnostic runner-callable
   recompile bridge release unit
-- [ ] Ryan-authorized push for the runtime probe diagnostic runner-callable
+- [x] Ryan-authorized push for the runtime probe diagnostic runner-callable
   recompile bridge release unit
 
 ## What Is In Progress
@@ -3135,8 +3136,9 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the local runtime
-probe diagnostic runner-callable recompile bridge commits.
+Immediate next route: select the next bounded control action after the pushed
+runtime probe diagnostic runner-callable recompile bridge release. Do not
+reopen that release absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3313,14 +3315,14 @@ Release state for the diagnostic runner-callable recompile bridge unit:
   - `tests/test_runtime_observation_recompile.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- workspace-only accepted
 - release-unit-audit-cleared
 - full-regression-cleared with `895 passed`
 - commit-gating-cleared
 - staged: no
 - locally committed at `74fb275 Compose runtime probe runner callable recompile`
-- pushed: no
-- next required action: Ryan authorization to push
+- pushed with `origin/main` advanced through
+  `f463df7 Sync runtime probe callable recompile release routing`
+- release-gate status is no-active-gate
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate

@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Push Sync
+
+- Ryan authorized pushing the runtime probe diagnostic runner-callable
+  recompile bridge release after local commit creation and release-routing
+  sync.
+- Push completed:
+  - source/contract release:
+    `74fb275 Compose runtime probe runner callable recompile`
+  - release-routing sync:
+    `f463df7 Sync runtime probe callable recompile release routing`
+- Post-push verification:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `f463df7 Sync runtime probe callable recompile release routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+  - `git diff --check` clean
+- Release state:
+  - runtime probe diagnostic runner-callable recompile bridge is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `74fb275 Compose runtime probe runner callable recompile`
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Local Commit Routing
 
 - Local commit creation completed for the runtime probe diagnostic
