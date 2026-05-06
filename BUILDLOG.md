@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Runner Request Materialization Push Sync
+
+- Ryan authorized pushing the runtime probe runner-request materialization
+  release after local commit creation and release-routing sync.
+- Pre-push verification:
+  - branch `main`
+  - local `HEAD` at
+    `7eb5304 Sync runtime probe runner request release routing`
+  - `origin/main` at
+    `30b0089 Sync runtime probe attempt post-push state`
+  - local commits ahead of `origin/main` were exactly source/contract release
+    `68a8e73 Materialize runtime probe runner requests` and docs-only release
+    routing `7eb5304`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Push completed:
+  - pushed `main` to `origin/main`
+  - remote advanced from `30b0089` to `7eb5304`
+- Post-push verification:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `7eb5304 Sync runtime probe runner request release routing`
+  - latest pushed source/contract authority is
+    `68a8e73 Materialize runtime probe runner requests`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat `68a8e73` as pushed and no-active-gate
+  - treat the committed `7eb5304` local-candidate wording as superseded by
+    this post-push sync because it can otherwise misroute a fresh controller
+    back to a completed push gate
+  - next route may choose the next bounded runtime-probe execution-loop
+    planning or implementation lane, but must not reopen `68a8e73` release
+    gates absent new findings
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Runner Request Materialization Release Routing
 
 - Local commit creation completed for the runtime probe runner-request
