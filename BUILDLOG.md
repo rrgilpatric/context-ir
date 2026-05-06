@@ -2,6 +2,33 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Runner-Request Attempt Assembly Release Routing
+
+- Local commit creation completed for the runtime probe runner-request
+  attempt/result assembly release unit.
+- Local commit:
+  - `3363929 Assemble runtime probe runner request attempts`
+- Post-commit repo state before Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` at
+    `3363929 Assemble runtime probe runner request attempts`
+  - `origin/main` at
+    `e4d8995 Sync runtime probe runner request post-push state`
+  - local branch ahead of `origin/main` by exactly the source/contract release
+    candidate `3363929`
+  - worktree clean before this docs-only continuity sync
+  - nothing staged
+  - no untracked files
+- Routing decision:
+  - treat `3363929` as release-gate-cleared and locally committed
+  - do not route `3363929` back to implementation, release-unit audit, full
+    regression, commit-gating, staging, or local commit creation absent new
+    findings
+  - do not route another implementation or planning lane before Ryan's
+    explicit push/hold decision for `3363929`
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Runner-Request Attempt Assembly Local Commit Routing
 
 - Reviewed the returned combined read-only release-gate result for the runtime
