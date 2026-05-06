@@ -2,6 +2,137 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Runner-Request Attempt Assembly Local Commit Routing
+
+- Reviewed the returned combined read-only release-gate result for the runtime
+  probe runner-request attempt/result assembly release unit.
+- Gate result accepted:
+  - findings: none
+  - Gate 1 release-unit audit passed for the exact four-file unit
+  - focused validation passed, including targeted pytest reporting
+    `202 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `882 passed`
+  - Gate 3 commit-gating passed with the exact four-file unit, nothing staged,
+    no untracked drift, no extra drift, and clean `git diff --check`
+- Live repo state was reverified before staging:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `e4d8995 Sync runtime probe runner request post-push state`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - treat the exact four-file unit as release-unit-audit-cleared,
+    full-regression-cleared, and commit-gating-cleared
+  - proceed to local commit creation for the exact four-file unit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass
+
+## 2026-05-06 -- Runtime Probe Runner-Request Attempt Assembly Review
+
+- Reviewed the returned internal non-executing runner-request attempt/result
+  assembly implementation slice.
+- Repo-backed truth verified during control review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `e4d8995 Sync runtime probe runner request post-push state`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Acceptance decision:
+  - accepted first-pass in workspace-only state
+  - the slice adds
+    `assemble_runtime_probe_result_batch_from_runner_request_attempts(...)`
+  - the helper accepts a `RuntimeProbeRunnerRequestBatch` plus typed
+    `RuntimeProbeExecutionAttempt` values and returns deterministic
+    runner-request-order `RuntimeProbeResultBatch`
+  - it revalidates the authorized runner-request batch and verifies attempts
+    against runner request identity, request object identity, execution-input
+    identity, replay artifact identity, plan ID, and request IDs before
+    converting through the existing observed/non-proof result behavior
+  - it rejects unplanned, duplicate, missing, plan-drifted, request-drifted,
+    execution-input-drifted, runner-request-drifted, blank, and malformed
+    attempt metadata
+  - exports remain module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root, tool facade,
+    MCP, JSON/schema, serialization, eval, scoring, optimizer, compiler,
+    product, benchmark, and public-claim surfaces remain unchanged
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_observation_recompile.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+  - targeted pytest result: `202 passed`
+  - `git diff --check`
+- Release state:
+  - proposed release unit is exactly `src/context_ir/runtime_probe_execution.py`,
+    `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+  - workspace-only accepted
+  - not release-unit-audit-cleared
+  - not full-regression-cleared
+  - not commit-gating-cleared
+  - not staged, not locally committed, and not pushed
+  - next control action is a combined read-only release gate over the exact
+    four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-06 -- Runtime Probe Runner-Request Attempt Assembly Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `e4d8995 Sync runtime probe runner request post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `68a8e73 Materialize runtime probe runner requests`.
+- Continuity correction:
+  - the older `PLAN.md` canonical authority line naming `86be8d7` was stale
+    after the `68a8e73` push
+  - active routing now treats `68a8e73` as the latest pushed source/contract
+    authority and no-active-gate
+- Routing decision:
+  - the next smallest meaningful runtime-probe execution-loop slice is an
+    internal non-executing runner-request attempt/result assembly gate
+  - this slice should accept a `RuntimeProbeRunnerRequestBatch` plus typed
+    `RuntimeProbeExecutionAttempt` values, validate that the attempts belong
+    to the runner requests, and return deterministic plan-ordered
+    `RuntimeProbeResultBatch`
+  - this slice should preserve plan ID, request IDs, request object identity,
+    execution-input identity, replay artifact identity, runner-request order,
+    and existing observed/non-proof result behavior
+  - this slice should stay inside `src/context_ir/runtime_probe_execution.py`
+    and `tests/test_runtime_probe_execution.py`
+  - `PLAN.md` and `BUILDLOG.md` are control-lane continuity state for this
+    route and should not be edited by the implementation lane
+- Why now:
+  - planned runtime probe requests, replay-ready execution inputs, runner
+    requests, normalized execution attempts, result contracts, result-batch
+    admission, and result-batch recompile composition are pushed
+  - before implementing any actual runner, future runner outputs need an
+    internal gate that proves they correspond to the authorized runner-request
+    batch instead of only to ad hoc execution inputs
+- Alternatives rejected:
+  - actual subprocess or in-process probe execution: still too broad and
+    safety-sensitive for this slice
+  - direct construction of observations: bypasses the pushed
+    result/attempt/admission contracts
+  - JSON/schema/serialization, facade, MCP, package-root, eval, scoring,
+    optimizer, compiler, product, benchmark, or public-claim exposure: still
+    held
+  - reopening `68a8e73` release gates: no new finding supports reopening the
+    pushed runner-request materialization release
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Runner Request Materialization Push Sync
 
 - Ryan authorized pushing the runtime probe runner-request materialization

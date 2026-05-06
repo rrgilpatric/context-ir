@@ -18,6 +18,7 @@ from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
 from context_ir.runtime_probe_execution import (
     assemble_runtime_probe_result_batch_from_execution_attempts,
+    assemble_runtime_probe_result_batch_from_runner_request_attempts,
 )
 from context_ir.semantic_types import (
     RepositorySnapshotBasis,
@@ -275,6 +276,17 @@ def _assemble_result_batch(
     """Assemble execution attempts through the public module-local helper."""
     return assemble_runtime_probe_result_batch_from_execution_attempts(
         input_batch,
+        attempts,
+    )
+
+
+def _assemble_runner_request_result_batch(
+    runner_request_batch: runtime_probe_execution.RuntimeProbeRunnerRequestBatch,
+    attempts: tuple[runtime_probe_execution.RuntimeProbeExecutionAttempt, ...],
+) -> runtime_probe_results.RuntimeProbeResultBatch:
+    """Assemble attempts through the runner-request gate."""
+    return assemble_runtime_probe_result_batch_from_runner_request_attempts(
+        runner_request_batch,
         attempts,
     )
 
@@ -676,6 +688,263 @@ def test_runtime_probe_runner_request_batch_rejects_order_and_duplicate_drift() 
             timeout_seconds=runner_request.timeout_seconds,
             runner_environment=runner_request.runner_environment,
             runner_assumptions=runner_request.runner_assumptions,
+        )
+
+
+def test_assemble_runner_request_results_preserves_order_and_identities() -> None:
+    """Runner-request-gated attempts become results in runner-request order."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    third_request = _request(start_line=5)
+    plan = _plan(first_request, second_request, third_request)
+    input_batch = _materialized_batch(plan)
+    runner_batch = _runner_request_batch(input_batch)
+    original_runner_requests = runner_batch.runner_requests
+    first_payload = (_field("observed_module", "plugins.weather"),)
+    first_attempt = _execution_attempt(
+        runner_batch.runner_requests[0].execution_input,
+        normalized_payload=first_payload,
+    )
+    second_attempt = _execution_attempt(
+        runner_batch.runner_requests[1].execution_input,
+        durable_artifact_reference=(
+            "artifact://runtime-probe-results/dynamic-import/main-run.json"
+        ),
+    )
+    third_attempt = _execution_attempt(
+        runner_batch.runner_requests[2].execution_input,
+        outcome=runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+        failure_summary="probe process exited non-zero",
+        failure_detail_fields=(_field("exit_code", "1"),),
+    )
+
+    result_batch = _assemble_runner_request_result_batch(
+        runner_batch,
+        (third_attempt, first_attempt, second_attempt),
+    )
+
+    assert result_batch.plan_id == runner_batch.plan_id
+    assert tuple(result.request_id for result in result_batch.results) == (
+        runner_batch.request_ids
+    )
+    assert runner_batch.runner_requests is original_runner_requests
+
+    for result, runner_request in zip(
+        result_batch.results,
+        runner_batch.runner_requests,
+        strict=True,
+    ):
+        assert result.plan_id == runner_request.plan_id
+        assert result.request_id == runner_request.request_id
+        assert result.request is runner_request.request
+        assert result.replay_artifact is runner_request.replay_artifact
+        assert result.replay_artifact is runner_request.execution_input.replay_artifact
+
+    first_result = result_batch.results[0]
+    assert isinstance(first_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert first_result.normalized_payload == first_payload
+    assert first_result.durable_artifact_reference is None
+    assert first_result.is_admissible_runtime_backed_proof is True
+
+    second_result = result_batch.results[1]
+    assert isinstance(second_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert second_result.normalized_payload == ()
+    assert second_result.durable_artifact_reference == (
+        "artifact://runtime-probe-results/dynamic-import/main-run.json"
+    )
+    assert second_result.is_admissible_runtime_backed_proof is True
+
+    third_result = result_batch.results[2]
+    assert isinstance(third_result, runtime_probe_results.RuntimeProbeNonProofResult)
+    assert (
+        third_result.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    )
+    assert third_result.failure_summary == "probe process exited non-zero"
+    assert third_result.failure_detail_fields == (_field("exit_code", "1"),)
+    assert third_result.is_admissible_runtime_backed_proof is False
+
+
+def test_assemble_runner_request_results_supports_empty_batch() -> None:
+    """Empty runner-request batches assemble into empty result batches."""
+    input_batch = _materialized_batch(
+        runtime_probe_requests.build_runtime_probe_request_plan(())
+    )
+    runner_batch = _runner_request_batch(input_batch)
+
+    result_batch = _assemble_runner_request_result_batch(runner_batch, ())
+
+    assert result_batch.plan_id == runner_batch.plan_id
+    assert result_batch.results == ()
+
+
+def test_assemble_runner_request_results_rejects_incomplete_attempt_sets() -> None:
+    """Runner-request assembly requires exactly one attempt per runner request."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(first_request, second_request))
+    )
+    planned_attempt = _execution_attempt(
+        runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    duplicate_attempt = _execution_attempt(
+        runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_module", "plugins.forecast"),),
+    )
+    unplanned_runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(_request(start_line=8)))
+    )
+    unplanned_attempt = _execution_attempt(
+        unplanned_runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_module", "plugins.unplanned"),),
+    )
+
+    with pytest.raises(ValueError, match="missing runtime probe execution attempt"):
+        _assemble_runner_request_result_batch(
+            runner_batch,
+            (planned_attempt,),
+        )
+    with pytest.raises(ValueError, match="duplicate runtime probe execution attempt"):
+        _assemble_runner_request_result_batch(
+            runner_batch,
+            (planned_attempt, duplicate_attempt),
+        )
+    with pytest.raises(ValueError, match="not present in runner request batch"):
+        _assemble_runner_request_result_batch(
+            runner_batch,
+            (planned_attempt, unplanned_attempt),
+        )
+
+
+def test_assemble_runner_request_results_rejects_attempt_identity_drift() -> None:
+    """Runner-request assembly rejects plan, request, and execution-input drift."""
+    request = _request()
+    plan = _plan(request)
+    runner_batch = _runner_request_batch(_materialized_batch(plan))
+    equivalent_input = _materialized_batch(plan).inputs[0]
+    wrong_input_attempt = _execution_attempt(
+        equivalent_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    plan_drifted_attempt = _execution_attempt(
+        runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    object.__setattr__(
+        plan_drifted_attempt,
+        "plan_id",
+        "runtime_probe_request_plan:wrong",
+    )
+    request_drifted_attempt = _execution_attempt(
+        runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    object.__setattr__(request_drifted_attempt, "request", _request(start_line=8))
+
+    with pytest.raises(ValueError, match="runner request execution input"):
+        _assemble_runner_request_result_batch(
+            runner_batch,
+            (wrong_input_attempt,),
+        )
+    with pytest.raises(ValueError, match="plan_id must match execution input"):
+        _assemble_runner_request_result_batch(
+            runner_batch,
+            (plan_drifted_attempt,),
+        )
+    with pytest.raises(ValueError, match="request must be execution input request"):
+        _assemble_runner_request_result_batch(
+            runner_batch,
+            (request_drifted_attempt,),
+        )
+
+
+def test_assemble_runner_request_results_rejects_runner_request_drift() -> None:
+    """Runner-request assembly revalidates the authorized runner-request batch."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    input_batch = _materialized_batch(_plan(first_request, second_request))
+    runner_batch = _runner_request_batch(input_batch)
+    object.__setattr__(
+        runner_batch,
+        "runner_requests",
+        tuple(reversed(runner_batch.runner_requests)),
+    )
+    attempts = tuple(
+        _execution_attempt(
+            runner_request.execution_input,
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+        )
+        for runner_request in runner_batch.runner_requests
+    )
+
+    with pytest.raises(ValueError, match="request_ids must match requests"):
+        _assemble_runner_request_result_batch(runner_batch, attempts)
+
+
+def test_assemble_runner_request_results_rejects_bad_attempt_metadata() -> None:
+    """Runner-request assembly revalidates normalized attempt metadata."""
+    blank_payload_runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(_request(start_line=3)))
+    )
+    blank_payload_field = _field("observed_module", "plugins.weather")
+    blank_payload_attempt = _execution_attempt(
+        blank_payload_runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(blank_payload_field,),
+    )
+    object.__setattr__(blank_payload_field, "value", " ")
+
+    malformed_payload_runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(_request(start_line=4)))
+    )
+    malformed_payload_attempt = _execution_attempt(
+        malformed_payload_runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    object.__setattr__(
+        malformed_payload_attempt,
+        "normalized_payload",
+        (("observed_module", "plugins.weather"),),
+    )
+
+    blank_failure_runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(_request(start_line=5)))
+    )
+    blank_failure_attempt = _execution_attempt(
+        blank_failure_runner_batch.runner_requests[0].execution_input,
+        outcome=runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+        failure_summary="probe exceeded timeout",
+    )
+    object.__setattr__(blank_failure_attempt, "failure_summary", " ")
+
+    malformed_outcome_runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(_request(start_line=6)))
+    )
+    malformed_outcome_attempt = _execution_attempt(
+        malformed_outcome_runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    object.__setattr__(malformed_outcome_attempt, "outcome", "observed")
+
+    with pytest.raises(ValueError, match="normalized_payload"):
+        _assemble_runner_request_result_batch(
+            blank_payload_runner_batch,
+            (blank_payload_attempt,),
+        )
+    with pytest.raises(ValueError, match="normalized_payload"):
+        _assemble_runner_request_result_batch(
+            malformed_payload_runner_batch,
+            (malformed_payload_attempt,),
+        )
+    with pytest.raises(ValueError, match="failure_summary"):
+        _assemble_runner_request_result_batch(
+            blank_failure_runner_batch,
+            (blank_failure_attempt,),
+        )
+    with pytest.raises(ValueError, match="outcome is not supported"):
+        _assemble_runner_request_result_batch(
+            malformed_outcome_runner_batch,
+            (malformed_outcome_attempt,),
         )
 
 
@@ -1144,6 +1413,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "assemble_runtime_probe_result_batch_from_execution_attempts" in (
         runtime_probe_execution.__all__
     )
+    assert "assemble_runtime_probe_result_batch_from_runner_request_attempts" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_execution_input_batch" in (
         runtime_probe_execution.__all__
     )
@@ -1158,6 +1430,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "assemble_runtime_probe_result_batch_from_execution_attempts" not in (
         context_ir.__all__
     )
+    assert "assemble_runtime_probe_result_batch_from_runner_request_attempts" not in (
+        context_ir.__all__
+    )
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
     assert not hasattr(context_ir, "RuntimeProbeExecutionAttempt")
@@ -1168,6 +1443,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "assemble_runtime_probe_result_batch_from_execution_attempts",
+    )
+    assert not hasattr(
+        context_ir,
+        "assemble_runtime_probe_result_batch_from_runner_request_attempts",
     )
     assert not hasattr(context_ir, "materialize_runtime_probe_execution_input_batch")
     assert not hasattr(

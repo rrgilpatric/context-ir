@@ -41,7 +41,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`86be8d7 Assemble runtime probe execution attempts`. Live git refs and worktree
+`68a8e73 Materialize runtime probe runner requests`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
@@ -454,6 +454,13 @@ Current route:
 - Combined read-only release gate passed with no findings for that exact
   four-file runner-request materialization unit, and Ryan-authorized push is
   complete.
+- Runtime probe runner-request attempt/result assembly is accepted first-pass
+  in workspace-only state. The release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
+- Combined read-only release gate passed with no findings for that exact
+  four-file runner-request attempt/result assembly unit. Next active route is
+  local commit creation for the exact four-file unit. Push remains Ryan-gated.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2134,6 +2141,14 @@ sequencing for `c1a12d7` absent new findings.
   materialization release unit
 - [x] Ryan-authorized push for the runtime probe runner-request
   materialization release unit
+- [x] Post-`68a8e73` planning/control selected the internal non-executing
+  runner-request attempt/result assembly gate
+- [x] Runtime probe runner-request attempt/result assembly implementation
+  slice accepted first-pass in workspace-only state
+- [x] Combined release gate for the exact four-file runtime probe
+  runner-request attempt/result assembly release unit
+- [ ] Local commit creation for the runtime probe runner-request attempt/result
+  assembly release unit
 
 ## What Is In Progress
 
@@ -2166,6 +2181,18 @@ sequencing for `c1a12d7` absent new findings.
 - The active next action may choose the next bounded runtime-probe
   execution-loop planning or implementation lane. Do not reopen `68a8e73`
   release gates absent new findings.
+- Runtime probe runner-request attempt/result assembly is accepted first-pass
+  in workspace-only state and release-gate-cleared:
+  - release unit is exactly `src/context_ir/runtime_probe_execution.py`,
+    `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+  - release-unit audit passed with no findings
+  - full regression passed with `882 passed`
+  - commit-gating passed with the exact four-file unit
+  - not staged, not locally committed, and not pushed before local commit
+    sequencing
+- The active next action is local commit creation for that exact four-file
+  runner-request attempt/result assembly release unit. Push remains
+  Ryan-gated.
 - Runtime probe result-batch recompile bridge is completed and pushed at
   `591c09b Compose runtime probe result batch recompile`.
 - Release-gate status is no-active-gate for `591c09b`.
@@ -2997,8 +3024,13 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: choose the next bounded runtime-probe execution-loop
-planning or implementation lane.
+Immediate next route: create the local source/contract commit for the exact
+four-file runtime probe runner-request attempt/result assembly release unit:
+
+- `src/context_ir/runtime_probe_execution.py`
+- `tests/test_runtime_probe_execution.py`
+- `PLAN.md`
+- `BUILDLOG.md`
 
 The runtime probe runner-request materialization release is pushed at
 `68a8e73 Materialize runtime probe runner requests` and has release-gate status
@@ -3054,6 +3086,24 @@ environment, and empty runner assumptions. The combined read-only release gate
 passed with no findings: Gate 1 release-unit audit passed, Gate 2 full
 regression passed with `876 passed`, Gate 3 commit-gating passed, and
 Ryan-authorized push is complete.
+
+The runner-request attempt/result assembly slice is workspace-only accepted
+first-pass and release-gate-cleared. It adds an internal helper that accepts a
+`RuntimeProbeRunnerRequestBatch` plus typed `RuntimeProbeExecutionAttempt`
+values, validates attempts against the runner requests, and returns a
+deterministic `RuntimeProbeResultBatch` in runner-request plan order. It does
+not execute probes. It preserves runner request order, plan ID, request IDs,
+request object identity, execution-input object identity, replay artifact
+identity, and existing observed/non-proof result behavior. It rejects
+unplanned, duplicate, missing, plan-drifted, request-drifted,
+execution-input-drifted, runner-request-drifted, blank, and malformed attempt
+metadata.
+
+The combined read-only release gate passed with no findings: Gate 1
+release-unit audit passed, Gate 2 full regression passed with `882 passed`,
+and Gate 3 commit-gating passed.
+
+After local commit creation, push still requires explicit Ryan authorization.
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate

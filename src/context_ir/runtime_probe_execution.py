@@ -418,6 +418,28 @@ def assemble_runtime_probe_result_batch_from_execution_attempts(
     return RuntimeProbeResultBatch(plan_id=input_batch.plan_id, results=results)
 
 
+def assemble_runtime_probe_result_batch_from_runner_request_attempts(
+    runner_request_batch: RuntimeProbeRunnerRequestBatch,
+    attempts: Iterable[RuntimeProbeExecutionAttempt],
+) -> RuntimeProbeResultBatch:
+    """Convert runner-request attempts into an ordered result batch."""
+    attempts_by_request_id = _index_execution_attempts_for_runner_request_batch(
+        runner_request_batch,
+        attempts,
+    )
+    results = tuple(
+        _runtime_probe_result_from_runner_request_attempt(
+            runner_request,
+            attempts_by_request_id[runner_request.request_id],
+        )
+        for runner_request in runner_request_batch.runner_requests
+    )
+    return RuntimeProbeResultBatch(
+        plan_id=runner_request_batch.plan_id,
+        results=results,
+    )
+
+
 def _materialize_runtime_probe_execution_input(
     *,
     plan_id: str,
@@ -457,6 +479,64 @@ def _materialize_runtime_probe_execution_input(
             runtime_assumptions=runtime_assumptions,
         ),
     )
+
+
+def _index_execution_attempts_for_runner_request_batch(
+    runner_request_batch: RuntimeProbeRunnerRequestBatch,
+    attempts: Iterable[RuntimeProbeExecutionAttempt],
+) -> dict[str, RuntimeProbeExecutionAttempt]:
+    """Return attempts keyed by request ID after runner-request validation."""
+    _validate_runner_request_batch(runner_request_batch)
+    runner_requests_by_request_id = {
+        runner_request.request_id: runner_request
+        for runner_request in runner_request_batch.runner_requests
+    }
+    attempts_by_request_id: dict[str, RuntimeProbeExecutionAttempt] = {}
+
+    for attempt in attempts:
+        _validate_execution_attempt(attempt)
+        if attempt.request_id in attempts_by_request_id:
+            raise ValueError("duplicate runtime probe execution attempt request_id")
+        runner_request = runner_requests_by_request_id.get(attempt.request_id)
+        if runner_request is None:
+            raise ValueError(
+                "runtime probe execution attempt request_id is not present in "
+                "runner request batch"
+            )
+        if attempt.plan_id != runner_request_batch.plan_id:
+            raise ValueError(
+                "runtime probe execution attempt plan_id must match runner request "
+                "batch"
+            )
+        if attempt.request is not runner_request.request:
+            raise ValueError(
+                "runtime probe execution attempt request must be the runner request "
+                "request"
+            )
+        if attempt.execution_input is not runner_request.execution_input:
+            raise ValueError(
+                "runtime probe execution attempt input must be the runner request "
+                "execution input"
+            )
+        replay_artifact = attempt.execution_input.replay_artifact
+        if replay_artifact is not runner_request.replay_artifact:
+            raise ValueError(
+                "runtime probe execution attempt replay_artifact must be the runner "
+                "request replay_artifact"
+            )
+        attempts_by_request_id[attempt.request_id] = attempt
+
+    missing_request_ids = tuple(
+        request_id
+        for request_id in runner_request_batch.request_ids
+        if request_id not in attempts_by_request_id
+    )
+    if missing_request_ids:
+        raise ValueError(
+            "missing runtime probe execution attempt for runner request batch "
+            "request_id"
+        )
+    return attempts_by_request_id
 
 
 def _index_execution_attempts_for_input_batch(
@@ -541,6 +621,21 @@ def _validate_execution_input(input_item: RuntimeProbeExecutionInput) -> None:
     )
 
 
+def _validate_runner_request_batch(
+    runner_request_batch: RuntimeProbeRunnerRequestBatch,
+) -> None:
+    """Re-check a runner-request batch before accepting runner attempts."""
+    RuntimeProbeRunnerRequestBatch(
+        plan_id=runner_request_batch.plan_id,
+        request_ids=runner_request_batch.request_ids,
+        runner_requests=runner_request_batch.runner_requests,
+        runner_contract_revision=runner_request_batch.runner_contract_revision,
+        timeout_seconds=runner_request_batch.timeout_seconds,
+        runner_environment=runner_request_batch.runner_environment,
+        runner_assumptions=runner_request_batch.runner_assumptions,
+    )
+
+
 def _validate_runner_request(runner_request: RuntimeProbeRunnerRequest) -> None:
     """Re-check one runner handoff request for tampering."""
     RuntimeProbeRunnerRequest(
@@ -553,6 +648,23 @@ def _validate_runner_request(runner_request: RuntimeProbeRunnerRequest) -> None:
         timeout_seconds=runner_request.timeout_seconds,
         runner_environment=runner_request.runner_environment,
         runner_assumptions=runner_request.runner_assumptions,
+    )
+
+
+def _validate_execution_attempt(attempt: RuntimeProbeExecutionAttempt) -> None:
+    """Re-check one execution attempt for tampered normalized metadata."""
+    if not isinstance(attempt, RuntimeProbeExecutionAttempt):
+        raise ValueError("runtime probe execution attempts must be typed attempts")
+    RuntimeProbeExecutionAttempt(
+        plan_id=attempt.plan_id,
+        request_id=attempt.request_id,
+        request=attempt.request,
+        execution_input=attempt.execution_input,
+        outcome=attempt.outcome,
+        normalized_payload=attempt.normalized_payload,
+        durable_artifact_reference=attempt.durable_artifact_reference,
+        failure_summary=attempt.failure_summary,
+        failure_detail_fields=attempt.failure_detail_fields,
     )
 
 
@@ -613,6 +725,26 @@ def _runtime_probe_result_from_attempt(
     raise ValueError("runtime probe execution attempt outcome is not supported")
 
 
+def _runtime_probe_result_from_runner_request_attempt(
+    runner_request: RuntimeProbeRunnerRequest,
+    attempt: RuntimeProbeExecutionAttempt,
+) -> RuntimeProbeResult:
+    """Build a result only after confirming runner-request identity is preserved."""
+    result = _runtime_probe_result_from_attempt(attempt)
+    if result.plan_id != runner_request.plan_id:
+        raise ValueError("runtime probe result plan_id must match runner request")
+    if result.request_id != runner_request.request_id:
+        raise ValueError("runtime probe result request_id must match runner request")
+    if result.request is not runner_request.request:
+        raise ValueError("runtime probe result request must be runner request request")
+    if result.replay_artifact is not runner_request.replay_artifact:
+        raise ValueError(
+            "runtime probe result replay_artifact must be runner request "
+            "replay_artifact"
+        )
+    return result
+
+
 def _validate_observed_attempt_metadata(
     attempt: RuntimeProbeExecutionAttempt,
 ) -> None:
@@ -632,7 +764,10 @@ def _validate_non_proof_attempt_metadata(
     attempt: RuntimeProbeExecutionAttempt,
 ) -> None:
     """Reject failed attempts that omit failure metadata or carry proof metadata."""
-    if not attempt.failure_summary or not attempt.failure_summary.strip():
+    if (
+        not isinstance(attempt.failure_summary, str)
+        or not attempt.failure_summary.strip()
+    ):
         raise ValueError("non-proof runtime probe attempts require failure_summary")
     if attempt.normalized_payload or attempt.durable_artifact_reference is not None:
         raise ValueError(
@@ -646,14 +781,20 @@ def _validate_replay_fields(
     field_name: str,
 ) -> None:
     """Reject replay fields whose frozen values have been tampered blank."""
+    if not isinstance(fields, tuple):
+        raise ValueError(f"{field_name} must be a tuple of replay fields")
     for replay_field in fields:
+        if not isinstance(replay_field, RuntimeProbeReplayField):
+            raise ValueError(f"{field_name} must contain replay fields")
         if not replay_field.key.strip() or not replay_field.value.strip():
             raise ValueError(f"{field_name} must not contain blank fields")
 
 
 def _validate_optional_reference(reference: str | None, *, field_name: str) -> None:
     """Reject blank optional artifact references."""
-    if reference is not None and not reference.strip():
+    if reference is None:
+        return
+    if not isinstance(reference, str) or not reference.strip():
         raise ValueError(f"{field_name} must be non-empty when provided")
 
 
@@ -751,6 +892,7 @@ __all__ = [
     "RuntimeProbeRunnerRequest",
     "RuntimeProbeRunnerRequestBatch",
     "assemble_runtime_probe_result_batch_from_execution_attempts",
+    "assemble_runtime_probe_result_batch_from_runner_request_attempts",
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_runner_request_batch",
 ]
