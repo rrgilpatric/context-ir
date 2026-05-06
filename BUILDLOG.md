@@ -2,6 +2,33 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-06 -- Runtime Probe Runner Request Materialization Release Routing
+
+- Local commit creation completed for the runtime probe runner-request
+  materialization release unit.
+- Local commit:
+  - `68a8e73 Materialize runtime probe runner requests`
+- Post-commit repo state before Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` at
+    `68a8e73 Materialize runtime probe runner requests`
+  - `origin/main` at
+    `30b0089 Sync runtime probe attempt post-push state`
+  - local branch ahead of `origin/main` by exactly the source/contract release
+    candidate `68a8e73`
+  - worktree clean before this docs-only continuity sync
+  - nothing staged
+  - no untracked files
+- Routing decision:
+  - treat `68a8e73` as release-gate-cleared and locally committed
+  - do not route `68a8e73` back to implementation, release-unit audit, full
+    regression, commit-gating, staging, or local commit creation absent new
+    findings
+  - do not route another implementation or planning lane before Ryan's
+    explicit push/hold decision for `68a8e73`
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Runner Request Materialization Local Commit Routing
 
 - Reviewed the returned combined read-only release-gate result for the runtime
