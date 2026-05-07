@@ -2,6 +2,110 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Dispatch Workspace Acceptance
+
+- Reviewed the returned internal runtime probe runner dispatch table slice
+  against the implementation spec and quality gate.
+- Findings: none.
+- Repo-backed truth during acceptance review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `2e2a818 Sync runtime probe failure normalization post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed runtime probe runner handler entries keyed by
+    `(RuntimeProbeFamily, form_label)`
+  - adds an internal dispatching `RuntimeProbeRunnerCallable`
+  - validates incoming `RuntimeProbeRunnerRequest` values before dispatch
+  - preserves successful typed handler attempts by identity
+  - represents missing handlers as deterministic non-proof attempts, defaulting
+    to setup-failed
+  - keeps handler exceptions propagating unless the dispatch runner is
+    explicitly wrapped by the existing failure-normalizing adapter
+  - keeps the boundary internal and module-local, with no facade, MCP,
+    package-root, schema, eval, scoring, optimizer, compiler, benchmark, or
+    public-claim widening
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_observation_recompile.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `232 passed`
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Runtime Probe Runner Dispatch Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `2e2a818 Sync runtime probe failure normalization post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `93456b6 Normalize runtime probe runner failures`.
+- Routing decision:
+  - the next smallest meaningful runtime-probe execution-loop slice is an
+    internal runtime probe runner dispatch table
+  - this slice should add frozen typed handler entries keyed by
+    `(RuntimeProbeFamily, form_label)`
+  - this slice should add a dispatching `RuntimeProbeRunnerCallable` that
+    validates the incoming `RuntimeProbeRunnerRequest`, selects the matching
+    handler by the carried request family/form, and returns successful typed
+    handler attempts unchanged
+  - missing handlers should produce deterministic non-proof attempts, defaulting
+    to setup-failed, so partial future handler rollout does not become proof or
+    collapse the whole request batch
+  - this slice should stay inside `src/context_ir/runtime_probe_execution.py`
+    and `tests/test_runtime_probe_execution.py`
+  - `PLAN.md` and `BUILDLOG.md` are control-lane continuity state for this
+    route and should not be edited by the implementation lane
+- Why now:
+  - runner request preparation, strict runner collection, result assembly,
+    diagnostic recompile, and failure normalization are pushed
+  - before adding one real family/form probe handler, the execution loop needs
+    a typed dispatch boundary so future family handlers do not hand-roll
+    routing or bypass runner-request validation
+- Alternatives rejected:
+  - actual subprocess or in-process repository probe execution: still too broad
+    for the first post-normalization slice
+  - concrete family/form proof generation: should land after the handler
+    dispatch boundary exists
+  - timeout enforcement: requires a real execution mechanism and should not be
+    mixed with dispatch
+  - making missing handlers proof-bearing or observed: missing support is
+    non-proof by policy
+  - admission or recompile rule changes: dispatch must stay below existing
+    result/admission/recompile gates
+  - JSON/schema/serialization, facade, MCP, package-root, eval, scoring,
+    optimizer, compiler, product, benchmark, or public-claim exposure: still
+    held
+  - reopening `93456b6` release gates: no new finding supports reopening the
+    pushed failure-normalization release
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Failure-Normalization Push Sync
 
 - Ryan authorized pushing the runtime probe runner failure-normalization

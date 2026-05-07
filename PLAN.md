@@ -542,6 +542,19 @@ Current route:
   family/form-specific probe logic, admission or recompile rule changes,
   facade/MCP/package-root export, schema, eval, scoring, optimizer, compiler,
   benchmark, or public claims.
+- Runtime probe runner dispatch table implementation slice is accepted
+  first-pass in workspace-only state. It adds an internal frozen typed
+  family/form handler registry and dispatching `RuntimeProbeRunnerCallable`.
+  Missing handlers produce deterministic non-proof attempts rather than
+  runtime-backed proof. Focused control-lane validation passed with
+  `232 passed`.
+- Next active route is a combined read-only release gate over the exact
+  four-file runtime probe runner dispatch table release unit:
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
+  This unit is not release-unit-audit-cleared, not full-regression-cleared,
+  not commit-gating-cleared, not staged, not locally committed, and not
+  pushed. Push remains Ryan-gated.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2272,6 +2285,12 @@ sequencing for `c1a12d7` absent new findings.
   adapter release unit
 - [x] Ryan-authorized push for the runtime probe runner failure-normalization
   adapter release unit
+- [x] Post-`93456b6` planning/control selected the internal runtime probe
+  runner dispatch table
+- [x] Runtime probe runner dispatch table implementation slice accepted
+  first-pass in workspace-only state
+- [ ] Combined release gate for the exact four-file runtime probe runner
+  dispatch table release unit
 
 ## What Is In Progress
 
@@ -3179,9 +3198,10 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded control action after the pushed
-runtime probe runner failure-normalization adapter release. Do not reopen that
-release absent new findings.
+Immediate next route: run a combined read-only release gate over the exact
+four-file runtime probe runner dispatch table release unit. Do not stage,
+commit, or push before the gate reports cleanly. Do not reopen the pushed
+runtime probe runner failure-normalization adapter release absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3399,6 +3419,42 @@ Release state for the runtime probe runner failure-normalization adapter unit:
 - pushed with `origin/main` advanced through
   `4f13fac Sync runtime probe failure normalization routing`
 - release-gate status is no-active-gate
+
+The runtime probe runner dispatch table slice is accepted first-pass in
+workspace-only state. Proposed release unit:
+
+- `src/context_ir/runtime_probe_execution.py`
+- `tests/test_runtime_probe_execution.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The slice adds an internal frozen typed handler registry keyed by
+`(RuntimeProbeFamily, form_label)` and a dispatching
+`RuntimeProbeRunnerCallable` that validates `RuntimeProbeRunnerRequest`,
+selects handlers by carried request family/form, and returns typed handler
+attempts unchanged. Missing handlers return deterministic non-proof attempts,
+defaulting to `RuntimeProbeResultOutcome.SETUP_FAILED`, while preserving
+runner-request identity and replay artifact identity through existing gates.
+Duplicate handler keys, blank form labels, observed missing-handler outcomes,
+untyped handler returns, and handler identity drift reject or flow through
+existing runner-request-gated assembly. Handler-raised exceptions propagate
+unless the handler or dispatch runner is explicitly wrapped with the existing
+failure-normalizing adapter. The slice does not add concrete family/form probe
+behavior, subprocess execution, in-process repository probe execution, timeout
+enforcement, admission rule changes, recompile rule changes,
+facade/MCP/package-root export, schema, eval, scoring, optimizer, compiler,
+benchmark, or public claims.
+
+Release state for the runtime probe runner dispatch table unit:
+
+- accepted in workspace: yes, first-pass
+- release-unit-audit-cleared: no
+- full-regression-cleared: no
+- commit-gating-cleared: no
+- staged: no
+- locally committed: no
+- pushed: no
+- next route: combined read-only release gate over the exact four-file unit
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate

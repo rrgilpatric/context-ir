@@ -1319,6 +1319,250 @@ def test_collect_runtime_probe_runner_attempts_propagates_runner_exceptions() ->
     assert calls == [runner_batch.runner_requests[0]]
 
 
+def test_dispatching_runtime_probe_runner_dispatches_by_family_and_form() -> None:
+    """Dispatching runners select handlers by the request's family/form key."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+    runner_request = runner_batch.runner_requests[0]
+    returned_attempt = _execution_attempt(
+        runner_request.execution_input,
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+    wrong_key_calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+
+    def wrong_key_handler(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        wrong_key_calls.append(runner_request)
+        return _execution_attempt(
+            runner_request.execution_input,
+            normalized_payload=(_field("observed_module", "wrong"),),
+        )
+
+    def handler(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        return returned_attempt
+
+    dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
+        (
+            runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+                family_label=(
+                    runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN
+                ),
+                form_label=runner_request.request.form_label,
+                handler=wrong_key_handler,
+            ),
+            runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+                family_label=runner_request.request.family_label,
+                form_label="dynamic_import:other_form/1",
+                handler=wrong_key_handler,
+            ),
+            runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+                family_label=runner_request.request.family_label,
+                form_label=runner_request.request.form_label,
+                handler=handler,
+            ),
+        )
+    )
+
+    attempt = dispatching_runner(runner_request)
+
+    assert isinstance(
+        dispatching_runner,
+        runtime_probe_execution.RuntimeProbeDispatchingRunner,
+    )
+    assert attempt is returned_attempt
+    assert calls == [runner_request]
+    assert wrong_key_calls == []
+
+
+def test_dispatching_runtime_probe_runner_materializes_missing_handler_attempts() -> (
+    None
+):
+    """Missing dispatch handlers produce deterministic non-proof attempts."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+    runner_request = runner_batch.runner_requests[0]
+    dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
+        ()
+    )
+
+    attempt = dispatching_runner(runner_request)
+    collection = collect_runtime_probe_execution_attempts_from_runner_requests(
+        runner_batch,
+        dispatching_runner,
+    )
+
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.execution_input.replay_artifact is runner_request.replay_artifact
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary == (
+        "runtime probe runner has no handler for dynamic_import form "
+        "dynamic_import:importlib.import_module/1; recorded as setup_failed"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "missing_runtime_probe_handler"),
+        _field("family_label", "dynamic_import"),
+        _field("form_label", "dynamic_import:importlib.import_module/1"),
+        _field("missing_handler_outcome", "setup_failed"),
+    )
+
+    result = collection.result_batch.results[0]
+    assert isinstance(result, runtime_probe_results.RuntimeProbeNonProofResult)
+    assert result.request is runner_request.request
+    assert result.replay_artifact is runner_request.replay_artifact
+    assert (
+        result.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert result.is_admissible_runtime_backed_proof is False
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    (
+        runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+        runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+        runtime_probe_results.RuntimeProbeResultOutcome.MISSING_ENVIRONMENT,
+        runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED,
+    ),
+)
+def test_dispatching_runtime_probe_runner_supports_non_proof_missing_outcomes(
+    outcome: runtime_probe_results.RuntimeProbeResultOutcome,
+) -> None:
+    """Missing-handler attempts can be configured to any non-proof outcome."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+    dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
+        (),
+        missing_handler_outcome=outcome,
+    )
+
+    attempt = dispatching_runner(runner_batch.runner_requests[0])
+
+    assert attempt.outcome is outcome
+    assert attempt.failure_detail_fields[-1] == _field(
+        "missing_handler_outcome",
+        outcome.value,
+    )
+
+
+def test_dispatching_runtime_probe_runner_rejects_bad_dispatch_metadata() -> None:
+    """Dispatch tables reject ambiguous keys and proof-bearing miss outcomes."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+    runner_request = runner_batch.runner_requests[0]
+
+    def handler(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        return _execution_attempt(runner_request.execution_input)
+
+    entry = runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+        family_label=runner_request.request.family_label,
+        form_label=runner_request.request.form_label,
+        handler=handler,
+    )
+
+    with pytest.raises(ValueError, match="form_label"):
+        runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+            family_label=runner_request.request.family_label,
+            form_label=" ",
+            handler=handler,
+        )
+    with pytest.raises(ValueError, match="duplicate runtime probe runner handler key"):
+        runtime_probe_execution.make_dispatching_runtime_probe_runner(
+            (
+                entry,
+                runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+                    family_label=runner_request.request.family_label,
+                    form_label=runner_request.request.form_label,
+                    handler=handler,
+                ),
+            )
+        )
+    with pytest.raises(ValueError, match="non-proof outcome"):
+        runtime_probe_execution.make_dispatching_runtime_probe_runner(
+            (),
+            missing_handler_outcome=(
+                runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+            ),
+        )
+
+
+def test_dispatching_runtime_probe_runner_rejects_untyped_handler_returns() -> None:
+    """Dispatching runners keep the same strict typed return boundary."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+    runner_request = runner_batch.runner_requests[0]
+
+    def handler(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> object:
+        return {
+            "plan_id": runner_request.plan_id,
+            "request_id": runner_request.request_id,
+        }
+
+    dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
+        (
+            runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+                family_label=runner_request.request.family_label,
+                form_label=runner_request.request.form_label,
+                handler=handler,
+            ),
+        )
+    )
+
+    with pytest.raises(ValueError, match="typed runtime probe execution attempts"):
+        dispatching_runner(runner_request)
+
+
+def test_dispatching_runtime_probe_runner_propagates_handler_exceptions() -> None:
+    """Handler exceptions propagate unless an existing adapter wraps dispatch."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+    runner_request = runner_batch.runner_requests[0]
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+
+    def handler(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        raise RuntimeError("handler failed")
+
+    dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
+        (
+            runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+                family_label=runner_request.request.family_label,
+                form_label=runner_request.request.form_label,
+                handler=handler,
+            ),
+        )
+    )
+
+    with pytest.raises(RuntimeError, match="handler failed"):
+        dispatching_runner(runner_request)
+
+    adapted_runner = (
+        runtime_probe_execution.make_failure_normalizing_runtime_probe_runner(
+            dispatching_runner
+        )
+    )
+    normalized_attempt = adapted_runner(runner_request)
+
+    assert calls == [runner_request, runner_request]
+    assert (
+        normalized_attempt.outcome
+        is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    )
+    assert normalized_attempt.request is runner_request.request
+    assert normalized_attempt.execution_input is runner_request.execution_input
+
+
 def test_failure_normalizing_runner_preserves_success_and_normalizes_exception() -> (
     None
 ):
@@ -2028,6 +2272,14 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
             normalized_payload=(_field("observed_module", "plugins.weather"),),
         )
 
+    handler_entry = runtime_probe_execution.RuntimeProbeRunnerHandlerEntry(
+        family_label=runner_request.request.family_label,
+        form_label=runner_request.request.form_label,
+        handler=runner,
+    )
+    dispatching_runner = runtime_probe_execution.RuntimeProbeDispatchingRunner(
+        handler_entries=(handler_entry,),
+    )
     normalizing_runner = runtime_probe_execution.RuntimeProbeFailureNormalizingRunner(
         runner=runner,
     )
@@ -2050,15 +2302,24 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         normalizing_runner.outcome = (
             runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT
         )
+    with pytest.raises(FrozenInstanceError):
+        handler_entry.form_label = "dynamic_import:mutated/1"
+    with pytest.raises(FrozenInstanceError):
+        dispatching_runner.missing_handler_outcome = (
+            runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT
+        )
 
     assert (
         "RuntimeProbeDiagnosticRunnerRequestPreparation"
         in runtime_probe_execution.__all__
     )
+    assert "RuntimeProbeDispatchingRunner" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionAttempt" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInput" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInputBatch" in runtime_probe_execution.__all__
     assert "RuntimeProbeFailureNormalizingRunner" in runtime_probe_execution.__all__
+    assert "RuntimeProbeRunnerHandlerEntry" in runtime_probe_execution.__all__
+    assert "RuntimeProbeRunnerHandlerKey" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerAttemptCollection" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerCallable" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerRequest" in runtime_probe_execution.__all__
@@ -2072,6 +2333,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "collect_runtime_probe_execution_attempts_from_runner_requests" in (
         runtime_probe_execution.__all__
     )
+    assert "make_dispatching_runtime_probe_runner" in runtime_probe_execution.__all__
     assert "make_failure_normalizing_runtime_probe_runner" in (
         runtime_probe_execution.__all__
     )
@@ -2085,10 +2347,13 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         runtime_probe_execution.__all__
     )
     assert "RuntimeProbeDiagnosticRunnerRequestPreparation" not in context_ir.__all__
+    assert "RuntimeProbeDispatchingRunner" not in context_ir.__all__
     assert "RuntimeProbeExecutionAttempt" not in context_ir.__all__
     assert "RuntimeProbeExecutionInput" not in context_ir.__all__
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
     assert "RuntimeProbeFailureNormalizingRunner" not in context_ir.__all__
+    assert "RuntimeProbeRunnerHandlerEntry" not in context_ir.__all__
+    assert "RuntimeProbeRunnerHandlerKey" not in context_ir.__all__
     assert "RuntimeProbeRunnerAttemptCollection" not in context_ir.__all__
     assert "RuntimeProbeRunnerCallable" not in context_ir.__all__
     assert "RuntimeProbeRunnerRequest" not in context_ir.__all__
@@ -2103,6 +2368,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         "collect_runtime_probe_execution_attempts_from_runner_requests"
         not in context_ir.__all__
     )
+    assert "make_dispatching_runtime_probe_runner" not in context_ir.__all__
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
@@ -2110,10 +2376,13 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         "prepare_runtime_probe_runner_requests_for_diagnostic" not in context_ir.__all__
     )
     assert not hasattr(context_ir, "RuntimeProbeDiagnosticRunnerRequestPreparation")
+    assert not hasattr(context_ir, "RuntimeProbeDispatchingRunner")
     assert not hasattr(context_ir, "RuntimeProbeExecutionAttempt")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInput")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
     assert not hasattr(context_ir, "RuntimeProbeFailureNormalizingRunner")
+    assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerEntry")
+    assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerKey")
     assert not hasattr(context_ir, "RuntimeProbeRunnerAttemptCollection")
     assert not hasattr(context_ir, "RuntimeProbeRunnerCallable")
     assert not hasattr(context_ir, "RuntimeProbeRunnerRequest")
@@ -2129,6 +2398,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "collect_runtime_probe_execution_attempts_from_runner_requests",
+    )
+    assert not hasattr(
+        context_ir,
+        "make_dispatching_runtime_probe_runner",
     )
     assert not hasattr(
         context_ir,

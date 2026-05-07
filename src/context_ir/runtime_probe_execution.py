@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import TypeAlias
 
 import context_ir.runtime_acquisition as runtime_acquisition
@@ -42,6 +43,7 @@ _NON_PROOF_ATTEMPT_OUTCOMES = frozenset(
 )
 
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
+RuntimeProbeRunnerHandlerKey: TypeAlias = tuple[RuntimeProbeFamily, str]
 
 
 @dataclass(frozen=True)
@@ -395,6 +397,67 @@ RuntimeProbeRunnerCallable: TypeAlias = Callable[
 
 
 @dataclass(frozen=True)
+class RuntimeProbeRunnerHandlerEntry:
+    """Typed dispatch-table entry for one runtime probe family/form handler."""
+
+    family_label: RuntimeProbeFamily
+    form_label: str
+    handler: RuntimeProbeRunnerCallable
+
+    def __post_init__(self) -> None:
+        """Reject incomplete dispatch handler metadata."""
+        _validate_runtime_probe_runner_handler_entry(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeDispatchingRunner:
+    """Runner callable that dispatches requests to family/form handlers."""
+
+    handler_entries: tuple[RuntimeProbeRunnerHandlerEntry, ...]
+    missing_handler_outcome: RuntimeProbeResultOutcome = (
+        RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    _handlers_by_key: Mapping[
+        RuntimeProbeRunnerHandlerKey,
+        RuntimeProbeRunnerCallable,
+    ] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        """Reject ambiguous dispatch tables and proof-bearing miss outcomes."""
+        handlers_by_key = _index_runtime_probe_runner_handler_entries(
+            self.handler_entries
+        )
+        _validate_failure_normalization_outcome(self.missing_handler_outcome)
+        object.__setattr__(
+            self,
+            "_handlers_by_key",
+            MappingProxyType(handlers_by_key),
+        )
+
+    def __call__(
+        self,
+        runner_request: RuntimeProbeRunnerRequest,
+    ) -> RuntimeProbeExecutionAttempt:
+        """Dispatch a validated request by its carried family and form labels."""
+        _validate_runner_request(runner_request)
+        handler = self._handlers_by_key.get(
+            _runtime_probe_runner_request_handler_key(runner_request)
+        )
+        if handler is None:
+            return _runtime_probe_missing_handler_attempt(
+                runner_request,
+                outcome=self.missing_handler_outcome,
+            )
+        attempt = handler(runner_request)
+        if not isinstance(attempt, RuntimeProbeExecutionAttempt):
+            raise ValueError(
+                "runtime probe runner callable must return typed runtime probe "
+                "execution attempts"
+            )
+        return attempt
+
+
+@dataclass(frozen=True)
 class RuntimeProbeFailureNormalizingRunner:
     """Adapter that converts runner-raised exceptions into non-proof attempts."""
 
@@ -655,6 +718,20 @@ def make_failure_normalizing_runtime_probe_runner(
     )
 
 
+def make_dispatching_runtime_probe_runner(
+    handler_entries: Iterable[RuntimeProbeRunnerHandlerEntry],
+    *,
+    missing_handler_outcome: RuntimeProbeResultOutcome = (
+        RuntimeProbeResultOutcome.SETUP_FAILED
+    ),
+) -> RuntimeProbeRunnerCallable:
+    """Return a runner that dispatches by runtime probe family and form labels."""
+    return RuntimeProbeDispatchingRunner(
+        handler_entries=tuple(handler_entries),
+        missing_handler_outcome=missing_handler_outcome,
+    )
+
+
 def _materialize_runtime_probe_execution_input(
     *,
     plan_id: str,
@@ -743,6 +820,47 @@ def _runtime_probe_failure_attempt_from_runner_exception(
             RuntimeProbeReplayField(
                 key="exception_type",
                 value=exception_type_label,
+            ),
+        ),
+    )
+
+
+def _runtime_probe_missing_handler_attempt(
+    runner_request: RuntimeProbeRunnerRequest,
+    *,
+    outcome: RuntimeProbeResultOutcome,
+) -> RuntimeProbeExecutionAttempt:
+    """Return a deterministic non-proof attempt for an unimplemented handler key."""
+    _validate_runner_request(runner_request)
+    _validate_failure_normalization_outcome(outcome)
+    handler_key = _runtime_probe_runner_request_handler_key(runner_request)
+    family_label, form_label = handler_key
+    return RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=outcome,
+        failure_summary=(
+            "runtime probe runner has no handler for "
+            f"{family_label.value} form {form_label}; recorded as {outcome.value}"
+        ),
+        failure_detail_fields=(
+            RuntimeProbeReplayField(
+                key="failure_source",
+                value="missing_runtime_probe_handler",
+            ),
+            RuntimeProbeReplayField(
+                key="family_label",
+                value=family_label.value,
+            ),
+            RuntimeProbeReplayField(
+                key="form_label",
+                value=form_label,
+            ),
+            RuntimeProbeReplayField(
+                key="missing_handler_outcome",
+                value=outcome.value,
             ),
         ),
     )
@@ -1001,6 +1119,55 @@ def _validate_runner_request(runner_request: RuntimeProbeRunnerRequest) -> None:
     )
 
 
+def _validate_runtime_probe_runner_handler_entry(
+    handler_entry: RuntimeProbeRunnerHandlerEntry,
+) -> None:
+    """Reject handler entries without a concrete family/form callable key."""
+    if not isinstance(handler_entry.family_label, RuntimeProbeFamily):
+        raise ValueError(
+            "runtime probe runner handler family_label must be a runtime probe family"
+        )
+    if not isinstance(handler_entry.form_label, str) or (
+        not handler_entry.form_label.strip()
+    ):
+        raise ValueError("runtime probe runner handler form_label must be non-empty")
+    if not callable(handler_entry.handler):
+        raise ValueError("runtime probe runner handler must be callable")
+
+
+def _index_runtime_probe_runner_handler_entries(
+    handler_entries: tuple[RuntimeProbeRunnerHandlerEntry, ...],
+) -> dict[RuntimeProbeRunnerHandlerKey, RuntimeProbeRunnerCallable]:
+    """Return dispatch handlers keyed by family/form after duplicate checks."""
+    if not isinstance(handler_entries, tuple):
+        raise ValueError("runtime probe runner handler entries must be a tuple")
+    handlers_by_key: dict[RuntimeProbeRunnerHandlerKey, RuntimeProbeRunnerCallable] = {}
+    for handler_entry in handler_entries:
+        _validate_runtime_probe_runner_handler_entry(handler_entry)
+        handler_key = _runtime_probe_runner_handler_entry_key(handler_entry)
+        if handler_key in handlers_by_key:
+            raise ValueError("duplicate runtime probe runner handler key")
+        handlers_by_key[handler_key] = handler_entry.handler
+    return handlers_by_key
+
+
+def _runtime_probe_runner_handler_entry_key(
+    handler_entry: RuntimeProbeRunnerHandlerEntry,
+) -> RuntimeProbeRunnerHandlerKey:
+    """Return the dispatch-table key carried by one handler entry."""
+    return (handler_entry.family_label, handler_entry.form_label)
+
+
+def _runtime_probe_runner_request_handler_key(
+    runner_request: RuntimeProbeRunnerRequest,
+) -> RuntimeProbeRunnerHandlerKey:
+    """Return the dispatch key carried by one runner request."""
+    return (
+        runner_request.request.family_label,
+        runner_request.request.form_label,
+    )
+
+
 def _validate_failure_normalization_outcome(
     outcome: RuntimeProbeResultOutcome,
 ) -> None:
@@ -1247,10 +1414,13 @@ def _replay_inputs_for_request(
 
 __all__ = [
     "RuntimeProbeDiagnosticRunnerRequestPreparation",
+    "RuntimeProbeDispatchingRunner",
     "RuntimeProbeExecutionAttempt",
     "RuntimeProbeExecutionInput",
     "RuntimeProbeExecutionInputBatch",
     "RuntimeProbeFailureNormalizingRunner",
+    "RuntimeProbeRunnerHandlerEntry",
+    "RuntimeProbeRunnerHandlerKey",
     "RuntimeProbeRunnerAttemptCollection",
     "RuntimeProbeRunnerCallable",
     "RuntimeProbeRunnerRequest",
@@ -1258,6 +1428,7 @@ __all__ = [
     "assemble_runtime_probe_result_batch_from_execution_attempts",
     "assemble_runtime_probe_result_batch_from_runner_request_attempts",
     "collect_runtime_probe_execution_attempts_from_runner_requests",
+    "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_runner_request_batch",
