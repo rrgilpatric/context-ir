@@ -548,13 +548,16 @@ Current route:
   Missing handlers produce deterministic non-proof attempts rather than
   runtime-backed proof. Focused control-lane validation passed with
   `232 passed`.
-- Next active route is a combined read-only release gate over the exact
+- The combined read-only release gate passed with no findings for the exact
   four-file runtime probe runner dispatch table release unit:
   `src/context_ir/runtime_probe_execution.py`,
   `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
-  This unit is not release-unit-audit-cleared, not full-regression-cleared,
-  not commit-gating-cleared, not staged, not locally committed, and not
-  pushed. Push remains Ryan-gated.
+  Focused validation passed with `232 passed`; full regression passed with
+  `912 passed`; commit-gating passed.
+- Local commit creation completed at
+  `3751df1 Add runtime probe runner dispatch table`. Push remains
+  Ryan-gated. Do not start a new implementation lane before push or an
+  explicit Ryan redirect.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2289,8 +2292,12 @@ sequencing for `c1a12d7` absent new findings.
   runner dispatch table
 - [x] Runtime probe runner dispatch table implementation slice accepted
   first-pass in workspace-only state
-- [ ] Combined release gate for the exact four-file runtime probe runner
+- [x] Combined release gate for the exact four-file runtime probe runner
   dispatch table release unit
+- [x] Local commit creation for the runtime probe runner dispatch table
+  release unit
+- [ ] Ryan-authorized push for the runtime probe runner dispatch table release
+  unit
 
 ## What Is In Progress
 
@@ -3198,10 +3205,11 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: run a combined read-only release gate over the exact
-four-file runtime probe runner dispatch table release unit. Do not stage,
-commit, or push before the gate reports cleanly. Do not reopen the pushed
-runtime probe runner failure-normalization adapter release absent new findings.
+Immediate next route: await explicit Ryan authorization to push the locally
+committed runtime probe runner dispatch table release and this continuity sync.
+Do not open another implementation lane before push or an explicit Ryan
+redirect. Do not reopen the pushed runtime probe runner failure-normalization
+adapter release absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3448,13 +3456,15 @@ benchmark, or public claims.
 Release state for the runtime probe runner dispatch table unit:
 
 - accepted in workspace: yes, first-pass
-- release-unit-audit-cleared: no
-- full-regression-cleared: no
-- commit-gating-cleared: no
+- release-unit-audit-cleared: yes, no findings
+- focused validation: passed with `232 passed`
+- full-regression-cleared: yes, full pytest `912 passed`
+- commit-gating-cleared: yes
 - staged: no
-- locally committed: no
+- locally committed at `3751df1 Add runtime probe runner dispatch table`
 - pushed: no
-- next route: combined read-only release gate over the exact four-file unit
+- next route: await explicit Ryan authorization to push the local release and
+  continuity-sync commits
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate

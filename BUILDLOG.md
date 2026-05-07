@@ -2,6 +2,38 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Dispatch Local Commit Routing
+
+- The combined read-only release gate returned no findings for the exact
+  four-file runtime probe runner dispatch table release unit.
+- Control-lane verification before staging matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `2e2a818 Sync runtime probe failure normalization post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted gate result:
+  - Gate 1 release-unit audit passed with focused validation reporting
+    `232 passed`
+  - Gate 2 full regression passed with full pytest reporting `912 passed`
+  - Gate 3 commit-gating passed
+- Local commit creation completed:
+  - `3751df1 Add runtime probe runner dispatch table`
+- Release state:
+  - exact four-file release unit is locally committed
+  - `origin/main` remains at
+    `2e2a818 Sync runtime probe failure normalization post-push state`
+  - pushed: no
+  - push remains Ryan-gated
+  - next route: await explicit Ryan authorization to push the local release
+    and continuity-sync commits
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Dispatch Workspace Acceptance
 
 - Reviewed the returned internal runtime probe runner dispatch table slice
