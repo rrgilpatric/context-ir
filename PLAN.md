@@ -555,9 +555,13 @@ Current route:
   Focused validation passed with `232 passed`; full regression passed with
   `912 passed`; commit-gating passed.
 - Local commit creation completed at
-  `3751df1 Add runtime probe runner dispatch table`. Push remains
-  Ryan-gated. Do not start a new implementation lane before push or an
-  explicit Ryan redirect.
+  `3751df1 Add runtime probe runner dispatch table`.
+- Ryan-authorized push completed with `origin/main` advanced through
+  `d7fe447 Sync runtime probe dispatch routing`.
+- Release-gate status is no-active-gate for `3751df1`.
+- Next active route is selecting the next bounded control action after the
+  pushed runtime probe runner dispatch table release. Do not reopen the
+  dispatch table release absent new findings.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2296,7 +2300,7 @@ sequencing for `c1a12d7` absent new findings.
   dispatch table release unit
 - [x] Local commit creation for the runtime probe runner dispatch table
   release unit
-- [ ] Ryan-authorized push for the runtime probe runner dispatch table release
+- [x] Ryan-authorized push for the runtime probe runner dispatch table release
   unit
 
 ## What Is In Progress
@@ -3205,11 +3209,9 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: await explicit Ryan authorization to push the locally
-committed runtime probe runner dispatch table release and this continuity sync.
-Do not open another implementation lane before push or an explicit Ryan
-redirect. Do not reopen the pushed runtime probe runner failure-normalization
-adapter release absent new findings.
+Immediate next route: select the next bounded control action after the pushed
+runtime probe runner dispatch table release. Do not reopen the pushed dispatch
+table or failure-normalization adapter releases absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3462,9 +3464,10 @@ Release state for the runtime probe runner dispatch table unit:
 - commit-gating-cleared: yes
 - staged: no
 - locally committed at `3751df1 Add runtime probe runner dispatch table`
-- pushed: no
-- next route: await explicit Ryan authorization to push the local release and
-  continuity-sync commits
+- pushed with `origin/main` advanced through
+  `d7fe447 Sync runtime probe dispatch routing`
+- release-gate status is no-active-gate
+- next route: select the next bounded control action after the pushed release
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate

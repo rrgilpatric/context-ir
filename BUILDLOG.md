@@ -2,6 +2,32 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Dispatch Push Sync
+
+- Ryan authorized pushing the runtime probe runner dispatch table release after
+  local commit creation and release-routing sync.
+- Push completed:
+  - source/contract release:
+    `3751df1 Add runtime probe runner dispatch table`
+  - release-routing sync:
+    `d7fe447 Sync runtime probe dispatch routing`
+- Post-push verification:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d7fe447 Sync runtime probe dispatch routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+  - `git diff --check` clean
+- Release state:
+  - runtime probe runner dispatch table release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `3751df1 Add runtime probe runner dispatch table`
+  - next route is selecting the next bounded control action after the pushed
+    release
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Dispatch Local Commit Routing
 
 - The combined read-only release gate returned no findings for the exact
