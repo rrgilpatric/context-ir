@@ -2,6 +2,137 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Failure-Normalization Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  runtime probe runner failure-normalization adapter unit.
+- Reverified live repo state before advancing:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `db99c05 Sync runtime probe callable recompile post-push state`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Gate result:
+  - Gate 1 release-unit audit passed with no findings
+  - focused validation passed, including targeted pytest reporting
+    `223 passed`
+  - Gate 2 full regression passed, including full pytest reporting
+    `903 passed`
+  - Gate 3 commit-gating passed with exact dirty tracked set unchanged,
+    nothing staged, no untracked files, and clean `git diff --check`
+- Decision:
+  - the exact four-file unit is commit-ready to stage locally
+  - next control action is local commit sequencing
+  - push remains Ryan-gated after local commit creation
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Runtime Probe Runner Failure-Normalization Review
+
+- Reviewed the returned internal runtime probe runner failure-normalization
+  adapter slice.
+- Verified repo-backed truth before acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `db99c05 Sync runtime probe callable recompile post-push state`
+  - dirty tracked files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted implementation state:
+  - added frozen internal `RuntimeProbeFailureNormalizingRunner`
+  - added `make_failure_normalizing_runtime_probe_runner(...)`
+  - successful typed attempts pass through unchanged by object identity
+  - wrapped-runner `Exception` failures become deterministic non-proof
+    `RuntimeProbeExecutionAttempt` values for the matching runner request
+  - allowed normalized outcomes are limited to crashed, timed-out,
+    missing-environment, and setup-failed
+  - `OBSERVED` normalization is rejected
+  - untyped runner returns remain strict errors rather than normalized
+  - `BaseException` subclasses still propagate
+  - the existing strict collector still propagates runner exceptions when no
+    adapter is used
+  - no subprocess execution, in-process repository probe execution, timeout
+    enforcement, family/form-specific probe logic, admission/recompile rule
+    changes, facade, MCP, package-root export, schema, eval, scoring,
+    optimizer, compiler, benchmark, or public claims were added
+- Control-lane focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_observation_recompile.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `223 passed`
+  - `git diff --check`
+- Decision:
+  - accepted first-pass in workspace-only state
+  - proposed release unit is exactly
+    `src/context_ir/runtime_probe_execution.py`,
+    `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+  - next control action is a combined read-only release gate over that exact
+    four-file unit
+  - do not stage, commit, push, or route another implementation slice before
+    the release gate returns clean or Ryan explicitly redirects
+- Acceptance status: first-pass
+
+## 2026-05-06 -- Runtime Probe Runner Failure-Normalization Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `db99c05 Sync runtime probe callable recompile post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `74fb275 Compose runtime probe runner callable recompile`.
+- Routing decision:
+  - the next smallest meaningful runtime-probe execution-loop slice is an
+    internal runner failure-normalization adapter
+  - this slice should add an opt-in wrapper for `RuntimeProbeRunnerCallable`
+    so runner-raised exceptions can become typed non-proof
+    `RuntimeProbeExecutionAttempt` values for the matching
+    `RuntimeProbeRunnerRequest`
+  - successful typed attempts should pass through unchanged
+  - the existing strict collector should continue to propagate runner
+    exceptions when no adapter is used
+  - malformed or untyped runner returns should remain rejected rather than
+    normalized
+  - this slice should stay inside `src/context_ir/runtime_probe_execution.py`
+    and `tests/test_runtime_probe_execution.py`
+  - `PLAN.md` and `BUILDLOG.md` are control-lane continuity state for this
+    route and should not be edited by the implementation lane
+- Why now:
+  - the runner-callable collection path and diagnostic recompile bridge are
+    pushed
+  - before any real subprocess, in-process, or family/form-specific runner,
+    failure behavior needs a typed opt-in path that preserves non-proof
+    outcomes without letting exceptions become proof or collapse request
+    identity
+- Alternatives rejected:
+  - actual subprocess or in-process repository probe execution: still too
+    broad and safety-sensitive for this slice
+  - family/form-specific proof generation: should wait until runner failure
+    normalization exists
+  - changing the existing strict collector to catch exceptions by default:
+    that would silently change pushed behavior and remove the explicit
+    strict-vs-normalized boundary
+  - timeout enforcement: requires an actual runner/execution mechanism and is
+    not just exception normalization
+  - admission or recompile rule changes: lower-layer runner failure
+    normalization should not alter result admission semantics
+  - JSON/schema/serialization, facade, MCP, package-root, eval, scoring,
+    optimizer, compiler, product, benchmark, or public-claim exposure: still
+    held
+  - reopening `74fb275` release gates: no new finding supports reopening the
+    pushed diagnostic runner-callable recompile bridge release
+- Acceptance status: first-pass
+
 ## 2026-05-06 -- Runtime Probe Diagnostic Runner-Callable Recompile Push Sync
 
 - Ryan authorized pushing the runtime probe diagnostic runner-callable

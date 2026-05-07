@@ -1319,6 +1319,198 @@ def test_collect_runtime_probe_runner_attempts_propagates_runner_exceptions() ->
     assert calls == [runner_batch.runner_requests[0]]
 
 
+def test_failure_normalizing_runner_preserves_success_and_normalizes_exception() -> (
+    None
+):
+    """Opt-in adapter preserves successes and converts Exceptions to failures."""
+    first_request = _request(start_line=3)
+    second_request = _request(start_line=4)
+    third_request = _request(start_line=5)
+    runner_batch = _runner_request_batch(
+        _materialized_batch(_plan(first_request, second_request, third_request))
+    )
+    first_attempt = _execution_attempt(
+        runner_batch.runner_requests[0].execution_input,
+        normalized_payload=(_field("observed_request_id", first_request.request_id),),
+    )
+    third_attempt = _execution_attempt(
+        runner_batch.runner_requests[2].execution_input,
+        normalized_payload=(_field("observed_request_id", third_request.request_id),),
+    )
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        if runner_request is runner_batch.runner_requests[0]:
+            return first_attempt
+        if runner_request is runner_batch.runner_requests[1]:
+            raise RuntimeError("pid=12345 traceback frame local")
+        return third_attempt
+
+    adapted_runner = (
+        runtime_probe_execution.make_failure_normalizing_runtime_probe_runner(runner)
+    )
+
+    collection = collect_runtime_probe_execution_attempts_from_runner_requests(
+        runner_batch,
+        adapted_runner,
+    )
+
+    assert isinstance(
+        adapted_runner,
+        runtime_probe_execution.RuntimeProbeFailureNormalizingRunner,
+    )
+    assert tuple(calls) == runner_batch.runner_requests
+    assert collection.attempts[0] is first_attempt
+    assert collection.attempts[2] is third_attempt
+
+    normalized_attempt = collection.attempts[1]
+    assert normalized_attempt.plan_id == runner_batch.plan_id
+    assert normalized_attempt.request_id == runner_batch.runner_requests[1].request_id
+    assert normalized_attempt.request is runner_batch.runner_requests[1].request
+    assert (
+        normalized_attempt.execution_input
+        is runner_batch.runner_requests[1].execution_input
+    )
+    assert (
+        normalized_attempt.outcome
+        is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    )
+    assert normalized_attempt.normalized_payload == ()
+    assert normalized_attempt.durable_artifact_reference is None
+    assert normalized_attempt.failure_summary == (
+        "runtime probe runner raised RuntimeError; normalized as crashed"
+    )
+    assert normalized_attempt.failure_detail_fields == (
+        _field("failure_normalization_source", "runner_exception"),
+        _field("normalized_outcome", "crashed"),
+        _field("exception_type", "builtins.RuntimeError"),
+    )
+    assert "pid=12345" not in normalized_attempt.failure_summary
+    assert all(
+        "pid=12345" not in detail.value
+        for detail in normalized_attempt.failure_detail_fields
+    )
+
+    normalized_result = collection.result_batch.results[1]
+    assert isinstance(
+        normalized_result,
+        runtime_probe_results.RuntimeProbeNonProofResult,
+    )
+    assert normalized_result.request_id == normalized_attempt.request_id
+    assert normalized_result.request is normalized_attempt.request
+    assert normalized_result.replay_artifact is (
+        runner_batch.runner_requests[1].replay_artifact
+    )
+    assert normalized_result.is_admissible_runtime_backed_proof is False
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    (
+        runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+        runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+        runtime_probe_results.RuntimeProbeResultOutcome.MISSING_ENVIRONMENT,
+        runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED,
+    ),
+)
+def test_failure_normalizing_runtime_probe_runner_supports_non_proof_outcomes(
+    outcome: runtime_probe_results.RuntimeProbeResultOutcome,
+) -> None:
+    """Failure normalization is limited to explicit non-proof outcomes."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+    runner_request = runner_batch.runner_requests[0]
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        raise LookupError("local path /private/tmp/runtime-probe")
+
+    adapted_runner = runtime_probe_execution.RuntimeProbeFailureNormalizingRunner(
+        runner=runner,
+        outcome=outcome,
+    )
+
+    attempt = adapted_runner(runner_request)
+
+    assert attempt.outcome is outcome
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.failure_summary == (
+        f"runtime probe runner raised LookupError; normalized as {outcome.value}"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_normalization_source", "runner_exception"),
+        _field("normalized_outcome", outcome.value),
+        _field("exception_type", "builtins.LookupError"),
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+
+
+def test_failure_normalizing_runtime_probe_runner_rejects_observed_outcome() -> None:
+    """Failure normalization cannot be configured to produce proof outcomes."""
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        return _execution_attempt(runner_request.execution_input)
+
+    with pytest.raises(ValueError, match="non-proof outcome"):
+        runtime_probe_execution.make_failure_normalizing_runtime_probe_runner(
+            runner,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+        )
+
+
+def test_failure_normalizing_runtime_probe_runner_rejects_untyped_returns() -> None:
+    """Malformed runner returns remain strict errors instead of normalized failures."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> object:
+        return {
+            "plan_id": runner_request.plan_id,
+            "request_id": runner_request.request_id,
+        }
+
+    adapted_runner = (
+        runtime_probe_execution.make_failure_normalizing_runtime_probe_runner(runner)
+    )
+
+    with pytest.raises(ValueError, match="typed runtime probe execution attempts"):
+        collect_runtime_probe_execution_attempts_from_runner_requests(
+            runner_batch,
+            adapted_runner,
+        )
+
+
+def test_failure_normalizing_runtime_probe_runner_does_not_catch_base_exception() -> (
+    None
+):
+    """Only Exception subclasses are normalized; BaseException subclasses propagate."""
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(_request())))
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        raise SystemExit("runner requested shutdown")
+
+    adapted_runner = (
+        runtime_probe_execution.make_failure_normalizing_runtime_probe_runner(runner)
+    )
+
+    with pytest.raises(SystemExit, match="runner requested shutdown"):
+        collect_runtime_probe_execution_attempts_from_runner_requests(
+            runner_batch,
+            adapted_runner,
+        )
+
+
 def test_runtime_probe_runner_attempt_collection_rejects_order_and_result_drift() -> (
     None
 ):
@@ -1828,6 +2020,18 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         ),
     )
 
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        return _execution_attempt(
+            runner_request.execution_input,
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+        )
+
+    normalizing_runner = runtime_probe_execution.RuntimeProbeFailureNormalizingRunner(
+        runner=runner,
+    )
+
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
     with pytest.raises(FrozenInstanceError):
@@ -1842,6 +2046,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         preparation.request_plan = (
             runtime_probe_requests.build_runtime_probe_request_plan(())
         )
+    with pytest.raises(FrozenInstanceError):
+        normalizing_runner.outcome = (
+            runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT
+        )
 
     assert (
         "RuntimeProbeDiagnosticRunnerRequestPreparation"
@@ -1850,6 +2058,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionAttempt" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInput" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInputBatch" in runtime_probe_execution.__all__
+    assert "RuntimeProbeFailureNormalizingRunner" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerAttemptCollection" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerCallable" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerRequest" in runtime_probe_execution.__all__
@@ -1861,6 +2070,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         runtime_probe_execution.__all__
     )
     assert "collect_runtime_probe_execution_attempts_from_runner_requests" in (
+        runtime_probe_execution.__all__
+    )
+    assert "make_failure_normalizing_runtime_probe_runner" in (
         runtime_probe_execution.__all__
     )
     assert "materialize_runtime_probe_execution_input_batch" in (
@@ -1876,6 +2088,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionAttempt" not in context_ir.__all__
     assert "RuntimeProbeExecutionInput" not in context_ir.__all__
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
+    assert "RuntimeProbeFailureNormalizingRunner" not in context_ir.__all__
     assert "RuntimeProbeRunnerAttemptCollection" not in context_ir.__all__
     assert "RuntimeProbeRunnerCallable" not in context_ir.__all__
     assert "RuntimeProbeRunnerRequest" not in context_ir.__all__
@@ -1890,6 +2103,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         "collect_runtime_probe_execution_attempts_from_runner_requests"
         not in context_ir.__all__
     )
+    assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
     assert (
@@ -1899,6 +2113,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeExecutionAttempt")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInput")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
+    assert not hasattr(context_ir, "RuntimeProbeFailureNormalizingRunner")
     assert not hasattr(context_ir, "RuntimeProbeRunnerAttemptCollection")
     assert not hasattr(context_ir, "RuntimeProbeRunnerCallable")
     assert not hasattr(context_ir, "RuntimeProbeRunnerRequest")
@@ -1914,6 +2129,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "collect_runtime_probe_execution_attempts_from_runner_requests",
+    )
+    assert not hasattr(
+        context_ir,
+        "make_failure_normalizing_runtime_probe_runner",
     )
     assert not hasattr(
         context_ir,

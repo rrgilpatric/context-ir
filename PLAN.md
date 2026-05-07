@@ -509,6 +509,35 @@ Current route:
 - Ryan-authorized push completed with `origin/main` advanced through
   `f463df7 Sync runtime probe callable recompile release routing`.
 - Release-gate status is no-active-gate for `74fb275`.
+- Runtime probe runner failure-normalization adapter is workspace-only accepted
+  first-pass. The proposed release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
+- Control-lane focused validation passed for that workspace-only unit:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_observation_recompile.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `223 passed`
+  - `git diff --check`
+- The combined read-only release gate passed with no findings for that exact
+  four-file runtime probe runner failure-normalization adapter unit: Gate 1
+  release-unit audit passed, focused validation passed with `223 passed`,
+  Gate 2 full regression passed with `903 passed`, and Gate 3 commit-gating
+  passed.
+- Next active route is local commit sequencing for that exact four-file unit.
+  Push remains Ryan-gated after local commit creation.
+- The accepted slice adds an internal
+  runtime probe runner failure-normalization adapter in
+  `src/context_ir/runtime_probe_execution.py` and
+  `tests/test_runtime_probe_execution.py`. This route preserves the
+  strict runner-callable path while adding an explicit opt-in wrapper that
+  converts runner-raised exceptions into typed non-proof
+  `RuntimeProbeExecutionAttempt` values. It does not implement subprocess
+  execution, in-process repository probe execution, timeout enforcement,
+  family/form-specific probe logic, admission or recompile rule changes,
+  facade/MCP/package-root export, schema, eval, scoring, optimizer, compiler,
+  benchmark, or public claims.
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2229,6 +2258,14 @@ sequencing for `c1a12d7` absent new findings.
   recompile bridge release unit
 - [x] Ryan-authorized push for the runtime probe diagnostic runner-callable
   recompile bridge release unit
+- [x] Post-`74fb275` planning/control selected the internal runtime probe
+  runner failure-normalization adapter
+- [x] Runtime probe runner failure-normalization adapter implementation slice
+  accepted first-pass in workspace-only state
+- [x] Combined release gate for the exact four-file runtime probe runner
+  failure-normalization adapter release unit
+- [ ] Local commit creation for the runtime probe runner failure-normalization
+  adapter release unit
 
 ## What Is In Progress
 
@@ -3136,9 +3173,9 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded control action after the pushed
-runtime probe diagnostic runner-callable recompile bridge release. Do not
-reopen that release absent new findings.
+Immediate next route: perform local commit sequencing for the exact four-file
+internal runtime probe runner failure-normalization adapter unit. Push remains
+Ryan-gated after local commit creation.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3323,6 +3360,39 @@ Release state for the diagnostic runner-callable recompile bridge unit:
 - pushed with `origin/main` advanced through
   `f463df7 Sync runtime probe callable recompile release routing`
 - release-gate status is no-active-gate
+
+The runtime probe runner failure-normalization adapter slice is workspace-only
+accepted first-pass. It adds an opt-in internal adapter in
+`src/context_ir/runtime_probe_execution.py` that wraps a
+`RuntimeProbeRunnerCallable` so `Exception` failures raised by the runner
+become typed non-proof `RuntimeProbeExecutionAttempt` values for the matching
+`RuntimeProbeRunnerRequest`, while successful typed attempts continue through
+unchanged by object identity. The existing strict collector still propagates
+runner exceptions when no adapter is used, untyped runner returns are rejected
+rather than normalized, and `BaseException` subclasses still propagate. The
+adapter preserves request, execution-input, replay-artifact, runner-request
+identity, and runner-request batch order through existing gates, and keeps
+crash, timeout, missing-environment, and setup-failure outcomes non-proof. It
+does not implement subprocess execution, in-process repository probe
+execution, timeout enforcement, family/form-specific probe logic, admission
+rule changes, recompile rule changes, facade/MCP/package-root export, schema,
+eval, scoring, optimizer, compiler, benchmark, or public claims.
+
+Release state for the runtime probe runner failure-normalization adapter unit:
+
+- proposed release unit is exactly:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- workspace-only accepted
+- release-unit-audit-cleared
+- full-regression-cleared with `903 passed`
+- commit-gating-cleared
+- staged: no
+- locally committed: no
+- pushed: no
+- next required action: local commit creation
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate

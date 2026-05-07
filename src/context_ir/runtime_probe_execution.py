@@ -395,6 +395,39 @@ RuntimeProbeRunnerCallable: TypeAlias = Callable[
 
 
 @dataclass(frozen=True)
+class RuntimeProbeFailureNormalizingRunner:
+    """Adapter that converts runner-raised exceptions into non-proof attempts."""
+
+    runner: RuntimeProbeRunnerCallable
+    outcome: RuntimeProbeResultOutcome = RuntimeProbeResultOutcome.CRASHED
+
+    def __post_init__(self) -> None:
+        """Reject normalization outcomes that could be mistaken for proof."""
+        _validate_failure_normalization_outcome(self.outcome)
+
+    def __call__(
+        self,
+        runner_request: RuntimeProbeRunnerRequest,
+    ) -> RuntimeProbeExecutionAttempt:
+        """Run the wrapped runner and normalize raised Exceptions only."""
+        _validate_runner_request(runner_request)
+        try:
+            attempt = self.runner(runner_request)
+        except Exception as exception:
+            return _runtime_probe_failure_attempt_from_runner_exception(
+                runner_request,
+                outcome=self.outcome,
+                exception=exception,
+            )
+        if not isinstance(attempt, RuntimeProbeExecutionAttempt):
+            raise ValueError(
+                "runtime probe runner callable must return typed runtime probe "
+                "execution attempts"
+            )
+        return attempt
+
+
+@dataclass(frozen=True)
 class RuntimeProbeRunnerAttemptCollection:
     """Internal runner-callable boundary for validated probe attempts."""
 
@@ -610,6 +643,18 @@ def collect_runtime_probe_execution_attempts_from_runner_requests(
     )
 
 
+def make_failure_normalizing_runtime_probe_runner(
+    runner: RuntimeProbeRunnerCallable,
+    *,
+    outcome: RuntimeProbeResultOutcome = RuntimeProbeResultOutcome.CRASHED,
+) -> RuntimeProbeRunnerCallable:
+    """Return an opt-in adapter that normalizes runner-raised Exceptions."""
+    return RuntimeProbeFailureNormalizingRunner(
+        runner=runner,
+        outcome=outcome,
+    )
+
+
 def _materialize_runtime_probe_execution_input(
     *,
     plan_id: str,
@@ -663,6 +708,44 @@ def _runtime_probe_execution_attempt_from_runner(
             "execution attempts"
         )
     return attempt
+
+
+def _runtime_probe_failure_attempt_from_runner_exception(
+    runner_request: RuntimeProbeRunnerRequest,
+    *,
+    outcome: RuntimeProbeResultOutcome,
+    exception: Exception,
+) -> RuntimeProbeExecutionAttempt:
+    """Normalize one runner exception without stack traces or process-local data."""
+    _validate_failure_normalization_outcome(outcome)
+    exception_type = type(exception)
+    exception_type_name = exception_type.__name__
+    exception_type_label = f"{exception_type.__module__}.{exception_type_name}"
+    return RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=outcome,
+        failure_summary=(
+            "runtime probe runner raised "
+            f"{exception_type_name}; normalized as {outcome.value}"
+        ),
+        failure_detail_fields=(
+            RuntimeProbeReplayField(
+                key="failure_normalization_source",
+                value="runner_exception",
+            ),
+            RuntimeProbeReplayField(
+                key="normalized_outcome",
+                value=outcome.value,
+            ),
+            RuntimeProbeReplayField(
+                key="exception_type",
+                value=exception_type_label,
+            ),
+        ),
+    )
 
 
 def _index_execution_attempts_for_runner_request_batch(
@@ -918,6 +1001,16 @@ def _validate_runner_request(runner_request: RuntimeProbeRunnerRequest) -> None:
     )
 
 
+def _validate_failure_normalization_outcome(
+    outcome: RuntimeProbeResultOutcome,
+) -> None:
+    """Reject failure normalization outcomes that could produce runtime proof."""
+    if outcome not in _NON_PROOF_ATTEMPT_OUTCOMES:
+        raise ValueError(
+            "runtime probe failure normalization outcome must be a non-proof outcome"
+        )
+
+
 def _validate_execution_attempt(attempt: RuntimeProbeExecutionAttempt) -> None:
     """Re-check one execution attempt for tampered normalized metadata."""
     if not isinstance(attempt, RuntimeProbeExecutionAttempt):
@@ -1157,6 +1250,7 @@ __all__ = [
     "RuntimeProbeExecutionAttempt",
     "RuntimeProbeExecutionInput",
     "RuntimeProbeExecutionInputBatch",
+    "RuntimeProbeFailureNormalizingRunner",
     "RuntimeProbeRunnerAttemptCollection",
     "RuntimeProbeRunnerCallable",
     "RuntimeProbeRunnerRequest",
@@ -1164,6 +1258,7 @@ __all__ = [
     "assemble_runtime_probe_result_batch_from_execution_attempts",
     "assemble_runtime_probe_result_batch_from_runner_request_attempts",
     "collect_runtime_probe_execution_attempts_from_runner_requests",
+    "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_runner_request_batch",
     "prepare_runtime_probe_runner_requests_for_diagnostic",
