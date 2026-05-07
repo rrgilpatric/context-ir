@@ -2,6 +2,28 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Failure-Normalization Local Commit Routing
+
+- Local commit creation completed for the runtime probe runner
+  failure-normalization adapter release unit.
+- Commit:
+  - `93456b6 Normalize runtime probe runner failures`
+- Post-commit repo state:
+  - branch `main`
+  - local `HEAD` at `93456b6 Normalize runtime probe runner failures`
+  - `origin/main` at
+    `db99c05 Sync runtime probe callable recompile post-push state`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only routing sync
+  - nothing staged before this docs-only routing sync
+  - `git diff --check` clean
+- Release state:
+  - exact four-file source/contract unit is release-unit-audit-cleared,
+    full-regression-cleared, commit-gating-cleared, and locally committed
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Failure-Normalization Release Gate
 
 - Accepted the returned combined read-only release gate for the exact four-file

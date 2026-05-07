@@ -525,8 +525,10 @@ Current route:
   release-unit audit passed, focused validation passed with `223 passed`,
   Gate 2 full regression passed with `903 passed`, and Gate 3 commit-gating
   passed.
-- Next active route is local commit sequencing for that exact four-file unit.
-  Push remains Ryan-gated after local commit creation.
+- Local commit creation completed at
+  `93456b6 Normalize runtime probe runner failures`.
+- Next active route is Ryan-authorized push sequencing for local commits.
+  Push remains Ryan-gated.
 - The accepted slice adds an internal
   runtime probe runner failure-normalization adapter in
   `src/context_ir/runtime_probe_execution.py` and
@@ -2264,7 +2266,9 @@ sequencing for `c1a12d7` absent new findings.
   accepted first-pass in workspace-only state
 - [x] Combined release gate for the exact four-file runtime probe runner
   failure-normalization adapter release unit
-- [ ] Local commit creation for the runtime probe runner failure-normalization
+- [x] Local commit creation for the runtime probe runner failure-normalization
+  adapter release unit
+- [ ] Ryan-authorized push for the runtime probe runner failure-normalization
   adapter release unit
 
 ## What Is In Progress
@@ -3173,9 +3177,8 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: perform local commit sequencing for the exact four-file
-internal runtime probe runner failure-normalization adapter unit. Push remains
-Ryan-gated after local commit creation.
+Immediate next route: wait for Ryan authorization to push the local runtime
+probe runner failure-normalization adapter commits.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3390,9 +3393,9 @@ Release state for the runtime probe runner failure-normalization adapter unit:
 - full-regression-cleared with `903 passed`
 - commit-gating-cleared
 - staged: no
-- locally committed: no
+- locally committed at `93456b6 Normalize runtime probe runner failures`
 - pushed: no
-- next required action: local commit creation
+- next required action: Ryan authorization to push
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate
