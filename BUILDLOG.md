@@ -2,6 +2,30 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Failure-Normalization Push Sync
+
+- Ryan authorized pushing the runtime probe runner failure-normalization
+  adapter release after local commit creation and release-routing sync.
+- Push completed:
+  - source/contract release:
+    `93456b6 Normalize runtime probe runner failures`
+  - release-routing sync:
+    `4f13fac Sync runtime probe failure normalization routing`
+- Post-push verification:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `4f13fac Sync runtime probe failure normalization routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+  - `git diff --check` clean
+- Release state:
+  - runtime probe runner failure-normalization adapter is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `93456b6 Normalize runtime probe runner failures`
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Failure-Normalization Local Commit Routing
 
 - Local commit creation completed for the runtime probe runner

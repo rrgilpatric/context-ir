@@ -41,7 +41,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`74fb275 Compose runtime probe runner callable recompile`. Live git refs and
+`93456b6 Normalize runtime probe runner failures`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
 
@@ -509,8 +509,9 @@ Current route:
 - Ryan-authorized push completed with `origin/main` advanced through
   `f463df7 Sync runtime probe callable recompile release routing`.
 - Release-gate status is no-active-gate for `74fb275`.
-- Runtime probe runner failure-normalization adapter is workspace-only accepted
-  first-pass. The proposed release unit is exactly
+- Runtime probe runner failure-normalization adapter is pushed at
+  `93456b6 Normalize runtime probe runner failures` with no active gate. The
+  release unit is exactly
   `src/context_ir/runtime_probe_execution.py`,
   `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`.
 - Control-lane focused validation passed for that workspace-only unit:
@@ -527,8 +528,9 @@ Current route:
   passed.
 - Local commit creation completed at
   `93456b6 Normalize runtime probe runner failures`.
-- Next active route is Ryan-authorized push sequencing for local commits.
-  Push remains Ryan-gated.
+- Ryan-authorized push completed with `origin/main` advanced through
+  `4f13fac Sync runtime probe failure normalization routing`.
+- Release-gate status is no-active-gate for `93456b6`.
 - The accepted slice adds an internal
   runtime probe runner failure-normalization adapter in
   `src/context_ir/runtime_probe_execution.py` and
@@ -2268,7 +2270,7 @@ sequencing for `c1a12d7` absent new findings.
   failure-normalization adapter release unit
 - [x] Local commit creation for the runtime probe runner failure-normalization
   adapter release unit
-- [ ] Ryan-authorized push for the runtime probe runner failure-normalization
+- [x] Ryan-authorized push for the runtime probe runner failure-normalization
   adapter release unit
 
 ## What Is In Progress
@@ -3177,8 +3179,9 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the local runtime
-probe runner failure-normalization adapter commits.
+Immediate next route: select the next bounded control action after the pushed
+runtime probe runner failure-normalization adapter release. Do not reopen that
+release absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3388,14 +3391,14 @@ Release state for the runtime probe runner failure-normalization adapter unit:
   - `tests/test_runtime_probe_execution.py`
   - `PLAN.md`
   - `BUILDLOG.md`
-- workspace-only accepted
 - release-unit-audit-cleared
 - full-regression-cleared with `903 passed`
 - commit-gating-cleared
 - staged: no
 - locally committed at `93456b6 Normalize runtime probe runner failures`
-- pushed: no
-- next required action: Ryan authorization to push
+- pushed with `origin/main` advanced through
+  `4f13fac Sync runtime probe failure normalization routing`
+- release-gate status is no-active-gate
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate
