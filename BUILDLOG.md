@@ -2,6 +2,141 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Environment Context Release Gate
+
+- The combined read-only release gate returned no findings for the exact
+  four-file runtime probe runner environment context release unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `93a303d Sync runtime probe dispatch post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted gate result:
+  - Gate 1 release-unit audit passed with no findings
+  - Gate 2 full regression passed:
+    - `.venv/bin/python -m ruff check src/ tests/`
+    - `.venv/bin/python -m ruff format --check src/ tests/`
+      reporting `108 files already formatted`
+    - `.venv/bin/python -m mypy --strict src/`
+      reporting no issues in 36 source files
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+      reporting `925 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Runtime Probe Runner Environment Context Workspace Acceptance
+
+- Reviewed the returned internal runtime probe runner environment context slice
+  against the implementation spec and quality gate.
+- Findings: none.
+- Repo-backed truth during acceptance review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `93a303d Sync runtime probe dispatch post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed `RuntimeProbeLocalPythonEnvironmentContext`
+  - adds `derive_runtime_probe_local_python_environment_context(...)`
+  - revalidates the `RuntimeProbeRunnerRequest` before derivation
+  - derives repository root, working directory, and deterministic ordered
+    Python path entries from `runner_environment`
+  - preserves runner contract revision, timeout seconds, runner environment,
+    and runner assumptions needed for replay
+  - rejects missing required singleton fields, duplicate singleton metadata,
+    blank path metadata, relative path metadata, and malformed path metadata
+  - keeps exports module-local to `context_ir.runtime_probe_execution.__all__`
+    with no package-root export
+  - preserves existing runner request, dispatch, attempt, result, admission,
+    recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+    compiler, benchmark, and public-claim behavior
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `163 passed`
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Runtime Probe Runner Environment Context Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `93a303d Sync runtime probe dispatch post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `3751df1 Add runtime probe runner dispatch table`.
+- Routing decision:
+  - the next smallest runtime-probe execution-loop slice is an internal typed
+    runner-environment context
+  - this slice should parse `RuntimeProbeRunnerRequest.runner_environment`
+    replay fields into a frozen typed context that future concrete family/form
+    handlers can consume
+  - it should stay inside `src/context_ir/runtime_probe_execution.py` and
+    `tests/test_runtime_probe_execution.py`
+  - `PLAN.md` and `BUILDLOG.md` are control-lane continuity state for this
+    route and should not be edited by the implementation lane
+- Why now:
+  - runner request preparation, dispatch, attempt collection, result assembly,
+    diagnostic recompile, and failure normalization are pushed
+  - concrete probe handlers now have a dispatch boundary, but they still need a
+    stable typed repository/import-path context instead of ad hoc parsing of
+    generic replay fields
+- Alternatives rejected:
+  - concrete dynamic-import handler now: premature until the runner environment
+    has a typed local execution context
+  - actual subprocess or in-process repository probe execution: still too broad
+    for this slice and should come after the context contract
+  - timeout enforcement: requires an actual execution mechanism and should not
+    be mixed with context parsing
+  - admission or recompile rule changes: the context must stay below existing
+    result/admission/recompile gates
+  - JSON/schema/serialization, facade, MCP, package-root, eval, scoring,
+    optimizer, compiler, product, benchmark, or public-claim exposure: still
+    held
+  - reopening `3751df1` release gates: no new finding supports reopening the
+    pushed dispatch-table release
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Dispatch Push Sync
 
 - Ryan authorized pushing the runtime probe runner dispatch table release after

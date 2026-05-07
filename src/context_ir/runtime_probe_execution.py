@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
+from pathlib import PurePosixPath, PureWindowsPath
 from types import MappingProxyType
 from typing import TypeAlias
 
@@ -41,9 +42,24 @@ _NON_PROOF_ATTEMPT_OUTCOMES = frozenset(
         RuntimeProbeResultOutcome.SETUP_FAILED,
     }
 )
+_LOCAL_PYTHON_REPOSITORY_ROOT_ENVIRONMENT_KEY = "repository_root"
+_LOCAL_PYTHON_WORKING_DIRECTORY_ENVIRONMENT_KEY = "working_directory"
+_LOCAL_PYTHON_PATH_ENTRY_ENVIRONMENT_KEY = "python_path_entry"
+_LOCAL_PYTHON_REQUIRED_SINGLETON_ENVIRONMENT_KEYS = frozenset(
+    {
+        _LOCAL_PYTHON_REPOSITORY_ROOT_ENVIRONMENT_KEY,
+        _LOCAL_PYTHON_WORKING_DIRECTORY_ENVIRONMENT_KEY,
+    }
+)
+_LOCAL_PYTHON_REPEATED_ENVIRONMENT_KEYS = frozenset(
+    {
+        _LOCAL_PYTHON_PATH_ENTRY_ENVIRONMENT_KEY,
+    }
+)
 
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
 RuntimeProbeRunnerHandlerKey: TypeAlias = tuple[RuntimeProbeFamily, str]
+_LocalPythonEnvironmentParts: TypeAlias = tuple[str, str, tuple[str, ...]]
 
 
 @dataclass(frozen=True)
@@ -206,6 +222,53 @@ class RuntimeProbeRunnerRequest:
             runner_environment=self.runner_environment,
             runner_assumptions=self.runner_assumptions,
         )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonEnvironmentContext:
+    """Frozen local-Python runner environment derived from replay metadata."""
+
+    repository_root: str
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    runner_contract_revision: str
+    timeout_seconds: int
+    runner_environment: tuple[RuntimeProbeReplayField, ...]
+    runner_assumptions: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject contexts that drift from their source runner metadata."""
+        if not self.runner_contract_revision.strip():
+            raise ValueError("runner_contract_revision must be non-empty")
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        if not isinstance(self.python_path_entries, tuple):
+            raise ValueError("python_path_entries must be a tuple")
+        _validate_replay_fields(
+            self.runner_environment,
+            field_name="runner_environment",
+        )
+        _validate_replay_fields(
+            self.runner_assumptions,
+            field_name="runner_assumptions",
+        )
+        (
+            repository_root,
+            working_directory,
+            python_path_entries,
+        ) = _local_python_environment_parts_from_fields(self.runner_environment)
+        if self.repository_root != repository_root:
+            raise ValueError(
+                "local Python repository_root must match runner_environment"
+            )
+        if self.working_directory != working_directory:
+            raise ValueError(
+                "local Python working_directory must match runner_environment"
+            )
+        if self.python_path_entries != python_path_entries:
+            raise ValueError(
+                "local Python python_path_entries must match runner_environment"
+            )
 
 
 @dataclass(frozen=True)
@@ -641,6 +704,27 @@ def prepare_runtime_probe_runner_requests_for_diagnostic(
         request_plan=request_plan,
         execution_input_batch=execution_input_batch,
         runner_request_batch=runner_request_batch,
+    )
+
+
+def derive_runtime_probe_local_python_environment_context(
+    runner_request: RuntimeProbeRunnerRequest,
+) -> RuntimeProbeLocalPythonEnvironmentContext:
+    """Derive typed local-Python metadata from a validated runner request."""
+    _validate_runner_request(runner_request)
+    (
+        repository_root,
+        working_directory,
+        python_path_entries,
+    ) = _local_python_environment_parts_from_fields(runner_request.runner_environment)
+    return RuntimeProbeLocalPythonEnvironmentContext(
+        repository_root=repository_root,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+        runner_contract_revision=runner_request.runner_contract_revision,
+        timeout_seconds=runner_request.timeout_seconds,
+        runner_environment=runner_request.runner_environment,
+        runner_assumptions=runner_request.runner_assumptions,
     )
 
 
@@ -1195,6 +1279,88 @@ def _validate_execution_attempt(attempt: RuntimeProbeExecutionAttempt) -> None:
     )
 
 
+def _local_python_environment_parts_from_fields(
+    runner_environment: tuple[RuntimeProbeReplayField, ...],
+) -> _LocalPythonEnvironmentParts:
+    """Extract strict local-Python path metadata from runner environment fields."""
+    _validate_replay_fields(
+        runner_environment,
+        field_name="runner_environment",
+    )
+    singleton_values: dict[str, str] = {}
+    python_path_entries: list[str] = []
+
+    for replay_field in runner_environment:
+        if replay_field.key in _LOCAL_PYTHON_REPEATED_ENVIRONMENT_KEYS:
+            if replay_field.key == _LOCAL_PYTHON_PATH_ENTRY_ENVIRONMENT_KEY:
+                python_path_entries.append(
+                    _validate_local_python_path_metadata(
+                        replay_field.value,
+                        field_key=replay_field.key,
+                    )
+                )
+            continue
+
+        if replay_field.key in singleton_values:
+            raise ValueError(
+                f"duplicate singleton runner_environment field {replay_field.key}"
+            )
+        singleton_values[replay_field.key] = replay_field.value
+
+    repository_root = _required_local_python_singleton_path(
+        singleton_values,
+        field_key=_LOCAL_PYTHON_REPOSITORY_ROOT_ENVIRONMENT_KEY,
+    )
+    working_directory = _required_local_python_singleton_path(
+        singleton_values,
+        field_key=_LOCAL_PYTHON_WORKING_DIRECTORY_ENVIRONMENT_KEY,
+    )
+    return (repository_root, working_directory, tuple(python_path_entries))
+
+
+def _required_local_python_singleton_path(
+    singleton_values: Mapping[str, str],
+    *,
+    field_key: str,
+) -> str:
+    """Return one required singleton path after absolute-path validation."""
+    if field_key not in _LOCAL_PYTHON_REQUIRED_SINGLETON_ENVIRONMENT_KEYS:
+        raise ValueError("local Python singleton field is not required")
+    value = singleton_values.get(field_key)
+    if value is None:
+        raise ValueError(
+            f"missing required singleton runner_environment field {field_key}"
+        )
+    return _validate_local_python_path_metadata(value, field_key=field_key)
+
+
+def _validate_local_python_path_metadata(value: str, *, field_key: str) -> str:
+    """Reject blank, relative, or malformed local-Python path metadata."""
+    if not value.strip():
+        raise ValueError(
+            f"runner_environment field {field_key} path metadata must be non-empty"
+        )
+    if value != value.strip() or _contains_control_character(value):
+        raise ValueError(
+            f"runner_environment field {field_key} path metadata is malformed"
+        )
+    if not _is_absolute_path_metadata(value):
+        raise ValueError(
+            f"runner_environment field {field_key} path metadata must be absolute"
+        )
+    return value
+
+
+def _contains_control_character(value: str) -> bool:
+    """Return whether a metadata value contains path-breaking control characters."""
+    return any(ord(character) < 32 or ord(character) == 127 for character in value)
+
+
+def _is_absolute_path_metadata(value: str) -> bool:
+    """Return whether a path string is absolute on supported path syntaxes."""
+    return PurePosixPath(value).is_absolute() or PureWindowsPath(value).is_absolute()
+
+
 def _validate_runner_handoff_metadata(
     *,
     runner_contract_revision: str,
@@ -1419,6 +1585,7 @@ __all__ = [
     "RuntimeProbeExecutionInput",
     "RuntimeProbeExecutionInputBatch",
     "RuntimeProbeFailureNormalizingRunner",
+    "RuntimeProbeLocalPythonEnvironmentContext",
     "RuntimeProbeRunnerHandlerEntry",
     "RuntimeProbeRunnerHandlerKey",
     "RuntimeProbeRunnerAttemptCollection",
@@ -1428,6 +1595,7 @@ __all__ = [
     "assemble_runtime_probe_result_batch_from_execution_attempts",
     "assemble_runtime_probe_result_batch_from_runner_request_attempts",
     "collect_runtime_probe_execution_attempts_from_runner_requests",
+    "derive_runtime_probe_local_python_environment_context",
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",

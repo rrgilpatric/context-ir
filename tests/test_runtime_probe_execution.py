@@ -235,6 +235,22 @@ def _runner_assumptions() -> tuple[runtime_probe_results.RuntimeProbeReplayField
     )
 
 
+def _local_python_runner_environment() -> tuple[
+    runtime_probe_results.RuntimeProbeReplayField,
+    ...,
+]:
+    """Return local-Python environment fields for context derivation tests."""
+    return (
+        _field("python_version", "3.11"),
+        _field("repository_root", "/workspace/context-ir"),
+        _field("platform", "linux-x86_64"),
+        _field("python_path_entry", "/workspace/context-ir/src"),
+        _field("working_directory", "/workspace/context-ir"),
+        _field("python_path_entry", "/workspace/context-ir/tests/fixtures"),
+        _field("python_path_entry", "/opt/context-ir/support"),
+    )
+
+
 def _runner_request_batch(
     input_batch: runtime_probe_execution.RuntimeProbeExecutionInputBatch,
 ) -> runtime_probe_execution.RuntimeProbeRunnerRequestBatch:
@@ -246,6 +262,30 @@ def _runner_request_batch(
         runner_environment=_runner_environment(),
         runner_assumptions=_runner_assumptions(),
     )
+
+
+def _local_python_runner_request(
+    runner_environment: tuple[
+        runtime_probe_results.RuntimeProbeReplayField,
+        ...,
+    ]
+    | None = None,
+) -> runtime_probe_execution.RuntimeProbeRunnerRequest:
+    """Return one runner request carrying local-Python environment metadata."""
+    runner_batch = (
+        runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
+            _materialized_batch(_plan(_request())),
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=(
+                _local_python_runner_environment()
+                if runner_environment is None
+                else runner_environment
+            ),
+            runner_assumptions=_runner_assumptions(),
+        )
+    )
+    return runner_batch.runner_requests[0]
 
 
 def _diagnostic_for_plan(
@@ -545,6 +585,122 @@ def test_materialize_runtime_probe_runner_requests_preserves_order_and_identitie
         assert runner_request.timeout_seconds == 30
         assert runner_request.runner_environment == runner_environment
         assert runner_request.runner_assumptions == runner_assumptions
+
+
+def test_derive_local_python_environment_context_preserves_runner_metadata() -> None:
+    """Local-Python context derivation preserves path order and replay metadata."""
+    runner_request = _local_python_runner_request()
+
+    context = (
+        runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
+            runner_request
+        )
+    )
+
+    assert isinstance(
+        context,
+        runtime_probe_execution.RuntimeProbeLocalPythonEnvironmentContext,
+    )
+    assert context.repository_root == "/workspace/context-ir"
+    assert context.working_directory == "/workspace/context-ir"
+    assert context.python_path_entries == (
+        "/workspace/context-ir/src",
+        "/workspace/context-ir/tests/fixtures",
+        "/opt/context-ir/support",
+    )
+    assert context.runner_contract_revision == (runner_request.runner_contract_revision)
+    assert context.timeout_seconds == runner_request.timeout_seconds
+    assert context.runner_environment is runner_request.runner_environment
+    assert context.runner_assumptions is runner_request.runner_assumptions
+
+    with pytest.raises(FrozenInstanceError):
+        context.repository_root = "/tmp/context-ir"
+
+
+def test_derive_local_python_environment_context_revalidates_runner_request() -> None:
+    """Context derivation rejects runner requests that drift after construction."""
+    runner_request = _local_python_runner_request()
+    object.__setattr__(runner_request, "request_id", "runtime_probe:wrong")
+
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
+            runner_request
+        )
+
+
+@pytest.mark.parametrize(
+    ("runner_environment", "error_match"),
+    (
+        (
+            tuple(
+                field
+                for field in _local_python_runner_environment()
+                if field.key != "repository_root"
+            ),
+            "repository_root",
+        ),
+        (
+            tuple(
+                field
+                for field in _local_python_runner_environment()
+                if field.key != "working_directory"
+            ),
+            "working_directory",
+        ),
+        (
+            _local_python_runner_environment()
+            + (_field("repository_root", "/workspace/other"),),
+            "duplicate singleton",
+        ),
+        (
+            _local_python_runner_environment() + (_field("platform", "darwin-arm64"),),
+            "duplicate singleton",
+        ),
+    ),
+)
+def test_derive_local_python_environment_context_rejects_singleton_metadata_drift(
+    runner_environment: tuple[runtime_probe_results.RuntimeProbeReplayField, ...],
+    error_match: str,
+) -> None:
+    """Local-Python context derivation requires unique singleton metadata."""
+    runner_request = _local_python_runner_request(
+        runner_environment=runner_environment,
+    )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
+            runner_request
+        )
+
+
+@pytest.mark.parametrize(
+    ("field_key", "bad_value", "error_match"),
+    (
+        ("repository_root", " ", "runner_environment"),
+        ("repository_root", "workspace/context-ir", "absolute"),
+        ("working_directory", "workspace/context-ir", "absolute"),
+        ("python_path_entry", "src", "absolute"),
+        ("python_path_entry", "/workspace/context-ir/src\nbad", "malformed"),
+        ("working_directory", " /workspace/context-ir", "malformed"),
+        ("repository_root", "/workspace/context-ir\x00bad", "malformed"),
+    ),
+)
+def test_derive_local_python_environment_context_rejects_bad_path_metadata(
+    field_key: str,
+    bad_value: str,
+    error_match: str,
+) -> None:
+    """Local-Python path metadata must be non-blank, absolute, and parseable."""
+    runner_request = _local_python_runner_request()
+    field = next(
+        field for field in runner_request.runner_environment if field.key == field_key
+    )
+    object.__setattr__(field, "value", bad_value)
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
+            runner_request
+        )
 
 
 def test_prepare_runtime_probe_runner_requests_for_diagnostic_preserves_boundary() -> (
@@ -2283,6 +2439,11 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     normalizing_runner = runtime_probe_execution.RuntimeProbeFailureNormalizingRunner(
         runner=runner,
     )
+    local_python_context = (
+        runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
+            _local_python_runner_request()
+        )
+    )
 
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
@@ -2308,6 +2469,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         dispatching_runner.missing_handler_outcome = (
             runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT
         )
+    with pytest.raises(FrozenInstanceError):
+        local_python_context.working_directory = "/tmp/context-ir"
 
     assert (
         "RuntimeProbeDiagnosticRunnerRequestPreparation"
@@ -2318,6 +2481,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionInput" in runtime_probe_execution.__all__
     assert "RuntimeProbeExecutionInputBatch" in runtime_probe_execution.__all__
     assert "RuntimeProbeFailureNormalizingRunner" in runtime_probe_execution.__all__
+    assert (
+        "RuntimeProbeLocalPythonEnvironmentContext" in runtime_probe_execution.__all__
+    )
     assert "RuntimeProbeRunnerHandlerEntry" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerHandlerKey" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerAttemptCollection" in runtime_probe_execution.__all__
@@ -2331,6 +2497,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         runtime_probe_execution.__all__
     )
     assert "collect_runtime_probe_execution_attempts_from_runner_requests" in (
+        runtime_probe_execution.__all__
+    )
+    assert "derive_runtime_probe_local_python_environment_context" in (
         runtime_probe_execution.__all__
     )
     assert "make_dispatching_runtime_probe_runner" in runtime_probe_execution.__all__
@@ -2352,6 +2521,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionInput" not in context_ir.__all__
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
     assert "RuntimeProbeFailureNormalizingRunner" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonEnvironmentContext" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerEntry" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerKey" not in context_ir.__all__
     assert "RuntimeProbeRunnerAttemptCollection" not in context_ir.__all__
@@ -2368,6 +2538,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         "collect_runtime_probe_execution_attempts_from_runner_requests"
         not in context_ir.__all__
     )
+    assert "derive_runtime_probe_local_python_environment_context" not in (
+        context_ir.__all__
+    )
     assert "make_dispatching_runtime_probe_runner" not in context_ir.__all__
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
@@ -2381,6 +2554,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeExecutionInput")
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
     assert not hasattr(context_ir, "RuntimeProbeFailureNormalizingRunner")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonEnvironmentContext")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerEntry")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerKey")
     assert not hasattr(context_ir, "RuntimeProbeRunnerAttemptCollection")
@@ -2398,6 +2572,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "collect_runtime_probe_execution_attempts_from_runner_requests",
+    )
+    assert not hasattr(
+        context_ir,
+        "derive_runtime_probe_local_python_environment_context",
     )
     assert not hasattr(
         context_ir,

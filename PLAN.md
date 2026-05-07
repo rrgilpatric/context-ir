@@ -41,7 +41,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`93456b6 Normalize runtime probe runner failures`. Live git refs and
+`3751df1 Add runtime probe runner dispatch table`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
 
@@ -559,9 +559,26 @@ Current route:
 - Ryan-authorized push completed with `origin/main` advanced through
   `d7fe447 Sync runtime probe dispatch routing`.
 - Release-gate status is no-active-gate for `3751df1`.
-- Next active route is selecting the next bounded control action after the
-  pushed runtime probe runner dispatch table release. Do not reopen the
-  dispatch table release absent new findings.
+- Runtime probe runner environment context implementation slice is accepted
+  first-pass in workspace-only state. It adds a frozen typed local Python
+  environment context and derivation helper in
+  `src/context_ir/runtime_probe_execution.py`, with focused tests in
+  `tests/test_runtime_probe_execution.py`. Focused control-lane validation
+  passed with `163 passed`.
+- Proposed release unit is exactly:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state for the environment context unit:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `925 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2302,6 +2319,14 @@ sequencing for `c1a12d7` absent new findings.
   release unit
 - [x] Ryan-authorized push for the runtime probe runner dispatch table release
   unit
+- [x] Post-`3751df1` planning/control selected the internal runtime probe
+  runner environment context
+- [x] Runtime probe runner environment context implementation slice accepted
+  first-pass in workspace-only state
+- [x] Combined release gate for the exact four-file runtime probe runner
+  environment context release unit
+- [ ] Local commit creation for the runtime probe runner environment context
+  release unit
 
 ## What Is In Progress
 
@@ -3209,9 +3234,9 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded control action after the pushed
-runtime probe runner dispatch table release. Do not reopen the pushed dispatch
-table or failure-normalization adapter releases absent new findings.
+Immediate next route: create the local commit for the exact four-file runtime
+probe runner environment context release unit. Do not reopen the pushed
+dispatch table or failure-normalization adapter releases absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3467,7 +3492,45 @@ Release state for the runtime probe runner dispatch table unit:
 - pushed with `origin/main` advanced through
   `d7fe447 Sync runtime probe dispatch routing`
 - release-gate status is no-active-gate
-- next route: select the next bounded control action after the pushed release
+- next route: internal runtime probe runner environment context implementation
+  slice
+
+The runtime probe runner environment context slice is accepted first-pass in
+workspace-only state. Proposed release unit:
+
+- `src/context_ir/runtime_probe_execution.py`
+- `tests/test_runtime_probe_execution.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The slice adds a frozen typed `RuntimeProbeLocalPythonEnvironmentContext` and
+`derive_runtime_probe_local_python_environment_context(...)` in
+`src/context_ir/runtime_probe_execution.py`. It revalidates
+`RuntimeProbeRunnerRequest` before deriving the context, parses
+`runner_environment` into repository root, working directory, and ordered
+Python path entries, preserves runner contract revision, timeout seconds,
+runner environment, and runner assumptions for replay, and rejects missing
+required singleton fields, duplicate singleton metadata, blank path metadata,
+relative path metadata, and malformed path metadata. The context remains
+module-local through `context_ir.runtime_probe_execution.__all__`, with no
+package-root export.
+
+Release state for the runtime probe runner environment context unit:
+
+- accepted in workspace: yes, first-pass
+- focused validation: passed with `163 passed`
+- release-unit-audit-cleared: yes, no findings
+- full-regression-cleared: yes, full pytest `925 passed`
+- commit-gating-cleared: yes
+- staged: no
+- locally committed: no
+- pushed: no
+- next route: local commit creation for the exact four-file unit
+
+The slice does not inspect the filesystem, import modules, execute repository
+code, spawn subprocesses, enforce timeouts, generate observed attempts, change
+dispatch behavior, admission, recompile, facade/MCP/package-root export,
+schema, eval, scoring, optimizer, compiler, benchmark, or public claims.
 
 The runtime probe result-batch recompile tranche is pushed at
 `591c09b Compose runtime probe result batch recompile` and has release-gate
