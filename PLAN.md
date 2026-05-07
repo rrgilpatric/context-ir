@@ -576,9 +576,10 @@ Current route:
   - full-regression-cleared: yes, full pytest `925 passed`
   - commit-gating-cleared: yes
   - staged: no
-  - locally committed: no
+  - locally committed at `f75196e Add runtime probe runner environment context`
   - pushed: no
-  - next route: local commit creation for the exact four-file unit
+  - next route: await explicit Ryan authorization to push the local release
+    and continuity-sync commits
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2325,7 +2326,9 @@ sequencing for `c1a12d7` absent new findings.
   first-pass in workspace-only state
 - [x] Combined release gate for the exact four-file runtime probe runner
   environment context release unit
-- [ ] Local commit creation for the runtime probe runner environment context
+- [x] Local commit creation for the runtime probe runner environment context
+  release unit
+- [ ] Ryan-authorized push for the runtime probe runner environment context
   release unit
 
 ## What Is In Progress
@@ -3234,9 +3237,10 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file runtime
-probe runner environment context release unit. Do not reopen the pushed
-dispatch table or failure-normalization adapter releases absent new findings.
+Immediate next route: await explicit Ryan authorization to push the local
+runtime probe runner environment context release and continuity-sync commits.
+Do not reopen the pushed dispatch table or failure-normalization adapter
+releases absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3523,9 +3527,10 @@ Release state for the runtime probe runner environment context unit:
 - full-regression-cleared: yes, full pytest `925 passed`
 - commit-gating-cleared: yes
 - staged: no
-- locally committed: no
+- locally committed at `f75196e Add runtime probe runner environment context`
 - pushed: no
-- next route: local commit creation for the exact four-file unit
+- next route: await explicit Ryan authorization to push the local release and
+  continuity-sync commits
 
 The slice does not inspect the filesystem, import modules, execute repository
 code, spawn subprocesses, enforce timeouts, generate observed attempts, change

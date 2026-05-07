@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Environment Context Local Commit Routing
+
+- The combined read-only release gate returned no findings for the exact
+  four-file runtime probe runner environment context release unit.
+- Control-lane verification before staging matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `93a303d Sync runtime probe dispatch post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged before local commit creation
+  - no untracked files
+  - `git diff --check` clean
+- Accepted gate result:
+  - Gate 1 release-unit audit passed with no findings
+  - Gate 2 full regression passed with full pytest reporting `925 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- Local commit creation completed:
+  - `f75196e Add runtime probe runner environment context`
+- Release state:
+  - exact four-file release unit is locally committed
+  - `origin/main` remains at
+    `93a303d Sync runtime probe dispatch post-push state`
+  - pushed: no
+  - push remains Ryan-gated
+  - next route: await explicit Ryan authorization to push the local release
+    and continuity-sync commits
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Environment Context Release Gate
 
 - The combined read-only release gate returned no findings for the exact
