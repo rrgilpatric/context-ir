@@ -2,6 +2,32 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Runtime Probe Runner Environment Context Push Sync
+
+- Ryan authorized pushing the runtime probe runner environment context release
+  after local commit creation and release-routing sync.
+- Push completed:
+  - source/contract release:
+    `f75196e Add runtime probe runner environment context`
+  - release-routing sync:
+    `646298b Sync runtime probe environment context local routing`
+- Post-push verification:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `646298b Sync runtime probe environment context local routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+  - `git diff --check` clean
+- Release state:
+  - runtime probe runner environment context release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `f75196e Add runtime probe runner environment context`
+  - next route is selecting the next bounded control action after the pushed
+    release
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Environment Context Local Commit Routing
 
 - The combined read-only release gate returned no findings for the exact

@@ -41,7 +41,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`3751df1 Add runtime probe runner dispatch table`. Live git refs and
+`f75196e Add runtime probe runner environment context`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
 
@@ -577,9 +577,10 @@ Current route:
   - commit-gating-cleared: yes
   - staged: no
   - locally committed at `f75196e Add runtime probe runner environment context`
-  - pushed: no
-  - next route: await explicit Ryan authorization to push the local release
-    and continuity-sync commits
+  - pushed with `origin/main` advanced through
+    `646298b Sync runtime probe environment context local routing`
+  - release-gate status is no-active-gate
+  - next route: select the next bounded control action after the pushed release
 - Do not route `591c09b`, `ccd417a`, `eb6def0`, `8ac3b46`, `b279b00`,
   `74aadd7`, `95f7545`,
   `35c440d`, `f5c8df0`, `8706f2e`, `b0a5ec5`, `6d5fc47`, `fce09b0`,
@@ -2328,8 +2329,9 @@ sequencing for `c1a12d7` absent new findings.
   environment context release unit
 - [x] Local commit creation for the runtime probe runner environment context
   release unit
-- [ ] Ryan-authorized push for the runtime probe runner environment context
+- [x] Ryan-authorized push for the runtime probe runner environment context
   release unit
+- [ ] Post-`f75196e` planning/control selects the next bounded action
 
 ## What Is In Progress
 
@@ -3237,10 +3239,10 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: await explicit Ryan authorization to push the local
-runtime probe runner environment context release and continuity-sync commits.
-Do not reopen the pushed dispatch table or failure-normalization adapter
-releases absent new findings.
+Immediate next route: select the next bounded control action after the pushed
+runtime probe runner environment context release. Do not reopen the pushed
+environment context, dispatch table, or failure-normalization adapter releases
+absent new findings.
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
@@ -3528,9 +3530,10 @@ Release state for the runtime probe runner environment context unit:
 - commit-gating-cleared: yes
 - staged: no
 - locally committed at `f75196e Add runtime probe runner environment context`
-- pushed: no
-- next route: await explicit Ryan authorization to push the local release and
-  continuity-sync commits
+- pushed with `origin/main` advanced through
+  `646298b Sync runtime probe environment context local routing`
+- release-gate status is no-active-gate
+- next route: select the next bounded control action after the pushed release
 
 The slice does not inspect the filesystem, import modules, execute repository
 code, spawn subprocesses, enforce timeouts, generate observed attempts, change
