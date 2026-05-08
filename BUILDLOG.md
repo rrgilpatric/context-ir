@@ -2,6 +2,30 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Push Sync
+
+- Ryan authorized pushing the local Python subprocess non-proof attempt
+  normalization release after local source/contract commit creation and
+  release-routing sync.
+- Push completed with `origin/main` advanced through:
+  - `5b10728 Normalize local Python subprocess failures`
+  - `c471fd1 Sync local Python failure normalization release routing`
+- Post-push verification before this docs-only post-push sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `c471fd1 Sync local Python failure normalization release routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+- Release state:
+  - local Python subprocess non-proof attempt normalization release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `5b10728 Normalize local Python subprocess failures`
+  - next route is selecting the next bounded control action after the pushed
+    release
+- Acceptance status: 2 corrections
+
 ## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Local Commit Routing
 
 - Local commit creation completed for the exact four-file local Python

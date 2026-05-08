@@ -41,9 +41,50 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`d0a009b Execute local Python subprocess invocations`. Live git refs and
+`5b10728 Normalize local Python subprocess failures`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python subprocess non-proof attempt normalization release:
+
+- module-local helpers convert local Python subprocess failure facts into typed
+  non-proof `RuntimeProbeExecutionAttempt` values
+- `subprocess.TimeoutExpired` maps to `TIMED_OUT`
+- other local subprocess execution exceptions map to sanitized `CRASHED`
+  attempts
+- nonzero `RuntimeProbeLocalPythonProcessCompletion.returncode` maps to a
+  non-proof attempt, defaulting to `CRASHED`
+- configured non-proof outcomes for nonzero completions are supported
+- `RuntimeProbeResultOutcome.OBSERVED` is rejected at this helper boundary
+- zero-returncode completions reject as deferred
+- invocation and completion contracts are revalidated before attempt
+  materialization
+- produced attempts preserve runner request, request object, and execution
+  input identity, and intentionally do not carry invocation or completion
+  object identity
+- failure summary/detail fields are deterministic and do not leak raw stdout,
+  stderr, traceback text, temporary paths, PIDs, or process-local data
+- raw executor behavior remains unchanged and still returns raw completions
+  while propagating subprocess exceptions
+- the release does not parse stdout/stderr, synthesize observed results,
+  implement family/form handlers, register handlers, or change admission,
+  recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+  compiler, docs, or public claims
+- implementation review accepted the slice after one implementation correction
+  and one continuity/spec correction
+- combined read-only release gate rerun passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `961 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `5b10728 Normalize local Python subprocess failures`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `c471fd1 Sync local Python failure normalization release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `5b10728`
 
 Local Python raw subprocess execution boundary release:
 
@@ -2490,8 +2531,9 @@ sequencing for `c1a12d7` absent new findings.
   subprocess non-proof attempt normalization release unit
 - [x] Local commit creation for the local Python subprocess non-proof attempt
   normalization release unit
-- [ ] Ryan-authorized push for the local Python subprocess non-proof attempt
+- [x] Ryan-authorized push for the local Python subprocess non-proof attempt
   normalization release unit
+- [ ] Post-`5b10728` planning/control selects the next bounded control action
 
 ## What Is In Progress
 
@@ -3399,17 +3441,15 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: await explicit Ryan authorization to push the local
-Python subprocess non-proof attempt normalization release and continuity-sync
-commits. The current pushed source/contract release remains
-`d0a009b Execute local Python subprocess invocations`, with post-push sync
-pushed through `af9a685 Sync local Python subprocess execution post-push
-state`. The local unpushed source/contract commit is
-`5b10728 Normalize local Python subprocess failures`. Release-gate status is
-no-active-gate for `d0a009b`; the local non-proof attempt normalization
-release is commit-ready and locally committed, but not pushed. Do not reopen
-the pushed subprocess execution, completion, invocation, environment context,
-dispatch table, or prior failure-normalization releases absent new findings.
+Immediate next route: select the next bounded control action after the pushed
+local Python subprocess non-proof attempt normalization release. The current
+pushed source/contract release is
+`5b10728 Normalize local Python subprocess failures`, with release routing
+pushed through `c471fd1 Sync local Python failure normalization release
+routing`. Release-gate status is no-active-gate for `5b10728`. Do not reopen
+the pushed failure normalization, subprocess execution, completion,
+invocation, environment context, dispatch table, or prior
+failure-normalization releases absent new findings.
 
 Proposed release unit:
 
@@ -3474,9 +3514,8 @@ attempt normalization unit:
 - commit-gating-cleared: yes
 - staged: yes, then committed
 - locally committed: yes, `5b10728`
-- pushed: no
-- next route: await explicit Ryan authorization to push the local release and
-  continuity-sync commits
+- pushed: yes, with `origin/main` advanced through `c471fd1`
+- next route: select the next bounded control action after the pushed release
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
