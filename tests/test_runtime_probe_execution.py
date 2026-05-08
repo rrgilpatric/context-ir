@@ -24,6 +24,8 @@ from context_ir.runtime_probe_execution import (
     collect_runtime_probe_execution_attempts_from_runner_requests,
     execute_runtime_probe_local_python_subprocess_invocation,
     materialize_runtime_probe_local_python_process_completion,
+    materialize_runtime_probe_local_python_process_completion_attempt,
+    materialize_runtime_probe_local_python_subprocess_exception_attempt,
     materialize_runtime_probe_local_python_subprocess_invocation,
 )
 from context_ir.semantic_types import (
@@ -1156,6 +1158,228 @@ def test_execute_local_python_subprocess_invocation_propagates_timeout(
                 "runtime-probe-local-python-process-completion:test.1"
             ),
         )
+
+
+def test_materialize_local_python_timeout_attempt_is_sanitized() -> None:
+    """Timeout exceptions become deterministic non-proof attempts without raw data."""
+    invocation = _local_python_subprocess_invocation()
+    exception = subprocess.TimeoutExpired(
+        cmd=invocation.argv,
+        timeout=invocation.timeout_seconds,
+        output="raw stdout proof payload /private/tmp/runtime-probe",
+        stderr="raw stderr traceback pid=12345",
+    )
+
+    attempt = materialize_runtime_probe_local_python_subprocess_exception_attempt(
+        invocation,
+        exception,
+    )
+
+    runner_request = invocation.runner_request
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary == (
+        "local Python subprocess timed out; recorded as timed_out"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_subprocess_timeout"),
+        _field("normalized_outcome", "timed_out"),
+        _field("exception_type", "subprocess.TimeoutExpired"),
+        _field("timeout_seconds", str(invocation.timeout_seconds)),
+    )
+    failure_text = "\n".join(
+        (
+            attempt.failure_summary,
+            *(field.value for field in attempt.failure_detail_fields),
+        )
+    )
+    assert "raw stdout" not in failure_text
+    assert "raw stderr" not in failure_text
+    assert "/private/tmp" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "traceback" not in failure_text
+    assert invocation.working_directory not in failure_text
+
+
+def test_materialize_local_python_exception_attempt_is_sanitized() -> None:
+    """Generic local subprocess exceptions default to sanitized crashed attempts."""
+    invocation = _local_python_subprocess_invocation()
+    exception = RuntimeError(
+        "raw stderr traceback pid=12345 from /private/tmp/runtime-probe"
+    )
+
+    attempt = materialize_runtime_probe_local_python_subprocess_exception_attempt(
+        invocation,
+        exception,
+    )
+
+    runner_request = invocation.runner_request
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary == (
+        "local Python subprocess raised RuntimeError; recorded as crashed"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_subprocess_exception"),
+        _field("normalized_outcome", "crashed"),
+        _field("exception_type", "builtins.RuntimeError"),
+    )
+    failure_text = "\n".join(
+        (
+            attempt.failure_summary,
+            *(field.value for field in attempt.failure_detail_fields),
+        )
+    )
+    assert "raw stderr" not in failure_text
+    assert "traceback" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "/private/tmp" not in failure_text
+    assert invocation.working_directory not in failure_text
+
+
+def test_materialize_nonzero_local_python_completion_attempt_is_non_proof() -> None:
+    """Nonzero completions become non-proof attempts without parsing raw output."""
+    completion = _local_python_process_completion(
+        returncode=17,
+        stdout_text='{"observed_module":"plugins.weather"}\n',
+        stderr_text="Traceback raw stderr pid=12345 /private/tmp/runtime-probe\n",
+    )
+
+    attempt = materialize_runtime_probe_local_python_process_completion_attempt(
+        completion
+    )
+
+    runner_request = completion.invocation.runner_request
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary == (
+        "local Python subprocess exited with returncode 17; recorded as crashed"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_process_completion"),
+        _field("normalized_outcome", "crashed"),
+        _field("returncode", "17"),
+    )
+    result_batch = _assemble_result_batch(
+        runtime_probe_execution.RuntimeProbeExecutionInputBatch(
+            plan_id=runner_request.plan_id,
+            request_ids=(runner_request.request_id,),
+            inputs=(runner_request.execution_input,),
+        ),
+        (attempt,),
+    )
+    result = result_batch.results[0]
+    assert isinstance(result, runtime_probe_results.RuntimeProbeNonProofResult)
+    assert result.is_admissible_runtime_backed_proof is False
+
+    failure_text = "\n".join(
+        (
+            attempt.failure_summary,
+            *(field.value for field in attempt.failure_detail_fields),
+        )
+    )
+    assert "observed_module" not in failure_text
+    assert "raw stderr" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "/private/tmp" not in failure_text
+    assert completion.stdout_text not in failure_text
+    assert completion.stderr_text not in failure_text
+
+
+def test_nonzero_local_python_completion_attempt_supports_configured_outcome() -> None:
+    """Nonzero completions can be mapped to a configured non-proof outcome."""
+    setup_failed = runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    completion = _local_python_process_completion(
+        returncode=64,
+        stdout_text='{"observed_module":"plugins.weather"}\n',
+        stderr_text="missing setup variable from raw stderr\n",
+    )
+
+    attempt = materialize_runtime_probe_local_python_process_completion_attempt(
+        completion,
+        outcome=setup_failed,
+    )
+
+    runner_request = completion.invocation.runner_request
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.outcome is setup_failed
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary == (
+        "local Python subprocess exited with returncode 64; recorded as setup_failed"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_process_completion"),
+        _field("normalized_outcome", "setup_failed"),
+        _field("returncode", "64"),
+    )
+
+
+def test_nonzero_local_python_completion_attempt_rejects_observed_outcome() -> None:
+    """Nonzero completion failure materialization cannot produce proof outcomes."""
+    completion = _local_python_process_completion(returncode=17)
+
+    with pytest.raises(ValueError, match="non-proof outcome"):
+        materialize_runtime_probe_local_python_process_completion_attempt(
+            completion,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+        )
+
+
+def test_materialize_zero_returncode_completion_attempt_rejects_deferred_success() -> (
+    None
+):
+    """Zero-returncode completions are not interpreted by the failure boundary."""
+    completion = _local_python_process_completion(
+        returncode=0,
+        stdout_text='{"observed_module":"plugins.weather"}\n',
+        stderr_text="",
+    )
+
+    with pytest.raises(ValueError, match="deferred"):
+        materialize_runtime_probe_local_python_process_completion_attempt(completion)
+
+
+def test_materialize_local_python_failure_attempts_revalidate_carried_contracts() -> (
+    None
+):
+    """Local-Python failure materializers revalidate carried request contracts."""
+    invocation = _local_python_subprocess_invocation()
+    object.__setattr__(
+        invocation.runner_request,
+        "plan_id",
+        "runtime_probe_request_plan:wrong",
+    )
+
+    with pytest.raises(ValueError, match="plan_id"):
+        materialize_runtime_probe_local_python_subprocess_exception_attempt(
+            invocation,
+            RuntimeError("local failure"),
+        )
+
+    completion = _local_python_process_completion(returncode=5)
+    object.__setattr__(completion, "returncode", True)
+
+    with pytest.raises(ValueError, match="returncode"):
+        materialize_runtime_probe_local_python_process_completion_attempt(completion)
 
 
 @pytest.mark.parametrize(
@@ -3195,7 +3419,13 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_execution_input_batch" in (
         runtime_probe_execution.__all__
     )
+    assert "materialize_runtime_probe_local_python_process_completion_attempt" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_local_python_process_completion" in (
+        runtime_probe_execution.__all__
+    )
+    assert "materialize_runtime_probe_local_python_subprocess_exception_attempt" in (
         runtime_probe_execution.__all__
     )
     assert "materialize_runtime_probe_local_python_subprocess_invocation" in (
@@ -3243,7 +3473,15 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert (
+        "materialize_runtime_probe_local_python_process_completion_attempt"
+        not in context_ir.__all__
+    )
+    assert (
         "materialize_runtime_probe_local_python_subprocess_invocation"
+        not in context_ir.__all__
+    )
+    assert (
+        "materialize_runtime_probe_local_python_subprocess_exception_attempt"
         not in context_ir.__all__
     )
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
@@ -3300,7 +3538,15 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "materialize_runtime_probe_execution_input_batch")
     assert not hasattr(
         context_ir,
+        "materialize_runtime_probe_local_python_process_completion_attempt",
+    )
+    assert not hasattr(
+        context_ir,
         "materialize_runtime_probe_local_python_process_completion",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_local_python_subprocess_exception_attempt",
     )
     assert not hasattr(
         context_ir,

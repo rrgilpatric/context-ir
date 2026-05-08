@@ -2,6 +2,328 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Release Gate
+
+- The combined read-only release gate rerun returned no findings for the exact
+  four-file local Python subprocess non-proof attempt normalization release
+  unit.
+- Gate 1 release-unit audit passed:
+  - scope stayed within the accepted four-file unit
+  - raw executor behavior was not widened
+  - public/API/MCP/package-root/schema/eval/scoring/compiler/docs/public claim
+    surfaces were not widened
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+    reporting `108 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    reporting `961 passed`
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, after 1 implementation correction and 1
+    continuity/spec correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `961 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: 2 corrections
+
+## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Identity Claim Correction
+
+- Ryan authorized correcting the release-gate identity overclaim finding.
+- Correction applied as continuity/spec wording only; no source or test
+  behavior was changed.
+- Corrected active contract:
+  - timeout, exception, and nonzero-completion materializers revalidate their
+    carried invocation and completion contracts before producing attempts
+  - produced `RuntimeProbeExecutionAttempt` values preserve runner request,
+    request object, and execution input identity
+  - produced attempts do not carry invocation or completion object identity,
+    because `RuntimeProbeExecutionAttempt` has no such fields and this slice
+    does not widen that source contract
+- Repo-backed truth during correction:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean before correction
+- Release state:
+  - accepted in workspace: yes, after 1 implementation correction and 1
+    continuity/spec correction
+  - release-unit-audit-cleared: no, rerun required
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: rerun the combined read-only release gate over the exact
+    four-file unit
+- Acceptance status: 2 corrections
+
+## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Release-Gate Finding
+
+- Reviewed the returned combined read-only release-gate result for the local
+  Python subprocess non-proof attempt normalization release unit.
+- Gate 1 finding accepted as valid:
+  - the then-active continuity wording overclaimed identity preservation across
+    runner request, request object, execution input, invocation, and completion
+  - `RuntimeProbeExecutionAttempt` only carries `plan_id`, `request_id`,
+    `request`, and `execution_input`
+  - the new timeout, exception, and nonzero-completion materializers validate
+    invocation/completion contracts before attempt materialization, but the
+    resulting attempt does not preserve invocation or completion object
+    identity
+  - therefore the release-unit claim/spec is broader than the implemented
+    attempt contract
+- Repo-backed truth during gate-finding review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Recommendation:
+  - fix now with a narrow continuity/spec correction
+  - revise active `PLAN.md` and `BUILDLOG.md` wording to say the helpers
+    revalidate invocation/completion contracts and preserve runner request,
+    request object, and execution input identity in the produced attempt
+  - do not widen `RuntimeProbeExecutionAttempt` to carry invocation or
+    completion identity in this slice; that would expand the source contract
+    beyond the intended non-proof failure-normalization boundary
+- Release state:
+  - accepted in workspace: held pending Ryan decision on this finding
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Acceptance status: held
+
+## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Workspace Acceptance
+
+- Reviewed the narrow correction for the local Python subprocess non-proof
+  attempt normalization slice against the held test-coverage finding.
+- Findings after correction: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - module-local helpers convert local Python subprocess failure facts into
+    typed non-proof `RuntimeProbeExecutionAttempt` values
+  - `subprocess.TimeoutExpired` maps to `TIMED_OUT`
+  - other local subprocess execution exceptions map to sanitized `CRASHED`
+    attempts
+  - nonzero `RuntimeProbeLocalPythonProcessCompletion.returncode` maps to a
+    non-proof attempt, defaulting to `CRASHED`
+  - configured non-proof outcomes for nonzero completions are supported
+  - `RuntimeProbeResultOutcome.OBSERVED` is rejected at this helper boundary
+  - zero-returncode completions reject as deferred
+  - invocation and completion contracts are revalidated before attempt
+    materialization
+  - produced attempts preserve runner request, request object, and execution
+    input identity
+  - failure summary/detail fields are deterministic and do not leak raw
+    stdout, stderr, traceback text, temporary paths, PIDs, or process-local
+    data
+  - exports remain module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+    unchanged
+- Scope boundary:
+  - raw executor behavior remains unchanged and still returns raw completions
+    while propagating subprocess exceptions
+  - no stdout/stderr parsing, observed-result synthesis, family/form handler
+    implementation, handler registration, admission, recompile, facade, MCP,
+    package-root, schema, eval, scoring, optimizer, compiler, docs, or public
+    claims changed
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `199 passed`
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: 1 correction
+
+## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Review Finding
+
+- Reviewed the returned local Python subprocess non-proof attempt
+  normalization slice against the implementation spec and quality gate.
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Finding:
+  - `materialize_runtime_probe_local_python_process_completion_attempt(...)`
+    adds an `outcome` parameter for nonzero completion mapping and validates it
+    through `_validate_failure_normalization_outcome(...)`
+  - tests cover the default `CRASHED` mapping, but do not cover a configured
+    non-proof outcome or rejection of a proof-bearing `OBSERVED` outcome at
+    this helper boundary
+  - that leaves new behavior untested, contrary to the repo rule that every
+    new behavior gets a test
+- Decision:
+  - Ryan agreed with the recommendation to fix now
+  - narrow correction authorized to add focused tests for a
+    configured non-proof outcome and observed-outcome rejection, without
+    changing source behavior unless the tests expose a defect
+- Release state:
+  - accepted in workspace: no
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Acceptance status: held
+
+## 2026-05-08 -- Post-Subprocess Execution Boundary Spike Acceptance
+
+- Reviewed the returned read-only post-subprocess execution boundary spike
+  against the spike question and current repo state.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - dirty tracked files exactly: `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted recommendation:
+  - implement a narrow local Python subprocess non-proof
+    attempt-normalization slice next
+  - cover only failure paths from the raw subprocess boundary:
+    - `subprocess.TimeoutExpired` to `RuntimeProbeExecutionAttempt` with
+      `TIMED_OUT`
+    - other local subprocess execution exceptions to non-proof
+      `RuntimeProbeExecutionAttempt`, defaulting to `CRASHED`
+    - nonzero `RuntimeProbeLocalPythonProcessCompletion.returncode` to
+      non-proof `RuntimeProbeExecutionAttempt`, defaulting to `CRASHED`
+  - keep zero-exit completion, stdout/stderr parsing, observed proof
+    synthesis, family/form handlers, and handler registration deferred
+- Control refinement:
+  - the implementation slice should add pure module-local materializers for
+    non-proof attempts
+  - it should not change
+    `execute_runtime_probe_local_python_subprocess_invocation(...)`; the raw
+    executor must continue returning raw completions and propagating
+    subprocess exceptions
+- Reasoning:
+  - the repo now has pushed runner requests, local Python environment
+    derivation, shell-free invocation materialization, raw process completion
+    materialization, and raw subprocess execution
+  - the next missing boundary is failure normalization from local subprocess
+    facts into existing typed non-proof attempts
+  - direct stdout protocol, observed-result synthesis, or concrete dynamic
+    import handler work would still mix failure mapping, success parsing,
+    proof construction, and dispatch registration in one slice
+- Next implementation slice:
+  - add module-local helpers in
+    `src/context_ir/runtime_probe_execution.py`
+  - add focused tests in `tests/test_runtime_probe_execution.py`
+  - keep `PLAN.md` and `BUILDLOG.md` as control-lane continuity only, not
+    implementation-lane scope
+- Acceptance status: first-pass
+
+## 2026-05-08 -- Post-Subprocess Execution Boundary Next-Move Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `d0a009b Execute local Python subprocess invocations`.
+- Routing decision:
+  - the next control action is a bounded read-only spike to choose the next
+    smallest safe implementation slice after raw local Python subprocess
+    execution
+  - the spike should decide between subprocess exception/timeout-to-attempt
+    mapping, nonzero completion-to-non-proof mapping, an internal stdout/result
+    protocol contract, or a first concrete family/form handler
+  - the spike must return an exact implementation slice spec if it recommends
+    one
+- Why now:
+  - runner request preparation, local Python environment derivation,
+    invocation materialization, raw process completion materialization, and raw
+    subprocess execution are pushed and no-active-gate
+  - the next substantive work risks crossing from raw process facts into
+    outcome normalization, timeout mapping, stdout/stderr parsing, observed
+    result synthesis, and handler registration
+  - those concerns should be decomposed before a worker edits source
+- Alternatives rejected:
+  - direct concrete dynamic-import handler now: too likely to mix process
+    execution, wire protocol, output parsing, proof synthesis, and dispatch
+    registration in one slice
+  - direct observed-result synthesis now: premature until the raw completion
+    and failure surfaces have an explicit mapping boundary
+  - admission, recompile, facade, MCP, package-root, eval, scoring, optimizer,
+    compiler, benchmark, docs, or public-claim work: unrelated to the
+    immediate runner execution boundary
+  - reopening `d0a009b`, `e9f87fc`, `ea6ff8e`, `f75196e`, `3751df1`, or
+    `93456b6`: no new finding supports reopening those pushed releases
+- Acceptance status: first-pass
+
 ## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Push Sync
 
 - Ryan authorized pushing the raw local Python subprocess execution boundary

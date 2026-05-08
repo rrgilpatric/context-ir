@@ -2474,6 +2474,22 @@ sequencing for `c1a12d7` absent new findings.
   boundary release unit
 - [x] Ryan-authorized push for the raw local Python subprocess execution
   boundary release unit
+- [x] Post-`d0a009b` planning/control selected the post-subprocess execution
+  boundary next-move spike
+- [x] Post-subprocess execution boundary next-move spike accepted first-pass
+- [x] Local Python subprocess non-proof attempt normalization implementation
+  slice accepted in workspace after one correction
+- [x] Ryan decision on nonzero completion outcome-parameter test coverage
+  finding
+- [x] Nonzero completion outcome-parameter test coverage correction
+- [x] Ryan decision on the local Python subprocess non-proof attempt
+  normalization release-gate identity overclaim finding
+- [x] Continuity/spec correction for the local Python subprocess non-proof
+  attempt normalization identity claim
+- [x] Combined release gate rerun for the exact four-file local Python
+  subprocess non-proof attempt normalization release unit
+- [ ] Local commit creation for the local Python subprocess non-proof attempt
+  normalization release unit
 
 ## What Is In Progress
 
@@ -3381,15 +3397,14 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded control action after the pushed
-raw local Python subprocess execution boundary release. The source/contract
-release is pushed at
-`d0a009b Execute local Python subprocess invocations`, with release-routing
-sync pushed through
-`8ae13f6 Sync local Python subprocess execution release routing`. Release-gate
-status is no-active-gate. Do not reopen the pushed subprocess execution,
-completion, invocation, environment context, dispatch table, or
-failure-normalization releases absent new findings.
+Immediate next route: create the local commit for the exact four-file local
+Python subprocess non-proof attempt normalization release unit. The current
+pushed source/contract release is still
+`d0a009b Execute local Python subprocess invocations`, with post-push sync
+pushed through `af9a685 Sync local Python subprocess execution post-push
+state`. Release-gate status is no-active-gate for `d0a009b`. Do not reopen the
+pushed subprocess execution, completion, invocation, environment context,
+dispatch table, or prior failure-normalization releases absent new findings.
 
 Proposed release unit:
 
@@ -3398,35 +3413,64 @@ Proposed release unit:
 - `PLAN.md`
 - `BUILDLOG.md`
 
-The raw subprocess execution boundary is accepted in workspace after one
-correction. It adds module-local
-`execute_runtime_probe_local_python_subprocess_invocation(...)`, revalidates
-the invocation, validates `completion_contract_revision` before subprocess
-execution, runs shell-free `subprocess.run(...)` with the invocation argv,
-working directory, timeout seconds, text capture, and deterministic child
-`PYTHONPATH`, and returns raw
-`RuntimeProbeLocalPythonProcessCompletion` through the existing materializer.
-It remains raw and non-interpreting: no stdout/stderr parsing, no return-code
-outcome normalization, no timeout-to-attempt/result mapping, no
-`RuntimeProbeExecutionAttempt` synthesis, no observed/non-proof result
-synthesis, no family/form handler implementation or dispatch registration,
-and no admission, recompile, facade, MCP, package-root, schema, eval, scoring,
-optimizer, compiler, benchmark, docs, or public-claim changes.
+The local Python subprocess non-proof attempt normalization slice is accepted
+in workspace after one correction. It adds pure module-local helpers that
+convert local Python subprocess failure facts into non-proof
+`RuntimeProbeExecutionAttempt` values:
 
-Current release state for the proposed raw subprocess execution unit:
+- `subprocess.TimeoutExpired` maps to `TIMED_OUT`
+- other local subprocess execution exceptions map to non-proof attempts,
+  defaulting to `CRASHED`
+- nonzero `RuntimeProbeLocalPythonProcessCompletion.returncode` maps to a
+  non-proof attempt, defaulting to `CRASHED`
+- configured non-proof outcomes for nonzero completions are supported
+- `RuntimeProbeResultOutcome.OBSERVED` is rejected at the helper boundary
+- zero-returncode completions reject or remain deferred
+
+Release-gate finding and correction:
+
+- Gate 1 found that the accepted release-unit wording overclaims identity
+  preservation
+- the produced `RuntimeProbeExecutionAttempt` preserves runner request,
+  request object, and execution input identity, but it has no fields for
+  invocation or completion object identity
+- the materializers revalidate invocation/completion contracts before attempt
+  materialization, but they do not preserve those objects in the resulting
+  attempt
+- Ryan authorized the recommended narrow continuity/spec correction
+- active wording now states that invocation/completion contracts are revalidated
+  while runner request, request object, and execution input identity are
+  preserved in the produced attempt
+
+Corrected boundary:
+
+- do not widen `RuntimeProbeExecutionAttempt` to carry invocation or completion
+  identity in this slice; that would expand the source contract beyond the
+  intended non-proof failure-normalization boundary
+- rerun the combined read-only release gate over the exact four-file unit
+
+Current release state for the proposed local Python subprocess non-proof
+attempt normalization unit:
 
 - selected by control: yes
 - implementation lane launched: yes
 - implementation returned: yes
+- review finding: missing configured-outcome and observed-outcome rejection
+  coverage
 - correction authorized by Ryan: yes
-- accepted in workspace: yes, after one correction
-- focused validation: passed with `192 passed`
+- correction returned: yes
+- release-gate finding: identity preservation overclaim in continuity/spec
+  wording, corrected after Ryan authorization
+- accepted in workspace: yes, after one implementation correction and one
+  continuity/spec correction
+- focused validation: passed with `199 passed`
 - release-unit-audit-cleared: yes
-- full-regression-cleared: yes, full pytest `954 passed`
+- full-regression-cleared: yes, full pytest `961 passed`
 - commit-gating-cleared: yes
-- staged: yes, then committed
-- locally committed: yes, `d0a009b`
-- pushed: yes
+- staged: no
+- locally committed: no
+- pushed: no
+- next route: local commit creation for the exact four-file unit
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate

@@ -988,6 +988,66 @@ def execute_runtime_probe_local_python_subprocess_invocation(
     )
 
 
+def materialize_runtime_probe_local_python_subprocess_exception_attempt(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+    exception: Exception,
+) -> RuntimeProbeExecutionAttempt:
+    """Convert a local-Python subprocess exception into a non-proof attempt."""
+    _validate_local_python_subprocess_invocation(invocation)
+    _validate_runner_request(invocation.runner_request)
+    if not isinstance(exception, Exception):
+        raise ValueError("local Python subprocess exception must be an Exception")
+    if isinstance(exception, subprocess.TimeoutExpired):
+        return _runtime_probe_local_python_subprocess_timeout_attempt(
+            invocation,
+        )
+    return _runtime_probe_local_python_subprocess_exception_attempt(
+        invocation,
+        exception,
+    )
+
+
+def materialize_runtime_probe_local_python_process_completion_attempt(
+    completion: RuntimeProbeLocalPythonProcessCompletion,
+    *,
+    outcome: RuntimeProbeResultOutcome = RuntimeProbeResultOutcome.CRASHED,
+) -> RuntimeProbeExecutionAttempt:
+    """Convert a nonzero local-Python process completion into a non-proof attempt."""
+    _validate_local_python_process_completion(completion)
+    _validate_failure_normalization_outcome(outcome)
+    if completion.returncode == 0:
+        raise ValueError(
+            "zero-returncode local Python process completions are deferred and "
+            "cannot materialize failure attempts"
+        )
+    runner_request = completion.invocation.runner_request
+    return RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=outcome,
+        failure_summary=(
+            "local Python subprocess exited with returncode "
+            f"{completion.returncode}; recorded as {outcome.value}"
+        ),
+        failure_detail_fields=(
+            RuntimeProbeReplayField(
+                key="failure_source",
+                value="local_python_process_completion",
+            ),
+            RuntimeProbeReplayField(
+                key="normalized_outcome",
+                value=outcome.value,
+            ),
+            RuntimeProbeReplayField(
+                key="returncode",
+                value=str(completion.returncode),
+            ),
+        ),
+    )
+
+
 def assemble_runtime_probe_result_batch_from_execution_attempts(
     input_batch: RuntimeProbeExecutionInputBatch,
     attempts: Iterable[RuntimeProbeExecutionAttempt],
@@ -1160,6 +1220,74 @@ def _runtime_probe_failure_attempt_from_runner_exception(
             RuntimeProbeReplayField(
                 key="normalized_outcome",
                 value=outcome.value,
+            ),
+            RuntimeProbeReplayField(
+                key="exception_type",
+                value=exception_type_label,
+            ),
+        ),
+    )
+
+
+def _runtime_probe_local_python_subprocess_timeout_attempt(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+) -> RuntimeProbeExecutionAttempt:
+    """Normalize a local-Python timeout without subprocess-local data."""
+    runner_request = invocation.runner_request
+    return RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=RuntimeProbeResultOutcome.TIMED_OUT,
+        failure_summary="local Python subprocess timed out; recorded as timed_out",
+        failure_detail_fields=(
+            RuntimeProbeReplayField(
+                key="failure_source",
+                value="local_python_subprocess_timeout",
+            ),
+            RuntimeProbeReplayField(
+                key="normalized_outcome",
+                value=RuntimeProbeResultOutcome.TIMED_OUT.value,
+            ),
+            RuntimeProbeReplayField(
+                key="exception_type",
+                value="subprocess.TimeoutExpired",
+            ),
+            RuntimeProbeReplayField(
+                key="timeout_seconds",
+                value=str(invocation.timeout_seconds),
+            ),
+        ),
+    )
+
+
+def _runtime_probe_local_python_subprocess_exception_attempt(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+    exception: Exception,
+) -> RuntimeProbeExecutionAttempt:
+    """Normalize a local-Python subprocess exception without raw exception text."""
+    runner_request = invocation.runner_request
+    exception_type = type(exception)
+    exception_type_name = exception_type.__name__
+    exception_type_label = f"{exception_type.__module__}.{exception_type_name}"
+    return RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=RuntimeProbeResultOutcome.CRASHED,
+        failure_summary=(
+            f"local Python subprocess raised {exception_type_name}; recorded as crashed"
+        ),
+        failure_detail_fields=(
+            RuntimeProbeReplayField(
+                key="failure_source",
+                value="local_python_subprocess_exception",
+            ),
+            RuntimeProbeReplayField(
+                key="normalized_outcome",
+                value=RuntimeProbeResultOutcome.CRASHED.value,
             ),
             RuntimeProbeReplayField(
                 key="exception_type",
@@ -1556,6 +1684,29 @@ def _validate_local_python_subprocess_invocation(
         invocation_contract_revision=invocation.invocation_contract_revision,
         request_replay_payload_fields=invocation.request_replay_payload_fields,
     )
+
+
+def _validate_local_python_process_completion(
+    completion: RuntimeProbeLocalPythonProcessCompletion,
+) -> None:
+    """Re-check one raw local-Python process completion for tampering."""
+    if not isinstance(completion, RuntimeProbeLocalPythonProcessCompletion):
+        raise ValueError("local Python process completion must be typed")
+    RuntimeProbeLocalPythonProcessCompletion(
+        invocation=completion.invocation,
+        invocation_identity=completion.invocation_identity,
+        argv=completion.argv,
+        working_directory=completion.working_directory,
+        python_path_entries=completion.python_path_entries,
+        timeout_seconds=completion.timeout_seconds,
+        returncode=completion.returncode,
+        stdout_text=completion.stdout_text,
+        stderr_text=completion.stderr_text,
+        completion_contract_revision=completion.completion_contract_revision,
+        request_replay_payload_fields=completion.request_replay_payload_fields,
+    )
+    _validate_local_python_subprocess_invocation(completion.invocation)
+    _validate_runner_request(completion.invocation.runner_request)
 
 
 def _validate_local_python_environment_context(
@@ -2008,7 +2159,9 @@ __all__ = [
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",
+    "materialize_runtime_probe_local_python_process_completion_attempt",
     "materialize_runtime_probe_local_python_process_completion",
+    "materialize_runtime_probe_local_python_subprocess_exception_attempt",
     "materialize_runtime_probe_local_python_subprocess_invocation",
     "materialize_runtime_probe_runner_request_batch",
     "prepare_runtime_probe_runner_requests_for_diagnostic",
