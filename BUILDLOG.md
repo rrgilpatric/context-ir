@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Local Commit Routing
+
+- Local commit creation completed for the exact four-file raw local Python
+  subprocess execution boundary release unit.
+- Local commit:
+  - `d0a009b Execute local Python subprocess invocations`
+- Commit contents:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity sync:
+  - branch `main`
+  - `HEAD` at `d0a009b Execute local Python subprocess invocations`
+  - `origin/main` remains at
+    `be50412 Sync local Python process completion post-push state`
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - locally committed: yes, `d0a009b`
+  - pushed: no
+  - push remains Ryan-gated
+  - next route: await explicit Ryan authorization to push the local release
+    and continuity-sync commits
+- Acceptance status: 1 correction
+
 ## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Release Gate
 
 - The combined read-only release gate returned no findings for the exact

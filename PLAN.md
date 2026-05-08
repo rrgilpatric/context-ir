@@ -2432,7 +2432,9 @@ sequencing for `c1a12d7` absent new findings.
   Python subprocess execution boundary
 - [x] Combined release gate for the exact four-file raw local Python
   subprocess execution boundary release unit
-- [ ] Local commit creation for the raw local Python subprocess execution
+- [x] Local commit creation for the raw local Python subprocess execution
+  boundary release unit
+- [ ] Ryan-authorized push for the raw local Python subprocess execution
   boundary release unit
 
 ## What Is In Progress
@@ -3341,14 +3343,16 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file raw
-local Python subprocess execution boundary release unit. The source/contract
-release is pushed at `e9f87fc Add local Python process completion contract`,
-with post-push routing sync pushed through
-`be50412 Sync local Python process completion post-push state`. Release-gate
-status is no-active-gate. Do not reopen the pushed completion, invocation,
-environment context, dispatch table, or failure-normalization releases absent
-new findings.
+Immediate next route: await explicit Ryan authorization to push the local raw
+local Python subprocess execution boundary release and continuity-sync commits.
+The local source/contract release commit is
+`d0a009b Execute local Python subprocess invocations`. The current pushed
+source/contract authority remains
+`e9f87fc Add local Python process completion contract`, with post-push routing
+sync pushed through
+`be50412 Sync local Python process completion post-push state`. Do not reopen
+the pushed completion, invocation, environment context, dispatch table, or
+failure-normalization releases absent new findings.
 
 Proposed release unit:
 
@@ -3383,9 +3387,10 @@ Current release state for the proposed raw subprocess execution unit:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `954 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes, `d0a009b`
 - pushed: no
+- push authorization: pending Ryan
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
