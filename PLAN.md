@@ -2488,7 +2488,9 @@ sequencing for `c1a12d7` absent new findings.
   attempt normalization identity claim
 - [x] Combined release gate rerun for the exact four-file local Python
   subprocess non-proof attempt normalization release unit
-- [ ] Local commit creation for the local Python subprocess non-proof attempt
+- [x] Local commit creation for the local Python subprocess non-proof attempt
+  normalization release unit
+- [ ] Ryan-authorized push for the local Python subprocess non-proof attempt
   normalization release unit
 
 ## What Is In Progress
@@ -3397,13 +3399,16 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file local
-Python subprocess non-proof attempt normalization release unit. The current
-pushed source/contract release is still
+Immediate next route: await explicit Ryan authorization to push the local
+Python subprocess non-proof attempt normalization release and continuity-sync
+commits. The current pushed source/contract release remains
 `d0a009b Execute local Python subprocess invocations`, with post-push sync
 pushed through `af9a685 Sync local Python subprocess execution post-push
-state`. Release-gate status is no-active-gate for `d0a009b`. Do not reopen the
-pushed subprocess execution, completion, invocation, environment context,
+state`. The local unpushed source/contract commit is
+`5b10728 Normalize local Python subprocess failures`. Release-gate status is
+no-active-gate for `d0a009b`; the local non-proof attempt normalization
+release is commit-ready and locally committed, but not pushed. Do not reopen
+the pushed subprocess execution, completion, invocation, environment context,
 dispatch table, or prior failure-normalization releases absent new findings.
 
 Proposed release unit:
@@ -3467,10 +3472,11 @@ attempt normalization unit:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `961 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes, `5b10728`
 - pushed: no
-- next route: local commit creation for the exact four-file unit
+- next route: await explicit Ryan authorization to push the local release and
+  continuity-sync commits
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate

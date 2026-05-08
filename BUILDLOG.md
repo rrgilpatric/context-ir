@@ -2,6 +2,39 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Local Commit Routing
+
+- Local commit creation completed for the exact four-file local Python
+  subprocess non-proof attempt normalization release unit.
+- Local source/contract commit:
+  - `5b10728 Normalize local Python subprocess failures`
+- Commit contents:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - `HEAD` at `5b10728 Normalize local Python subprocess failures`
+  - `origin/main` at
+    `af9a685 Sync local Python subprocess execution post-push state`
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - accepted in workspace: yes, after 1 implementation correction and 1
+    continuity/spec correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `961 passed`
+  - commit-gating-cleared: yes
+  - locally committed: yes, `5b10728`
+  - pushed: no
+  - push remains Ryan-gated
+  - next route: await explicit Ryan authorization to push the local release
+    and continuity-sync commits
+- Acceptance status: 2 corrections
+
 ## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Release Gate
 
 - The combined read-only release gate rerun returned no findings for the exact
