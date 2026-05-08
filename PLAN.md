@@ -2380,6 +2380,15 @@ sequencing for `c1a12d7` absent new findings.
   contract release unit
 - [x] Ryan-authorized push for the local Python subprocess invocation
   contract release unit
+- [x] Post-`ea6ff8e` planning/control selected the local Python subprocess
+  execution-boundary spike
+- [x] Local Python subprocess execution-boundary spike accepted first-pass
+- [x] Local Python process completion/result contract implementation slice
+  accepted first-pass in workspace-only state
+- [x] Combined release gate for the exact four-file local Python process
+  completion contract release unit
+- [ ] Local commit creation for the local Python process completion contract
+  release unit
 
 ## What Is In Progress
 
@@ -3287,13 +3296,10 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded control action after the pushed
-local Python subprocess invocation contract release. The source/contract
-release is pushed at `ea6ff8e Add local Python subprocess invocation
-contract`, with release-routing sync pushed through
-`07cc3ce Sync local Python invocation release routing`. Release-gate status is
-no-active-gate. Do not reopen the pushed invocation, environment context,
-dispatch table, or failure-normalization releases absent new findings.
+Immediate next route: create the local commit for the exact four-file local
+Python process completion contract release unit. The combined read-only
+release gate passed with no findings. Push remains explicitly Ryan-gated after
+local commit creation.
 
 Proposed release unit:
 
@@ -3302,32 +3308,31 @@ Proposed release unit:
 - `PLAN.md`
 - `BUILDLOG.md`
 
-The local Python subprocess invocation contract slice is accepted first-pass
-in workspace-only state. It adds a frozen module-local
-`RuntimeProbeLocalPythonSubprocessInvocation` and
-`materialize_runtime_probe_local_python_subprocess_invocation(...)` in
+The local Python process completion/result contract slice is accepted
+first-pass in workspace-only state. It adds frozen module-local
+`RuntimeProbeLocalPythonProcessCompletion` and
+`materialize_runtime_probe_local_python_process_completion(...)` in
 `src/context_ir/runtime_probe_execution.py`, with focused tests in
-`tests/test_runtime_probe_execution.py`. It remains non-executing: no
-subprocess import or execution, no in-process repository imports, no timeout
-enforcement, no stdout/stderr parsing, no observed-result synthesis, no
-family/form handler implementation or dispatch registration, and no admission,
-recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
-compiler, benchmark, or public-claim changes. Do not route another
-implementation slice until the release gate clears or Ryan explicitly
-redirects.
+`tests/test_runtime_probe_execution.py`. It remains non-executing and
+non-interpreting: no subprocess import or execution, no timeout enforcement,
+no stdout/stderr parsing, no `RuntimeProbeExecutionAttempt` synthesis, no
+observed/non-proof result synthesis, no family/form handler implementation or
+dispatch registration, and no admission, recompile, facade, MCP, package-root,
+schema, eval, scoring, optimizer, compiler, benchmark, or public-claim
+changes. Do not route another implementation slice until the release gate
+clears or Ryan explicitly redirects.
 
-Current release state for the proposed invocation-contract unit:
+Current release state for the proposed process-completion unit:
 
-- accepted in workspace: yes, first-pass after one audit correction
-- prior Gate 1 finding: corrected
-- focused validation: passed with `177 passed`
+- accepted in workspace: yes, first-pass
+- focused validation: passed with `187 passed`
 - subprocess guard: no matches for subprocess execution tokens
 - release-unit-audit-cleared: yes
-- full-regression-cleared: yes, full pytest `939 passed`
+- full-regression-cleared: yes, full pytest `949 passed`
 - commit-gating-cleared: yes
 - staged: no
-- locally committed: yes, `ea6ff8e`
-- pushed: yes
+- locally committed: no
+- pushed: no
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate

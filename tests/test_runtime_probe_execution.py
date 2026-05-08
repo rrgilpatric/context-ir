@@ -20,6 +20,7 @@ from context_ir.runtime_probe_execution import (
     assemble_runtime_probe_result_batch_from_execution_attempts,
     assemble_runtime_probe_result_batch_from_runner_request_attempts,
     collect_runtime_probe_execution_attempts_from_runner_requests,
+    materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_subprocess_invocation,
 )
 from context_ir.semantic_types import (
@@ -309,6 +310,30 @@ def _local_python_subprocess_invocation(
         module_name=module_name,
         invocation_contract_revision=invocation_contract_revision,
         module_argv=module_argv,
+    )
+
+
+def _local_python_process_completion(
+    invocation: runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation
+    | None = None,
+    *,
+    returncode: int = 0,
+    stdout_text: str = '{"status":"ok"}\n',
+    stderr_text: str = "",
+    completion_contract_revision: str = (
+        "runtime-probe-local-python-process-completion:test.1"
+    ),
+) -> runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion:
+    """Return one frozen raw local-Python process completion."""
+    selected_invocation = (
+        _local_python_subprocess_invocation() if invocation is None else invocation
+    )
+    return materialize_runtime_probe_local_python_process_completion(
+        selected_invocation,
+        returncode=returncode,
+        stdout_text=stdout_text,
+        stderr_text=stderr_text,
+        completion_contract_revision=completion_contract_revision,
     )
 
 
@@ -852,6 +877,222 @@ def test_local_python_subprocess_invocation_rejects_contract_drift() -> None:
             invocation_contract_revision=invocation.invocation_contract_revision,
             request_replay_payload_fields=(
                 _field("plan_id", invocation.runner_request.plan_id),
+            ),
+        )
+
+
+def test_materialize_local_python_process_completion_preserves_raw_fields() -> None:
+    """Raw local-Python process completions preserve process fields verbatim."""
+    runner_request = _local_python_runner_request(timeout_seconds=47)
+    module_argv = (
+        "--plan-id",
+        runner_request.plan_id,
+        "--request-id",
+        runner_request.request_id,
+    )
+    invocation = _local_python_subprocess_invocation(
+        runner_request,
+        module_argv=module_argv,
+    )
+
+    first_completion = _local_python_process_completion(
+        invocation,
+        returncode=17,
+        stdout_text="",
+        stderr_text="warning: fixture used\nline 2\n",
+    )
+    second_completion = _local_python_process_completion(
+        invocation,
+        returncode=17,
+        stdout_text="",
+        stderr_text="warning: fixture used\nline 2\n",
+    )
+
+    assert first_completion == second_completion
+    assert isinstance(
+        first_completion,
+        runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion,
+    )
+    assert first_completion.invocation is invocation
+    assert first_completion.invocation_identity.startswith(
+        "runtime_probe_local_python_subprocess_invocation:"
+    )
+    assert first_completion.argv is invocation.argv
+    assert first_completion.working_directory == invocation.working_directory
+    assert first_completion.python_path_entries is invocation.python_path_entries
+    assert first_completion.timeout_seconds == 47
+    assert first_completion.returncode == 17
+    assert first_completion.stdout_text == ""
+    assert first_completion.stderr_text == "warning: fixture used\nline 2\n"
+    assert first_completion.completion_contract_revision == (
+        "runtime-probe-local-python-process-completion:test.1"
+    )
+    assert first_completion.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+
+    with pytest.raises(FrozenInstanceError):
+        first_completion.returncode = 0
+
+
+def test_materialize_local_python_process_completion_revalidates_invocation() -> None:
+    """Completion materialization rejects invocation contracts drifted in memory."""
+    argv_drifted_invocation = _local_python_subprocess_invocation()
+    object.__setattr__(
+        argv_drifted_invocation,
+        "argv",
+        ("/workspace/other/python", *argv_drifted_invocation.argv[1:]),
+    )
+    request_drifted_invocation = _local_python_subprocess_invocation()
+    object.__setattr__(
+        request_drifted_invocation.runner_request,
+        "request_id",
+        "runtime_probe:wrong",
+    )
+
+    with pytest.raises(ValueError, match="argv executable"):
+        _local_python_process_completion(argv_drifted_invocation)
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        _local_python_process_completion(request_drifted_invocation)
+
+
+@pytest.mark.parametrize(
+    ("primitive_overrides", "error_match"),
+    (
+        ({"returncode": True}, "returncode"),
+        ({"returncode": "0"}, "returncode"),
+        ({"stdout_text": b""}, "stdout_text"),
+        ({"stderr_text": None}, "stderr_text"),
+        ({"completion_contract_revision": ""}, "completion_contract_revision"),
+        (
+            {"completion_contract_revision": " runtime-probe-completion:test.1"},
+            "completion_contract_revision.*malformed",
+        ),
+        (
+            {"completion_contract_revision": "runtime-probe-completion:test.1\nbad"},
+            "completion_contract_revision.*malformed",
+        ),
+    ),
+)
+def test_materialize_local_python_process_completion_rejects_bad_primitives(
+    primitive_overrides: dict[str, object],
+    error_match: str,
+) -> None:
+    """Raw completion materialization requires typed primitive fields."""
+    invocation = _local_python_subprocess_invocation()
+    primitives: dict[str, object] = {
+        "returncode": 0,
+        "stdout_text": "",
+        "stderr_text": "",
+        "completion_contract_revision": (
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    }
+    primitives.update(primitive_overrides)
+
+    with pytest.raises(ValueError, match=error_match):
+        materialize_runtime_probe_local_python_process_completion(
+            invocation,
+            returncode=primitives["returncode"],
+            stdout_text=primitives["stdout_text"],
+            stderr_text=primitives["stderr_text"],
+            completion_contract_revision=primitives["completion_contract_revision"],
+        )
+
+
+def test_local_python_process_completion_rejects_contract_drift() -> None:
+    """The frozen completion type rechecks invocation and copied metadata."""
+    completion = _local_python_process_completion()
+
+    with pytest.raises(ValueError, match="invocation_identity"):
+        runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion(
+            invocation=completion.invocation,
+            invocation_identity="runtime_probe_local_python_subprocess_invocation:wrong",
+            argv=completion.argv,
+            working_directory=completion.working_directory,
+            python_path_entries=completion.python_path_entries,
+            timeout_seconds=completion.timeout_seconds,
+            returncode=completion.returncode,
+            stdout_text=completion.stdout_text,
+            stderr_text=completion.stderr_text,
+            completion_contract_revision=completion.completion_contract_revision,
+            request_replay_payload_fields=completion.request_replay_payload_fields,
+        )
+
+    with pytest.raises(ValueError, match="argv"):
+        runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion(
+            invocation=completion.invocation,
+            invocation_identity=completion.invocation_identity,
+            argv=(*completion.argv, "--mutated"),
+            working_directory=completion.working_directory,
+            python_path_entries=completion.python_path_entries,
+            timeout_seconds=completion.timeout_seconds,
+            returncode=completion.returncode,
+            stdout_text=completion.stdout_text,
+            stderr_text=completion.stderr_text,
+            completion_contract_revision=completion.completion_contract_revision,
+            request_replay_payload_fields=completion.request_replay_payload_fields,
+        )
+
+    with pytest.raises(ValueError, match="working_directory"):
+        runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion(
+            invocation=completion.invocation,
+            invocation_identity=completion.invocation_identity,
+            argv=completion.argv,
+            working_directory="/workspace/other",
+            python_path_entries=completion.python_path_entries,
+            timeout_seconds=completion.timeout_seconds,
+            returncode=completion.returncode,
+            stdout_text=completion.stdout_text,
+            stderr_text=completion.stderr_text,
+            completion_contract_revision=completion.completion_contract_revision,
+            request_replay_payload_fields=completion.request_replay_payload_fields,
+        )
+
+    with pytest.raises(ValueError, match="python_path_entries"):
+        runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion(
+            invocation=completion.invocation,
+            invocation_identity=completion.invocation_identity,
+            argv=completion.argv,
+            working_directory=completion.working_directory,
+            python_path_entries=("/workspace/other/src",),
+            timeout_seconds=completion.timeout_seconds,
+            returncode=completion.returncode,
+            stdout_text=completion.stdout_text,
+            stderr_text=completion.stderr_text,
+            completion_contract_revision=completion.completion_contract_revision,
+            request_replay_payload_fields=completion.request_replay_payload_fields,
+        )
+
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion(
+            invocation=completion.invocation,
+            invocation_identity=completion.invocation_identity,
+            argv=completion.argv,
+            working_directory=completion.working_directory,
+            python_path_entries=completion.python_path_entries,
+            timeout_seconds=completion.timeout_seconds + 1,
+            returncode=completion.returncode,
+            stdout_text=completion.stdout_text,
+            stderr_text=completion.stderr_text,
+            completion_contract_revision=completion.completion_contract_revision,
+            request_replay_payload_fields=completion.request_replay_payload_fields,
+        )
+
+    with pytest.raises(ValueError, match="replay payload fields"):
+        runtime_probe_execution.RuntimeProbeLocalPythonProcessCompletion(
+            invocation=completion.invocation,
+            invocation_identity=completion.invocation_identity,
+            argv=completion.argv,
+            working_directory=completion.working_directory,
+            python_path_entries=completion.python_path_entries,
+            timeout_seconds=completion.timeout_seconds,
+            returncode=completion.returncode,
+            stdout_text=completion.stdout_text,
+            stderr_text=completion.stderr_text,
+            completion_contract_revision=completion.completion_contract_revision,
+            request_replay_payload_fields=(
+                _field("plan_id", completion.invocation.runner_request.plan_id),
             ),
         )
 
@@ -2673,6 +2914,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         )
     )
     local_python_invocation = _local_python_subprocess_invocation()
+    local_python_completion = _local_python_process_completion(local_python_invocation)
 
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
@@ -2702,6 +2944,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         local_python_context.working_directory = "/tmp/context-ir"
     with pytest.raises(FrozenInstanceError):
         local_python_invocation.working_directory = "/tmp/context-ir"
+    with pytest.raises(FrozenInstanceError):
+        local_python_completion.stdout_text = "mutated"
 
     assert (
         "RuntimeProbeDiagnosticRunnerRequestPreparation"
@@ -2714,6 +2958,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeFailureNormalizingRunner" in runtime_probe_execution.__all__
     assert (
         "RuntimeProbeLocalPythonEnvironmentContext" in runtime_probe_execution.__all__
+    )
+    assert "RuntimeProbeLocalPythonProcessCompletion" in (
+        runtime_probe_execution.__all__
     )
     assert (
         "RuntimeProbeLocalPythonSubprocessInvocation" in runtime_probe_execution.__all__
@@ -2743,6 +2990,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_execution_input_batch" in (
         runtime_probe_execution.__all__
     )
+    assert "materialize_runtime_probe_local_python_process_completion" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_local_python_subprocess_invocation" in (
         runtime_probe_execution.__all__
     )
@@ -2759,6 +3009,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
     assert "RuntimeProbeFailureNormalizingRunner" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonEnvironmentContext" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonProcessCompletion" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonSubprocessInvocation" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerEntry" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerKey" not in context_ir.__all__
@@ -2797,6 +3048,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
     assert not hasattr(context_ir, "RuntimeProbeFailureNormalizingRunner")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonEnvironmentContext")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonProcessCompletion")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonSubprocessInvocation")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerEntry")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerKey")
@@ -2833,6 +3085,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         "prepare_runtime_probe_runner_requests_for_diagnostic",
     )
     assert not hasattr(context_ir, "materialize_runtime_probe_execution_input_batch")
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_local_python_process_completion",
+    )
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_local_python_subprocess_invocation",

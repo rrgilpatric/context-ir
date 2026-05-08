@@ -352,6 +352,79 @@ class RuntimeProbeLocalPythonSubprocessInvocation:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonProcessCompletion:
+    """Frozen raw local-Python process completion contract."""
+
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation
+    invocation_identity: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    returncode: int
+    stdout_text: str
+    stderr_text: str
+    completion_contract_revision: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject raw completions that drift from their source invocation."""
+        _validate_local_python_subprocess_invocation(self.invocation)
+
+        if self.invocation_identity != _runtime_probe_local_python_invocation_identity(
+            self.invocation
+        ):
+            raise ValueError(
+                "local Python process completion invocation_identity must match "
+                "invocation"
+            )
+        if self.argv != self.invocation.argv:
+            raise ValueError(
+                "local Python process completion argv must match invocation"
+            )
+        if self.working_directory != self.invocation.working_directory:
+            raise ValueError(
+                "local Python process completion working_directory must match "
+                "invocation"
+            )
+        if self.python_path_entries != self.invocation.python_path_entries:
+            raise ValueError(
+                "local Python process completion python_path_entries must match "
+                "invocation"
+            )
+        if self.timeout_seconds != self.invocation.timeout_seconds:
+            raise ValueError(
+                "local Python process completion timeout_seconds must match invocation"
+            )
+
+        _validate_local_python_process_returncode(self.returncode)
+        _validate_local_python_raw_text(
+            self.stdout_text,
+            field_name="stdout_text",
+        )
+        _validate_local_python_raw_text(
+            self.stderr_text,
+            field_name="stderr_text",
+        )
+        _validate_contract_revision(
+            self.completion_contract_revision,
+            field_name="completion_contract_revision",
+        )
+        _validate_replay_fields(
+            self.request_replay_payload_fields,
+            field_name="request_replay_payload_fields",
+        )
+        if (
+            self.request_replay_payload_fields
+            != self.invocation.request_replay_payload_fields
+        ):
+            raise ValueError(
+                "local Python process completion replay payload fields must match "
+                "invocation"
+            )
+
+
+@dataclass(frozen=True)
 class RuntimeProbeRunnerRequestBatch:
     """Ordered internal runner-request batch for one execution-input batch."""
 
@@ -841,6 +914,45 @@ def materialize_runtime_probe_local_python_subprocess_invocation(
         timeout_seconds=environment_context.timeout_seconds,
         invocation_contract_revision=invocation_contract_revision,
         request_replay_payload_fields=runner_request.replay_artifact.replay_inputs,
+    )
+
+
+def materialize_runtime_probe_local_python_process_completion(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+    *,
+    returncode: int,
+    stdout_text: str,
+    stderr_text: str,
+    completion_contract_revision: str,
+) -> RuntimeProbeLocalPythonProcessCompletion:
+    """Build a frozen raw process completion without interpreting output."""
+    _validate_local_python_subprocess_invocation(invocation)
+    validated_returncode = _validate_local_python_process_returncode(returncode)
+    validated_stdout = _validate_local_python_raw_text(
+        stdout_text,
+        field_name="stdout_text",
+    )
+    validated_stderr = _validate_local_python_raw_text(
+        stderr_text,
+        field_name="stderr_text",
+    )
+    validated_revision = _validate_contract_revision(
+        completion_contract_revision,
+        field_name="completion_contract_revision",
+    )
+
+    return RuntimeProbeLocalPythonProcessCompletion(
+        invocation=invocation,
+        invocation_identity=_runtime_probe_local_python_invocation_identity(invocation),
+        argv=invocation.argv,
+        working_directory=invocation.working_directory,
+        python_path_entries=invocation.python_path_entries,
+        timeout_seconds=invocation.timeout_seconds,
+        returncode=validated_returncode,
+        stdout_text=validated_stdout,
+        stderr_text=validated_stderr,
+        completion_contract_revision=validated_revision,
+        request_replay_payload_fields=invocation.request_replay_payload_fields,
     )
 
 
@@ -1395,6 +1507,25 @@ def _validate_execution_attempt(attempt: RuntimeProbeExecutionAttempt) -> None:
     )
 
 
+def _validate_local_python_subprocess_invocation(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+) -> None:
+    """Re-check one local-Python subprocess invocation for tampering."""
+    if not isinstance(invocation, RuntimeProbeLocalPythonSubprocessInvocation):
+        raise ValueError("local Python subprocess invocation must be typed")
+    RuntimeProbeLocalPythonSubprocessInvocation(
+        runner_request=invocation.runner_request,
+        environment_context=invocation.environment_context,
+        python_executable=invocation.python_executable,
+        argv=invocation.argv,
+        working_directory=invocation.working_directory,
+        python_path_entries=invocation.python_path_entries,
+        timeout_seconds=invocation.timeout_seconds,
+        invocation_contract_revision=invocation.invocation_contract_revision,
+        request_replay_payload_fields=invocation.request_replay_payload_fields,
+    )
+
+
 def _validate_local_python_environment_context(
     environment_context: RuntimeProbeLocalPythonEnvironmentContext,
 ) -> None:
@@ -1459,6 +1590,29 @@ def _validate_local_python_argv_token(token: str, *, field_name: str) -> str:
     if token != token.strip() or _contains_control_character(token):
         raise ValueError(f"local Python {field_name} token is malformed")
     return token
+
+
+def _validate_local_python_process_returncode(returncode: int) -> int:
+    """Reject untyped raw process return code values without interpreting them."""
+    if not isinstance(returncode, int) or isinstance(returncode, bool):
+        raise ValueError("local Python process completion returncode must be an int")
+    return returncode
+
+
+def _validate_local_python_raw_text(value: str, *, field_name: str) -> str:
+    """Reject untyped raw process text while preserving empty and multiline values."""
+    if not isinstance(value, str):
+        raise ValueError(f"local Python process completion {field_name} must be text")
+    return value
+
+
+def _validate_contract_revision(value: str, *, field_name: str) -> str:
+    """Reject blank or malformed revision labels."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be non-empty")
+    if value != value.strip() or _contains_control_character(value):
+        raise ValueError(f"{field_name} is malformed")
+    return value
 
 
 def _local_python_environment_parts_from_fields(
@@ -1684,6 +1838,33 @@ def _validate_request_plan(plan: RuntimeProbeRequestPlan) -> None:
         raise ValueError("runtime probe execution plan_id must match requests")
 
 
+def _runtime_probe_local_python_invocation_identity(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+) -> str:
+    """Return a stable identity digest for one local-Python invocation contract."""
+    replay_payload_identity = tuple(
+        (field.key, field.value) for field in invocation.request_replay_payload_fields
+    )
+    serialized_identity = json.dumps(
+        (
+            ("plan_id", invocation.runner_request.plan_id),
+            ("request_id", invocation.runner_request.request_id),
+            (
+                "invocation_contract_revision",
+                invocation.invocation_contract_revision,
+            ),
+            ("argv", invocation.argv),
+            ("working_directory", invocation.working_directory),
+            ("python_path_entries", invocation.python_path_entries),
+            ("timeout_seconds", invocation.timeout_seconds),
+            ("request_replay_payload_fields", replay_payload_identity),
+        ),
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()
+    return f"runtime_probe_local_python_subprocess_invocation:{digest}"
+
+
 def _runtime_probe_identifier(
     *,
     plan_id: str,
@@ -1770,6 +1951,7 @@ __all__ = [
     "RuntimeProbeExecutionInputBatch",
     "RuntimeProbeFailureNormalizingRunner",
     "RuntimeProbeLocalPythonEnvironmentContext",
+    "RuntimeProbeLocalPythonProcessCompletion",
     "RuntimeProbeLocalPythonSubprocessInvocation",
     "RuntimeProbeRunnerHandlerEntry",
     "RuntimeProbeRunnerHandlerKey",
@@ -1784,6 +1966,7 @@ __all__ = [
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",
+    "materialize_runtime_probe_local_python_process_completion",
     "materialize_runtime_probe_local_python_subprocess_invocation",
     "materialize_runtime_probe_runner_request_batch",
     "prepare_runtime_probe_runner_requests_for_diagnostic",

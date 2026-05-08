@@ -2,6 +2,184 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Process Completion Contract Release Gate
+
+- The combined read-only release gate returned no findings for the exact
+  four-file local Python process completion contract release unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ee5f2b8 Sync local Python invocation post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted gate result:
+  - Gate 1 release-unit audit passed with no findings
+  - Gate 2 full regression passed:
+    - `.venv/bin/python -m ruff check src/ tests/`
+    - `.venv/bin/python -m ruff format --check src/ tests/`
+      reporting `108 files already formatted`
+    - `.venv/bin/python -m mypy --strict src/`
+      reporting no issues in 36 source files
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+      reporting `949 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-08 -- Local Python Process Completion Contract Workspace Acceptance
+
+- Reviewed the returned raw local Python process completion/result contract
+  slice against the implementation spec and quality gate.
+- Findings: none.
+- Repo-backed truth during acceptance review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ee5f2b8 Sync local Python invocation post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed `RuntimeProbeLocalPythonProcessCompletion`
+  - adds `materialize_runtime_probe_local_python_process_completion(...)`
+  - revalidates the carried
+    `RuntimeProbeLocalPythonSubprocessInvocation`
+  - preserves invocation identity, argv, working directory, ordered Python
+    path entries, timeout seconds, raw return code, raw stdout/stderr text,
+    completion contract revision, and request replay payload fields
+  - validates primitive raw completion fields without interpreting them
+  - permits empty stdout/stderr and nonzero return codes
+  - keeps exports module-local to `context_ir.runtime_probe_execution.__all__`
+    with no package-root export
+  - preserves existing runner request, invocation, dispatch, attempt, result,
+    admission, recompile, facade, MCP, package-root, schema, eval, scoring,
+    optimizer, compiler, benchmark, and public-claim behavior
+  - does not import subprocess, execute repository code, enforce timeouts,
+    parse stdout/stderr, synthesize `RuntimeProbeExecutionAttempt` values,
+    synthesize observed/non-proof results, or register handlers
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `187 passed`
+  - `rg -n "import subprocess|subprocess\\.|from subprocess|Popen|TimeoutExpired" src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    returned no matches
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-08 -- Local Python Process Completion Contract Spike Acceptance
+
+- Reviewed the returned read-only local Python subprocess execution-boundary
+  spike against the spike question and current repo state.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ee5f2b8 Sync local Python invocation post-push state`
+  - dirty tracked files exactly: `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted recommendation:
+  - implement a still-non-executing raw local Python process
+    completion/result contract next
+  - do not implement raw subprocess execution yet
+  - do not implement a concrete family/form handler yet
+- Reasoning:
+  - the repo now has a pushed shell-free invocation contract, but no typed
+    boundary for raw process output
+  - raw process output must not be collapsed directly into
+    `RuntimeProbeExecutionAttempt`, `RuntimeProbeObservedResult`, or
+    proof-bearing runtime evidence
+  - a frozen completion contract isolates raw return code and text capture
+    shape before later slices introduce process spawning, timeout behavior,
+    stdout/stderr parsing, outcome normalization, observed-result synthesis,
+    or handler registration
+- Next implementation slice:
+  - add a frozen module-local raw local Python process completion/result
+    contract in `src/context_ir/runtime_probe_execution.py`
+  - add focused tests in `tests/test_runtime_probe_execution.py`
+  - keep `PLAN.md` and `BUILDLOG.md` as control-lane continuity only, not
+    implementation-lane scope
+- Acceptance status: first-pass
+
+## 2026-05-08 -- Post-Invocation Contract Runner Execution Boundary Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `ee5f2b8 Sync local Python invocation post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `ea6ff8e Add local Python subprocess invocation contract`.
+- Routing decision:
+  - the next control action is a bounded read-only spike for the local Python
+    subprocess execution boundary
+  - the spike should decide the next smallest safe implementation slice after
+    the pushed non-executing invocation contract
+  - the likely decision point is whether to implement a raw subprocess
+    execution/result-capture boundary next, a still-non-executing completed
+    process/result contract, or a first concrete family/form handler
+  - the spike must return an exact implementation slice spec if it recommends
+    one
+- Why now:
+  - runner request preparation, strict attempt collection, result assembly,
+    diagnostic recompile composition, failure normalization, dispatch, local
+    Python environment context, and shell-free invocation materialization are
+    pushed and no-active-gate
+  - the next substantive work risks crossing from typed replay contracts into
+    repository code execution, subprocess isolation, timeout semantics,
+    stdout/stderr parsing, process-result normalization, observed-result
+    synthesis, and handler registration
+  - those concerns should be decomposed before a worker edits source
+- Alternatives rejected:
+  - direct dynamic-import handler implementation now: too likely to mix command
+    construction, execution, timeout behavior, payload normalization, observed
+    result synthesis, and dispatch registration in one slice
+  - direct subprocess runner implementation now: plausible, but should be
+    decomposed first against current contracts so it does not silently absorb
+    handler-specific parsing or proof synthesis
+  - admission, recompile, facade, MCP, package-root, eval, scoring, optimizer,
+    compiler, benchmark, or public-claim work: unrelated to the immediate
+    runner execution boundary
+  - reopening `ea6ff8e`, `f75196e`, `3751df1`, or `93456b6` release gates:
+    no new finding supports reopening those pushed releases
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Local Python Subprocess Invocation Contract Push Sync
 
 - Ryan authorized pushing the local Python subprocess invocation contract
