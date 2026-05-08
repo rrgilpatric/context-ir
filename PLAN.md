@@ -2387,7 +2387,9 @@ sequencing for `c1a12d7` absent new findings.
   accepted first-pass in workspace-only state
 - [x] Combined release gate for the exact four-file local Python process
   completion contract release unit
-- [ ] Local commit creation for the local Python process completion contract
+- [x] Local commit creation for the local Python process completion contract
+  release unit
+- [ ] Ryan-authorized push for the local Python process completion contract
   release unit
 
 ## What Is In Progress
@@ -3296,10 +3298,12 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file local
-Python process completion contract release unit. The combined read-only
-release gate passed with no findings. Push remains explicitly Ryan-gated after
-local commit creation.
+Immediate next route: await explicit Ryan authorization to push the local
+Python process completion contract release and continuity-sync commits. The
+source/contract release is locally committed at
+`e9f87fc Add local Python process completion contract`; `origin/main` remains
+at `ee5f2b8 Sync local Python invocation post-push state`. Push remains
+explicitly Ryan-gated.
 
 Proposed release unit:
 
@@ -3331,7 +3335,7 @@ Current release state for the proposed process-completion unit:
 - full-regression-cleared: yes, full pytest `949 passed`
 - commit-gating-cleared: yes
 - staged: no
-- locally committed: no
+- locally committed: yes, `e9f87fc`
 - pushed: no
 
 The runtime probe runner-request attempt/result assembly release is pushed at

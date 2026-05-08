@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Process Completion Contract Local Commit Routing
+
+- Local commit creation completed for the exact four-file local Python process
+  completion contract release unit.
+- Local commit:
+  - `e9f87fc Add local Python process completion contract`
+- Commit contents:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity sync:
+  - branch `main`
+  - `HEAD` at `e9f87fc Add local Python process completion contract`
+  - `origin/main` remains at
+    `ee5f2b8 Sync local Python invocation post-push state`
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - locally committed: yes, `e9f87fc`
+  - pushed: no
+  - push remains Ryan-gated
+  - next route: await explicit Ryan authorization to push the local release
+    and continuity-sync commits
+- Acceptance status: first-pass
+
 ## 2026-05-08 -- Local Python Process Completion Contract Release Gate
 
 - The combined read-only release gate returned no findings for the exact
