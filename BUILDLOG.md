@@ -2,6 +2,193 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Release Gate
+
+- The combined read-only release gate returned no findings for the exact
+  four-file raw local Python subprocess execution boundary release unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `be50412 Sync local Python process completion post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted gate result:
+  - Gate 1 release-unit audit passed with no findings
+  - Gate 2 full regression passed:
+    - `.venv/bin/python -m ruff check src/ tests/`
+    - `.venv/bin/python -m ruff format --check src/ tests/`
+      reporting `108 files already formatted`
+    - `.venv/bin/python -m mypy --strict src/`
+      reporting no issues in 36 source files
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+      reporting `954 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: 1 correction
+
+## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Workspace Acceptance
+
+- Reviewed the returned correction for the raw local Python subprocess
+  execution boundary against the implementation spec, prior finding, and
+  quality gate.
+- Findings after correction: none.
+- Repo-backed truth during acceptance review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `be50412 Sync local Python process completion post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds module-local
+    `execute_runtime_probe_local_python_subprocess_invocation(...)`
+  - revalidates `RuntimeProbeLocalPythonSubprocessInvocation` before
+    subprocess execution
+  - validates `completion_contract_revision` before subprocess execution
+  - uses shell-free `subprocess.run(...)` with invocation argv, working
+    directory, timeout seconds, text capture, `capture_output=True`,
+    `check=False`, and `shell=False`
+  - builds a child-only environment from ambient `os.environ` while overriding
+    `PYTHONPATH` deterministically from ordered
+    `invocation.python_path_entries`
+  - materializes raw return code, stdout text, and stderr text through
+    `materialize_runtime_probe_local_python_process_completion(...)`
+  - propagates subprocess exceptions for later mapping slices
+  - keeps exports module-local to `context_ir.runtime_probe_execution.__all__`
+    with no package-root export
+  - preserves existing runner request, local environment, invocation,
+    completion, dispatch, attempt, result, admission, recompile, facade, MCP,
+    package-root, schema, eval, scoring, optimizer, compiler, benchmark, docs,
+    and public-claim behavior
+  - does not parse stdout/stderr, interpret return codes, synthesize
+    `RuntimeProbeExecutionAttempt` values, synthesize observed/non-proof
+    results, implement family/form handlers, or register handlers
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `192 passed`
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: 1 correction
+
+## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Review Finding
+
+- Reviewed the returned raw local Python subprocess execution boundary slice
+  against the implementation spec and quality gate.
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `be50412 Sync local Python process completion post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Finding:
+  - `completion_contract_revision` is validated only after
+    `subprocess.run(...)`
+  - a blank or malformed completion revision would still launch the child
+    process before failing in the completion materializer
+  - there is no executor-level negative test proving invalid completion
+    revision metadata prevents the subprocess call
+- Decision:
+  - rejected with finding
+  - Ryan agreed to fix with a narrow correction
+  - correction must prevalidate `completion_contract_revision` before
+    `subprocess.run(...)` and add a mocked test proving invalid revision
+    values do not call subprocess
+- Release state:
+  - accepted in workspace: no
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Acceptance status: rejected
+
+## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `be50412 Sync local Python process completion post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `e9f87fc Add local Python process completion contract`.
+- Routing decision:
+  - the next control action is a bounded implementation slice for the raw
+    local Python subprocess execution boundary
+  - this is the first slice allowed to import and use `subprocess`
+  - the slice must consume the existing
+    `RuntimeProbeLocalPythonSubprocessInvocation` contract and produce the
+    existing `RuntimeProbeLocalPythonProcessCompletion` contract
+  - execution must remain raw and non-interpreting: shell-free subprocess
+    launch, timeout use, stdout/stderr capture, and return-code capture only
+- Why now:
+  - runner request materialization, local Python environment derivation,
+    shell-free invocation materialization, and raw process completion
+    materialization are pushed and no-active-gate
+  - the completion contract now gives the first execution slice a fixed raw
+    output shape, so it does not need to invent parsing, proof synthesis,
+    attempt assembly, or handler registration semantics
+- Explicitly deferred:
+  - stdout/stderr parsing
+  - return-code outcome normalization
+  - timeout-to-attempt/result mapping
+  - `RuntimeProbeExecutionAttempt` synthesis
+  - observed/non-proof result synthesis
+  - family/form handler implementation or dispatch registration
+  - admission, recompile, facade, MCP, package-root, schema, eval, scoring,
+    optimizer, compiler, benchmark, docs, public claims, or continuity edits
+    by the implementation lane
+- Alternatives rejected:
+  - direct concrete dynamic-import handler: still too broad because it would
+    mix process execution, handler semantics, payload parsing, proof synthesis,
+    and dispatch registration
+  - output parsing or observed-result synthesis now: premature before a raw
+    execution boundary exists
+  - another planning spike: not required because the invocation and completion
+    contracts now bound the first execution step tightly enough
+- Acceptance status: first-pass
+
 ## 2026-05-08 -- Local Python Process Completion Contract Push Sync
 
 - Ryan authorized pushing the local Python process completion contract release

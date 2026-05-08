@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
 import textwrap
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
@@ -20,6 +22,7 @@ from context_ir.runtime_probe_execution import (
     assemble_runtime_probe_result_batch_from_execution_attempts,
     assemble_runtime_probe_result_batch_from_runner_request_attempts,
     collect_runtime_probe_execution_attempts_from_runner_requests,
+    execute_runtime_probe_local_python_subprocess_invocation,
     materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_subprocess_invocation,
 )
@@ -954,6 +957,205 @@ def test_materialize_local_python_process_completion_revalidates_invocation() ->
         _local_python_process_completion(argv_drifted_invocation)
     with pytest.raises(ValueError, match="request_id must match execution input"):
         _local_python_process_completion(request_drifted_invocation)
+
+
+def test_execute_local_python_subprocess_invocation_preserves_raw_completion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The execution boundary captures raw process fields without interpretation."""
+    invocation = _local_python_subprocess_invocation()
+    monkeypatch.setenv("CONTEXT_IR_RUNTIME_PROBE_TEST", "ambient-preserved")
+    monkeypatch.setenv("PYTHONPATH", "/ambient/path")
+    calls: list[dict[str, object]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        calls.append(
+            {
+                "args": args,
+                "cwd": cwd,
+                "env": env,
+                "timeout": timeout,
+                "shell": shell,
+                "capture_output": capture_output,
+                "text": text,
+                "check": check,
+            }
+        )
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=23,
+            stdout="raw stdout\n",
+            stderr="raw stderr\n",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    completion = execute_runtime_probe_local_python_subprocess_invocation(
+        invocation,
+        completion_contract_revision=(
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    )
+
+    assert len(calls) == 1
+    call = calls[0]
+    child_environment = call["env"]
+    assert call["args"] is invocation.argv
+    assert call["cwd"] == invocation.working_directory
+    assert call["timeout"] == invocation.timeout_seconds
+    assert call["shell"] is False
+    assert call["capture_output"] is True
+    assert call["text"] is True
+    assert call["check"] is False
+    assert isinstance(child_environment, dict)
+    assert child_environment is not os.environ
+    assert child_environment["CONTEXT_IR_RUNTIME_PROBE_TEST"] == "ambient-preserved"
+    assert child_environment["PYTHONPATH"] == os.pathsep.join(
+        invocation.python_path_entries
+    )
+    assert os.environ["PYTHONPATH"] == "/ambient/path"
+    assert completion == _local_python_process_completion(
+        invocation,
+        returncode=23,
+        stdout_text="raw stdout\n",
+        stderr_text="raw stderr\n",
+    )
+
+
+def test_execute_local_python_subprocess_invocation_revalidates_before_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Invocation drift is rejected before reaching the subprocess boundary."""
+    invocation = _local_python_subprocess_invocation()
+    object.__setattr__(
+        invocation,
+        "argv",
+        ("/workspace/other/python", *invocation.argv[1:]),
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    with pytest.raises(ValueError, match="argv executable"):
+        execute_runtime_probe_local_python_subprocess_invocation(
+            invocation,
+            completion_contract_revision=(
+                "runtime-probe-local-python-process-completion:test.1"
+            ),
+        )
+
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("completion_contract_revision", "error_match"),
+    (
+        ("", "completion_contract_revision"),
+        (
+            " runtime-probe-local-python-process-completion:test.1",
+            "completion_contract_revision.*malformed",
+        ),
+    ),
+)
+def test_execute_subprocess_rejects_bad_completion_revision_before_run(
+    monkeypatch: pytest.MonkeyPatch,
+    completion_contract_revision: str,
+    error_match: str,
+) -> None:
+    """Completion revision metadata is validated before subprocess execution."""
+    invocation = _local_python_subprocess_invocation()
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout="",
+            stderr="",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    with pytest.raises(ValueError, match=error_match):
+        execute_runtime_probe_local_python_subprocess_invocation(
+            invocation,
+            completion_contract_revision=completion_contract_revision,
+        )
+
+    assert calls == []
+
+
+def test_execute_local_python_subprocess_invocation_propagates_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Subprocess exceptions stay raw for later execution-attempt mapping slices."""
+    invocation = _local_python_subprocess_invocation()
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, shell, capture_output, text, check
+        raise subprocess.TimeoutExpired(cmd=args, timeout=timeout)
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        execute_runtime_probe_local_python_subprocess_invocation(
+            invocation,
+            completion_contract_revision=(
+                "runtime-probe-local-python-process-completion:test.1"
+            ),
+        )
 
 
 @pytest.mark.parametrize(
@@ -2983,6 +3185,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "derive_runtime_probe_local_python_environment_context" in (
         runtime_probe_execution.__all__
     )
+    assert "execute_runtime_probe_local_python_subprocess_invocation" in (
+        runtime_probe_execution.__all__
+    )
     assert "make_dispatching_runtime_probe_runner" in runtime_probe_execution.__all__
     assert "make_failure_normalizing_runtime_probe_runner" in (
         runtime_probe_execution.__all__
@@ -3030,6 +3235,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "derive_runtime_probe_local_python_environment_context" not in (
         context_ir.__all__
     )
+    assert (
+        "execute_runtime_probe_local_python_subprocess_invocation"
+        not in context_ir.__all__
+    )
     assert "make_dispatching_runtime_probe_runner" not in context_ir.__all__
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
@@ -3071,6 +3280,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "derive_runtime_probe_local_python_environment_context",
+    )
+    assert not hasattr(
+        context_ir,
+        "execute_runtime_probe_local_python_subprocess_invocation",
     )
     assert not hasattr(
         context_ir,

@@ -2424,6 +2424,16 @@ sequencing for `c1a12d7` absent new findings.
   release unit
 - [x] Ryan-authorized push for the local Python process completion contract
   release unit
+- [x] Post-`e9f87fc` planning/control selected the raw local Python subprocess
+  execution boundary
+- [x] Raw local Python subprocess execution boundary implementation slice
+  accepted in workspace after one correction
+- [x] Completion revision pre-run validation correction for the raw local
+  Python subprocess execution boundary
+- [x] Combined release gate for the exact four-file raw local Python
+  subprocess execution boundary release unit
+- [ ] Local commit creation for the raw local Python subprocess execution
+  boundary release unit
 
 ## What Is In Progress
 
@@ -3331,13 +3341,14 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded control action after the pushed
-local Python process completion contract release. The source/contract release
-is pushed at `e9f87fc Add local Python process completion contract`, with
-release-routing sync pushed through
-`928ea13 Sync local Python process completion routing`. Release-gate status is
-no-active-gate. Do not reopen the pushed completion, invocation, environment
-context, dispatch table, or failure-normalization releases absent new findings.
+Immediate next route: create the local commit for the exact four-file raw
+local Python subprocess execution boundary release unit. The source/contract
+release is pushed at `e9f87fc Add local Python process completion contract`,
+with post-push routing sync pushed through
+`be50412 Sync local Python process completion post-push state`. Release-gate
+status is no-active-gate. Do not reopen the pushed completion, invocation,
+environment context, dispatch table, or failure-normalization releases absent
+new findings.
 
 Proposed release unit:
 
@@ -3346,31 +3357,35 @@ Proposed release unit:
 - `PLAN.md`
 - `BUILDLOG.md`
 
-The local Python process completion/result contract slice is accepted
-first-pass in workspace-only state. It adds frozen module-local
-`RuntimeProbeLocalPythonProcessCompletion` and
-`materialize_runtime_probe_local_python_process_completion(...)` in
-`src/context_ir/runtime_probe_execution.py`, with focused tests in
-`tests/test_runtime_probe_execution.py`. It remains non-executing and
-non-interpreting: no subprocess import or execution, no timeout enforcement,
-no stdout/stderr parsing, no `RuntimeProbeExecutionAttempt` synthesis, no
-observed/non-proof result synthesis, no family/form handler implementation or
-dispatch registration, and no admission, recompile, facade, MCP, package-root,
-schema, eval, scoring, optimizer, compiler, benchmark, or public-claim
-changes. Do not route another implementation slice until the release gate
-clears or Ryan explicitly redirects.
+The raw subprocess execution boundary is accepted in workspace after one
+correction. It adds module-local
+`execute_runtime_probe_local_python_subprocess_invocation(...)`, revalidates
+the invocation, validates `completion_contract_revision` before subprocess
+execution, runs shell-free `subprocess.run(...)` with the invocation argv,
+working directory, timeout seconds, text capture, and deterministic child
+`PYTHONPATH`, and returns raw
+`RuntimeProbeLocalPythonProcessCompletion` through the existing materializer.
+It remains raw and non-interpreting: no stdout/stderr parsing, no return-code
+outcome normalization, no timeout-to-attempt/result mapping, no
+`RuntimeProbeExecutionAttempt` synthesis, no observed/non-proof result
+synthesis, no family/form handler implementation or dispatch registration,
+and no admission, recompile, facade, MCP, package-root, schema, eval, scoring,
+optimizer, compiler, benchmark, docs, or public-claim changes.
 
-Current release state for the proposed process-completion unit:
+Current release state for the proposed raw subprocess execution unit:
 
-- accepted in workspace: yes, first-pass
-- focused validation: passed with `187 passed`
-- subprocess guard: no matches for subprocess execution tokens
+- selected by control: yes
+- implementation lane launched: yes
+- implementation returned: yes
+- correction authorized by Ryan: yes
+- accepted in workspace: yes, after one correction
+- focused validation: passed with `192 passed`
 - release-unit-audit-cleared: yes
-- full-regression-cleared: yes, full pytest `949 passed`
+- full-regression-cleared: yes, full pytest `954 passed`
 - commit-gating-cleared: yes
 - staged: no
-- locally committed: yes, `e9f87fc`
-- pushed: yes
+- locally committed: no
+- pushed: no
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate

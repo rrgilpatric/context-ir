@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import subprocess
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath, PureWindowsPath
@@ -956,6 +958,36 @@ def materialize_runtime_probe_local_python_process_completion(
     )
 
 
+def execute_runtime_probe_local_python_subprocess_invocation(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+    *,
+    completion_contract_revision: str,
+) -> RuntimeProbeLocalPythonProcessCompletion:
+    """Execute one local-Python invocation and return its raw process completion."""
+    _validate_local_python_subprocess_invocation(invocation)
+    validated_revision = _validate_contract_revision(
+        completion_contract_revision,
+        field_name="completion_contract_revision",
+    )
+    completed_process: subprocess.CompletedProcess[str] = subprocess.run(
+        invocation.argv,
+        cwd=invocation.working_directory,
+        env=_local_python_subprocess_child_environment(invocation),
+        timeout=invocation.timeout_seconds,
+        shell=False,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return materialize_runtime_probe_local_python_process_completion(
+        invocation,
+        returncode=completed_process.returncode,
+        stdout_text=completed_process.stdout,
+        stderr_text=completed_process.stderr,
+        completion_contract_revision=validated_revision,
+    )
+
+
 def assemble_runtime_probe_result_batch_from_execution_attempts(
     input_batch: RuntimeProbeExecutionInputBatch,
     attempts: Iterable[RuntimeProbeExecutionAttempt],
@@ -1599,6 +1631,15 @@ def _validate_local_python_process_returncode(returncode: int) -> int:
     return returncode
 
 
+def _local_python_subprocess_child_environment(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+) -> dict[str, str]:
+    """Return a child-only environment with deterministic invocation PYTHONPATH."""
+    child_environment = dict(os.environ)
+    child_environment["PYTHONPATH"] = os.pathsep.join(invocation.python_path_entries)
+    return child_environment
+
+
 def _validate_local_python_raw_text(value: str, *, field_name: str) -> str:
     """Reject untyped raw process text while preserving empty and multiline values."""
     if not isinstance(value, str):
@@ -1963,6 +2004,7 @@ __all__ = [
     "assemble_runtime_probe_result_batch_from_runner_request_attempts",
     "collect_runtime_probe_execution_attempts_from_runner_requests",
     "derive_runtime_probe_local_python_environment_context",
+    "execute_runtime_probe_local_python_subprocess_invocation",
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",
