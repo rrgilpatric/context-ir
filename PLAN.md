@@ -2331,7 +2331,17 @@ sequencing for `c1a12d7` absent new findings.
   release unit
 - [x] Ryan-authorized push for the runtime probe runner environment context
   release unit
-- [ ] Post-`f75196e` planning/control selects the next bounded action
+- [x] Post-`f75196e` planning/control selected the local Python runner
+  execution-boundary spike
+- [x] Local Python runner execution-boundary spike accepted first-pass
+- [x] Local Python subprocess invocation contract implementation slice accepted
+  first-pass in workspace-only state
+- [x] Blank invocation revision negative-test correction for the local Python
+  subprocess invocation contract
+- [x] Combined release gate for the exact four-file local Python subprocess
+  invocation contract release unit
+- [ ] Local commit creation for the local Python subprocess invocation
+  contract release unit
 
 ## What Is In Progress
 
@@ -3239,10 +3249,45 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded control action after the pushed
-runtime probe runner environment context release. Do not reopen the pushed
-environment context, dispatch table, or failure-normalization adapter releases
-absent new findings.
+Immediate next route: create the local commit for the exact four-file local
+Python subprocess invocation contract release unit. The combined read-only
+release gate passed with no findings after the prior blank-revision
+test-coverage correction. Push remains explicitly Ryan-gated after local
+commit creation.
+
+Proposed release unit:
+
+- `src/context_ir/runtime_probe_execution.py`
+- `tests/test_runtime_probe_execution.py`
+- `PLAN.md`
+- `BUILDLOG.md`
+
+The local Python subprocess invocation contract slice is accepted first-pass
+in workspace-only state. It adds a frozen module-local
+`RuntimeProbeLocalPythonSubprocessInvocation` and
+`materialize_runtime_probe_local_python_subprocess_invocation(...)` in
+`src/context_ir/runtime_probe_execution.py`, with focused tests in
+`tests/test_runtime_probe_execution.py`. It remains non-executing: no
+subprocess import or execution, no in-process repository imports, no timeout
+enforcement, no stdout/stderr parsing, no observed-result synthesis, no
+family/form handler implementation or dispatch registration, and no admission,
+recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+compiler, benchmark, or public-claim changes. Do not route another
+implementation slice until the release gate clears or Ryan explicitly
+redirects.
+
+Current release state for the proposed invocation-contract unit:
+
+- accepted in workspace: yes, first-pass after one audit correction
+- prior Gate 1 finding: corrected
+- focused validation: passed with `177 passed`
+- subprocess guard: no matches for subprocess execution tokens
+- release-unit-audit-cleared: yes
+- full-regression-cleared: yes, full pytest `939 passed`
+- commit-gating-cleared: yes
+- staged: no
+- locally committed: no
+- pushed: no
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate

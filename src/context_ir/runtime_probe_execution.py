@@ -272,6 +272,86 @@ class RuntimeProbeLocalPythonEnvironmentContext:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonSubprocessInvocation:
+    """Frozen, shell-free local-Python subprocess invocation contract."""
+
+    runner_request: RuntimeProbeRunnerRequest
+    environment_context: RuntimeProbeLocalPythonEnvironmentContext
+    python_executable: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    invocation_contract_revision: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject invocation contracts that drift from their runner request."""
+        _validate_runner_request(self.runner_request)
+        _validate_local_python_environment_context(self.environment_context)
+
+        expected_context = derive_runtime_probe_local_python_environment_context(
+            self.runner_request
+        )
+        if self.environment_context != expected_context:
+            raise ValueError(
+                "local Python subprocess invocation environment_context must be "
+                "derived from runner request"
+            )
+
+        if not self.invocation_contract_revision.strip():
+            raise ValueError("invocation_contract_revision must be non-empty")
+        _validate_absolute_path_metadata(
+            self.python_executable,
+            field_name="python_executable",
+        )
+        _validate_local_python_subprocess_argv(
+            self.argv,
+            python_executable=self.python_executable,
+        )
+        _validate_absolute_path_metadata(
+            self.working_directory,
+            field_name="working_directory",
+        )
+        if self.working_directory != self.environment_context.working_directory:
+            raise ValueError(
+                "local Python subprocess invocation working_directory must match "
+                "environment context"
+            )
+        if self.timeout_seconds != self.environment_context.timeout_seconds:
+            raise ValueError(
+                "local Python subprocess invocation timeout_seconds must match "
+                "environment context"
+            )
+        if not isinstance(self.python_path_entries, tuple):
+            raise ValueError(
+                "local Python subprocess invocation python_path_entries must be a tuple"
+            )
+        for python_path_entry in self.python_path_entries:
+            _validate_absolute_path_metadata(
+                python_path_entry,
+                field_name="python_path_entry",
+            )
+        if self.python_path_entries != self.environment_context.python_path_entries:
+            raise ValueError(
+                "local Python subprocess invocation python_path_entries must match "
+                "environment context"
+            )
+        _validate_replay_fields(
+            self.request_replay_payload_fields,
+            field_name="request_replay_payload_fields",
+        )
+        if (
+            self.request_replay_payload_fields
+            != self.runner_request.replay_artifact.replay_inputs
+        ):
+            raise ValueError(
+                "local Python subprocess invocation replay payload fields must match "
+                "runner request replay inputs"
+            )
+
+
+@dataclass(frozen=True)
 class RuntimeProbeRunnerRequestBatch:
     """Ordered internal runner-request batch for one execution-input batch."""
 
@@ -725,6 +805,42 @@ def derive_runtime_probe_local_python_environment_context(
         timeout_seconds=runner_request.timeout_seconds,
         runner_environment=runner_request.runner_environment,
         runner_assumptions=runner_request.runner_assumptions,
+    )
+
+
+def materialize_runtime_probe_local_python_subprocess_invocation(
+    runner_request: RuntimeProbeRunnerRequest,
+    *,
+    python_executable: str,
+    module_name: str,
+    invocation_contract_revision: str,
+    module_argv: Iterable[str] = (),
+) -> RuntimeProbeLocalPythonSubprocessInvocation:
+    """Build a frozen local-Python subprocess invocation without executing it."""
+    _validate_runner_request(runner_request)
+    environment_context = derive_runtime_probe_local_python_environment_context(
+        runner_request
+    )
+    executable = _validate_absolute_path_metadata(
+        python_executable,
+        field_name="python_executable",
+    )
+    validated_module_name = _validate_local_python_module_name(module_name)
+    validated_module_argv = tuple(
+        _validate_local_python_argv_token(token, field_name="module_argv")
+        for token in module_argv
+    )
+
+    return RuntimeProbeLocalPythonSubprocessInvocation(
+        runner_request=runner_request,
+        environment_context=environment_context,
+        python_executable=executable,
+        argv=(executable, "-m", validated_module_name, *validated_module_argv),
+        working_directory=environment_context.working_directory,
+        python_path_entries=environment_context.python_path_entries,
+        timeout_seconds=environment_context.timeout_seconds,
+        invocation_contract_revision=invocation_contract_revision,
+        request_replay_payload_fields=runner_request.replay_artifact.replay_inputs,
     )
 
 
@@ -1279,6 +1395,72 @@ def _validate_execution_attempt(attempt: RuntimeProbeExecutionAttempt) -> None:
     )
 
 
+def _validate_local_python_environment_context(
+    environment_context: RuntimeProbeLocalPythonEnvironmentContext,
+) -> None:
+    """Re-check one local-Python environment context for tampering."""
+    if not isinstance(environment_context, RuntimeProbeLocalPythonEnvironmentContext):
+        raise ValueError(
+            "local Python subprocess invocation environment_context must be typed"
+        )
+    RuntimeProbeLocalPythonEnvironmentContext(
+        repository_root=environment_context.repository_root,
+        working_directory=environment_context.working_directory,
+        python_path_entries=environment_context.python_path_entries,
+        runner_contract_revision=environment_context.runner_contract_revision,
+        timeout_seconds=environment_context.timeout_seconds,
+        runner_environment=environment_context.runner_environment,
+        runner_assumptions=environment_context.runner_assumptions,
+    )
+
+
+def _validate_local_python_subprocess_argv(
+    argv: tuple[str, ...],
+    *,
+    python_executable: str,
+) -> tuple[str, ...]:
+    """Reject invocation argv that cannot represent ``python -m module`` safely."""
+    if not isinstance(argv, tuple):
+        raise ValueError("local Python subprocess invocation argv must be a tuple")
+    if len(argv) < 3:
+        raise ValueError(
+            "local Python subprocess invocation argv must include executable, -m, "
+            "and module name"
+        )
+    if argv[0] != python_executable:
+        raise ValueError(
+            "local Python subprocess invocation argv executable must match "
+            "python_executable"
+        )
+    if argv[1] != "-m":
+        raise ValueError("local Python subprocess invocation argv must use python -m")
+    _validate_local_python_module_name(argv[2])
+    for token in argv[3:]:
+        _validate_local_python_argv_token(token, field_name="argv")
+    return argv
+
+
+def _validate_local_python_module_name(module_name: str) -> str:
+    """Reject module names that are not strict dotted Python identifiers."""
+    if not isinstance(module_name, str) or not module_name.strip():
+        raise ValueError("local Python module name must be non-empty")
+    if module_name != module_name.strip() or _contains_control_character(module_name):
+        raise ValueError("local Python module name is malformed")
+    module_parts = module_name.split(".")
+    if any(not module_part.isidentifier() for module_part in module_parts):
+        raise ValueError("local Python module name must be a dotted identifier")
+    return module_name
+
+
+def _validate_local_python_argv_token(token: str, *, field_name: str) -> str:
+    """Reject blank or malformed local-Python argv tokens."""
+    if not isinstance(token, str) or not token.strip():
+        raise ValueError(f"local Python {field_name} tokens must be non-empty")
+    if token != token.strip() or _contains_control_character(token):
+        raise ValueError(f"local Python {field_name} token is malformed")
+    return token
+
+
 def _local_python_environment_parts_from_fields(
     runner_environment: tuple[RuntimeProbeReplayField, ...],
 ) -> _LocalPythonEnvironmentParts:
@@ -1336,18 +1518,20 @@ def _required_local_python_singleton_path(
 
 def _validate_local_python_path_metadata(value: str, *, field_key: str) -> str:
     """Reject blank, relative, or malformed local-Python path metadata."""
-    if not value.strip():
-        raise ValueError(
-            f"runner_environment field {field_key} path metadata must be non-empty"
-        )
+    return _validate_absolute_path_metadata(
+        value,
+        field_name=f"runner_environment field {field_key}",
+    )
+
+
+def _validate_absolute_path_metadata(value: str, *, field_name: str) -> str:
+    """Reject blank, relative, or malformed path metadata."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} path metadata must be non-empty")
     if value != value.strip() or _contains_control_character(value):
-        raise ValueError(
-            f"runner_environment field {field_key} path metadata is malformed"
-        )
+        raise ValueError(f"{field_name} path metadata is malformed")
     if not _is_absolute_path_metadata(value):
-        raise ValueError(
-            f"runner_environment field {field_key} path metadata must be absolute"
-        )
+        raise ValueError(f"{field_name} path metadata must be absolute")
     return value
 
 
@@ -1586,6 +1770,7 @@ __all__ = [
     "RuntimeProbeExecutionInputBatch",
     "RuntimeProbeFailureNormalizingRunner",
     "RuntimeProbeLocalPythonEnvironmentContext",
+    "RuntimeProbeLocalPythonSubprocessInvocation",
     "RuntimeProbeRunnerHandlerEntry",
     "RuntimeProbeRunnerHandlerKey",
     "RuntimeProbeRunnerAttemptCollection",
@@ -1599,6 +1784,7 @@ __all__ = [
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",
+    "materialize_runtime_probe_local_python_subprocess_invocation",
     "materialize_runtime_probe_runner_request_batch",
     "prepare_runtime_probe_runner_requests_for_diagnostic",
 ]

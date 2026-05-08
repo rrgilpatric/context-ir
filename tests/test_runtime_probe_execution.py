@@ -20,6 +20,7 @@ from context_ir.runtime_probe_execution import (
     assemble_runtime_probe_result_batch_from_execution_attempts,
     assemble_runtime_probe_result_batch_from_runner_request_attempts,
     collect_runtime_probe_execution_attempts_from_runner_requests,
+    materialize_runtime_probe_local_python_subprocess_invocation,
 )
 from context_ir.semantic_types import (
     CapabilityTier,
@@ -270,13 +271,15 @@ def _local_python_runner_request(
         ...,
     ]
     | None = None,
+    *,
+    timeout_seconds: int = 30,
 ) -> runtime_probe_execution.RuntimeProbeRunnerRequest:
     """Return one runner request carrying local-Python environment metadata."""
     runner_batch = (
         runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
             _materialized_batch(_plan(_request())),
             runner_contract_revision="runtime-probe-runner:test.1",
-            timeout_seconds=30,
+            timeout_seconds=timeout_seconds,
             runner_environment=(
                 _local_python_runner_environment()
                 if runner_environment is None
@@ -286,6 +289,27 @@ def _local_python_runner_request(
         )
     )
     return runner_batch.runner_requests[0]
+
+
+def _local_python_subprocess_invocation(
+    runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest | None = None,
+    *,
+    python_executable: str = "/workspace/context-ir/.venv/bin/python",
+    module_name: str = "context_ir.runtime_probe_worker",
+    module_argv: tuple[str, ...] = ("--request", "runtime-probe-request.json"),
+    invocation_contract_revision: str = "runtime-probe-local-python-subprocess:test.1",
+) -> runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation:
+    """Return one frozen, non-executing local-Python subprocess invocation."""
+    selected_runner_request = (
+        _local_python_runner_request() if runner_request is None else runner_request
+    )
+    return materialize_runtime_probe_local_python_subprocess_invocation(
+        selected_runner_request,
+        python_executable=python_executable,
+        module_name=module_name,
+        invocation_contract_revision=invocation_contract_revision,
+        module_argv=module_argv,
+    )
 
 
 def _diagnostic_for_plan(
@@ -625,6 +649,210 @@ def test_derive_local_python_environment_context_revalidates_runner_request() ->
     with pytest.raises(ValueError, match="request_id must match execution input"):
         runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
             runner_request
+        )
+
+
+def test_materialize_local_python_subprocess_invocation_is_deterministic() -> None:
+    """Local-Python subprocess contracts are frozen execution-free request specs."""
+    runner_request = _local_python_runner_request()
+    module_argv = (
+        "--plan-id",
+        runner_request.plan_id,
+        "--request-id",
+        runner_request.request_id,
+    )
+
+    first_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        module_argv=module_argv,
+    )
+    second_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        module_argv=module_argv,
+    )
+
+    assert first_invocation == second_invocation
+    assert isinstance(
+        first_invocation,
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation,
+    )
+    assert first_invocation.runner_request is runner_request
+    assert first_invocation.environment_context == (
+        runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
+            runner_request
+        )
+    )
+    assert first_invocation.python_executable == (
+        "/workspace/context-ir/.venv/bin/python"
+    )
+    assert first_invocation.argv == (
+        "/workspace/context-ir/.venv/bin/python",
+        "-m",
+        "context_ir.runtime_probe_worker",
+        "--plan-id",
+        runner_request.plan_id,
+        "--request-id",
+        runner_request.request_id,
+    )
+    assert first_invocation.working_directory == "/workspace/context-ir"
+    assert first_invocation.python_path_entries == (
+        "/workspace/context-ir/src",
+        "/workspace/context-ir/tests/fixtures",
+        "/opt/context-ir/support",
+    )
+    assert first_invocation.timeout_seconds == runner_request.timeout_seconds
+    assert first_invocation.invocation_contract_revision == (
+        "runtime-probe-local-python-subprocess:test.1"
+    )
+    assert first_invocation.request_replay_payload_fields is (
+        runner_request.replay_artifact.replay_inputs
+    )
+    assert (
+        tuple(field.key for field in first_invocation.request_replay_payload_fields)
+        == _EXPECTED_REPLAY_INPUT_KEYS
+    )
+
+    with pytest.raises(FrozenInstanceError):
+        first_invocation.python_executable = "/tmp/python"
+
+
+def test_materialize_local_python_subprocess_invocation_revalidates_runner() -> None:
+    """Invocation materialization rejects runner requests that drifted in memory."""
+    runner_request = _local_python_runner_request()
+    object.__setattr__(runner_request, "request_id", "runtime_probe:wrong")
+
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        _local_python_subprocess_invocation(runner_request)
+
+
+@pytest.mark.parametrize(
+    ("python_executable", "error_match"),
+    (
+        ("workspace/context-ir/.venv/bin/python", "python_executable.*absolute"),
+        (" /workspace/context-ir/.venv/bin/python", "python_executable.*malformed"),
+        ("/workspace/context-ir/.venv/bin/python\nbad", "python_executable.*malformed"),
+    ),
+)
+def test_materialize_local_python_subprocess_invocation_rejects_bad_executable(
+    python_executable: str,
+    error_match: str,
+) -> None:
+    """Python executable metadata must be absolute and shell-token safe."""
+    with pytest.raises(ValueError, match=error_match):
+        _local_python_subprocess_invocation(
+            python_executable=python_executable,
+        )
+
+
+@pytest.mark.parametrize(
+    ("module_name", "module_argv", "error_match"),
+    (
+        (" ", (), "module name"),
+        (" context_ir.worker", (), "module name is malformed"),
+        ("context_ir.runtime-probe-worker", (), "dotted identifier"),
+        ("context_ir.worker", ("",), "module_argv"),
+        ("context_ir.worker", ("--payload\nbad",), "module_argv.*malformed"),
+    ),
+)
+def test_materialize_local_python_subprocess_invocation_rejects_bad_module_or_argv(
+    module_name: str,
+    module_argv: tuple[str, ...],
+    error_match: str,
+) -> None:
+    """Module names and argv tokens are validated before any future execution."""
+    with pytest.raises(ValueError, match=error_match):
+        _local_python_subprocess_invocation(
+            module_name=module_name,
+            module_argv=module_argv,
+        )
+
+
+@pytest.mark.parametrize(
+    "invocation_contract_revision",
+    ("", " \t\n"),
+)
+def test_materialize_local_python_subprocess_invocation_rejects_blank_revision(
+    invocation_contract_revision: str,
+) -> None:
+    """Invocation materialization rejects blank contract revisions."""
+    with pytest.raises(ValueError, match="invocation_contract_revision"):
+        _local_python_subprocess_invocation(
+            invocation_contract_revision=invocation_contract_revision,
+        )
+
+
+def test_local_python_subprocess_invocation_preserves_path_order_and_timeout() -> None:
+    """Invocation contracts keep Python path ordering and timeout metadata intact."""
+    runner_request = _local_python_runner_request(timeout_seconds=47)
+
+    invocation = _local_python_subprocess_invocation(runner_request)
+
+    assert invocation.python_path_entries == (
+        "/workspace/context-ir/src",
+        "/workspace/context-ir/tests/fixtures",
+        "/opt/context-ir/support",
+    )
+    assert invocation.timeout_seconds == 47
+    assert invocation.timeout_seconds == invocation.environment_context.timeout_seconds
+
+
+def test_local_python_subprocess_invocation_rejects_contract_drift() -> None:
+    """The frozen invocation type revalidates path, argv, and replay identities."""
+    invocation = _local_python_subprocess_invocation()
+    other_runner_request = _local_python_runner_request(
+        runner_environment=(
+            _field("python_version", "3.11"),
+            _field("repository_root", "/workspace/context-ir"),
+            _field("platform", "linux-x86_64"),
+            _field("python_path_entry", "/workspace/context-ir/src"),
+            _field("working_directory", "/workspace/other"),
+        )
+    )
+    other_context = (
+        runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
+            other_runner_request
+        )
+    )
+
+    with pytest.raises(ValueError, match="environment_context"):
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation(
+            runner_request=invocation.runner_request,
+            environment_context=other_context,
+            python_executable=invocation.python_executable,
+            argv=invocation.argv,
+            working_directory=invocation.working_directory,
+            python_path_entries=invocation.python_path_entries,
+            timeout_seconds=invocation.timeout_seconds,
+            invocation_contract_revision=invocation.invocation_contract_revision,
+            request_replay_payload_fields=invocation.request_replay_payload_fields,
+        )
+
+    with pytest.raises(ValueError, match="argv executable"):
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation(
+            runner_request=invocation.runner_request,
+            environment_context=invocation.environment_context,
+            python_executable=invocation.python_executable,
+            argv=("/workspace/other/python", *invocation.argv[1:]),
+            working_directory=invocation.working_directory,
+            python_path_entries=invocation.python_path_entries,
+            timeout_seconds=invocation.timeout_seconds,
+            invocation_contract_revision=invocation.invocation_contract_revision,
+            request_replay_payload_fields=invocation.request_replay_payload_fields,
+        )
+
+    with pytest.raises(ValueError, match="replay payload fields"):
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation(
+            runner_request=invocation.runner_request,
+            environment_context=invocation.environment_context,
+            python_executable=invocation.python_executable,
+            argv=invocation.argv,
+            working_directory=invocation.working_directory,
+            python_path_entries=invocation.python_path_entries,
+            timeout_seconds=invocation.timeout_seconds,
+            invocation_contract_revision=invocation.invocation_contract_revision,
+            request_replay_payload_fields=(
+                _field("plan_id", invocation.runner_request.plan_id),
+            ),
         )
 
 
@@ -2444,6 +2672,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
             _local_python_runner_request()
         )
     )
+    local_python_invocation = _local_python_subprocess_invocation()
 
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
@@ -2471,6 +2700,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         )
     with pytest.raises(FrozenInstanceError):
         local_python_context.working_directory = "/tmp/context-ir"
+    with pytest.raises(FrozenInstanceError):
+        local_python_invocation.working_directory = "/tmp/context-ir"
 
     assert (
         "RuntimeProbeDiagnosticRunnerRequestPreparation"
@@ -2483,6 +2714,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeFailureNormalizingRunner" in runtime_probe_execution.__all__
     assert (
         "RuntimeProbeLocalPythonEnvironmentContext" in runtime_probe_execution.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonSubprocessInvocation" in runtime_probe_execution.__all__
     )
     assert "RuntimeProbeRunnerHandlerEntry" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerHandlerKey" in runtime_probe_execution.__all__
@@ -2509,6 +2743,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_execution_input_batch" in (
         runtime_probe_execution.__all__
     )
+    assert "materialize_runtime_probe_local_python_subprocess_invocation" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_runner_request_batch" in (
         runtime_probe_execution.__all__
     )
@@ -2522,6 +2759,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeExecutionInputBatch" not in context_ir.__all__
     assert "RuntimeProbeFailureNormalizingRunner" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonEnvironmentContext" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonSubprocessInvocation" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerEntry" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerKey" not in context_ir.__all__
     assert "RuntimeProbeRunnerAttemptCollection" not in context_ir.__all__
@@ -2544,6 +2782,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_dispatching_runtime_probe_runner" not in context_ir.__all__
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
+    assert (
+        "materialize_runtime_probe_local_python_subprocess_invocation"
+        not in context_ir.__all__
+    )
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
     assert (
         "prepare_runtime_probe_runner_requests_for_diagnostic" not in context_ir.__all__
@@ -2555,6 +2797,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeExecutionInputBatch")
     assert not hasattr(context_ir, "RuntimeProbeFailureNormalizingRunner")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonEnvironmentContext")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonSubprocessInvocation")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerEntry")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerKey")
     assert not hasattr(context_ir, "RuntimeProbeRunnerAttemptCollection")
@@ -2590,6 +2833,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         "prepare_runtime_probe_runner_requests_for_diagnostic",
     )
     assert not hasattr(context_ir, "materialize_runtime_probe_execution_input_batch")
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_local_python_subprocess_invocation",
+    )
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_runner_request_batch",

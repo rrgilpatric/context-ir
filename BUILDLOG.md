@@ -2,6 +2,277 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Local Python Subprocess Invocation Contract Release Gate
+
+- The combined read-only release gate returned no findings for the exact
+  four-file local Python subprocess invocation contract release unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d721c07 Sync runtime probe environment context post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted gate result:
+  - Gate 1 release-unit audit passed with no findings after the prior
+    blank-revision test correction
+  - Gate 2 full regression passed:
+    - `.venv/bin/python -m ruff check src/ tests/`
+    - `.venv/bin/python -m ruff format --check src/ tests/`
+      reporting `108 files already formatted`
+    - `.venv/bin/python -m mypy --strict src/`
+      reporting no issues in 36 source files
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+      reporting `939 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- Release state:
+  - accepted in workspace: yes, first-pass after one audit correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Local Python Subprocess Invocation Correction Acceptance
+
+- Reviewed the returned narrow correction for the local Python subprocess
+  invocation contract release-unit audit finding.
+- Findings: none.
+- Corrected behavior:
+  - `tests/test_runtime_probe_execution.py` now has a focused parametrized
+    negative test proving empty-string and whitespace-only
+    `invocation_contract_revision` values are rejected through
+    `materialize_runtime_probe_local_python_subprocess_invocation(...)`
+- Control-lane validation passed:
+  - `.venv/bin/python -m ruff check tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check tests/test_runtime_probe_execution.py`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -v`
+    reporting `88 passed`
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `177 passed`
+  - `rg -n "import subprocess|subprocess\\.|Popen|TimeoutExpired|CompletedProcess" src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    returned no matches
+  - `git diff --check`
+- Release state:
+  - accepted in workspace: yes, first-pass after one audit correction
+  - prior Gate 1 finding: corrected
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: rerun the combined read-only release gate over the exact
+    four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Local Python Subprocess Invocation Correction Authorization
+
+- Ryan agreed with the release-unit audit finding and authorized the narrow
+  correction path.
+- Authorized correction scope:
+  - `tests/test_runtime_probe_execution.py`
+- Required correction:
+  - add a negative test proving blank or whitespace
+    `invocation_contract_revision` is rejected through the local Python
+    subprocess invocation materialization path
+- Constraints:
+  - do not edit source unless the new test exposes a real behavior gap
+  - do not edit `PLAN.md` or `BUILDLOG.md` from the correction lane
+  - do not stage, commit, or push
+  - after correction, return results for control-lane review before rerouting
+    the combined read-only release gate
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Local Python Subprocess Invocation Contract Gate Hold
+
+- The combined read-only release gate stopped during Gate 1 release-unit audit
+  for the exact four-file local Python subprocess invocation contract unit.
+- Finding:
+  - `RuntimeProbeLocalPythonSubprocessInvocation.__post_init__` now rejects a
+    blank `invocation_contract_revision`, but the release unit does not add a
+    negative test for blank or whitespace invocation revision input
+  - this violates the repo rule that every new behavior gets a test
+- Control-lane verification matched the gate report:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d721c07 Sync runtime probe environment context post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Gate results:
+  - Gate 1 release-unit audit: failed
+  - Gate 2 full regression: not run
+  - Gate 3 commit-gating: not run
+- Release state:
+  - accepted in workspace: held pending correction
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Recommendation:
+  - issue one narrow correction lane limited to
+    `tests/test_runtime_probe_execution.py`
+  - add a negative test proving blank or whitespace
+    `invocation_contract_revision` is rejected through the invocation
+    materialization path
+  - do not change source unless the new test exposes a real behavior gap
+  - rerun focused validation and then reroute the combined read-only release
+    gate over the exact four-file unit
+- Acceptance status: held
+
+## 2026-05-07 -- Local Python Subprocess Invocation Contract Workspace Acceptance
+
+- Reviewed the returned non-executing local Python subprocess invocation
+  contract slice against the implementation spec and quality gate.
+- Findings: none.
+- Repo-backed truth during acceptance review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d721c07 Sync runtime probe environment context post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed `RuntimeProbeLocalPythonSubprocessInvocation`
+  - adds
+    `materialize_runtime_probe_local_python_subprocess_invocation(...)`
+  - revalidates `RuntimeProbeRunnerRequest` before deriving invocation state
+  - derives the existing local Python environment context and verifies it
+    remains tied to the original runner request
+  - validates absolute Python executable and path metadata
+  - validates dotted module names and shell-free argv tokens
+  - builds deterministic shell-free `python -m ...` argv without importing or
+    executing repository code
+  - preserves working directory, ordered Python path entries, timeout seconds,
+    invocation contract revision, and replay payload fields
+  - keeps exports module-local to `context_ir.runtime_probe_execution.__all__`
+    with no package-root export
+  - preserves existing runner request, dispatch, attempt, result, admission,
+    recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+    compiler, benchmark, and public-claim behavior
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `175 passed`
+  - `rg -n "import subprocess|subprocess\\.|Popen|TimeoutExpired|CompletedProcess" src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    returned no matches
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Local Python Runner Execution-Boundary Spike Acceptance
+
+- Reviewed the returned read-only local Python runner execution-boundary spike
+  against the spike question and current repo state.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d721c07 Sync runtime probe environment context post-push state`
+  - dirty tracked files exactly: `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted recommendation:
+  - implement a non-executing local Python subprocess/invocation contract first
+  - do not implement a concrete family/form handler yet
+- Reasoning:
+  - the runner now has typed request preparation, strict attempt collection,
+    result assembly, diagnostic recompile composition, failure normalization,
+    dispatch, and local Python environment derivation
+  - a concrete handler would mix command construction, repository-code
+    execution, timeout semantics, result parsing, observed payload synthesis,
+    and dispatch registration
+  - a shell-free, non-executing invocation contract isolates the next boundary
+    without importing repository modules, spawning subprocesses, enforcing
+    timeouts, or synthesizing observed results
+- Next implementation slice:
+  - add a frozen module-local local Python invocation contract in
+    `src/context_ir/runtime_probe_execution.py`
+  - add focused tests in `tests/test_runtime_probe_execution.py`
+  - keep `PLAN.md` and `BUILDLOG.md` as control-lane continuity only, not
+    implementation-lane scope
+- Acceptance status: first-pass
+
+## 2026-05-07 -- Post-Environment Context Runner Execution Boundary Route
+
+- Verified repo-backed truth before choosing the next lane:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d721c07 Sync runtime probe environment context post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `f75196e Add runtime probe runner environment context`.
+- Routing decision:
+  - the next control action is a bounded read-only spike for the local Python
+    runner execution boundary
+  - the spike should decide the next smallest safe implementation slice after
+    the pushed dispatch table and environment context
+  - the likely decision point is whether to implement a non-executing local
+    Python subprocess/invocation contract first, or a first concrete
+    family/form handler directly
+  - the spike must return an exact implementation slice spec if it recommends
+    one
+- Why now:
+  - runner request preparation, strict attempt collection, result assembly,
+    diagnostic recompile, failure normalization, dispatch, and environment
+    context are all pushed and no-active-gate
+  - the next substantive work risks crossing from pure typed contracts into
+    repository code execution, subprocess isolation, timeout semantics, and
+    handler-specific observed-result synthesis
+  - those concerns should be decomposed before a worker edits source
+- Alternatives rejected:
+  - direct dynamic-import handler implementation now: too likely to mix
+    command construction, execution, timeout behavior, payload normalization,
+    and handler registration in one slice
+  - in-process repository imports now: high mutation/isolation risk and not
+    clearly justified before a subprocess-boundary decision
+  - admission, recompile, facade, MCP, package-root, eval, scoring, optimizer,
+    compiler, benchmark, or public-claim work: unrelated to the immediate
+    runner execution boundary
+  - reopening `f75196e`, `3751df1`, or `93456b6` release gates: no new
+    finding supports reopening those pushed releases
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Runtime Probe Runner Environment Context Push Sync
 
 - Ryan authorized pushing the runtime probe runner environment context release
