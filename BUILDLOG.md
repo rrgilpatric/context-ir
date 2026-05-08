@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Push Sync
+
+- Ryan authorized pushing the raw local Python subprocess execution boundary
+  release after local commit creation and release-routing sync.
+- Push completed with `origin/main` advanced through:
+  - `d0a009b Execute local Python subprocess invocations`
+  - `8ae13f6 Sync local Python subprocess execution release routing`
+- Post-push verification before this docs-only post-push sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `8ae13f6 Sync local Python subprocess execution release routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+- Release state:
+  - raw local Python subprocess execution boundary release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `d0a009b Execute local Python subprocess invocations`
+  - next route is selecting the next bounded control action after the pushed
+    release
+- Acceptance status: 1 correction
+
 ## 2026-05-08 -- Local Python Raw Subprocess Execution Boundary Local Commit Routing
 
 - Local commit creation completed for the exact four-file raw local Python

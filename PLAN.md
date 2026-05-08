@@ -41,9 +41,47 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`e9f87fc Add local Python process completion contract`. Live git refs and
+`d0a009b Execute local Python subprocess invocations`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python raw subprocess execution boundary release:
+
+- `execute_runtime_probe_local_python_subprocess_invocation(...)` is a
+  module-local executor that consumes a validated
+  `RuntimeProbeLocalPythonSubprocessInvocation`
+- the executor validates `completion_contract_revision` before subprocess
+  execution and rejects invalid revision metadata before any child process can
+  launch
+- execution uses shell-free `subprocess.run(...)` with invocation argv, working
+  directory, timeout seconds, text capture, `capture_output=True`,
+  `check=False`, and `shell=False`
+- the child environment is copied from ambient `os.environ` with deterministic
+  `PYTHONPATH` override from ordered `invocation.python_path_entries`
+- raw return code, stdout text, and stderr text are materialized through
+  `materialize_runtime_probe_local_python_process_completion(...)`
+- subprocess exceptions propagate for later mapping slices
+- the release remains raw and non-interpreting: no stdout/stderr parsing, no
+  return-code outcome normalization, no timeout-to-attempt/result mapping, no
+  `RuntimeProbeExecutionAttempt` synthesis, no observed/non-proof result
+  synthesis, no family/form handler implementation or dispatch registration,
+  and no admission, recompile, facade, MCP, package-root, schema, eval,
+  scoring, optimizer, compiler, benchmark, docs, or public-claim changes
+- implementation review accepted the slice after one correction for pre-run
+  completion revision validation
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `954 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `d0a009b Execute local Python subprocess invocations`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `8ae13f6 Sync local Python subprocess execution release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `d0a009b`
 
 Local Python process completion contract release:
 
@@ -2434,7 +2472,7 @@ sequencing for `c1a12d7` absent new findings.
   subprocess execution boundary release unit
 - [x] Local commit creation for the raw local Python subprocess execution
   boundary release unit
-- [ ] Ryan-authorized push for the raw local Python subprocess execution
+- [x] Ryan-authorized push for the raw local Python subprocess execution
   boundary release unit
 
 ## What Is In Progress
@@ -3343,15 +3381,14 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: await explicit Ryan authorization to push the local raw
-local Python subprocess execution boundary release and continuity-sync commits.
-The local source/contract release commit is
-`d0a009b Execute local Python subprocess invocations`. The current pushed
-source/contract authority remains
-`e9f87fc Add local Python process completion contract`, with post-push routing
+Immediate next route: select the next bounded control action after the pushed
+raw local Python subprocess execution boundary release. The source/contract
+release is pushed at
+`d0a009b Execute local Python subprocess invocations`, with release-routing
 sync pushed through
-`be50412 Sync local Python process completion post-push state`. Do not reopen
-the pushed completion, invocation, environment context, dispatch table, or
+`8ae13f6 Sync local Python subprocess execution release routing`. Release-gate
+status is no-active-gate. Do not reopen the pushed subprocess execution,
+completion, invocation, environment context, dispatch table, or
 failure-normalization releases absent new findings.
 
 Proposed release unit:
@@ -3389,8 +3426,7 @@ Current release state for the proposed raw subprocess execution unit:
 - commit-gating-cleared: yes
 - staged: yes, then committed
 - locally committed: yes, `d0a009b`
-- pushed: no
-- push authorization: pending Ryan
+- pushed: yes
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
