@@ -2340,7 +2340,9 @@ sequencing for `c1a12d7` absent new findings.
   subprocess invocation contract
 - [x] Combined release gate for the exact four-file local Python subprocess
   invocation contract release unit
-- [ ] Local commit creation for the local Python subprocess invocation
+- [x] Local commit creation for the local Python subprocess invocation
+  contract release unit
+- [ ] Ryan-authorized push for the local Python subprocess invocation
   contract release unit
 
 ## What Is In Progress
@@ -3249,11 +3251,12 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file local
-Python subprocess invocation contract release unit. The combined read-only
-release gate passed with no findings after the prior blank-revision
-test-coverage correction. Push remains explicitly Ryan-gated after local
-commit creation.
+Immediate next route: await explicit Ryan authorization to push the local
+Python subprocess invocation contract release and continuity-sync commits. The
+source/contract release is locally committed at
+`ea6ff8e Add local Python subprocess invocation contract`; `origin/main`
+remains at `d721c07 Sync runtime probe environment context post-push state`.
+Push remains explicitly Ryan-gated.
 
 Proposed release unit:
 
@@ -3286,7 +3289,7 @@ Current release state for the proposed invocation-contract unit:
 - full-regression-cleared: yes, full pytest `939 passed`
 - commit-gating-cleared: yes
 - staged: no
-- locally committed: no
+- locally committed: yes, `ea6ff8e`
 - pushed: no
 
 The runtime probe runner-request attempt/result assembly release is pushed at
