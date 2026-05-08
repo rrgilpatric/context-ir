@@ -41,9 +41,42 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`ea6ff8e Add local Python subprocess invocation contract`. Live git refs and
+`e9f87fc Add local Python process completion contract`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python process completion contract release:
+
+- `RuntimeProbeLocalPythonProcessCompletion` is a frozen module-local raw
+  completion contract for future local Python subprocess execution
+- `materialize_runtime_probe_local_python_process_completion(...)` revalidates
+  the carried invocation and materializes raw returncode/stdout/stderr fields
+  without executing or interpreting anything
+- the contract preserves invocation identity, argv, working directory, ordered
+  Python path entries, timeout seconds, raw return code, raw stdout/stderr
+  text, completion contract revision, and request replay payload fields
+- empty stdout/stderr and nonzero return codes remain valid uninterpreted raw
+  process facts
+- the release remains non-executing and non-interpreting: no subprocess import
+  or execution, no timeout enforcement, no stdout/stderr parsing, no
+  `RuntimeProbeExecutionAttempt` synthesis, no observed/non-proof result
+  synthesis, no family/form handler implementation or dispatch registration,
+  and no admission, recompile, facade, MCP, package-root, schema, eval,
+  scoring, optimizer, compiler, benchmark, or public-claim changes
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `949 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `e9f87fc Add local Python process completion contract`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `928ea13 Sync local Python process completion routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `e9f87fc`
 
 Local Python subprocess invocation contract release:
 
@@ -2389,7 +2422,7 @@ sequencing for `c1a12d7` absent new findings.
   completion contract release unit
 - [x] Local commit creation for the local Python process completion contract
   release unit
-- [ ] Ryan-authorized push for the local Python process completion contract
+- [x] Ryan-authorized push for the local Python process completion contract
   release unit
 
 ## What Is In Progress
@@ -3298,12 +3331,13 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: await explicit Ryan authorization to push the local
-Python process completion contract release and continuity-sync commits. The
-source/contract release is locally committed at
-`e9f87fc Add local Python process completion contract`; `origin/main` remains
-at `ee5f2b8 Sync local Python invocation post-push state`. Push remains
-explicitly Ryan-gated.
+Immediate next route: select the next bounded control action after the pushed
+local Python process completion contract release. The source/contract release
+is pushed at `e9f87fc Add local Python process completion contract`, with
+release-routing sync pushed through
+`928ea13 Sync local Python process completion routing`. Release-gate status is
+no-active-gate. Do not reopen the pushed completion, invocation, environment
+context, dispatch table, or failure-normalization releases absent new findings.
 
 Proposed release unit:
 
@@ -3336,7 +3370,7 @@ Current release state for the proposed process-completion unit:
 - commit-gating-cleared: yes
 - staged: no
 - locally committed: yes, `e9f87fc`
-- pushed: no
+- pushed: yes
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate

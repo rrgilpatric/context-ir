@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-08 -- Local Python Process Completion Contract Push Sync
+
+- Ryan authorized pushing the local Python process completion contract release
+  after local commit creation and release-routing sync.
+- Push completed with `origin/main` advanced through:
+  - `e9f87fc Add local Python process completion contract`
+  - `928ea13 Sync local Python process completion routing`
+- Post-push verification before this docs-only post-push sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `928ea13 Sync local Python process completion routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+- Release state:
+  - local Python process completion contract release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `e9f87fc Add local Python process completion contract`
+  - next route is selecting the next bounded control action after the pushed
+    release
+- Acceptance status: first-pass
+
 ## 2026-05-08 -- Local Python Process Completion Contract Local Commit Routing
 
 - Local commit creation completed for the exact four-file local Python process
