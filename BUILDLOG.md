@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-07 -- Local Python Subprocess Invocation Contract Push Sync
+
+- Ryan authorized pushing the local Python subprocess invocation contract
+  release after local commit creation and release-routing sync.
+- Push completed with `origin/main` advanced through:
+  - `ea6ff8e Add local Python subprocess invocation contract`
+  - `07cc3ce Sync local Python invocation release routing`
+- Post-push verification before this docs-only post-push sync:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `07cc3ce Sync local Python invocation release routing`
+  - worktree clean before this docs-only post-push sync
+  - nothing staged before this docs-only post-push sync
+  - no untracked files before this docs-only post-push sync
+- Release state:
+  - local Python subprocess invocation contract release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `ea6ff8e Add local Python subprocess invocation contract`
+  - next route is selecting the next bounded control action after the pushed
+    release
+- Acceptance status: first-pass
+
 ## 2026-05-07 -- Local Python Subprocess Invocation Contract Local Commit Routing
 
 - Local commit creation completed for the exact four-file local Python

@@ -41,9 +41,45 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`f75196e Add runtime probe runner environment context`. Live git refs and
+`ea6ff8e Add local Python subprocess invocation contract`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python subprocess invocation contract release:
+
+- `RuntimeProbeLocalPythonSubprocessInvocation` is a frozen module-local
+  shell-free invocation contract for future local Python runtime probe handlers
+- `materialize_runtime_probe_local_python_subprocess_invocation(...)`
+  revalidates `RuntimeProbeRunnerRequest`, derives the existing local Python
+  environment context, validates an absolute Python executable, validates
+  dotted module names and argv tokens, and builds deterministic `python -m ...`
+  argv without executing anything
+- the contract preserves the original runner request, derived environment
+  context, working directory, ordered Python path entries, timeout seconds,
+  invocation contract revision, and replay payload fields
+- blank or whitespace-only invocation contract revisions reject through tested
+  validation
+- the release remains non-executing: no subprocess import or execution, no
+  in-process repository imports, no timeout enforcement, no stdout/stderr
+  parsing, no observed-result synthesis, no family/form handler implementation
+  or dispatch registration, and no admission, recompile, facade, MCP,
+  package-root, schema, eval, scoring, optimizer, compiler, benchmark, or
+  public-claim changes
+- implementation review accepted the slice first-pass after one audit
+  correction for the missing blank-revision negative test
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `939 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `ea6ff8e Add local Python subprocess invocation contract`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `07cc3ce Sync local Python invocation release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `ea6ff8e`
 
 Prior pushed runtime probe execution-input materialization release:
 
@@ -2342,7 +2378,7 @@ sequencing for `c1a12d7` absent new findings.
   invocation contract release unit
 - [x] Local commit creation for the local Python subprocess invocation
   contract release unit
-- [ ] Ryan-authorized push for the local Python subprocess invocation
+- [x] Ryan-authorized push for the local Python subprocess invocation
   contract release unit
 
 ## What Is In Progress
@@ -3251,12 +3287,13 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: await explicit Ryan authorization to push the local
-Python subprocess invocation contract release and continuity-sync commits. The
-source/contract release is locally committed at
-`ea6ff8e Add local Python subprocess invocation contract`; `origin/main`
-remains at `d721c07 Sync runtime probe environment context post-push state`.
-Push remains explicitly Ryan-gated.
+Immediate next route: select the next bounded control action after the pushed
+local Python subprocess invocation contract release. The source/contract
+release is pushed at `ea6ff8e Add local Python subprocess invocation
+contract`, with release-routing sync pushed through
+`07cc3ce Sync local Python invocation release routing`. Release-gate status is
+no-active-gate. Do not reopen the pushed invocation, environment context,
+dispatch table, or failure-normalization releases absent new findings.
 
 Proposed release unit:
 
@@ -3290,7 +3327,7 @@ Current release state for the proposed invocation-contract unit:
 - commit-gating-cleared: yes
 - staged: no
 - locally committed: yes, `ea6ff8e`
-- pushed: no
+- pushed: yes
 
 The runtime probe runner-request attempt/result assembly release is pushed at
 `3363929 Assemble runtime probe runner request attempts` and has release-gate
