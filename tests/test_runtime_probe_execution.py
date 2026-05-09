@@ -334,6 +334,19 @@ def _local_python_worker_request_stdin_transport(
     )
 
 
+def _assert_local_python_worker_stdin_input(
+    invocation: runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation,
+    stdin_text: str,
+) -> None:
+    """Assert subprocess stdin carries exactly the deterministic worker payload."""
+    expected_transport = _local_python_worker_request_stdin_transport(invocation)
+    assert stdin_text == expected_transport.stdin_text
+    assert not stdin_text.endswith("\n")
+    assert parse_runtime_probe_local_python_worker_request_payload(stdin_text) == (
+        expected_transport.payload
+    )
+
+
 def _rebuild_local_python_worker_request_stdin_transport(
     transport: (
         runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestStdinTransport
@@ -1633,6 +1646,7 @@ def test_execute_local_python_subprocess_invocation_preserves_raw_completion(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
@@ -1644,6 +1658,7 @@ def test_execute_local_python_subprocess_invocation_preserves_raw_completion(
                 "args": args,
                 "cwd": cwd,
                 "env": env,
+                "input": input,
                 "timeout": timeout,
                 "shell": shell,
                 "capture_output": capture_output,
@@ -1672,6 +1687,9 @@ def test_execute_local_python_subprocess_invocation_preserves_raw_completion(
     child_environment = call["env"]
     assert call["args"] is invocation.argv
     assert call["cwd"] == invocation.working_directory
+    call_stdin_text = call["input"]
+    assert isinstance(call_stdin_text, str)
+    _assert_local_python_worker_stdin_input(invocation, call_stdin_text)
     assert call["timeout"] == invocation.timeout_seconds
     assert call["shell"] is False
     assert call["capture_output"] is True
@@ -1709,13 +1727,14 @@ def test_execute_local_python_subprocess_invocation_revalidates_before_run(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         calls.append(args)
         return subprocess.CompletedProcess(
             args=args,
@@ -1761,13 +1780,14 @@ def test_execute_subprocess_rejects_bad_completion_revision_before_run(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         calls.append(args)
         return subprocess.CompletedProcess(
             args=args,
@@ -1787,6 +1807,82 @@ def test_execute_subprocess_rejects_bad_completion_revision_before_run(
     assert calls == []
 
 
+@pytest.mark.parametrize(
+    ("drift_field", "error_match"),
+    (
+        (
+            "stdin_text",
+            "stdin_text must match deterministic serialized payload",
+        ),
+        ("payload", "payload must match invocation"),
+    ),
+)
+def test_execute_subprocess_rejects_stdin_transport_drift_before_run(
+    monkeypatch: pytest.MonkeyPatch,
+    drift_field: str,
+    error_match: str,
+) -> None:
+    """Worker stdin transport drift is rejected before subprocess execution."""
+    invocation = _local_python_subprocess_invocation()
+    transport = _local_python_worker_request_stdin_transport(invocation)
+    if drift_field == "stdin_text":
+        object.__setattr__(transport, "stdin_text", f"{transport.stdin_text}\n")
+    else:
+        other_invocation = _local_python_subprocess_invocation(
+            module_argv=("--request", "other-runtime-probe-request.json"),
+        )
+        object.__setattr__(
+            transport,
+            "payload",
+            _local_python_worker_request_payload(other_invocation),
+        )
+
+    def fake_transport_materializer(
+        materialized_invocation: (
+            runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation
+        ),
+    ) -> runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestStdinTransport:
+        assert materialized_invocation is invocation
+        return transport
+
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        input: str,
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, input, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args, returncode=0, stdout="", stderr=""
+        )
+
+    monkeypatch.setattr(
+        runtime_probe_execution,
+        "materialize_runtime_probe_local_python_worker_request_stdin_transport",
+        fake_transport_materializer,
+    )
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    with pytest.raises(ValueError, match=error_match):
+        execute_runtime_probe_local_python_subprocess_invocation(
+            invocation,
+            completion_contract_revision=(
+                "runtime-probe-local-python-process-completion:test.1"
+            ),
+        )
+
+    assert calls == []
+
+
 def test_execute_local_python_subprocess_invocation_propagates_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1798,13 +1894,14 @@ def test_execute_local_python_subprocess_invocation_propagates_timeout(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, shell, capture_output, text, check
+        del cwd, env, input, shell, capture_output, text, check
         raise subprocess.TimeoutExpired(cmd=args, timeout=timeout)
 
     monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
@@ -1823,13 +1920,14 @@ def test_execute_local_python_subprocess_invocation_attempt_observes_stdout_prot
 ) -> None:
     """The attempt wrapper converts valid zero-exit stdout into observed proof."""
     invocation = _local_python_subprocess_invocation()
-    calls: list[tuple[str, ...]] = []
+    calls: list[tuple[tuple[str, ...], str]] = []
 
     def fake_run(
         args: tuple[str, ...],
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
@@ -1837,7 +1935,7 @@ def test_execute_local_python_subprocess_invocation_attempt_observes_stdout_prot
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
         del cwd, env, timeout, shell, capture_output, text, check
-        calls.append(args)
+        calls.append((args, input))
         return subprocess.CompletedProcess(
             args=args,
             returncode=0,
@@ -1860,7 +1958,10 @@ def test_execute_local_python_subprocess_invocation_attempt_observes_stdout_prot
         ),
     )
 
-    assert calls == [invocation.argv]
+    assert len(calls) == 1
+    call_args, call_stdin_text = calls[0]
+    assert call_args is invocation.argv
+    _assert_local_python_worker_stdin_input(invocation, call_stdin_text)
     _assert_attempt_identity(attempt, invocation)
     assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
     assert attempt.normalized_payload == (
@@ -1883,13 +1984,14 @@ def test_execute_local_python_subprocess_invocation_attempt_maps_timeout(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, shell, capture_output, text, check
+        del cwd, env, input, shell, capture_output, text, check
         raise subprocess.TimeoutExpired(
             cmd=args,
             timeout=timeout,
@@ -1935,13 +2037,14 @@ def test_execute_local_python_subprocess_invocation_attempt_maps_generic_excepti
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del args, cwd, env, timeout, shell, capture_output, text, check
+        del args, cwd, env, input, timeout, shell, capture_output, text, check
         raise RuntimeError(
             "raw exception proof payload traceback pid=12345 /private/tmp/probe"
         )
@@ -1983,13 +2086,14 @@ def test_execute_local_python_subprocess_invocation_attempt_maps_nonzero_complet
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         return subprocess.CompletedProcess(
             args=args,
             returncode=42,
@@ -2034,13 +2138,14 @@ def test_execute_local_python_subprocess_invocation_attempt_maps_malformed_stdou
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         return subprocess.CompletedProcess(
             args=args,
             returncode=0,
@@ -2090,13 +2195,14 @@ def test_execute_local_python_subprocess_invocation_attempt_validates_before_run
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         calls.append(args)
         return subprocess.CompletedProcess(
             args=args, returncode=0, stdout="", stderr=""
@@ -2147,13 +2253,14 @@ def test_local_python_subprocess_handler_observes_success_and_preserves_argv(
     runner_request = _local_python_runner_request()
     module_argv = ("--first", "1", "--second", runner_request.request_id)
     entry = _local_python_subprocess_handler_entry(module_argv=module_argv)
-    calls: list[tuple[str, ...]] = []
+    calls: list[tuple[tuple[str, ...], str]] = []
 
     def fake_run(
         args: tuple[str, ...],
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
@@ -2161,7 +2268,7 @@ def test_local_python_subprocess_handler_observes_success_and_preserves_argv(
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
         del cwd, env, timeout, shell, capture_output, text, check
-        calls.append(args)
+        calls.append((args, input))
         return subprocess.CompletedProcess(
             args=args,
             returncode=0,
@@ -2178,17 +2285,22 @@ def test_local_python_subprocess_handler_observes_success_and_preserves_argv(
 
     attempt = entry.handler(runner_request)
 
-    assert calls == [
-        (
-            "/workspace/context-ir/.venv/bin/python",
-            "-m",
-            "context_ir.runtime_probe_worker",
-            "--first",
-            "1",
-            "--second",
-            runner_request.request_id,
-        )
-    ]
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        module_argv=module_argv,
+    )
+    assert len(calls) == 1
+    call_args, call_stdin_text = calls[0]
+    assert call_args == (
+        "/workspace/context-ir/.venv/bin/python",
+        "-m",
+        "context_ir.runtime_probe_worker",
+        "--first",
+        "1",
+        "--second",
+        runner_request.request_id,
+    )
+    _assert_local_python_worker_stdin_input(expected_invocation, call_stdin_text)
     assert attempt.plan_id == runner_request.plan_id
     assert attempt.request_id == runner_request.request_id
     assert attempt.request is runner_request.request
@@ -2245,13 +2357,14 @@ def test_local_python_subprocess_handler_preserves_attempt_normalization(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         if exception is not None:
             raise exception
         return subprocess.CompletedProcess(
@@ -2305,13 +2418,14 @@ def test_local_python_subprocess_handler_rejects_family_form_drift_before_run(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         calls.append(args)
         return subprocess.CompletedProcess(
             args=args, returncode=0, stdout="", stderr=""
@@ -2339,13 +2453,14 @@ def test_local_python_subprocess_handler_revalidates_runner_before_run(
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
         text: bool,
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, env, timeout, shell, capture_output, text, check
+        del cwd, env, input, timeout, shell, capture_output, text, check
         calls.append(args)
         return subprocess.CompletedProcess(
             args=args, returncode=0, stdout="", stderr=""
@@ -2405,13 +2520,14 @@ def test_dispatching_runner_consumes_local_python_subprocess_handler_entry(
     dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
         (entry,)
     )
-    calls: list[tuple[str, ...]] = []
+    calls: list[tuple[tuple[str, ...], str]] = []
 
     def fake_run(
         args: tuple[str, ...],
         *,
         cwd: str,
         env: dict[str, str],
+        input: str,
         timeout: int,
         shell: bool,
         capture_output: bool,
@@ -2419,7 +2535,7 @@ def test_dispatching_runner_consumes_local_python_subprocess_handler_entry(
         check: bool,
     ) -> subprocess.CompletedProcess[str]:
         del cwd, env, timeout, shell, capture_output, text, check
-        calls.append(args)
+        calls.append((args, input))
         return subprocess.CompletedProcess(
             args=args,
             returncode=0,
@@ -2435,15 +2551,17 @@ def test_dispatching_runner_consumes_local_python_subprocess_handler_entry(
 
     attempt = dispatching_runner(runner_request)
 
-    assert calls == [
-        (
-            "/workspace/context-ir/.venv/bin/python",
-            "-m",
-            "context_ir.runtime_probe_worker",
-            "--request",
-            "runtime-probe-request.json",
-        )
-    ]
+    expected_invocation = _local_python_subprocess_invocation(runner_request)
+    assert len(calls) == 1
+    call_args, call_stdin_text = calls[0]
+    assert call_args == (
+        "/workspace/context-ir/.venv/bin/python",
+        "-m",
+        "context_ir.runtime_probe_worker",
+        "--request",
+        "runtime-probe-request.json",
+    )
+    _assert_local_python_worker_stdin_input(expected_invocation, call_stdin_text)
     assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
     assert attempt.normalized_payload == (
         _field("dispatch_observed", "plugins.weather"),

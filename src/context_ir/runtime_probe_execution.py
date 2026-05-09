@@ -1398,10 +1398,17 @@ def execute_runtime_probe_local_python_subprocess_invocation(
         completion_contract_revision,
         field_name="completion_contract_revision",
     )
+    stdin_transport = (
+        materialize_runtime_probe_local_python_worker_request_stdin_transport(
+            invocation
+        )
+    )
+    _validate_local_python_worker_request_stdin_transport(stdin_transport)
     completed_process: subprocess.CompletedProcess[str] = subprocess.run(
         invocation.argv,
         cwd=invocation.working_directory,
         env=_local_python_subprocess_child_environment(invocation),
+        input=stdin_transport.stdin_text,
         timeout=invocation.timeout_seconds,
         shell=False,
         capture_output=True,

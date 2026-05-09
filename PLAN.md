@@ -41,9 +41,52 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`4d155ec Add local Python worker payload contract`. Live git refs and
+`0a3c4c6 Add local Python worker stdin transport`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python worker request stdin transport contract release:
+
+- `RuntimeProbeLocalPythonWorkerRequestStdinTransport` is a frozen
+  module-local request handoff contract for the exact text future local-Python
+  worker subprocesses receive over stdin
+- transports materialize from typed
+  `RuntimeProbeLocalPythonSubprocessInvocation` values after revalidating the
+  invocation
+- materialization internally derives
+  `RuntimeProbeLocalPythonWorkerRequestPayload`, serializes it through the
+  deterministic strict JSON helper, and parses it back through the strict
+  parser as a drift check
+- transports preserve invocation identity, the typed payload, deterministic
+  stdin text, argv, working directory, ordered Python path entries, timeout
+  seconds, request identity, family/form labels, replay seeds, and ordered
+  replay payload fields
+- direct construction rejects invocation/payload/stdin-text drift, malformed
+  stdin text, blank or unsupported transport revision, extra trailing newline
+  drift, and attempts to bypass strict payload validation
+- exports stay module-local through
+  `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+  unchanged
+- the release does not add `subprocess.run(input=...)`, executor behavior
+  changes, handler adapter changes, worker modules, concrete family/form
+  semantics, temp files, filesystem IO, stdout protocol changes,
+  `RuntimeProbeObservedResult` synthesis, result assembly changes, admission,
+  recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+  compiler, docs, or public claims
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1047 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `0a3c4c6 Add local Python worker stdin transport`
+- Ryan-authorized push completed with release routing through
+  `9a25fbf Sync local Python stdin transport release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `0a3c4c6`
 
 Local Python worker request payload contract release:
 
@@ -2860,8 +2903,16 @@ sequencing for `c1a12d7` absent new findings.
   worker request stdin transport contract release unit
 - [x] Local commit creation for the local Python worker request stdin transport
   contract release unit
-- [ ] Ryan-authorized push for the local Python worker request stdin transport
+- [x] Ryan-authorized push for the local Python worker request stdin transport
   contract release unit
+- [x] Post-`0a3c4c6` control selected local Python subprocess stdin execution
+  wiring
+- [x] Local Python subprocess stdin execution wiring implementation slice
+  accepted first-pass as workspace-only state
+- [x] Combined read-only release gate for the exact four-file local Python
+  subprocess stdin execution wiring release unit
+- [ ] Local commit creation for the local Python subprocess stdin execution
+  wiring release unit
 
 ## What Is In Progress
 
@@ -3769,61 +3820,51 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the locally committed
-local Python worker request stdin transport contract release. Current local
+Immediate next route: create a local commit for the exact four-file local
+Python subprocess stdin execution wiring release unit. Current pushed
 source/contract authority is
-`0a3c4c6 Add local Python worker stdin transport`. Current pushed
-source/contract authority remains
-`4d155ec Add local Python worker payload contract`, with release-routing
+`0a3c4c6 Add local Python worker stdin transport`, with release-routing
 continuity through
-`20d8af3 Sync local Python worker payload release routing`. Release-gate status
-is no-active-gate for `0a3c4c6`. Do not reopen pushed worker payload, handler
-adapter, executor attempt wrapper, stdout failure normalization, observed
-attempt, stdout protocol, nonzero failure normalization, subprocess execution,
-completion, invocation, environment context, dispatch table, or prior releases
-absent new findings.
+`9a25fbf Sync local Python stdin transport release routing`. Release-gate
+status is no-active-gate for `0a3c4c6`. Do not reopen pushed stdin transport,
+worker payload, handler adapter, executor attempt wrapper, stdout failure
+normalization, observed attempt, stdout protocol, nonzero failure
+normalization, subprocess execution, completion, invocation, environment
+context, dispatch table, or prior releases absent new findings.
 
-Accepted workspace-only local Python worker request stdin transport contract
-slice:
+Accepted workspace-only local Python subprocess stdin execution wiring slice:
 
-- adds a frozen module-local contract for the exact request text a future local
-  Python worker subprocess would receive over stdin
-- materializes it from typed `RuntimeProbeLocalPythonSubprocessInvocation`
-  values
-- internally materializes and validates
-  `RuntimeProbeLocalPythonWorkerRequestPayload`
-- serializes the payload through the existing deterministic strict JSON helper
-  and parse it back through the existing strict parser as a drift check
-- preserves invocation identity, payload identity, deterministic stdin text,
-  request/replay identity metadata, argv, working directory, ordered Python path
-  entries, timeout seconds, and worker payload contract metadata
-- validates a nonblank/supported stdin transport contract revision
-- rejects invocation/payload/stdin-text drift, malformed serialized payloads,
-  blank transport metadata, and any constructor path that would bypass strict
-  payload validation
-- rejects extra trailing newline drift in stdin text
-- keeps exports module-local through
-  `context_ir.runtime_probe_execution.__all__`; do not export from package root
-- no `subprocess.run(input=...)` wiring, executor behavior changes, handler
-  adapter changes, worker module, concrete family/form semantics, temp files,
-  filesystem IO, stdout protocol changes, observed-result synthesis, result
-  assembly changes, admission, recompile, facade, MCP, package-root, schema,
-  eval, scoring, optimizer, compiler, docs, or public claims
+- wires the existing raw local-Python subprocess executor to materialize
+  `RuntimeProbeLocalPythonWorkerRequestStdinTransport` before launch and pass
+  its deterministic `stdin_text` to `subprocess.run(...)` as text-mode stdin
+- preserves the existing invocation, cwd, child environment, timeout,
+  `shell=False`, captured stdout/stderr, completion materialization, exception
+  propagation from the raw executor, and attempt-normalization wrapper behavior
+- validates the invocation, completion contract revision, worker request payload,
+  and stdin transport before subprocess launch
+- rejects invocation/stdin/payload drift before `subprocess.run(...)`
+- keeps success, nonzero, timeout, generic exception, malformed stdout, and
+  dispatch paths flowing through the existing materializers
+- no worker module, concrete family/form semantics, global registration, temp
+  files, filesystem IO, stdout protocol changes, observed-result synthesis,
+  result assembly changes, admission, recompile, facade, MCP, package-root,
+  schema, eval, scoring, optimizer, compiler, docs, or public claims
 
-Current release state for the selected stdin transport contract slice:
+Current release state for the selected stdin execution wiring slice:
 
 - selected by control: yes
 - implementation lane launched: yes
 - implementation returned: yes
 - accepted in workspace: yes, first-pass
 - implementation validation reported by execution lane: passed, including
-  focused suite reporting `285 passed`
-- focused control validation: passed with `14 passed, 182 deselected`
+  requested subset reporting `287 passed`
+- focused control validation: passed with `50 passed, 148 deselected`
+- focused control ruff check: passed
 - release-unit-audit-cleared: yes
-- full-regression-cleared: yes, full pytest `1047 passed`
+- full-regression-cleared: yes, full pytest `1049 passed`
 - commit-gating-cleared: yes
-- staged: yes, then committed
-- locally committed: yes, `0a3c4c6 Add local Python worker stdin transport`
+- staged: no
+- locally committed: no
 - pushed: no
 - expected implementation files:
   `src/context_ir/runtime_probe_execution.py` and
@@ -3834,8 +3875,7 @@ Current release state for the selected stdin transport contract slice:
   `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_execution.py`, and
   `tests/test_runtime_probe_execution.py`
-- push remains Ryan-gated
-- next route: Ryan-authorized push sequencing
+- next route: local commit creation for the exact four-file unit
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that
