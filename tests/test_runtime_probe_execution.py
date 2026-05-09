@@ -27,6 +27,7 @@ from context_ir.runtime_probe_execution import (
     materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_process_completion_attempt,
     materialize_runtime_probe_local_python_stdout_protocol_attempt,
+    materialize_runtime_probe_local_python_stdout_protocol_failure_attempt,
     materialize_runtime_probe_local_python_stdout_protocol_result,
     materialize_runtime_probe_local_python_subprocess_exception_attempt,
     materialize_runtime_probe_local_python_subprocess_invocation,
@@ -1379,6 +1380,170 @@ def test_materialize_zero_returncode_completion_attempt_rejects_deferred_success
 
     with pytest.raises(ValueError, match="deferred"):
         materialize_runtime_probe_local_python_process_completion_attempt(completion)
+
+
+def test_materialize_stdout_protocol_failure_attempt_is_non_proof() -> None:
+    """Malformed zero-exit stdout becomes a sanitized non-proof attempt."""
+    completion = _local_python_process_completion(
+        returncode=0,
+        stdout_text="raw stdout observed_module pid=12345 /private/tmp/probe\n",
+        stderr_text="raw stderr traceback pid=12345 /private/tmp/probe\n",
+    )
+    exception = ValueError(
+        "raw stdout observed_module raw stderr traceback pid=12345 /private/tmp"
+    )
+
+    attempt = materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+        completion,
+        exception,
+    )
+
+    runner_request = completion.invocation.runner_request
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary == (
+        "local Python stdout protocol failed after zero returncode; recorded as "
+        "setup_failed"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_stdout_protocol_failure"),
+        _field("normalized_outcome", "setup_failed"),
+        _field("returncode", "0"),
+        _field("exception_type", "builtins.ValueError"),
+    )
+    result_batch = _assemble_result_batch(
+        runtime_probe_execution.RuntimeProbeExecutionInputBatch(
+            plan_id=runner_request.plan_id,
+            request_ids=(runner_request.request_id,),
+            inputs=(runner_request.execution_input,),
+        ),
+        (attempt,),
+    )
+    result = result_batch.results[0]
+    assert isinstance(result, runtime_probe_results.RuntimeProbeNonProofResult)
+    assert result.is_admissible_runtime_backed_proof is False
+
+    failure_text = "\n".join(
+        (
+            attempt.failure_summary,
+            *(field.value for field in attempt.failure_detail_fields),
+        )
+    )
+    assert "observed_module" not in failure_text
+    assert "raw stdout" not in failure_text
+    assert "raw stderr" not in failure_text
+    assert "traceback" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "/private/tmp" not in failure_text
+    assert completion.stdout_text not in failure_text
+    assert completion.stderr_text not in failure_text
+    assert str(exception) not in failure_text
+
+
+def test_stdout_protocol_failure_attempt_rejects_nonzero_completion() -> None:
+    """The stdout protocol failure boundary is only for zero-exit completions."""
+    completion = _local_python_process_completion(returncode=17)
+
+    with pytest.raises(ValueError, match="zero returncode"):
+        materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+            completion,
+            ValueError("malformed stdout"),
+        )
+
+
+def test_stdout_protocol_failure_attempt_supports_configured_outcome() -> None:
+    """Malformed stdout can be mapped to a configured non-proof outcome."""
+    missing_environment = (
+        runtime_probe_results.RuntimeProbeResultOutcome.MISSING_ENVIRONMENT
+    )
+    completion = _local_python_process_completion(returncode=0)
+
+    attempt = materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+        completion,
+        ValueError("malformed stdout"),
+        outcome=missing_environment,
+    )
+
+    assert attempt.outcome is missing_environment
+    assert attempt.failure_summary == (
+        "local Python stdout protocol failed after zero returncode; recorded as "
+        "missing_environment"
+    )
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_stdout_protocol_failure"),
+        _field("normalized_outcome", "missing_environment"),
+        _field("returncode", "0"),
+        _field("exception_type", "builtins.ValueError"),
+    )
+
+
+def test_stdout_protocol_failure_attempt_rejects_observed_outcome() -> None:
+    """Malformed stdout failure materialization cannot produce proof outcomes."""
+    completion = _local_python_process_completion(returncode=0)
+
+    with pytest.raises(ValueError, match="non-proof outcome"):
+        materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+            completion,
+            ValueError("malformed stdout"),
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+        )
+
+
+def test_stdout_protocol_failure_attempt_revalidates_completion() -> None:
+    """Malformed stdout failure materialization re-checks completion identity."""
+    completion = _local_python_process_completion(returncode=0)
+    object.__setattr__(completion, "argv", ("/workspace/context-ir/.venv/bin/python",))
+
+    with pytest.raises(ValueError, match="argv must match invocation"):
+        materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+            completion,
+            ValueError("malformed stdout"),
+        )
+
+
+def test_stdout_protocol_failure_attempt_revalidates_invocation() -> None:
+    """Malformed stdout failure materialization re-checks invocation identity."""
+    invocation = _local_python_subprocess_invocation()
+    completion = _local_python_process_completion(invocation, returncode=0)
+    object.__setattr__(invocation, "working_directory", "/tmp/context-ir-mutated")
+
+    with pytest.raises(ValueError, match="working_directory must match environment"):
+        materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+            completion,
+            ValueError("malformed stdout"),
+        )
+
+
+def test_stdout_protocol_failure_attempt_revalidates_runner_request() -> None:
+    """Malformed stdout failure materialization re-checks runner request identity."""
+    runner_request = _local_python_runner_request()
+    invocation = _local_python_subprocess_invocation(runner_request)
+    completion = _local_python_process_completion(invocation, returncode=0)
+    object.__setattr__(runner_request, "request_id", "runtime-probe-request:mutated")
+
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+            completion,
+            ValueError("malformed stdout"),
+        )
+
+
+def test_stdout_protocol_failure_attempt_rejects_non_exception_failure() -> None:
+    """Malformed stdout failure materialization requires a typed Exception."""
+    completion = _local_python_process_completion(returncode=0)
+
+    with pytest.raises(ValueError, match="must be an Exception"):
+        materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+            completion,
+            "malformed stdout",  # type: ignore[arg-type]
+        )
 
 
 def test_materialize_local_python_stdout_protocol_result_parses_success() -> None:
@@ -3932,6 +4097,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_local_python_process_completion" in (
         runtime_probe_execution.__all__
     )
+    assert "materialize_runtime_probe_local_python_stdout_protocol_failure_attempt" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_local_python_stdout_protocol_attempt" in (
         runtime_probe_execution.__all__
     )
@@ -3988,6 +4156,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert (
         "materialize_runtime_probe_local_python_process_completion_attempt"
+        not in context_ir.__all__
+    )
+    assert (
+        "materialize_runtime_probe_local_python_stdout_protocol_failure_attempt"
         not in context_ir.__all__
     )
     assert (
@@ -4062,6 +4234,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_local_python_process_completion_attempt",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_local_python_stdout_protocol_failure_attempt",
     )
     assert not hasattr(
         context_ir,

@@ -1137,6 +1137,59 @@ def materialize_runtime_probe_local_python_process_completion_attempt(
     )
 
 
+def materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+    completion: RuntimeProbeLocalPythonProcessCompletion,
+    exception: Exception,
+    *,
+    outcome: RuntimeProbeResultOutcome = RuntimeProbeResultOutcome.SETUP_FAILED,
+) -> RuntimeProbeExecutionAttempt:
+    """Convert malformed zero-exit local-Python stdout into a non-proof attempt."""
+    _validate_local_python_process_completion(completion)
+    _validate_local_python_subprocess_invocation(completion.invocation)
+    _validate_runner_request(completion.invocation.runner_request)
+    _validate_failure_normalization_outcome(outcome)
+    if completion.returncode != 0:
+        raise ValueError(
+            "local Python stdout protocol failure materialization requires zero "
+            "returncode"
+        )
+    if not isinstance(exception, Exception):
+        raise ValueError("local Python stdout protocol failure must be an Exception")
+
+    runner_request = completion.invocation.runner_request
+    exception_type = type(exception)
+    exception_type_label = f"{exception_type.__module__}.{exception_type.__name__}"
+    return RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=outcome,
+        failure_summary=(
+            "local Python stdout protocol failed after zero returncode; recorded "
+            f"as {outcome.value}"
+        ),
+        failure_detail_fields=(
+            RuntimeProbeReplayField(
+                key="failure_source",
+                value="local_python_stdout_protocol_failure",
+            ),
+            RuntimeProbeReplayField(
+                key="normalized_outcome",
+                value=outcome.value,
+            ),
+            RuntimeProbeReplayField(
+                key="returncode",
+                value=str(completion.returncode),
+            ),
+            RuntimeProbeReplayField(
+                key="exception_type",
+                value=exception_type_label,
+            ),
+        ),
+    )
+
+
 def assemble_runtime_probe_result_batch_from_execution_attempts(
     input_batch: RuntimeProbeExecutionInputBatch,
     attempts: Iterable[RuntimeProbeExecutionAttempt],
@@ -2382,6 +2435,7 @@ __all__ = [
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_local_python_process_completion_attempt",
     "materialize_runtime_probe_local_python_process_completion",
+    "materialize_runtime_probe_local_python_stdout_protocol_failure_attempt",
     "materialize_runtime_probe_local_python_stdout_protocol_attempt",
     "materialize_runtime_probe_local_python_stdout_protocol_result",
     "materialize_runtime_probe_local_python_subprocess_exception_attempt",

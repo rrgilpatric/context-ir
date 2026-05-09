@@ -2,6 +2,151 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Stdout Protocol Failure Normalization Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  local Python stdout protocol failure-normalization release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed.
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+    reporting `108 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    reporting `993 passed`
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `3202178 Sync local Python observed attempt post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `993 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Stdout Protocol Failure Normalization Workspace Acceptance
+
+- Reviewed the returned local Python stdout protocol failure-normalization
+  implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `3202178 Sync local Python observed attempt post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds
+    `materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(...)`
+  - consumes typed `RuntimeProbeLocalPythonProcessCompletion` values plus a
+    parsing or validation `Exception`
+  - requires zero return code at this boundary; nonzero completion mapping
+    remains owned by
+    `materialize_runtime_probe_local_python_process_completion_attempt(...)`
+  - revalidates completion, invocation, and runner request before materializing
+    the attempt
+  - returns non-proof `RuntimeProbeExecutionAttempt` values, defaulting to
+    `RuntimeProbeResultOutcome.SETUP_FAILED`
+  - supports configured non-proof outcomes and rejects `OBSERVED`
+  - preserves runner request identity, request object, and execution input
+  - emits deterministic sanitized failure summary and detail fields without raw
+    stdout, stderr, exception message, traceback text, temporary paths, PIDs, or
+    process-local data
+  - keeps exports module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+    unchanged
+- Scope boundary:
+  - no stdout protocol parser changes
+  - no observed-attempt materialization changes
+  - no subprocess execution changes
+  - no nonzero completion mapping changes
+  - no executor wrapper orchestration
+  - no concrete family/form handler or dispatch registration
+  - no `RuntimeProbeObservedResult` synthesis or result assembly changes
+  - no admission, recompile, facade, MCP, package-root, schema, eval, scoring,
+    optimizer, compiler, docs, or public-claim changes
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `231 passed`
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Stdout Protocol Failure Normalization Routing
+
+- Reviewed the clean post-push repo state after the local Python stdout
+  protocol observed-attempt materialization release.
+- Repo-backed truth during routing:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `3202178 Sync local Python observed attempt post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - next smallest safe implementation slice is local Python stdout protocol
+    failure normalization for zero-returncode completions whose stdout cannot
+    materialize a valid `RuntimeProbeLocalPythonStdoutProtocolResult`
+  - do this before the full executor-to-attempt wrapper so orchestration can
+    compose already-typed success and failure boundaries without inventing
+    parse-failure policy
+- Scope boundary:
+  - consume typed `RuntimeProbeLocalPythonProcessCompletion` values and a
+    parsing/validation `Exception`
+  - require zero return code; nonzero completion mapping remains owned by
+    `materialize_runtime_probe_local_python_process_completion_attempt(...)`
+  - revalidate completion, invocation, and runner request before materializing
+    the attempt
+  - produce deterministic non-proof `RuntimeProbeExecutionAttempt` values,
+    defaulting to `RuntimeProbeResultOutcome.SETUP_FAILED`
+  - sanitize summaries/details so raw stdout, stderr, exception messages,
+    stack traces, temporary paths, PIDs, and process-local data are not leaked
+  - no stdout protocol parser changes, observed-attempt changes, subprocess
+    execution changes, executor wrapper orchestration, handler implementation,
+    dispatch registration, result assembly, admission, recompile, facade, MCP,
+    package-root, schema, eval, scoring, optimizer, compiler, docs, or public
+    claims
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Local Python Observed Attempt Materialization Post-Push State
 
 - Ryan-authorized push completed for the local Python stdout protocol
