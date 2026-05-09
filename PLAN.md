@@ -2543,7 +2543,9 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Local Python stdout protocol durable-reference contract correction
 - [x] Combined release gate for the exact four-file local Python stdout/result
   protocol contract release unit
-- [ ] Local commit creation for the local Python stdout/result protocol
+- [x] Local commit creation for the local Python stdout/result protocol
+  contract release unit
+- [ ] Ryan-authorized push for the local Python stdout/result protocol
   contract release unit
 
 ## What Is In Progress
@@ -3519,10 +3521,11 @@ contract unit:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `982 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes, `0c4a654 Add local Python stdout protocol contract`
 - pushed: no
-- next route: local commit creation for the exact four-file unit
+- next route: await explicit Ryan authorization to push the local release and
+  continuity-sync commits
 
 Most recent release unit:
 
