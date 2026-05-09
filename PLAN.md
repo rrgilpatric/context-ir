@@ -41,9 +41,45 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`0c4a654 Add local Python stdout protocol contract`. Live git refs and
+`81a3ce3 Materialize local Python observed attempts`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python stdout protocol observed-attempt materialization release:
+
+- `materialize_runtime_probe_local_python_stdout_protocol_attempt(...)` is a
+  module-local helper that consumes typed
+  `RuntimeProbeLocalPythonStdoutProtocolResult` values
+- the helper revalidates the stdout protocol result, carried completion,
+  subprocess invocation, and runner request before materializing the attempt
+- the helper returns `RuntimeProbeExecutionAttempt` with
+  `RuntimeProbeResultOutcome.OBSERVED`
+- runner request identity, request object, execution input, ordered normalized
+  payload, and durable artifact reference are preserved
+- observed attempts produced by this helper carry no failure summary or failure
+  detail fields
+- exports stay module-local through
+  `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+  unchanged
+- the release does not change subprocess execution, stdout parsing, non-proof
+  failure mapping, `RuntimeProbeObservedResult` synthesis, result-batch
+  assembly, concrete family/form handlers, dispatch registration, executor
+  wrapper orchestration, admission, recompile, facade, MCP, package-root,
+  schema, eval, scoring, optimizer, compiler, docs, or public claims
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `985 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `81a3ce3 Materialize local Python observed attempts`
+- Ryan-authorized push completed with release routing through
+  `cc5ca86 Sync local Python observed attempt release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `81a3ce3`
 
 Local Python stdout/result protocol contract release:
 
@@ -2602,7 +2638,7 @@ sequencing for `c1a12d7` absent new findings.
   protocol observed-attempt materialization release unit
 - [x] Local commit creation for the local Python stdout protocol
   observed-attempt materialization release unit
-- [ ] Ryan-authorized push for the local Python stdout protocol
+- [x] Ryan-authorized push for the local Python stdout protocol
   observed-attempt materialization release unit
 
 ## What Is In Progress
@@ -3549,9 +3585,9 @@ observed-attempt materialization unit:
 - commit-gating-cleared: yes
 - staged: yes, then committed
 - locally committed: yes, `81a3ce3 Materialize local Python observed attempts`
-- pushed: no
-- next route: await explicit Ryan authorization to push the local release and
-  continuity-sync commits
+- pushed: yes, with `origin/main` advanced through `cc5ca86`
+- release-gate status: no-active-gate
+- next route: select the next bounded control action after the pushed release
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that

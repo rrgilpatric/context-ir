@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Observed Attempt Materialization Post-Push State
+
+- Ryan-authorized push completed for the local Python stdout protocol
+  observed-attempt materialization release unit and its release-routing
+  continuity sync.
+- Pushed commits:
+  - `81a3ce3 Materialize local Python observed attempts`
+  - `cc5ca86 Sync local Python observed attempt release routing`
+- Repo-backed truth after push:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `cc5ca86 Sync local Python observed attempt release routing`
+  - worktree clean before this post-push continuity sync
+  - nothing staged before this post-push continuity sync
+  - no untracked files before this post-push continuity sync
+- Release state:
+  - local Python stdout protocol observed-attempt materialization release is
+    pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `81a3ce3 Materialize local Python observed attempts`
+  - next route: select the next bounded control action after the pushed
+    release
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Local Python Observed Attempt Materialization Local Commit Routing
 
 - Local commit creation completed for the local Python stdout protocol
