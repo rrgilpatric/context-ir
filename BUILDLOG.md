@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Dynamic Import Worker Request Contract Local Commit Routing
+
+- Local commit creation completed for the local Python dynamic-import worker
+  request contract release unit.
+- Commit:
+  - `c134b85 Add dynamic import worker request contract`
+- Commit contents:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `c134b85 Add dynamic import worker request contract`
+  - `origin/main` at
+    `0ea7ca5 Sync worker stdout egress release routing`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted after one correction,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1084 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: 1 correction
+
 ## 2026-05-09 -- Dynamic Import Worker Request Contract Workspace Acceptance
 
 - Reviewed the returned local Python dynamic-import worker request contract

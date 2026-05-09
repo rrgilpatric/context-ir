@@ -3090,8 +3090,12 @@ sequencing for `c1a12d7` absent new findings.
   request contract
 - [x] Local Python dynamic-import worker request contract implementation slice
   accepted after one correction as workspace-only state
-- [ ] Combined read-only release gate for the exact four-file local Python
+- [x] Combined read-only release gate for the exact four-file local Python
   dynamic-import worker request contract release unit
+- [x] Local commit creation for the local Python dynamic-import worker request
+  contract release unit
+- [ ] Ryan-authorized push for the local Python dynamic-import worker request
+  contract release unit
 
 ## What Is In Progress
 
@@ -3999,19 +4003,19 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: launch a combined read-only release-gate lane for the
-exact four-file local Python dynamic-import worker request contract release
-unit. Current pushed source/contract authority remains
+Immediate next route: wait for Ryan authorization to push the locally committed
+local Python dynamic-import worker request contract release. Current local
+source/contract authority is
+`c134b85 Add dynamic import worker request contract`. Current pushed
+source/contract authority remains
 `9c6a3b5 Add worker stdout success egress`, with pushed release-routing
 continuity through `0ea7ca5 Sync worker stdout egress release routing`.
-Workspace-only accepted source/contract candidate is the dynamic-import worker
-request contract in `src/context_ir/runtime_probe_worker.py` and
-`tests/test_runtime_probe_worker.py`, plus the scoped continuity updates in
-`PLAN.md` and `BUILDLOG.md`. Do not reopen pushed worker stdout success egress,
-worker dispatch, worker ingress, stdin execution wiring, stdin transport,
-worker payload, handler adapter, executor attempt wrapper, stdout failure
-normalization, observed attempt, parent stdout protocol parser, nonzero
-failure normalization, subprocess execution, completion, invocation,
+Release-gate status is no-active-gate for `c134b85`. Do not reopen locally
+committed dynamic-import worker request contract, pushed worker stdout success
+egress, worker dispatch, worker ingress, stdin execution wiring, stdin
+transport, worker payload, handler adapter, executor attempt wrapper, stdout
+failure normalization, observed attempt, parent stdout protocol parser,
+nonzero failure normalization, subprocess execution, completion, invocation,
 environment context, dispatch table, or prior releases absent new findings.
 
 Selected next local Python dynamic-import worker request contract slice:
@@ -4071,17 +4075,17 @@ slice:
   changes are included
 - release state:
   - accepted in workspace: yes, after one correction
-  - release-unit-audit-cleared: no
-  - full-regression-cleared: no
-  - commit-gating-cleared: no
-  - staged: no
-  - locally committed: no
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1084 passed`
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes, `c134b85 Add dynamic import worker request contract`
   - pushed: no
   - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
     `src/context_ir/runtime_probe_worker.py`, and
     `tests/test_runtime_probe_worker.py`
-  - next route: combined read-only release gate with stop-on-first-finding
-    discipline
+  - push remains Ryan-gated
+  - next route: Ryan-authorized push sequencing
 
 Prior worker ingress, dispatch, and stdout-egress route notes below are
 historical continuity and are superseded for active routing by the selected
