@@ -41,9 +41,55 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`5b10728 Normalize local Python subprocess failures`. Live git refs and
+`0c4a654 Add local Python stdout protocol contract`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python stdout/result protocol contract release:
+
+- `RuntimeProbeLocalPythonStdoutProtocolResult` is a frozen module-local
+  contract for strict internal local-Python stdout success metadata
+- `materialize_runtime_probe_local_python_stdout_protocol_result(...)`
+  consumes typed `RuntimeProbeLocalPythonProcessCompletion` values only
+- the materializer requires zero return code before parsing stdout success
+  metadata
+- stdout is parsed as a strict internal JSON object with explicit stdout
+  protocol revision, ordered `normalized_payload`, and optional
+  `durable_artifact_reference`
+- at least one proof channel is required: normalized payload or durable
+  artifact reference
+- normalized payload order and the carried completion object are preserved
+- completion, invocation, and runner-request contracts are revalidated before
+  accepting protocol data
+- malformed JSON, non-object JSON, missing/blank/unsupported protocol
+  revision, unknown top-level keys, malformed payload entries, blank replay
+  fields, malformed durable references, empty proof metadata, nonzero
+  completions, and request/completion drift are rejected
+- both parser and direct frozen-contract construction reject malformed durable
+  references
+- exports stay module-local through
+  `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+  unchanged
+- the release does not synthesize `RuntimeProbeExecutionAttempt` values,
+  synthesize observed results, implement concrete family/form handlers,
+  register dispatch handlers, add executor wrapper orchestration, or change
+  admission, recompile, facade, MCP, package-root, schema, eval, scoring,
+  optimizer, compiler, docs, or public claims
+- implementation review accepted the slice after one durable-reference
+  validation correction
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `982 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `0c4a654 Add local Python stdout protocol contract`
+- Ryan-authorized push completed with `origin/main` advanced through
+  `d0e9b89 Sync local Python stdout protocol release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `0c4a654`
 
 Local Python subprocess non-proof attempt normalization release:
 
@@ -2545,7 +2591,7 @@ sequencing for `c1a12d7` absent new findings.
   protocol contract release unit
 - [x] Local commit creation for the local Python stdout/result protocol
   contract release unit
-- [ ] Ryan-authorized push for the local Python stdout/result protocol
+- [x] Ryan-authorized push for the local Python stdout/result protocol
   contract release unit
 
 ## What Is In Progress
@@ -3523,9 +3569,9 @@ contract unit:
 - commit-gating-cleared: yes
 - staged: yes, then committed
 - locally committed: yes, `0c4a654 Add local Python stdout protocol contract`
-- pushed: no
-- next route: await explicit Ryan authorization to push the local release and
-  continuity-sync commits
+- pushed: yes, with `origin/main` advanced through `d0e9b89`
+- release-gate status: no-active-gate
+- next route: select the next bounded control action after the pushed release
 
 Most recent release unit:
 

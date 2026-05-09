@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Stdout Protocol Contract Post-Push State
+
+- Ryan-authorized push completed for the local Python stdout/result protocol
+  contract release unit and its release-routing continuity sync.
+- Pushed commits:
+  - `0c4a654 Add local Python stdout protocol contract`
+  - `d0e9b89 Sync local Python stdout protocol release routing`
+- Repo-backed truth after push:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d0e9b89 Sync local Python stdout protocol release routing`
+  - worktree clean before this post-push continuity sync
+  - nothing staged before this post-push continuity sync
+  - no untracked files before this post-push continuity sync
+- Release state:
+  - local Python stdout/result protocol contract release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `0c4a654 Add local Python stdout protocol contract`
+  - next route: select the next bounded control action after the pushed
+    release
+- Acceptance status: 1 correction
+
 ## 2026-05-09 -- Local Python Stdout Protocol Contract Local Commit Routing
 
 - Local commit creation completed for the local Python stdout/result protocol
