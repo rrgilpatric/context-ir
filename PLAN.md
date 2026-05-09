@@ -2696,7 +2696,9 @@ sequencing for `c1a12d7` absent new findings.
   first-pass as workspace-only state
 - [x] Combined release gate for the exact four-file local Python
   executor-to-attempt wrapper release unit
-- [ ] Local commit creation for the local Python executor-to-attempt wrapper
+- [x] Local commit creation for the local Python executor-to-attempt wrapper
+  release unit
+- [ ] Ryan-authorized push for the local Python executor-to-attempt wrapper
   release unit
 
 ## What Is In Progress
@@ -3605,13 +3607,14 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file local
-Python executor-to-attempt wrapper release unit. Current pushed source/contract
-authority is
+Immediate next route: wait for Ryan authorization to push the locally committed
+local Python executor-to-attempt wrapper release. Current local source/contract
+authority is `8625186 Execute local Python subprocess attempts`. Current pushed
+source/contract authority remains
 `d8cf97b Normalize local Python stdout protocol failures`, with post-push
 continuity through
 `fd819a4 Sync local Python stdout failure post-push state`. Release-gate status
-is no-active-gate for `d8cf97b`. Do not reopen pushed stdout failure
+is no-active-gate for `8625186`. Do not reopen pushed stdout failure
 normalization, observed attempt, stdout protocol, nonzero failure
 normalization, subprocess execution, completion, invocation, environment
 context, dispatch table, or prior releases absent new findings.
@@ -3648,15 +3651,16 @@ unit:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `999 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes, `8625186 Execute local Python subprocess attempts`
 - pushed: no
 - release-gate status: no-active-gate for current pushed authority
 - release unit is exactly:
   `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_execution.py`, and
   `tests/test_runtime_probe_execution.py`
-- next route: local commit creation for the exact four-file unit
+- push remains Ryan-gated
+- next route: Ryan-authorized push sequencing
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that
