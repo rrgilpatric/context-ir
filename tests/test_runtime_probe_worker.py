@@ -41,6 +41,9 @@ DynamicImportWorkerRequest = (
 DynamicImportWorkerObservation = (
     runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerObservation
 )
+DynamicImportReplayTarget = (
+    runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportReplayTarget
+)
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
@@ -51,14 +54,25 @@ def _field(key: str, value: str) -> runtime_probe_results.RuntimeProbeReplayFiel
     return runtime_probe_results.RuntimeProbeReplayField(key=key, value=value)
 
 
-def _request() -> runtime_probe_requests.RuntimeProbeRequest:
+def _request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+) -> runtime_probe_requests.RuntimeProbeRequest:
     """Return one deterministic planned runtime probe request."""
+    form_label = "dynamic_import:importlib.import_module/1"
+    resolved_replay_selector_seed = (
+        f"call:{replay_target_seed}:{form_label}@{source_file_path}:3:4:3:28"
+        if replay_selector_seed is None
+        else replay_selector_seed
+    )
     return runtime_probe_requests.RuntimeProbeRequest(
         subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
-        subject_id="unsupported:call:main.py:3:4",
+        subject_id=f"unsupported:call:{source_file_path}:3:4",
         source_site=SourceSite(
-            site_id="site:main.py:3:4",
-            file_path="main.py",
+            site_id=f"site:{source_file_path}:3:4",
+            file_path=source_file_path,
             span=SourceSpan(
                 start_line=3,
                 start_column=4,
@@ -70,19 +84,28 @@ def _request() -> runtime_probe_requests.RuntimeProbeRequest:
         reason_code=UnresolvedReasonCode.DYNAMIC_IMPORT,
         boundary_text="importlib.import_module(name)",
         family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:importlib.import_module/1",
-        replay_target_seed="main.run",
-        replay_selector_seed="call:main.run:dynamic_import@main.py:3:4:3:28",
+        form_label=form_label,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=resolved_replay_selector_seed,
     )
 
 
 def _valid_worker_invocation(
     *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonSubprocessInvocation:
     """Return one strict worker invocation produced by the parent contract."""
     request_plan = runtime_probe_requests.build_runtime_probe_request_plan(
-        (_request(),)
+        (
+            _request(
+                source_file_path=source_file_path,
+                replay_target_seed=replay_target_seed,
+                replay_selector_seed=replay_selector_seed,
+            ),
+        )
     )
     input_batch = materialize_runtime_probe_execution_input_batch(
         request_plan,
@@ -125,17 +148,51 @@ def _valid_worker_invocation(
 
 def _valid_worker_payload(
     *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonWorkerRequestPayload:
     """Return the strict worker payload produced by the parent contract."""
-    invocation = _valid_worker_invocation(python_path_entries=python_path_entries)
+    invocation = _valid_worker_invocation(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        python_path_entries=python_path_entries,
+    )
     return materialize_runtime_probe_local_python_worker_request_payload(invocation)
 
 
-def _valid_dynamic_import_worker_request() -> DynamicImportWorkerRequest:
+def _valid_dynamic_import_worker_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+) -> DynamicImportWorkerRequest:
     """Return one worker-local dynamic-import request contract."""
     return runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
-        _valid_worker_payload()
+        _valid_worker_payload(
+            source_file_path=source_file_path,
+            replay_target_seed=replay_target_seed,
+            replay_selector_seed=replay_selector_seed,
+        )
+    )
+
+
+def _valid_dynamic_import_replay_target(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+) -> DynamicImportReplayTarget:
+    """Return one worker-local non-executing replay target contract."""
+    request = _valid_dynamic_import_worker_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+    )
+    return runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+        request
     )
 
 
@@ -682,6 +739,182 @@ def test_dynamic_import_worker_request_preserves_argv_paths_and_invocation() -> 
     assert request.invocation_identity == payload.invocation_identity
 
 
+@pytest.mark.parametrize(
+    (
+        "source_file_path",
+        "replay_target_seed",
+        "source_module_name",
+        "replay_target_attribute_path",
+    ),
+    (
+        ("main.py", "main.run", "main", ("run",)),
+        (
+            "pkg/runtime.py",
+            "pkg.runtime.resolve_plugin",
+            "pkg.runtime",
+            ("resolve_plugin",),
+        ),
+        (
+            "pkg/__init__.py",
+            "pkg.bootstrap.resolve",
+            "pkg",
+            ("bootstrap", "resolve"),
+        ),
+    ),
+)
+def test_dynamic_import_replay_target_derives_module_and_attribute_path(
+    source_file_path: str,
+    replay_target_seed: str,
+    source_module_name: str,
+    replay_target_attribute_path: tuple[str, ...],
+) -> None:
+    """Replay targets derive source modules and target attributes without imports."""
+    request = _valid_dynamic_import_worker_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+    )
+
+    replay_target = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
+        )
+    )
+
+    assert replay_target.request is request
+    assert replay_target.plan_id == request.plan_id
+    assert replay_target.request_id == request.request_id
+    assert replay_target.source_file_path == source_file_path
+    assert replay_target.source_module_name == source_module_name
+    assert replay_target.replay_target_seed == replay_target_seed
+    assert replay_target.replay_target_attribute_path == replay_target_attribute_path
+    assert replay_target.replay_selector_seed == request.replay_selector_seed
+    assert replay_target.invocation_identity == request.invocation_identity
+    assert replay_target.request_replay_payload_fields is (
+        request.request_replay_payload_fields
+    )
+
+
+def test_dynamic_import_replay_target_contract_is_frozen() -> None:
+    """Worker-local replay targets are immutable non-executing contracts."""
+    replay_target = _valid_dynamic_import_replay_target()
+
+    with pytest.raises(FrozenInstanceError):
+        replay_target.source_module_name = "other"
+
+
+def test_dynamic_import_replay_target_revalidates_request() -> None:
+    """Replay target materialization reruns worker request validation."""
+    request = _valid_dynamic_import_worker_request()
+    object.__setattr__(request, "source_start_line", 0)
+
+    with pytest.raises(ValueError, match="source span"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
+        )
+
+
+def test_dynamic_import_replay_target_constructor_rejects_drift() -> None:
+    """Direct dataclass construction reruns derived target validation."""
+    replay_target = _valid_dynamic_import_replay_target()
+
+    with pytest.raises(ValueError, match="source_module_name"):
+        replace(replay_target, source_module_name="main.other")
+    with pytest.raises(ValueError, match="replay_target_attribute_path"):
+        replace(replay_target, replay_target_attribute_path=("other",))
+
+
+@pytest.mark.parametrize(
+    ("source_file_path", "replay_target_seed"),
+    (
+        ("/abs/main.py", "main.run"),
+        ("../main.py", "main.run"),
+        ("pkg/../runtime.py", "pkg.runtime.run"),
+        ("pkg//runtime.py", "pkg.runtime.run"),
+        ("pkg/runtime.txt", "pkg.runtime.run"),
+        ("pkg/3runtime.py", "pkg.3runtime.run"),
+        ("__init__.py", "__init__.run"),
+    ),
+)
+def test_dynamic_import_replay_target_rejects_malformed_source_paths(
+    source_file_path: str,
+    replay_target_seed: str,
+) -> None:
+    """Replay targets require strict repository-relative Python source paths."""
+    request = _valid_dynamic_import_worker_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+    )
+
+    with pytest.raises(ValueError, match="source"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
+        )
+
+
+def test_dynamic_import_replay_target_rejects_source_fallback_seed() -> None:
+    """source: fallback seeds remain unsupported by the local replay contract."""
+    request = _valid_dynamic_import_worker_request(
+        replay_target_seed="source:main.py:3"
+    )
+
+    with pytest.raises(ValueError, match="unsupported"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
+        )
+
+
+def test_dynamic_import_replay_target_rejects_source_module_drift() -> None:
+    """Replay target seeds must be rooted at the derived source module."""
+    request = _valid_dynamic_import_worker_request(
+        source_file_path="pkg/runtime.py",
+        replay_target_seed="pkg.other.run",
+    )
+
+    with pytest.raises(ValueError, match="source_module_name"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
+        )
+
+
+@pytest.mark.parametrize(
+    "replay_target_seed",
+    (
+        "pkg.runtime",
+        "pkg.runtime.",
+        "pkg.runtime..run",
+        "pkg.runtime.3run",
+        "pkg.runtime.run-name",
+    ),
+)
+def test_dynamic_import_replay_target_rejects_malformed_target_segments(
+    replay_target_seed: str,
+) -> None:
+    """Replay target module and attribute segments must be strict identifiers."""
+    request = _valid_dynamic_import_worker_request(
+        source_file_path="pkg/runtime.py",
+        replay_target_seed=replay_target_seed,
+    )
+
+    with pytest.raises(ValueError, match="replay_target"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
+        )
+
+
+def test_dynamic_import_replay_target_rejects_request_drift() -> None:
+    """Replay target validation catches a carried request mutated after creation."""
+    request = _valid_dynamic_import_worker_request()
+    replay_target = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
+        )
+    )
+    object.__setattr__(request, "replay_selector_seed", "call:drifted")
+
+    with pytest.raises(ValueError, match="replay_selector_seed"):
+        replace(replay_target)
+
+
 def test_dynamic_import_worker_observation_materializes_replay_identity() -> None:
     """The worker derives observation metadata from a validated request."""
     request = _valid_dynamic_import_worker_request()
@@ -779,8 +1012,8 @@ def test_dynamic_import_worker_observation_rejects_request_drift() -> None:
         _dynamic_import_worker_success_response(observation)
 
 
-def test_dynamic_import_worker_observation_does_not_import_modules() -> None:
-    """The observation contract adds no importlib import surface."""
+def test_dynamic_import_worker_contracts_do_not_import_modules() -> None:
+    """Dynamic-import worker contracts add no importlib import surface."""
     for source_path in (
         Path(runtime_probe_worker.__file__),
         Path(__file__),
@@ -1259,6 +1492,13 @@ def test_worker_entrypoint_is_importable() -> None:
         runtime_probe_worker,
         "RuntimeProbeLocalPythonDynamicImportWorkerObserver",
     )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonDynamicImportReplayTarget",
+    )
+    assert callable(
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target
+    )
 
 
 def test_package_root_exports_remain_unchanged() -> None:
@@ -1269,6 +1509,7 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert "RuntimeProbeLocalPythonDynamicImportWorkerObservation" not in (
         context_ir.__all__
     )
+    assert "RuntimeProbeLocalPythonDynamicImportReplayTarget" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonWorkerSuccessResponse" not in context_ir.__all__
     assert (
         "RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter"
@@ -1281,6 +1522,9 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir.__all__
     )
     assert "materialize_runtime_probe_dynamic_import_worker_observation" not in (
+        context_ir.__all__
+    )
+    assert "materialize_runtime_probe_dynamic_import_replay_target" not in (
         context_ir.__all__
     )
     assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
@@ -1298,6 +1542,10 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir,
         "RuntimeProbeLocalPythonDynamicImportWorkerObservation",
     )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonDynamicImportReplayTarget",
+    )
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonWorkerSuccessResponse")
     assert not hasattr(
         context_ir,
@@ -1311,6 +1559,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_dynamic_import_worker_observation",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_dynamic_import_replay_target",
     )
     assert not hasattr(
         context_ir,
