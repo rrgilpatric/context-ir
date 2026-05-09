@@ -41,9 +41,44 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`41f5df9 Pass worker requests through stdin`. Live git refs and
+`f67e5f8 Add fail-closed runtime probe worker`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Fail-closed local Python worker ingress release:
+
+- `src/context_ir/runtime_probe_worker.py` now exists as the importable
+  `context_ir.runtime_probe_worker` subprocess target module
+- the worker exposes a testable `main(...)` entrypoint
+- the worker reads stdin and parses request payloads only through
+  `parse_runtime_probe_local_python_worker_request_payload(...)`
+- valid worker request payloads parse successfully and then fail closed with
+  deterministic nonzero exit status, empty stdout, and sanitized stderr
+- malformed stdin fails closed with deterministic nonzero exit status, empty
+  stdout, and sanitized stderr
+- stderr does not leak raw stdin, tracebacks, exception messages, environment
+  names, or local path details
+- worker output does not emit the success stdout protocol and cannot produce
+  observed proof
+- package-root exports remain unchanged
+- the release does not add concrete handler logic, dynamic import execution,
+  worker dispatch registry, stdout protocol extension, global handler
+  registration, filesystem IO, subprocess execution in tests, docs, public
+  claims, API, MCP, schema, eval, scoring, optimizer, compiler, admission,
+  recompile, or result assembly changes
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1054 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `f67e5f8 Add fail-closed runtime probe worker`
+- Ryan-authorized push completed with release routing through
+  `1cc925a Sync fail-closed worker release routing`
+- release unit is exactly `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_worker.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `f67e5f8`
 
 Local Python subprocess stdin execution wiring release:
 
@@ -2960,8 +2995,14 @@ sequencing for `c1a12d7` absent new findings.
   Python worker ingress skeleton release unit
 - [x] Local commit creation for the fail-closed local Python worker ingress
   skeleton release unit
-- [ ] Ryan-authorized push for the fail-closed local Python worker ingress
+- [x] Ryan-authorized push for the fail-closed local Python worker ingress
   skeleton release unit
+- [x] Fail-closed local Python worker-side dispatch contract implementation
+  slice accepted first-pass as workspace-only state
+- [x] Combined read-only release gate for the exact four-file fail-closed local
+  Python worker-side dispatch contract release unit
+- [ ] Local commit creation for the fail-closed local Python worker-side
+  dispatch contract release unit
 
 ## What Is In Progress
 
@@ -3869,18 +3910,18 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the locally committed
-fail-closed local Python worker ingress skeleton release. Current local
-source/contract authority is
-`f67e5f8 Add fail-closed runtime probe worker`. Current pushed source/contract
-authority remains `41f5df9 Pass worker requests through stdin`, with
+Immediate next route: local commit creation for the fail-closed local Python
+worker-side dispatch contract release unit. Current pushed source/contract
+authority is
+`f67e5f8 Add fail-closed runtime probe worker`, with
 release-routing continuity through
-`132647b Sync local Python stdin execution routing`. Release-gate status is
-no-active-gate for `f67e5f8`. Do not reopen pushed stdin execution wiring,
-stdin transport, worker payload, handler adapter, executor attempt wrapper,
-stdout failure normalization, observed attempt, stdout protocol, nonzero
-failure normalization, subprocess execution, completion, invocation,
-environment context, dispatch table, or prior releases absent new findings.
+`1cc925a Sync fail-closed worker release routing`. Release-gate status is
+no-active-gate for `f67e5f8`. Do not reopen pushed worker ingress, stdin
+execution wiring, stdin transport, worker payload, handler adapter, executor
+attempt wrapper, stdout failure normalization, observed attempt, stdout
+protocol, nonzero failure normalization, subprocess execution, completion,
+invocation, environment context, dispatch table, or prior releases absent new
+findings.
 
 Accepted local Python worker post-stdin-execution spike:
 
@@ -3933,7 +3974,8 @@ Current release state for the selected worker ingress skeleton slice:
 - commit-gating-cleared: yes
 - staged: yes, then committed
 - locally committed: yes, `f67e5f8 Add fail-closed runtime probe worker`
-- pushed: no
+- pushed: yes, with release routing through
+  `1cc925a Sync fail-closed worker release routing`
 - expected implementation files:
   `src/context_ir/runtime_probe_worker.py` and
   `tests/test_runtime_probe_worker.py`
@@ -3943,8 +3985,67 @@ Current release state for the selected worker ingress skeleton slice:
   `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_worker.py`, and
   `tests/test_runtime_probe_worker.py`
-- push remains Ryan-gated
-- next route: Ryan-authorized push sequencing
+- push completed after explicit Ryan authorization
+- next route: fail-closed worker-side dispatch contract implementation lane
+
+Selected next worker-side dispatch contract slice:
+
+- add a small internal dispatch table/handler-entry contract inside
+  `src/context_ir/runtime_probe_worker.py`
+- dispatch from parsed `RuntimeProbeLocalPythonWorkerRequestPayload`
+  family/form metadata only
+- default `main(...)` remains fail-closed with no registered handlers and no
+  stdout proof
+- missing-handler, handler-exception, duplicate-handler, malformed-handler,
+  and invalid-response paths must fail closed with deterministic sanitized
+  stderr and empty stdout
+- no concrete family/form worker behavior, dynamic import execution, stdout
+  success protocol emission, global registration, parent executor changes,
+  API/MCP/package-root/schema/eval/scoring/compiler/docs/public-claim changes,
+  admission, recompile, or result assembly changes
+
+Accepted workspace-only local Python worker-side dispatch contract slice:
+
+- adds frozen typed worker response and handler-entry contracts in
+  `src/context_ir/runtime_probe_worker.py`
+- adds a fail-closed dispatching worker keyed by parsed
+  `RuntimeProbeLocalPythonWorkerRequestPayload.family_label` and `form_label`
+- default `main(...)` behavior remains fail-closed with no registered handlers,
+  nonzero exit status, sanitized stderr, and empty stdout
+- matching injected handlers are called only after strict stdin payload parsing
+- valid handler responses still fail closed without stdout proof
+- missing handler, duplicate handler, malformed handler, handler exception,
+  and invalid handler response paths fail closed with deterministic sanitized
+  stderr and empty stdout
+- package-root exports remain unchanged
+- no concrete family/form behavior, dynamic import execution, repository-code
+  execution, stdout success protocol emission, global registration, parent
+  executor changes, API, MCP, schema, eval, scoring, compiler, docs,
+  public-claim, admission, recompile, or result assembly changes
+- implementation validation reported by the execution lane passed, including
+  targeted suite reporting `210 passed`
+- focused control validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `210 passed`
+  - `git diff --check`
+- combined read-only release gate passed after one continuity correction:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1061 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- release-unit-audit-cleared: yes
+- full-regression-cleared: yes, full pytest `1061 passed`
+- commit-gating-cleared: yes
+- staged: no
+- locally committed: no
+- pushed: no
+- proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_worker.py`, and
+  `tests/test_runtime_probe_worker.py`
+- next route: local commit creation for the exact four-file unit
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+from dataclasses import FrozenInstanceError
 from io import StringIO
 from types import ModuleType
+from typing import cast
 
 import pytest
 
@@ -102,12 +105,23 @@ def _valid_worker_stdin_text() -> str:
 
 def _run_worker(stdin_text: str) -> tuple[int, str, str]:
     """Run the importable worker entrypoint without spawning a subprocess."""
+    return _run_worker_with_handlers(stdin_text, ())
+
+
+def _run_worker_with_handlers(
+    stdin_text: str,
+    handler_entries: Iterable[
+        runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry
+    ],
+) -> tuple[int, str, str]:
+    """Run the importable worker entrypoint with an injected handler table."""
     stdout = StringIO()
     stderr = StringIO()
     exit_code = runtime_probe_worker.main(
         stdin=StringIO(stdin_text),
         stdout=stdout,
         stderr=stderr,
+        handler_entries=handler_entries,
     )
     return (exit_code, stdout.getvalue(), stderr.getvalue())
 
@@ -120,9 +134,12 @@ def _assert_sanitized_worker_stderr(stderr_text: str, raw_stdin: str) -> None:
     assert "PYTHONPATH" not in stderr_text
     assert "/private/tmp" not in stderr_text
     assert "/workspace/context-ir" not in stderr_text
+    assert "RuntimeError" not in stderr_text
     assert "ValueError" not in stderr_text
+    assert "handler failed" not in stderr_text
     assert "valid JSON" not in stderr_text
     assert "unknown keys" not in stderr_text
+    assert "typed" not in stderr_text
 
 
 def _assert_no_success_stdout_protocol(stdout_text: str) -> None:
@@ -166,6 +183,204 @@ def test_valid_worker_request_parses_and_fails_closed(
         == "runtime_probe_worker: rejected worker request without executing probe\n"
     )
     _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_registered_worker_handler_dispatches_by_payload_family_and_form() -> None:
+    """Injected handlers are routed only by parsed payload family/form metadata."""
+    stdin_text = _valid_worker_stdin_text()
+    handler_payloads: list[RuntimeProbeLocalPythonWorkerRequestPayload] = []
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse:
+        handler_payloads.append(payload)
+        return runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse()
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert (
+        stderr_text
+        == "runtime_probe_worker: rejected worker request without executing probe\n"
+    )
+    assert len(handler_payloads) == 1
+    assert (
+        handler_payloads[0].family_label
+        is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+    )
+    assert handler_payloads[0].form_label == (
+        "dynamic_import:importlib.import_module/1"
+    )
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_missing_worker_handler_fails_closed_without_calling_other_forms() -> None:
+    """Non-matching registered handlers are ignored and no proof is emitted."""
+    stdin_text = _valid_worker_stdin_text()
+    calls: list[RuntimeProbeLocalPythonWorkerRequestPayload] = []
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse:
+        calls.append(payload)
+        return runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse()
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:other_form/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert calls == []
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert (
+        stderr_text
+        == "runtime_probe_worker: rejected worker request without executing probe\n"
+    )
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_duplicate_worker_handler_fails_closed_with_sanitized_stderr() -> None:
+    """Duplicate family/form handler entries are rejected before dispatch."""
+    stdin_text = _valid_worker_stdin_text()
+    calls: list[RuntimeProbeLocalPythonWorkerRequestPayload] = []
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse:
+        calls.append(payload)
+        return runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse()
+
+    first_entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+    duplicate_entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (first_entry, duplicate_entry),
+    )
+
+    assert calls == []
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert stderr_text == "runtime_probe_worker: rejected duplicate worker handler\n"
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_malformed_worker_handler_fails_closed_with_sanitized_stderr() -> None:
+    """Malformed injected handler entries are rejected without raw details."""
+    stdin_text = _valid_worker_stdin_text()
+    handler_entries = cast(
+        Iterable[runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry],
+        (object(),),
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        handler_entries,
+    )
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert stderr_text == "runtime_probe_worker: rejected malformed worker handler\n"
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_worker_handler_exception_fails_closed_with_sanitized_stderr() -> None:
+    """Handler exceptions are normalized without leaking exception details."""
+    stdin_text = _valid_worker_stdin_text()
+    calls: list[RuntimeProbeLocalPythonWorkerRequestPayload] = []
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse:
+        calls.append(payload)
+        raise RuntimeError("handler failed with secret-token /private/tmp Traceback")
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert len(calls) == 1
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert stderr_text == "runtime_probe_worker: rejected worker handler failure\n"
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_invalid_worker_handler_response_fails_closed_with_sanitized_stderr() -> None:
+    """Untyped handler responses are rejected without reflecting their data."""
+    stdin_text = _valid_worker_stdin_text()
+
+    def handler(payload: RuntimeProbeLocalPythonWorkerRequestPayload) -> object:
+        del payload
+        return {
+            "stdout": "runtime_probe_stdout_protocol_revision",
+            "token": "secret-token",
+            "path": "/private/tmp/context-ir",
+        }
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert (
+        stderr_text
+        == "runtime_probe_worker: rejected invalid worker handler response\n"
+    )
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_worker_response_contract_is_frozen_and_non_proof() -> None:
+    """Worker responses are immutable typed markers for non-proof rejection."""
+    response = runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse()
+
+    assert response.rejected_without_proof is True
+    with pytest.raises(FrozenInstanceError):
+        response.rejected_without_proof = False
+    with pytest.raises(ValueError, match="non-proof"):
+        runtime_probe_worker.RuntimeProbeLocalPythonWorkerResponse(
+            rejected_without_proof=False
+        )
 
 
 def test_malformed_worker_request_fails_closed_with_sanitized_stderr() -> None:

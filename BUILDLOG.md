@@ -2,6 +2,170 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Worker-Side Dispatch Contract Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  fail-closed local Python worker-side dispatch contract release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed:
+  - worker dispatch contract remains fail-closed
+  - default `main(...)` behavior remains non-proof
+  - no concrete handlers, dynamic import execution, stdout proof emission,
+    global registration, parent executor behavior, package-root/API/MCP/schema
+    /eval/scoring/compiler/docs/public-claim surfaces, admission, recompile,
+    or result assembly changes are introduced
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed, reporting
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed, reporting
+    `1061 passed`
+  - `git diff --check` passed
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `1cc925a Sync fail-closed worker release routing`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1061 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Worker-Side Dispatch Release-Gate Continuity Correction
+
+- Accepted the release-gate finding that `PLAN.md` still listed
+  Ryan-authorized push for the fail-closed local Python worker ingress skeleton
+  release unit as unchecked under "What Is Complete".
+- Corrected the stale checklist item to match the canonical active block and
+  live repo-backed truth:
+  - `f67e5f8 Add fail-closed runtime probe worker` is pushed source/contract
+    authority
+  - `1cc925a Sync fail-closed worker release routing` is current release
+    routing
+- Scope:
+  - documentation/control continuity correction only
+  - no source or test behavior changes
+  - no staging, commit, or push
+- Next route remains rerunning the combined read-only release gate for the
+  exact four-file worker-side dispatch contract release unit.
+- Acceptance status: 1 correction
+
+## 2026-05-09 -- Worker-Side Dispatch Contract Workspace Acceptance
+
+- Reviewed the returned fail-closed local Python worker-side dispatch contract
+  implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `1cc925a Sync fail-closed worker release routing`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed worker response and handler-entry contracts
+  - adds a fail-closed dispatching worker keyed by parsed
+    `RuntimeProbeLocalPythonWorkerRequestPayload.family_label` and
+    `form_label`
+  - default `main(...)` behavior remains fail-closed with no registered
+    handlers and no stdout proof
+  - matching injected handlers are called only after strict stdin payload
+    parsing
+  - valid handler responses still return deterministic nonzero fail-closed
+    status with sanitized stderr and empty stdout
+  - missing handler, duplicate handler, malformed handler, handler exception,
+    and invalid handler response paths fail closed with deterministic
+    sanitized stderr and empty stdout
+  - package-root exports remain unchanged
+  - no concrete family/form behavior, dynamic import execution,
+    repository-code execution, stdout success protocol emission, global
+    registration, parent executor changes, API, MCP, schema, eval, scoring,
+    compiler, docs, public-claim, admission, recompile, or result assembly
+    changes
+- Implementation validation reported by the execution lane:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed, reporting `210 passed`
+  - `git diff --check` passed
+- Focused validation rerun by control:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed, reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source
+    files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed, reporting `210 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Fail-Closed Worker Post-Push Dispatch Routing
+
+- Verified live repo state after Ryan-authorized push of the fail-closed local
+  Python worker ingress release.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `1cc925a Sync fail-closed worker release routing`
+  - latest pushed source/contract authority is
+    `f67e5f8 Add fail-closed runtime probe worker`
+  - worktree was clean before this control-route continuity update
+  - nothing staged before this control-route continuity update
+  - no untracked files before this control-route continuity update
+  - `git diff --check` was clean before this control-route continuity update
+- Continuity correction:
+  - committed `PLAN.md` and `BUILDLOG.md` still treated the worker ingress
+    push as pending
+  - current routing now treats `f67e5f8` as pushed, no-active-gate source and
+    contract authority
+- Routing decision:
+  - the next implementation lane should add a fail-closed worker-side dispatch
+    contract in `context_ir.runtime_probe_worker`
+  - worker ingress exists and parses strict stdin payloads, but concrete
+    family/form behavior is still too broad because it would mix dispatch,
+    repository-code execution, stdout proof emission, and family/form
+    semantics
+  - the next slice should dispatch parsed payloads by family/form and keep all
+    missing, malformed, or exception paths non-proof and sanitized
+- Scope boundary:
+  - no concrete handler logic
+  - no dynamic import execution
+  - no stdout success protocol emission
+  - no global handler registration
+  - no parent executor, API, MCP, package-root, schema, eval, scoring,
+    compiler, docs, public-claim, admission, recompile, or result assembly
+    changes
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Fail-Closed Local Python Worker Ingress Local Commit Routing
 
 - Local commit creation completed for the fail-closed local Python worker
