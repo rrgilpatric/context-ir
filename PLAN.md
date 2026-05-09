@@ -2804,8 +2804,10 @@ sequencing for `c1a12d7` absent new findings.
   slice accepted after two corrections as workspace-only state
 - [x] Combined read-only release gate for the exact four-file local Python
   worker request payload contract release unit
-- [ ] Local commit creation for the local Python worker request payload
+- [x] Local commit creation for the local Python worker request payload
   contract release unit
+- [ ] Ryan-authorized push for the local Python worker request payload contract
+  release unit
 
 ## What Is In Progress
 
@@ -3713,13 +3715,15 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: local commit creation for the exact four-file local
-Python worker request payload contract release unit. Current pushed
+Immediate next route: wait for Ryan authorization to push the locally committed
+local Python worker request payload contract release. Current local
 source/contract authority is
+`4d155ec Add local Python worker payload contract`. Current pushed
+source/contract authority remains
 `9b9b5cd Add local Python probe handler adapter`, with release-routing
 continuity through
 `2f63f7f Sync local Python handler adapter release routing`. Release-gate
-status is no-active-gate for `9b9b5cd`. Do not reopen pushed handler adapter,
+status is no-active-gate for `4d155ec`. Do not reopen pushed handler adapter,
 executor attempt wrapper, stdout failure normalization, observed attempt,
 stdout protocol, nonzero failure normalization, subprocess execution,
 completion, invocation, environment context, dispatch table, or prior releases
@@ -3782,8 +3786,8 @@ Current release state for the selected worker request payload slice:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `1033 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes, `4d155ec Add local Python worker payload contract`
 - pushed: no
 - expected implementation files:
   `src/context_ir/runtime_probe_execution.py` and
@@ -3792,7 +3796,8 @@ Current release state for the selected worker request payload slice:
   `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_execution.py`, and
   `tests/test_runtime_probe_execution.py`
-- next route: local commit creation for the exact four-file unit
+- push remains Ryan-gated
+- next route: Ryan-authorized push sequencing
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that
