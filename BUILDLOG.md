@@ -2,6 +2,104 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Dynamic Import Worker Observation Success Response Workspace Acceptance
+
+- Reviewed the returned local Python dynamic-import worker observation
+  success-response contract implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `077c91a Sync dynamic import worker request routing`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed
+    `RuntimeProbeLocalPythonDynamicImportWorkerObservation`
+  - adds
+    `materialize_runtime_probe_dynamic_import_worker_observation(...)`
+  - adds
+    `materialize_runtime_probe_dynamic_import_worker_success_response(...)`
+  - preserves the validated dynamic-import worker request, plan/request
+    identity, replay target and selector seeds, invocation contract revision,
+    invocation identity, request replay payload fields, and observed imported
+    module name
+  - materializes the existing worker stdout success response with exactly one
+    deterministic normalized payload field: `imported_module`
+  - validates imported module metadata as non-empty, stripped,
+    control-character free, absolute dotted module syntax, non-empty segments,
+    and identifier-like module-name segments
+  - package-root exports remain unchanged
+  - no `importlib` import, repository-code execution, module import attempt,
+    concrete handler implementation, default/global handler registration,
+    subprocess behavior change, parent executor/parser change, API, MCP,
+    schema, eval, scoring, compiler, docs, public-claim, admission,
+    recompile, or result assembly change is included
+- Validation:
+  - implementation lane reported ruff, format check, strict mypy, targeted
+    pytest `251 passed`, no `importlib` import matches, and `git diff --check`
+    passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `251 passed`
+  - control reran the no-importlib boundary scan, which produced no matches
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Dynamic Import Worker Request Contract Post-Push Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  dynamic-import worker request contract release unit.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `077c91a Sync dynamic import worker request routing`
+  - current pushed source/contract authority is
+    `c134b85 Add dynamic import worker request contract`
+  - worktree clean before this control-route continuity sync
+  - nothing staged before this control-route continuity sync
+  - no untracked files before this control-route continuity sync
+- Release state:
+  - `c134b85` is pushed and no-active-gate
+  - prior locally committed push hold for the dynamic-import worker request
+    contract is superseded by this post-push routing entry
+- Decision: route the next implementation lane to a non-executing local Python
+  dynamic-import worker observation success-response contract.
+- Alternatives considered:
+  - actual `importlib.import_module(name)` execution inside the worker
+  - a globally registered dynamic-import worker handler
+  - parent-side dispatch registration
+  - an end-to-end subprocess proof smoke
+  - a fail-closed dynamic-import handler skeleton
+- Reasoning:
+  - the worker now has typed request ingress for the first concrete
+    `DYNAMIC_IMPORT` form
+  - actual imports would combine repository-code execution, instrumentation,
+    proof payload shape, and handler registration in one slice
+  - a dynamic-import observation-to-success-response contract defines the
+    `imported_module` proof payload boundary before any real import occurs
+  - the slice keeps runtime execution, global registration, parent behavior,
+    public surfaces, and result assembly unchanged
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Dynamic Import Worker Request Contract Local Commit Routing
 
 - Local commit creation completed for the local Python dynamic-import worker

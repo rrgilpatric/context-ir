@@ -41,9 +41,49 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`9c6a3b5 Add worker stdout success egress`. Live git refs and
+`c134b85 Add dynamic import worker request contract`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python dynamic-import worker request contract release:
+
+- `src/context_ir/runtime_probe_worker.py` now has a frozen typed
+  `RuntimeProbeLocalPythonDynamicImportWorkerRequest`
+- `materialize_runtime_probe_dynamic_import_worker_request(...)` derives the
+  worker-local request from `RuntimeProbeLocalPythonWorkerRequestPayload`
+- the contract accepts only `RuntimeProbeFamily.DYNAMIC_IMPORT` with exact
+  form label `dynamic_import:importlib.import_module/1`
+- the request preserves plan/request identity, subject identity, source-site
+  identity and span, reason code, boundary text, replay target and selector
+  seeds, argv, working directory, ordered Python path entries, timeout
+  seconds, invocation contract revision, invocation identity, and original
+  request replay fields
+- drifted, missing, duplicate, blank, malformed source-span, and malformed
+  invocation identity metadata are rejected before any execution behavior
+  exists
+- first review found missing direct-constructor validation coverage; the
+  correction added focused `dataclasses.replace(...)` coverage for the
+  frozen contract's `__post_init__` path
+- package-root exports remain unchanged
+- the release does not add `importlib` imports, repository-code execution,
+  module import attempts, concrete proof-producing handlers, default/global
+  handler registration, subprocess changes, stdout success emission from real
+  behavior, parent executor/parser changes, API, MCP, schema, eval, scoring,
+  compiler, docs, public-claim, admission, recompile, or result assembly
+  changes
+- implementation review accepted the slice after one correction
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1084 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `c134b85 Add dynamic import worker request contract`
+- Ryan-authorized push completed with release routing through
+  `077c91a Sync dynamic import worker request routing`
+- release unit is exactly `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_worker.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `c134b85`
 
 Local Python worker stdout success egress contract release:
 
@@ -3094,8 +3134,14 @@ sequencing for `c1a12d7` absent new findings.
   dynamic-import worker request contract release unit
 - [x] Local commit creation for the local Python dynamic-import worker request
   contract release unit
-- [ ] Ryan-authorized push for the local Python dynamic-import worker request
+- [x] Ryan-authorized push for the local Python dynamic-import worker request
   contract release unit
+- [x] Post-`c134b85` control selected local Python dynamic-import worker
+  observation success-response contract
+- [x] Local Python dynamic-import worker observation success-response contract
+  implementation slice accepted first-pass as workspace-only state
+- [ ] Combined read-only release gate for the exact four-file local Python
+  dynamic-import worker observation success-response contract release unit
 
 ## What Is In Progress
 
@@ -4003,20 +4049,94 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the locally committed
-local Python dynamic-import worker request contract release. Current local
-source/contract authority is
-`c134b85 Add dynamic import worker request contract`. Current pushed
-source/contract authority remains
-`9c6a3b5 Add worker stdout success egress`, with pushed release-routing
-continuity through `0ea7ca5 Sync worker stdout egress release routing`.
-Release-gate status is no-active-gate for `c134b85`. Do not reopen locally
-committed dynamic-import worker request contract, pushed worker stdout success
-egress, worker dispatch, worker ingress, stdin execution wiring, stdin
-transport, worker payload, handler adapter, executor attempt wrapper, stdout
-failure normalization, observed attempt, parent stdout protocol parser,
-nonzero failure normalization, subprocess execution, completion, invocation,
-environment context, dispatch table, or prior releases absent new findings.
+Immediate next route: launch a combined read-only release-gate lane for the
+exact four-file local Python dynamic-import worker observation
+success-response contract release unit. Current pushed source/contract
+authority remains `c134b85 Add dynamic import worker request contract`, with
+pushed release-routing continuity through
+`077c91a Sync dynamic import worker request routing`. Workspace-only accepted
+source/contract candidate is the dynamic-import worker observation
+success-response contract in `src/context_ir/runtime_probe_worker.py` and
+`tests/test_runtime_probe_worker.py`, plus the scoped continuity updates in
+`PLAN.md` and `BUILDLOG.md`. Do not reopen pushed dynamic-import worker
+request contract, worker stdout success egress, worker dispatch, worker
+ingress, stdin execution wiring, stdin transport, worker payload, handler
+adapter, executor attempt wrapper, stdout failure normalization, observed
+attempt, parent stdout protocol parser, nonzero failure normalization,
+subprocess execution, completion, invocation, environment context, dispatch
+table, or prior releases absent new findings.
+
+Selected next local Python dynamic-import worker observation success-response
+contract slice:
+
+- add a frozen typed worker-local dynamic-import observation/proof-metadata
+  contract derived from `RuntimeProbeLocalPythonDynamicImportWorkerRequest`
+- carry the validated request identity plus the observed imported module name
+- add a helper that materializes a
+  `RuntimeProbeLocalPythonWorkerSuccessResponse` from the typed observation
+- emitted normalized payload should be deterministic and limited to the
+  current dynamic-import runtime field, `imported_module`
+- validate imported module metadata strictly: non-empty, stripped, no control
+  characters, no relative module syntax, no empty dotted segments, and no
+  malformed module-name segments
+- keep the slice non-executing: no `importlib` imports, no repository code
+  execution, no module import attempts, no concrete handler implementation,
+  no default/global handler registration, no subprocess changes, no parent
+  executor/parser changes, no eval, schema, scoring, compiler, API, MCP,
+  docs, public claims, admission, recompile, or result assembly changes
+
+Accepted workspace-only local Python dynamic-import worker observation
+success-response contract slice:
+
+- adds frozen typed
+  `RuntimeProbeLocalPythonDynamicImportWorkerObservation` in
+  `src/context_ir/runtime_probe_worker.py`
+- adds
+  `materialize_runtime_probe_dynamic_import_worker_observation(...)`
+- adds
+  `materialize_runtime_probe_dynamic_import_worker_success_response(...)`
+- preserves the validated
+  `RuntimeProbeLocalPythonDynamicImportWorkerRequest`, plan/request identity,
+  replay target and selector seeds, invocation contract revision, invocation
+  identity, request replay payload fields, and observed imported module name
+- materializes the existing worker stdout success response with exactly one
+  deterministic normalized payload field: `imported_module`
+- validates imported module metadata as non-empty, stripped, control-character
+  free, absolute dotted module syntax, non-empty segments, and identifier-like
+  module-name segments
+- direct construction, request drift, malformed imported-module metadata,
+  frozen behavior, deterministic success payload, no-importlib boundary, and
+  package-root export quarantine are covered by tests
+- control reran focused validation:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed, reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source
+    files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed, reporting `251 passed`
+  - `rg -n "^(import importlib|from importlib)" src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    produced no matches
+  - `git diff --check` passed
+- no `importlib` imports, repository code execution, module import attempts,
+  concrete handler implementation, default/global handler registration,
+  subprocess changes, parent executor/parser changes, package-root export,
+  docs, eval, schema, scoring, compiler, API, MCP, public claims, admission,
+  recompile, or result assembly changes are included
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: combined read-only release gate with stop-on-first-finding
+    discipline
 
 Selected next local Python dynamic-import worker request contract slice:
 
@@ -4080,12 +4200,14 @@ slice:
   - commit-gating-cleared: yes
   - staged: yes, then committed
   - locally committed: yes, `c134b85 Add dynamic import worker request contract`
-  - pushed: no
+  - pushed: yes, with release routing through
+    `077c91a Sync dynamic import worker request routing`
   - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
     `src/context_ir/runtime_probe_worker.py`, and
     `tests/test_runtime_probe_worker.py`
-  - push remains Ryan-gated
-  - next route: Ryan-authorized push sequencing
+  - push completed after explicit Ryan authorization
+  - next route: local Python dynamic-import worker observation
+    success-response contract
 
 Prior worker ingress, dispatch, and stdout-egress route notes below are
 historical continuity and are superseded for active routing by the selected

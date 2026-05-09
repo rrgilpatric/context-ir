@@ -97,6 +97,25 @@ class RuntimeProbeLocalPythonDynamicImportWorkerRequest:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonDynamicImportWorkerObservation:
+    """Worker-local dynamic-import observation metadata before stdout emission."""
+
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest
+    plan_id: str
+    request_id: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    imported_module: str
+
+    def __post_init__(self) -> None:
+        """Reject drifted request identity or malformed module observations."""
+        _validate_runtime_probe_dynamic_import_worker_observation(self)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonWorkerResponse:
     """Typed non-proof worker response that cannot carry stdout payload data."""
 
@@ -369,6 +388,41 @@ def materialize_runtime_probe_dynamic_import_worker_request(
     )
 
 
+def materialize_runtime_probe_dynamic_import_worker_observation(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+    *,
+    imported_module: str,
+) -> RuntimeProbeLocalPythonDynamicImportWorkerObservation:
+    """Build non-executing dynamic-import observation metadata from a request."""
+    _validate_runtime_probe_dynamic_import_worker_request(request)
+    return RuntimeProbeLocalPythonDynamicImportWorkerObservation(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_contract_revision=request.invocation_contract_revision,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+        imported_module=imported_module,
+    )
+
+
+def materialize_runtime_probe_dynamic_import_worker_success_response(
+    observation: RuntimeProbeLocalPythonDynamicImportWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for one module observation."""
+    _validate_runtime_probe_dynamic_import_worker_observation(observation)
+    return RuntimeProbeLocalPythonWorkerSuccessResponse(
+        normalized_payload=(
+            RuntimeProbeReplayField(
+                key="imported_module",
+                value=observation.imported_module,
+            ),
+        ),
+    )
+
+
 def _validate_runtime_probe_dynamic_import_worker_payload(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
 ) -> None:
@@ -582,6 +636,104 @@ def _validate_runtime_probe_dynamic_import_worker_request(
         raise ValueError(
             "runtime probe dynamic import worker invocation_identity must match "
             "request replay identity"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_worker_observation(
+    observation: RuntimeProbeLocalPythonDynamicImportWorkerObservation,
+) -> None:
+    """Reject dynamic-import observation metadata that drifted from its request."""
+    if not isinstance(
+        observation,
+        RuntimeProbeLocalPythonDynamicImportWorkerObservation,
+    ):
+        raise ValueError(
+            "runtime probe dynamic import worker observation must be typed"
+        )
+    _validate_runtime_probe_dynamic_import_worker_request(observation.request)
+    _validate_runtime_probe_dynamic_import_imported_module(observation.imported_module)
+    _validate_runtime_probe_dynamic_import_observation_field_match(
+        field_name="plan_id",
+        value=observation.plan_id,
+        expected_value=observation.request.plan_id,
+    )
+    _validate_runtime_probe_dynamic_import_observation_field_match(
+        field_name="request_id",
+        value=observation.request_id,
+        expected_value=observation.request.request_id,
+    )
+    _validate_runtime_probe_dynamic_import_observation_field_match(
+        field_name="replay_target_seed",
+        value=observation.replay_target_seed,
+        expected_value=observation.request.replay_target_seed,
+    )
+    _validate_runtime_probe_dynamic_import_observation_field_match(
+        field_name="replay_selector_seed",
+        value=observation.replay_selector_seed,
+        expected_value=observation.request.replay_selector_seed,
+    )
+    _validate_runtime_probe_dynamic_import_observation_field_match(
+        field_name="invocation_contract_revision",
+        value=observation.invocation_contract_revision,
+        expected_value=observation.request.invocation_contract_revision,
+    )
+    _validate_runtime_probe_dynamic_import_observation_field_match(
+        field_name="invocation_identity",
+        value=observation.invocation_identity,
+        expected_value=observation.request.invocation_identity,
+    )
+    if (
+        observation.request_replay_payload_fields
+        != observation.request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe dynamic import worker observation "
+            "request_replay_payload_fields must match request"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_observation_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied observation identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe dynamic import worker observation "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_imported_module(
+    imported_module: str,
+) -> None:
+    """Reject malformed observed dynamic-import module names."""
+    if not isinstance(imported_module, str) or not imported_module.strip():
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module must be non-empty"
+        )
+    if imported_module != imported_module.strip() or _contains_control_character(
+        imported_module
+    ):
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module is malformed"
+        )
+    if imported_module.startswith("."):
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module must be absolute"
+        )
+    module_segments = imported_module.split(".")
+    if any(not module_segment for module_segment in module_segments):
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module "
+            "must not contain empty segments"
+        )
+    if any(not module_segment.isidentifier() for module_segment in module_segments):
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module "
+            "must be a dotted identifier"
         )
 
 

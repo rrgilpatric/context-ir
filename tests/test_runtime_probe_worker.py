@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import FrozenInstanceError, replace
 from io import StringIO
+from pathlib import Path
 from types import ModuleType
 from typing import cast
 
@@ -32,6 +33,16 @@ from context_ir.semantic_types import (
     SourceSite,
     SourceSpan,
     UnresolvedReasonCode,
+)
+
+DynamicImportWorkerRequest = (
+    runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerRequest
+)
+DynamicImportWorkerObservation = (
+    runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerObservation
+)
+WorkerSuccessResponse = (
+    runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
 
 
@@ -119,6 +130,50 @@ def _valid_worker_payload(
     """Return the strict worker payload produced by the parent contract."""
     invocation = _valid_worker_invocation(python_path_entries=python_path_entries)
     return materialize_runtime_probe_local_python_worker_request_payload(invocation)
+
+
+def _valid_dynamic_import_worker_request() -> DynamicImportWorkerRequest:
+    """Return one worker-local dynamic-import request contract."""
+    return runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+        _valid_worker_payload()
+    )
+
+
+def _valid_dynamic_import_worker_observation(
+    *,
+    request: DynamicImportWorkerRequest | None = None,
+    imported_module: str = "plugins.weather",
+) -> DynamicImportWorkerObservation:
+    """Return one worker-local dynamic-import observation contract."""
+    worker_module = runtime_probe_worker
+    validated_request = (
+        _valid_dynamic_import_worker_request() if request is None else request
+    )
+    return worker_module.materialize_runtime_probe_dynamic_import_worker_observation(
+        validated_request,
+        imported_module=imported_module,
+    )
+
+
+def _dynamic_import_worker_success_response(
+    observation: DynamicImportWorkerObservation,
+) -> WorkerSuccessResponse:
+    """Return the worker stdout success response for one observation."""
+    worker_module = runtime_probe_worker
+    materialize_success_response = (
+        worker_module.materialize_runtime_probe_dynamic_import_worker_success_response
+    )
+    return materialize_success_response(observation)
+
+
+def _serialize_worker_success_response(
+    response: WorkerSuccessResponse,
+) -> str:
+    """Serialize one worker stdout success response."""
+    worker_module = runtime_probe_worker
+    return worker_module.serialize_runtime_probe_local_python_worker_success_response(
+        response
+    )
 
 
 def _valid_worker_stdin_text() -> str:
@@ -627,6 +682,117 @@ def test_dynamic_import_worker_request_preserves_argv_paths_and_invocation() -> 
     assert request.invocation_identity == payload.invocation_identity
 
 
+def test_dynamic_import_worker_observation_materializes_replay_identity() -> None:
+    """The worker derives observation metadata from a validated request."""
+    request = _valid_dynamic_import_worker_request()
+    observation = _valid_dynamic_import_worker_observation(request=request)
+
+    assert observation.request is request
+    assert observation.plan_id == request.plan_id
+    assert observation.request_id == request.request_id
+    assert observation.replay_target_seed == request.replay_target_seed
+    assert observation.replay_selector_seed == request.replay_selector_seed
+    assert (
+        observation.invocation_contract_revision == request.invocation_contract_revision
+    )
+    assert observation.invocation_identity == request.invocation_identity
+    assert observation.request_replay_payload_fields is (
+        request.request_replay_payload_fields
+    )
+    assert observation.imported_module == "plugins.weather"
+
+
+def test_dynamic_import_worker_observation_success_response_is_deterministic() -> None:
+    """Observation proof metadata emits one deterministic imported-module field."""
+    observation = _valid_dynamic_import_worker_observation()
+
+    response = _dynamic_import_worker_success_response(observation)
+    stdout_text = _serialize_worker_success_response(response)
+
+    assert response.normalized_payload == (
+        _field("imported_module", "plugins.weather"),
+    )
+    assert response.durable_artifact_reference is None
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":['
+        '{"key":"imported_module","value":"plugins.weather"}]}'
+    )
+
+
+def test_dynamic_import_worker_observation_contract_is_frozen() -> None:
+    """Dynamic-import observation metadata is immutable before response emission."""
+    observation = _valid_dynamic_import_worker_observation()
+
+    with pytest.raises(FrozenInstanceError):
+        observation.imported_module = "plugins.forecast"
+
+
+def test_dynamic_import_worker_observation_constructor_rejects_identity_drift() -> None:
+    """Direct observation construction reruns request identity validation."""
+    observation = _valid_dynamic_import_worker_observation()
+
+    with pytest.raises(ValueError, match="request_id"):
+        replace(observation, request_id="runtime_probe:wrong")
+    with pytest.raises(ValueError, match="imported_module"):
+        replace(observation, imported_module=" plugins.weather")
+
+
+@pytest.mark.parametrize(
+    "imported_module",
+    (
+        "",
+        " ",
+        " plugins.weather",
+        "plugins.weather ",
+        "plugins\nweather",
+        ".plugins.weather",
+        "..plugins",
+        "plugins.",
+        "plugins..weather",
+        "plugins-weather",
+        "plugins.3weather",
+        "plugins.weather!",
+    ),
+)
+def test_dynamic_import_worker_observation_rejects_invalid_imported_module(
+    imported_module: str,
+) -> None:
+    """Observed module names must be strict absolute dotted identifiers."""
+    request = _valid_dynamic_import_worker_request()
+
+    with pytest.raises(ValueError, match="imported_module"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_observation(
+            request,
+            imported_module=imported_module,
+        )
+
+
+def test_dynamic_import_worker_observation_rejects_request_drift() -> None:
+    """Success response materialization rechecks the carried request identity."""
+    request = _valid_dynamic_import_worker_request()
+    observation = _valid_dynamic_import_worker_observation(request=request)
+    object.__setattr__(request, "replay_selector_seed", "call:drifted")
+
+    with pytest.raises(ValueError, match="replay_selector_seed"):
+        _dynamic_import_worker_success_response(observation)
+
+
+def test_dynamic_import_worker_observation_does_not_import_modules() -> None:
+    """The observation contract adds no importlib import surface."""
+    for source_path in (
+        Path(runtime_probe_worker.__file__),
+        Path(__file__),
+    ):
+        source_text = source_path.read_text(encoding="utf-8")
+
+        assert not any(
+            line.startswith(("import importlib", "from importlib"))
+            for line in source_text.splitlines()
+        )
+
+
 def test_valid_worker_request_parses_and_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -909,8 +1075,17 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert "runtime_probe_worker" not in context_ir.__all__
     assert "main" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonDynamicImportWorkerRequest" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonDynamicImportWorkerObservation" not in (
+        context_ir.__all__
+    )
     assert "RuntimeProbeLocalPythonWorkerSuccessResponse" not in context_ir.__all__
     assert "materialize_runtime_probe_dynamic_import_worker_request" not in (
+        context_ir.__all__
+    )
+    assert "materialize_runtime_probe_dynamic_import_worker_observation" not in (
+        context_ir.__all__
+    )
+    assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
         context_ir.__all__
     )
     assert "serialize_runtime_probe_local_python_worker_success_response" not in (
@@ -918,10 +1093,22 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert not hasattr(context_ir, "main")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonDynamicImportWorkerRequest")
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonDynamicImportWorkerObservation",
+    )
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonWorkerSuccessResponse")
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_dynamic_import_worker_request",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_dynamic_import_worker_observation",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_dynamic_import_worker_success_response",
     )
     assert not hasattr(
         context_ir,
