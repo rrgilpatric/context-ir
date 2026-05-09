@@ -41,9 +41,51 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`81a3ce3 Materialize local Python observed attempts`. Live git refs and
+`d8cf97b Normalize local Python stdout protocol failures`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python stdout protocol failure-normalization release:
+
+- `materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(...)`
+  is a module-local helper that consumes typed
+  `RuntimeProbeLocalPythonProcessCompletion` values plus a parsing or
+  validation `Exception`
+- the helper requires zero return code at this boundary; nonzero completion
+  mapping remains owned by
+  `materialize_runtime_probe_local_python_process_completion_attempt(...)`
+- the helper revalidates completion, invocation, and runner request before
+  materializing the attempt
+- the helper returns non-proof `RuntimeProbeExecutionAttempt` values,
+  defaulting to `RuntimeProbeResultOutcome.SETUP_FAILED`
+- configured non-proof outcomes are supported and `OBSERVED` is rejected
+- runner request identity, request object, and execution input are preserved
+- failure summary/detail fields are deterministic and sanitized without raw
+  stdout, stderr, exception message, traceback text, temporary paths, PIDs, or
+  process-local data
+- exports stay module-local through
+  `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+  unchanged
+- the release does not change stdout protocol parsing, observed-attempt
+  materialization, subprocess execution, nonzero completion mapping, executor
+  wrapper orchestration, concrete family/form handlers, dispatch registration,
+  `RuntimeProbeObservedResult` synthesis, result assembly, admission,
+  recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+  compiler, docs, or public claims
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `993 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `d8cf97b Normalize local Python stdout protocol failures`
+- Ryan-authorized push completed with release routing through
+  `d5de659 Sync local Python stdout failure release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `d8cf97b`
 
 Local Python stdout protocol observed-attempt materialization release:
 
@@ -2647,7 +2689,7 @@ sequencing for `c1a12d7` absent new findings.
   protocol failure-normalization release unit
 - [x] Local commit creation for the local Python stdout protocol
   failure-normalization release unit
-- [ ] Ryan-authorized push for the local Python stdout protocol
+- [x] Ryan-authorized push for the local Python stdout protocol
   failure-normalization release unit
 
 ## What Is In Progress
@@ -3602,9 +3644,9 @@ failure-normalization unit:
 - staged: yes, then committed
 - locally committed: yes,
   `d8cf97b Normalize local Python stdout protocol failures`
-- pushed: no
-- next route: await explicit Ryan authorization to push the local release and
-  continuity-sync commits
+- pushed: yes, with `origin/main` advanced through `d5de659`
+- release-gate status: no-active-gate
+- next route: select the next bounded control action after the pushed release
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that

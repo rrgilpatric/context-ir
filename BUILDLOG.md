@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Stdout Protocol Failure Normalization Post-Push State
+
+- Ryan-authorized push completed for the local Python stdout protocol
+  failure-normalization release unit and its release-routing continuity sync.
+- Pushed commits:
+  - `d8cf97b Normalize local Python stdout protocol failures`
+  - `d5de659 Sync local Python stdout failure release routing`
+- Repo-backed truth after push:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d5de659 Sync local Python stdout failure release routing`
+  - worktree clean before this post-push continuity sync
+  - nothing staged before this post-push continuity sync
+  - no untracked files before this post-push continuity sync
+- Release state:
+  - local Python stdout protocol failure-normalization release is pushed
+  - release-gate status is no-active-gate
+  - current pushed source/contract authority is
+    `d8cf97b Normalize local Python stdout protocol failures`
+  - next route: select the next bounded control action after the pushed
+    release
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Local Python Stdout Protocol Failure Normalization Local Commit Routing
 
 - Local commit creation completed for the local Python stdout protocol
