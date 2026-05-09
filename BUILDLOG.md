@@ -2,6 +2,35 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Fail-Closed Local Python Worker Ingress Local Commit Routing
+
+- Local commit creation completed for the fail-closed local Python worker
+  ingress skeleton release unit.
+- Commit:
+  - `f67e5f8 Add fail-closed runtime probe worker`
+- Commit contents:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at `f67e5f8 Add fail-closed runtime probe worker`
+  - `origin/main` at
+    `132647b Sync local Python stdin execution routing`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Fail-Closed Local Python Worker Ingress Release Gate
 
 - Accepted the returned combined read-only release gate for the exact four-file

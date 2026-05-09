@@ -2958,7 +2958,9 @@ sequencing for `c1a12d7` absent new findings.
   accepted first-pass as workspace-only state
 - [x] Combined read-only release gate for the exact four-file fail-closed local
   Python worker ingress skeleton release unit
-- [ ] Local commit creation for the fail-closed local Python worker ingress
+- [x] Local commit creation for the fail-closed local Python worker ingress
+  skeleton release unit
+- [ ] Ryan-authorized push for the fail-closed local Python worker ingress
   skeleton release unit
 
 ## What Is In Progress
@@ -3867,15 +3869,17 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create a local commit for the exact four-file
-fail-closed local Python worker ingress skeleton release unit. Current pushed
+Immediate next route: wait for Ryan authorization to push the locally committed
+fail-closed local Python worker ingress skeleton release. Current local
 source/contract authority is
-`41f5df9 Pass worker requests through stdin`, with release-routing continuity
-through `132647b Sync local Python stdin execution routing`. Release-gate
-status is no-active-gate for `41f5df9`. Do not reopen pushed stdin execution
-wiring, stdin transport, worker payload, handler adapter, executor attempt
-wrapper, stdout failure normalization, observed attempt, stdout protocol,
-nonzero failure normalization, subprocess execution, completion, invocation,
+`f67e5f8 Add fail-closed runtime probe worker`. Current pushed source/contract
+authority remains `41f5df9 Pass worker requests through stdin`, with
+release-routing continuity through
+`132647b Sync local Python stdin execution routing`. Release-gate status is
+no-active-gate for `f67e5f8`. Do not reopen pushed stdin execution wiring,
+stdin transport, worker payload, handler adapter, executor attempt wrapper,
+stdout failure normalization, observed attempt, stdout protocol, nonzero
+failure normalization, subprocess execution, completion, invocation,
 environment context, dispatch table, or prior releases absent new findings.
 
 Accepted local Python worker post-stdin-execution spike:
@@ -3927,8 +3931,8 @@ Current release state for the selected worker ingress skeleton slice:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `1054 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes, `f67e5f8 Add fail-closed runtime probe worker`
 - pushed: no
 - expected implementation files:
   `src/context_ir/runtime_probe_worker.py` and
@@ -3939,7 +3943,8 @@ Current release state for the selected worker ingress skeleton slice:
   `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_worker.py`, and
   `tests/test_runtime_probe_worker.py`
-- next route: local commit creation for the exact four-file unit
+- push remains Ryan-gated
+- next route: Ryan-authorized push sequencing
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that
