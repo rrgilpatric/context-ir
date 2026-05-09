@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
+import importlib
+import io
 import json
 import sys
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath, PureWindowsPath
-from types import MappingProxyType
+from types import MappingProxyType, ModuleType
 from typing import TextIO, TypeAlias
 
 from context_ir.runtime_probe_execution import (
@@ -165,6 +168,11 @@ RuntimeProbeLocalPythonDynamicImportWorkerObserver: TypeAlias = Callable[
     [RuntimeProbeLocalPythonDynamicImportWorkerRequest],
     RuntimeProbeLocalPythonDynamicImportWorkerObservation,
 ]
+RuntimeProbeLocalPythonDynamicImportTargetCallable: TypeAlias = Callable[[], object]
+RuntimeProbeLocalPythonDynamicImportObservationSource: TypeAlias = (
+    RuntimeProbeLocalPythonDynamicImportWorkerRequest
+    | RuntimeProbeLocalPythonDynamicImportReplayTarget
+)
 RuntimeProbeLocalPythonWorkerCallable: TypeAlias = Callable[
     [RuntimeProbeLocalPythonWorkerRequestPayload],
     RuntimeProbeLocalPythonWorkerHandlerResponse,
@@ -501,6 +509,22 @@ def materialize_runtime_probe_dynamic_import_worker_success_response(
     )
 
 
+def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
+    observation_source: RuntimeProbeLocalPythonDynamicImportObservationSource,
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> RuntimeProbeLocalPythonDynamicImportWorkerObservation:
+    """Observe one injected zero-argument target under import-module interception."""
+    request = _runtime_probe_dynamic_import_observation_source_request(
+        observation_source
+    )
+    _validate_runtime_probe_dynamic_import_target_callable(target)
+    imported_module = _runtime_probe_dynamic_import_captured_import_module_name(target)
+    return materialize_runtime_probe_dynamic_import_worker_observation(
+        request,
+        imported_module=imported_module,
+    )
+
+
 def build_runtime_probe_dynamic_import_worker_handler_entry(
     observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
@@ -737,6 +761,108 @@ def _validate_runtime_probe_dynamic_import_worker_observer(
     if not callable(observer):
         raise ValueError(
             "runtime probe dynamic import worker observer must be callable"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_target_callable(
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> None:
+    """Reject non-callable target injections before import interception."""
+    if not callable(target):
+        raise ValueError("runtime probe dynamic import worker target must be callable")
+
+
+def _runtime_probe_dynamic_import_observation_source_request(
+    observation_source: RuntimeProbeLocalPythonDynamicImportObservationSource,
+) -> RuntimeProbeLocalPythonDynamicImportWorkerRequest:
+    """Return the request carried by a validated request or replay target."""
+    if isinstance(
+        observation_source,
+        RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+    ):
+        _validate_runtime_probe_dynamic_import_worker_request(observation_source)
+        return observation_source
+    if isinstance(
+        observation_source,
+        RuntimeProbeLocalPythonDynamicImportReplayTarget,
+    ):
+        _validate_runtime_probe_dynamic_import_replay_target(observation_source)
+        return observation_source.request
+    raise ValueError(
+        "runtime probe dynamic import worker observation source must be a "
+        "request or replay target"
+    )
+
+
+def _runtime_probe_dynamic_import_captured_import_module_name(
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> str:
+    """Run a target while capturing one importlib.import_module module name."""
+    captured_modules: list[str] = []
+    captured_rejections: list[str] = []
+    original_import_module = importlib.import_module
+
+    def controlled_import_module(
+        name: str,
+        package: str | None = None,
+    ) -> ModuleType:
+        if package is not None:
+            captured_rejections.append("package")
+            raise ValueError(
+                "runtime probe dynamic import worker package imports are unsupported"
+            )
+        if isinstance(name, str) and name.startswith("."):
+            captured_rejections.append("relative")
+            raise ValueError(
+                "runtime probe dynamic import worker relative imports are unsupported"
+            )
+        try:
+            _validate_runtime_probe_dynamic_import_imported_module(name)
+        except ValueError as error:
+            captured_rejections.append("malformed")
+            raise ValueError(
+                "runtime probe dynamic import worker module name is malformed"
+            ) from error
+        captured_modules.append(name)
+        return ModuleType(name)
+
+    try:
+        importlib.import_module = controlled_import_module
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            target()
+    finally:
+        importlib.import_module = original_import_module
+
+    _validate_runtime_probe_dynamic_import_intercepted_calls(
+        captured_modules=captured_modules,
+        captured_rejections=tuple(captured_rejections),
+    )
+    return captured_modules[0]
+
+
+def _validate_runtime_probe_dynamic_import_intercepted_calls(
+    *,
+    captured_modules: list[str],
+    captured_rejections: tuple[str, ...],
+) -> None:
+    """Reject intercepted import behavior outside the single absolute-call form."""
+    if "package" in captured_rejections:
+        raise ValueError(
+            "runtime probe dynamic import worker package imports are unsupported"
+        )
+    if "relative" in captured_rejections:
+        raise ValueError(
+            "runtime probe dynamic import worker relative imports are unsupported"
+        )
+    if "malformed" in captured_rejections:
+        raise ValueError("runtime probe dynamic import worker module name is malformed")
+    if len(captured_modules) != 1:
+        raise ValueError(
+            "runtime probe dynamic import worker target must capture exactly one "
+            "absolute import"
         )
 
 

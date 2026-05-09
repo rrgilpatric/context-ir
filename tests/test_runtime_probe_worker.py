@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
+import importlib
+import sys
 from collections.abc import Iterable
 from dataclasses import FrozenInstanceError, replace
 from io import StringIO
-from pathlib import Path
 from types import ModuleType
 from typing import cast
 
@@ -46,6 +48,9 @@ DynamicImportReplayTarget = (
 )
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
+)
+_DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER = (
+    "materialize_runtime_probe_dynamic_import_worker_observation_from_target"
 )
 
 
@@ -210,6 +215,18 @@ def _valid_dynamic_import_worker_observation(
         validated_request,
         imported_module=imported_module,
     )
+
+
+def _dynamic_import_worker_observation_from_target(
+    observation_source: DynamicImportWorkerRequest | DynamicImportReplayTarget,
+    target: runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> DynamicImportWorkerObservation:
+    """Return one harness observation from an injected target callable."""
+    materialize_from_target = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER,
+    )
+    return materialize_from_target(observation_source, target)
 
 
 def _dynamic_import_worker_success_response(
@@ -1012,18 +1029,193 @@ def test_dynamic_import_worker_observation_rejects_request_drift() -> None:
         _dynamic_import_worker_success_response(observation)
 
 
-def test_dynamic_import_worker_contracts_do_not_import_modules() -> None:
-    """Dynamic-import worker contracts add no importlib import surface."""
-    for source_path in (
-        Path(runtime_probe_worker.__file__),
-        Path(__file__),
-    ):
-        source_text = source_path.read_text(encoding="utf-8")
+def test_dynamic_import_worker_target_harness_observes_request_import() -> None:
+    """The target harness captures one import-module call from a worker request."""
+    request = _valid_dynamic_import_worker_request()
+    original_import_module = importlib.import_module
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
 
-        assert not any(
-            line.startswith(("import importlib", "from importlib"))
-            for line in source_text.splitlines()
+    def target() -> object:
+        print("target stdout secret-token")
+        print("target stderr /private/tmp", file=sys.stderr)
+        imported_module = importlib.import_module("plugins.weather")
+        assert imported_module.__name__ == "plugins.weather"
+        return imported_module
+
+    with (
+        contextlib.redirect_stdout(outer_stdout),
+        contextlib.redirect_stderr(outer_stderr),
+    ):
+        observation = _dynamic_import_worker_observation_from_target(request, target)
+
+    assert observation.request is request
+    assert observation.imported_module == "plugins.weather"
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert importlib.import_module is original_import_module
+
+
+def test_dynamic_import_worker_target_harness_accepts_replay_target() -> None:
+    """Replay-target observation does not import or resolve the source module."""
+    request = _valid_dynamic_import_worker_request(
+        source_file_path="runtime_probe_unique_source.py",
+        replay_target_seed="runtime_probe_unique_source.run",
+    )
+    replay_target = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
+            request
         )
+    )
+    observed_module_name = "plugins.runtime_probe_unique_observed"
+    assert replay_target.source_module_name not in sys.modules
+    assert observed_module_name not in sys.modules
+
+    def target() -> None:
+        importlib.import_module(observed_module_name)
+
+    observation = _dynamic_import_worker_observation_from_target(replay_target, target)
+
+    assert observation.request is request
+    assert observation.imported_module == observed_module_name
+    assert replay_target.source_module_name not in sys.modules
+    assert observed_module_name not in sys.modules
+
+
+def test_dynamic_import_worker_target_harness_is_worker_stdout_safe() -> None:
+    """Target stdout and stderr cannot contaminate the worker stdout protocol."""
+
+    def observer(request: DynamicImportWorkerRequest) -> DynamicImportWorkerObservation:
+        def target() -> None:
+            print("target stdout runtime_probe_stdout_protocol_revision")
+            print("target stderr secret-token /private/tmp", file=sys.stderr)
+            importlib.import_module("plugins.protocol_safe")
+
+        return _dynamic_import_worker_observation_from_target(request, target)
+
+    entry = (
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer
+        )
+    )
+    worker_stdout = StringIO()
+    worker_stderr = StringIO()
+
+    with (
+        contextlib.redirect_stdout(worker_stdout),
+        contextlib.redirect_stderr(worker_stderr),
+    ):
+        exit_code = runtime_probe_worker.main(
+            stdin=StringIO(_valid_worker_stdin_text()),
+            handler_entries=(entry,),
+        )
+    stdout_text = worker_stdout.getvalue()
+    stderr_text = worker_stderr.getvalue()
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":['
+        '{"key":"imported_module","value":"plugins.protocol_safe"}]}'
+    )
+    assert "target stdout" not in stdout_text
+    assert "target stderr" not in stderr_text
+
+
+@pytest.mark.parametrize(
+    ("target", "error_match"),
+    (
+        (lambda: None, "exactly one"),
+        (
+            lambda: (
+                importlib.import_module("plugins.first"),
+                importlib.import_module("plugins.second"),
+            ),
+            "exactly one",
+        ),
+        (lambda: importlib.import_module("plugins-weather"), "module name"),
+        (lambda: importlib.import_module(".weather"), "relative"),
+        (
+            lambda: importlib.import_module(
+                "plugins.weather",
+                package="plugins",
+            ),
+            "package",
+        ),
+    ),
+)
+def test_dynamic_import_worker_target_harness_rejects_bad_import_shapes(
+    target: runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportTargetCallable,
+    error_match: str,
+) -> None:
+    """The harness accepts exactly one absolute import-module call."""
+    request = _valid_dynamic_import_worker_request()
+    original_import_module = importlib.import_module
+
+    with pytest.raises(ValueError, match=error_match):
+        _dynamic_import_worker_observation_from_target(request, target)
+
+    assert importlib.import_module is original_import_module
+
+
+def test_dynamic_import_worker_target_harness_rejects_caught_errors() -> None:
+    """Rejected import shapes remain rejected even if the target catches them."""
+    request = _valid_dynamic_import_worker_request()
+
+    def target() -> None:
+        with contextlib.suppress(ValueError):
+            importlib.import_module(".weather")
+
+    with pytest.raises(ValueError, match="relative"):
+        _dynamic_import_worker_observation_from_target(request, target)
+
+
+def test_dynamic_import_worker_target_harness_rejects_noncallable_target() -> None:
+    """Non-callable target injections are rejected before wrapper installation."""
+    request = _valid_dynamic_import_worker_request()
+    original_import_module = importlib.import_module
+    target = cast(
+        runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportTargetCallable,
+        object(),
+    )
+
+    with pytest.raises(ValueError, match="target"):
+        _dynamic_import_worker_observation_from_target(request, target)
+
+    assert importlib.import_module is original_import_module
+
+
+def test_dynamic_import_worker_target_harness_rejects_replay_target_drift() -> None:
+    """Replay-target drift is rejected before the injected target is invoked."""
+    replay_target = _valid_dynamic_import_replay_target()
+    object.__setattr__(replay_target, "request_id", "runtime_probe:wrong")
+    target_calls: list[str] = []
+
+    def target() -> None:
+        target_calls.append("called")
+        importlib.import_module("plugins.weather")
+
+    with pytest.raises(ValueError, match="request_id"):
+        _dynamic_import_worker_observation_from_target(replay_target, target)
+
+    assert target_calls == []
+
+
+def test_dynamic_import_worker_target_harness_restores_wrapper_on_failure() -> None:
+    """The import-module wrapper is restored when target execution raises."""
+    request = _valid_dynamic_import_worker_request()
+    original_import_module = importlib.import_module
+
+    def target() -> None:
+        importlib.import_module("plugins.weather")
+        raise RuntimeError("target failed with secret-token")
+
+    with pytest.raises(RuntimeError, match="target failed"):
+        _dynamic_import_worker_observation_from_target(request, target)
+
+    assert importlib.import_module is original_import_module
 
 
 def test_dynamic_import_worker_handler_factory_metadata() -> None:
@@ -1499,6 +1691,11 @@ def test_worker_entrypoint_is_importable() -> None:
     assert callable(
         runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target
     )
+    observe_from_target = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER,
+    )
+    assert callable(observe_from_target)
 
 
 def test_package_root_exports_remain_unchanged() -> None:
@@ -1531,6 +1728,10 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir.__all__
     )
     assert "build_runtime_probe_dynamic_import_worker_handler_entry" not in (
+        context_ir.__all__
+    )
+    assert _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonDynamicImportTargetCallable" not in (
         context_ir.__all__
     )
     assert "serialize_runtime_probe_local_python_worker_success_response" not in (
@@ -1571,6 +1772,14 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         "build_runtime_probe_dynamic_import_worker_handler_entry",
+    )
+    assert not hasattr(
+        context_ir,
+        _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER,
+    )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonDynamicImportTargetCallable",
     )
     assert not hasattr(
         context_ir,

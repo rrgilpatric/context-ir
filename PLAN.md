@@ -41,9 +41,100 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`73feb5f Add dynamic import worker handler adapter`. Live git refs and
+`7fe4f76 Add dynamic import replay target contract`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Workspace-only local Python dynamic-import import interception harness slice:
+
+- `src/context_ir/runtime_probe_worker.py` now has module-local
+  `materialize_runtime_probe_dynamic_import_worker_observation_from_target(...)`
+- the helper accepts either a validated
+  `RuntimeProbeLocalPythonDynamicImportWorkerRequest` or
+  `RuntimeProbeLocalPythonDynamicImportReplayTarget`
+- the helper accepts an injected zero-argument target callable and runs it
+  under a controlled `importlib.import_module` wrapper
+- the wrapper captures exactly one absolute dotted imported module name and
+  returns a fake `ModuleType` with that name, so no repository module import is
+  performed by this harness
+- the helper materializes the existing
+  `RuntimeProbeLocalPythonDynamicImportWorkerObservation` contract
+- target stdout and stderr are redirected away from worker stdout/stderr, so
+  worker stdout protocol output cannot be contaminated by target prints
+- `importlib.import_module` is restored on success and failure
+- zero captured imports, multiple captured imports, malformed module names,
+  relative imports, package imports, noncallable targets, and replay-target
+  drift are rejected
+- package-root exports remain unchanged
+- the slice does not add repository source-module import, repository attribute
+  lookup, concrete observer replay-target resolution, default/global handler
+  registration, subprocess behavior changes, parent executor/parser changes,
+  stdout protocol shape changes, API, MCP, schema, eval, scoring, compiler,
+  docs, public-claim, admission, recompile, or result assembly changes
+- implementation review accepted the slice first-pass
+- focused validation passed:
+  - ruff check over the two touched source/test files
+  - ruff format check over the two touched source/test files
+  - strict mypy over `src/`
+  - targeted pytest over `tests/test_runtime_probe_worker.py` and
+    `tests/test_runtime_probe_execution.py`, reporting `290 passed`
+  - `git diff --check`
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1141 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: local commit creation for the exact four-file unit
+
+Local Python dynamic-import worker replay target contract release:
+
+- `src/context_ir/runtime_probe_worker.py` now has frozen module-local
+  `RuntimeProbeLocalPythonDynamicImportReplayTarget`
+- `materialize_runtime_probe_dynamic_import_replay_target(...)` consumes
+  `RuntimeProbeLocalPythonDynamicImportWorkerRequest` and derives the
+  repository replay target shape needed by a future concrete observer
+- the contract derives strict source module names from repository-relative
+  Python source paths, including top-level modules, nested modules, and
+  package `__init__.py` files
+- the contract derives replay target attribute paths from dotted
+  `replay_target_seed` values only when rooted at the derived source module
+  name
+- request identity, source file path, replay target seed, replay selector
+  seed, invocation identity, and request replay payload fields are preserved
+- unsupported `source:...` fallback seeds, absolute or traversal source paths,
+  non-Python source paths, blank or malformed module and attribute path
+  segments, source-module drift, request drift, and direct-constructor drift
+  are rejected
+- package-root exports remain unchanged
+- the release does not add `importlib` imports, repository-code execution,
+  module import attempts, attribute lookup, concrete observer implementation,
+  default/global handler registration, subprocess behavior changes, parent
+  executor/parser changes, API, MCP, schema, eval, scoring, compiler, docs,
+  public-claim, admission, recompile, or result assembly changes
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1130 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `7fe4f76 Add dynamic import replay target contract`
+- Ryan-authorized push completed with release routing through
+  `ad3ed71 Sync dynamic import replay target routing`
+- release unit is exactly `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_worker.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `7fe4f76`
 
 Local Python dynamic-import worker handler adapter release:
 
@@ -3240,8 +3331,16 @@ sequencing for `c1a12d7` absent new findings.
   dynamic-import worker replay target contract release unit
 - [x] Local commit creation for the local Python dynamic-import worker replay
   target contract release unit
-- [ ] Ryan-authorized push for the local Python dynamic-import worker replay
+- [x] Ryan-authorized push for the local Python dynamic-import worker replay
   target contract release unit
+- [x] Post-`7fe4f76` control selected local Python dynamic-import import
+  interception harness
+- [x] Local Python dynamic-import import interception harness implementation
+  slice accepted first-pass as workspace-only state
+- [x] Combined read-only release gate for the exact four-file local Python
+  dynamic-import import interception harness release unit
+- [ ] Local commit creation for the local Python dynamic-import import
+  interception harness release unit
 
 ## What Is In Progress
 
@@ -4149,23 +4248,77 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the locally committed
-local Python dynamic-import worker replay target contract release. Current
-local source/contract authority is
-`7fe4f76 Add dynamic import replay target contract`. Current pushed
-source/contract authority remains
-`73feb5f Add dynamic import worker handler adapter`, with pushed
+Immediate next route: local commit creation for the accepted and gate-cleared
+local Python dynamic-import import interception harness release unit. Current
+pushed source/contract authority is
+`7fe4f76 Add dynamic import replay target contract`, with pushed
 release-routing continuity through
-`196188b Sync dynamic import handler routing`. Release-gate status is
-no-active-gate for `7fe4f76`. Do not reopen locally committed dynamic-import
-worker replay target contract, pushed dynamic-import worker handler adapter,
-dynamic-import worker observation success-response contract, dynamic-import
-worker request contract, worker stdout success egress, worker dispatch, worker
-ingress, stdin execution wiring, stdin transport, worker payload, parent-side
-handler adapter, executor attempt wrapper, stdout failure normalization,
-observed attempt, parent stdout protocol parser, nonzero failure
+`ad3ed71 Sync dynamic import replay target routing`. The release unit is
+exactly `BUILDLOG.md`, `PLAN.md`, `src/context_ir/runtime_probe_worker.py`,
+and `tests/test_runtime_probe_worker.py`. It is accepted first-pass,
+release-unit-audit-cleared, full-regression-cleared, and
+commit-gating-cleared. Stage and commit exactly that file set with a concise
+imperative commit message. Do not push; push remains Ryan-gated. Do not reopen
+pushed dynamic-import worker replay target contract, dynamic-import worker
+handler adapter, dynamic-import worker observation success-response contract,
+dynamic-import worker request contract, worker stdout success egress, worker
+dispatch, worker ingress, stdin execution wiring, stdin transport, worker
+payload, parent-side handler adapter, executor attempt wrapper, stdout failure
+normalization, observed attempt, parent stdout protocol parser, nonzero failure
 normalization, subprocess execution, completion, invocation, environment
 context, dispatch table, or prior releases absent new findings.
+
+Accepted workspace-only local Python dynamic-import import interception
+harness slice:
+
+- adds module-local
+  `materialize_runtime_probe_dynamic_import_worker_observation_from_target(...)`
+- accepts either a validated
+  `RuntimeProbeLocalPythonDynamicImportWorkerRequest` or
+  `RuntimeProbeLocalPythonDynamicImportReplayTarget`
+- accepts an injected zero-argument target callable and runs it under a
+  controlled `importlib.import_module` wrapper
+- captures exactly one absolute dotted imported module name and materializes
+  the existing `RuntimeProbeLocalPythonDynamicImportWorkerObservation`
+  contract
+- shields target stdout and stderr so worker stdout protocol output cannot be
+  contaminated
+- restores `importlib.import_module` on success and failure
+- rejects zero captured imports, multiple captured imports, malformed module
+  names, relative imports, package imports, noncallable targets, and
+  replay-target drift
+- package-root exports remain unchanged
+- no repository source-module import, repository attribute lookup, concrete
+  observer replay-target resolution, default/global handler registration,
+  subprocess behavior change, parent executor/parser change, stdout protocol
+  shape change, API, MCP, schema, eval, scoring, compiler, docs, public-claim,
+  admission, recompile, or result assembly change is included
+- control reran focused validation:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed, reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source
+    files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed, reporting `290 passed`
+  - `git diff --check` passed
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest `1141 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: local commit creation for the exact four-file unit
 
 Accepted workspace-only local Python dynamic-import worker replay target
 contract slice:
@@ -4217,12 +4370,13 @@ contract slice:
   - staged: yes, then committed
   - locally committed: yes,
     `7fe4f76 Add dynamic import replay target contract`
-  - pushed: no
+  - pushed: yes, with release routing through
+    `ad3ed71 Sync dynamic import replay target routing`
   - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
     `src/context_ir/runtime_probe_worker.py`, and
     `tests/test_runtime_probe_worker.py`
-  - push remains Ryan-gated
-  - next route: Ryan-authorized push sequencing
+  - push completed after explicit Ryan authorization
+  - next route: control selection of the next bounded north-star lane
 
 Accepted workspace-only local Python dynamic-import worker handler adapter
 slice:
