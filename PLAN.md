@@ -3238,7 +3238,9 @@ sequencing for `c1a12d7` absent new findings.
   slice accepted first-pass as workspace-only state
 - [x] Combined read-only release gate for the exact four-file local Python
   dynamic-import worker replay target contract release unit
-- [ ] Local commit creation for the local Python dynamic-import worker replay
+- [x] Local commit creation for the local Python dynamic-import worker replay
+  target contract release unit
+- [ ] Ryan-authorized push for the local Python dynamic-import worker replay
   target contract release unit
 
 ## What Is In Progress
@@ -4147,20 +4149,23 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file local
-Python dynamic-import worker replay target contract release unit. Current
-pushed source/contract authority is
+Immediate next route: wait for Ryan authorization to push the locally committed
+local Python dynamic-import worker replay target contract release. Current
+local source/contract authority is
+`7fe4f76 Add dynamic import replay target contract`. Current pushed
+source/contract authority remains
 `73feb5f Add dynamic import worker handler adapter`, with pushed
 release-routing continuity through
 `196188b Sync dynamic import handler routing`. Release-gate status is
-no-active-gate for `73feb5f`. Do not reopen pushed dynamic-import worker
-handler adapter, dynamic-import worker observation success-response contract,
-dynamic-import worker request contract, worker stdout success egress, worker
-dispatch, worker ingress, stdin execution wiring, stdin transport, worker
-payload, parent-side handler adapter, executor attempt wrapper, stdout failure
-normalization, observed attempt, parent stdout protocol parser, nonzero
-failure normalization, subprocess execution, completion, invocation,
-environment context, dispatch table, or prior releases absent new findings.
+no-active-gate for `7fe4f76`. Do not reopen locally committed dynamic-import
+worker replay target contract, pushed dynamic-import worker handler adapter,
+dynamic-import worker observation success-response contract, dynamic-import
+worker request contract, worker stdout success egress, worker dispatch, worker
+ingress, stdin execution wiring, stdin transport, worker payload, parent-side
+handler adapter, executor attempt wrapper, stdout failure normalization,
+observed attempt, parent stdout protocol parser, nonzero failure
+normalization, subprocess execution, completion, invocation, environment
+context, dispatch table, or prior releases absent new findings.
 
 Accepted workspace-only local Python dynamic-import worker replay target
 contract slice:
@@ -4209,13 +4214,15 @@ contract slice:
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes, full pytest `1130 passed`
   - commit-gating-cleared: yes
-  - staged: no
-  - locally committed: no
+  - staged: yes, then committed
+  - locally committed: yes,
+    `7fe4f76 Add dynamic import replay target contract`
   - pushed: no
   - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
     `src/context_ir/runtime_probe_worker.py`, and
     `tests/test_runtime_probe_worker.py`
-  - next route: local commit creation for the exact four-file unit
+  - push remains Ryan-gated
+  - next route: Ryan-authorized push sequencing
 
 Accepted workspace-only local Python dynamic-import worker handler adapter
 slice:

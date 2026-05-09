@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Dynamic Import Worker Replay Target Contract Local Commit Routing
+
+- Local commit creation completed for the local Python dynamic-import worker
+  replay target contract release unit.
+- Commit:
+  - `7fe4f76 Add dynamic import replay target contract`
+- Commit contents:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `7fe4f76 Add dynamic import replay target contract`
+  - `origin/main` at
+    `196188b Sync dynamic import handler routing`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1130 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Dynamic Import Worker Replay Target Contract Release Gate
 
 - Combined read-only release gate passed for the exact four-file local Python
