@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
+from pathlib import PurePosixPath, PureWindowsPath
 from types import MappingProxyType
 from typing import TextIO, TypeAlias
 
@@ -15,6 +17,7 @@ from context_ir.runtime_probe_execution import (
 )
 from context_ir.runtime_probe_requests import RuntimeProbeFamily
 from context_ir.runtime_probe_results import RuntimeProbeReplayField
+from context_ir.semantic_types import SemanticSubjectKind, UnresolvedReasonCode
 
 RuntimeProbeLocalPythonWorkerHandlerKey: TypeAlias = tuple[RuntimeProbeFamily, str]
 _MALFORMED_REQUEST_EXIT_CODE = 64
@@ -36,6 +39,61 @@ _HANDLER_EXCEPTION_MESSAGE = "runtime_probe_worker: rejected worker handler fail
 _INVALID_RESPONSE_MESSAGE = (
     "runtime_probe_worker: rejected invalid worker handler response\n"
 )
+_DYNAMIC_IMPORT_WORKER_FORM_LABEL = "dynamic_import:importlib.import_module/1"
+_DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX = (
+    "runtime_probe_local_python_subprocess_invocation:"
+)
+_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
+    "plan_id",
+    "request_id",
+    "subject_kind",
+    "subject_id",
+    "source_site_id",
+    "source_file_path",
+    "source_start_line",
+    "source_start_column",
+    "source_end_line",
+    "source_end_column",
+    "reason_code",
+    "boundary_text",
+    "family_label",
+    "form_label",
+    "replay_target_seed",
+    "replay_selector_seed",
+)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonDynamicImportWorkerRequest:
+    """Worker-local request contract for importlib.import_module probes only."""
+
+    plan_id: str
+    request_id: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    source_site_id: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    reason_code: UnresolvedReasonCode
+    boundary_text: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject drifted or non-dynamic-import worker request metadata."""
+        _validate_runtime_probe_dynamic_import_worker_request(self)
 
 
 @dataclass(frozen=True)
@@ -260,6 +318,602 @@ def _runtime_probe_worker_payload_key(
     return (payload.family_label, payload.form_label)
 
 
+def materialize_runtime_probe_dynamic_import_worker_request(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> RuntimeProbeLocalPythonDynamicImportWorkerRequest:
+    """Derive a non-executing dynamic-import worker request from stdin payload."""
+    _validate_runtime_probe_dynamic_import_worker_payload(payload)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    return RuntimeProbeLocalPythonDynamicImportWorkerRequest(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        subject_kind=_runtime_probe_worker_subject_kind_from_replay_field(
+            replay_fields_by_key["subject_kind"]
+        ),
+        subject_id=replay_fields_by_key["subject_id"],
+        source_site_id=replay_fields_by_key["source_site_id"],
+        source_file_path=replay_fields_by_key["source_file_path"],
+        source_start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        source_start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        source_end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        source_end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+        reason_code=_runtime_probe_worker_reason_code_from_replay_field(
+            replay_fields_by_key["reason_code"]
+        ),
+        boundary_text=replay_fields_by_key["boundary_text"],
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        invocation_identity=payload.invocation_identity,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+
+
+def _validate_runtime_probe_dynamic_import_worker_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> None:
+    """Reject payloads that cannot become the worker-local import-module request."""
+    if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
+        raise ValueError("runtime probe dynamic import worker payload must be typed")
+    _validate_runtime_probe_dynamic_import_payload_family_form(
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.plan_id,
+        field_name="plan_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_invocation_identity(payload.invocation_identity)
+    _validate_runtime_probe_worker_argv(payload.argv)
+    _validate_runtime_probe_worker_path_text(
+        payload.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(payload.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(payload.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    _validate_runtime_probe_dynamic_import_replay_metadata(
+        replay_fields_by_key,
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+    if payload.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe dynamic import worker invocation_identity must match "
+            "payload replay identity"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_worker_request(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+) -> None:
+    """Reject dynamic-import worker requests whose copied metadata drifted."""
+    if not isinstance(request, RuntimeProbeLocalPythonDynamicImportWorkerRequest):
+        raise ValueError("runtime probe dynamic import worker request must be typed")
+    _validate_runtime_probe_dynamic_import_payload_family_form(
+        family_label=request.family_label,
+        form_label=request.form_label,
+    )
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError(
+            "runtime probe dynamic import worker subject_kind is unsupported"
+        )
+    if request.reason_code is not UnresolvedReasonCode.DYNAMIC_IMPORT:
+        raise ValueError(
+            "runtime probe dynamic import worker reason_code is unsupported"
+        )
+    _validate_runtime_probe_worker_metadata_text(
+        request.plan_id,
+        field_name="plan_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.subject_id,
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_site_id,
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_file_path,
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.boundary_text,
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=request.source_start_line,
+        start_column=request.source_start_column,
+        end_line=request.source_end_line,
+        end_column=request.source_end_column,
+    )
+    _validate_runtime_probe_worker_invocation_identity(request.invocation_identity)
+    _validate_runtime_probe_worker_argv(request.argv)
+    _validate_runtime_probe_worker_path_text(
+        request.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(request.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(request.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    _validate_runtime_probe_dynamic_import_replay_metadata(
+        replay_fields_by_key,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        family_label=request.family_label,
+        form_label=request.form_label,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="subject_kind",
+        expected_value=request.subject_kind.value,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="subject_id",
+        expected_value=request.subject_id,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_site_id",
+        expected_value=request.source_site_id,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_file_path",
+        expected_value=request.source_file_path,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_start_line",
+        expected_value=str(request.source_start_line),
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_start_column",
+        expected_value=str(request.source_start_column),
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_end_line",
+        expected_value=str(request.source_end_line),
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_end_column",
+        expected_value=str(request.source_end_column),
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="reason_code",
+        expected_value=request.reason_code.value,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="boundary_text",
+        expected_value=request.boundary_text,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        invocation_contract_revision=request.invocation_contract_revision,
+        argv=request.argv,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+        timeout_seconds=request.timeout_seconds,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+    if request.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe dynamic import worker invocation_identity must match "
+            "request replay identity"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_payload_family_form(
+    *,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """Reject non-importlib dynamic-import worker request family/form labels."""
+    if family_label is not RuntimeProbeFamily.DYNAMIC_IMPORT:
+        raise ValueError(
+            "runtime probe dynamic import worker family_label is unsupported"
+        )
+    if form_label != _DYNAMIC_IMPORT_WORKER_FORM_LABEL:
+        raise ValueError(
+            "runtime probe dynamic import worker form_label is unsupported"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_replay_metadata(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    plan_id: str,
+    request_id: str,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    replay_target_seed: str,
+    replay_selector_seed: str,
+) -> None:
+    """Reject replay fields that drift from dynamic-import worker metadata."""
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="plan_id",
+        expected_value=plan_id,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="request_id",
+        expected_value=request_id,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="family_label",
+        expected_value=family_label.value,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="form_label",
+        expected_value=form_label,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="replay_target_seed",
+        expected_value=replay_target_seed,
+    )
+    _validate_runtime_probe_worker_replay_field_match(
+        replay_fields_by_key,
+        field_key="replay_selector_seed",
+        expected_value=replay_selector_seed,
+    )
+    if replay_fields_by_key["subject_kind"] != (
+        SemanticSubjectKind.UNSUPPORTED_FINDING.value
+    ):
+        raise ValueError(
+            "runtime probe dynamic import worker subject_kind is unsupported"
+        )
+    if replay_fields_by_key["reason_code"] != UnresolvedReasonCode.DYNAMIC_IMPORT.value:
+        raise ValueError(
+            "runtime probe dynamic import worker reason_code is unsupported"
+        )
+    _runtime_probe_worker_subject_kind_from_replay_field(
+        replay_fields_by_key["subject_kind"]
+    )
+    _runtime_probe_worker_reason_code_from_replay_field(
+        replay_fields_by_key["reason_code"]
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["subject_id"],
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_site_id"],
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_file_path"],
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["boundary_text"],
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+    )
+
+
+def _runtime_probe_worker_required_replay_fields_by_key(
+    fields: tuple[RuntimeProbeReplayField, ...],
+) -> dict[str, str]:
+    """Return required replay fields after enforcing exact singleton keys."""
+    _validate_runtime_probe_worker_replay_fields(
+        fields,
+        field_name="request_replay_payload_fields",
+    )
+    fields_by_key: dict[str, str] = {}
+    for required_key in _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS:
+        matching_fields = tuple(field for field in fields if field.key == required_key)
+        if len(matching_fields) != 1:
+            raise ValueError(
+                "runtime probe dynamic import worker request_replay_payload_fields "
+                f"must contain exactly one {required_key}"
+            )
+        fields_by_key[required_key] = matching_fields[0].value
+    return fields_by_key
+
+
+def _validate_runtime_probe_worker_replay_field_match(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    field_key: str,
+    expected_value: str,
+) -> None:
+    """Require a replay field to match a copied top-level request field."""
+    if replay_fields_by_key[field_key] != expected_value:
+        raise ValueError(
+            "runtime probe dynamic import worker "
+            f"{field_key} must match request replay payload fields"
+        )
+
+
+def _runtime_probe_worker_subject_kind_from_replay_field(
+    value: str,
+) -> SemanticSubjectKind:
+    """Parse and validate the subject kind copied into replay metadata."""
+    try:
+        subject_kind = SemanticSubjectKind(value)
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe dynamic import worker subject_kind is unsupported"
+        ) from error
+    if subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError(
+            "runtime probe dynamic import worker subject_kind is unsupported"
+        )
+    return subject_kind
+
+
+def _runtime_probe_worker_reason_code_from_replay_field(
+    value: str,
+) -> UnresolvedReasonCode:
+    """Parse and validate the dynamic-import reason copied into replay metadata."""
+    try:
+        reason_code = UnresolvedReasonCode(value)
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe dynamic import worker reason_code is unsupported"
+        ) from error
+    if reason_code is not UnresolvedReasonCode.DYNAMIC_IMPORT:
+        raise ValueError(
+            "runtime probe dynamic import worker reason_code is unsupported"
+        )
+    return reason_code
+
+
+def _runtime_probe_worker_replay_span_value(value: str, *, field_name: str) -> int:
+    """Parse a source-span replay value as a non-negative integer."""
+    if not isinstance(value, str) or not value.isdecimal():
+        raise ValueError(
+            f"runtime probe dynamic import worker {field_name} is malformed"
+        )
+    return int(value)
+
+
+def _validate_runtime_probe_worker_source_span(
+    *,
+    start_line: int,
+    start_column: int,
+    end_line: int,
+    end_column: int,
+) -> None:
+    """Reject impossible source-span coordinates before future execution."""
+    span_values = (start_line, start_column, end_line, end_column)
+    if any(
+        not isinstance(value, int) or isinstance(value, bool) for value in span_values
+    ):
+        raise ValueError("runtime probe dynamic import worker source span is malformed")
+    if start_line < 1 or end_line < 1 or start_column < 0 or end_column < 0:
+        raise ValueError("runtime probe dynamic import worker source span is malformed")
+    if end_line < start_line:
+        raise ValueError("runtime probe dynamic import worker source span is malformed")
+    if end_line == start_line and end_column < start_column:
+        raise ValueError("runtime probe dynamic import worker source span is malformed")
+
+
+def _validate_runtime_probe_worker_metadata_text(
+    value: str, *, field_name: str
+) -> None:
+    """Reject blank or control-character-bearing worker request metadata."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(
+            f"runtime probe dynamic import worker {field_name} must be non-empty"
+        )
+    if value != value.strip() or _contains_control_character(value):
+        raise ValueError(
+            f"runtime probe dynamic import worker {field_name} is malformed"
+        )
+
+
+def _validate_runtime_probe_worker_path_text(value: str, *, field_name: str) -> None:
+    """Reject blank worker path metadata while preserving the copied string."""
+    _validate_runtime_probe_worker_metadata_text(value, field_name=field_name)
+    if not _is_runtime_probe_worker_absolute_path_metadata(value):
+        raise ValueError(
+            f"runtime probe dynamic import worker {field_name} must be absolute"
+        )
+
+
+def _validate_runtime_probe_worker_argv(argv: tuple[str, ...]) -> None:
+    """Reject malformed copied argv metadata without executing it."""
+    if not isinstance(argv, tuple) or len(argv) < 3:
+        raise ValueError("runtime probe dynamic import worker argv is malformed")
+    for token in argv:
+        _validate_runtime_probe_worker_metadata_text(token, field_name="argv")
+    if not _is_runtime_probe_worker_absolute_path_metadata(argv[0]) or argv[1] != "-m":
+        raise ValueError("runtime probe dynamic import worker argv is malformed")
+
+
+def _validate_runtime_probe_worker_python_path_entries(
+    python_path_entries: tuple[str, ...],
+) -> None:
+    """Reject unordered or malformed Python path metadata."""
+    if not isinstance(python_path_entries, tuple) or not python_path_entries:
+        raise ValueError(
+            "runtime probe dynamic import worker python_path_entries must be a tuple"
+        )
+    for python_path_entry in python_path_entries:
+        _validate_runtime_probe_worker_path_text(
+            python_path_entry,
+            field_name="python_path_entries",
+        )
+
+
+def _validate_runtime_probe_worker_timeout_seconds(timeout_seconds: int) -> None:
+    """Reject non-positive or untyped timeout metadata."""
+    if not isinstance(timeout_seconds, int) or isinstance(timeout_seconds, bool):
+        raise ValueError(
+            "runtime probe dynamic import worker timeout_seconds must be an int"
+        )
+    if timeout_seconds <= 0:
+        raise ValueError(
+            "runtime probe dynamic import worker timeout_seconds must be positive"
+        )
+
+
+def _validate_runtime_probe_worker_invocation_identity(
+    invocation_identity: str,
+) -> None:
+    """Reject malformed local-Python invocation identity metadata."""
+    _validate_runtime_probe_worker_metadata_text(
+        invocation_identity,
+        field_name="invocation_identity",
+    )
+    if not invocation_identity.startswith(
+        _DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX
+    ):
+        raise ValueError(
+            "runtime probe dynamic import worker invocation_identity is malformed"
+        )
+    digest = invocation_identity.removeprefix(
+        _DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX
+    )
+    if len(digest) != 64 or any(
+        character not in "0123456789abcdef" for character in digest
+    ):
+        raise ValueError(
+            "runtime probe dynamic import worker invocation_identity is malformed"
+        )
+
+
+def _runtime_probe_worker_invocation_identity_from_parts(
+    *,
+    plan_id: str,
+    request_id: str,
+    invocation_contract_revision: str,
+    argv: tuple[str, ...],
+    working_directory: str,
+    python_path_entries: tuple[str, ...],
+    timeout_seconds: int,
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...],
+) -> str:
+    """Return the stable local-Python invocation identity for copied metadata."""
+    replay_payload_identity = tuple(
+        (field.key, field.value) for field in request_replay_payload_fields
+    )
+    serialized_identity = json.dumps(
+        (
+            ("plan_id", plan_id),
+            ("request_id", request_id),
+            ("invocation_contract_revision", invocation_contract_revision),
+            ("argv", argv),
+            ("working_directory", working_directory),
+            ("python_path_entries", python_path_entries),
+            ("timeout_seconds", timeout_seconds),
+            ("request_replay_payload_fields", replay_payload_identity),
+        ),
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(serialized_identity.encode("utf-8")).hexdigest()
+    return f"{_DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX}{digest}"
+
+
+def _is_runtime_probe_worker_absolute_path_metadata(value: str) -> bool:
+    """Return whether copied worker path metadata is absolute."""
+    return PurePosixPath(value).is_absolute() or PureWindowsPath(value).is_absolute()
+
+
 def _validate_runtime_probe_worker_handler_entry(
     handler_entry: RuntimeProbeLocalPythonWorkerHandlerEntry,
 ) -> None:
@@ -332,7 +986,11 @@ def _validate_runtime_probe_worker_replay_fields(
             raise ValueError(
                 f"runtime probe worker {field_name} must contain replay fields"
             )
-        if not replay_field.key.strip() or not replay_field.value.strip():
+        if not isinstance(replay_field.key, str) or not replay_field.key.strip():
+            raise ValueError(
+                f"runtime probe worker {field_name} must not contain blank fields"
+            )
+        if not isinstance(replay_field.value, str) or not replay_field.value.strip():
             raise ValueError(
                 f"runtime probe worker {field_name} must not contain blank fields"
             )

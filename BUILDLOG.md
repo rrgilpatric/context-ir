@@ -2,6 +2,110 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Dynamic Import Worker Request Contract Workspace Acceptance
+
+- Reviewed the returned local Python dynamic-import worker request contract
+  implementation slice and its correction.
+- Initial finding:
+  - `RuntimeProbeLocalPythonDynamicImportWorkerRequest` direct-constructor
+    validation through `__post_init__` was not covered by tests
+- Correction accepted:
+  - added focused `dataclasses.replace(...)` coverage proving direct
+    construction rejects invalid `boundary_text` metadata
+- Findings after correction: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `0ea7ca5 Sync worker stdout egress release routing`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed `RuntimeProbeLocalPythonDynamicImportWorkerRequest`
+  - adds
+    `materialize_runtime_probe_dynamic_import_worker_request(...)`
+  - accepts only `RuntimeProbeFamily.DYNAMIC_IMPORT` with exact form label
+    `dynamic_import:importlib.import_module/1`
+  - preserves plan/request identity, subject identity, source-site identity and
+    span, reason code, boundary text, replay target and selector seeds, argv,
+    working directory, ordered Python path entries, timeout seconds, invocation
+    contract revision, invocation identity, and original request replay fields
+  - rejects drifted, missing, duplicate, blank, malformed source-span, and
+    malformed invocation identity metadata
+  - package-root exports remain unchanged
+  - no `importlib` import, repository-code execution, module import attempt,
+    concrete proof-producing handler, default/global handler registration,
+    subprocess behavior change, stdout success emission from real behavior,
+    parent executor/parser change, API, MCP, schema, eval, scoring, compiler,
+    docs, public-claim, admission, recompile, or result assembly change is
+    included
+- Validation:
+  - implementation lane reported ruff, format check, strict mypy, targeted
+    pytest `232 passed`, no `importlib` import matches, and `git diff --check`
+    passed
+  - correction lane reported ruff, format check, strict mypy, worker pytest
+    `35 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `233 passed`
+  - control reran the no-importlib boundary scan, which produced no matches
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, after one correction
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: 1 correction
+
+## 2026-05-09 -- Worker Stdout Success Egress Post-Push Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  worker stdout success egress release unit.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `0ea7ca5 Sync worker stdout egress release routing`
+  - current pushed source/contract authority is
+    `9c6a3b5 Add worker stdout success egress`
+  - worktree clean before this control-route continuity sync
+  - nothing staged before this control-route continuity sync
+  - no untracked files before this control-route continuity sync
+- Release state:
+  - `9c6a3b5` is pushed and no-active-gate
+  - prior locally committed push hold for worker stdout success egress is
+    superseded by this post-push routing entry
+- Decision: route the next implementation lane to a non-executing local Python
+  dynamic-import worker request contract.
+- Alternatives considered:
+  - concrete `importlib.import_module(name)` worker behavior
+  - global worker handler registration
+  - an end-to-end subprocess proof smoke
+  - stdout failure protocol changes
+- Reasoning:
+  - worker stdin handoff, fail-closed ingress, worker dispatch, and worker
+    stdout success egress are now pushed
+  - the next gap is the first concrete family/form request boundary inside the
+    worker
+  - implementing actual imports or global registration now would mix
+    family/form validation, repository-code execution, proof synthesis, and
+    routing in one slice
+  - a non-executing dynamic-import request contract creates the next reviewable
+    boundary without widening runtime execution, public surfaces, or result
+    assembly
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Worker Stdout Success Egress Local Commit Routing
 
 - Local commit creation completed for the local Python worker stdout success

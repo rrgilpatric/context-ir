@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from io import StringIO
 from types import ModuleType
 from typing import cast
@@ -65,7 +65,10 @@ def _request() -> runtime_probe_requests.RuntimeProbeRequest:
     )
 
 
-def _valid_worker_invocation() -> RuntimeProbeLocalPythonSubprocessInvocation:
+def _valid_worker_invocation(
+    *,
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> RuntimeProbeLocalPythonSubprocessInvocation:
     """Return one strict worker invocation produced by the parent contract."""
     request_plan = runtime_probe_requests.build_runtime_probe_request_plan(
         (_request(),)
@@ -90,7 +93,10 @@ def _valid_worker_invocation() -> RuntimeProbeLocalPythonSubprocessInvocation:
         runner_environment=(
             _field("repository_root", "/workspace/context-ir"),
             _field("working_directory", "/workspace/context-ir"),
-            _field("python_path_entry", "/workspace/context-ir/src"),
+            *(
+                _field("python_path_entry", python_path_entry)
+                for python_path_entry in python_path_entries
+            ),
         ),
         runner_assumptions=(
             _field("network", "disabled"),
@@ -106,10 +112,18 @@ def _valid_worker_invocation() -> RuntimeProbeLocalPythonSubprocessInvocation:
     return invocation
 
 
+def _valid_worker_payload(
+    *,
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> RuntimeProbeLocalPythonWorkerRequestPayload:
+    """Return the strict worker payload produced by the parent contract."""
+    invocation = _valid_worker_invocation(python_path_entries=python_path_entries)
+    return materialize_runtime_probe_local_python_worker_request_payload(invocation)
+
+
 def _valid_worker_stdin_text() -> str:
     """Return strict worker stdin JSON produced by the accepted parent contract."""
-    invocation = _valid_worker_invocation()
-    payload = materialize_runtime_probe_local_python_worker_request_payload(invocation)
+    payload = _valid_worker_payload()
     return serialize_runtime_probe_local_python_worker_request_payload(payload)
 
 
@@ -159,6 +173,30 @@ def _assert_no_success_stdout_protocol(stdout_text: str) -> None:
     assert "normalized_payload" not in stdout_text
     assert "durable_artifact_reference" not in stdout_text
     assert "observed" not in stdout_text
+
+
+def _replay_fields_by_key(
+    fields: tuple[runtime_probe_results.RuntimeProbeReplayField, ...],
+) -> dict[str, str]:
+    """Return replay fields keyed by metadata key for contract assertions."""
+    return {field.key: field.value for field in fields}
+
+
+def _worker_payload_with_replay_field(
+    key: str,
+    value: str,
+) -> RuntimeProbeLocalPythonWorkerRequestPayload:
+    """Return a valid worker payload with one replay field tampered in place."""
+    payload = _valid_worker_payload()
+    object.__setattr__(
+        payload,
+        "request_replay_payload_fields",
+        tuple(
+            _field(field.key, value) if field.key == key else field
+            for field in payload.request_replay_payload_fields
+        ),
+    )
+    return payload
 
 
 def test_registered_worker_handler_emits_success_stdout_protocol() -> None:
@@ -349,6 +387,244 @@ def test_malformed_worker_success_metadata_fails_closed() -> None:
         == "runtime_probe_worker: rejected invalid worker handler response\n"
     )
     _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_dynamic_import_worker_request_materializes_replay_contract() -> None:
+    """The worker derives a non-executing import-module request from payload."""
+    payload = _valid_worker_payload()
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+    )
+    replay_fields = _replay_fields_by_key(payload.request_replay_payload_fields)
+
+    assert request.plan_id == payload.plan_id
+    assert request.request_id == payload.request_id
+    assert request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert request.subject_id == replay_fields["subject_id"]
+    assert request.source_site_id == replay_fields["source_site_id"]
+    assert request.source_file_path == replay_fields["source_file_path"]
+    assert request.source_start_line == int(replay_fields["source_start_line"])
+    assert request.source_start_column == int(replay_fields["source_start_column"])
+    assert request.source_end_line == int(replay_fields["source_end_line"])
+    assert request.source_end_column == int(replay_fields["source_end_column"])
+    assert request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
+    assert request.boundary_text == "importlib.import_module(name)"
+    assert (
+        request.family_label is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+    )
+    assert request.form_label == "dynamic_import:importlib.import_module/1"
+    assert request.replay_target_seed == payload.replay_target_seed
+    assert request.replay_selector_seed == payload.replay_selector_seed
+    assert request.argv == payload.argv
+    assert request.working_directory == payload.working_directory
+    assert request.python_path_entries == payload.python_path_entries
+    assert request.timeout_seconds == payload.timeout_seconds
+    assert request.invocation_identity == payload.invocation_identity
+    assert (
+        request.request_replay_payload_fields is payload.request_replay_payload_fields
+    )
+
+
+def test_dynamic_import_worker_request_contract_is_frozen() -> None:
+    """Worker-local dynamic-import requests are immutable replay contracts."""
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            _valid_worker_payload()
+        )
+    )
+
+    with pytest.raises(FrozenInstanceError):
+        request.boundary_text = "importlib.import_module(other)"
+
+
+def test_dynamic_import_worker_request_constructor_rejects_blank_boundary() -> None:
+    """Direct dataclass construction reruns worker-request metadata validation."""
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            _valid_worker_payload()
+        )
+    )
+
+    with pytest.raises(ValueError, match="boundary_text"):
+        replace(request, boundary_text=" ")
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "error_match"),
+    (
+        (
+            "family_label",
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            "family_label",
+        ),
+        ("form_label", "dynamic_import:other_form/1", "form_label"),
+    ),
+)
+def test_dynamic_import_worker_request_validates_exact_family_form(
+    field_name: str,
+    field_value: object,
+    error_match: str,
+) -> None:
+    """Only the first importlib.import_module dynamic-import form materializes."""
+    payload = _valid_worker_payload()
+    object.__setattr__(payload, field_name, field_value)
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("reason_code", "reflective_builtin", "reason_code"),
+        ("boundary_text", "importlib.import_module(name)\n", "boundary_text"),
+    ),
+)
+def test_dynamic_import_worker_request_validates_reason_and_boundary(
+    replay_key: str,
+    replay_value: str,
+    error_match: str,
+) -> None:
+    """Reason and boundary replay metadata are checked before execution exists."""
+    payload = _worker_payload_with_replay_field(replay_key, replay_value)
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+def test_dynamic_import_worker_request_rejects_blank_payload_metadata() -> None:
+    """Blank top-level metadata is rejected while materializing the request."""
+    payload = _valid_worker_payload()
+    object.__setattr__(payload, "replay_target_seed", " ")
+
+    with pytest.raises(ValueError, match="replay_target_seed"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize("replay_key", ("subject_id", "boundary_text"))
+def test_dynamic_import_worker_request_rejects_missing_replay_fields(
+    replay_key: str,
+) -> None:
+    """Required request replay fields must remain present exactly once."""
+    payload = _valid_worker_payload()
+    object.__setattr__(
+        payload,
+        "request_replay_payload_fields",
+        tuple(
+            field
+            for field in payload.request_replay_payload_fields
+            if field.key != replay_key
+        ),
+    )
+
+    with pytest.raises(ValueError, match=f"exactly one {replay_key}"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+def test_dynamic_import_worker_request_rejects_duplicate_replay_fields() -> None:
+    """Duplicate required replay fields are rejected as drift, not normalized."""
+    payload = _valid_worker_payload()
+    object.__setattr__(
+        payload,
+        "request_replay_payload_fields",
+        (
+            *payload.request_replay_payload_fields,
+            _field("request_id", payload.request_id),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="exactly one request_id"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+def test_dynamic_import_worker_request_rejects_top_level_replay_drift() -> None:
+    """Top-level identity must match its duplicated replay-field identity."""
+    payload = _valid_worker_payload()
+    object.__setattr__(payload, "request_id", "runtime_probe:wrong")
+
+    with pytest.raises(ValueError, match="request_id must match request replay"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value"),
+    (
+        ("source_start_line", "0"),
+        ("source_start_column", "not-an-int"),
+        ("source_end_column", "1"),
+    ),
+)
+def test_dynamic_import_worker_request_rejects_malformed_source_span(
+    replay_key: str,
+    replay_value: str,
+) -> None:
+    """Malformed source span values fail before any import behavior exists."""
+    payload = _worker_payload_with_replay_field(replay_key, replay_value)
+
+    with pytest.raises(ValueError, match="source"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    "invocation_identity",
+    (
+        "runtime_probe_local_python_subprocess_invocation:not-a-digest",
+        "runtime_probe_local_python_subprocess_invocation:" + ("0" * 64),
+    ),
+)
+def test_dynamic_import_worker_request_rejects_malformed_replay_identity(
+    invocation_identity: str,
+) -> None:
+    """Invocation identity must match the copied replay-sensitive payload fields."""
+    payload = _valid_worker_payload()
+    object.__setattr__(
+        payload,
+        "invocation_identity",
+        invocation_identity,
+    )
+
+    with pytest.raises(ValueError, match="invocation_identity"):
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+
+
+def test_dynamic_import_worker_request_preserves_argv_paths_and_invocation() -> None:
+    """Argv, Python path order, and invocation identity survive materialization."""
+    payload = _valid_worker_payload(
+        python_path_entries=(
+            "/workspace/context-ir/tests/fixtures",
+            "/workspace/context-ir/src",
+        )
+    )
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+    )
+
+    assert request.argv == payload.argv
+    assert request.python_path_entries == (
+        "/workspace/context-ir/tests/fixtures",
+        "/workspace/context-ir/src",
+    )
+    assert request.invocation_identity == payload.invocation_identity
 
 
 def test_valid_worker_request_parses_and_fails_closed(
@@ -632,12 +908,21 @@ def test_package_root_exports_remain_unchanged() -> None:
     """Worker ingress stays module-local and absent from the package root API."""
     assert "runtime_probe_worker" not in context_ir.__all__
     assert "main" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonDynamicImportWorkerRequest" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonWorkerSuccessResponse" not in context_ir.__all__
+    assert "materialize_runtime_probe_dynamic_import_worker_request" not in (
+        context_ir.__all__
+    )
     assert "serialize_runtime_probe_local_python_worker_success_response" not in (
         context_ir.__all__
     )
     assert not hasattr(context_ir, "main")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonDynamicImportWorkerRequest")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonWorkerSuccessResponse")
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_dynamic_import_worker_request",
+    )
     assert not hasattr(
         context_ir,
         "serialize_runtime_probe_local_python_worker_success_response",

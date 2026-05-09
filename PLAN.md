@@ -41,9 +41,47 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`7eefba2 Add fail-closed worker dispatch`. Live git refs and
+`9c6a3b5 Add worker stdout success egress`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python worker stdout success egress contract release:
+
+- `src/context_ir/runtime_probe_worker.py` now has a frozen typed
+  `RuntimeProbeLocalPythonWorkerSuccessResponse`
+- `serialize_runtime_probe_local_python_worker_success_response(...)` emits
+  the existing parent stdout success protocol with deterministic JSON key
+  order and no trailing newline
+- matching injected worker handlers may return the success response;
+  `main(...)` writes deterministic stdout protocol JSON and returns zero
+- emitted stdout shape remains compatible with the existing parent parser:
+  `runtime_probe_stdout_protocol_revision`, ordered `normalized_payload`, and
+  optional `durable_artifact_reference`
+- durable-only success is supported
+- default `main(...)` with no handlers remains fail-closed with nonzero exit
+  status, sanitized stderr, and empty stdout
+- malformed stdin, missing handler, duplicate handler, malformed handler,
+  handler exception, invalid response, and malformed success metadata paths
+  remain fail-closed, nonzero, sanitized, and empty-stdout
+- package-root exports remain unchanged
+- the release does not add concrete family/form behavior, dynamic import
+  execution, repository-code execution, global registration, parent executor
+  changes, parent stdout parser changes, API, MCP, schema, eval, scoring,
+  compiler, docs, public-claim, admission, recompile, or result assembly
+  changes
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1066 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `9c6a3b5 Add worker stdout success egress`
+- Ryan-authorized push completed with release routing through
+  `0ea7ca5 Sync worker stdout egress release routing`
+- release unit is exactly `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_worker.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `9c6a3b5`
 
 Fail-closed local Python worker-side dispatch contract release:
 
@@ -3046,8 +3084,14 @@ sequencing for `c1a12d7` absent new findings.
   worker stdout success egress contract release unit
 - [x] Local commit creation for the local Python worker stdout success egress
   contract release unit
-- [ ] Ryan-authorized push for the local Python worker stdout success egress
+- [x] Ryan-authorized push for the local Python worker stdout success egress
   contract release unit
+- [x] Post-`9c6a3b5` control selected local Python dynamic-import worker
+  request contract
+- [x] Local Python dynamic-import worker request contract implementation slice
+  accepted after one correction as workspace-only state
+- [ ] Combined read-only release gate for the exact four-file local Python
+  dynamic-import worker request contract release unit
 
 ## What Is In Progress
 
@@ -3955,20 +3999,93 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the locally committed
-local Python worker stdout success egress contract release. Current local
-source/contract authority is `9c6a3b5 Add worker stdout success egress`.
-Current pushed source/contract authority remains
-`7eefba2 Add fail-closed worker dispatch`, with pushed
-release-routing continuity through
-`d3c16d1 Sync worker dispatch release routing`. Release-gate status is
-no-active-gate for `9c6a3b5`. Do not reopen locally committed worker stdout
-success egress, pushed worker dispatch, worker ingress, stdin execution
-wiring, stdin transport, worker payload, handler adapter, executor attempt
-wrapper, stdout failure normalization, observed attempt, parent stdout
-protocol parser, nonzero failure normalization, subprocess execution,
-completion, invocation, environment context, dispatch table, or prior releases
-absent new findings.
+Immediate next route: launch a combined read-only release-gate lane for the
+exact four-file local Python dynamic-import worker request contract release
+unit. Current pushed source/contract authority remains
+`9c6a3b5 Add worker stdout success egress`, with pushed release-routing
+continuity through `0ea7ca5 Sync worker stdout egress release routing`.
+Workspace-only accepted source/contract candidate is the dynamic-import worker
+request contract in `src/context_ir/runtime_probe_worker.py` and
+`tests/test_runtime_probe_worker.py`, plus the scoped continuity updates in
+`PLAN.md` and `BUILDLOG.md`. Do not reopen pushed worker stdout success egress,
+worker dispatch, worker ingress, stdin execution wiring, stdin transport,
+worker payload, handler adapter, executor attempt wrapper, stdout failure
+normalization, observed attempt, parent stdout protocol parser, nonzero
+failure normalization, subprocess execution, completion, invocation,
+environment context, dispatch table, or prior releases absent new findings.
+
+Selected next local Python dynamic-import worker request contract slice:
+
+- add a frozen typed worker-side request contract derived from
+  `RuntimeProbeLocalPythonWorkerRequestPayload`
+- scope it only to `RuntimeProbeFamily.DYNAMIC_IMPORT` and exact form label
+  `dynamic_import:importlib.import_module/1`
+- preserve plan/request identity, replay target seed, replay selector seed,
+  source-site replay fields, boundary text, reason code, argv, working
+  directory, ordered Python path entries, timeout, and invocation identity
+- validate exact family/form/reason/boundary metadata and reject drift,
+  missing required replay fields, duplicate required replay fields, blank
+  metadata, and malformed replay identity
+- keep the slice non-executing: no `importlib` imports, no repository code
+  execution, no module import attempts, no handler registration, no stdout
+  success emission from real behavior, no parent executor changes, no eval,
+  schema, scoring, compiler, API, MCP, docs, public claims, admission,
+  recompile, or result assembly changes
+
+Accepted workspace-only local Python dynamic-import worker request contract
+slice:
+
+- adds frozen typed `RuntimeProbeLocalPythonDynamicImportWorkerRequest` in
+  `src/context_ir/runtime_probe_worker.py`
+- adds
+  `materialize_runtime_probe_dynamic_import_worker_request(...)` for deriving
+  the worker-local request from `RuntimeProbeLocalPythonWorkerRequestPayload`
+- accepts only `RuntimeProbeFamily.DYNAMIC_IMPORT` with exact form label
+  `dynamic_import:importlib.import_module/1`
+- preserves plan/request identity, subject identity, source-site identity and
+  span, reason code, boundary text, replay target and selector seeds, argv,
+  working directory, ordered Python path entries, timeout seconds, invocation
+  contract revision, invocation identity, and original request replay fields
+- rejects drifted, missing, duplicate, blank, malformed source-span, and
+  malformed invocation identity metadata before any execution behavior exists
+- first review found missing direct-constructor validation coverage; correction
+  added focused `dataclasses.replace(...)` coverage for the frozen contract's
+  `__post_init__` path
+- control reran focused validation:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed, reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source
+    files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed, reporting `233 passed`
+  - `rg -n "^(import importlib|from importlib)" src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    produced no matches
+  - `git diff --check` passed
+- no `importlib` imports, repository code execution, module import attempts,
+  concrete proof-producing handler, default/global handler registration,
+  subprocess changes, stdout success emission from real behavior, parent
+  executor/parser changes, package-root export, docs, eval, schema, scoring,
+  compiler, API, MCP, admission, recompile, public claims, or result assembly
+  changes are included
+- release state:
+  - accepted in workspace: yes, after one correction
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: combined read-only release gate with stop-on-first-finding
+    discipline
+
+Prior worker ingress, dispatch, and stdout-egress route notes below are
+historical continuity and are superseded for active routing by the selected
+dynamic-import worker request contract above.
 
 Accepted local Python worker post-stdin-execution spike:
 
@@ -4161,12 +4278,13 @@ slice:
 - commit-gating-cleared: yes
 - staged: yes, then committed
 - locally committed: yes, `9c6a3b5 Add worker stdout success egress`
-- pushed: no
+- pushed: yes, with release routing through
+  `0ea7ca5 Sync worker stdout egress release routing`
 - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_worker.py`, and
   `tests/test_runtime_probe_worker.py`
-- push remains Ryan-gated
-- next route: Ryan-authorized push sequencing
+- push completed after explicit Ryan authorization
+- next route: local Python dynamic-import worker request contract
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that
