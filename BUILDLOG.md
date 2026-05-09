@@ -2,6 +2,35 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Subprocess Stdin Execution Wiring Local Commit Routing
+
+- Local commit creation completed for the local Python subprocess stdin
+  execution wiring release unit.
+- Commit:
+  - `41f5df9 Pass worker requests through stdin`
+- Commit contents:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at `41f5df9 Pass worker requests through stdin`
+  - `origin/main` at
+    `9a25fbf Sync local Python stdin transport release routing`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Local Python Subprocess Stdin Execution Wiring Release Gate
 
 - Accepted the returned combined read-only release gate for the exact four-file

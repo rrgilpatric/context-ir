@@ -2911,7 +2911,9 @@ sequencing for `c1a12d7` absent new findings.
   accepted first-pass as workspace-only state
 - [x] Combined read-only release gate for the exact four-file local Python
   subprocess stdin execution wiring release unit
-- [ ] Local commit creation for the local Python subprocess stdin execution
+- [x] Local commit creation for the local Python subprocess stdin execution
+  wiring release unit
+- [ ] Ryan-authorized push for the local Python subprocess stdin execution
   wiring release unit
 
 ## What Is In Progress
@@ -3820,13 +3822,15 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create a local commit for the exact four-file local
-Python subprocess stdin execution wiring release unit. Current pushed
+Immediate next route: wait for Ryan authorization to push the locally committed
+local Python subprocess stdin execution wiring release. Current local
 source/contract authority is
+`41f5df9 Pass worker requests through stdin`. Current pushed source/contract
+authority remains
 `0a3c4c6 Add local Python worker stdin transport`, with release-routing
 continuity through
 `9a25fbf Sync local Python stdin transport release routing`. Release-gate
-status is no-active-gate for `0a3c4c6`. Do not reopen pushed stdin transport,
+status is no-active-gate for `41f5df9`. Do not reopen pushed stdin transport,
 worker payload, handler adapter, executor attempt wrapper, stdout failure
 normalization, observed attempt, stdout protocol, nonzero failure
 normalization, subprocess execution, completion, invocation, environment
@@ -3863,8 +3867,8 @@ Current release state for the selected stdin execution wiring slice:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `1049 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes, `41f5df9 Pass worker requests through stdin`
 - pushed: no
 - expected implementation files:
   `src/context_ir/runtime_probe_execution.py` and
@@ -3875,7 +3879,8 @@ Current release state for the selected stdin execution wiring slice:
   `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_execution.py`, and
   `tests/test_runtime_probe_execution.py`
-- next route: local commit creation for the exact four-file unit
+- push remains Ryan-gated
+- next route: Ryan-authorized push sequencing
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that
