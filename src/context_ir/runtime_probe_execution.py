@@ -1028,6 +1028,25 @@ def materialize_runtime_probe_local_python_stdout_protocol_result(
     )
 
 
+def materialize_runtime_probe_local_python_stdout_protocol_attempt(
+    protocol_result: RuntimeProbeLocalPythonStdoutProtocolResult,
+) -> RuntimeProbeExecutionAttempt:
+    """Convert a typed local-Python stdout success protocol into an attempt."""
+    _validate_local_python_stdout_protocol_result(protocol_result)
+    completion = protocol_result.completion
+    invocation = completion.invocation
+    runner_request = invocation.runner_request
+    return RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=RuntimeProbeResultOutcome.OBSERVED,
+        normalized_payload=protocol_result.normalized_payload,
+        durable_artifact_reference=protocol_result.durable_artifact_reference,
+    )
+
+
 def execute_runtime_probe_local_python_subprocess_invocation(
     invocation: RuntimeProbeLocalPythonSubprocessInvocation,
     *,
@@ -1779,6 +1798,25 @@ def _validate_local_python_process_completion(
     _validate_runner_request(completion.invocation.runner_request)
 
 
+def _validate_local_python_stdout_protocol_result(
+    protocol_result: RuntimeProbeLocalPythonStdoutProtocolResult,
+) -> None:
+    """Re-check one local-Python stdout protocol result for tampering."""
+    if not isinstance(protocol_result, RuntimeProbeLocalPythonStdoutProtocolResult):
+        raise ValueError("local Python stdout protocol result must be typed")
+    RuntimeProbeLocalPythonStdoutProtocolResult(
+        completion=protocol_result.completion,
+        stdout_protocol_revision=protocol_result.stdout_protocol_revision,
+        normalized_payload=protocol_result.normalized_payload,
+        durable_artifact_reference=protocol_result.durable_artifact_reference,
+    )
+    _validate_local_python_process_completion(protocol_result.completion)
+    _validate_local_python_subprocess_invocation(protocol_result.completion.invocation)
+    _validate_runner_request(
+        protocol_result.completion.invocation.runner_request,
+    )
+
+
 def _parse_runtime_probe_local_python_stdout_protocol(
     stdout_text: str,
 ) -> tuple[str, tuple[RuntimeProbeReplayField, ...], str | None]:
@@ -2344,6 +2382,7 @@ __all__ = [
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_local_python_process_completion_attempt",
     "materialize_runtime_probe_local_python_process_completion",
+    "materialize_runtime_probe_local_python_stdout_protocol_attempt",
     "materialize_runtime_probe_local_python_stdout_protocol_result",
     "materialize_runtime_probe_local_python_subprocess_exception_attempt",
     "materialize_runtime_probe_local_python_subprocess_invocation",

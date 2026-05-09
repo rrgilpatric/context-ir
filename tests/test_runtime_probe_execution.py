@@ -26,6 +26,7 @@ from context_ir.runtime_probe_execution import (
     execute_runtime_probe_local_python_subprocess_invocation,
     materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_process_completion_attempt,
+    materialize_runtime_probe_local_python_stdout_protocol_attempt,
     materialize_runtime_probe_local_python_stdout_protocol_result,
     materialize_runtime_probe_local_python_subprocess_exception_attempt,
     materialize_runtime_probe_local_python_subprocess_invocation,
@@ -1705,6 +1706,140 @@ def test_local_python_stdout_protocol_result_dataclass_rejects_contract_drift() 
             stdout_protocol_revision=result.stdout_protocol_revision,
             normalized_payload=(),
             durable_artifact_reference=None,
+        )
+
+
+def test_materialize_local_python_stdout_protocol_attempt_observes_success() -> None:
+    """A typed stdout success protocol materializes an observed attempt."""
+    invocation = _local_python_subprocess_invocation()
+    completion = _local_python_process_completion(
+        invocation,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=[
+                {"key": "first_observed_module", "value": "plugins.weather"},
+                {"key": "second_observed_module", "value": "plugins.forecast"},
+            ],
+            durable_artifact_reference="runtime-artifact:local-python:abc123",
+        ),
+    )
+    protocol_result = materialize_runtime_probe_local_python_stdout_protocol_result(
+        completion
+    )
+
+    attempt = materialize_runtime_probe_local_python_stdout_protocol_attempt(
+        protocol_result
+    )
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.plan_id == invocation.runner_request.plan_id
+    assert attempt.request_id == invocation.runner_request.request_id
+    assert attempt.request is invocation.runner_request.request
+    assert attempt.execution_input is invocation.runner_request.execution_input
+    assert attempt.normalized_payload == (
+        _field("first_observed_module", "plugins.weather"),
+        _field("second_observed_module", "plugins.forecast"),
+    )
+    assert attempt.durable_artifact_reference == "runtime-artifact:local-python:abc123"
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_materialize_local_python_stdout_protocol_attempt_preserves_durable_only() -> (
+    None
+):
+    """Durable-only stdout proof remains durable-only on the observed attempt."""
+    protocol_result = materialize_runtime_probe_local_python_stdout_protocol_result(
+        _local_python_process_completion(
+            stdout_text=_local_python_stdout_protocol_text(
+                normalized_payload=[],
+                durable_artifact_reference=(
+                    "runtime-artifact:local-python:durable-only"
+                ),
+            )
+        )
+    )
+
+    attempt = materialize_runtime_probe_local_python_stdout_protocol_attempt(
+        protocol_result
+    )
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference == (
+        "runtime-artifact:local-python:durable-only"
+    )
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_local_python_stdout_protocol_attempt_revalidates_carried_contracts() -> None:
+    """Attempt materialization rejects drift in result, completion, and request data."""
+    protocol_result = materialize_runtime_probe_local_python_stdout_protocol_result(
+        _local_python_process_completion(
+            stdout_text=_local_python_stdout_protocol_text()
+        )
+    )
+    object.__setattr__(
+        protocol_result,
+        "stdout_protocol_revision",
+        "runtime_probe_local_python_stdout_protocol:v2",
+    )
+
+    with pytest.raises(ValueError, match="revision is unsupported"):
+        materialize_runtime_probe_local_python_stdout_protocol_attempt(protocol_result)
+
+    completion_drifted_result = (
+        materialize_runtime_probe_local_python_stdout_protocol_result(
+            _local_python_process_completion(
+                stdout_text=_local_python_stdout_protocol_text()
+            )
+        )
+    )
+    object.__setattr__(
+        completion_drifted_result.completion,
+        "invocation_identity",
+        "wrong",
+    )
+
+    with pytest.raises(ValueError, match="invocation_identity"):
+        materialize_runtime_probe_local_python_stdout_protocol_attempt(
+            completion_drifted_result
+        )
+
+    invocation_drifted_result = (
+        materialize_runtime_probe_local_python_stdout_protocol_result(
+            _local_python_process_completion(
+                stdout_text=_local_python_stdout_protocol_text()
+            )
+        )
+    )
+    object.__setattr__(
+        invocation_drifted_result.completion.invocation,
+        "timeout_seconds",
+        999,
+    )
+
+    with pytest.raises(ValueError, match="timeout_seconds"):
+        materialize_runtime_probe_local_python_stdout_protocol_attempt(
+            invocation_drifted_result
+        )
+
+    request_drifted_result = (
+        materialize_runtime_probe_local_python_stdout_protocol_result(
+            _local_python_process_completion(
+                stdout_text=_local_python_stdout_protocol_text()
+            )
+        )
+    )
+    object.__setattr__(
+        request_drifted_result.completion.invocation.runner_request,
+        "request_id",
+        "runtime_probe:wrong",
+    )
+
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        materialize_runtime_probe_local_python_stdout_protocol_attempt(
+            request_drifted_result
         )
 
 
@@ -3699,6 +3834,11 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
             )
         )
     )
+    local_python_stdout_protocol_attempt = (
+        materialize_runtime_probe_local_python_stdout_protocol_attempt(
+            local_python_stdout_protocol_result
+        )
+    )
 
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
@@ -3732,6 +3872,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         local_python_completion.stdout_text = "mutated"
     with pytest.raises(FrozenInstanceError):
         local_python_stdout_protocol_result.stdout_protocol_revision = "mutated"
+    with pytest.raises(FrozenInstanceError):
+        local_python_stdout_protocol_attempt.plan_id = (
+            "runtime_probe_request_plan:mutated"
+        )
 
     assert (
         "RuntimeProbeDiagnosticRunnerRequestPreparation"
@@ -3786,6 +3930,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         runtime_probe_execution.__all__
     )
     assert "materialize_runtime_probe_local_python_process_completion" in (
+        runtime_probe_execution.__all__
+    )
+    assert "materialize_runtime_probe_local_python_stdout_protocol_attempt" in (
         runtime_probe_execution.__all__
     )
     assert "materialize_runtime_probe_local_python_stdout_protocol_result" in (
@@ -3845,6 +3992,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert (
         "materialize_runtime_probe_local_python_subprocess_invocation"
+        not in context_ir.__all__
+    )
+    assert (
+        "materialize_runtime_probe_local_python_stdout_protocol_attempt"
         not in context_ir.__all__
     )
     assert (
@@ -3919,6 +4070,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_local_python_subprocess_exception_attempt",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_local_python_stdout_protocol_attempt",
     )
     assert not hasattr(
         context_ir,
