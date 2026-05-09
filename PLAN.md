@@ -41,9 +41,45 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`0a3c4c6 Add local Python worker stdin transport`. Live git refs and
+`41f5df9 Pass worker requests through stdin`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python subprocess stdin execution wiring release:
+
+- `execute_runtime_probe_local_python_subprocess_invocation(...)` now
+  materializes `RuntimeProbeLocalPythonWorkerRequestStdinTransport` before
+  subprocess launch
+- the raw executor passes `stdin_transport.stdin_text` to
+  `subprocess.run(...)` through text-mode `input=...`
+- existing argv, cwd, child environment, timeout, `shell=False`,
+  `capture_output=True`, `text=True`, `check=False`, raw completion
+  materialization, and raw executor exception propagation are preserved
+- invocation, completion contract revision, worker request payload, and stdin
+  transport validation happen before subprocess launch
+- invocation/stdin/payload drift is rejected before `subprocess.run(...)`
+- success, nonzero completion, timeout, generic exception, malformed stdout,
+  handler adapter, and dispatch paths continue through the existing typed
+  materializers
+- the release does not add worker modules, concrete family/form semantics,
+  global registration, temp files, filesystem IO, stdout protocol changes,
+  `RuntimeProbeObservedResult` synthesis, result assembly changes, admission,
+  recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+  compiler, docs, or public claims
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1049 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `41f5df9 Pass worker requests through stdin`
+- Ryan-authorized push completed with release routing through
+  `132647b Sync local Python stdin execution routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `41f5df9`
 
 Local Python worker request stdin transport contract release:
 
@@ -2913,8 +2949,17 @@ sequencing for `c1a12d7` absent new findings.
   subprocess stdin execution wiring release unit
 - [x] Local commit creation for the local Python subprocess stdin execution
   wiring release unit
-- [ ] Ryan-authorized push for the local Python subprocess stdin execution
+- [x] Ryan-authorized push for the local Python subprocess stdin execution
   wiring release unit
+- [x] Post-`41f5df9` control selected local Python worker next-move spike
+- [x] Local Python worker post-stdin-execution next-move spike accepted
+  first-pass
+- [x] Fail-closed local Python worker ingress skeleton implementation slice
+  accepted first-pass as workspace-only state
+- [x] Combined read-only release gate for the exact four-file fail-closed local
+  Python worker ingress skeleton release unit
+- [ ] Local commit creation for the fail-closed local Python worker ingress
+  skeleton release unit
 
 ## What Is In Progress
 
@@ -3822,65 +3867,79 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the locally committed
-local Python subprocess stdin execution wiring release. Current local
+Immediate next route: create a local commit for the exact four-file
+fail-closed local Python worker ingress skeleton release unit. Current pushed
 source/contract authority is
-`41f5df9 Pass worker requests through stdin`. Current pushed source/contract
-authority remains
-`0a3c4c6 Add local Python worker stdin transport`, with release-routing
-continuity through
-`9a25fbf Sync local Python stdin transport release routing`. Release-gate
-status is no-active-gate for `41f5df9`. Do not reopen pushed stdin transport,
-worker payload, handler adapter, executor attempt wrapper, stdout failure
-normalization, observed attempt, stdout protocol, nonzero failure
-normalization, subprocess execution, completion, invocation, environment
-context, dispatch table, or prior releases absent new findings.
+`41f5df9 Pass worker requests through stdin`, with release-routing continuity
+through `132647b Sync local Python stdin execution routing`. Release-gate
+status is no-active-gate for `41f5df9`. Do not reopen pushed stdin execution
+wiring, stdin transport, worker payload, handler adapter, executor attempt
+wrapper, stdout failure normalization, observed attempt, stdout protocol,
+nonzero failure normalization, subprocess execution, completion, invocation,
+environment context, dispatch table, or prior releases absent new findings.
 
-Accepted workspace-only local Python subprocess stdin execution wiring slice:
+Accepted local Python worker post-stdin-execution spike:
 
-- wires the existing raw local-Python subprocess executor to materialize
-  `RuntimeProbeLocalPythonWorkerRequestStdinTransport` before launch and pass
-  its deterministic `stdin_text` to `subprocess.run(...)` as text-mode stdin
-- preserves the existing invocation, cwd, child environment, timeout,
-  `shell=False`, captured stdout/stderr, completion materialization, exception
-  propagation from the raw executor, and attempt-normalization wrapper behavior
-- validates the invocation, completion contract revision, worker request payload,
-  and stdin transport before subprocess launch
-- rejects invocation/stdin/payload drift before `subprocess.run(...)`
-- keeps success, nonzero, timeout, generic exception, malformed stdout, and
-  dispatch paths flowing through the existing materializers
-- no worker module, concrete family/form semantics, global registration, temp
-  files, filesystem IO, stdout protocol changes, observed-result synthesis,
-  result assembly changes, admission, recompile, facade, MCP, package-root,
-  schema, eval, scoring, optimizer, compiler, docs, or public claims
+- recommendation: add a fail-closed `context_ir.runtime_probe_worker` ingress
+  skeleton before worker-side dispatch, concrete family/form behavior, stdout
+  failure protocol changes, or global registration
+- rationale: generic request handoff is complete, but no module exists at the
+  configured worker module name; a fail-closed ingress proves valid and
+  malformed stdin cannot become runtime proof
+- valid worker request payloads should parse through the existing strict
+  payload parser and then return deterministic nonzero fail-closed status with
+  empty stdout
+- malformed stdin should return deterministic sanitized failure with empty
+  stdout and no raw payload, traceback, path, or environment leakage
+- nonzero completion remains safe because existing parent-side handling
+  normalizes it as non-proof
 
-Current release state for the selected stdin execution wiring slice:
+Accepted workspace-only fail-closed local Python worker ingress implementation
+slice:
+
+- adds `src/context_ir/runtime_probe_worker.py`
+- adds `tests/test_runtime_probe_worker.py`
+- implements a testable worker entrypoint that reads stdin, parses only with
+  `parse_runtime_probe_local_python_worker_request_payload(...)`, and always
+  fails closed without emitting stdout proof
+- invalid stdin and valid-but-unimplemented requests both exit nonzero,
+  deterministically, with sanitized stderr
+- keeps package root unchanged; no `context_ir.__all__` export
+- no concrete handler logic, dynamic import execution, worker dispatch
+  registry, stdout protocol extension, global handler registration,
+  subprocess execution in tests, filesystem IO, docs, public claims, API, MCP,
+  schema, eval, scoring, optimizer, compiler, admission, recompile, or result
+  assembly changes
+
+Current release state for the selected worker ingress skeleton slice:
 
 - selected by control: yes
+- spike lane launched: yes
+- spike returned: yes
+- spike accepted by control: yes, first-pass
 - implementation lane launched: yes
 - implementation returned: yes
 - accepted in workspace: yes, first-pass
 - implementation validation reported by execution lane: passed, including
-  requested subset reporting `287 passed`
-- focused control validation: passed with `50 passed, 148 deselected`
-- focused control ruff check: passed
+  targeted suite reporting `203 passed`
+- focused control validation: passed with `5 passed`
+- focused control ruff and format checks: passed
 - release-unit-audit-cleared: yes
-- full-regression-cleared: yes, full pytest `1049 passed`
+- full-regression-cleared: yes, full pytest `1054 passed`
 - commit-gating-cleared: yes
-- staged: yes, then committed
-- locally committed: yes, `41f5df9 Pass worker requests through stdin`
+- staged: no
+- locally committed: no
 - pushed: no
 - expected implementation files:
-  `src/context_ir/runtime_probe_execution.py` and
-  `tests/test_runtime_probe_execution.py`
+  `src/context_ir/runtime_probe_worker.py` and
+  `tests/test_runtime_probe_worker.py`
 - control-route continuity files:
   `PLAN.md` and `BUILDLOG.md`
 - proposed release unit is exactly:
   `BUILDLOG.md`, `PLAN.md`,
-  `src/context_ir/runtime_probe_execution.py`, and
-  `tests/test_runtime_probe_execution.py`
-- push remains Ryan-gated
-- next route: Ryan-authorized push sequencing
+  `src/context_ir/runtime_probe_worker.py`, and
+  `tests/test_runtime_probe_worker.py`
+- next route: local commit creation for the exact four-file unit
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that

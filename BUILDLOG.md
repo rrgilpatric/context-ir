@@ -2,6 +2,201 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Fail-Closed Local Python Worker Ingress Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  fail-closed local Python worker ingress skeleton release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed:
+  - worker ingress is fail-closed
+  - stdout never carries proof
+  - stderr is sanitized and constant
+  - no probes are executed
+  - package-root/API/MCP/schema/eval/scoring/compiler/docs/public-claim
+    surfaces are unchanged
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed, reporting
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed, reporting
+    `1054 passed`
+  - `git diff --check` passed
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `132647b Sync local Python stdin execution routing`
+  - dirty tracked files exactly `BUILDLOG.md` and `PLAN.md`
+  - untracked files exactly `src/context_ir/runtime_probe_worker.py` and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1054 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Fail-Closed Local Python Worker Ingress Workspace Acceptance
+
+- Reviewed the returned fail-closed local Python worker ingress implementation
+  slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `132647b Sync local Python stdin execution routing`
+  - dirty tracked files exactly `BUILDLOG.md` and `PLAN.md`
+  - untracked implementation files exactly
+    `src/context_ir/runtime_probe_worker.py` and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds `src/context_ir/runtime_probe_worker.py` as the importable
+    `context_ir.runtime_probe_worker` subprocess target module
+  - exposes a testable `main(...)` entrypoint
+  - reads stdin and parses it only through
+    `parse_runtime_probe_local_python_worker_request_payload(...)`
+  - valid worker request payloads parse successfully and then fail closed with
+    deterministic nonzero exit status, empty stdout, and sanitized stderr
+  - malformed stdin fails closed with deterministic nonzero exit status, empty
+    stdout, and sanitized stderr
+  - stderr does not leak raw stdin, tracebacks, exception messages, environment
+    names, or local path details
+  - worker output does not emit the success stdout protocol and cannot produce
+    observed proof
+  - package-root exports remain unchanged
+  - the release does not add concrete handler logic, dynamic import execution,
+    worker dispatch registry, stdout protocol extension, global handler
+    registration, filesystem IO, subprocess execution in tests, docs, public
+    claims, API, MCP, schema, eval, scoring, optimizer, compiler, admission,
+    recompile, or result assembly changes
+- Implementation validation reported by the execution lane:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed, reporting `203 passed`
+  - `git diff --check` passed
+- Focused validation rerun by control:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q`
+    passed, reporting `5 passed`
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Worker Post-Stdin Spike Acceptance
+
+- Reviewed the returned read-only local Python worker post-stdin-execution
+  next-move spike.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `132647b Sync local Python stdin execution routing`
+  - dirty tracked files exactly `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted recommendation:
+  - next smallest safe implementation slice is a fail-closed
+    `context_ir.runtime_probe_worker` ingress skeleton
+- Evidence:
+  - caller-side subprocess execution now passes typed stdin through
+    `subprocess.run(input=...)`
+  - strict worker request payload parsing already exists in
+    `runtime_probe_execution.py`
+  - no `src/context_ir/runtime_probe_worker.py` module exists today
+  - `context_ir.runtime_probe_worker` currently appears only as future module
+    metadata in tests and handler configuration
+  - the current stdout protocol is proof-bearing on success, so the first
+    worker module must not emit stdout proof
+  - non-proof outcomes are already inadmissible as runtime-backed proof
+- Alternatives considered:
+  - worker-side request dispatch contract: deferred until an ingress module
+    exists
+  - first concrete `DYNAMIC_IMPORT` family/form worker: rejected as too broad
+    because it would combine worker ingress, runtime behavior, proof payload
+    semantics, and family/form correctness
+  - stdout non-proof/failure protocol extension: deferred because it changes
+    parent/worker egress before a worker exists
+  - global handler registration: blocked until at least one real worker
+    behavior exists
+- Scope boundary for the selected implementation:
+  - add `src/context_ir/runtime_probe_worker.py`
+  - add `tests/test_runtime_probe_worker.py`
+  - parse stdin only through
+    `parse_runtime_probe_local_python_worker_request_payload(...)`
+  - fail closed for valid and malformed requests with deterministic nonzero
+    exit status, empty stdout, and sanitized stderr
+  - no raw payload, traceback, path, or environment leakage
+  - no concrete handler logic, dynamic import execution, worker dispatch
+    registry, stdout protocol extension, global handler registration,
+    package-root export, docs, public claims, API, MCP, schema, eval, scoring,
+    compiler, admission, recompile, or result assembly changes
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Worker Post-Stdin Next-Move Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  subprocess stdin execution wiring release.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `132647b Sync local Python stdin execution routing`
+  - latest pushed source/contract authority is
+    `41f5df9 Pass worker requests through stdin`
+  - worktree was clean before this control-route continuity update
+  - nothing staged before this control-route continuity update
+  - no untracked files before this control-route continuity update
+  - `git diff --check` was clean before this control-route continuity update
+- Continuity correction:
+  - committed `PLAN.md` and `BUILDLOG.md` still included stale active routing
+    that treated the `41f5df9` push as pending
+  - current routing now treats `41f5df9` as pushed, no-active-gate source and
+    contract authority
+- Routing decision:
+  - the next lane should be a bounded read-only next-move spike for local
+    Python worker design
+  - generic request handoff is now complete through stdin, but choosing the
+    first worker-module behavior would cross into worker ingress/egress,
+    failure semantics, proof admissibility, and concrete family/form sequencing
+  - the spike should choose the next smallest safe implementation slice before
+    any worker module or handler semantics are added
+- Alternatives to be considered by the spike:
+  - fail-closed worker module ingress skeleton
+  - worker-side request dispatch contract
+  - first concrete `DYNAMIC_IMPORT` family/form worker
+  - stdout non-proof/failure protocol extension
+  - global handler registration
+- Scope boundary:
+  - the spike is read-only
+  - it must not edit files, stage changes, commit, push, run repository-code
+    probes, implement a worker, implement concrete handler behavior, or widen
+    package-root, API, MCP, schema, eval, scoring, compiler, docs, or
+    public-claim surfaces
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Local Python Subprocess Stdin Execution Wiring Local Commit Routing
 
 - Local commit creation completed for the local Python subprocess stdin
