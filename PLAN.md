@@ -3193,7 +3193,9 @@ sequencing for `c1a12d7` absent new findings.
   accepted first-pass as workspace-only state
 - [x] Combined read-only release gate for the exact four-file local Python
   dynamic-import worker handler adapter release unit
-- [ ] Local commit creation for the local Python dynamic-import worker handler
+- [x] Local commit creation for the local Python dynamic-import worker handler
+  adapter release unit
+- [ ] Ryan-authorized push for the local Python dynamic-import worker handler
   adapter release unit
 
 ## What Is In Progress
@@ -4102,13 +4104,16 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the exact four-file local
-Python dynamic-import worker handler adapter release unit.
-Current pushed source/contract authority is
+Immediate next route: wait for Ryan authorization to push the locally committed
+local Python dynamic-import worker handler adapter release. Current local
+source/contract authority is
+`73feb5f Add dynamic import worker handler adapter`. Current pushed
+source/contract authority remains
 `6e8d04f Add dynamic import worker observation contract`, with pushed
 release-routing continuity through
 `c47832c Sync dynamic import observation routing`. Release-gate status is
-no-active-gate for `6e8d04f`. Do not reopen dynamic-import worker observation
+no-active-gate for `73feb5f`. Do not reopen locally committed dynamic-import
+worker handler adapter, pushed dynamic-import worker observation
 success-response contract, dynamic-import worker request contract, worker
 stdout success egress, worker dispatch, worker ingress, stdin execution
 wiring, stdin transport, worker payload, parent-side handler adapter, executor
@@ -4161,13 +4166,15 @@ slice:
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes, full pytest `1109 passed`
   - commit-gating-cleared: yes
-  - staged: no
-  - locally committed: no
+  - staged: yes, then committed
+  - locally committed: yes,
+    `73feb5f Add dynamic import worker handler adapter`
   - pushed: no
   - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
     `src/context_ir/runtime_probe_worker.py`, and
     `tests/test_runtime_probe_worker.py`
-  - next route: local commit creation for the exact four-file unit
+  - push remains Ryan-gated
+  - next route: Ryan-authorized push sequencing
 
 Prior dynamic-import request and observation route notes, plus worker ingress,
 dispatch, and stdout-egress route notes below, are historical continuity and
