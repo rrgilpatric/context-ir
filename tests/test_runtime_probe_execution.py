@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import textwrap
@@ -25,6 +26,7 @@ from context_ir.runtime_probe_execution import (
     execute_runtime_probe_local_python_subprocess_invocation,
     materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_process_completion_attempt,
+    materialize_runtime_probe_local_python_stdout_protocol_result,
     materialize_runtime_probe_local_python_subprocess_exception_attempt,
     materialize_runtime_probe_local_python_subprocess_invocation,
 )
@@ -340,6 +342,26 @@ def _local_python_process_completion(
         stderr_text=stderr_text,
         completion_contract_revision=completion_contract_revision,
     )
+
+
+def _local_python_stdout_protocol_text(
+    *,
+    revision: str = "runtime_probe_local_python_stdout_protocol:v1",
+    normalized_payload: list[dict[str, str]] | None = None,
+    durable_artifact_reference: str | None = None,
+) -> str:
+    """Return one strict local-Python success stdout protocol document."""
+    protocol: dict[str, object] = {
+        "runtime_probe_stdout_protocol_revision": revision,
+        "normalized_payload": (
+            [{"key": "observed_module", "value": "plugins.weather"}]
+            if normalized_payload is None
+            else normalized_payload
+        ),
+    }
+    if durable_artifact_reference is not None:
+        protocol["durable_artifact_reference"] = durable_artifact_reference
+    return json.dumps(protocol, separators=(",", ":"))
 
 
 def _diagnostic_for_plan(
@@ -1356,6 +1378,334 @@ def test_materialize_zero_returncode_completion_attempt_rejects_deferred_success
 
     with pytest.raises(ValueError, match="deferred"):
         materialize_runtime_probe_local_python_process_completion_attempt(completion)
+
+
+def test_materialize_local_python_stdout_protocol_result_parses_success() -> None:
+    """Zero-returncode stdout JSON materializes an ordered typed success protocol."""
+    completion = _local_python_process_completion(
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=[
+                {"key": "first_observed_module", "value": "plugins.weather"},
+                {"key": "second_observed_module", "value": "plugins.forecast"},
+            ],
+            durable_artifact_reference="runtime-artifact:local-python:abc123",
+        ),
+        stderr_text="raw stderr warning is ignored for success semantics\n",
+    )
+
+    result = materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+    second_result = materialize_runtime_probe_local_python_stdout_protocol_result(
+        completion
+    )
+
+    assert result == second_result
+    assert isinstance(
+        result,
+        runtime_probe_execution.RuntimeProbeLocalPythonStdoutProtocolResult,
+    )
+    assert result.completion is completion
+    assert result.stdout_protocol_revision == (
+        "runtime_probe_local_python_stdout_protocol:v1"
+    )
+    assert result.normalized_payload == (
+        _field("first_observed_module", "plugins.weather"),
+        _field("second_observed_module", "plugins.forecast"),
+    )
+    assert result.durable_artifact_reference == "runtime-artifact:local-python:abc123"
+
+    with pytest.raises(FrozenInstanceError):
+        result.durable_artifact_reference = "runtime-artifact:mutated"
+
+
+def test_local_python_stdout_protocol_result_allows_durable_only_success() -> None:
+    """A durable artifact reference is a valid proof channel without payload."""
+    completion = _local_python_process_completion(
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=[],
+            durable_artifact_reference="runtime-artifact:local-python:durable-only",
+        ),
+    )
+
+    result = materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+    assert result.normalized_payload == ()
+    assert result.durable_artifact_reference == (
+        "runtime-artifact:local-python:durable-only"
+    )
+
+
+@pytest.mark.parametrize(
+    "durable_artifact_reference",
+    (
+        " runtime-artifact:local-python:abc123",
+        "runtime-artifact:local-python:abc123 ",
+        "runtime-artifact:local-python:\nabc123",
+    ),
+)
+def test_local_python_stdout_protocol_result_rejects_malformed_durable_reference(
+    durable_artifact_reference: str,
+) -> None:
+    """Direct result construction enforces stdout durable-reference rules."""
+    completion = _local_python_process_completion(
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=[],
+            durable_artifact_reference="runtime-artifact:local-python:abc123",
+        ),
+    )
+
+    with pytest.raises(ValueError, match="durable_artifact_reference is malformed"):
+        runtime_probe_execution.RuntimeProbeLocalPythonStdoutProtocolResult(
+            completion=completion,
+            stdout_protocol_revision=("runtime_probe_local_python_stdout_protocol:v1"),
+            normalized_payload=(),
+            durable_artifact_reference=durable_artifact_reference,
+        )
+
+
+@pytest.mark.parametrize(
+    ("stdout_text", "error_match"),
+    (
+        ("not json raw stdout secret", "valid JSON object"),
+        ('["not", "object"]', "JSON object"),
+        (
+            json.dumps(
+                {
+                    "normalized_payload": [
+                        {"key": "observed_module", "value": "plugins.weather"}
+                    ],
+                }
+            ),
+            "revision",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": " ",
+                    "normalized_payload": [
+                        {"key": "observed_module", "value": "plugins.weather"}
+                    ],
+                }
+            ),
+            "revision",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v2"
+                    ),
+                    "normalized_payload": [
+                        {"key": "observed_module", "value": "plugins.weather"}
+                    ],
+                }
+            ),
+            "revision is unsupported",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": [],
+                    "raw_stdout": "secret",
+                }
+            ),
+            "unknown keys",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": {"key": "observed_module"},
+                }
+            ),
+            "normalized_payload must be a list",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": [["observed_module", "plugins.weather"]],
+                }
+            ),
+            "normalized_payload entries must be objects",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": [
+                        {
+                            "key": "observed_module",
+                            "value": "plugins.weather",
+                            "extra": "nope",
+                        }
+                    ],
+                }
+            ),
+            "key and value",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": [{"key": "", "value": "plugins.weather"}],
+                }
+            ),
+            "blank fields",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": [],
+                    "durable_artifact_reference": "",
+                }
+            ),
+            "durable_artifact_reference",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": [],
+                    "durable_artifact_reference": " runtime-artifact:abc",
+                }
+            ),
+            "durable_artifact_reference is malformed",
+        ),
+        (
+            json.dumps(
+                {
+                    "runtime_probe_stdout_protocol_revision": (
+                        "runtime_probe_local_python_stdout_protocol:v1"
+                    ),
+                    "normalized_payload": [],
+                    "durable_artifact_reference": None,
+                }
+            ),
+            "normalized_payload or durable_artifact_reference",
+        ),
+    ),
+)
+def test_local_python_stdout_protocol_rejects_malformed_stdout_without_leakage(
+    stdout_text: str,
+    error_match: str,
+) -> None:
+    """Malformed success stdout is rejected without reflecting raw streams."""
+    completion = _local_python_process_completion(
+        returncode=0,
+        stdout_text=stdout_text,
+        stderr_text="raw stderr pid=12345 /private/tmp/runtime-probe\n",
+    )
+
+    with pytest.raises(ValueError, match=error_match) as exc_info:
+        materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+    error_text = str(exc_info.value)
+    assert "secret" not in error_text
+    assert "pid=12345" not in error_text
+    assert "/private/tmp" not in error_text
+    assert stdout_text not in error_text
+    assert completion.stderr_text not in error_text
+
+
+def test_local_python_stdout_protocol_rejects_nonzero_completion() -> None:
+    """The success protocol is scoped only to zero-returncode completions."""
+    completion = _local_python_process_completion(
+        returncode=2,
+        stdout_text=_local_python_stdout_protocol_text(),
+    )
+
+    with pytest.raises(ValueError, match="zero returncode"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+
+def test_local_python_stdout_protocol_result_revalidates_carried_contracts() -> None:
+    """Success protocol materialization revalidates completion and request identity."""
+    completion = _local_python_process_completion(
+        stdout_text=_local_python_stdout_protocol_text()
+    )
+    object.__setattr__(completion, "invocation_identity", "wrong")
+
+    with pytest.raises(ValueError, match="invocation_identity"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+    invocation_drifted_completion = _local_python_process_completion(
+        stdout_text=_local_python_stdout_protocol_text()
+    )
+    object.__setattr__(
+        invocation_drifted_completion.invocation,
+        "working_directory",
+        "/workspace/other",
+    )
+
+    with pytest.raises(ValueError, match="working_directory"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(
+            invocation_drifted_completion
+        )
+
+    request_drifted_completion = _local_python_process_completion(
+        stdout_text=_local_python_stdout_protocol_text()
+    )
+    object.__setattr__(
+        request_drifted_completion.invocation.runner_request,
+        "request_id",
+        "runtime_probe:wrong",
+    )
+
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(
+            request_drifted_completion
+        )
+
+
+def test_local_python_stdout_protocol_result_dataclass_rejects_contract_drift() -> None:
+    """The frozen result contract rechecks completion, proof, and revision fields."""
+    completion = _local_python_process_completion(
+        stdout_text=_local_python_stdout_protocol_text()
+    )
+    result = materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+    with pytest.raises(ValueError, match="revision is unsupported"):
+        runtime_probe_execution.RuntimeProbeLocalPythonStdoutProtocolResult(
+            completion=result.completion,
+            stdout_protocol_revision="runtime_probe_local_python_stdout_protocol:v2",
+            normalized_payload=result.normalized_payload,
+            durable_artifact_reference=result.durable_artifact_reference,
+        )
+    blank_payload_field = _field("observed_module", "plugins.weather")
+    object.__setattr__(blank_payload_field, "value", "")
+    with pytest.raises(ValueError, match="normalized_payload"):
+        runtime_probe_execution.RuntimeProbeLocalPythonStdoutProtocolResult(
+            completion=result.completion,
+            stdout_protocol_revision=result.stdout_protocol_revision,
+            normalized_payload=(blank_payload_field,),
+            durable_artifact_reference=None,
+        )
+    with pytest.raises(ValueError, match="normalized_payload or durable"):
+        runtime_probe_execution.RuntimeProbeLocalPythonStdoutProtocolResult(
+            completion=result.completion,
+            stdout_protocol_revision=result.stdout_protocol_revision,
+            normalized_payload=(),
+            durable_artifact_reference=None,
+        )
 
 
 def test_materialize_local_python_failure_attempts_revalidate_carried_contracts() -> (
@@ -3341,6 +3691,14 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     local_python_invocation = _local_python_subprocess_invocation()
     local_python_completion = _local_python_process_completion(local_python_invocation)
+    local_python_stdout_protocol_result = (
+        materialize_runtime_probe_local_python_stdout_protocol_result(
+            _local_python_process_completion(
+                local_python_invocation,
+                stdout_text=_local_python_stdout_protocol_text(),
+            )
+        )
+    )
 
     with pytest.raises(FrozenInstanceError):
         input_item.plan_id = "runtime_probe_request_plan:mutated"
@@ -3372,6 +3730,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         local_python_invocation.working_directory = "/tmp/context-ir"
     with pytest.raises(FrozenInstanceError):
         local_python_completion.stdout_text = "mutated"
+    with pytest.raises(FrozenInstanceError):
+        local_python_stdout_protocol_result.stdout_protocol_revision = "mutated"
 
     assert (
         "RuntimeProbeDiagnosticRunnerRequestPreparation"
@@ -3386,6 +3746,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         "RuntimeProbeLocalPythonEnvironmentContext" in runtime_probe_execution.__all__
     )
     assert "RuntimeProbeLocalPythonProcessCompletion" in (
+        runtime_probe_execution.__all__
+    )
+    assert "RuntimeProbeLocalPythonStdoutProtocolResult" in (
         runtime_probe_execution.__all__
     )
     assert (
@@ -3425,6 +3788,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_local_python_process_completion" in (
         runtime_probe_execution.__all__
     )
+    assert "materialize_runtime_probe_local_python_stdout_protocol_result" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_local_python_subprocess_exception_attempt" in (
         runtime_probe_execution.__all__
     )
@@ -3445,6 +3811,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeFailureNormalizingRunner" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonEnvironmentContext" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonProcessCompletion" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonStdoutProtocolResult" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonSubprocessInvocation" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerEntry" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerKey" not in context_ir.__all__
@@ -3481,6 +3848,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         not in context_ir.__all__
     )
     assert (
+        "materialize_runtime_probe_local_python_stdout_protocol_result"
+        not in context_ir.__all__
+    )
+    assert (
         "materialize_runtime_probe_local_python_subprocess_exception_attempt"
         not in context_ir.__all__
     )
@@ -3496,6 +3867,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeFailureNormalizingRunner")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonEnvironmentContext")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonProcessCompletion")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonStdoutProtocolResult")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonSubprocessInvocation")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerEntry")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerKey")
@@ -3547,6 +3919,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_local_python_subprocess_exception_attempt",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_local_python_stdout_protocol_result",
     )
     assert not hasattr(
         context_ir,

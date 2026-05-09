@@ -36,6 +36,19 @@ _RUNTIME_PROBE_EXECUTION_INPUT_BATCH_CONTRACT_VERSION = (
 _RUNTIME_PROBE_RUNNER_REQUEST_BATCH_CONTRACT_VERSION = (
     "runtime_probe_runner_request_batch:v1"
 )
+_RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION = (
+    "runtime_probe_local_python_stdout_protocol:v1"
+)
+_RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY = (
+    "runtime_probe_stdout_protocol_revision"
+)
+_RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_KEYS = frozenset(
+    {
+        _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY,
+        "normalized_payload",
+        "durable_artifact_reference",
+    }
+)
 _NON_PROOF_ATTEMPT_OUTCOMES = frozenset(
     {
         RuntimeProbeResultOutcome.CRASHED,
@@ -423,6 +436,41 @@ class RuntimeProbeLocalPythonProcessCompletion:
             raise ValueError(
                 "local Python process completion replay payload fields must match "
                 "invocation"
+            )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonStdoutProtocolResult:
+    """Typed internal success protocol parsed from local-Python stdout."""
+
+    completion: RuntimeProbeLocalPythonProcessCompletion
+    stdout_protocol_revision: str
+    normalized_payload: tuple[RuntimeProbeReplayField, ...]
+    durable_artifact_reference: str | None = None
+
+    def __post_init__(self) -> None:
+        """Reject parsed success payloads whose carried completion is invalid."""
+        _validate_local_python_process_completion(self.completion)
+        if self.completion.returncode != 0:
+            raise ValueError(
+                "local Python stdout protocol results require zero returncode"
+            )
+        if (
+            self.stdout_protocol_revision
+            != _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION
+        ):
+            raise ValueError("local Python stdout protocol revision is unsupported")
+        _validate_replay_fields(
+            self.normalized_payload,
+            field_name="normalized_payload",
+        )
+        _parse_runtime_probe_local_python_durable_artifact_reference(
+            self.durable_artifact_reference
+        )
+        if not self.normalized_payload and self.durable_artifact_reference is None:
+            raise ValueError(
+                "local Python stdout protocol results require normalized_payload "
+                "or durable_artifact_reference"
             )
 
 
@@ -955,6 +1003,28 @@ def materialize_runtime_probe_local_python_process_completion(
         stderr_text=validated_stderr,
         completion_contract_revision=validated_revision,
         request_replay_payload_fields=invocation.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_local_python_stdout_protocol_result(
+    completion: RuntimeProbeLocalPythonProcessCompletion,
+) -> RuntimeProbeLocalPythonStdoutProtocolResult:
+    """Parse a zero-returncode local-Python completion stdout protocol."""
+    _validate_local_python_process_completion(completion)
+    if completion.returncode != 0:
+        raise ValueError(
+            "local Python stdout protocol materialization requires zero returncode"
+        )
+    (
+        stdout_protocol_revision,
+        normalized_payload,
+        durable_artifact_reference,
+    ) = _parse_runtime_probe_local_python_stdout_protocol(completion.stdout_text)
+    return RuntimeProbeLocalPythonStdoutProtocolResult(
+        completion=completion,
+        stdout_protocol_revision=stdout_protocol_revision,
+        normalized_payload=normalized_payload,
+        durable_artifact_reference=durable_artifact_reference,
     )
 
 
@@ -1709,6 +1779,118 @@ def _validate_local_python_process_completion(
     _validate_runner_request(completion.invocation.runner_request)
 
 
+def _parse_runtime_probe_local_python_stdout_protocol(
+    stdout_text: str,
+) -> tuple[str, tuple[RuntimeProbeReplayField, ...], str | None]:
+    """Parse the strict internal JSON stdout protocol without leaking raw output."""
+    _validate_local_python_raw_text(stdout_text, field_name="stdout_text")
+    try:
+        decoded: object = json.loads(stdout_text)
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            "local Python stdout protocol must be a valid JSON object"
+        ) from error
+    if not isinstance(decoded, dict):
+        raise ValueError("local Python stdout protocol must be a JSON object")
+
+    protocol_object: dict[object, object] = decoded
+    if any(not isinstance(key, str) for key in protocol_object):
+        raise ValueError("local Python stdout protocol keys must be strings")
+    protocol_keys = set(protocol_object)
+    unknown_keys = protocol_keys - _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_KEYS
+    if unknown_keys:
+        raise ValueError("local Python stdout protocol contains unknown keys")
+
+    revision_value = protocol_object.get(
+        _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY
+    )
+    if not isinstance(revision_value, str) or not revision_value.strip():
+        raise ValueError("local Python stdout protocol revision must be non-empty")
+    if revision_value != revision_value.strip() or _contains_control_character(
+        revision_value
+    ):
+        raise ValueError("local Python stdout protocol revision is malformed")
+    if revision_value != _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION:
+        raise ValueError("local Python stdout protocol revision is unsupported")
+
+    normalized_payload = _parse_runtime_probe_local_python_normalized_payload(
+        protocol_object.get("normalized_payload")
+    )
+    durable_artifact_reference = (
+        _parse_runtime_probe_local_python_durable_artifact_reference(
+            protocol_object.get("durable_artifact_reference")
+        )
+        if "durable_artifact_reference" in protocol_object
+        else None
+    )
+    if not normalized_payload and durable_artifact_reference is None:
+        raise ValueError(
+            "local Python stdout protocol requires normalized_payload or "
+            "durable_artifact_reference"
+        )
+    return (revision_value, normalized_payload, durable_artifact_reference)
+
+
+def _parse_runtime_probe_local_python_normalized_payload(
+    value: object,
+) -> tuple[RuntimeProbeReplayField, ...]:
+    """Parse ordered normalized payload entries from the stdout protocol."""
+    if not isinstance(value, list):
+        raise ValueError(
+            "local Python stdout protocol normalized_payload must be a list"
+        )
+    fields: list[RuntimeProbeReplayField] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            raise ValueError(
+                "local Python stdout protocol normalized_payload entries must "
+                "be objects"
+            )
+        entry_object: dict[object, object] = entry
+        if set(entry_object) != {"key", "value"}:
+            raise ValueError(
+                "local Python stdout protocol normalized_payload entries must "
+                "contain key and value"
+            )
+        field_key = entry_object["key"]
+        field_value = entry_object["value"]
+        if not isinstance(field_key, str) or not isinstance(field_value, str):
+            raise ValueError(
+                "local Python stdout protocol normalized_payload key and value "
+                "must be strings"
+            )
+        if not field_key.strip() or not field_value.strip():
+            raise ValueError(
+                "local Python stdout protocol normalized_payload must not contain "
+                "blank fields"
+            )
+        fields.append(RuntimeProbeReplayField(key=field_key, value=field_value))
+    normalized_payload = tuple(fields)
+    _validate_replay_fields(
+        normalized_payload,
+        field_name="normalized_payload",
+    )
+    return normalized_payload
+
+
+def _parse_runtime_probe_local_python_durable_artifact_reference(
+    value: object,
+) -> str | None:
+    """Parse an optional durable artifact reference from the stdout protocol."""
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(
+            "local Python stdout protocol durable_artifact_reference must be "
+            "a non-empty string or null"
+        )
+    if value != value.strip() or _contains_control_character(value):
+        raise ValueError(
+            "local Python stdout protocol durable_artifact_reference is malformed"
+        )
+    return value
+
+
 def _validate_local_python_environment_context(
     environment_context: RuntimeProbeLocalPythonEnvironmentContext,
 ) -> None:
@@ -2144,6 +2326,7 @@ __all__ = [
     "RuntimeProbeFailureNormalizingRunner",
     "RuntimeProbeLocalPythonEnvironmentContext",
     "RuntimeProbeLocalPythonProcessCompletion",
+    "RuntimeProbeLocalPythonStdoutProtocolResult",
     "RuntimeProbeLocalPythonSubprocessInvocation",
     "RuntimeProbeRunnerHandlerEntry",
     "RuntimeProbeRunnerHandlerKey",
@@ -2161,6 +2344,7 @@ __all__ = [
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_local_python_process_completion_attempt",
     "materialize_runtime_probe_local_python_process_completion",
+    "materialize_runtime_probe_local_python_stdout_protocol_result",
     "materialize_runtime_probe_local_python_subprocess_exception_attempt",
     "materialize_runtime_probe_local_python_subprocess_invocation",
     "materialize_runtime_probe_runner_request_batch",

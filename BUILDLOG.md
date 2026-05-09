@@ -2,6 +2,241 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Stdout Protocol Contract Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  local Python stdout/result protocol contract release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed.
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+    reporting `108 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    reporting `982 passed`
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b9689be Sync local Python failure normalization post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `982 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: 1 correction
+
+## 2026-05-08 -- Local Python Stdout Protocol Contract Workspace Acceptance
+
+- Reviewed the returned durable-reference contract correction for the local
+  Python stdout/result protocol contract slice.
+- Findings after correction: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b9689be Sync local Python failure normalization post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen module-local `RuntimeProbeLocalPythonStdoutProtocolResult`
+  - adds
+    `materialize_runtime_probe_local_python_stdout_protocol_result(...)`
+  - consumes typed `RuntimeProbeLocalPythonProcessCompletion` values only
+  - requires zero return code before parsing stdout success metadata
+  - parses stdout as a strict internal JSON object with explicit stdout
+    protocol revision, ordered `normalized_payload`, and optional
+    `durable_artifact_reference`
+  - requires at least one proof channel: normalized payload or durable
+    artifact reference
+  - preserves normalized payload order and the carried completion object
+  - revalidates completion, invocation, and runner-request contracts before
+    accepting protocol data
+  - rejects malformed JSON, non-object JSON, missing/blank/unsupported
+    protocol revision, unknown top-level keys, malformed payload entries, blank
+    replay fields, malformed durable references, empty proof metadata, nonzero
+    completions, and request/completion drift
+  - both parser and direct frozen-contract construction reject malformed
+    durable references
+  - keeps exports module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+    unchanged
+- Scope boundary:
+  - no `RuntimeProbeExecutionAttempt` synthesis
+  - no observed result synthesis
+  - no concrete family/form handler or dispatch registration
+  - no executor wrapper orchestration
+  - no admission, recompile, facade, MCP, package-root, schema, eval, scoring,
+    compiler, docs, or public-claim changes
+- Focused control-lane validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    reporting `220 passed`
+  - `git diff --check`
+- Proposed release unit:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate over the exact four-file unit
+- Acceptance status: 1 correction
+
+## 2026-05-08 -- Local Python Stdout Protocol Contract Review Finding
+
+- Reviewed the returned local Python stdout/result protocol contract
+  implementation slice against the slice spec and quality gate.
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b9689be Sync local Python failure normalization post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Finding:
+  - `materialize_runtime_probe_local_python_stdout_protocol_result(...)`
+    rejects malformed `durable_artifact_reference` values while parsing stdout
+  - the exported frozen contract
+    `RuntimeProbeLocalPythonStdoutProtocolResult` revalidates durable
+    references only with `_validate_optional_reference(...)`, which rejects
+    blank values but permits malformed values such as leading/trailing
+    whitespace or control characters
+  - this leaves the typed module-local contract weaker than the materializer
+    and violates the slice requirement to reject malformed durable references
+    as part of the protocol contract
+  - tests cover malformed durable references through the materializer path, but
+    do not cover direct contract construction with malformed durable reference
+    metadata
+- Recommendation:
+  - fix now with a narrow source/test correction
+  - make `RuntimeProbeLocalPythonStdoutProtocolResult.__post_init__` enforce
+    the same durable-reference validation as stdout parsing
+  - add a focused direct-constructor negative test for malformed durable
+    references
+  - do not widen into observed-attempt synthesis, handlers, dispatch
+    registration, executor orchestration, facade, MCP, package-root, schema,
+    eval, scoring, compiler, docs, or public claims
+- Release state:
+  - accepted in workspace: no
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Acceptance status: held
+
+## 2026-05-08 -- Local Python Success-Boundary Spike Acceptance
+
+- Reviewed the returned read-only local Python success-boundary next-move spike
+  against the spike question and current repo state.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b9689be Sync local Python failure normalization post-push state`
+  - dirty tracked files exactly: `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted recommendation:
+  - implement an internal module-local stdout/result protocol contract next
+  - keep zero-exit completion-to-observed-attempt materialization deferred
+    until stdout has a typed protocol boundary
+  - keep concrete family/form handlers, dispatch registration, executor
+    orchestration wrappers, facade, MCP, package-root, schema, eval, scoring,
+    compiler, docs, and public-claim changes deferred
+- Reasoning:
+  - raw invocation, raw process completion, raw subprocess execution, and
+    non-proof failure mapping are pushed and no-active-gate
+  - `RuntimeProbeExecutionAttempt` and result assembly already support observed
+    attempts once normalized payload or durable artifact reference exists
+  - zero-exit process completions are currently deferred because raw stdout has
+    no internal wire contract
+  - implementing a concrete handler or zero-exit observed-attempt materializer
+    now would mix protocol design, parsing, proof payload validation, observed
+    synthesis, and handler semantics
+- Next implementation slice:
+  - add a module-local typed stdout/result protocol contract in
+    `src/context_ir/runtime_probe_execution.py`
+  - add focused tests in `tests/test_runtime_probe_execution.py`
+  - do not edit `PLAN.md` or `BUILDLOG.md` from the implementation lane
+- Acceptance status: first-pass
+
+## 2026-05-08 -- Post-Failure-Normalization Success-Boundary Route
+
+- Verified repo-backed truth before selecting the next bounded control action:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `b9689be Sync local Python failure normalization post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `5b10728 Normalize local Python subprocess failures`.
+- Routing decision:
+  - the next control action is a bounded read-only spike to choose the next
+    smallest safe success-path boundary after local Python subprocess
+    non-proof failure normalization
+  - the spike should decide between an internal stdout/result protocol
+    contract, a zero-exit completion-to-observed-attempt materializer, a first
+    concrete family/form handler, an executor wrapper that catches local
+    process failures and returns typed attempts, or a different smaller slice
+  - the spike must return an exact implementation slice spec if it recommends
+    one
+- Why now:
+  - raw invocation, raw process completion, raw subprocess execution, and
+    non-proof failure mapping are pushed and no-active-gate
+  - the remaining success path risks mixing stdout/stderr parsing, wire
+    protocol design, proof payload validation, observed attempt synthesis,
+    concrete handler semantics, and dispatch registration
+  - those concerns should be decomposed before any worker edits source
+- Alternatives rejected for immediate implementation without a spike:
+  - direct concrete dynamic-import handler now: too likely to combine process
+    execution, stdout protocol, output parsing, proof synthesis, and dispatch
+    registration in one slice
+  - direct observed-result synthesis now: premature until the success payload
+    protocol and zero-exit handling boundary are explicit
+  - facade, MCP, package-root, schema, eval, scoring, optimizer, compiler,
+    benchmark, docs, or public-claim work: unrelated to the immediate local
+    Python runner success boundary
+  - reopening `5b10728`, `d0a009b`, `e9f87fc`, `ea6ff8e`, `f75196e`, or
+    `3751df1`: no new finding supports reopening those pushed releases
+- Acceptance status: first-pass
+
 ## 2026-05-08 -- Local Python Subprocess Non-Proof Attempt Normalization Push Sync
 
 - Ryan authorized pushing the local Python subprocess non-proof attempt
