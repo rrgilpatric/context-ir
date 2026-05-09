@@ -2691,6 +2691,13 @@ sequencing for `c1a12d7` absent new findings.
   failure-normalization release unit
 - [x] Ryan-authorized push for the local Python stdout protocol
   failure-normalization release unit
+- [x] Post-`d8cf97b` control selected local Python executor-to-attempt wrapper
+- [x] Local Python executor-to-attempt wrapper implementation slice accepted
+  first-pass as workspace-only state
+- [x] Combined release gate for the exact four-file local Python
+  executor-to-attempt wrapper release unit
+- [ ] Local commit creation for the local Python executor-to-attempt wrapper
+  release unit
 
 ## What Is In Progress
 
@@ -3598,55 +3605,58 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: send the accepted workspace-only local Python stdout
-protocol failure-normalization release unit through a combined read-only
-release gate. The current pushed source/contract authority is
-`81a3ce3 Materialize local Python observed attempts`, with post-push continuity
-through `3202178 Sync local Python observed attempt post-push state`.
-Release-gate status is no-active-gate for `81a3ce3`. Do not reopen the pushed
-observed attempt, stdout protocol, failure normalization, subprocess execution,
-completion, invocation, environment context, dispatch table, or prior
-failure-normalization releases absent new findings.
+Immediate next route: create the local commit for the exact four-file local
+Python executor-to-attempt wrapper release unit. Current pushed source/contract
+authority is
+`d8cf97b Normalize local Python stdout protocol failures`, with post-push
+continuity through
+`fd819a4 Sync local Python stdout failure post-push state`. Release-gate status
+is no-active-gate for `d8cf97b`. Do not reopen pushed stdout failure
+normalization, observed attempt, stdout protocol, nonzero failure
+normalization, subprocess execution, completion, invocation, environment
+context, dispatch table, or prior releases absent new findings.
 
 Accepted workspace-only implementation slice:
 
-- add a module-local helper that consumes typed
-  `RuntimeProbeLocalPythonProcessCompletion` plus a parsing/validation
-  `Exception` from zero-returncode stdout protocol materialization
-- require zero return code; nonzero completion mapping remains owned by
-  `materialize_runtime_probe_local_python_process_completion_attempt(...)`
-- revalidate completion, invocation, and runner request before materializing the
-  attempt
-- produce deterministic non-proof `RuntimeProbeExecutionAttempt` values,
-  defaulting to `RuntimeProbeResultOutcome.SETUP_FAILED`
-- preserve runner request identity, request object, and execution input
-- sanitize failure summary/detail fields so raw stdout, stderr, exception
-  messages, stack traces, temporary paths, PIDs, and process-local data are not
-  leaked
-- preserve existing stdout protocol parsing, observed-attempt materialization,
-  nonzero completion mapping, subprocess execution, result assembly, dispatch,
-  admission, recompile, facade, MCP, package-root, schema, eval, scoring,
-  optimizer, compiler, docs, and public-claim behavior
-- keep full executor wrapper orchestration, concrete family/form handlers, and
-  dispatch registration deferred
+- adds a module-local helper,
+  `execute_runtime_probe_local_python_subprocess_invocation_attempt(...)`
+- consumes `RuntimeProbeLocalPythonSubprocessInvocation` plus
+  `completion_contract_revision`
+- revalidates invocation and completion revision before subprocess launch
+- executes via existing
+  `execute_runtime_probe_local_python_subprocess_invocation(...)`
+- maps subprocess exceptions through the existing subprocess exception
+  materializer
+- maps nonzero completions through the existing nonzero completion materializer
+- maps zero-returncode valid stdout protocol through the existing stdout
+  protocol result and observed-attempt materializers
+- maps zero-returncode malformed stdout protocol through the existing stdout
+  protocol failure materializer
+- preserves existing raw executor, individual materializers, result assembly,
+  dispatch, admission, recompile, facade, MCP, package-root, schema, eval,
+  scoring, optimizer, compiler, docs, and public claims
+- keeps concrete family/form handlers and dispatch registration deferred
 
-Current release state for the proposed local Python stdout protocol
-failure-normalization unit:
+Current release state for the proposed local Python executor-to-attempt wrapper
+unit:
 
 - selected by control: yes
 - implementation lane launched: yes
 - implementation returned: yes
 - accepted in workspace: yes, first-pass
-- focused validation: passed with `231 passed`
+- focused validation: passed with `237 passed`
 - release-unit-audit-cleared: yes
-- full-regression-cleared: yes, full pytest `993 passed`
+- full-regression-cleared: yes, full pytest `999 passed`
 - commit-gating-cleared: yes
-- staged: yes, then committed
-- locally committed: yes,
-  `d8cf97b Normalize local Python stdout protocol failures`
-- pushed: yes, with `origin/main` advanced through `d5de659`
-- release-gate status: no-active-gate
-- next route: select the next bounded control action after the pushed release
+- staged: no
+- locally committed: no
+- pushed: no
+- release-gate status: no-active-gate for current pushed authority
+- release unit is exactly:
+  `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_execution.py`
+- next route: local commit creation for the exact four-file unit
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that

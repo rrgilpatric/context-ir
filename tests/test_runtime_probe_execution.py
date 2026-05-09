@@ -24,6 +24,7 @@ from context_ir.runtime_probe_execution import (
     assemble_runtime_probe_result_batch_from_runner_request_attempts,
     collect_runtime_probe_execution_attempts_from_runner_requests,
     execute_runtime_probe_local_python_subprocess_invocation,
+    execute_runtime_probe_local_python_subprocess_invocation_attempt,
     materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_process_completion_attempt,
     materialize_runtime_probe_local_python_stdout_protocol_attempt,
@@ -364,6 +365,28 @@ def _local_python_stdout_protocol_text(
     if durable_artifact_reference is not None:
         protocol["durable_artifact_reference"] = durable_artifact_reference
     return json.dumps(protocol, separators=(",", ":"))
+
+
+def _assert_attempt_identity(
+    attempt: runtime_probe_execution.RuntimeProbeExecutionAttempt,
+    invocation: runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation,
+) -> None:
+    """Assert that an attempt preserves its source runner request identity."""
+    runner_request = invocation.runner_request
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+
+
+def _attempt_failure_text(
+    attempt: runtime_probe_execution.RuntimeProbeExecutionAttempt,
+) -> str:
+    """Return the exposed failure fields as one searchable string."""
+    parts = [field.value for field in attempt.failure_detail_fields]
+    if attempt.failure_summary is not None:
+        parts.insert(0, attempt.failure_summary)
+    return "\n".join(parts)
 
 
 def _diagnostic_for_plan(
@@ -1182,6 +1205,314 @@ def test_execute_local_python_subprocess_invocation_propagates_timeout(
                 "runtime-probe-local-python-process-completion:test.1"
             ),
         )
+
+
+def test_execute_local_python_subprocess_invocation_attempt_observes_stdout_protocol(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The attempt wrapper converts valid zero-exit stdout into observed proof."""
+    invocation = _local_python_subprocess_invocation()
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout=_local_python_stdout_protocol_text(
+                normalized_payload=[
+                    {"key": "first_observed_module", "value": "plugins.weather"},
+                    {"key": "second_observed_module", "value": "plugins.forecast"},
+                ],
+                durable_artifact_reference="runtime-artifact:local-python:abc123",
+            ),
+            stderr="raw stderr warning is ignored for success semantics\n",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = execute_runtime_probe_local_python_subprocess_invocation_attempt(
+        invocation,
+        completion_contract_revision=(
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    )
+
+    assert calls == [invocation.argv]
+    _assert_attempt_identity(attempt, invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("first_observed_module", "plugins.weather"),
+        _field("second_observed_module", "plugins.forecast"),
+    )
+    assert attempt.durable_artifact_reference == "runtime-artifact:local-python:abc123"
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_execute_local_python_subprocess_invocation_attempt_maps_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Subprocess timeouts become sanitized timed-out attempts."""
+    invocation = _local_python_subprocess_invocation()
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, shell, capture_output, text, check
+        raise subprocess.TimeoutExpired(
+            cmd=args,
+            timeout=timeout,
+            output="raw stdout proof payload /private/tmp/runtime-probe",
+            stderr="raw stderr traceback pid=12345",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = execute_runtime_probe_local_python_subprocess_invocation_attempt(
+        invocation,
+        completion_contract_revision=(
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    )
+
+    _assert_attempt_identity(attempt, invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_subprocess_timeout"),
+        _field("normalized_outcome", "timed_out"),
+        _field("exception_type", "subprocess.TimeoutExpired"),
+        _field("timeout_seconds", str(invocation.timeout_seconds)),
+    )
+    failure_text = _attempt_failure_text(attempt)
+    assert "raw stdout" not in failure_text
+    assert "raw stderr" not in failure_text
+    assert "traceback" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "/private/tmp" not in failure_text
+
+
+def test_execute_local_python_subprocess_invocation_attempt_maps_generic_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Generic subprocess exceptions become sanitized crashed attempts."""
+    invocation = _local_python_subprocess_invocation()
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del args, cwd, env, timeout, shell, capture_output, text, check
+        raise RuntimeError(
+            "raw exception proof payload traceback pid=12345 /private/tmp/probe"
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = execute_runtime_probe_local_python_subprocess_invocation_attempt(
+        invocation,
+        completion_contract_revision=(
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    )
+
+    _assert_attempt_identity(attempt, invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_subprocess_exception"),
+        _field("normalized_outcome", "crashed"),
+        _field("exception_type", "builtins.RuntimeError"),
+    )
+    failure_text = _attempt_failure_text(attempt)
+    assert "raw exception" not in failure_text
+    assert "proof payload" not in failure_text
+    assert "traceback" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "/private/tmp" not in failure_text
+
+
+def test_execute_local_python_subprocess_invocation_attempt_maps_nonzero_completion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Nonzero raw completions become sanitized non-proof attempts."""
+    invocation = _local_python_subprocess_invocation()
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=42,
+            stdout='{"observed_module":"plugins.weather"}\n',
+            stderr="raw stderr traceback pid=12345 /private/tmp/probe\n",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = execute_runtime_probe_local_python_subprocess_invocation_attempt(
+        invocation,
+        completion_contract_revision=(
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    )
+
+    _assert_attempt_identity(attempt, invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_process_completion"),
+        _field("normalized_outcome", "crashed"),
+        _field("returncode", "42"),
+    )
+    failure_text = _attempt_failure_text(attempt)
+    assert "observed_module" not in failure_text
+    assert "raw stderr" not in failure_text
+    assert "traceback" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "/private/tmp" not in failure_text
+
+
+def test_execute_local_python_subprocess_invocation_attempt_maps_malformed_stdout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Malformed zero-exit stdout becomes a sanitized setup-failed attempt."""
+    invocation = _local_python_subprocess_invocation()
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout="raw stdout observed_module pid=12345 /private/tmp/probe\n",
+            stderr="raw stderr traceback pid=12345 /private/tmp/probe\n",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = execute_runtime_probe_local_python_subprocess_invocation_attempt(
+        invocation,
+        completion_contract_revision=(
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    )
+
+    _assert_attempt_identity(attempt, invocation)
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "local_python_stdout_protocol_failure"),
+        _field("normalized_outcome", "setup_failed"),
+        _field("returncode", "0"),
+        _field("exception_type", "builtins.ValueError"),
+    )
+    failure_text = _attempt_failure_text(attempt)
+    assert "observed_module" not in failure_text
+    assert "raw stdout" not in failure_text
+    assert "raw stderr" not in failure_text
+    assert "traceback" not in failure_text
+    assert "pid=12345" not in failure_text
+    assert "/private/tmp" not in failure_text
+
+
+def test_execute_local_python_subprocess_invocation_attempt_validates_before_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Invocation and completion revision drift are rejected before subprocess use."""
+    invocation = _local_python_subprocess_invocation()
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args, returncode=0, stdout="", stderr=""
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    with pytest.raises(ValueError, match="completion_contract_revision"):
+        execute_runtime_probe_local_python_subprocess_invocation_attempt(
+            invocation,
+            completion_contract_revision="",
+        )
+
+    object.__setattr__(
+        invocation,
+        "argv",
+        ("/workspace/other/python", *invocation.argv[1:]),
+    )
+    with pytest.raises(ValueError, match="argv executable"):
+        execute_runtime_probe_local_python_subprocess_invocation_attempt(
+            invocation,
+            completion_contract_revision=(
+                "runtime-probe-local-python-process-completion:test.1"
+            ),
+        )
+
+    assert calls == []
 
 
 def test_materialize_local_python_timeout_attempt_is_sanitized() -> None:
@@ -4084,6 +4415,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "execute_runtime_probe_local_python_subprocess_invocation" in (
         runtime_probe_execution.__all__
     )
+    assert "execute_runtime_probe_local_python_subprocess_invocation_attempt" in (
+        runtime_probe_execution.__all__
+    )
     assert "make_dispatching_runtime_probe_runner" in runtime_probe_execution.__all__
     assert "make_failure_normalizing_runtime_probe_runner" in (
         runtime_probe_execution.__all__
@@ -4149,6 +4483,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert (
         "execute_runtime_probe_local_python_subprocess_invocation"
+        not in context_ir.__all__
+    )
+    assert (
+        "execute_runtime_probe_local_python_subprocess_invocation_attempt"
         not in context_ir.__all__
     )
     assert "make_dispatching_runtime_probe_runner" not in context_ir.__all__
@@ -4217,6 +4555,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "execute_runtime_probe_local_python_subprocess_invocation",
+    )
+    assert not hasattr(
+        context_ir,
+        "execute_runtime_probe_local_python_subprocess_invocation_attempt",
     )
     assert not hasattr(
         context_ir,

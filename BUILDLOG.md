@@ -2,6 +2,148 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Executor Attempt Wrapper Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  local Python executor-to-attempt wrapper release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed.
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+    reporting `108 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    reporting `999 passed`
+  - `git diff --check` passed
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `fd819a4 Sync local Python stdout failure post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `999 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Executor Attempt Wrapper Workspace Acceptance
+
+- Reviewed the returned local Python executor-to-attempt wrapper implementation
+  slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `fd819a4 Sync local Python stdout failure post-push state`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds
+    `execute_runtime_probe_local_python_subprocess_invocation_attempt(...)`
+  - consumes typed `RuntimeProbeLocalPythonSubprocessInvocation` values plus
+    `completion_contract_revision`
+  - revalidates invocation and completion revision before subprocess launch
+  - executes through existing
+    `execute_runtime_probe_local_python_subprocess_invocation(...)`
+  - maps subprocess timeouts and generic subprocess exceptions through
+    `materialize_runtime_probe_local_python_subprocess_exception_attempt(...)`
+  - maps nonzero completions through
+    `materialize_runtime_probe_local_python_process_completion_attempt(...)`
+  - maps zero-returncode valid stdout protocol through
+    `materialize_runtime_probe_local_python_stdout_protocol_result(...)` and
+    `materialize_runtime_probe_local_python_stdout_protocol_attempt(...)`
+  - maps zero-returncode malformed stdout protocol through
+    `materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(...)`
+  - preserves runner request identity, request object, execution input,
+    ordered normalized payload, and durable artifact reference on success
+  - failure attempts remain non-proof and sanitized without raw stdout, stderr,
+    exception message, traceback text, temporary paths, PIDs, or process-local
+    data
+  - exports stay module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+    unchanged
+  - the release does not add concrete family/form handlers, dispatch
+    registration, `RuntimeProbeObservedResult` synthesis, result assembly
+    changes, admission, recompile, facade, MCP, package-root, schema, eval,
+    scoring, optimizer, compiler, docs, or public claims
+- Focused validation rerun by control:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed, reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting no issues in
+    36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    passed, reporting `237 passed`
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Executor Attempt Wrapper Routing
+
+- Reviewed clean post-push repo state after the local Python stdout protocol
+  failure-normalization release.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `fd819a4 Sync local Python stdout failure post-push state`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - the next smallest safe implementation slice is a module-local local Python
+    executor-to-attempt wrapper that composes the pushed raw executor,
+    subprocess exception mapping, nonzero completion mapping, stdout success
+    materialization, and stdout protocol failure normalization
+  - this is now safe because every terminal raw, success, and failure boundary
+    already has a typed attempt materializer
+- Scope boundary:
+  - consume typed `RuntimeProbeLocalPythonSubprocessInvocation` values plus
+    `completion_contract_revision`
+  - revalidate invocation and completion revision before launching subprocess
+  - use `execute_runtime_probe_local_python_subprocess_invocation(...)`
+  - map subprocess exceptions through
+    `materialize_runtime_probe_local_python_subprocess_exception_attempt(...)`
+  - map nonzero completions through
+    `materialize_runtime_probe_local_python_process_completion_attempt(...)`
+  - map zero-returncode valid stdout through
+    `materialize_runtime_probe_local_python_stdout_protocol_result(...)` and
+    `materialize_runtime_probe_local_python_stdout_protocol_attempt(...)`
+  - map zero-returncode malformed stdout through
+    `materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(...)`
+  - do not add concrete family/form handlers, dispatch registration, result
+    assembly changes, admission, recompile, facade, MCP, package-root, schema,
+    eval, scoring, optimizer, compiler, docs, or public claims
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Local Python Stdout Protocol Failure Normalization Post-Push State
 
 - Ryan-authorized push completed for the local Python stdout protocol

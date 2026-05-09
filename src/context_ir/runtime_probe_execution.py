@@ -1190,6 +1190,47 @@ def materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
     )
 
 
+def execute_runtime_probe_local_python_subprocess_invocation_attempt(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+    *,
+    completion_contract_revision: str,
+) -> RuntimeProbeExecutionAttempt:
+    """Execute a local-Python subprocess invocation as one normalized attempt."""
+    _validate_local_python_subprocess_invocation(invocation)
+    validated_revision = _validate_contract_revision(
+        completion_contract_revision,
+        field_name="completion_contract_revision",
+    )
+    try:
+        completion = execute_runtime_probe_local_python_subprocess_invocation(
+            invocation,
+            completion_contract_revision=validated_revision,
+        )
+    except Exception as exception:
+        return materialize_runtime_probe_local_python_subprocess_exception_attempt(
+            invocation,
+            exception,
+        )
+
+    if completion.returncode != 0:
+        return materialize_runtime_probe_local_python_process_completion_attempt(
+            completion
+        )
+
+    try:
+        protocol_result = materialize_runtime_probe_local_python_stdout_protocol_result(
+            completion
+        )
+    except Exception as exception:
+        return materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(
+            completion,
+            exception,
+        )
+    return materialize_runtime_probe_local_python_stdout_protocol_attempt(
+        protocol_result
+    )
+
+
 def assemble_runtime_probe_result_batch_from_execution_attempts(
     input_batch: RuntimeProbeExecutionInputBatch,
     attempts: Iterable[RuntimeProbeExecutionAttempt],
@@ -2430,6 +2471,7 @@ __all__ = [
     "collect_runtime_probe_execution_attempts_from_runner_requests",
     "derive_runtime_probe_local_python_environment_context",
     "execute_runtime_probe_local_python_subprocess_invocation",
+    "execute_runtime_probe_local_python_subprocess_invocation_attempt",
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "materialize_runtime_probe_execution_input_batch",
