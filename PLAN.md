@@ -2645,7 +2645,9 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Local Python stdout protocol failure-normalization implementation slice
 - [x] Combined release gate for the exact four-file local Python stdout
   protocol failure-normalization release unit
-- [ ] Local commit creation for the local Python stdout protocol
+- [x] Local commit creation for the local Python stdout protocol
+  failure-normalization release unit
+- [ ] Ryan-authorized push for the local Python stdout protocol
   failure-normalization release unit
 
 ## What Is In Progress
@@ -3597,10 +3599,12 @@ failure-normalization unit:
 - release-unit-audit-cleared: yes
 - full-regression-cleared: yes, full pytest `993 passed`
 - commit-gating-cleared: yes
-- staged: no
-- locally committed: no
+- staged: yes, then committed
+- locally committed: yes,
+  `d8cf97b Normalize local Python stdout protocol failures`
 - pushed: no
-- next route: local commit creation for the exact four-file unit
+- next route: await explicit Ryan authorization to push the local release and
+  continuity-sync commits
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that
