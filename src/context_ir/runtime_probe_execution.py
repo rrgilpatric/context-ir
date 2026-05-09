@@ -39,8 +39,33 @@ _RUNTIME_PROBE_RUNNER_REQUEST_BATCH_CONTRACT_VERSION = (
 _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION = (
     "runtime_probe_local_python_stdout_protocol:v1"
 )
+_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_CONTRACT_VERSION = (
+    "runtime_probe_local_python_worker_request_payload:v1"
+)
 _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY = (
     "runtime_probe_stdout_protocol_revision"
+)
+_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_KEYS = frozenset(
+    {
+        "contract_version",
+        "plan_id",
+        "request_id",
+        "family_label",
+        "form_label",
+        "replay_target_seed",
+        "replay_selector_seed",
+        "request_replay_payload_fields",
+        "runtime_assumptions",
+        "runner_contract_revision",
+        "runner_environment",
+        "runner_assumptions",
+        "invocation_contract_revision",
+        "invocation_identity",
+        "argv",
+        "working_directory",
+        "python_path_entries",
+        "timeout_seconds",
+    }
 )
 _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_KEYS = frozenset(
     {
@@ -70,6 +95,24 @@ _LOCAL_PYTHON_REPEATED_ENVIRONMENT_KEYS = frozenset(
     {
         _LOCAL_PYTHON_PATH_ENTRY_ENVIRONMENT_KEY,
     }
+)
+_REQUIRED_WORKER_REQUEST_REPLAY_FIELD_KEYS = (
+    "plan_id",
+    "request_id",
+    "subject_kind",
+    "subject_id",
+    "source_site_id",
+    "source_file_path",
+    "source_start_line",
+    "source_start_column",
+    "source_end_line",
+    "source_end_column",
+    "reason_code",
+    "boundary_text",
+    "family_label",
+    "form_label",
+    "replay_target_seed",
+    "replay_selector_seed",
 )
 
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
@@ -284,6 +327,56 @@ class RuntimeProbeLocalPythonEnvironmentContext:
             raise ValueError(
                 "local Python python_path_entries must match runner_environment"
             )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonWorkerRequestPayload:
+    """Frozen strict JSON request payload for future local-Python workers."""
+
+    plan_id: str
+    request_id: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    runtime_assumptions: tuple[RuntimeProbeReplayField, ...]
+    runner_contract_revision: str
+    runner_environment: tuple[RuntimeProbeReplayField, ...]
+    runner_assumptions: tuple[RuntimeProbeReplayField, ...]
+    invocation_contract_revision: str
+    invocation_identity: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    contract_version: str = field(
+        default=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_CONTRACT_VERSION,
+        init=False,
+    )
+
+    def __post_init__(self) -> None:
+        """Reject worker request payloads with drifted duplicate metadata."""
+        _validate_local_python_worker_request_payload_parts(
+            contract_version=self.contract_version,
+            plan_id=self.plan_id,
+            request_id=self.request_id,
+            family_label=self.family_label,
+            form_label=self.form_label,
+            replay_target_seed=self.replay_target_seed,
+            replay_selector_seed=self.replay_selector_seed,
+            request_replay_payload_fields=self.request_replay_payload_fields,
+            runtime_assumptions=self.runtime_assumptions,
+            runner_contract_revision=self.runner_contract_revision,
+            runner_environment=self.runner_environment,
+            runner_assumptions=self.runner_assumptions,
+            invocation_contract_revision=self.invocation_contract_revision,
+            invocation_identity=self.invocation_identity,
+            argv=self.argv,
+            working_directory=self.working_directory,
+            python_path_entries=self.python_path_entries,
+            timeout_seconds=self.timeout_seconds,
+        )
 
 
 @dataclass(frozen=True)
@@ -979,6 +1072,137 @@ def derive_runtime_probe_local_python_environment_context(
         timeout_seconds=runner_request.timeout_seconds,
         runner_environment=runner_request.runner_environment,
         runner_assumptions=runner_request.runner_assumptions,
+    )
+
+
+def materialize_runtime_probe_local_python_worker_request_payload(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+) -> RuntimeProbeLocalPythonWorkerRequestPayload:
+    """Build a frozen local-Python worker JSON payload without executing code."""
+    _validate_local_python_subprocess_invocation(invocation)
+    runner_request = invocation.runner_request
+    _validate_runner_request(runner_request)
+    request = runner_request.request
+    return RuntimeProbeLocalPythonWorkerRequestPayload(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        family_label=request.family_label,
+        form_label=request.form_label,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+        request_replay_payload_fields=invocation.request_replay_payload_fields,
+        runtime_assumptions=runner_request.replay_artifact.runtime_assumptions,
+        runner_contract_revision=runner_request.runner_contract_revision,
+        runner_environment=runner_request.runner_environment,
+        runner_assumptions=runner_request.runner_assumptions,
+        invocation_contract_revision=invocation.invocation_contract_revision,
+        invocation_identity=_runtime_probe_local_python_invocation_identity(invocation),
+        argv=invocation.argv,
+        working_directory=invocation.working_directory,
+        python_path_entries=invocation.python_path_entries,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+
+
+def serialize_runtime_probe_local_python_worker_request_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> str:
+    """Serialize a local-Python worker request payload as deterministic JSON."""
+    _validate_local_python_worker_request_payload(payload)
+    return json.dumps(
+        _runtime_probe_local_python_worker_request_payload_json_object(payload),
+        separators=(",", ":"),
+    )
+
+
+def parse_runtime_probe_local_python_worker_request_payload(
+    payload_json: str,
+) -> RuntimeProbeLocalPythonWorkerRequestPayload:
+    """Parse a strict local-Python worker request payload JSON document."""
+    payload_object = _parse_runtime_probe_local_python_worker_request_payload_object(
+        payload_json
+    )
+    contract_version = _parse_local_python_worker_payload_string_field(
+        payload_object["contract_version"],
+        field_name="contract_version",
+    )
+    if (
+        contract_version
+        != _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_CONTRACT_VERSION
+    ):
+        raise ValueError(
+            "local Python worker request payload contract_version is unsupported"
+        )
+
+    return RuntimeProbeLocalPythonWorkerRequestPayload(
+        plan_id=_parse_local_python_worker_payload_string_field(
+            payload_object["plan_id"],
+            field_name="plan_id",
+        ),
+        request_id=_parse_local_python_worker_payload_string_field(
+            payload_object["request_id"],
+            field_name="request_id",
+        ),
+        family_label=_parse_runtime_probe_worker_payload_family_label(
+            payload_object["family_label"]
+        ),
+        form_label=_parse_local_python_worker_payload_string_field(
+            payload_object["form_label"],
+            field_name="form_label",
+        ),
+        replay_target_seed=_parse_local_python_worker_payload_string_field(
+            payload_object["replay_target_seed"],
+            field_name="replay_target_seed",
+        ),
+        replay_selector_seed=_parse_local_python_worker_payload_string_field(
+            payload_object["replay_selector_seed"],
+            field_name="replay_selector_seed",
+        ),
+        request_replay_payload_fields=(
+            _parse_runtime_probe_worker_payload_replay_fields(
+                payload_object["request_replay_payload_fields"],
+                field_name="request_replay_payload_fields",
+            )
+        ),
+        runtime_assumptions=_parse_runtime_probe_worker_payload_replay_fields(
+            payload_object["runtime_assumptions"],
+            field_name="runtime_assumptions",
+        ),
+        runner_contract_revision=_parse_local_python_worker_payload_string_field(
+            payload_object["runner_contract_revision"],
+            field_name="runner_contract_revision",
+        ),
+        runner_environment=_parse_runtime_probe_worker_payload_replay_fields(
+            payload_object["runner_environment"],
+            field_name="runner_environment",
+        ),
+        runner_assumptions=_parse_runtime_probe_worker_payload_replay_fields(
+            payload_object["runner_assumptions"],
+            field_name="runner_assumptions",
+        ),
+        invocation_contract_revision=(
+            _parse_local_python_worker_payload_string_field(
+                payload_object["invocation_contract_revision"],
+                field_name="invocation_contract_revision",
+            )
+        ),
+        invocation_identity=_parse_local_python_worker_payload_string_field(
+            payload_object["invocation_identity"],
+            field_name="invocation_identity",
+        ),
+        argv=_parse_local_python_worker_payload_argv(payload_object["argv"]),
+        working_directory=_parse_local_python_worker_payload_absolute_path(
+            payload_object["working_directory"],
+            field_name="working_directory",
+        ),
+        python_path_entries=(
+            _parse_local_python_worker_payload_python_path_entries(
+                payload_object["python_path_entries"]
+            )
+        ),
+        timeout_seconds=_parse_local_python_worker_payload_timeout_seconds(
+            payload_object["timeout_seconds"]
+        ),
     )
 
 
@@ -2003,6 +2227,248 @@ def _validate_execution_attempt(attempt: RuntimeProbeExecutionAttempt) -> None:
     )
 
 
+def _validate_local_python_worker_request_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> None:
+    """Re-check one local-Python worker request payload for tampering."""
+    if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
+        raise ValueError("local Python worker request payload must be typed")
+    _validate_local_python_worker_request_payload_parts(
+        contract_version=payload.contract_version,
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+        runtime_assumptions=payload.runtime_assumptions,
+        runner_contract_revision=payload.runner_contract_revision,
+        runner_environment=payload.runner_environment,
+        runner_assumptions=payload.runner_assumptions,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        invocation_identity=payload.invocation_identity,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+    )
+
+
+def _validate_local_python_worker_request_payload_parts(
+    *,
+    contract_version: str,
+    plan_id: str,
+    request_id: str,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    replay_target_seed: str,
+    replay_selector_seed: str,
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...],
+    runtime_assumptions: tuple[RuntimeProbeReplayField, ...],
+    runner_contract_revision: str,
+    runner_environment: tuple[RuntimeProbeReplayField, ...],
+    runner_assumptions: tuple[RuntimeProbeReplayField, ...],
+    invocation_contract_revision: str,
+    invocation_identity: str,
+    argv: tuple[str, ...],
+    working_directory: str,
+    python_path_entries: tuple[str, ...],
+    timeout_seconds: int,
+) -> None:
+    """Reject local-Python worker payload fields that cannot round-trip safely."""
+    _validate_contract_revision(
+        contract_version,
+        field_name="local Python worker request payload contract_version",
+    )
+    if (
+        contract_version
+        != _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_CONTRACT_VERSION
+    ):
+        raise ValueError(
+            "local Python worker request payload contract_version is unsupported"
+        )
+    _validate_local_python_worker_payload_metadata_text(
+        plan_id,
+        field_name="plan_id",
+    )
+    _validate_local_python_worker_payload_metadata_text(
+        request_id,
+        field_name="request_id",
+    )
+    if not isinstance(family_label, RuntimeProbeFamily):
+        raise ValueError(
+            "local Python worker request payload family_label must be a runtime "
+            "probe family"
+        )
+    _validate_local_python_worker_payload_metadata_text(
+        form_label,
+        field_name="form_label",
+    )
+    _validate_local_python_worker_payload_metadata_text(
+        replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_local_python_worker_payload_metadata_text(
+        replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    if not request_replay_payload_fields:
+        raise ValueError(
+            "local Python worker request payload requires request replay fields"
+        )
+    if not runtime_assumptions:
+        raise ValueError(
+            "local Python worker request payload requires runtime_assumptions"
+        )
+    _validate_replay_fields(
+        request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_replay_fields(
+        runtime_assumptions,
+        field_name="runtime_assumptions",
+    )
+    _validate_runner_handoff_metadata(
+        runner_contract_revision=runner_contract_revision,
+        timeout_seconds=timeout_seconds,
+        runner_environment=runner_environment,
+        runner_assumptions=runner_assumptions,
+    )
+    (
+        _environment_repository_root,
+        environment_working_directory,
+        environment_python_path_entries,
+    ) = _local_python_environment_parts_from_fields(runner_environment)
+    _validate_contract_revision(
+        invocation_contract_revision,
+        field_name="local Python worker request payload invocation_contract_revision",
+    )
+    _validate_local_python_worker_payload_metadata_text(
+        invocation_identity,
+        field_name="invocation_identity",
+    )
+    _validate_local_python_worker_payload_invocation_argv(argv)
+    _validate_absolute_path_metadata(
+        working_directory,
+        field_name="local Python worker request payload working_directory",
+    )
+    if working_directory != environment_working_directory:
+        raise ValueError(
+            "local Python worker request payload working_directory must match "
+            "runner environment"
+        )
+    _validate_local_python_worker_payload_python_path_entries(
+        python_path_entries,
+    )
+    if python_path_entries != environment_python_path_entries:
+        raise ValueError(
+            "local Python worker request payload python_path_entries must match "
+            "runner environment"
+        )
+    _validate_worker_payload_replay_field_match(
+        request_replay_payload_fields,
+        field_key="plan_id",
+        expected_value=plan_id,
+    )
+    _validate_worker_payload_replay_field_match(
+        request_replay_payload_fields,
+        field_key="request_id",
+        expected_value=request_id,
+    )
+    _validate_worker_payload_replay_field_match(
+        request_replay_payload_fields,
+        field_key="family_label",
+        expected_value=family_label.value,
+    )
+    _validate_worker_payload_replay_field_match(
+        request_replay_payload_fields,
+        field_key="form_label",
+        expected_value=form_label,
+    )
+    _validate_worker_payload_replay_field_match(
+        request_replay_payload_fields,
+        field_key="replay_target_seed",
+        expected_value=replay_target_seed,
+    )
+    _validate_worker_payload_replay_field_match(
+        request_replay_payload_fields,
+        field_key="replay_selector_seed",
+        expected_value=replay_selector_seed,
+    )
+    _validate_worker_payload_required_replay_fields(request_replay_payload_fields)
+    expected_invocation_identity = (
+        _runtime_probe_local_python_invocation_identity_from_parts(
+            plan_id=plan_id,
+            request_id=request_id,
+            invocation_contract_revision=invocation_contract_revision,
+            argv=argv,
+            working_directory=working_directory,
+            python_path_entries=python_path_entries,
+            timeout_seconds=timeout_seconds,
+            request_replay_payload_fields=request_replay_payload_fields,
+        )
+    )
+    if invocation_identity != expected_invocation_identity:
+        raise ValueError(
+            "local Python worker request payload invocation_identity must match "
+            "invocation"
+        )
+
+
+def _validate_worker_payload_replay_field_match(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    field_key: str,
+    expected_value: str,
+) -> None:
+    """Require one request replay field to match its top-level payload twin."""
+    matching_fields = tuple(field for field in fields if field.key == field_key)
+    if len(matching_fields) != 1:
+        raise ValueError(
+            "local Python worker request payload request_replay_payload_fields "
+            f"must contain exactly one {field_key}"
+        )
+    if matching_fields[0].value != expected_value:
+        raise ValueError(
+            "local Python worker request payload "
+            f"{field_key} must match request replay payload fields"
+        )
+
+
+def _validate_worker_payload_required_replay_fields(
+    fields: tuple[RuntimeProbeReplayField, ...],
+) -> None:
+    """Require worker payload replay fields to carry every request identity key."""
+    field_counts = {
+        required_key: sum(1 for field in fields if field.key == required_key)
+        for required_key in _REQUIRED_WORKER_REQUEST_REPLAY_FIELD_KEYS
+    }
+    for required_key, field_count in field_counts.items():
+        if field_count != 1:
+            raise ValueError(
+                "local Python worker request payload request_replay_payload_fields "
+                f"must contain exactly one {required_key}"
+            )
+
+
+def _validate_local_python_worker_payload_metadata_text(
+    value: str,
+    *,
+    field_name: str,
+) -> str:
+    """Reject blank or malformed worker payload metadata text."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(
+            f"local Python worker request payload {field_name} must be non-empty"
+        )
+    if value != value.strip() or _contains_control_character(value):
+        raise ValueError(
+            f"local Python worker request payload {field_name} is malformed"
+        )
+    return value
+
+
 def _validate_local_python_subprocess_invocation(
     invocation: RuntimeProbeLocalPythonSubprocessInvocation,
 ) -> None:
@@ -2062,6 +2528,272 @@ def _validate_local_python_stdout_protocol_result(
     _validate_runner_request(
         protocol_result.completion.invocation.runner_request,
     )
+
+
+def _runtime_probe_local_python_worker_request_payload_json_object(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> dict[str, object]:
+    """Return the stable JSON object shape for a local-Python worker payload."""
+    _validate_local_python_worker_request_payload(payload)
+    return {
+        "contract_version": payload.contract_version,
+        "plan_id": payload.plan_id,
+        "request_id": payload.request_id,
+        "family_label": payload.family_label.value,
+        "form_label": payload.form_label,
+        "replay_target_seed": payload.replay_target_seed,
+        "replay_selector_seed": payload.replay_selector_seed,
+        "request_replay_payload_fields": _replay_fields_json_array(
+            payload.request_replay_payload_fields,
+            field_name="request_replay_payload_fields",
+        ),
+        "runtime_assumptions": _replay_fields_json_array(
+            payload.runtime_assumptions,
+            field_name="runtime_assumptions",
+        ),
+        "runner_contract_revision": payload.runner_contract_revision,
+        "runner_environment": _replay_fields_json_array(
+            payload.runner_environment,
+            field_name="runner_environment",
+        ),
+        "runner_assumptions": _replay_fields_json_array(
+            payload.runner_assumptions,
+            field_name="runner_assumptions",
+        ),
+        "invocation_contract_revision": payload.invocation_contract_revision,
+        "invocation_identity": payload.invocation_identity,
+        "argv": list(payload.argv),
+        "working_directory": payload.working_directory,
+        "python_path_entries": list(payload.python_path_entries),
+        "timeout_seconds": payload.timeout_seconds,
+    }
+
+
+def _replay_fields_json_array(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    field_name: str,
+) -> list[dict[str, str]]:
+    """Return replay fields as ordered strict JSON key/value objects."""
+    _validate_replay_fields(fields, field_name=field_name)
+    return [{"key": field.key, "value": field.value} for field in fields]
+
+
+def _parse_runtime_probe_local_python_worker_request_payload_object(
+    payload_json: str,
+) -> dict[object, object]:
+    """Parse the top-level worker payload JSON object with exact keys."""
+    _validate_local_python_worker_payload_json_text(payload_json)
+    try:
+        decoded: object = json.loads(
+            payload_json,
+            object_pairs_hook=_local_python_worker_payload_json_object_from_pairs,
+        )
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            "local Python worker request payload must be valid JSON"
+        ) from error
+    if not isinstance(decoded, dict):
+        raise ValueError("local Python worker request payload must be a JSON object")
+
+    payload_object: dict[object, object] = decoded
+    if any(not isinstance(key, str) for key in payload_object):
+        raise ValueError("local Python worker request payload keys must be strings")
+    payload_keys = set(payload_object)
+    unknown_keys = (
+        payload_keys - _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_KEYS
+    )
+    if unknown_keys:
+        raise ValueError("local Python worker request payload contains unknown keys")
+    missing_keys = (
+        _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_KEYS - payload_keys
+    )
+    if missing_keys:
+        raise ValueError("local Python worker request payload is missing required keys")
+    return payload_object
+
+
+def _local_python_worker_payload_json_object_from_pairs(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate object keys while decoding strict payload JSON."""
+    payload_object: dict[str, object] = {}
+    for key, value in pairs:
+        if key in payload_object:
+            raise ValueError(
+                "local Python worker request payload contains duplicate JSON keys"
+            )
+        payload_object[key] = value
+    return payload_object
+
+
+def _validate_local_python_worker_payload_json_text(value: str) -> None:
+    """Reject untyped or blank worker payload JSON text."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(
+            "local Python worker request payload JSON must be non-empty text"
+        )
+
+
+def _parse_local_python_worker_payload_string_field(
+    value: object,
+    *,
+    field_name: str,
+) -> str:
+    """Parse one strict string field from the worker request payload."""
+    if not isinstance(value, str):
+        raise ValueError(
+            f"local Python worker request payload {field_name} must be a string"
+        )
+    return _validate_local_python_worker_payload_metadata_text(
+        value,
+        field_name=field_name,
+    )
+
+
+def _parse_runtime_probe_worker_payload_family_label(
+    value: object,
+) -> RuntimeProbeFamily:
+    """Parse one runtime probe family label from the worker request payload."""
+    family_label = _parse_local_python_worker_payload_string_field(
+        value,
+        field_name="family_label",
+    )
+    try:
+        return RuntimeProbeFamily(family_label)
+    except ValueError as error:
+        raise ValueError(
+            "local Python worker request payload family_label is unsupported"
+        ) from error
+
+
+def _parse_local_python_worker_payload_timeout_seconds(value: object) -> int:
+    """Parse a positive integer timeout from the worker request payload."""
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        raise ValueError(
+            "local Python worker request payload timeout_seconds must be a "
+            "positive integer"
+        )
+    return value
+
+
+def _parse_local_python_worker_payload_argv(value: object) -> tuple[str, ...]:
+    """Parse the subprocess argv list from a worker request payload."""
+    if not isinstance(value, list):
+        raise ValueError("local Python worker request payload argv must be a list")
+    argv = tuple(
+        _parse_local_python_worker_payload_string_field(token, field_name="argv")
+        for token in value
+    )
+    return _validate_local_python_worker_payload_invocation_argv(argv)
+
+
+def _parse_local_python_worker_payload_absolute_path(
+    value: object,
+    *,
+    field_name: str,
+) -> str:
+    """Parse one absolute path string from a worker request payload."""
+    path_value = _parse_local_python_worker_payload_string_field(
+        value,
+        field_name=field_name,
+    )
+    return _validate_absolute_path_metadata(
+        path_value,
+        field_name=f"local Python worker request payload {field_name}",
+    )
+
+
+def _parse_local_python_worker_payload_python_path_entries(
+    value: object,
+) -> tuple[str, ...]:
+    """Parse ordered Python path entries from a worker request payload."""
+    if not isinstance(value, list):
+        raise ValueError(
+            "local Python worker request payload python_path_entries must be a list"
+        )
+    python_path_entries = tuple(
+        _parse_local_python_worker_payload_absolute_path(
+            entry,
+            field_name="python_path_entries",
+        )
+        for entry in value
+    )
+    return _validate_local_python_worker_payload_python_path_entries(
+        python_path_entries,
+    )
+
+
+def _validate_local_python_worker_payload_invocation_argv(
+    argv: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Reject worker payload argv values that do not retain invocation shape."""
+    if not isinstance(argv, tuple) or not argv:
+        raise ValueError("local Python worker request payload argv must be a tuple")
+    _validate_absolute_path_metadata(
+        argv[0],
+        field_name="local Python worker request payload argv executable",
+    )
+    return _validate_local_python_subprocess_argv(
+        argv,
+        python_executable=argv[0],
+    )
+
+
+def _validate_local_python_worker_payload_python_path_entries(
+    python_path_entries: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Reject unordered-container or malformed worker payload Python path data."""
+    if not isinstance(python_path_entries, tuple):
+        raise ValueError(
+            "local Python worker request payload python_path_entries must be a tuple"
+        )
+    if not python_path_entries:
+        raise ValueError(
+            "local Python worker request payload python_path_entries must be non-empty"
+        )
+    for python_path_entry in python_path_entries:
+        _validate_absolute_path_metadata(
+            python_path_entry,
+            field_name="local Python worker request payload python_path_entries",
+        )
+    return python_path_entries
+
+
+def _parse_runtime_probe_worker_payload_replay_fields(
+    value: object,
+    *,
+    field_name: str,
+) -> tuple[RuntimeProbeReplayField, ...]:
+    """Parse ordered replay fields from a worker request payload array."""
+    if not isinstance(value, list):
+        raise ValueError(
+            f"local Python worker request payload {field_name} must be a list"
+        )
+    fields: list[RuntimeProbeReplayField] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            raise ValueError(
+                f"local Python worker request payload {field_name} entries must "
+                "be objects"
+            )
+        entry_object: dict[object, object] = entry
+        if set(entry_object) != {"key", "value"}:
+            raise ValueError(
+                f"local Python worker request payload {field_name} entries must "
+                "contain key and value"
+            )
+        field_key = entry_object["key"]
+        field_value = entry_object["value"]
+        if not isinstance(field_key, str) or not isinstance(field_value, str):
+            raise ValueError(
+                f"local Python worker request payload {field_name} key and value "
+                "must be strings"
+            )
+        fields.append(RuntimeProbeReplayField(key=field_key, value=field_value))
+    parsed_fields = tuple(fields)
+    _validate_replay_fields(parsed_fields, field_name=field_name)
+    return parsed_fields
 
 
 def _parse_runtime_probe_local_python_stdout_protocol(
@@ -2501,21 +3233,45 @@ def _runtime_probe_local_python_invocation_identity(
     invocation: RuntimeProbeLocalPythonSubprocessInvocation,
 ) -> str:
     """Return a stable identity digest for one local-Python invocation contract."""
+    return _runtime_probe_local_python_invocation_identity_from_parts(
+        plan_id=invocation.runner_request.plan_id,
+        request_id=invocation.runner_request.request_id,
+        invocation_contract_revision=invocation.invocation_contract_revision,
+        argv=invocation.argv,
+        working_directory=invocation.working_directory,
+        python_path_entries=invocation.python_path_entries,
+        timeout_seconds=invocation.timeout_seconds,
+        request_replay_payload_fields=invocation.request_replay_payload_fields,
+    )
+
+
+def _runtime_probe_local_python_invocation_identity_from_parts(
+    *,
+    plan_id: str,
+    request_id: str,
+    invocation_contract_revision: str,
+    argv: tuple[str, ...],
+    working_directory: str,
+    python_path_entries: tuple[str, ...],
+    timeout_seconds: int,
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...],
+) -> str:
+    """Return the stable local-Python invocation identity for copied metadata."""
     replay_payload_identity = tuple(
-        (field.key, field.value) for field in invocation.request_replay_payload_fields
+        (field.key, field.value) for field in request_replay_payload_fields
     )
     serialized_identity = json.dumps(
         (
-            ("plan_id", invocation.runner_request.plan_id),
-            ("request_id", invocation.runner_request.request_id),
+            ("plan_id", plan_id),
+            ("request_id", request_id),
             (
                 "invocation_contract_revision",
-                invocation.invocation_contract_revision,
+                invocation_contract_revision,
             ),
-            ("argv", invocation.argv),
-            ("working_directory", invocation.working_directory),
-            ("python_path_entries", invocation.python_path_entries),
-            ("timeout_seconds", invocation.timeout_seconds),
+            ("argv", argv),
+            ("working_directory", working_directory),
+            ("python_path_entries", python_path_entries),
+            ("timeout_seconds", timeout_seconds),
             ("request_replay_payload_fields", replay_payload_identity),
         ),
         separators=(",", ":"),
@@ -2614,6 +3370,7 @@ __all__ = [
     "RuntimeProbeLocalPythonStdoutProtocolResult",
     "RuntimeProbeLocalPythonSubprocessHandlerConfig",
     "RuntimeProbeLocalPythonSubprocessInvocation",
+    "RuntimeProbeLocalPythonWorkerRequestPayload",
     "RuntimeProbeRunnerHandlerEntry",
     "RuntimeProbeRunnerHandlerKey",
     "RuntimeProbeRunnerAttemptCollection",
@@ -2637,6 +3394,9 @@ __all__ = [
     "materialize_runtime_probe_local_python_stdout_protocol_result",
     "materialize_runtime_probe_local_python_subprocess_exception_attempt",
     "materialize_runtime_probe_local_python_subprocess_invocation",
+    "materialize_runtime_probe_local_python_worker_request_payload",
     "materialize_runtime_probe_runner_request_batch",
+    "parse_runtime_probe_local_python_worker_request_payload",
     "prepare_runtime_probe_runner_requests_for_diagnostic",
+    "serialize_runtime_probe_local_python_worker_request_payload",
 ]

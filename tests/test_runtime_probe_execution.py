@@ -32,6 +32,9 @@ from context_ir.runtime_probe_execution import (
     materialize_runtime_probe_local_python_stdout_protocol_result,
     materialize_runtime_probe_local_python_subprocess_exception_attempt,
     materialize_runtime_probe_local_python_subprocess_invocation,
+    materialize_runtime_probe_local_python_worker_request_payload,
+    parse_runtime_probe_local_python_worker_request_payload,
+    serialize_runtime_probe_local_python_worker_request_payload,
 )
 from context_ir.semantic_types import (
     CapabilityTier,
@@ -300,6 +303,20 @@ def _local_python_runner_request(
         )
     )
     return runner_batch.runner_requests[0]
+
+
+def _local_python_worker_request_payload(
+    invocation: (
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation | None
+    ) = None,
+) -> runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestPayload:
+    """Return one strict JSON worker request payload for local-Python tests."""
+    selected_invocation = (
+        _local_python_subprocess_invocation() if invocation is None else invocation
+    )
+    return materialize_runtime_probe_local_python_worker_request_payload(
+        selected_invocation
+    )
 
 
 def _local_python_subprocess_invocation(
@@ -755,6 +772,299 @@ def test_derive_local_python_environment_context_revalidates_runner_request() ->
     with pytest.raises(ValueError, match="request_id must match execution input"):
         runtime_probe_execution.derive_runtime_probe_local_python_environment_context(
             runner_request
+        )
+
+
+def test_materialize_local_python_worker_request_payload_is_deterministic() -> None:
+    """Worker request payloads are frozen execution-free JSON handoff contracts."""
+    runner_request = _local_python_runner_request(timeout_seconds=47)
+    invocation = _local_python_subprocess_invocation(runner_request)
+
+    first_payload = _local_python_worker_request_payload(invocation)
+    second_payload = _local_python_worker_request_payload(invocation)
+
+    assert first_payload == second_payload
+    assert isinstance(
+        first_payload,
+        runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestPayload,
+    )
+    assert first_payload.contract_version == (
+        "runtime_probe_local_python_worker_request_payload:v1"
+    )
+    assert first_payload.plan_id == runner_request.plan_id
+    assert first_payload.request_id == runner_request.request_id
+    assert first_payload.family_label is runner_request.request.family_label
+    assert first_payload.form_label == runner_request.request.form_label
+    assert first_payload.replay_target_seed == runner_request.request.replay_target_seed
+    assert (
+        first_payload.replay_selector_seed
+        == runner_request.request.replay_selector_seed
+    )
+    assert first_payload.request_replay_payload_fields is (
+        runner_request.replay_artifact.replay_inputs
+    )
+    assert first_payload.runtime_assumptions is (
+        runner_request.replay_artifact.runtime_assumptions
+    )
+    assert first_payload.runner_contract_revision == (
+        runner_request.runner_contract_revision
+    )
+    assert first_payload.runner_environment is runner_request.runner_environment
+    assert first_payload.runner_assumptions is runner_request.runner_assumptions
+    assert first_payload.invocation_contract_revision == (
+        invocation.invocation_contract_revision
+    )
+    assert first_payload.invocation_identity.startswith(
+        "runtime_probe_local_python_subprocess_invocation:"
+    )
+    assert first_payload.argv is invocation.argv
+    assert first_payload.working_directory == invocation.working_directory
+    assert first_payload.python_path_entries is invocation.python_path_entries
+    assert first_payload.timeout_seconds == 47
+
+    with pytest.raises(FrozenInstanceError):
+        first_payload.plan_id = "runtime_probe_request_plan:mutated"
+
+
+def test_materialize_local_python_worker_request_payload_revalidates_invocation() -> (
+    None
+):
+    """Payload materialization rejects invocations that drifted in memory."""
+    invocation = _local_python_subprocess_invocation()
+    object.__setattr__(
+        invocation,
+        "argv",
+        ("/workspace/other/python", *invocation.argv[1:]),
+    )
+
+    with pytest.raises(ValueError, match="argv executable"):
+        _local_python_worker_request_payload(invocation)
+
+
+def test_local_python_worker_request_payload_serializes_strict_json() -> None:
+    """Worker request payload JSON serialization is deterministic and strict."""
+    payload = _local_python_worker_request_payload()
+
+    first_serialized = serialize_runtime_probe_local_python_worker_request_payload(
+        payload
+    )
+    second_serialized = serialize_runtime_probe_local_python_worker_request_payload(
+        payload
+    )
+    parsed_payload = parse_runtime_probe_local_python_worker_request_payload(
+        first_serialized
+    )
+
+    assert first_serialized == second_serialized
+    assert ", " not in first_serialized
+    assert ": " not in first_serialized
+    assert parsed_payload == payload
+    assert (
+        serialize_runtime_probe_local_python_worker_request_payload(parsed_payload)
+        == first_serialized
+    )
+    decoded = json.loads(first_serialized)
+    assert list(decoded) == [
+        "contract_version",
+        "plan_id",
+        "request_id",
+        "family_label",
+        "form_label",
+        "replay_target_seed",
+        "replay_selector_seed",
+        "request_replay_payload_fields",
+        "runtime_assumptions",
+        "runner_contract_revision",
+        "runner_environment",
+        "runner_assumptions",
+        "invocation_contract_revision",
+        "invocation_identity",
+        "argv",
+        "working_directory",
+        "python_path_entries",
+        "timeout_seconds",
+    ]
+    assert decoded["family_label"] == "dynamic_import"
+    assert decoded["invocation_identity"] == payload.invocation_identity
+    assert decoded["argv"] == list(payload.argv)
+    assert decoded["working_directory"] == payload.working_directory
+    assert decoded["python_path_entries"] == list(payload.python_path_entries)
+    assert decoded["timeout_seconds"] == 30
+    assert decoded["request_replay_payload_fields"][0] == {
+        "key": "plan_id",
+        "value": payload.plan_id,
+    }
+    assert [field["key"] for field in decoded["request_replay_payload_fields"]] == list(
+        _EXPECTED_REPLAY_INPUT_KEYS
+    )
+
+
+def test_parse_local_python_worker_request_payload_rejects_bad_keys() -> None:
+    """Worker request payload JSON must use exactly the versioned key set."""
+    payload_object = json.loads(
+        serialize_runtime_probe_local_python_worker_request_payload(
+            _local_python_worker_request_payload()
+        )
+    )
+    unknown_payload_object = dict(payload_object)
+    unknown_payload_object["extra"] = "unplanned"
+    missing_payload_object = dict(payload_object)
+    del missing_payload_object["request_id"]
+
+    with pytest.raises(ValueError, match="unknown keys"):
+        parse_runtime_probe_local_python_worker_request_payload(
+            json.dumps(unknown_payload_object, separators=(",", ":"))
+        )
+    with pytest.raises(ValueError, match="missing required keys"):
+        parse_runtime_probe_local_python_worker_request_payload(
+            json.dumps(missing_payload_object, separators=(",", ":"))
+        )
+    with pytest.raises(ValueError, match="duplicate JSON keys"):
+        parse_runtime_probe_local_python_worker_request_payload(
+            '{"contract_version":"first","contract_version":"second"}'
+        )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "error_match"),
+    (
+        (
+            "contract_version",
+            "runtime_probe_local_python_worker_request_payload:v2",
+            "contract_version is unsupported",
+        ),
+        ("family_label", "unplanned_family", "family_label is unsupported"),
+        ("timeout_seconds", 0, "timeout_seconds"),
+        ("timeout_seconds", True, "timeout_seconds"),
+        ("timeout_seconds", 31, "invocation_identity"),
+        (
+            "invocation_identity",
+            "runtime_probe_local_python_subprocess_invocation:wrong",
+            "invocation_identity",
+        ),
+        (
+            "argv",
+            [
+                "/workspace/context-ir/.venv/bin/python",
+                "--not-module-mode",
+                "context_ir.runtime_probe_worker",
+            ],
+            "argv",
+        ),
+        ("working_directory", "/workspace/other", "working_directory"),
+        (
+            "python_path_entries",
+            [
+                "/opt/context-ir/support",
+                "/workspace/context-ir/tests/fixtures",
+                "/workspace/context-ir/src",
+            ],
+            "python_path_entries",
+        ),
+        (
+            "request_replay_payload_fields",
+            [{"key": "plan_id", "value": "runtime_probe_request_plan:wrong"}],
+            "plan_id must match request replay",
+        ),
+        (
+            "runner_environment",
+            [{"key": "repository_root", "value": "/workspace/context-ir"}],
+            "missing required singleton",
+        ),
+    ),
+)
+def test_parse_local_python_worker_request_payload_rejects_bad_values(
+    field_name: str,
+    field_value: object,
+    error_match: str,
+) -> None:
+    """Worker request payload parsing validates primitive and replay field values."""
+    payload_object = json.loads(
+        serialize_runtime_probe_local_python_worker_request_payload(
+            _local_python_worker_request_payload()
+        )
+    )
+    payload_object[field_name] = field_value
+
+    with pytest.raises(ValueError, match=error_match):
+        parse_runtime_probe_local_python_worker_request_payload(
+            json.dumps(payload_object, separators=(",", ":"))
+        )
+
+
+@pytest.mark.parametrize(
+    "missing_field_key",
+    (
+        "source_site_id",
+        "source_file_path",
+        "source_start_line",
+        "source_start_column",
+        "source_end_line",
+        "source_end_column",
+        "reason_code",
+        "boundary_text",
+    ),
+)
+def test_local_python_worker_request_payload_rejects_missing_required_replay_fields(
+    missing_field_key: str,
+) -> None:
+    """Direct and parsed payload validation require replay request identity fields."""
+    payload = _local_python_worker_request_payload()
+    fields_without_key = tuple(
+        field
+        for field in payload.request_replay_payload_fields
+        if field.key != missing_field_key
+    )
+    error_match = f"exactly one {missing_field_key}"
+
+    with pytest.raises(ValueError, match=error_match):
+        replace(payload, request_replay_payload_fields=fields_without_key)
+
+    payload_object = json.loads(
+        serialize_runtime_probe_local_python_worker_request_payload(payload)
+    )
+    payload_object["request_replay_payload_fields"] = [
+        field
+        for field in payload_object["request_replay_payload_fields"]
+        if field["key"] != missing_field_key
+    ]
+
+    with pytest.raises(ValueError, match=error_match):
+        parse_runtime_probe_local_python_worker_request_payload(
+            json.dumps(payload_object, separators=(",", ":"))
+        )
+
+
+def test_local_python_worker_request_payload_rejects_drift_before_serialize() -> None:
+    """Serialization revalidates frozen payloads before emitting JSON."""
+    payload = _local_python_worker_request_payload()
+    object.__setattr__(payload, "plan_id", "runtime_probe_request_plan:wrong")
+
+    with pytest.raises(ValueError, match="plan_id must match request replay"):
+        serialize_runtime_probe_local_python_worker_request_payload(payload)
+
+    identity_drifted_payload = _local_python_worker_request_payload()
+    object.__setattr__(
+        identity_drifted_payload,
+        "invocation_identity",
+        "runtime_probe_local_python_subprocess_invocation:wrong",
+    )
+
+    with pytest.raises(ValueError, match="invocation_identity"):
+        serialize_runtime_probe_local_python_worker_request_payload(
+            identity_drifted_payload
+        )
+
+    path_order_drifted_payload = _local_python_worker_request_payload()
+    object.__setattr__(
+        path_order_drifted_payload,
+        "python_path_entries",
+        tuple(reversed(path_order_drifted_payload.python_path_entries)),
+    )
+
+    with pytest.raises(ValueError, match="python_path_entries"):
+        serialize_runtime_probe_local_python_worker_request_payload(
+            path_order_drifted_payload
         )
 
 
@@ -4673,6 +4983,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
             _local_python_runner_request()
         )
     )
+    local_python_worker_payload = _local_python_worker_request_payload()
     local_python_invocation = _local_python_subprocess_invocation()
     local_python_handler_config = (
         runtime_probe_execution.RuntimeProbeLocalPythonSubprocessHandlerConfig(
@@ -4731,6 +5042,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     with pytest.raises(FrozenInstanceError):
         local_python_context.working_directory = "/tmp/context-ir"
     with pytest.raises(FrozenInstanceError):
+        local_python_worker_payload.plan_id = "runtime_probe_request_plan:mutated"
+    with pytest.raises(FrozenInstanceError):
         local_python_invocation.working_directory = "/tmp/context-ir"
     with pytest.raises(FrozenInstanceError):
         local_python_handler_config.form_label = "dynamic_import:mutated/1"
@@ -4767,6 +5080,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert (
         "RuntimeProbeLocalPythonSubprocessInvocation" in runtime_probe_execution.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonWorkerRequestPayload" in runtime_probe_execution.__all__
     )
     assert "RuntimeProbeRunnerHandlerEntry" in runtime_probe_execution.__all__
     assert "RuntimeProbeRunnerHandlerKey" in runtime_probe_execution.__all__
@@ -4823,10 +5139,19 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "materialize_runtime_probe_local_python_subprocess_invocation" in (
         runtime_probe_execution.__all__
     )
+    assert "materialize_runtime_probe_local_python_worker_request_payload" in (
+        runtime_probe_execution.__all__
+    )
     assert "materialize_runtime_probe_runner_request_batch" in (
         runtime_probe_execution.__all__
     )
+    assert "parse_runtime_probe_local_python_worker_request_payload" in (
+        runtime_probe_execution.__all__
+    )
     assert "prepare_runtime_probe_runner_requests_for_diagnostic" in (
+        runtime_probe_execution.__all__
+    )
+    assert "serialize_runtime_probe_local_python_worker_request_payload" in (
         runtime_probe_execution.__all__
     )
     assert "RuntimeProbeDiagnosticRunnerRequestPreparation" not in context_ir.__all__
@@ -4840,6 +5165,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeLocalPythonStdoutProtocolResult" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonSubprocessHandlerConfig" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonSubprocessInvocation" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonWorkerRequestPayload" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerEntry" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerKey" not in context_ir.__all__
     assert "RuntimeProbeRunnerAttemptCollection" not in context_ir.__all__
@@ -4887,6 +5213,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         not in context_ir.__all__
     )
     assert (
+        "materialize_runtime_probe_local_python_worker_request_payload"
+        not in context_ir.__all__
+    )
+    assert (
         "materialize_runtime_probe_local_python_stdout_protocol_attempt"
         not in context_ir.__all__
     )
@@ -4900,7 +5230,15 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert "materialize_runtime_probe_runner_request_batch" not in context_ir.__all__
     assert (
+        "parse_runtime_probe_local_python_worker_request_payload"
+        not in context_ir.__all__
+    )
+    assert (
         "prepare_runtime_probe_runner_requests_for_diagnostic" not in context_ir.__all__
+    )
+    assert (
+        "serialize_runtime_probe_local_python_worker_request_payload"
+        not in context_ir.__all__
     )
     assert not hasattr(context_ir, "RuntimeProbeDiagnosticRunnerRequestPreparation")
     assert not hasattr(context_ir, "RuntimeProbeDispatchingRunner")
@@ -4913,6 +5251,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonStdoutProtocolResult")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonSubprocessHandlerConfig")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonSubprocessInvocation")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonWorkerRequestPayload")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerEntry")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerKey")
     assert not hasattr(context_ir, "RuntimeProbeRunnerAttemptCollection")
@@ -4990,5 +5329,17 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert not hasattr(
         context_ir,
+        "materialize_runtime_probe_local_python_worker_request_payload",
+    )
+    assert not hasattr(
+        context_ir,
         "materialize_runtime_probe_runner_request_batch",
+    )
+    assert not hasattr(
+        context_ir,
+        "parse_runtime_probe_local_python_worker_request_payload",
+    )
+    assert not hasattr(
+        context_ir,
+        "serialize_runtime_probe_local_python_worker_request_payload",
     )

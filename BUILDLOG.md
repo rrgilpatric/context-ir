@@ -2,6 +2,188 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Worker Request Payload Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  local Python worker request payload contract release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed.
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+    reporting `108 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    reporting `1033 passed`
+  - `git diff --check` passed
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `2f63f7f Sync local Python handler adapter release routing`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, after two correction passes
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1033 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: 2 corrections
+
+## 2026-05-09 -- Local Python Worker Request Payload Workspace Acceptance
+
+- Reviewed the returned local Python worker request payload implementation
+  slice and two narrow correction passes.
+- Findings:
+  - first returned implementation omitted invocation-derived metadata and
+    materialized from `RuntimeProbeRunnerRequest` instead of
+    `RuntimeProbeLocalPythonSubprocessInvocation`
+  - first correction still allowed payloads that omitted source-site identity,
+    source span, `reason_code`, or `boundary_text` replay fields
+  - second correction closed the remaining required replay-field validation gap
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `2f63f7f Sync local Python handler adapter release routing`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen module-local
+    `RuntimeProbeLocalPythonWorkerRequestPayload`
+  - materializes payloads from typed
+    `RuntimeProbeLocalPythonSubprocessInvocation` values after revalidating the
+    invocation and carried runner request
+  - preserves request identity, family/form, replay seeds,
+    `request_replay_payload_fields`, runtime assumptions, runner environment,
+    runner assumptions, runner contract revision, invocation contract revision,
+    invocation identity, argv, working directory, ordered Python path entries,
+    and timeout seconds
+  - requires exactly one request replay field for every required request
+    identity key, including source-site identity, source span, `reason_code`,
+    and `boundary_text`
+  - provides deterministic strict JSON serialization and parsing helpers
+  - rejects malformed JSON, duplicate JSON keys, non-object payloads, missing
+    or unknown top-level keys, invalid enum labels, invalid replay fields,
+    missing required replay identity fields, and invocation/payload drift
+  - preserves deterministic order for request replay fields and Python path
+    entries
+  - exports stay module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+    unchanged
+  - the release does not add filesystem IO, stdin/stdout transport wiring,
+    subprocess behavior changes, temp files, worker modules, concrete
+    family/form semantics, global dispatch registration,
+    `RuntimeProbeObservedResult` synthesis, result assembly changes, admission,
+    recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+    compiler, docs, or public claims
+- Implementation validation reported by the execution lane:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 36 source files
+  - requested focused pytest suite passed, reporting `271 tests`
+  - `git diff --check` passed
+- Focused validation rerun by control:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -k worker_request_payload -q`
+    passed, reporting `24 passed, 158 deselected`
+- Release state:
+  - accepted in workspace: yes, after two correction passes
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: 2 corrections
+
+## 2026-05-09 -- Local Python Worker Request Payload Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  runner handler adapter release.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `2f63f7f Sync local Python handler adapter release routing`
+  - latest pushed source/contract authority is
+    `9b9b5cd Add local Python probe handler adapter`
+  - worktree was clean before this control-route continuity update
+  - nothing staged before this control-route continuity update
+  - no untracked files before this control-route continuity update
+  - `git diff --check` was clean before this control-route continuity update
+- Continuity correction:
+  - committed `PLAN.md` and `BUILDLOG.md` still described the handler adapter
+    push as pending even though live git refs showed `HEAD == origin/main` at
+    `2f63f7f`
+  - current routing now treats `9b9b5cd` as pushed, no-active-gate source and
+    contract authority
+- Routing decision:
+  - the next smallest safe implementation slice is a module-local,
+    non-executing local Python worker request payload contract
+  - the handler adapter can invoke a configured local Python module, but future
+    child worker modules still need a deterministic request/replay payload
+    boundary before concrete family/form workers or global registration are
+    safe
+- Alternatives considered:
+  - concrete `DYNAMIC_IMPORT` worker or handler: rejected as too broad because
+    it would mix request transport, repository-code execution, probe semantics,
+    stdout proof interpretation, and registration
+  - stdin/temp-file transport wiring: rejected as premature until the payload
+    shape is typed and round-trip tested
+  - global handler registration: rejected because no concrete worker module
+    exists yet
+- Scope boundary:
+  - derive payloads from typed `RuntimeProbeLocalPythonSubprocessInvocation`
+    values and the carried `RuntimeProbeRunnerRequest`
+  - preserve request identity, family/form, source-site, replay, runtime
+    assumption, runner environment, invocation, timeout, argv, working
+    directory, and ordered Python path metadata needed by future workers
+  - add deterministic in-memory strict JSON serialization and parsing helpers
+  - reject malformed payloads and drift without leaking raw serialized payloads
+  - do not add filesystem IO, stdin/stdout transport wiring, subprocess
+    behavior changes, temp files, worker modules, concrete family/form
+    semantics, global dispatch registration, observed-result synthesis,
+    admission, recompile, facade, MCP, package-root, schema, eval, scoring,
+    optimizer, compiler, docs, or public claims
+- First implementation-lane result:
+  - returned `NEEDS-CONTROL`
+  - made no file edits
+  - ran no validation commands
+  - ambiguity: the prompt phrase "Do not execute anything and do not write
+    files" was read as a ban on repo edits and validation commands
+- Control clarification:
+  - implementation lanes are authorized to edit the two in-scope repo files and
+    run the listed validation commands
+  - "non-executing" and "no write files" constrain the delivered runtime probe
+    behavior: do not add subprocess execution behavior beyond existing helpers,
+    repository-code execution, temp files, stdin/stdout transport wiring, or
+    runtime filesystem IO for the worker payload contract
+- Release state:
+  - selected by control: yes
+  - first implementation lane launched: yes
+  - first implementation lane returned: `NEEDS-CONTROL`
+  - corrected implementation lane launched: no
+  - accepted in workspace: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Local Python Handler Adapter Local Commit Routing
 
 - Local commit creation completed for the local Python runner handler adapter
