@@ -793,6 +793,186 @@ def test_dynamic_import_worker_observation_does_not_import_modules() -> None:
         )
 
 
+def test_dynamic_import_worker_handler_factory_metadata() -> None:
+    """The factory returns the exact dynamic-import family/form handler entry."""
+
+    def observer(request: DynamicImportWorkerRequest) -> DynamicImportWorkerObservation:
+        return _valid_dynamic_import_worker_observation(request=request)
+
+    entry = (
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer
+        )
+    )
+
+    assert (
+        entry.family_label is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+    )
+    assert entry.form_label == "dynamic_import:importlib.import_module/1"
+    assert isinstance(
+        entry.handler,
+        runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter,
+    )
+    with pytest.raises(FrozenInstanceError):
+        entry.handler.observer = observer
+
+
+def test_dynamic_import_worker_handler_factory_rejects_noncallable_observer() -> None:
+    """The injected observer contract is enforced before handler registration."""
+    observer = cast(
+        runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerObserver,
+        object(),
+    )
+
+    with pytest.raises(ValueError, match="observer"):
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer
+        )
+
+
+def test_dynamic_import_worker_adapter_materializes_observed_success() -> None:
+    """The adapter validates the payload before invoking the observer."""
+    observed_requests: list[DynamicImportWorkerRequest] = []
+
+    def observer(request: DynamicImportWorkerRequest) -> DynamicImportWorkerObservation:
+        assert isinstance(request, DynamicImportWorkerRequest)
+        assert (
+            request.family_label
+            is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+        )
+        assert request.form_label == "dynamic_import:importlib.import_module/1"
+        observed_requests.append(request)
+        return _valid_dynamic_import_worker_observation(
+            request=request,
+            imported_module="plugins.forecast",
+        )
+
+    adapter = (
+        runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter(
+            observer=observer
+        )
+    )
+
+    response = adapter(_valid_worker_payload())
+
+    assert len(observed_requests) == 1
+    assert (
+        response
+        == runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(_field("imported_module", "plugins.forecast"),)
+        )
+    )
+
+
+def test_dynamic_import_worker_adapter_rejects_payload_before_observer() -> None:
+    """Invalid worker payload metadata never reaches the injected observer."""
+    observer_calls: list[DynamicImportWorkerRequest] = []
+
+    def observer(request: DynamicImportWorkerRequest) -> DynamicImportWorkerObservation:
+        observer_calls.append(request)
+        return _valid_dynamic_import_worker_observation(request=request)
+
+    adapter = (
+        runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter(
+            observer=observer
+        )
+    )
+    payload = _worker_payload_with_replay_field("reason_code", "reflective_builtin")
+
+    with pytest.raises(ValueError, match="reason_code"):
+        adapter(payload)
+
+    assert observer_calls == []
+
+
+def test_dynamic_import_worker_factory_dispatches_success_through_main() -> None:
+    """Worker main can consume the injected dynamic-import handler factory."""
+
+    def observer(request: DynamicImportWorkerRequest) -> DynamicImportWorkerObservation:
+        return _valid_dynamic_import_worker_observation(
+            request=request,
+            imported_module="plugins.dispatch",
+        )
+
+    entry = (
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer
+        )
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        _valid_worker_stdin_text(),
+        (entry,),
+    )
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":['
+        '{"key":"imported_module","value":"plugins.dispatch"}]}'
+    )
+
+
+def test_dynamic_import_worker_observer_exception_fails_closed() -> None:
+    """Observer exceptions are sanitized through the worker dispatch boundary."""
+    stdin_text = _valid_worker_stdin_text()
+
+    def observer(request: DynamicImportWorkerRequest) -> DynamicImportWorkerObservation:
+        del request
+        raise RuntimeError("handler failed with secret-token /private/tmp Traceback")
+
+    entry = (
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer
+        )
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert stderr_text == "runtime_probe_worker: rejected worker handler failure\n"
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+def test_dynamic_import_worker_drifted_observation_fails_closed() -> None:
+    """Returned observations are revalidated against the adapted request."""
+    stdin_text = _valid_worker_stdin_text()
+
+    def observer(request: DynamicImportWorkerRequest) -> DynamicImportWorkerObservation:
+        observation = _valid_dynamic_import_worker_observation(request=request)
+        object.__setattr__(observation, "request_id", "runtime_probe:wrong")
+        return observation
+
+    adapter = (
+        runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter(
+            observer=observer
+        )
+    )
+    with pytest.raises(ValueError, match="request_id"):
+        adapter(_valid_worker_payload())
+
+    entry = (
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer
+        )
+    )
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert stderr_text == "runtime_probe_worker: rejected worker handler failure\n"
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
 def test_valid_worker_request_parses_and_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1059,7 +1239,7 @@ def test_worker_without_handlers_never_emits_success_protocol_shape() -> None:
 
 
 def test_worker_entrypoint_is_importable() -> None:
-    """The subprocess target module exists and exposes a callable main."""
+    """The subprocess target module exposes module-local worker entrypoints."""
     module = __import__(
         "context_ir.runtime_probe_worker",
         fromlist=["main"],
@@ -1068,6 +1248,17 @@ def test_worker_entrypoint_is_importable() -> None:
     assert isinstance(module, ModuleType)
     assert module is runtime_probe_worker
     assert callable(runtime_probe_worker.main)
+    assert callable(
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter",
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonDynamicImportWorkerObserver",
+    )
 
 
 def test_package_root_exports_remain_unchanged() -> None:
@@ -1079,6 +1270,13 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir.__all__
     )
     assert "RuntimeProbeLocalPythonWorkerSuccessResponse" not in context_ir.__all__
+    assert (
+        "RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter"
+        not in context_ir.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonDynamicImportWorkerObserver" not in context_ir.__all__
+    )
     assert "materialize_runtime_probe_dynamic_import_worker_request" not in (
         context_ir.__all__
     )
@@ -1086,6 +1284,9 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir.__all__
     )
     assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
+        context_ir.__all__
+    )
+    assert "build_runtime_probe_dynamic_import_worker_handler_entry" not in (
         context_ir.__all__
     )
     assert "serialize_runtime_probe_local_python_worker_success_response" not in (
@@ -1100,6 +1301,11 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonWorkerSuccessResponse")
     assert not hasattr(
         context_ir,
+        "RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter",
+    )
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonDynamicImportWorkerObserver")
+    assert not hasattr(
+        context_ir,
         "materialize_runtime_probe_dynamic_import_worker_request",
     )
     assert not hasattr(
@@ -1109,6 +1315,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_dynamic_import_worker_success_response",
+    )
+    assert not hasattr(
+        context_ir,
+        "build_runtime_probe_dynamic_import_worker_handler_entry",
     )
     assert not hasattr(
         context_ir,

@@ -141,10 +141,40 @@ class RuntimeProbeLocalPythonWorkerSuccessResponse:
 RuntimeProbeLocalPythonWorkerHandlerResponse: TypeAlias = (
     RuntimeProbeLocalPythonWorkerResponse | RuntimeProbeLocalPythonWorkerSuccessResponse
 )
+RuntimeProbeLocalPythonDynamicImportWorkerObserver: TypeAlias = Callable[
+    [RuntimeProbeLocalPythonDynamicImportWorkerRequest],
+    RuntimeProbeLocalPythonDynamicImportWorkerObservation,
+]
 RuntimeProbeLocalPythonWorkerCallable: TypeAlias = Callable[
     [RuntimeProbeLocalPythonWorkerRequestPayload],
     RuntimeProbeLocalPythonWorkerHandlerResponse,
 ]
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter:
+    """Adapt parsed worker payloads to an injected dynamic-import observer."""
+
+    observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver
+
+    def __post_init__(self) -> None:
+        """Reject malformed observer injection before worker dispatch."""
+        _validate_runtime_probe_dynamic_import_worker_observer(self.observer)
+
+    def __call__(
+        self,
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+        """Run the injected observer against a validated worker request."""
+        request = materialize_runtime_probe_dynamic_import_worker_request(payload)
+        observation = self.observer(request)
+        _validate_runtime_probe_dynamic_import_worker_observation_for_request(
+            observation,
+            request,
+        )
+        return materialize_runtime_probe_dynamic_import_worker_success_response(
+            observation
+        )
 
 
 @dataclass(frozen=True)
@@ -423,6 +453,19 @@ def materialize_runtime_probe_dynamic_import_worker_success_response(
     )
 
 
+def build_runtime_probe_dynamic_import_worker_handler_entry(
+    observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for the import-module worker form."""
+    return RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label=_DYNAMIC_IMPORT_WORKER_FORM_LABEL,
+        handler=RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter(
+            observer=observer
+        ),
+    )
+
+
 def _validate_runtime_probe_dynamic_import_worker_payload(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
 ) -> None:
@@ -636,6 +679,30 @@ def _validate_runtime_probe_dynamic_import_worker_request(
         raise ValueError(
             "runtime probe dynamic import worker invocation_identity must match "
             "request replay identity"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_worker_observer(
+    observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
+) -> None:
+    """Reject non-callable dynamic-import observer injections."""
+    if not callable(observer):
+        raise ValueError(
+            "runtime probe dynamic import worker observer must be callable"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_worker_observation_for_request(
+    observation: RuntimeProbeLocalPythonDynamicImportWorkerObservation,
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+) -> None:
+    """Reject observer results that do not belong to the adapted request."""
+    _validate_runtime_probe_dynamic_import_worker_request(request)
+    _validate_runtime_probe_dynamic_import_worker_observation(observation)
+    if observation.request != request:
+        raise ValueError(
+            "runtime probe dynamic import worker observation request must match "
+            "adapted request"
         )
 
 

@@ -2,6 +2,144 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Dynamic Import Worker Handler Adapter Release Gate
+
+- Combined read-only release gate passed for the exact four-file local Python
+  dynamic-import worker handler adapter release unit.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1109 passed`
+    - no-importlib boundary scan produced no matches
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth reported by the read-only gate:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `c47832c Sync dynamic import observation routing`
+  - current pushed source/contract authority remains
+    `6e8d04f Add dynamic import worker observation contract`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Dynamic Import Worker Handler Adapter Workspace Acceptance
+
+- Reviewed the returned local Python dynamic-import worker handler adapter
+  implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `c47832c Sync dynamic import observation routing`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds module-local
+    `RuntimeProbeLocalPythonDynamicImportWorkerObserver`
+  - adds frozen
+    `RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter`
+  - adds
+    `build_runtime_probe_dynamic_import_worker_handler_entry(...)`
+  - the adapter materializes a
+    `RuntimeProbeLocalPythonDynamicImportWorkerRequest` from a typed worker
+    payload, calls an injected observer callable, validates the returned
+    `RuntimeProbeLocalPythonDynamicImportWorkerObservation` against the
+    adapted request, and materializes the existing worker success response
+  - the factory returns a `RuntimeProbeLocalPythonWorkerHandlerEntry` for
+    `RuntimeProbeFamily.DYNAMIC_IMPORT` and form
+    `dynamic_import:importlib.import_module/1`
+  - existing worker dispatch and `main(...)` can consume the injected handler
+    factory with fake observers
+  - default `main(...)` remains fail-closed without default handlers
+  - package-root exports remain unchanged
+  - no `importlib` imports, repository-code execution, module import attempts,
+    concrete observer implementation, default/global handler registration,
+    subprocess behavior change, parent executor/parser change, API, MCP,
+    schema, eval, scoring, compiler, docs, public-claim, admission,
+    recompile, or result assembly change is included
+- Validation:
+  - implementation lane reported ruff, format check, strict mypy, targeted
+    pytest `258 passed`, no `importlib` import matches, and `git diff --check`
+    passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `258 passed`
+  - control reran the no-importlib boundary scan, which produced no matches
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Dynamic Import Worker Observation Contract Post-Push Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  dynamic-import worker observation success-response contract release unit.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `c47832c Sync dynamic import observation routing`
+  - current pushed source/contract authority is
+    `6e8d04f Add dynamic import worker observation contract`
+  - worktree clean before this control-route continuity sync
+  - nothing staged before this control-route continuity sync
+  - no untracked files before this control-route continuity sync
+  - `git diff --check` clean before this control-route continuity sync
+- Release state:
+  - `6e8d04f` is pushed and no-active-gate
+  - prior locally committed push hold for the dynamic-import worker
+    observation contract is superseded by this post-push routing entry
+- Decision: route the next implementation lane to a non-executing local Python
+  dynamic-import worker handler adapter backed by an injected observer
+  callable.
+- Alternatives considered:
+  - actual `importlib.import_module(name)` execution inside the worker
+  - a default/global dynamic-import worker handler registration
+  - parent-side handler dispatch registration
+  - an end-to-end subprocess proof smoke
+  - direct runtime-observed result assembly or admission changes
+- Reasoning:
+  - the worker now has typed dynamic-import request metadata and a typed
+    observation-to-success-response boundary
+  - a handler adapter is the next integration seam between worker dispatch and
+    the typed observation contract
+  - keeping the observer injected lets tests prove dispatch/main integration
+    without repository-code execution or importlib imports
+  - actual import execution, default registration, parent behavior, public
+    surfaces, and result assembly remain deferred
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Dynamic Import Worker Observation Contract Local Commit Routing
 
 - Local commit creation completed for the local Python dynamic-import worker
