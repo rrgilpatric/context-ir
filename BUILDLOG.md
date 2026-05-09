@@ -2,6 +2,161 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Worker Request Stdin Transport Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  local Python worker request stdin transport contract release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed:
+  - the four-file unit stays module-local and non-executing
+  - it does not widen executor, handler adapter, package-root/API/MCP/schema,
+    eval, scoring, compiler, docs, or public-claim surfaces
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed, reporting
+    `108 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed, reporting
+    `1047 passed`
+  - `git diff --check` passed
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `20d8af3 Sync local Python worker payload release routing`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1047 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Worker Request Stdin Transport Workspace Acceptance
+
+- Reviewed the returned local Python worker request stdin transport
+  implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `20d8af3 Sync local Python worker payload release routing`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen module-local
+    `RuntimeProbeLocalPythonWorkerRequestStdinTransport`
+  - materializes stdin transports from typed
+    `RuntimeProbeLocalPythonSubprocessInvocation` values after revalidating the
+    invocation
+  - internally materializes and validates
+    `RuntimeProbeLocalPythonWorkerRequestPayload`
+  - serializes the payload through the deterministic strict JSON helper and
+    parses it back through the strict parser as a drift check
+  - preserves invocation identity, the typed payload, deterministic stdin text,
+    argv, working directory, ordered Python path entries, timeout seconds,
+    request identity, family/form labels, replay seeds, and ordered replay
+    payload fields
+  - validates a closed stdin transport contract revision
+  - rejects invocation/payload/stdin-text drift, malformed stdin text, blank or
+    unsupported transport revision, extra trailing newline drift, and direct
+    constructor attempts that bypass strict payload validation
+  - exports stay module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+    unchanged
+  - the release does not add `subprocess.run(input=...)`, executor behavior
+    changes, handler adapter changes, worker modules, concrete family/form
+    semantics, temp files, filesystem IO, stdout protocol changes,
+    `RuntimeProbeObservedResult` synthesis, result assembly changes, admission,
+    recompile, facade, MCP, package-root, schema, eval, scoring, optimizer,
+    compiler, docs, or public claims
+- Implementation validation reported by the execution lane:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - requested pytest suite passed, reporting `285 passed`
+  - `git diff --check` passed
+- Focused validation rerun by control:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -k stdin_transport -q`
+    passed, reporting `14 passed, 182 deselected`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Worker Request Stdin Transport Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  worker request payload contract release.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `20d8af3 Sync local Python worker payload release routing`
+  - latest pushed source/contract authority is
+    `4d155ec Add local Python worker payload contract`
+  - worktree was clean before this control-route continuity update
+  - nothing staged before this control-route continuity update
+  - no untracked files before this control-route continuity update
+  - `git diff --check` was clean before this control-route continuity update
+- Continuity correction:
+  - committed `PLAN.md` and `BUILDLOG.md` still included stale active routing
+    that treated the `4d155ec` push as pending
+  - current routing now treats `4d155ec` as pushed, no-active-gate source and
+    contract authority
+- Routing decision:
+  - the next smallest safe implementation slice is a module-local,
+    non-executing local Python worker request stdin transport contract
+  - the worker request payload contract can now produce deterministic strict
+    JSON, but the child-process request transport boundary is still absent
+  - defining the typed stdin transport contract before wiring executor stdin
+    keeps request serialization, subprocess behavior, and concrete worker
+    semantics separate
+- Alternatives considered:
+  - concrete `DYNAMIC_IMPORT` worker or handler: rejected as too broad because
+    it would mix request transport, repository-code execution, probe semantics,
+    stdout proof interpretation, and registration
+  - executor stdin wiring: rejected as premature until the request transport
+    contract is typed and round-trip tested
+  - argv payload transport: rejected because the payload preserves invocation
+    argv and would create circular identity/bloat concerns
+  - environment-variable payload transport: deferred because size and exposure
+    concerns make stdin the cleaner first transport boundary
+  - temp-file transport: rejected because it would introduce runtime filesystem
+    IO before the in-memory transport contract exists
+- Scope boundary:
+  - implementation should touch only
+    `src/context_ir/runtime_probe_execution.py` and
+    `tests/test_runtime_probe_execution.py`
+  - it must not change subprocess execution behavior, add
+    `subprocess.run(input=...)`, change handler adapter behavior, add worker
+    modules, add temp files, perform filesystem IO, parse stdout, synthesize
+    observed results, register concrete handlers, or widen package-root, MCP,
+    schema, eval, scoring, compiler, docs, or public-claim surfaces
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Local Python Worker Request Payload Local Commit Routing
 
 - Local commit creation completed for the local Python worker request payload

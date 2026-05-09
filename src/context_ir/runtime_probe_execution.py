@@ -42,6 +42,9 @@ _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION = (
 _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_PAYLOAD_CONTRACT_VERSION = (
     "runtime_probe_local_python_worker_request_payload:v1"
 )
+_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_STDIN_TRANSPORT_CONTRACT_REVISION = (
+    "runtime_probe_local_python_worker_request_stdin_transport:v1"
+)
 _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY = (
     "runtime_probe_stdout_protocol_revision"
 )
@@ -457,6 +460,34 @@ class RuntimeProbeLocalPythonSubprocessInvocation:
                 "local Python subprocess invocation replay payload fields must match "
                 "runner request replay inputs"
             )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonWorkerRequestStdinTransport:
+    """Frozen stdin handoff contract for future local-Python workers."""
+
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload
+    stdin_text: str
+    invocation_identity: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    plan_id: str
+    request_id: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    stdin_transport_contract_revision: str = (
+        _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_STDIN_TRANSPORT_CONTRACT_REVISION
+    )
+
+    def __post_init__(self) -> None:
+        """Reject stdin transports that drift from invocation or payload JSON."""
+        _validate_local_python_worker_request_stdin_transport(self)
 
 
 @dataclass(frozen=True)
@@ -1203,6 +1234,40 @@ def parse_runtime_probe_local_python_worker_request_payload(
         timeout_seconds=_parse_local_python_worker_payload_timeout_seconds(
             payload_object["timeout_seconds"]
         ),
+    )
+
+
+def materialize_runtime_probe_local_python_worker_request_stdin_transport(
+    invocation: RuntimeProbeLocalPythonSubprocessInvocation,
+) -> RuntimeProbeLocalPythonWorkerRequestStdinTransport:
+    """Build deterministic stdin text for a local-Python worker request."""
+    _validate_local_python_subprocess_invocation(invocation)
+    payload = materialize_runtime_probe_local_python_worker_request_payload(invocation)
+    stdin_text = serialize_runtime_probe_local_python_worker_request_payload(payload)
+    parsed_payload = parse_runtime_probe_local_python_worker_request_payload(stdin_text)
+    if parsed_payload != payload:
+        raise ValueError(
+            "local Python worker request stdin transport payload failed strict "
+            "round trip"
+        )
+
+    runner_request = invocation.runner_request
+    return RuntimeProbeLocalPythonWorkerRequestStdinTransport(
+        invocation=invocation,
+        payload=payload,
+        stdin_text=stdin_text,
+        invocation_identity=payload.invocation_identity,
+        argv=invocation.argv,
+        working_directory=invocation.working_directory,
+        python_path_entries=invocation.python_path_entries,
+        timeout_seconds=invocation.timeout_seconds,
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        family_label=runner_request.request.family_label,
+        form_label=runner_request.request.form_label,
+        replay_target_seed=runner_request.request.replay_target_seed,
+        replay_selector_seed=runner_request.request.replay_selector_seed,
+        request_replay_payload_fields=invocation.request_replay_payload_fields,
     )
 
 
@@ -2253,6 +2318,169 @@ def _validate_local_python_worker_request_payload(
         python_path_entries=payload.python_path_entries,
         timeout_seconds=payload.timeout_seconds,
     )
+
+
+def _validate_local_python_worker_request_stdin_transport(
+    transport: RuntimeProbeLocalPythonWorkerRequestStdinTransport,
+) -> None:
+    """Re-check one local-Python worker stdin transport for tampering."""
+    if not isinstance(transport, RuntimeProbeLocalPythonWorkerRequestStdinTransport):
+        raise ValueError("local Python worker request stdin transport must be typed")
+    _validate_local_python_subprocess_invocation(transport.invocation)
+    _validate_local_python_worker_request_payload(transport.payload)
+    _validate_contract_revision(
+        transport.stdin_transport_contract_revision,
+        field_name=("local Python worker request stdin transport contract revision"),
+    )
+    if (
+        transport.stdin_transport_contract_revision
+        != _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_REQUEST_STDIN_TRANSPORT_CONTRACT_REVISION
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport contract revision is "
+            "unsupported"
+        )
+    if not isinstance(transport.stdin_text, str) or not transport.stdin_text.strip():
+        raise ValueError(
+            "local Python worker request stdin transport stdin_text must be "
+            "non-empty text"
+        )
+
+    expected_payload = materialize_runtime_probe_local_python_worker_request_payload(
+        transport.invocation
+    )
+    if transport.payload != expected_payload:
+        raise ValueError(
+            "local Python worker request stdin transport payload must match invocation"
+        )
+
+    expected_stdin_text = serialize_runtime_probe_local_python_worker_request_payload(
+        transport.payload
+    )
+    parsed_payload = parse_runtime_probe_local_python_worker_request_payload(
+        transport.stdin_text
+    )
+    if transport.stdin_text != expected_stdin_text:
+        raise ValueError(
+            "local Python worker request stdin transport stdin_text must match "
+            "deterministic serialized payload"
+        )
+    if parsed_payload != transport.payload:
+        raise ValueError(
+            "local Python worker request stdin transport stdin_text payload must "
+            "match payload"
+        )
+
+    _validate_local_python_worker_request_stdin_transport_identity(transport)
+
+
+def _validate_local_python_worker_request_stdin_transport_identity(
+    transport: RuntimeProbeLocalPythonWorkerRequestStdinTransport,
+) -> None:
+    """Reject stdin transport metadata that drifted from invocation or payload."""
+    invocation = transport.invocation
+    payload = transport.payload
+    runner_request = invocation.runner_request
+    expected_invocation_identity = _runtime_probe_local_python_invocation_identity(
+        invocation
+    )
+    if transport.invocation_identity != expected_invocation_identity:
+        raise ValueError(
+            "local Python worker request stdin transport invocation_identity must "
+            "match invocation"
+        )
+    if payload.invocation_identity != transport.invocation_identity:
+        raise ValueError(
+            "local Python worker request stdin transport payload invocation_identity "
+            "must match transport"
+        )
+    if transport.argv != invocation.argv or transport.argv != payload.argv:
+        raise ValueError(
+            "local Python worker request stdin transport argv must match invocation "
+            "and payload"
+        )
+    if (
+        transport.working_directory != invocation.working_directory
+        or transport.working_directory != payload.working_directory
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport working_directory must "
+            "match invocation and payload"
+        )
+    if (
+        transport.python_path_entries != invocation.python_path_entries
+        or transport.python_path_entries != payload.python_path_entries
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport python_path_entries must "
+            "match invocation and payload"
+        )
+    if (
+        transport.timeout_seconds != invocation.timeout_seconds
+        or transport.timeout_seconds != payload.timeout_seconds
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport timeout_seconds must match "
+            "invocation and payload"
+        )
+    if (
+        transport.plan_id != runner_request.plan_id
+        or transport.plan_id != payload.plan_id
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport plan_id must match "
+            "invocation and payload"
+        )
+    if (
+        transport.request_id != runner_request.request_id
+        or transport.request_id != payload.request_id
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport request_id must match "
+            "invocation and payload"
+        )
+    if (
+        transport.family_label is not runner_request.request.family_label
+        or transport.family_label is not payload.family_label
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport family_label must match "
+            "invocation and payload"
+        )
+    if (
+        transport.form_label != runner_request.request.form_label
+        or transport.form_label != payload.form_label
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport form_label must match "
+            "invocation and payload"
+        )
+    if (
+        transport.replay_target_seed != runner_request.request.replay_target_seed
+        or transport.replay_target_seed != payload.replay_target_seed
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport replay_target_seed must "
+            "match invocation and payload"
+        )
+    if (
+        transport.replay_selector_seed != runner_request.request.replay_selector_seed
+        or transport.replay_selector_seed != payload.replay_selector_seed
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport replay_selector_seed must "
+            "match invocation and payload"
+        )
+    if (
+        transport.request_replay_payload_fields
+        != invocation.request_replay_payload_fields
+        or transport.request_replay_payload_fields
+        != payload.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "local Python worker request stdin transport request_replay_payload_fields "
+            "must match invocation and payload"
+        )
 
 
 def _validate_local_python_worker_request_payload_parts(
@@ -3371,6 +3599,7 @@ __all__ = [
     "RuntimeProbeLocalPythonSubprocessHandlerConfig",
     "RuntimeProbeLocalPythonSubprocessInvocation",
     "RuntimeProbeLocalPythonWorkerRequestPayload",
+    "RuntimeProbeLocalPythonWorkerRequestStdinTransport",
     "RuntimeProbeRunnerHandlerEntry",
     "RuntimeProbeRunnerHandlerKey",
     "RuntimeProbeRunnerAttemptCollection",
@@ -3395,6 +3624,7 @@ __all__ = [
     "materialize_runtime_probe_local_python_subprocess_exception_attempt",
     "materialize_runtime_probe_local_python_subprocess_invocation",
     "materialize_runtime_probe_local_python_worker_request_payload",
+    "materialize_runtime_probe_local_python_worker_request_stdin_transport",
     "materialize_runtime_probe_runner_request_batch",
     "parse_runtime_probe_local_python_worker_request_payload",
     "prepare_runtime_probe_runner_requests_for_diagnostic",

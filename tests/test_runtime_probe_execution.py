@@ -33,6 +33,7 @@ from context_ir.runtime_probe_execution import (
     materialize_runtime_probe_local_python_subprocess_exception_attempt,
     materialize_runtime_probe_local_python_subprocess_invocation,
     materialize_runtime_probe_local_python_worker_request_payload,
+    materialize_runtime_probe_local_python_worker_request_stdin_transport,
     parse_runtime_probe_local_python_worker_request_payload,
     serialize_runtime_probe_local_python_worker_request_payload,
 )
@@ -316,6 +317,53 @@ def _local_python_worker_request_payload(
     )
     return materialize_runtime_probe_local_python_worker_request_payload(
         selected_invocation
+    )
+
+
+def _local_python_worker_request_stdin_transport(
+    invocation: (
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation | None
+    ) = None,
+) -> runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestStdinTransport:
+    """Return one deterministic stdin transport for local-Python worker tests."""
+    selected_invocation = (
+        _local_python_subprocess_invocation() if invocation is None else invocation
+    )
+    return materialize_runtime_probe_local_python_worker_request_stdin_transport(
+        selected_invocation
+    )
+
+
+def _rebuild_local_python_worker_request_stdin_transport(
+    transport: (
+        runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestStdinTransport
+    ),
+    **overrides: object,
+) -> runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestStdinTransport:
+    """Reconstruct a stdin transport with targeted field overrides."""
+    values: dict[str, object] = {
+        "invocation": transport.invocation,
+        "payload": transport.payload,
+        "stdin_text": transport.stdin_text,
+        "invocation_identity": transport.invocation_identity,
+        "argv": transport.argv,
+        "working_directory": transport.working_directory,
+        "python_path_entries": transport.python_path_entries,
+        "timeout_seconds": transport.timeout_seconds,
+        "plan_id": transport.plan_id,
+        "request_id": transport.request_id,
+        "family_label": transport.family_label,
+        "form_label": transport.form_label,
+        "replay_target_seed": transport.replay_target_seed,
+        "replay_selector_seed": transport.replay_selector_seed,
+        "request_replay_payload_fields": transport.request_replay_payload_fields,
+        "stdin_transport_contract_revision": (
+            transport.stdin_transport_contract_revision
+        ),
+    }
+    values.update(overrides)
+    return runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestStdinTransport(
+        **values
     )
 
 
@@ -1066,6 +1114,230 @@ def test_local_python_worker_request_payload_rejects_drift_before_serialize() ->
         serialize_runtime_probe_local_python_worker_request_payload(
             path_order_drifted_payload
         )
+
+
+def test_materialize_local_python_worker_request_stdin_transport_is_deterministic() -> (
+    None
+):
+    """Stdin transports freeze deterministic request JSON without execution."""
+    runner_request = _local_python_runner_request(timeout_seconds=47)
+    invocation = _local_python_subprocess_invocation(
+        runner_request,
+        module_argv=("--request-from-stdin",),
+    )
+
+    first_transport = _local_python_worker_request_stdin_transport(invocation)
+    second_transport = _local_python_worker_request_stdin_transport(invocation)
+
+    assert first_transport == second_transport
+    assert isinstance(
+        first_transport,
+        runtime_probe_execution.RuntimeProbeLocalPythonWorkerRequestStdinTransport,
+    )
+    assert first_transport.stdin_transport_contract_revision == (
+        "runtime_probe_local_python_worker_request_stdin_transport:v1"
+    )
+    assert first_transport.invocation is invocation
+    assert first_transport.payload == _local_python_worker_request_payload(invocation)
+    assert first_transport.stdin_text == (
+        serialize_runtime_probe_local_python_worker_request_payload(
+            first_transport.payload
+        )
+    )
+    assert first_transport.stdin_text.endswith("\n") is False
+    assert (
+        parse_runtime_probe_local_python_worker_request_payload(
+            first_transport.stdin_text
+        )
+        == first_transport.payload
+    )
+    assert first_transport.invocation_identity == (
+        first_transport.payload.invocation_identity
+    )
+    assert first_transport.argv is invocation.argv
+    assert first_transport.working_directory == invocation.working_directory
+    assert first_transport.python_path_entries is invocation.python_path_entries
+    assert first_transport.timeout_seconds == 47
+    assert first_transport.plan_id == runner_request.plan_id
+    assert first_transport.request_id == runner_request.request_id
+    assert first_transport.family_label is runner_request.request.family_label
+    assert first_transport.form_label == runner_request.request.form_label
+    assert first_transport.replay_target_seed == (
+        runner_request.request.replay_target_seed
+    )
+    assert first_transport.replay_selector_seed == (
+        runner_request.request.replay_selector_seed
+    )
+    assert first_transport.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert first_transport.python_path_entries == (
+        "/workspace/context-ir/src",
+        "/workspace/context-ir/tests/fixtures",
+        "/opt/context-ir/support",
+    )
+
+    decoded = json.loads(first_transport.stdin_text)
+    assert [field["key"] for field in decoded["request_replay_payload_fields"]] == (
+        list(_EXPECTED_REPLAY_INPUT_KEYS)
+    )
+    assert decoded["python_path_entries"] == list(invocation.python_path_entries)
+    assert decoded["timeout_seconds"] == 47
+
+    with pytest.raises(FrozenInstanceError):
+        first_transport.stdin_text = "{}"
+
+
+def test_stdin_transport_materialization_revalidates_invocation() -> None:
+    """Transport materialization rejects invocations drifted in memory."""
+    invocation = _local_python_subprocess_invocation()
+    object.__setattr__(
+        invocation,
+        "argv",
+        ("/workspace/other/python", *invocation.argv[1:]),
+    )
+
+    with pytest.raises(ValueError, match="argv executable"):
+        _local_python_worker_request_stdin_transport(invocation)
+
+
+def test_stdin_transport_rejects_direct_payload_bypass() -> None:
+    """Direct construction still revalidates the strict worker payload contract."""
+    transport = _local_python_worker_request_stdin_transport()
+    payload = transport.payload
+    object.__setattr__(payload, "plan_id", "runtime_probe_request_plan:wrong")
+
+    with pytest.raises(ValueError, match="plan_id must match request replay"):
+        _rebuild_local_python_worker_request_stdin_transport(
+            transport,
+            payload=payload,
+        )
+
+
+def test_local_python_worker_request_stdin_transport_rejects_payload_drift() -> None:
+    """The carried payload must be the exact payload derived from invocation."""
+    transport = _local_python_worker_request_stdin_transport()
+    other_invocation = _local_python_subprocess_invocation(
+        _local_python_runner_request(timeout_seconds=47),
+    )
+    other_payload = _local_python_worker_request_payload(other_invocation)
+    other_stdin_text = serialize_runtime_probe_local_python_worker_request_payload(
+        other_payload
+    )
+
+    with pytest.raises(ValueError, match="payload must match invocation"):
+        _rebuild_local_python_worker_request_stdin_transport(
+            transport,
+            payload=other_payload,
+            stdin_text=other_stdin_text,
+        )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "error_match"),
+    (
+        (
+            "stdin_text",
+            '{"not":"the payload"}',
+            "unknown keys",
+        ),
+        (
+            "stdin_text",
+            "not json",
+            "valid JSON",
+        ),
+        (
+            "stdin_text",
+            None,
+            "stdin_text must be non-empty text",
+        ),
+        (
+            "stdin_text",
+            "__append_newline__",
+            "deterministic serialized payload",
+        ),
+        (
+            "invocation_identity",
+            "runtime_probe_local_python_subprocess_invocation:wrong",
+            "invocation_identity",
+        ),
+        (
+            "python_path_entries",
+            (
+                "/opt/context-ir/support",
+                "/workspace/context-ir/tests/fixtures",
+                "/workspace/context-ir/src",
+            ),
+            "python_path_entries",
+        ),
+        (
+            "request_replay_payload_fields",
+            (_field("plan_id", "runtime_probe_request_plan:wrong"),),
+            "request_replay_payload_fields",
+        ),
+    ),
+)
+def test_local_python_worker_request_stdin_transport_rejects_drifted_fields(
+    field_name: str,
+    field_value: object,
+    error_match: str,
+) -> None:
+    """Direct stdin transport construction rejects copied metadata drift."""
+    transport = _local_python_worker_request_stdin_transport()
+    selected_value = (
+        f"{transport.stdin_text}\n"
+        if field_value == "__append_newline__"
+        else field_value
+    )
+
+    with pytest.raises(ValueError, match=error_match):
+        _rebuild_local_python_worker_request_stdin_transport(
+            transport,
+            **{field_name: selected_value},
+        )
+
+
+@pytest.mark.parametrize(
+    ("transport_revision", "error_match"),
+    (
+        ("", "contract revision must be non-empty"),
+        (
+            "runtime_probe_local_python_worker_request_stdin_transport:v2",
+            "contract revision is unsupported",
+        ),
+    ),
+)
+def test_local_python_worker_request_stdin_transport_rejects_bad_revision(
+    transport_revision: str,
+    error_match: str,
+) -> None:
+    """The stdin transport contract revision is closed and versioned."""
+    transport = _local_python_worker_request_stdin_transport()
+
+    with pytest.raises(ValueError, match=error_match):
+        _rebuild_local_python_worker_request_stdin_transport(
+            transport,
+            stdin_transport_contract_revision=transport_revision,
+        )
+
+
+def test_local_python_worker_request_stdin_transport_exports_module_local_only() -> (
+    None
+):
+    """The stdin transport is exported only from the runtime execution module."""
+    transport_type_name = "RuntimeProbeLocalPythonWorkerRequestStdinTransport"
+    materializer_name = (
+        "materialize_runtime_probe_local_python_worker_request_stdin_transport"
+    )
+
+    assert transport_type_name in runtime_probe_execution.__all__
+    assert materializer_name in runtime_probe_execution.__all__
+    assert hasattr(runtime_probe_execution, transport_type_name)
+    assert hasattr(runtime_probe_execution, materializer_name)
+    assert transport_type_name not in context_ir.__all__
+    assert materializer_name not in context_ir.__all__
+    assert not hasattr(context_ir, transport_type_name)
+    assert not hasattr(context_ir, materializer_name)
 
 
 def test_materialize_local_python_subprocess_invocation_is_deterministic() -> None:
