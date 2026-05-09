@@ -15,8 +15,12 @@ import context_ir.runtime_probe_requests as runtime_probe_requests
 import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.runtime_probe_worker as runtime_probe_worker
 from context_ir.runtime_probe_execution import (
+    RuntimeProbeLocalPythonSubprocessInvocation,
     RuntimeProbeLocalPythonWorkerRequestPayload,
     materialize_runtime_probe_execution_input_batch,
+    materialize_runtime_probe_local_python_process_completion,
+    materialize_runtime_probe_local_python_stdout_protocol_attempt,
+    materialize_runtime_probe_local_python_stdout_protocol_result,
     materialize_runtime_probe_local_python_subprocess_invocation,
     materialize_runtime_probe_local_python_worker_request_payload,
     materialize_runtime_probe_runner_request_batch,
@@ -61,8 +65,8 @@ def _request() -> runtime_probe_requests.RuntimeProbeRequest:
     )
 
 
-def _valid_worker_stdin_text() -> str:
-    """Return strict worker stdin JSON produced by the accepted parent contract."""
+def _valid_worker_invocation() -> RuntimeProbeLocalPythonSubprocessInvocation:
+    """Return one strict worker invocation produced by the parent contract."""
     request_plan = runtime_probe_requests.build_runtime_probe_request_plan(
         (_request(),)
     )
@@ -99,6 +103,12 @@ def _valid_worker_stdin_text() -> str:
         module_name="context_ir.runtime_probe_worker",
         invocation_contract_revision=("runtime-probe-local-python-subprocess:test.1"),
     )
+    return invocation
+
+
+def _valid_worker_stdin_text() -> str:
+    """Return strict worker stdin JSON produced by the accepted parent contract."""
+    invocation = _valid_worker_invocation()
     payload = materialize_runtime_probe_local_python_worker_request_payload(invocation)
     return serialize_runtime_probe_local_python_worker_request_payload(payload)
 
@@ -149,6 +159,196 @@ def _assert_no_success_stdout_protocol(stdout_text: str) -> None:
     assert "normalized_payload" not in stdout_text
     assert "durable_artifact_reference" not in stdout_text
     assert "observed" not in stdout_text
+
+
+def test_registered_worker_handler_emits_success_stdout_protocol() -> None:
+    """A matching injected handler can emit the parent stdout success protocol."""
+    stdin_text = _valid_worker_stdin_text()
+    handler_payloads: list[RuntimeProbeLocalPythonWorkerRequestPayload] = []
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse:
+        handler_payloads.append(payload)
+        return runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(
+                _field("first_observed_module", "plugins.weather"),
+                _field("second_observed_module", "plugins.forecast"),
+            ),
+            durable_artifact_reference="runtime-artifact:local-python:abc123",
+        )
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert len(handler_payloads) == 1
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":['
+        '{"key":"first_observed_module","value":"plugins.weather"},'
+        '{"key":"second_observed_module","value":"plugins.forecast"}],'
+        '"durable_artifact_reference":"runtime-artifact:local-python:abc123"}'
+    )
+    assert not stdout_text.endswith("\n")
+
+
+def test_worker_success_stdout_is_parent_parser_compatible() -> None:
+    """Worker success stdout parses into the existing parent observed attempt."""
+    stdin_text = _valid_worker_stdin_text()
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse:
+        del payload
+        return runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+        )
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+    completion = materialize_runtime_probe_local_python_process_completion(
+        _valid_worker_invocation(),
+        returncode=exit_code,
+        stdout_text=stdout_text,
+        stderr_text=stderr_text,
+        completion_contract_revision=(
+            "runtime-probe-local-python-process-completion:test.1"
+        ),
+    )
+
+    protocol_result = materialize_runtime_probe_local_python_stdout_protocol_result(
+        completion
+    )
+    attempt = materialize_runtime_probe_local_python_stdout_protocol_attempt(
+        protocol_result
+    )
+
+    assert protocol_result.stdout_protocol_revision == (
+        "runtime_probe_local_python_stdout_protocol:v1"
+    )
+    assert protocol_result.normalized_payload == (
+        _field("observed_module", "plugins.weather"),
+    )
+    assert protocol_result.durable_artifact_reference is None
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (_field("observed_module", "plugins.weather"),)
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+
+
+def test_worker_success_stdout_allows_durable_only_success() -> None:
+    """Durable-only worker success emits an empty normalized payload array."""
+    stdin_text = _valid_worker_stdin_text()
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse:
+        del payload
+        return runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(),
+            durable_artifact_reference="runtime-artifact:local-python:durable-only",
+        )
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":[],'
+        '"durable_artifact_reference":'
+        '"runtime-artifact:local-python:durable-only"}'
+    )
+
+
+def test_worker_success_response_contract_is_frozen_and_proof_bearing() -> None:
+    """Worker success responses are immutable typed proof payload contracts."""
+    response = runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+        normalized_payload=(_field("observed_module", "plugins.weather"),),
+    )
+
+    assert response.normalized_payload == (
+        _field("observed_module", "plugins.weather"),
+    )
+    assert response.durable_artifact_reference is None
+    with pytest.raises(FrozenInstanceError):
+        response.durable_artifact_reference = "runtime-artifact:local-python:mutated"
+    with pytest.raises(ValueError, match="normalized_payload or durable"):
+        runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=()
+        )
+    with pytest.raises(ValueError, match="durable_artifact_reference"):
+        runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(),
+            durable_artifact_reference=" runtime-artifact:local-python:abc123",
+        )
+
+
+def test_malformed_worker_success_metadata_fails_closed() -> None:
+    """Tampered typed success metadata is rejected without stdout or raw details."""
+    stdin_text = _valid_worker_stdin_text()
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse:
+        del payload
+        response = runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(_field("observed_module", "plugins.weather"),),
+        )
+        object.__setattr__(
+            response,
+            "durable_artifact_reference",
+            " runtime-artifact:local-python:secret-token:/private/tmp",
+        )
+        return response
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert (
+        stderr_text
+        == "runtime_probe_worker: rejected invalid worker handler response\n"
+    )
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
 
 
 def test_valid_worker_request_parses_and_fails_closed(
@@ -400,8 +600,8 @@ def test_malformed_worker_request_fails_closed_with_sanitized_stderr() -> None:
     _assert_sanitized_worker_stderr(stderr_text, stdin_text)
 
 
-def test_worker_never_emits_success_protocol_shape() -> None:
-    """Neither valid nor malformed ingress can produce observed proof stdout."""
+def test_worker_without_handlers_never_emits_success_protocol_shape() -> None:
+    """Default valid and malformed ingress cannot produce observed proof stdout."""
     malformed_stdin = "not json with secret-token /private/tmp Traceback"
 
     for stdin_text in (_valid_worker_stdin_text(), malformed_stdin):
@@ -432,4 +632,13 @@ def test_package_root_exports_remain_unchanged() -> None:
     """Worker ingress stays module-local and absent from the package root API."""
     assert "runtime_probe_worker" not in context_ir.__all__
     assert "main" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonWorkerSuccessResponse" not in context_ir.__all__
+    assert "serialize_runtime_probe_local_python_worker_success_response" not in (
+        context_ir.__all__
+    )
     assert not hasattr(context_ir, "main")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonWorkerSuccessResponse")
+    assert not hasattr(
+        context_ir,
+        "serialize_runtime_probe_local_python_worker_success_response",
+    )

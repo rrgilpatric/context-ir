@@ -2,6 +2,156 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Worker Stdout Success Egress Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  local Python worker stdout success egress contract release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed:
+  - the unit stays scoped to typed worker stdout success protocol emission for
+    injected handlers only
+  - no concrete family/form behavior, dynamic import execution,
+    repository-code execution, global registration, parent executor/parser
+    behavior, package-root/API/MCP/schema/eval/scoring/compiler/docs
+    /public-claim surfaces, admission, recompile, or result assembly widening
+    was found
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed, reporting
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed, reporting
+    `1066 passed`
+  - `git diff --check` passed
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d3c16d1 Sync worker dispatch release routing`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1066 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Worker Stdout Success Egress Workspace Acceptance
+
+- Reviewed the returned local Python worker stdout success egress contract
+  implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d3c16d1 Sync worker dispatch release routing`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen typed
+    `RuntimeProbeLocalPythonWorkerSuccessResponse`
+  - adds deterministic
+    `serialize_runtime_probe_local_python_worker_success_response(...)`
+    serialization
+  - matching injected handlers can return the success response; `main(...)`
+    writes the existing parent stdout success protocol and returns zero
+  - emitted stdout shape matches the existing parent parser:
+    `runtime_probe_stdout_protocol_revision`, ordered `normalized_payload`,
+    and optional `durable_artifact_reference`
+  - stdout has no trailing newline
+  - parent parser compatibility is tested through the existing parent
+    completion, stdout-protocol-result, and observed-attempt materializers
+  - durable-only success is supported
+  - default `main(...)` with no handlers remains fail-closed with nonzero exit
+    status, sanitized stderr, and empty stdout
+  - malformed stdin, missing handler, duplicate handler, malformed handler,
+    handler exception, invalid response, and malformed success metadata paths
+    remain fail-closed, nonzero, sanitized, and empty-stdout
+  - package-root exports remain unchanged
+  - no concrete family/form behavior, dynamic import execution,
+    repository-code execution, global registration, parent executor changes,
+    parent stdout parser changes, API, MCP, schema, eval, scoring, compiler,
+    docs, public-claim, admission, recompile, or result assembly changes
+- Implementation validation reported by the execution lane:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed
+  - `git diff --check` passed
+- Focused validation rerun by control:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`
+    passed, reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting 37 source
+    files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`
+    passed, reporting `215 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Worker Dispatch Post-Push Stdout Egress Routing
+
+- Verified live repo state after Ryan-authorized push of the fail-closed local
+  Python worker-side dispatch contract release.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `d3c16d1 Sync worker dispatch release routing`
+  - latest pushed source/contract authority is
+    `7eefba2 Add fail-closed worker dispatch`
+  - worktree was clean before this control-route continuity update
+  - nothing staged before this control-route continuity update
+  - no untracked files before this control-route continuity update
+- Continuity correction:
+  - committed `PLAN.md` and `BUILDLOG.md` still treated the `7eefba2` push as
+    pending
+  - current routing now treats `7eefba2` as pushed, no-active-gate source and
+    contract authority
+- Routing decision:
+  - the next implementation lane should add a local Python worker stdout
+    success egress contract
+  - the parent-side stdout success parser and observed-attempt materializer
+    already exist, but the worker currently has no typed way for injected
+    handlers to emit that protocol
+  - this should come before concrete dynamic-import behavior or global worker
+    registration so proof egress shape, validation, and default fail-closed
+    behavior stay separate from repository-code execution
+- Scope boundary:
+  - no concrete family/form worker behavior
+  - no dynamic import execution
+  - no repository-code execution
+  - no global handler registration
+  - no parent executor changes
+  - no API, MCP, package-root, schema, eval, scoring, compiler, docs,
+    public-claim, admission, recompile, or result assembly changes
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Worker-Side Dispatch Contract Local Commit Routing
 
 - Local commit creation completed for the fail-closed local Python worker-side

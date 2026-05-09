@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -13,10 +14,18 @@ from context_ir.runtime_probe_execution import (
     parse_runtime_probe_local_python_worker_request_payload,
 )
 from context_ir.runtime_probe_requests import RuntimeProbeFamily
+from context_ir.runtime_probe_results import RuntimeProbeReplayField
 
 RuntimeProbeLocalPythonWorkerHandlerKey: TypeAlias = tuple[RuntimeProbeFamily, str]
 _MALFORMED_REQUEST_EXIT_CODE = 64
 _REJECTED_REQUEST_EXIT_CODE = 78
+_SUCCESS_EXIT_CODE = 0
+_RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION = (
+    "runtime_probe_local_python_stdout_protocol:v1"
+)
+_RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY = (
+    "runtime_probe_stdout_protocol_revision"
+)
 _MALFORMED_REQUEST_MESSAGE = "runtime_probe_worker: rejected malformed worker request\n"
 _REJECTED_REQUEST_MESSAGE = (
     "runtime_probe_worker: rejected worker request without executing probe\n"
@@ -40,9 +49,24 @@ class RuntimeProbeLocalPythonWorkerResponse:
         _validate_runtime_probe_worker_response(self)
 
 
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Typed worker response carrying the stdout success protocol payload."""
+
+    normalized_payload: tuple[RuntimeProbeReplayField, ...]
+    durable_artifact_reference: str | None = None
+
+    def __post_init__(self) -> None:
+        """Reject malformed success payload metadata before stdout emission."""
+        _validate_runtime_probe_worker_success_response(self)
+
+
+RuntimeProbeLocalPythonWorkerHandlerResponse: TypeAlias = (
+    RuntimeProbeLocalPythonWorkerResponse | RuntimeProbeLocalPythonWorkerSuccessResponse
+)
 RuntimeProbeLocalPythonWorkerCallable: TypeAlias = Callable[
     [RuntimeProbeLocalPythonWorkerRequestPayload],
-    RuntimeProbeLocalPythonWorkerResponse,
+    RuntimeProbeLocalPythonWorkerHandlerResponse,
 ]
 
 
@@ -83,7 +107,7 @@ class RuntimeProbeLocalPythonDispatchingWorker:
     def __call__(
         self,
         payload: RuntimeProbeLocalPythonWorkerRequestPayload,
-    ) -> RuntimeProbeLocalPythonWorkerResponse:
+    ) -> RuntimeProbeLocalPythonWorkerHandlerResponse:
         """Route a parsed payload by family/form without emitting proof."""
         if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
             raise _RuntimeProbeWorkerDispatchError(_MALFORMED_REQUEST_MESSAGE)
@@ -97,7 +121,7 @@ class RuntimeProbeLocalPythonDispatchingWorker:
                 _HANDLER_EXCEPTION_MESSAGE
             ) from error
         try:
-            _validate_runtime_probe_worker_response(response)
+            _validate_runtime_probe_worker_handler_response(response)
         except Exception as error:
             raise _RuntimeProbeWorkerDispatchError(_INVALID_RESPONSE_MESSAGE) from error
         return response
@@ -122,10 +146,10 @@ def main(
     *,
     handler_entries: Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry] = (),
 ) -> int:
-    """Read one worker request from stdin and reject it without probe execution."""
+    """Read one worker request from stdin and route injected handlers fail-closed."""
     input_stream = sys.stdin if stdin is None else stdin
+    output_stream = sys.stdout if stdout is None else stdout
     error_stream = sys.stderr if stderr is None else stderr
-    del stdout
 
     stdin_text = input_stream.read()
     try:
@@ -135,7 +159,7 @@ def main(
         return _MALFORMED_REQUEST_EXIT_CODE
 
     try:
-        _dispatch_runtime_probe_local_python_worker_payload(
+        response = _dispatch_runtime_probe_local_python_worker_payload(
             payload,
             handler_entries,
         )
@@ -149,6 +173,17 @@ def main(
         error_stream.write(_MALFORMED_HANDLER_MESSAGE)
         return _REJECTED_REQUEST_EXIT_CODE
 
+    if isinstance(response, RuntimeProbeLocalPythonWorkerSuccessResponse):
+        try:
+            stdout_text = serialize_runtime_probe_local_python_worker_success_response(
+                response
+            )
+        except Exception:
+            error_stream.write(_INVALID_RESPONSE_MESSAGE)
+            return _REJECTED_REQUEST_EXIT_CODE
+        output_stream.write(stdout_text)
+        return _SUCCESS_EXIT_CODE
+
     error_stream.write(_REJECTED_REQUEST_MESSAGE)
     return _REJECTED_REQUEST_EXIT_CODE
 
@@ -156,7 +191,7 @@ def main(
 def _dispatch_runtime_probe_local_python_worker_payload(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
     handler_entries: Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry],
-) -> RuntimeProbeLocalPythonWorkerResponse:
+) -> RuntimeProbeLocalPythonWorkerHandlerResponse:
     """Dispatch one parsed worker payload through an injected handler table."""
     try:
         dispatching_worker = RuntimeProbeLocalPythonDispatchingWorker(
@@ -167,6 +202,24 @@ def _dispatch_runtime_probe_local_python_worker_payload(
     except Exception as error:
         raise _RuntimeProbeWorkerDispatchError(_MALFORMED_HANDLER_MESSAGE) from error
     return dispatching_worker(payload)
+
+
+def serialize_runtime_probe_local_python_worker_success_response(
+    response: RuntimeProbeLocalPythonWorkerSuccessResponse,
+) -> str:
+    """Serialize a worker success response as the parent stdout protocol JSON."""
+    _validate_runtime_probe_worker_success_response(response)
+    protocol: dict[str, object] = {
+        _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY: (
+            _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION
+        ),
+        "normalized_payload": _runtime_probe_worker_replay_fields_json_array(
+            response.normalized_payload
+        ),
+    }
+    if response.durable_artifact_reference is not None:
+        protocol["durable_artifact_reference"] = response.durable_artifact_reference
+    return json.dumps(protocol, separators=(",", ":"))
 
 
 def _index_runtime_probe_worker_handler_entries(
@@ -231,6 +284,94 @@ def _validate_runtime_probe_worker_response(
         raise ValueError("runtime probe worker response must be typed")
     if response.rejected_without_proof is not True:
         raise ValueError("runtime probe worker response must be non-proof")
+
+
+def _validate_runtime_probe_worker_success_response(
+    response: RuntimeProbeLocalPythonWorkerSuccessResponse,
+) -> None:
+    """Reject success responses that do not match the stdout proof contract."""
+    if not isinstance(response, RuntimeProbeLocalPythonWorkerSuccessResponse):
+        raise ValueError("runtime probe worker success response must be typed")
+    _validate_runtime_probe_worker_replay_fields(
+        response.normalized_payload,
+        field_name="normalized_payload",
+    )
+    _validate_runtime_probe_worker_durable_artifact_reference(
+        response.durable_artifact_reference
+    )
+    if not response.normalized_payload and response.durable_artifact_reference is None:
+        raise ValueError(
+            "runtime probe worker success responses require normalized_payload "
+            "or durable_artifact_reference"
+        )
+
+
+def _validate_runtime_probe_worker_handler_response(
+    response: RuntimeProbeLocalPythonWorkerHandlerResponse,
+) -> None:
+    """Reject handler responses outside the typed worker response contracts."""
+    if isinstance(response, RuntimeProbeLocalPythonWorkerSuccessResponse):
+        _validate_runtime_probe_worker_success_response(response)
+        return
+    if isinstance(response, RuntimeProbeLocalPythonWorkerResponse):
+        _validate_runtime_probe_worker_response(response)
+        return
+    raise ValueError("runtime probe worker handler response must be typed")
+
+
+def _validate_runtime_probe_worker_replay_fields(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    field_name: str,
+) -> None:
+    """Reject replay fields whose shape or frozen values were tampered."""
+    if not isinstance(fields, tuple):
+        raise ValueError(f"runtime probe worker {field_name} must be a tuple")
+    for replay_field in fields:
+        if not isinstance(replay_field, RuntimeProbeReplayField):
+            raise ValueError(
+                f"runtime probe worker {field_name} must contain replay fields"
+            )
+        if not replay_field.key.strip() or not replay_field.value.strip():
+            raise ValueError(
+                f"runtime probe worker {field_name} must not contain blank fields"
+            )
+
+
+def _validate_runtime_probe_worker_durable_artifact_reference(
+    durable_artifact_reference: str | None,
+) -> None:
+    """Reject durable artifact references the parent stdout parser rejects."""
+    if durable_artifact_reference is None:
+        return
+    if (
+        not isinstance(durable_artifact_reference, str)
+        or not durable_artifact_reference.strip()
+    ):
+        raise ValueError(
+            "runtime probe worker durable_artifact_reference must be non-empty"
+        )
+    if (
+        durable_artifact_reference != durable_artifact_reference.strip()
+        or _contains_control_character(durable_artifact_reference)
+    ):
+        raise ValueError("runtime probe worker durable_artifact_reference is malformed")
+
+
+def _runtime_probe_worker_replay_fields_json_array(
+    fields: tuple[RuntimeProbeReplayField, ...],
+) -> list[dict[str, str]]:
+    """Return replay fields as ordered strict JSON key/value objects."""
+    _validate_runtime_probe_worker_replay_fields(
+        fields,
+        field_name="normalized_payload",
+    )
+    return [{"key": field.key, "value": field.value} for field in fields]
+
+
+def _contains_control_character(value: str) -> bool:
+    """Return whether a metadata value contains JSON-protocol control characters."""
+    return any(ord(character) < 32 or ord(character) == 127 for character in value)
 
 
 if __name__ == "__main__":
