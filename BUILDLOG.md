@@ -2,6 +2,149 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-09 -- Local Python Handler Adapter Release Gate
+
+- Accepted the returned combined read-only release gate for the exact four-file
+  local Python runner handler adapter release unit.
+- Findings: none.
+- Gate 1 release-unit audit passed.
+- Gate 2 full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+    reporting `108 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`
+    reporting no issues in 36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`
+    reporting `1009 passed`
+  - `git diff --check` passed
+- Gate 3 commit-gating review passed for the exact four-file unit.
+- Control-lane verification matched the gate result:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `cd103ae Sync local Python executor attempt release routing`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1009 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Handler Adapter Workspace Acceptance
+
+- Reviewed the returned local Python runner handler adapter implementation
+  slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `cd103ae Sync local Python executor attempt release routing`
+  - dirty tracked files exactly:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds frozen
+    `RuntimeProbeLocalPythonSubprocessHandlerConfig`
+  - adds
+    `make_runtime_probe_local_python_subprocess_handler_entry(...)`
+  - the factory returns a dispatch-consumable
+    `RuntimeProbeRunnerHandlerEntry`
+  - configured metadata includes family label, form label, Python executable,
+    module name, invocation contract revision, completion contract revision,
+    and optional module argv
+  - produced handlers revalidate the runner request and reject family/form
+    drift before subprocess execution
+  - handlers materialize invocations through existing
+    `materialize_runtime_probe_local_python_subprocess_invocation(...)`
+  - handlers execute and normalize attempts through existing
+    `execute_runtime_probe_local_python_subprocess_invocation_attempt(...)`
+  - module argv order is preserved in the shell-free invocation argv
+  - failure and success paths continue to flow through the existing typed
+    local-Python attempt materializers
+  - exports stay module-local through
+    `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+    unchanged
+  - the release does not add concrete family/form probe logic, worker modules,
+    global dispatch registration, `RuntimeProbeObservedResult` synthesis,
+    result assembly changes, admission, recompile, facade, MCP, package-root,
+    schema, eval, scoring, optimizer, compiler, docs, or public claims
+- Focused validation rerun by control:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+    passed, reporting `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed, reporting no issues in
+    36 source files
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_results.py tests/test_runtime_probe_requests.py tests/test_public_api.py tests/test_mcp_server.py tests/test_tool_facade.py -v`
+    passed, reporting `247 passed`
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Local Python Handler Adapter Routing
+
+- Ryan-authorized push completed for the local Python executor-to-attempt
+  wrapper release unit and its release-routing continuity sync.
+- Pushed commits:
+  - `8625186 Execute local Python subprocess attempts`
+  - `cd103ae Sync local Python executor attempt release routing`
+- Repo-backed truth after push:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `cd103ae Sync local Python executor attempt release routing`
+  - worktree clean
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Current pushed source/contract authority is
+  `8625186 Execute local Python subprocess attempts`; release-gate status is
+  no-active-gate.
+- Routing decision:
+  - the next smallest safe implementation slice is a module-local local Python
+    runner handler adapter that turns configured family/form handler metadata
+    into a `RuntimeProbeRunnerCallable` or `RuntimeProbeRunnerHandlerEntry`
+  - the adapter should materialize a
+    `RuntimeProbeLocalPythonSubprocessInvocation` from a validated
+    `RuntimeProbeRunnerRequest`, then execute it through
+    `execute_runtime_probe_local_python_subprocess_invocation_attempt(...)`
+  - this creates the dispatch-consumable boundary before any concrete
+    family/form probe worker or global handler registration is added
+- Scope boundary:
+  - consume configured family label, form label, Python executable, module name,
+    invocation contract revision, completion contract revision, and optional
+    module argv
+  - reject request family/form drift before subprocess execution
+  - reuse existing invocation materialization and executor-to-attempt wrapper
+  - allow tests to mock `subprocess.run`; do not execute repository code in
+    tests
+  - do not add concrete family/form probe logic, worker module implementation,
+    global dispatch registration, observed-result synthesis, result assembly
+    changes, admission, recompile, facade, MCP, package-root, schema, eval,
+    scoring, optimizer, compiler, docs, or public claims
+- Acceptance status: first-pass routing
+
 ## 2026-05-09 -- Local Python Executor Attempt Wrapper Local Commit Routing
 
 - Local commit creation completed for the local Python executor-to-attempt

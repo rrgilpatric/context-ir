@@ -41,9 +41,55 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed source/contract release authority is
-`d8cf97b Normalize local Python stdout protocol failures`. Live git refs and
+`8625186 Execute local Python subprocess attempts`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Local Python executor-to-attempt wrapper release:
+
+- `execute_runtime_probe_local_python_subprocess_invocation_attempt(...)` is a
+  module-local helper that consumes typed
+  `RuntimeProbeLocalPythonSubprocessInvocation` values plus
+  `completion_contract_revision`
+- the helper revalidates invocation and completion revision before subprocess
+  launch
+- execution flows through existing
+  `execute_runtime_probe_local_python_subprocess_invocation(...)`
+- subprocess timeouts and generic subprocess exceptions map through
+  `materialize_runtime_probe_local_python_subprocess_exception_attempt(...)`
+- nonzero completions map through
+  `materialize_runtime_probe_local_python_process_completion_attempt(...)`
+- zero-returncode valid stdout protocol maps through
+  `materialize_runtime_probe_local_python_stdout_protocol_result(...)` and
+  `materialize_runtime_probe_local_python_stdout_protocol_attempt(...)`
+- zero-returncode malformed stdout protocol maps through
+  `materialize_runtime_probe_local_python_stdout_protocol_failure_attempt(...)`
+- observed success preserves runner request identity, request object,
+  execution input, ordered normalized payload, and durable artifact reference
+- failure attempts remain non-proof and sanitized without raw stdout, stderr,
+  exception message, traceback text, temporary paths, PIDs, or process-local
+  data
+- exports stay module-local through
+  `context_ir.runtime_probe_execution.__all__`; package-root exports remain
+  unchanged
+- the release does not add concrete family/form handlers, dispatch
+  registration, `RuntimeProbeObservedResult` synthesis, result assembly
+  changes, admission, recompile, facade, MCP, package-root, schema, eval,
+  scoring, optimizer, compiler, docs, or public claims
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `999 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `8625186 Execute local Python subprocess attempts`
+- Ryan-authorized push completed with release routing through
+  `cd103ae Sync local Python executor attempt release routing`
+- release unit is exactly
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, `PLAN.md`, and `BUILDLOG.md`
+- release-gate status is no-active-gate for `8625186`
 
 Local Python stdout protocol failure-normalization release:
 
@@ -2698,8 +2744,15 @@ sequencing for `c1a12d7` absent new findings.
   executor-to-attempt wrapper release unit
 - [x] Local commit creation for the local Python executor-to-attempt wrapper
   release unit
-- [ ] Ryan-authorized push for the local Python executor-to-attempt wrapper
+- [x] Ryan-authorized push for the local Python executor-to-attempt wrapper
   release unit
+- [x] Post-`8625186` control selected local Python runner handler adapter
+- [x] Local Python runner handler adapter implementation slice accepted
+  first-pass as workspace-only state
+- [x] Combined release gate for the exact four-file local Python runner handler
+  adapter release unit
+- [ ] Local commit creation for the local Python runner handler adapter release
+  unit
 
 ## What Is In Progress
 
@@ -3607,60 +3660,56 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan authorization to push the locally committed
-local Python executor-to-attempt wrapper release. Current local source/contract
-authority is `8625186 Execute local Python subprocess attempts`. Current pushed
-source/contract authority remains
-`d8cf97b Normalize local Python stdout protocol failures`, with post-push
+Immediate next route: create the local commit for the exact four-file local
+Python runner handler adapter release unit. Current pushed source/contract
+authority is
+`8625186 Execute local Python subprocess attempts`, with release-routing
 continuity through
-`fd819a4 Sync local Python stdout failure post-push state`. Release-gate status
-is no-active-gate for `8625186`. Do not reopen pushed stdout failure
-normalization, observed attempt, stdout protocol, nonzero failure
-normalization, subprocess execution, completion, invocation, environment
-context, dispatch table, or prior releases absent new findings.
+`cd103ae Sync local Python executor attempt release routing`. Release-gate
+status is no-active-gate for `8625186`. Do not reopen pushed executor attempt
+wrapper, stdout failure normalization, observed attempt, stdout protocol,
+nonzero failure normalization, subprocess execution, completion, invocation,
+environment context, dispatch table, or prior releases absent new findings.
 
 Accepted workspace-only implementation slice:
 
-- adds a module-local helper,
+- adds a module-local adapter/factory that turns configured local Python
+  subprocess handler metadata into a `RuntimeProbeRunnerCallable` or
+  `RuntimeProbeRunnerHandlerEntry`
+- consumes family label, form label, Python executable, module name, invocation
+  contract revision, completion contract revision, and optional module argv
+- when called with a `RuntimeProbeRunnerRequest`, revalidates and rejects
+  family/form drift before subprocess execution
+- materializes the invocation with existing
+  `materialize_runtime_probe_local_python_subprocess_invocation(...)`
+- executes and normalizes the attempt with existing
   `execute_runtime_probe_local_python_subprocess_invocation_attempt(...)`
-- consumes `RuntimeProbeLocalPythonSubprocessInvocation` plus
-  `completion_contract_revision`
-- revalidates invocation and completion revision before subprocess launch
-- executes via existing
-  `execute_runtime_probe_local_python_subprocess_invocation(...)`
-- maps subprocess exceptions through the existing subprocess exception
-  materializer
-- maps nonzero completions through the existing nonzero completion materializer
-- maps zero-returncode valid stdout protocol through the existing stdout
-  protocol result and observed-attempt materializers
-- maps zero-returncode malformed stdout protocol through the existing stdout
-  protocol failure materializer
 - preserves existing raw executor, individual materializers, result assembly,
-  dispatch, admission, recompile, facade, MCP, package-root, schema, eval,
-  scoring, optimizer, compiler, docs, and public claims
-- keeps concrete family/form handlers and dispatch registration deferred
+  dispatch mechanics, admission, recompile, facade, MCP, package-root, schema,
+  eval, scoring, optimizer, compiler, docs, and public claims
+- keeps concrete family/form probe workers, global dispatch registration, and
+  concrete `DYNAMIC_IMPORT` handler semantics deferred
 
-Current release state for the proposed local Python executor-to-attempt wrapper
+Current release state for the proposed local Python runner handler adapter
 unit:
 
 - selected by control: yes
 - implementation lane launched: yes
 - implementation returned: yes
 - accepted in workspace: yes, first-pass
-- focused validation: passed with `237 passed`
+- focused validation: passed with `247 passed`
 - release-unit-audit-cleared: yes
-- full-regression-cleared: yes, full pytest `999 passed`
+- full-regression-cleared: yes, full pytest `1009 passed`
 - commit-gating-cleared: yes
-- staged: yes, then committed
-- locally committed: yes, `8625186 Execute local Python subprocess attempts`
+- staged: no
+- locally committed: no
 - pushed: no
 - release-gate status: no-active-gate for current pushed authority
 - release unit is exactly:
   `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_execution.py`, and
   `tests/test_runtime_probe_execution.py`
-- push remains Ryan-gated
-- next route: Ryan-authorized push sequencing
+- next route: local commit creation for the exact four-file unit
 
 The local Python subprocess non-proof attempt normalization slice is accepted
 in workspace after one correction. It adds pure module-local helpers that

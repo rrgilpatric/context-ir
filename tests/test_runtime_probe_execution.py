@@ -323,6 +323,35 @@ def _local_python_subprocess_invocation(
     )
 
 
+def _local_python_subprocess_handler_entry(
+    *,
+    family_label: runtime_probe_requests.RuntimeProbeFamily = (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+    ),
+    form_label: str = "dynamic_import:importlib.import_module/1",
+    python_executable: str = "/workspace/context-ir/.venv/bin/python",
+    module_name: str = "context_ir.runtime_probe_worker",
+    invocation_contract_revision: str = "runtime-probe-local-python-subprocess:test.1",
+    completion_contract_revision: str = (
+        "runtime-probe-local-python-process-completion:test.1"
+    ),
+    module_argv: tuple[str, ...] = ("--request", "runtime-probe-request.json"),
+) -> runtime_probe_execution.RuntimeProbeRunnerHandlerEntry:
+    """Return one dispatch entry backed by the local-Python handler adapter."""
+    make_entry = (
+        runtime_probe_execution.make_runtime_probe_local_python_subprocess_handler_entry
+    )
+    return make_entry(
+        family_label=family_label,
+        form_label=form_label,
+        python_executable=python_executable,
+        module_name=module_name,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+        module_argv=module_argv,
+    )
+
+
 def _local_python_process_completion(
     invocation: runtime_probe_execution.RuntimeProbeLocalPythonSubprocessInvocation
     | None = None,
@@ -1513,6 +1542,330 @@ def test_execute_local_python_subprocess_invocation_attempt_validates_before_run
         )
 
     assert calls == []
+
+
+def test_make_local_python_subprocess_handler_entry_returns_dispatch_entry() -> None:
+    """The factory exposes a dispatchable entry for the configured family/form."""
+    entry = _local_python_subprocess_handler_entry(
+        module_argv=("--first", "1", "--second", "2"),
+    )
+
+    assert isinstance(entry, runtime_probe_execution.RuntimeProbeRunnerHandlerEntry)
+    assert (
+        entry.family_label is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+    )
+    assert entry.form_label == "dynamic_import:importlib.import_module/1"
+    assert callable(entry.handler)
+
+
+def test_local_python_subprocess_handler_observes_success_and_preserves_argv(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Direct handler calls delegate through invocation and attempt execution."""
+    runner_request = _local_python_runner_request()
+    module_argv = ("--first", "1", "--second", runner_request.request_id)
+    entry = _local_python_subprocess_handler_entry(module_argv=module_argv)
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout=_local_python_stdout_protocol_text(
+                normalized_payload=[
+                    {"key": "handler_observed", "value": "plugins.weather"},
+                ],
+                durable_artifact_reference="runtime-artifact:local-python:handler",
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = entry.handler(runner_request)
+
+    assert calls == [
+        (
+            "/workspace/context-ir/.venv/bin/python",
+            "-m",
+            "context_ir.runtime_probe_worker",
+            "--first",
+            "1",
+            "--second",
+            runner_request.request_id,
+        )
+    ]
+    assert attempt.plan_id == runner_request.plan_id
+    assert attempt.request_id == runner_request.request_id
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("handler_observed", "plugins.weather"),
+    )
+    assert attempt.durable_artifact_reference == (
+        "runtime-artifact:local-python:handler"
+    )
+
+
+@pytest.mark.parametrize(
+    ("exception", "returncode", "stdout_text", "expected_outcome", "failure_source"),
+    (
+        (
+            None,
+            17,
+            _local_python_stdout_protocol_text(),
+            runtime_probe_results.RuntimeProbeResultOutcome.CRASHED,
+            "local_python_process_completion",
+        ),
+        (
+            subprocess.TimeoutExpired(cmd=("python",), timeout=30),
+            0,
+            _local_python_stdout_protocol_text(),
+            runtime_probe_results.RuntimeProbeResultOutcome.TIMED_OUT,
+            "local_python_subprocess_timeout",
+        ),
+        (
+            None,
+            0,
+            "not json",
+            runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED,
+            "local_python_stdout_protocol_failure",
+        ),
+    ),
+)
+def test_local_python_subprocess_handler_preserves_attempt_normalization(
+    monkeypatch: pytest.MonkeyPatch,
+    exception: Exception | None,
+    returncode: int,
+    stdout_text: str,
+    expected_outcome: runtime_probe_results.RuntimeProbeResultOutcome,
+    failure_source: str,
+) -> None:
+    """Subprocess failure paths still flow through existing attempt normalization."""
+    runner_request = _local_python_runner_request()
+    entry = _local_python_subprocess_handler_entry()
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        if exception is not None:
+            raise exception
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=returncode,
+            stdout=stdout_text,
+            stderr="raw stderr is not propagated into failure metadata",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = entry.handler(runner_request)
+
+    assert attempt.request is runner_request.request
+    assert attempt.execution_input is runner_request.execution_input
+    assert attempt.outcome is expected_outcome
+    assert attempt.failure_detail_fields[0] == _field(
+        "failure_source",
+        failure_source,
+    )
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label"),
+    (
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            "dynamic_import:importlib.import_module/1",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:other_form/1",
+        ),
+    ),
+)
+def test_local_python_subprocess_handler_rejects_family_form_drift_before_run(
+    monkeypatch: pytest.MonkeyPatch,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """Configured handlers reject family/form drift before subprocess execution."""
+    runner_request = _local_python_runner_request()
+    entry = _local_python_subprocess_handler_entry(
+        family_label=family_label,
+        form_label=form_label,
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args, returncode=0, stdout="", stderr=""
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    with pytest.raises(ValueError, match="family/form"):
+        entry.handler(runner_request)
+
+    assert calls == []
+
+
+def test_local_python_subprocess_handler_revalidates_runner_before_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Runner request drift is rejected before adapter subprocess execution."""
+    runner_request = _local_python_runner_request()
+    entry = _local_python_subprocess_handler_entry()
+    object.__setattr__(runner_request, "request_id", "runtime_probe:wrong")
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args, returncode=0, stdout="", stderr=""
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    with pytest.raises(ValueError, match="request_id must match execution input"):
+        entry.handler(runner_request)
+
+    assert calls == []
+
+
+def test_local_python_subprocess_handler_rejects_invalid_config_metadata() -> None:
+    """Handler config rejects malformed local-Python subprocess metadata."""
+    with pytest.raises(ValueError, match="family_label"):
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessHandlerConfig(
+            family_label="dynamic_import",
+            form_label="dynamic_import:importlib.import_module/1",
+            python_executable="/workspace/context-ir/.venv/bin/python",
+            module_name="context_ir.runtime_probe_worker",
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-process-completion:test.1"
+            ),
+        )
+    with pytest.raises(ValueError, match="form_label"):
+        _local_python_subprocess_handler_entry(form_label=" ")
+    with pytest.raises(ValueError, match="python_executable.*absolute"):
+        _local_python_subprocess_handler_entry(python_executable="python")
+    with pytest.raises(ValueError, match="module name"):
+        _local_python_subprocess_handler_entry(module_name="context_ir.worker-bad")
+    with pytest.raises(ValueError, match="invocation_contract_revision"):
+        _local_python_subprocess_handler_entry(invocation_contract_revision="")
+    with pytest.raises(ValueError, match="completion_contract_revision"):
+        _local_python_subprocess_handler_entry(completion_contract_revision=" ")
+    with pytest.raises(ValueError, match="module_argv"):
+        runtime_probe_execution.make_runtime_probe_local_python_subprocess_handler_entry(
+            family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            form_label="dynamic_import:importlib.import_module/1",
+            python_executable="/workspace/context-ir/.venv/bin/python",
+            module_name="context_ir.runtime_probe_worker",
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-process-completion:test.1"
+            ),
+            module_argv="--request",
+        )
+
+
+def test_dispatching_runner_consumes_local_python_subprocess_handler_entry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Dispatching runners can consume the factory-produced handler entry."""
+    runner_request = _local_python_runner_request()
+    entry = _local_python_subprocess_handler_entry()
+    dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
+        (entry,)
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(
+        args: tuple[str, ...],
+        *,
+        cwd: str,
+        env: dict[str, str],
+        timeout: int,
+        shell: bool,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        del cwd, env, timeout, shell, capture_output, text, check
+        calls.append(args)
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout=_local_python_stdout_protocol_text(
+                normalized_payload=[
+                    {"key": "dispatch_observed", "value": "plugins.weather"},
+                ],
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = dispatching_runner(runner_request)
+
+    assert calls == [
+        (
+            "/workspace/context-ir/.venv/bin/python",
+            "-m",
+            "context_ir.runtime_probe_worker",
+            "--request",
+            "runtime-probe-request.json",
+        )
+    ]
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("dispatch_observed", "plugins.weather"),
+    )
 
 
 def test_materialize_local_python_timeout_attempt_is_sanitized() -> None:
@@ -4321,6 +4674,21 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
         )
     )
     local_python_invocation = _local_python_subprocess_invocation()
+    local_python_handler_config = (
+        runtime_probe_execution.RuntimeProbeLocalPythonSubprocessHandlerConfig(
+            family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            form_label="dynamic_import:importlib.import_module/1",
+            python_executable="/workspace/context-ir/.venv/bin/python",
+            module_name="context_ir.runtime_probe_worker",
+            invocation_contract_revision=(
+                "runtime-probe-local-python-subprocess:test.1"
+            ),
+            completion_contract_revision=(
+                "runtime-probe-local-python-process-completion:test.1"
+            ),
+            module_argv=("--request", "runtime-probe-request.json"),
+        )
+    )
     local_python_completion = _local_python_process_completion(local_python_invocation)
     local_python_stdout_protocol_result = (
         materialize_runtime_probe_local_python_stdout_protocol_result(
@@ -4365,6 +4733,8 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     with pytest.raises(FrozenInstanceError):
         local_python_invocation.working_directory = "/tmp/context-ir"
     with pytest.raises(FrozenInstanceError):
+        local_python_handler_config.form_label = "dynamic_import:mutated/1"
+    with pytest.raises(FrozenInstanceError):
         local_python_completion.stdout_text = "mutated"
     with pytest.raises(FrozenInstanceError):
         local_python_stdout_protocol_result.stdout_protocol_revision = "mutated"
@@ -4390,6 +4760,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert "RuntimeProbeLocalPythonStdoutProtocolResult" in (
         runtime_probe_execution.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonSubprocessHandlerConfig"
+        in runtime_probe_execution.__all__
     )
     assert (
         "RuntimeProbeLocalPythonSubprocessInvocation" in runtime_probe_execution.__all__
@@ -4420,6 +4794,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert "make_dispatching_runtime_probe_runner" in runtime_probe_execution.__all__
     assert "make_failure_normalizing_runtime_probe_runner" in (
+        runtime_probe_execution.__all__
+    )
+    assert "make_runtime_probe_local_python_subprocess_handler_entry" in (
         runtime_probe_execution.__all__
     )
     assert "materialize_runtime_probe_execution_input_batch" in (
@@ -4461,6 +4838,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "RuntimeProbeLocalPythonEnvironmentContext" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonProcessCompletion" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonStdoutProtocolResult" not in context_ir.__all__
+    assert "RuntimeProbeLocalPythonSubprocessHandlerConfig" not in context_ir.__all__
     assert "RuntimeProbeLocalPythonSubprocessInvocation" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerEntry" not in context_ir.__all__
     assert "RuntimeProbeRunnerHandlerKey" not in context_ir.__all__
@@ -4491,6 +4869,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert "make_dispatching_runtime_probe_runner" not in context_ir.__all__
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
+    assert (
+        "make_runtime_probe_local_python_subprocess_handler_entry"
+        not in context_ir.__all__
+    )
     assert "materialize_runtime_probe_execution_input_batch" not in context_ir.__all__
     assert (
         "materialize_runtime_probe_local_python_process_completion_attempt"
@@ -4529,6 +4911,7 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonEnvironmentContext")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonProcessCompletion")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonStdoutProtocolResult")
+    assert not hasattr(context_ir, "RuntimeProbeLocalPythonSubprocessHandlerConfig")
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonSubprocessInvocation")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerEntry")
     assert not hasattr(context_ir, "RuntimeProbeRunnerHandlerKey")
@@ -4567,6 +4950,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "make_failure_normalizing_runtime_probe_runner",
+    )
+    assert not hasattr(
+        context_ir,
+        "make_runtime_probe_local_python_subprocess_handler_entry",
     )
     assert not hasattr(
         context_ir,

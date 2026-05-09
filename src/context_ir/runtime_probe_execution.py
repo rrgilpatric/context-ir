@@ -367,6 +367,57 @@ class RuntimeProbeLocalPythonSubprocessInvocation:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonSubprocessHandlerConfig:
+    """Configured family/form adapter metadata for a local-Python probe worker."""
+
+    family_label: RuntimeProbeFamily
+    form_label: str
+    python_executable: str
+    module_name: str
+    invocation_contract_revision: str
+    completion_contract_revision: str
+    module_argv: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Reject handler metadata before it can reach subprocess execution."""
+        _validate_runtime_probe_local_python_subprocess_handler_config(self)
+
+
+@dataclass(frozen=True)
+class _RuntimeProbeLocalPythonSubprocessHandler:
+    """Callable adapter from runner requests to local-Python subprocess attempts."""
+
+    config: RuntimeProbeLocalPythonSubprocessHandlerConfig
+
+    def __post_init__(self) -> None:
+        """Reject incomplete local-Python handler configuration."""
+        _validate_runtime_probe_local_python_subprocess_handler_config(self.config)
+
+    def __call__(
+        self,
+        runner_request: RuntimeProbeRunnerRequest,
+    ) -> RuntimeProbeExecutionAttempt:
+        """Materialize, execute, and normalize one configured local-Python probe."""
+        _validate_runner_request(runner_request)
+        _validate_runtime_probe_local_python_subprocess_handler_config(self.config)
+        _validate_local_python_subprocess_handler_request_key(
+            runner_request,
+            self.config,
+        )
+        invocation = materialize_runtime_probe_local_python_subprocess_invocation(
+            runner_request,
+            python_executable=self.config.python_executable,
+            module_name=self.config.module_name,
+            invocation_contract_revision=self.config.invocation_contract_revision,
+            module_argv=self.config.module_argv,
+        )
+        return execute_runtime_probe_local_python_subprocess_invocation_attempt(
+            invocation,
+            completion_contract_revision=self.config.completion_contract_revision,
+        )
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonProcessCompletion:
     """Frozen raw local-Python process completion contract."""
 
@@ -1319,6 +1370,34 @@ def make_dispatching_runtime_probe_runner(
     )
 
 
+def make_runtime_probe_local_python_subprocess_handler_entry(
+    *,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    python_executable: str,
+    module_name: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+    module_argv: Iterable[str] = (),
+) -> RuntimeProbeRunnerHandlerEntry:
+    """Return a dispatch entry backed by one local-Python subprocess worker."""
+    config = RuntimeProbeLocalPythonSubprocessHandlerConfig(
+        family_label=family_label,
+        form_label=form_label,
+        python_executable=python_executable,
+        module_name=module_name,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+        module_argv=_local_python_subprocess_handler_module_argv(module_argv),
+    )
+    handler = _RuntimeProbeLocalPythonSubprocessHandler(config=config)
+    return RuntimeProbeRunnerHandlerEntry(
+        family_label=config.family_label,
+        form_label=config.form_label,
+        handler=handler,
+    )
+
+
 def _materialize_runtime_probe_execution_input(
     *,
     plan_id: str,
@@ -1788,6 +1867,80 @@ def _validate_runtime_probe_runner_handler_entry(
         raise ValueError("runtime probe runner handler form_label must be non-empty")
     if not callable(handler_entry.handler):
         raise ValueError("runtime probe runner handler must be callable")
+
+
+def _validate_runtime_probe_local_python_subprocess_handler_config(
+    config: RuntimeProbeLocalPythonSubprocessHandlerConfig,
+) -> None:
+    """Reject local-Python handler metadata that cannot produce safe invocations."""
+    if not isinstance(config, RuntimeProbeLocalPythonSubprocessHandlerConfig):
+        raise ValueError("runtime probe local Python handler config must be typed")
+    if not isinstance(config.family_label, RuntimeProbeFamily):
+        raise ValueError(
+            "runtime probe local Python handler family_label must be a runtime "
+            "probe family"
+        )
+    if not isinstance(config.form_label, str) or not config.form_label.strip():
+        raise ValueError(
+            "runtime probe local Python handler form_label must be non-empty"
+        )
+    if config.form_label != config.form_label.strip() or _contains_control_character(
+        config.form_label
+    ):
+        raise ValueError("runtime probe local Python handler form_label is malformed")
+    _validate_absolute_path_metadata(
+        config.python_executable,
+        field_name="runtime probe local Python handler python_executable",
+    )
+    _validate_local_python_module_name(config.module_name)
+    _validate_contract_revision(
+        config.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_contract_revision(
+        config.completion_contract_revision,
+        field_name="completion_contract_revision",
+    )
+    if not isinstance(config.module_argv, tuple):
+        raise ValueError(
+            "runtime probe local Python handler module_argv must be a tuple"
+        )
+    for token in config.module_argv:
+        _validate_local_python_argv_token(
+            token,
+            field_name="handler module_argv",
+        )
+
+
+def _validate_local_python_subprocess_handler_request_key(
+    runner_request: RuntimeProbeRunnerRequest,
+    config: RuntimeProbeLocalPythonSubprocessHandlerConfig,
+) -> None:
+    """Reject runner requests not matching the configured handler key."""
+    if _runtime_probe_runner_request_handler_key(runner_request) != (
+        config.family_label,
+        config.form_label,
+    ):
+        raise ValueError(
+            "runtime probe local Python handler request family/form must match "
+            "configured handler"
+        )
+
+
+def _local_python_subprocess_handler_module_argv(
+    module_argv: Iterable[str],
+) -> tuple[str, ...]:
+    """Return handler argv metadata as a tuple without treating text as a sequence."""
+    if isinstance(module_argv, str):
+        raise ValueError(
+            "runtime probe local Python handler module_argv must be tokens"
+        )
+    try:
+        return tuple(module_argv)
+    except TypeError as error:
+        raise ValueError(
+            "runtime probe local Python handler module_argv must be iterable"
+        ) from error
 
 
 def _index_runtime_probe_runner_handler_entries(
@@ -2459,6 +2612,7 @@ __all__ = [
     "RuntimeProbeLocalPythonEnvironmentContext",
     "RuntimeProbeLocalPythonProcessCompletion",
     "RuntimeProbeLocalPythonStdoutProtocolResult",
+    "RuntimeProbeLocalPythonSubprocessHandlerConfig",
     "RuntimeProbeLocalPythonSubprocessInvocation",
     "RuntimeProbeRunnerHandlerEntry",
     "RuntimeProbeRunnerHandlerKey",
@@ -2474,6 +2628,7 @@ __all__ = [
     "execute_runtime_probe_local_python_subprocess_invocation_attempt",
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
+    "make_runtime_probe_local_python_subprocess_handler_entry",
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_local_python_process_completion_attempt",
     "materialize_runtime_probe_local_python_process_completion",
