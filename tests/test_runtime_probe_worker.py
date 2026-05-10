@@ -60,6 +60,9 @@ _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER = (
 _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER = (
     "import_runtime_probe_dynamic_import_replay_target_source_module"
 )
+_DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER = (
+    "observe_runtime_probe_dynamic_import_worker_request"
+)
 
 
 def _field(key: str, value: str) -> runtime_probe_results.RuntimeProbeReplayField:
@@ -269,6 +272,39 @@ def _dynamic_import_replay_target_source_module(
         _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER,
     )
     return import_source_module(replay_target)
+
+
+def _observe_dynamic_import_worker_request(
+    request: DynamicImportWorkerRequest,
+) -> DynamicImportWorkerObservation:
+    """Observe one concrete dynamic-import worker request for worker tests."""
+    observe_request = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER,
+    )
+    return observe_request(request)
+
+
+def _dynamic_import_worker_request_with_source(
+    tmp_path: Path,
+    *,
+    module_name: str,
+    source_text: str,
+    replay_target_name: str = "run",
+) -> DynamicImportWorkerRequest:
+    """Return a worker request backed by a real temp source module."""
+    working_directory = tmp_path / f"{module_name}_workspace"
+    python_path = tmp_path / f"{module_name}_python_path"
+    working_directory.mkdir()
+    python_path.mkdir()
+    module_path = python_path / f"{module_name}.py"
+    module_path.write_text(source_text, encoding="utf-8")
+    return _valid_dynamic_import_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.{replay_target_name}",
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
 
 
 def _dynamic_import_worker_success_response(
@@ -1599,6 +1635,285 @@ def test_dynamic_import_worker_target_harness_restores_wrapper_on_failure() -> N
     assert importlib.import_module is original_import_module
 
 
+def test_dynamic_import_worker_concrete_observer_observes_source_target(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer imports, resolves, executes, and observes one request."""
+    module_name = "runtime_probe_concrete_observer_success_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "import importlib\n"
+            "import sys\n\n"
+            'print("source stdout runtime_probe_stdout_protocol_revision")\n'
+            'print("source stderr secret-token /private/tmp", file=sys.stderr)\n\n'
+            "def run():\n"
+            '    print("target stdout runtime_probe_stdout_protocol_revision")\n'
+            '    print("target stderr secret-token /private/tmp", file=sys.stderr)\n'
+            '    return importlib.import_module("plugins.composed")\n'
+        ),
+    )
+    original_import_module = importlib.import_module
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+    sys.modules.pop(module_name, None)
+    sys.modules.pop("plugins.composed", None)
+
+    try:
+        with (
+            contextlib.redirect_stdout(outer_stdout),
+            contextlib.redirect_stderr(outer_stderr),
+        ):
+            observation = _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+        sys.modules.pop("plugins.composed", None)
+
+    assert observation.request is request
+    assert observation.imported_module == "plugins.composed"
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+    assert importlib.import_module is original_import_module
+
+
+def test_dynamic_import_worker_concrete_observer_is_handler_injectable(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer can be injected through the existing handler factory."""
+    module_name = "runtime_probe_concrete_observer_handler_case"
+    source_text = (
+        "import importlib\n\n"
+        "def run():\n"
+        '    return importlib.import_module("plugins.handler_observed")\n'
+    )
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    payload = _valid_worker_payload(
+        source_file_path=request.source_file_path,
+        replay_target_seed=request.replay_target_seed,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+    )
+    observer = getattr(runtime_probe_worker, _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER)
+    entry = (
+        runtime_probe_worker.build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer
+        )
+    )
+    sys.modules.pop(module_name, None)
+
+    try:
+        exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+            serialize_runtime_probe_local_python_worker_request_payload(payload),
+            (entry,),
+        )
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":['
+        '{"key":"imported_module","value":"plugins.handler_observed"}]}'
+    )
+
+
+def test_dynamic_import_worker_concrete_observer_revalidates_request_before_import(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Drifted requests fail before the concrete observer mutates import state."""
+    request = _valid_dynamic_import_worker_request()
+    object.__setattr__(request, "replay_selector_seed", "call:drifted")
+    import_calls: list[str] = []
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+
+    def controlled_import_module(
+        name: str,
+        package: str | None = None,
+    ) -> ModuleType:
+        del package
+        import_calls.append(name)
+        return ModuleType(name)
+
+    monkeypatch.setattr(importlib, "import_module", controlled_import_module)
+
+    with pytest.raises(ValueError, match="replay_selector_seed"):
+        _observe_dynamic_import_worker_request(request)
+
+    assert import_calls == []
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+
+
+def test_dynamic_import_worker_concrete_observer_rejects_source_import_failure(
+    tmp_path: Path,
+) -> None:
+    """Source import failures stay deterministic and stream-shielded."""
+    module_name = "runtime_probe_concrete_observer_source_failure_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "import sys\n"
+            'print("source stdout runtime_probe_stdout_protocol_revision")\n'
+            'print("source stderr secret-token /private/tmp", file=sys.stderr)\n'
+            'raise RuntimeError("source failed with secret-token /private/tmp")\n'
+        ),
+    )
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    sys.modules.pop(module_name, None)
+
+    try:
+        with (
+            contextlib.redirect_stdout(outer_stdout),
+            contextlib.redirect_stderr(outer_stderr),
+            pytest.raises(
+                ValueError,
+                match="source module import failed",
+            ) as error_info,
+        ):
+            _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        ("VALUE = 1\n", "attribute_path"),
+        ("run = object()\n", "target"),
+    ),
+)
+def test_dynamic_import_worker_concrete_observer_rejects_bad_target_resolution(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Missing and non-callable concrete replay targets fail closed."""
+    module_name = "runtime_probe_concrete_observer_target_resolution_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+
+@pytest.mark.parametrize(
+    ("target_body", "error_match"),
+    (
+        ("    return None\n", "exactly one"),
+        ('    return importlib.import_module("plugins-weather")\n', "module name"),
+        ('    return importlib.import_module(".weather")\n', "relative"),
+        (
+            (
+                '    return importlib.import_module("plugins.weather", '
+                'package="plugins")\n'
+            ),
+            "package",
+        ),
+    ),
+)
+def test_dynamic_import_worker_concrete_observer_rejects_bad_import_shapes(
+    target_body: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """The concrete observer preserves import-shape rejection semantics."""
+    module_name = "runtime_probe_concrete_observer_bad_import_shape_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text="import importlib\n\ndef run():\n" + target_body,
+    )
+    original_import_module = importlib.import_module
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert importlib.import_module is original_import_module
+
+
+@pytest.mark.parametrize(
+    "failure_statement",
+    (
+        'raise RuntimeError("target failed with secret-token /private/tmp")',
+        'raise ValueError("target failed with secret-token /private/tmp")',
+    ),
+)
+def test_dynamic_import_worker_concrete_observer_rejects_target_execution_failure(
+    failure_statement: str,
+    tmp_path: Path,
+) -> None:
+    """Target exceptions are wrapped as deterministic worker-local failures."""
+    module_name = "runtime_probe_concrete_observer_target_failure_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "import sys\n\n"
+            "def run():\n"
+            '    print("target stdout runtime_probe_stdout_protocol_revision")\n'
+            '    print("target stderr secret-token /private/tmp", file=sys.stderr)\n'
+            f"    {failure_statement}\n"
+        ),
+    )
+    original_import_module = importlib.import_module
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+    sys.modules.pop(module_name, None)
+
+    try:
+        with (
+            contextlib.redirect_stdout(outer_stdout),
+            contextlib.redirect_stderr(outer_stderr),
+            pytest.raises(
+                ValueError,
+                match="target execution failed",
+            ) as error_info,
+        ):
+            _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert importlib.import_module is original_import_module
+
+
 def test_dynamic_import_worker_handler_factory_metadata() -> None:
     """The factory returns the exact dynamic-import family/form handler entry."""
 
@@ -2087,6 +2402,11 @@ def test_worker_entrypoint_is_importable() -> None:
         _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER,
     )
     assert callable(import_source_module)
+    observe_request = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER,
+    )
+    assert callable(observe_request)
 
 
 def test_package_root_exports_remain_unchanged() -> None:
@@ -2117,6 +2437,7 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER not in context_ir.__all__
     assert _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER not in context_ir.__all__
+    assert _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER not in context_ir.__all__
     assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
         context_ir.__all__
     )
@@ -2165,6 +2486,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER,
+    )
+    assert not hasattr(
+        context_ir,
+        _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER,
     )
     assert not hasattr(
         context_ir,

@@ -47,6 +47,16 @@ _DYNAMIC_IMPORT_WORKER_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX = (
     "runtime_probe_local_python_subprocess_invocation:"
 )
+_DYNAMIC_IMPORT_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
+    "runtime probe dynamic import worker target execution failed"
+)
+_DYNAMIC_IMPORT_WORKER_IMPORT_SHAPE_ERROR_MESSAGES = frozenset(
+    (
+        "runtime probe dynamic import worker package imports are unsupported",
+        "runtime probe dynamic import worker relative imports are unsupported",
+        "runtime probe dynamic import worker module name is malformed",
+    )
+)
 _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "plan_id",
     "request_id",
@@ -526,6 +536,26 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
     )
 
 
+def observe_runtime_probe_dynamic_import_worker_request(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+) -> RuntimeProbeLocalPythonDynamicImportWorkerObservation:
+    """Observe one concrete dynamic-import worker request in local Python."""
+    _validate_runtime_probe_dynamic_import_worker_request(request)
+    replay_target = materialize_runtime_probe_dynamic_import_replay_target(request)
+    source_module = import_runtime_probe_dynamic_import_replay_target_source_module(
+        replay_target
+    )
+    target = resolve_runtime_probe_dynamic_import_replay_target_callable(
+        replay_target,
+        source_module,
+    )
+    deterministic_target = _runtime_probe_dynamic_import_target_execution_guard(target)
+    return materialize_runtime_probe_dynamic_import_worker_observation_from_target(
+        replay_target,
+        deterministic_target,
+    )
+
+
 def import_runtime_probe_dynamic_import_replay_target_source_module(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
 ) -> ModuleType:
@@ -829,6 +859,28 @@ def _validate_runtime_probe_dynamic_import_target_callable(
     """Reject non-callable target injections before import interception."""
     if not callable(target):
         raise ValueError("runtime probe dynamic import worker target must be callable")
+
+
+def _runtime_probe_dynamic_import_target_execution_guard(
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> RuntimeProbeLocalPythonDynamicImportTargetCallable:
+    """Wrap concrete target execution with deterministic worker-local failures."""
+
+    def guarded_target() -> object:
+        try:
+            return target()
+        except ValueError as error:
+            if str(error) in _DYNAMIC_IMPORT_WORKER_IMPORT_SHAPE_ERROR_MESSAGES:
+                raise
+            raise ValueError(
+                _DYNAMIC_IMPORT_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
+            ) from error
+        except Exception as error:
+            raise ValueError(
+                _DYNAMIC_IMPORT_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
+            ) from error
+
+    return guarded_target
 
 
 def _validate_runtime_probe_dynamic_import_replay_target_source_module(
