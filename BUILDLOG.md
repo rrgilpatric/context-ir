@@ -2,6 +2,200 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-10 -- Parent-Side Dynamic Import Worker Subprocess Proof Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  three-file parent-side real-subprocess proof release unit.
+- Findings: none.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against `AGENTS.md`,
+    `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `README.md`, `EVAL.md`, or
+    `PUBLIC_CLAIMS.md`
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1171 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `2c21798 Register dynamic import worker default handler`
+  - current pushed source/contract authority is
+    `2c21798 Register dynamic import worker default handler`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1171 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact three-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Parent-Side Dynamic Import Worker Subprocess Proof Acceptance
+
+- Reviewed the returned parent-side real-subprocess proof implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `2c21798 Register dynamic import worker default handler`
+  - current pushed source/contract authority is
+    `2c21798 Register dynamic import worker default handler`
+  - dirty files are `BUILDLOG.md`, `PLAN.md`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - focused parent-side coverage in `tests/test_runtime_probe_execution.py`
+    creates a temporary repository source module and drives the existing
+    local-Python subprocess handler through the dispatching runner
+  - the subprocess path runs `python -m context_ir.runtime_probe_worker`
+    without injected worker handlers
+  - the worker uses the pushed default dynamic-import handler for
+    `RuntimeProbeFamily.DYNAMIC_IMPORT` and
+    `dynamic_import:importlib.import_module/1`
+  - the parent materializes an observed `RuntimeProbeExecutionAttempt` through
+    the existing stdout protocol with normalized payload
+    `imported_module=plugins.parent_subprocess`
+  - no changes were made to `src/context_ir/runtime_probe_worker.py`,
+    `src/context_ir/runtime_probe_execution.py`, package-root exports, MCP,
+    public API, schema, eval, scoring, compiler, docs, public claims,
+    admission, recompile, or result assembly surfaces
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `320 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_worker.py -q`,
+    reporting `320 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact three-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Default Handler Next-Lane Routing
+
+- Ryan authorized proceeding with selection of the next bounded north-star
+  lane after the local Python dynamic-import default worker handler release was
+  pushed.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `2c21798 Register dynamic import worker default handler`
+  - dirty files limited to workspace-only post-push/next-route continuity in
+    `PLAN.md` and `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next implementation lane to a parent-side
+  real-subprocess proof for the pushed default dynamic-import worker handler.
+- Selected lane:
+  - add focused coverage proving `context_ir.runtime_probe_execution` can use
+    the existing local-Python subprocess handler path to run
+    `python -m context_ir.runtime_probe_worker`
+  - use a temporary repository and the pushed worker default handler for
+    `RuntimeProbeFamily.DYNAMIC_IMPORT` /
+    `dynamic_import:importlib.import_module/1`
+  - verify the parent receives an observed `RuntimeProbeExecutionAttempt` via
+    the existing stdout protocol
+  - prefer a test-only proof in `tests/test_runtime_probe_execution.py`;
+    `src/context_ir/runtime_probe_execution.py` is in scope only for the
+    smallest module-local helper if the existing generic handler entry cannot
+    express the proof cleanly
+- Alternatives considered:
+  - parent-side admission/recompile/result assembly integration immediately
+  - broader runtime-probe execution API wiring
+  - another worker-side dynamic-import helper or form
+  - public/API/MCP/eval/docs claim updates
+- Reasoning:
+  - the worker now has a concrete default dynamic-import handler and can emit
+    the accepted stdout success protocol without injected handlers
+  - the parent execution module already has subprocess invocation, stdin,
+    process completion, stdout parsing, attempt normalization, dispatch, and
+    generic local-Python handler foundations
+  - the smallest remaining proof before admission/recompile integration is the
+    actual parent-to-child process composition
+  - keeping the lane focused on real subprocess proof avoids widening public
+    surfaces or reopening worker internals
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Default Handler Post-Push Routing
+
+- Ryan-authorized push completed for the local Python dynamic-import default
+  worker handler registration release unit.
+- Pushed commit:
+  - `2c21798 Register dynamic import worker default handler`
+- Repo-backed truth after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `2c21798 Register dynamic import worker default handler`
+  - workspace-only post-push continuity updates are present in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1170 passed`
+  - no active release gate, staging, local commit creation, or push remains for
+    `2c21798`
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Default Handler Local Commit Routing
+
+- Local commit creation completed for the local Python dynamic-import default
+  worker handler registration release unit.
+- Commit:
+  - `2c21798 Register dynamic import worker default handler`
+- Commit contents:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `2c21798 Register dynamic import worker default handler`
+  - `origin/main` at
+    `79b635b Compose dynamic import worker observer`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1170 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-10 -- Dynamic Import Worker Default Handler Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact

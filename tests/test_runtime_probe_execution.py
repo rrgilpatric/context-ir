@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import textwrap
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
@@ -2566,6 +2567,60 @@ def test_dispatching_runner_consumes_local_python_subprocess_handler_entry(
     assert attempt.normalized_payload == (
         _field("dispatch_observed", "plugins.weather"),
     )
+
+
+def test_dispatching_runner_executes_default_worker_in_local_python_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The parent handler can observe proof from the worker's default handler."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run() -> object:
+                return importlib.import_module("plugins.parent_subprocess")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+    )
+    entry = _local_python_subprocess_handler_entry(
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+    dispatching_runner = runtime_probe_execution.make_dispatching_runtime_probe_runner(
+        (entry,)
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = dispatching_runner(runner_request)
+
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("imported_module", "plugins.parent_subprocess"),
+    )
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
 
 
 def test_materialize_local_python_timeout_attempt_is_sanitized() -> None:
