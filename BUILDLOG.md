@@ -2,6 +2,195 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-10 -- Dynamic Import Worker Default Handler Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  four-file local Python dynamic-import default worker handler registration
+  release unit.
+- Findings: none.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against `AGENTS.md`,
+    `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `README.md`, `EVAL.md`, or
+    `PUBLIC_CLAIMS.md`
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1170 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `79b635b Compose dynamic import worker observer`
+  - current pushed source/contract authority is
+    `79b635b Compose dynamic import worker observer`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1170 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Default Handler Workspace Acceptance
+
+- Reviewed the returned local Python dynamic-import default worker handler
+  registration implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `79b635b Compose dynamic import worker observer`
+  - current pushed source/contract authority is
+    `79b635b Compose dynamic import worker observer`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - omitted `handler_entries` in `context_ir.runtime_probe_worker.main()`
+    resolves to a module-local default handler table
+  - the default table registers only the concrete dynamic-import observer for
+    `RuntimeProbeFamily.DYNAMIC_IMPORT` and
+    `dynamic_import:importlib.import_module/1`
+  - explicit injected handler entries, including an explicit empty tuple, keep
+    their previous behavior
+  - valid dynamic-import worker stdin can emit the existing stdout success
+    protocol through the default `main()` path
+  - malformed stdin, unsupported family/form requests, explicit handler-table
+    behavior, observer failures, stdout/stderr shielding, and package-root
+    export quarantine remain covered
+  - parent executor/parser behavior, subprocess runner behavior, stdout
+    protocol shape, package-root exports, MCP, public API, schema, eval,
+    scoring, compiler, docs, public-claim, admission, recompile, and result
+    assembly surfaces are unchanged
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `319 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `319 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Default Handler Routing
+
+- Verified live repo state after the pushed local Python dynamic-import
+  concrete observer composition release and selected the next bounded
+  north-star lane.
+- Repo-backed truth:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `79b635b Compose dynamic import worker observer`
+  - current pushed source/contract authority is
+    `79b635b Compose dynamic import worker observer`
+  - workspace-only post-push and routing continuity updates are present in
+    `PLAN.md` and `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next implementation lane to default local-Python
+  dynamic-import worker handler registration for the already-pushed concrete
+  observer.
+- Alternatives considered:
+  - parent-side subprocess proof execution immediately
+  - runtime probe execution result assembly or admission integration
+  - more observer helper refactoring
+  - public/API/MCP/eval/docs claim updates
+- Reasoning:
+  - the worker has a concrete observer but `main()` still defaults to an empty
+    handler table
+  - a real `python -m context_ir.runtime_probe_worker` subprocess cannot use
+    test-only injected handlers
+  - registering exactly the dynamic-import concrete observer as the worker's
+    default handler is the smallest step that makes the subprocess target
+    executable before parent-side end-to-end proof wiring
+  - parent executor/parser integration remains a separate risk and should wait
+    until the worker's default dispatch behavior is focused and tested
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Concrete Observer Post-Push Routing
+
+- Ryan-authorized push completed for the local Python dynamic-import concrete
+  observer composition release unit.
+- Pushed commit:
+  - `79b635b Compose dynamic import worker observer`
+- Repo-backed truth after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `79b635b Compose dynamic import worker observer`
+  - workspace-only post-push continuity updates are present in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1166 passed`
+  - no active release gate, staging, local commit creation, or push remains for
+    `79b635b`
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Concrete Observer Local Commit Routing
+
+- Local commit creation completed for the local Python dynamic-import concrete
+  observer composition release unit.
+- Commit:
+  - `79b635b Compose dynamic import worker observer`
+- Commit contents:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `79b635b Compose dynamic import worker observer`
+  - `origin/main` at
+    `f0eb9e1 Add dynamic import source module importer`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1166 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-10 -- Dynamic Import Worker Concrete Observer Release Gate
 
 - Combined read-only release gate passed for the exact four-file local Python

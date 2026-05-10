@@ -115,15 +115,26 @@ def _valid_worker_invocation(
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonSubprocessInvocation:
     """Return one strict worker invocation produced by the parent contract."""
-    request_plan = runtime_probe_requests.build_runtime_probe_request_plan(
-        (
-            _request(
-                source_file_path=source_file_path,
-                replay_target_seed=replay_target_seed,
-                replay_selector_seed=replay_selector_seed,
-            ),
-        )
+    request = _request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
     )
+    return _valid_worker_invocation_for_request(
+        request,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+    )
+
+
+def _valid_worker_invocation_for_request(
+    request: runtime_probe_requests.RuntimeProbeRequest,
+    *,
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> RuntimeProbeLocalPythonSubprocessInvocation:
+    """Return one strict worker invocation for a planned request."""
+    request_plan = runtime_probe_requests.build_runtime_probe_request_plan((request,))
     input_batch = materialize_runtime_probe_execution_input_batch(
         request_plan,
         repository_snapshot_basis=RepositorySnapshotBasis(
@@ -335,8 +346,20 @@ def _valid_worker_stdin_text() -> str:
 
 
 def _run_worker(stdin_text: str) -> tuple[int, str, str]:
-    """Run the importable worker entrypoint without spawning a subprocess."""
+    """Run the worker entrypoint with an explicit empty handler table."""
     return _run_worker_with_handlers(stdin_text, ())
+
+
+def _run_worker_with_default_handlers(stdin_text: str) -> tuple[int, str, str]:
+    """Run the worker entrypoint with omitted handler entries."""
+    stdout = StringIO()
+    stderr = StringIO()
+    exit_code = runtime_probe_worker.main(
+        stdin=StringIO(stdin_text),
+        stdout=stdout,
+        stderr=stderr,
+    )
+    return (exit_code, stdout.getvalue(), stderr.getvalue())
 
 
 def _run_worker_with_handlers(
@@ -1728,6 +1751,135 @@ def test_dynamic_import_worker_concrete_observer_is_handler_injectable(
     )
 
 
+def test_dynamic_import_worker_default_handler_dispatches_concrete_observer(
+    tmp_path: Path,
+) -> None:
+    """Omitted handler entries use the concrete dynamic-import observer."""
+    module_name = "runtime_probe_default_observer_success_case"
+    source_text = (
+        "import importlib\n"
+        "import sys\n\n"
+        'print("source stdout runtime_probe_stdout_protocol_revision")\n'
+        'print("source stderr secret-token /private/tmp", file=sys.stderr)\n\n'
+        "def run():\n"
+        '    print("target stdout runtime_probe_stdout_protocol_revision")\n'
+        '    print("target stderr secret-token /private/tmp", file=sys.stderr)\n'
+        '    return importlib.import_module("plugins.default_observed")\n'
+    )
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    payload = _valid_worker_payload(
+        source_file_path=request.source_file_path,
+        replay_target_seed=request.replay_target_seed,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+    )
+    sys.modules.pop(module_name, None)
+
+    try:
+        exit_code, stdout_text, stderr_text = _run_worker_with_default_handlers(
+            serialize_runtime_probe_local_python_worker_request_payload(payload)
+        )
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":['
+        '{"key":"imported_module","value":"plugins.default_observed"}]}'
+    )
+    assert "source stdout" not in stdout_text
+    assert "target stdout" not in stdout_text
+
+
+def test_dynamic_import_worker_default_handler_observer_failure_fails_closed(
+    tmp_path: Path,
+) -> None:
+    """Default concrete observer failures stay sanitized at the main boundary."""
+    module_name = "runtime_probe_default_observer_failure_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "def run():\n"
+            '    raise RuntimeError("target failed with secret-token /private/tmp")\n'
+        ),
+    )
+    payload = _valid_worker_payload(
+        source_file_path=request.source_file_path,
+        replay_target_seed=request.replay_target_seed,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+    )
+    stdin_text = serialize_runtime_probe_local_python_worker_request_payload(payload)
+    sys.modules.pop(module_name, None)
+
+    try:
+        exit_code, stdout_text, stderr_text = _run_worker_with_default_handlers(
+            stdin_text
+        )
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert stderr_text == "runtime_probe_worker: rejected worker handler failure\n"
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label", "reason_code", "boundary_text"),
+    (
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:other_form/1",
+            UnresolvedReasonCode.DYNAMIC_IMPORT,
+            "importlib.import_module(name)",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            "reflective_builtin:getattr/2",
+            UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+            "getattr(obj, name)",
+        ),
+    ),
+)
+def test_dynamic_import_worker_default_handler_rejects_unsupported_family_form(
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+    reason_code: UnresolvedReasonCode,
+    boundary_text: str,
+) -> None:
+    """The omitted-handler default table is limited to one dynamic-import form."""
+    request = replace(
+        _request(),
+        family_label=family_label,
+        form_label=form_label,
+        reason_code=reason_code,
+        boundary_text=boundary_text,
+        replay_selector_seed=f"call:main.run:{form_label}@main.py:3:4:3:28",
+    )
+    invocation = _valid_worker_invocation_for_request(request)
+    payload = materialize_runtime_probe_local_python_worker_request_payload(invocation)
+    stdin_text = serialize_runtime_probe_local_python_worker_request_payload(payload)
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_default_handlers(stdin_text)
+
+    assert exit_code == 78
+    _assert_no_success_stdout_protocol(stdout_text)
+    assert (
+        stderr_text
+        == "runtime_probe_worker: rejected worker request without executing probe\n"
+    )
+    _assert_sanitized_worker_stderr(stderr_text, stdin_text)
+
+
 def test_dynamic_import_worker_concrete_observer_revalidates_request_before_import(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2344,7 +2496,7 @@ def test_malformed_worker_request_fails_closed_with_sanitized_stderr() -> None:
 
 
 def test_worker_without_handlers_never_emits_success_protocol_shape() -> None:
-    """Default valid and malformed ingress cannot produce observed proof stdout."""
+    """Explicit empty handler ingress cannot produce observed proof stdout."""
     malformed_stdin = "not json with secret-token /private/tmp Traceback"
 
     for stdin_text in (_valid_worker_stdin_text(), malformed_stdin):

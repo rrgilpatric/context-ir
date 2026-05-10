@@ -285,14 +285,26 @@ class _RuntimeProbeWorkerDispatchError(Exception):
         self.stderr_message = stderr_message
 
 
+class _RuntimeProbeWorkerDefaultHandlerEntries:
+    """Marker for omitted worker handler entries."""
+
+
+_DEFAULT_RUNTIME_PROBE_WORKER_HANDLER_ENTRIES = (
+    _RuntimeProbeWorkerDefaultHandlerEntries()
+)
+
+
 def main(
     stdin: TextIO | None = None,
     stdout: TextIO | None = None,
     stderr: TextIO | None = None,
     *,
-    handler_entries: Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry] = (),
+    handler_entries: (
+        Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]
+        | _RuntimeProbeWorkerDefaultHandlerEntries
+    ) = _DEFAULT_RUNTIME_PROBE_WORKER_HANDLER_ENTRIES,
 ) -> int:
-    """Read one worker request from stdin and route injected handlers fail-closed."""
+    """Read one worker request from stdin and route handlers fail-closed."""
     input_stream = sys.stdin if stdin is None else stdin
     output_stream = sys.stdout if stdout is None else stdout
     error_stream = sys.stderr if stderr is None else stderr
@@ -336,12 +348,17 @@ def main(
 
 def _dispatch_runtime_probe_local_python_worker_payload(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
-    handler_entries: Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry],
+    handler_entries: (
+        Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]
+        | _RuntimeProbeWorkerDefaultHandlerEntries
+    ),
 ) -> RuntimeProbeLocalPythonWorkerHandlerResponse:
-    """Dispatch one parsed worker payload through an injected handler table."""
+    """Dispatch one parsed worker payload through resolved worker handlers."""
     try:
         dispatching_worker = RuntimeProbeLocalPythonDispatchingWorker(
-            handler_entries=tuple(handler_entries),
+            handler_entries=tuple(
+                _runtime_probe_local_python_worker_handler_entries(handler_entries)
+            ),
         )
     except _RuntimeProbeWorkerDuplicateHandlerError:
         raise
@@ -623,6 +640,30 @@ def build_runtime_probe_dynamic_import_worker_handler_entry(
         form_label=_DYNAMIC_IMPORT_WORKER_FORM_LABEL,
         handler=RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter(
             observer=observer
+        ),
+    )
+
+
+def _runtime_probe_local_python_worker_handler_entries(
+    handler_entries: (
+        Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]
+        | _RuntimeProbeWorkerDefaultHandlerEntries
+    ),
+) -> Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]:
+    """Return explicit handler entries or the module-local default table."""
+    if isinstance(handler_entries, _RuntimeProbeWorkerDefaultHandlerEntries):
+        return _default_runtime_probe_local_python_worker_handler_entries()
+    return handler_entries
+
+
+def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
+    RuntimeProbeLocalPythonWorkerHandlerEntry,
+    ...,
+]:
+    """Return the default concrete local-Python worker handler entries."""
+    return (
+        build_runtime_probe_dynamic_import_worker_handler_entry(
+            observe_runtime_probe_dynamic_import_worker_request
         ),
     )
 
