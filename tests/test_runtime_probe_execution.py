@@ -26,6 +26,7 @@ from context_ir.runtime_probe_execution import (
     collect_runtime_probe_execution_attempts_from_runner_requests,
     execute_runtime_probe_local_python_subprocess_invocation,
     execute_runtime_probe_local_python_subprocess_invocation_attempt,
+    make_runtime_probe_dynamic_import_local_python_subprocess_runner,
     materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_process_completion_attempt,
     materialize_runtime_probe_local_python_stdout_protocol_attempt,
@@ -2621,6 +2622,111 @@ def test_dispatching_runner_executes_default_worker_in_local_python_subprocess(
     assert attempt.durable_artifact_reference is None
     assert attempt.failure_summary is None
     assert attempt.failure_detail_fields == ()
+
+
+def test_dynamic_import_local_python_runner_executes_default_worker_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The composed helper reaches the worker's default dynamic-import handler."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run() -> object:
+                return importlib.import_module("plugins.helper_subprocess")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+    )
+    runner = make_runtime_probe_dynamic_import_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    assert isinstance(runner, runtime_probe_execution.RuntimeProbeDispatchingRunner)
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("imported_module", "plugins.helper_subprocess"),
+    )
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label"),
+    (
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            "reflective_builtin:getattr/2",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:load_module/1",
+        ),
+    ),
+)
+def test_dynamic_import_local_python_runner_registers_only_default_form(
+    monkeypatch: pytest.MonkeyPatch,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """The composed helper does not register adjacent family/form handlers."""
+    request = replace(_request(), family_label=family_label, form_label=form_label)
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    runner = make_runtime_probe_dynamic_import_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        del kwargs
+        calls.append(tuple(str(arg) for arg in args))
+        raise AssertionError("unsupported helper request reached subprocess")
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = runner(runner_request)
+
+    assert calls == []
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "missing_runtime_probe_handler"),
+        _field("family_label", family_label.value),
+        _field("form_label", form_label),
+        _field("missing_handler_outcome", "setup_failed"),
+    )
 
 
 def test_materialize_local_python_timeout_attempt_is_sanitized() -> None:
@@ -5557,6 +5663,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_failure_normalizing_runtime_probe_runner" in (
         runtime_probe_execution.__all__
     )
+    assert "make_runtime_probe_dynamic_import_local_python_subprocess_runner" in (
+        runtime_probe_execution.__all__
+    )
     assert "make_runtime_probe_local_python_subprocess_handler_entry" in (
         runtime_probe_execution.__all__
     )
@@ -5640,6 +5749,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert "make_dispatching_runtime_probe_runner" not in context_ir.__all__
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
+    assert (
+        "make_runtime_probe_dynamic_import_local_python_subprocess_runner"
+        not in context_ir.__all__
+    )
     assert (
         "make_runtime_probe_local_python_subprocess_handler_entry"
         not in context_ir.__all__
@@ -5734,6 +5847,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "make_failure_normalizing_runtime_probe_runner",
+    )
+    assert not hasattr(
+        context_ir,
+        "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
     )
     assert not hasattr(
         context_ir,

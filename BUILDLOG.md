@@ -2,6 +2,215 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-10 -- Dynamic Import Local-Python Runner Factory Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  four-file dynamic-import local-Python subprocess runner factory release unit.
+- Findings: none.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against `AGENTS.md`,
+    `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `README.md`, `EVAL.md`, or
+    `PUBLIC_CLAIMS.md`
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1175 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `ced8850 Prove runtime probe subprocess recompile bridge`
+  - latest pushed source/contract authority remains
+    `2c21798 Register dynamic import worker default handler`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1175 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Local-Python Runner Factory Acceptance
+
+- Reviewed the returned dynamic-import local-Python subprocess runner factory
+  implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `ced8850 Prove runtime probe subprocess recompile bridge`
+  - latest pushed source/contract authority remains
+    `2c21798 Register dynamic import worker default handler`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - `src/context_ir/runtime_probe_execution.py` now exposes the module-local
+    helper `make_runtime_probe_dynamic_import_local_python_subprocess_runner`
+  - the helper composes the existing dispatching runner with exactly one
+    existing local-Python subprocess handler entry
+  - the registered handler is limited to
+    `RuntimeProbeFamily.DYNAMIC_IMPORT` and
+    `dynamic_import:importlib.import_module/1`
+  - the helper invokes the existing worker module
+    `context_ir.runtime_probe_worker` with no module argv by default
+  - the Python executable plus invocation and completion contract revisions
+    remain explicit inputs
+  - focused tests prove the helper reaches the worker's default dynamic-import
+    handler through a real `python -m context_ir.runtime_probe_worker`
+    subprocess and does not register adjacent family/form requests
+  - package-root exports remain unchanged
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `338 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_observation_recompile.py tests/test_runtime_probe_worker.py -q`,
+    reporting `338 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Local-Python Runner Factory Next-Lane Routing
+
+- Ryan authorized proceeding with selection of the next bounded north-star lane
+  after the runtime probe real-subprocess recompile bridge proof was pushed.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `ced8850 Prove runtime probe subprocess recompile bridge`
+  - latest pushed source/contract authority remains
+    `2c21798 Register dynamic import worker default handler`
+  - dirty files are limited to workspace-only post-push/next-route continuity
+    in `PLAN.md` and `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next implementation lane to a bounded source/contract
+  slice that adds an internal dynamic-import local-Python subprocess runner
+  factory in `src/context_ir/runtime_probe_execution.py`.
+- Selected lane:
+  - compose the existing dispatching runner with exactly one existing
+    local-Python subprocess handler entry
+  - register only `RuntimeProbeFamily.DYNAMIC_IMPORT` and
+    `dynamic_import:importlib.import_module/1`
+  - invoke the existing `python -m context_ir.runtime_probe_worker` worker
+    module by default
+  - keep the Python executable and invocation/completion contract revisions
+    explicit inputs
+  - update focused tests in `tests/test_runtime_probe_execution.py`
+  - preserve package-root export quarantine; any export update must remain
+    module-local to `context_ir.runtime_probe_execution`
+- Explicit non-goals:
+  - no recompile convenience wrapper or automatic runner selection in
+    `runtime_observation_recompile`
+  - no tool facade, public API, package-root export, MCP, schema, eval,
+    scoring, compiler, public-claim, admission, result-assembly, stdout
+    protocol, or worker behavior change
+  - no new runtime family/form and no reopening of pushed worker default
+    handler, subprocess proof, or recompile bridge proof releases
+- Alternatives considered:
+  - add a recompile-level helper that chooses the default subprocess runner
+  - wire the dynamic-import subprocess path into a tool facade or public API
+  - add another test-only proof around the already-proven real subprocess path
+  - move to another runtime family/form
+- Reasoning:
+  - `cee4e9f` proved the existing parent-side subprocess handler can obtain a
+    typed observed attempt from the default worker subprocess path
+  - `ced8850` proved the existing recompile bridge can consume that real
+    subprocess attempt when the runner is injected
+  - the smallest useful source step is to codify the already-proven runner
+    composition internally, without choosing recompile policy or widening any
+    public surface
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Runtime Probe Real-Subprocess Recompile Bridge Proof Post-Push Routing
+
+- Ryan-authorized push completed for the runtime probe real-subprocess
+  recompile bridge proof release unit.
+- Pushed commit:
+  - `ced8850 Prove runtime probe subprocess recompile bridge`
+- Commit contents:
+  - `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `ced8850 Prove runtime probe subprocess recompile bridge`
+  - latest pushed source/contract authority remains
+    `2c21798 Register dynamic import worker default handler`
+  - workspace-only post-push continuity updates are present in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact three-file test/continuity unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1172 passed`
+  - no active release gate, staging, local commit creation, or push remains for
+    `ced8850`
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Runtime Probe Real-Subprocess Recompile Bridge Proof Local Commit Routing
+
+- Local commit creation completed for the runtime probe real-subprocess
+  recompile bridge proof release unit.
+- Commit:
+  - `ced8850 Prove runtime probe subprocess recompile bridge`
+- Commit contents:
+  - `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `ced8850 Prove runtime probe subprocess recompile bridge`
+  - `origin/main` at
+    `cee4e9f Prove dynamic import worker subprocess path`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact three-file test/continuity unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1172 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-10 -- Runtime Probe Real-Subprocess Recompile Bridge Proof Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact
