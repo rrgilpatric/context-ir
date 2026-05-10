@@ -12,7 +12,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath, PureWindowsPath
 from types import MappingProxyType, ModuleType
-from typing import TextIO, TypeAlias
+from typing import TextIO, TypeAlias, cast
 
 from context_ir.runtime_probe_execution import (
     RuntimeProbeLocalPythonWorkerRequestPayload,
@@ -525,6 +525,29 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
     )
 
 
+def resolve_runtime_probe_dynamic_import_replay_target_callable(
+    replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
+    source_module: ModuleType,
+) -> RuntimeProbeLocalPythonDynamicImportTargetCallable:
+    """Resolve an injected source module replay target without executing it."""
+    _validate_runtime_probe_dynamic_import_replay_target(replay_target)
+    _validate_runtime_probe_dynamic_import_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    resolved_target: object = source_module
+    for attribute_name in replay_target.replay_target_attribute_path:
+        try:
+            resolved_target = getattr(resolved_target, attribute_name)
+        except AttributeError as error:
+            raise ValueError(
+                "runtime probe dynamic import replay target "
+                "replay_target_attribute_path is missing"
+            ) from error
+    _validate_runtime_probe_dynamic_import_target_callable(resolved_target)
+    return cast(RuntimeProbeLocalPythonDynamicImportTargetCallable, resolved_target)
+
+
 def build_runtime_probe_dynamic_import_worker_handler_entry(
     observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
@@ -765,11 +788,27 @@ def _validate_runtime_probe_dynamic_import_worker_observer(
 
 
 def _validate_runtime_probe_dynamic_import_target_callable(
-    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+    target: object,
 ) -> None:
     """Reject non-callable target injections before import interception."""
     if not callable(target):
         raise ValueError("runtime probe dynamic import worker target must be callable")
+
+
+def _validate_runtime_probe_dynamic_import_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
+    source_module: ModuleType,
+) -> None:
+    """Reject injected source modules that do not match the replay target."""
+    if not isinstance(source_module, ModuleType):
+        raise ValueError(
+            "runtime probe dynamic import replay target source module must be typed"
+        )
+    if source_module.__name__ != replay_target.source_module_name:
+        raise ValueError(
+            "runtime probe dynamic import replay target source module "
+            "must match source_module_name"
+        )
 
 
 def _runtime_probe_dynamic_import_observation_source_request(

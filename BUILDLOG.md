@@ -2,6 +2,205 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-10 -- Dynamic Import Worker Replay Target Attribute Resolver Release Gate
+
+- Combined read-only release gate passed for the exact four-file local Python
+  dynamic-import replay target attribute resolver release unit.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against the relevant
+    governing docs
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1148 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `5fb6cf8 Add dynamic import interception harness`
+  - current pushed source/contract authority is
+    `5fb6cf8 Add dynamic import interception harness`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1148 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Replay Target Attribute Resolver Workspace Acceptance
+
+- Reviewed the returned local Python dynamic-import replay-target attribute
+  resolver implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `5fb6cf8 Add dynamic import interception harness`
+  - current pushed source/contract authority is
+    `5fb6cf8 Add dynamic import interception harness`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds module-local
+    `resolve_runtime_probe_dynamic_import_replay_target_callable(...)`
+  - accepts a validated
+    `RuntimeProbeLocalPythonDynamicImportReplayTarget`
+  - accepts an injected `ModuleType` source module object and validates that
+    its `__name__` matches `replay_target.source_module_name`
+  - resolves `replay_target.replay_target_attribute_path` by normal attribute
+    lookup without executing the resolved object
+  - returns the callable target expected by the existing import interception
+    harness
+  - rejects non-module source objects, source-module name drift,
+    request/replay-target drift, missing attributes, and noncallable final
+    targets
+  - package-root exports remain unchanged
+  - does not import repository source modules, execute the resolved callable,
+    run import interception, add concrete observer wiring, add default/global
+    handler registration, change worker stdout protocol shape, change parent
+    executor/parser behavior, or broaden API, MCP, schema, eval, scoring,
+    compiler, docs, or public-claim surfaces
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `297 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `297 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Replay Target Attribute Resolver Routing
+
+- Verified live repo state after the pushed local Python dynamic-import import
+  interception harness release and selected the next bounded north-star lane.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `5fb6cf8 Add dynamic import interception harness`
+  - current pushed source/contract authority is
+    `5fb6cf8 Add dynamic import interception harness`
+  - workspace-only post-push continuity updates are present in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next implementation lane to a local Python
+  dynamic-import replay-target attribute resolver for an injected source module
+  object.
+- Alternatives considered:
+  - concrete observer that imports the repository source module, resolves the
+    replay target attribute, and executes it under the import interception
+    harness
+  - source-module import helper before attribute resolution
+  - default/global worker handler registration
+  - parent-side end-to-end subprocess proof wiring
+- Reasoning:
+  - the pushed replay target contract now carries a strict source module name
+    and target attribute path
+  - the pushed import interception harness can observe an injected callable
+    once one exists
+  - the remaining concrete observer risk still has separable concerns:
+    source-module import, attribute-path resolution, target execution under the
+    harness, handler registration, and parent end-to-end proof
+  - resolving an injected module object's attribute path first validates
+    missing attributes, module-name drift, noncallable targets, request/replay
+    target drift, and no-execution behavior without importing repository code
+    or changing parent behavior
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Dynamic Import Worker Import Interception Harness Post-Push Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  dynamic-import import interception harness release unit.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `5fb6cf8 Add dynamic import interception harness`
+  - current pushed source/contract authority is
+    `5fb6cf8 Add dynamic import interception harness`
+  - worktree had only post-commit continuity updates in `PLAN.md` and
+    `BUILDLOG.md` before this post-push routing sync
+  - nothing staged before this post-push routing sync
+  - no untracked files before this post-push routing sync
+  - `git diff --check` clean
+- Release state:
+  - `5fb6cf8` is pushed and no-active-gate
+  - prior locally committed push hold for the dynamic-import import
+    interception harness is superseded by this post-push routing entry
+- Decision: hold implementation advancement until control selects the next
+  bounded north-star lane from the pushed import-interception harness state.
+- Reasoning:
+  - the just-pushed release closes the worker-local import interception,
+    stdout/stderr shielding, wrapper restoration, and observation
+    materialization harness
+  - the next move likely crosses into repository source-module import,
+    replay-target attribute resolution, concrete observer wiring, default
+    registration, parent end-to-end proof, or another decomposition point
+  - that decision should be made from live repo state rather than assumed from
+    the completed release
+- Acceptance status: first-pass
+
+## 2026-05-09 -- Dynamic Import Worker Import Interception Harness Local Commit Routing
+
+- Local commit creation completed for the local Python dynamic-import import
+  interception harness release unit.
+- Commit:
+  - `5fb6cf8 Add dynamic import interception harness`
+- Commit contents:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `5fb6cf8 Add dynamic import interception harness`
+  - `origin/main` at
+    `ad3ed71 Sync dynamic import replay target routing`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1141 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-09 -- Dynamic Import Worker Import Interception Harness Release Gate
 
 - Combined read-only release gate passed for the exact four-file local Python

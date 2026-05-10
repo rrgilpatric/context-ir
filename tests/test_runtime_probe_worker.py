@@ -52,6 +52,9 @@ WorkerSuccessResponse = (
 _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER = (
     "materialize_runtime_probe_dynamic_import_worker_observation_from_target"
 )
+_DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER = (
+    "resolve_runtime_probe_dynamic_import_replay_target_callable"
+)
 
 
 def _field(key: str, value: str) -> runtime_probe_results.RuntimeProbeReplayField:
@@ -227,6 +230,18 @@ def _dynamic_import_worker_observation_from_target(
         _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER,
     )
     return materialize_from_target(observation_source, target)
+
+
+def _dynamic_import_replay_target_callable(
+    replay_target: DynamicImportReplayTarget,
+    source_module: ModuleType,
+) -> runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportTargetCallable:
+    """Resolve one injected replay target callable for worker tests."""
+    resolve_target = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER,
+    )
+    return resolve_target(replay_target, source_module)
 
 
 def _dynamic_import_worker_success_response(
@@ -930,6 +945,122 @@ def test_dynamic_import_replay_target_rejects_request_drift() -> None:
 
     with pytest.raises(ValueError, match="replay_selector_seed"):
         replace(replay_target)
+
+
+def test_dynamic_import_replay_target_resolver_returns_injected_callable() -> None:
+    """The resolver walks an injected module attribute path without execution."""
+    replay_target = _valid_dynamic_import_replay_target(
+        source_file_path="pkg/runtime.py",
+        replay_target_seed="pkg.runtime.bootstrap.resolve",
+    )
+    source_module = ModuleType("pkg.runtime")
+    nested_target_container = ModuleType("pkg.runtime.bootstrap")
+    target_calls: list[str] = []
+
+    def target() -> object:
+        target_calls.append("called")
+        return importlib.import_module("plugins.weather")
+
+    nested_target_container.resolve = target
+    source_module.bootstrap = nested_target_container
+
+    resolved_target = _dynamic_import_replay_target_callable(
+        replay_target,
+        source_module,
+    )
+
+    assert resolved_target is target
+    assert target_calls == []
+    assert "plugins.weather" not in sys.modules
+
+
+def test_dynamic_import_replay_target_resolver_rejects_nonmodule_source() -> None:
+    """Replay target resolution requires an injected source module object."""
+    replay_target = _valid_dynamic_import_replay_target()
+    source_module = cast(ModuleType, object())
+
+    with pytest.raises(ValueError, match="source module"):
+        _dynamic_import_replay_target_callable(
+            replay_target,
+            source_module,
+        )
+
+
+def test_dynamic_import_replay_target_resolver_rejects_source_module_drift() -> None:
+    """Injected source modules must match the replay target module identity."""
+    replay_target = _valid_dynamic_import_replay_target()
+    source_module = ModuleType("other")
+    source_module.run = lambda: None
+
+    with pytest.raises(ValueError, match="source_module_name"):
+        _dynamic_import_replay_target_callable(
+            replay_target,
+            source_module,
+        )
+
+
+def test_dynamic_import_replay_target_resolver_rejects_request_drift() -> None:
+    """Resolution revalidates the carried request before attribute lookup."""
+    replay_target = _valid_dynamic_import_replay_target()
+    source_module = ModuleType("main")
+    target_calls: list[str] = []
+
+    def target() -> None:
+        target_calls.append("called")
+
+    source_module.run = target
+    object.__setattr__(replay_target.request, "replay_selector_seed", "call:drifted")
+
+    with pytest.raises(ValueError, match="replay_selector_seed"):
+        _dynamic_import_replay_target_callable(
+            replay_target,
+            source_module,
+        )
+
+    assert target_calls == []
+
+
+def test_dynamic_import_replay_target_resolver_rejects_replay_target_drift() -> None:
+    """Resolution rejects replay target copies that drift from their request."""
+    replay_target = _valid_dynamic_import_replay_target()
+    source_module = ModuleType("main")
+    source_module.run = lambda: None
+    object.__setattr__(replay_target, "request_id", "runtime_probe:wrong")
+
+    with pytest.raises(ValueError, match="request_id"):
+        _dynamic_import_replay_target_callable(
+            replay_target,
+            source_module,
+        )
+
+
+def test_dynamic_import_replay_target_resolver_rejects_missing_attribute() -> None:
+    """Missing replay target attributes fail without importing or executing code."""
+    replay_target = _valid_dynamic_import_replay_target(
+        source_file_path="pkg/runtime.py",
+        replay_target_seed="pkg.runtime.bootstrap.resolve",
+    )
+    source_module = ModuleType("pkg.runtime")
+    source_module.bootstrap = ModuleType("pkg.runtime.bootstrap")
+
+    with pytest.raises(ValueError, match="attribute_path"):
+        _dynamic_import_replay_target_callable(
+            replay_target,
+            source_module,
+        )
+
+
+def test_dynamic_import_replay_target_resolver_rejects_noncallable_target() -> None:
+    """The final resolved attribute must be a callable harness target."""
+    replay_target = _valid_dynamic_import_replay_target()
+    source_module = ModuleType("main")
+    source_module.run = object()
+
+    with pytest.raises(ValueError, match="target"):
+        _dynamic_import_replay_target_callable(
+            replay_target,
+            source_module,
+        )
 
 
 def test_dynamic_import_worker_observation_materializes_replay_identity() -> None:
@@ -1691,6 +1822,11 @@ def test_worker_entrypoint_is_importable() -> None:
     assert callable(
         runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target
     )
+    resolve_target = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER,
+    )
+    assert callable(resolve_target)
     observe_from_target = getattr(
         runtime_probe_worker,
         _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER,
@@ -1724,6 +1860,7 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert "materialize_runtime_probe_dynamic_import_replay_target" not in (
         context_ir.__all__
     )
+    assert _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER not in context_ir.__all__
     assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
         context_ir.__all__
     )
@@ -1764,6 +1901,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_dynamic_import_replay_target",
+    )
+    assert not hasattr(
+        context_ir,
+        _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER,
     )
     assert not hasattr(
         context_ir,
