@@ -2,6 +2,208 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-10 -- Dynamic Import Worker Source Module Import Harness Release Gate
+
+- Combined read-only release gate passed for the exact four-file local Python
+  dynamic-import source-module import harness release unit.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against `AGENTS.md`,
+    `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `README.md`, `EVAL.md`, or
+    `PUBLIC_CLAIMS.md`
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check passed
+    - strict mypy passed over 37 source files
+    - full pytest reported `1154 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `bd2ba92 Add dynamic import replay target resolver`
+  - current pushed source/contract authority is
+    `bd2ba92 Add dynamic import replay target resolver`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1154 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Source Module Import Harness Workspace Acceptance
+
+- Reviewed the returned local Python dynamic-import source-module import
+  harness implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `bd2ba92 Add dynamic import replay target resolver`
+  - current pushed source/contract authority is
+    `bd2ba92 Add dynamic import replay target resolver`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - adds module-local
+    `import_runtime_probe_dynamic_import_replay_target_source_module(...)`
+  - accepts a validated
+    `RuntimeProbeLocalPythonDynamicImportReplayTarget`
+  - imports exactly `replay_target.source_module_name` using the request
+    working directory and ordered Python path entries
+  - isolates module-import stdout and stderr so worker stdout protocol output
+    cannot be contaminated
+  - restores `sys.path` and the process working directory on success and
+    failure
+  - validates the imported result is a `ModuleType` whose `__name__` matches
+    `replay_target.source_module_name`
+  - rejects request/replay-target drift, import failures, malformed import
+    results, and source-module name drift with deterministic worker-local
+    errors
+  - package-root exports remain unchanged
+  - does not resolve the replay target attribute path, execute the resolved
+    callable, run dynamic-import interception, add concrete observer wiring,
+    add default/global handler registration, change worker stdout protocol
+    shape, change parent executor/parser behavior, or broaden API, MCP,
+    schema, eval, scoring, compiler, docs, or public-claim surfaces
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `303 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `303 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Source Module Import Harness Routing
+
+- Verified live repo state after the pushed local Python dynamic-import replay
+  target attribute resolver release and selected the next bounded north-star
+  lane.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `bd2ba92 Add dynamic import replay target resolver`
+  - current pushed source/contract authority is
+    `bd2ba92 Add dynamic import replay target resolver`
+  - workspace-only post-push continuity updates are present in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next implementation lane to a local Python
+  dynamic-import source-module import harness for validated replay targets.
+- Alternatives considered:
+  - concrete observer that imports the source module, resolves the replay
+    target, executes it under import interception, and emits the observation
+    in one slice
+  - default/global worker handler registration
+  - parent-side end-to-end subprocess proof wiring
+  - another non-importing contract slice
+- Reasoning:
+  - the replay target contract now derives strict source module identity
+  - the attribute resolver can resolve a callable from an injected module
+    object without executing it
+  - the import interception harness can observe an injected callable once it
+    exists
+  - source-module import remains a distinct risk because it mutates process
+    import state and may emit stdout/stderr during module import
+  - isolating source-module import first lets the worker prove Python path,
+    working-directory, stdout/stderr shielding, returned-module validation, and
+    restoration behavior before composing the concrete observer
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Replay Target Attribute Resolver Post-Push Routing
+
+- Verified live repo state after Ryan-authorized push of the local Python
+  dynamic-import replay target attribute resolver release unit.
+- Repo-backed truth:
+  - branch `main`
+  - `HEAD` and `origin/main` at
+    `bd2ba92 Add dynamic import replay target resolver`
+  - current pushed source/contract authority is
+    `bd2ba92 Add dynamic import replay target resolver`
+  - worktree had only post-commit continuity updates in `PLAN.md` and
+    `BUILDLOG.md` before this post-push routing sync
+  - nothing staged before this post-push routing sync
+  - no untracked files before this post-push routing sync
+  - `git diff --check` clean
+- Release state:
+  - `bd2ba92` is pushed and no-active-gate
+  - prior locally committed push hold for the dynamic-import replay target
+    attribute resolver is superseded by this post-push routing entry
+- Decision: hold implementation advancement until control selects the next
+  bounded north-star lane from the pushed replay-target attribute resolver
+  state.
+- Reasoning:
+  - the just-pushed release closes injected source-module attribute resolution
+    without repository import or target execution
+  - the next move likely crosses into repository source-module import,
+    concrete observer wiring that composes replay-target resolution with the
+    import interception harness, default registration, parent end-to-end proof,
+    or another decomposition point
+  - that decision should be made from live repo state rather than assumed from
+    the completed release
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Worker Replay Target Attribute Resolver Local Commit Routing
+
+- Local commit creation completed for the local Python dynamic-import replay
+  target attribute resolver release unit.
+- Commit:
+  - `bd2ba92 Add dynamic import replay target resolver`
+- Commit contents:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `bd2ba92 Add dynamic import replay target resolver`
+  - `origin/main` at
+    `5fb6cf8 Add dynamic import interception harness`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1148 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-10 -- Dynamic Import Worker Replay Target Attribute Resolver Release Gate
 
 - Combined read-only release gate passed for the exact four-file local Python

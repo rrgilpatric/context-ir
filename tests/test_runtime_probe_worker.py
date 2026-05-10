@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import os
 import sys
 from collections.abc import Iterable
 from dataclasses import FrozenInstanceError, replace
 from io import StringIO
+from pathlib import Path
 from types import ModuleType
 from typing import cast
 
@@ -54,6 +56,9 @@ _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER = (
 )
 _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER = (
     "resolve_runtime_probe_dynamic_import_replay_target_callable"
+)
+_DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER = (
+    "import_runtime_probe_dynamic_import_replay_target_source_module"
 )
 
 
@@ -103,6 +108,7 @@ def _valid_worker_invocation(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    working_directory: str = "/workspace/context-ir",
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonSubprocessInvocation:
     """Return one strict worker invocation produced by the parent contract."""
@@ -133,8 +139,8 @@ def _valid_worker_invocation(
         runner_contract_revision="runtime-probe-runner:test.1",
         timeout_seconds=30,
         runner_environment=(
-            _field("repository_root", "/workspace/context-ir"),
-            _field("working_directory", "/workspace/context-ir"),
+            _field("repository_root", working_directory),
+            _field("working_directory", working_directory),
             *(
                 _field("python_path_entry", python_path_entry)
                 for python_path_entry in python_path_entries
@@ -159,6 +165,7 @@ def _valid_worker_payload(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    working_directory: str = "/workspace/context-ir",
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonWorkerRequestPayload:
     """Return the strict worker payload produced by the parent contract."""
@@ -166,6 +173,7 @@ def _valid_worker_payload(
         source_file_path=source_file_path,
         replay_target_seed=replay_target_seed,
         replay_selector_seed=replay_selector_seed,
+        working_directory=working_directory,
         python_path_entries=python_path_entries,
     )
     return materialize_runtime_probe_local_python_worker_request_payload(invocation)
@@ -176,6 +184,8 @@ def _valid_dynamic_import_worker_request(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> DynamicImportWorkerRequest:
     """Return one worker-local dynamic-import request contract."""
     return runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
@@ -183,6 +193,8 @@ def _valid_dynamic_import_worker_request(
             source_file_path=source_file_path,
             replay_target_seed=replay_target_seed,
             replay_selector_seed=replay_selector_seed,
+            working_directory=working_directory,
+            python_path_entries=python_path_entries,
         )
     )
 
@@ -192,12 +204,16 @@ def _valid_dynamic_import_replay_target(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> DynamicImportReplayTarget:
     """Return one worker-local non-executing replay target contract."""
     request = _valid_dynamic_import_worker_request(
         source_file_path=source_file_path,
         replay_target_seed=replay_target_seed,
         replay_selector_seed=replay_selector_seed,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
     )
     return runtime_probe_worker.materialize_runtime_probe_dynamic_import_replay_target(
         request
@@ -242,6 +258,17 @@ def _dynamic_import_replay_target_callable(
         _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER,
     )
     return resolve_target(replay_target, source_module)
+
+
+def _dynamic_import_replay_target_source_module(
+    replay_target: DynamicImportReplayTarget,
+) -> ModuleType:
+    """Import one validated replay target source module for worker tests."""
+    import_source_module = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER,
+    )
+    return import_source_module(replay_target)
 
 
 def _dynamic_import_worker_success_response(
@@ -945,6 +972,229 @@ def test_dynamic_import_replay_target_rejects_request_drift() -> None:
 
     with pytest.raises(ValueError, match="replay_selector_seed"):
         replace(replay_target)
+
+
+def test_dynamic_import_replay_target_source_import_uses_request_environment(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Source import uses request cwd/path and captures import-time streams."""
+    working_directory = tmp_path / "workspace"
+    first_python_path = tmp_path / "first-path"
+    second_python_path = tmp_path / "second-path"
+    working_directory.mkdir()
+    first_python_path.mkdir()
+    second_python_path.mkdir()
+    module_name = "runtime_probe_source_import_env_case"
+    replay_target = _valid_dynamic_import_replay_target(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+        working_directory=str(working_directory),
+        python_path_entries=(str(first_python_path), str(second_python_path)),
+    )
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    import_calls: list[tuple[str, str | None, str, tuple[str, ...]]] = []
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+
+    def controlled_import_module(
+        name: str,
+        package: str | None = None,
+    ) -> ModuleType:
+        print("source stdout runtime_probe_stdout_protocol_revision")
+        print("source stderr secret-token /private/tmp", file=sys.stderr)
+        import_calls.append(
+            (
+                name,
+                package,
+                os.getcwd(),
+                tuple(sys.path[:3]),
+            )
+        )
+        imported_module = ModuleType(name)
+        imported_module.run = lambda: None
+        return imported_module
+
+    monkeypatch.setattr(importlib, "import_module", controlled_import_module)
+
+    with (
+        contextlib.redirect_stdout(outer_stdout),
+        contextlib.redirect_stderr(outer_stderr),
+    ):
+        imported_module = _dynamic_import_replay_target_source_module(replay_target)
+
+    assert imported_module.__name__ == module_name
+    assert import_calls == [
+        (
+            module_name,
+            None,
+            str(working_directory),
+            (str(working_directory), str(first_python_path), str(second_python_path)),
+        )
+    ]
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+
+
+def test_dynamic_import_replay_target_source_import_prefers_ordered_python_path(
+    tmp_path: Path,
+) -> None:
+    """Real source imports resolve through the request's ordered Python path."""
+    working_directory = tmp_path / "workspace"
+    first_python_path = tmp_path / "first-path"
+    second_python_path = tmp_path / "second-path"
+    working_directory.mkdir()
+    first_python_path.mkdir()
+    second_python_path.mkdir()
+    module_name = "runtime_probe_source_import_order_case"
+    first_module_path = first_python_path / f"{module_name}.py"
+    second_module_path = second_python_path / f"{module_name}.py"
+    first_module_path.write_text(
+        'ORIGIN = "first"\n\ndef run():\n    return None\n',
+        encoding="utf-8",
+    )
+    second_module_path.write_text(
+        'ORIGIN = "second"\n\ndef run():\n    return None\n',
+        encoding="utf-8",
+    )
+    replay_target = _valid_dynamic_import_replay_target(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+        working_directory=str(working_directory),
+        python_path_entries=(str(first_python_path), str(second_python_path)),
+    )
+    sys.modules.pop(module_name, None)
+
+    try:
+        imported_module = _dynamic_import_replay_target_source_module(replay_target)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert imported_module.__name__ == module_name
+    assert imported_module.ORIGIN == "first"
+
+
+def test_dynamic_import_replay_target_source_import_rejects_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Replay-target drift is rejected before mutating import state."""
+    replay_target = _valid_dynamic_import_replay_target()
+    object.__setattr__(replay_target, "request_id", "runtime_probe:wrong")
+    import_calls: list[str] = []
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+
+    def controlled_import_module(
+        name: str,
+        package: str | None = None,
+    ) -> ModuleType:
+        del package
+        import_calls.append(name)
+        return ModuleType(name)
+
+    monkeypatch.setattr(importlib, "import_module", controlled_import_module)
+
+    with pytest.raises(ValueError, match="request_id"):
+        _dynamic_import_replay_target_source_module(replay_target)
+
+    assert import_calls == []
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+
+
+def test_dynamic_import_replay_target_source_import_rejects_import_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Import failures use deterministic errors without leaking raw streams."""
+    working_directory = tmp_path / "workspace"
+    python_path = tmp_path / "python-path"
+    working_directory.mkdir()
+    python_path.mkdir()
+    module_name = "runtime_probe_source_import_failure_case"
+    replay_target = _valid_dynamic_import_replay_target(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+
+    def controlled_import_module(
+        name: str,
+        package: str | None = None,
+    ) -> ModuleType:
+        del name, package
+        print("source stdout runtime_probe_stdout_protocol_revision")
+        print("source stderr secret-token /private/tmp", file=sys.stderr)
+        raise RuntimeError("source import failed with secret-token /private/tmp")
+
+    monkeypatch.setattr(importlib, "import_module", controlled_import_module)
+
+    with (
+        contextlib.redirect_stdout(outer_stdout),
+        contextlib.redirect_stderr(outer_stderr),
+        pytest.raises(ValueError, match="source module import failed") as error_info,
+    ):
+        _dynamic_import_replay_target_source_module(replay_target)
+
+    assert isinstance(error_info.value.__cause__, RuntimeError)
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+
+
+@pytest.mark.parametrize(
+    ("returned_module", "error_match"),
+    (
+        (cast(ModuleType, object()), "source module"),
+        (ModuleType("runtime_probe_source_import_drifted"), "source_module_name"),
+    ),
+)
+def test_dynamic_import_replay_target_source_import_rejects_malformed_results(
+    returned_module: ModuleType,
+    error_match: str,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Imported source modules must be typed and match the replay target name."""
+    working_directory = tmp_path / "workspace"
+    python_path = tmp_path / "python-path"
+    working_directory.mkdir()
+    python_path.mkdir()
+    module_name = "runtime_probe_source_import_validation_case"
+    replay_target = _valid_dynamic_import_replay_target(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+
+    def controlled_import_module(
+        name: str,
+        package: str | None = None,
+    ) -> ModuleType:
+        del name, package
+        return returned_module
+
+    monkeypatch.setattr(importlib, "import_module", controlled_import_module)
+
+    with pytest.raises(ValueError, match=error_match):
+        _dynamic_import_replay_target_source_module(replay_target)
+
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
 
 
 def test_dynamic_import_replay_target_resolver_returns_injected_callable() -> None:
@@ -1832,6 +2082,11 @@ def test_worker_entrypoint_is_importable() -> None:
         _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER,
     )
     assert callable(observe_from_target)
+    import_source_module = getattr(
+        runtime_probe_worker,
+        _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER,
+    )
+    assert callable(import_source_module)
 
 
 def test_package_root_exports_remain_unchanged() -> None:
@@ -1861,6 +2116,7 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir.__all__
     )
     assert _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER not in context_ir.__all__
+    assert _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER not in context_ir.__all__
     assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
         context_ir.__all__
     )
@@ -1905,6 +2161,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         _DYNAMIC_IMPORT_REPLAY_TARGET_RESOLVER_HELPER,
+    )
+    assert not hasattr(
+        context_ir,
+        _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER,
     )
     assert not hasattr(
         context_ir,

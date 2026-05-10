@@ -7,6 +7,7 @@ import hashlib
 import importlib
 import io
 import json
+import os
 import sys
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -523,6 +524,41 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
         request,
         imported_module=imported_module,
     )
+
+
+def import_runtime_probe_dynamic_import_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
+) -> ModuleType:
+    """Import a replay target source module under request-local import state."""
+    _validate_runtime_probe_dynamic_import_replay_target(replay_target)
+    request = replay_target.request
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    try:
+        os.chdir(request.working_directory)
+        sys.path[:] = [
+            request.working_directory,
+            *request.python_path_entries,
+            *original_sys_path,
+        ]
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            imported_module = importlib.import_module(replay_target.source_module_name)
+    except Exception as error:
+        raise ValueError(
+            "runtime probe dynamic import source module import failed"
+        ) from error
+    finally:
+        sys.path[:] = original_sys_path
+        os.chdir(original_working_directory)
+
+    _validate_runtime_probe_dynamic_import_replay_target_source_module(
+        replay_target,
+        imported_module,
+    )
+    return imported_module
 
 
 def resolve_runtime_probe_dynamic_import_replay_target_callable(
