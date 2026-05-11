@@ -41,17 +41,16 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`9a88794 Add builtins attribute import subprocess support`. The latest pushed
+`82bbb59 Add loader builtin import subprocess support`. The latest pushed
 source/contract authority is also
-`9a88794 Add builtins attribute import subprocess support`. Live git refs
+`82bbb59 Add loader builtin import subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
-Workspace-only accepted `dynamic_import:loader.__import__/1` local-Python
-subprocess release candidate:
+Pushed `dynamic_import:loader.__import__/1` local-Python subprocess release:
 
 - reviewed the returned implementation slice; findings: none
-- current proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+- committed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_execution.py`,
   `src/context_ir/runtime_probe_worker.py`,
   `tests/test_runtime_probe_execution.py`, and
@@ -100,14 +99,128 @@ subprocess release candidate:
   - Gate 2 full regression passed, including full pytest reporting
     `1235 passed`
   - Gate 3 commit-gating passed for the exact six-file unit
+- local commit creation completed at
+  `82bbb59 Add loader builtin import subprocess support`
+- Ryan-authorized push completed for
+  `82bbb59 Add loader builtin import subprocess support`
 - release state:
   - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `82bbb59 Add loader builtin import subprocess support`
+  - pushed: yes
+  - next route: read-only planning/decomposition for the first
+    post-dynamic-import runtime-probe family subprocess slice
+
+Workspace-only post-`82bbb59` routing decision:
+
+- selected one read-only planning/decomposition spike as the next bounded
+  north-star lane
+- dynamic-import subprocess support is treated as closed for the pushed exact
+  seven forms absent a new finding
+- the planning lane must choose the smallest truthful next runtime-probe
+  subprocess family/slice, likely among reflective builtins, runtime mutation,
+  exec/eval, metaclass behavior, or a focused integration-gap correction if
+  live code shows dynamic-import subprocess integration is incomplete
+- no implementation, staging, commit, push, public-claim update, package-root
+  export, MCP change, schema change, scoring change, compiler change, or
+  generalized dynamic-runtime support is authorized by this routing decision
+
+Workspace-only accepted post-dynamic-import next-family planning result:
+
+- reviewed the returned read-only planning/decomposition spike; findings: none
+- accepted recommendation: implement exact
+  `reflective_builtin:hasattr/2` local-Python subprocess support as the first
+  post-dynamic-import runtime-probe family slice
+- reason:
+  - the current worker and parent runner are dynamic-import-only, while
+    `hasattr(obj, name)` is already an attachable planned/admissible
+    reflective-builtin runtime observation
+  - this opens the reflective-builtin subprocess family with one exact form,
+    without request schema, admission, tool facade, MCP, package-root,
+    public-claim, scoring, compiler, docs, eval, or generalized runtime
+    support widening
+- alternatives deferred:
+  - dynamic-import correction: no concrete live integration gap found
+  - `vars/0`, `globals/0`, and `locals/0`: mechanically small but weaker
+    north-star proof value than reflective attribute behavior
+  - `exec`/`eval`: larger because replay inputs and durable proof contracts
+    are family-specific
+  - `dir`, `setattr`, and metaclass behavior: larger because they pull in
+    durable artifact or broader runtime semantics
+- next route: exact `reflective_builtin:hasattr/2` local-Python subprocess
+  implementation lane
+
+Workspace-only accepted `reflective_builtin:hasattr/2` local-Python
+subprocess release candidate:
+
+- reviewed the returned implementation slice; findings: none
+- current proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`
+- `src/context_ir/runtime_probe_worker.py` now registers one exact
+  reflective-builtin local-Python worker form:
+  `reflective_builtin:hasattr/2`
+- the worker validates exact reflective metadata, reason
+  `REFLECTIVE_BUILTIN`, unsupported-finding subject kind, replay identity,
+  and boundary text `hasattr(obj, name)` before replay execution
+- the concrete worker observer imports the replay target source module,
+  resolves a zero-argument target, temporarily wraps `builtins.hasattr`,
+  captures exactly one two-argument call, restores `builtins.hasattr` on
+  success and failure, and emits normalized payload
+  `attribute_present=true` or `attribute_present=false`
+- source modules with a shadowing global `hasattr`, target-time global
+  `hasattr` mutation, builtin mutation, malformed metadata, boundary drift,
+  required-argument targets, target exceptions, non-selected reflective forms,
+  and dynamic-import requests through the reflective runner remain fail-closed
+- `src/context_ir/runtime_probe_execution.py` now has
+  `make_runtime_probe_reflective_hasattr_local_python_subprocess_runner(...)`
+  as a narrow parent runner factory for exactly
+  `reflective_builtin:hasattr/2`
+- no generalized reflective-builtin support, `getattr`, `vars`, `dir`,
+  runtime-mutation, `exec`/`eval`, metaclass support, public API,
+  package-root export, schema, MCP, tool facade, scoring, compiler,
+  admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or run-spec
+  change was added
+- focused control validation passed:
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`, `110 files already formatted`
+  - strict mypy over 37 source files
+  - targeted pytest over `tests/test_runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`,
+    `tests/test_runtime_probe_requests.py`,
+    `tests/test_runtime_observation_admission.py`, and
+    `tests/test_runtime_acquisition.py`, `563 passed`
+  - `git diff --check`
+- release state:
+  - accepted in workspace: yes, after 1 correction
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes
   - commit-gating-cleared: yes
   - staged: no
   - locally committed: no
   - pushed: no
+  - Gate 1 finding:
+    `_restore_runtime_probe_reflective_hasattr_builtin()` reads
+    `builtins.hasattr` before the restore `try` block, so deletion of
+    `builtins.hasattr` by replay target code can raise `AttributeError`
+    before restoration
+  - correction accepted:
+    `_restore_runtime_probe_reflective_hasattr_builtin()` now uses a missing
+    sentinel for pre-restore and post-restore inspection and always attempts
+    restoration; focused coverage proves target-time deletion of
+    `builtins.hasattr` fails closed after restoration
+  - combined read-only release gate passed with no findings:
+    - Gate 1 release-unit audit passed and confirmed the prior deletion
+      finding is closed
+    - Gate 2 full regression passed, including full pytest reporting
+      `1267 passed`
+    - Gate 3 commit-gating passed for the exact six-file unit
   - next route: local commit creation for the exact six-file unit
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess release:
@@ -4324,8 +4437,21 @@ sequencing for `c1a12d7` absent new findings.
   implementation slice
 - [x] Combined read-only release gate for the exact six-file
   `dynamic_import:loader.__import__/1` local-Python subprocess release unit
-- [ ] Local commit creation for the exact six-file
+- [x] Local commit creation for the exact six-file
   `dynamic_import:loader.__import__/1` local-Python subprocess release unit
+- [x] Ryan-authorized push for the exact six-file
+  `dynamic_import:loader.__import__/1` local-Python subprocess release unit
+- [x] Post-`82bbb59` control selection of the next bounded north-star lane
+- [x] Read-only post-dynamic-import runtime-probe next-family planning and
+  decomposition spike
+- [x] Exact `reflective_builtin:hasattr/2` local-Python subprocess
+  implementation slice
+- [x] Correction for `reflective_builtin:hasattr/2` target-time
+  `builtins.hasattr` deletion restoration
+- [x] Combined read-only release gate for the exact six-file
+  `reflective_builtin:hasattr/2` local-Python subprocess release unit
+- [ ] Local commit creation for the exact six-file
+  `reflective_builtin:hasattr/2` local-Python subprocess release unit
 
 ## What Is In Progress
 
@@ -5234,22 +5360,20 @@ supersession entries.
 ## What Is Next
 
 Immediate next route: create the local commit for the accepted and
-release-gate-cleared `dynamic_import:loader.__import__/1` local-Python
-subprocess release candidate. Current pushed release authority and latest
-pushed source/contract authority remain
-`9a88794 Add builtins attribute import subprocess support`. The commit-ready
-release unit is exactly `BUILDLOG.md`, `PLAN.md`,
-`src/context_ir/runtime_probe_execution.py`,
-`src/context_ir/runtime_probe_worker.py`,
-`tests/test_runtime_probe_execution.py`, and
-`tests/test_runtime_probe_worker.py`. Nothing is staged and no untracked files
-exist.
+release-gate-cleared `reflective_builtin:hasattr/2` local-Python subprocess
+release candidate. Current pushed release authority and latest pushed
+source/contract authority remain
+`82bbb59 Add loader builtin import subprocess support`.
 
 Selected next lane:
 
-- stage exactly the six-file release unit
-- create one local commit for exact `dynamic_import:loader.__import__/1`
-  local-Python subprocess support
+- stage exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`
+- create one local commit for exact `reflective_builtin:hasattr/2`
+  local-Python subprocess support after verifying the staged set
 - do not push without explicit Ryan authorization
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:

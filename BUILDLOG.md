@@ -2,6 +2,345 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-11 -- Reflective Hasattr Subprocess Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the
+  corrected exact `reflective_builtin:hasattr/2` local-Python subprocess
+  release unit.
+- Findings: none.
+- Gate results:
+  - release-unit audit: passed
+  - full regression: passed
+  - commit-gating: passed
+- Release-unit audit:
+  - confirmed the unit is bounded to exact
+    `reflective_builtin:hasattr/2` local-Python subprocess support
+  - confirmed the prior deletion finding is closed: target-time
+    `del builtins.hasattr` fails closed after restoring the original builtin
+  - confirmed no public API, package-root export, schema, MCP, tool facade,
+    scoring, compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture,
+    task, run-spec, or generalized runtime-support widening
+- Full regression:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: passed, `1267 passed`
+  - `git diff --check`: passed
+- Commit-gating:
+  - working tree remained exactly the six-file release unit
+  - staged files: none
+  - untracked files: none
+- Exact release-unit file set:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `82bbb59 Add loader builtin import subprocess support`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - create one local commit for the exact six-file unit
+  - push remains Ryan-gated
+- Acceptance status: 1 correction
+
+## 2026-05-11 -- Reflective Hasattr Deletion Correction Acceptance
+
+- Reviewed the returned correction for the
+  `reflective_builtin:hasattr/2` release-gate finding.
+- Findings: none.
+- Repo-backed truth during correction acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `82bbb59 Add loader builtin import subprocess support`
+  - working tree contains only the six release-unit files
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Correction accepted:
+  - `_restore_runtime_probe_reflective_hasattr_builtin()` now reads
+    `builtins.hasattr` with a missing sentinel and still attempts restoration
+    when replay target code deletes the builtin
+  - post-restore verification also uses the missing sentinel, avoiding a
+    second raw attribute read
+  - focused worker coverage proves a target that captures one `hasattr` call,
+    deletes `builtins.hasattr`, and returns fails closed while restoring the
+    original builtin
+- Focused validation rerun by control:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`:
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py tests/test_runtime_probe_worker.py`:
+    passed, `2 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -v`:
+    passed, `412 passed`
+  - `git diff --check`: passed
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - rerun one combined read-only release gate over the corrected exact
+    six-file unit
+  - the release-gate lane must stop on the first finding and must not edit,
+    stage, commit, or push
+- Acceptance status: 1 correction
+
+## 2026-05-11 -- Reflective Hasattr Subprocess Release-Gate Hold
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  `reflective_builtin:hasattr/2` local-Python subprocess release unit.
+- Findings:
+  - `src/context_ir/runtime_probe_worker.py`:
+    `_restore_runtime_probe_reflective_hasattr_builtin()` reads
+    `builtins.hasattr` before the restore `try` block. If replay target code
+    deletes `builtins.hasattr`, the read raises `AttributeError` before the
+    original builtin is restored. This violates the release unit's
+    fail-closed/restoration claim for target-time builtin mutation.
+- Gate results:
+  - release-unit audit: failed
+  - full regression: not run
+  - commit-gating: not run
+- Repo-backed truth during hold:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `82bbb59 Add loader builtin import subprocess support`
+  - working tree contains only the six release-unit files
+  - staged files: none
+  - untracked files: none
+- Control decision:
+  - accept the release-gate finding
+  - hold the release unit
+  - route one bounded correction lane for target-time deletion of
+    `builtins.hasattr`
+  - do not advance to full regression, commit-gating, staging, commit, push,
+    or the next north-star slice until the correction is reviewed and the
+    release gates are rerun
+- Acceptance status: held
+
+## 2026-05-11 -- Reflective Hasattr Subprocess Acceptance
+
+- Reviewed the returned implementation slice for exact
+  `reflective_builtin:hasattr/2` local-Python subprocess support.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `82bbb59 Add loader builtin import subprocess support`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Workspace-only accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Accepted implementation:
+  - the worker default handler table now registers exact
+    `reflective_builtin:hasattr/2`
+  - the parent runner exposes a narrow exact
+    `make_runtime_probe_reflective_hasattr_local_python_subprocess_runner(...)`
+  - the concrete worker observer validates exact reflective metadata, imports
+    the replay target module, runs a zero-argument replay target, wraps and
+    restores `builtins.hasattr`, captures exactly one two-argument call, and
+    emits `attribute_present=true` or `attribute_present=false`
+  - source-global `hasattr` shadowing or target-time drift, builtin mutation,
+    malformed metadata, boundary drift, required-argument targets, target
+    exceptions, adjacent reflective forms, and dynamic-import requests through
+    the reflective runner all fail closed
+  - dynamic-import subprocess behavior remains covered
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task,
+    run-spec, or generalized runtime-support widening was introduced
+- Focused validation rerun by control:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py -v`:
+    passed, `563 passed`
+  - `git diff --check`: passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run one combined read-only release gate over the exact six-file unit
+  - the release-gate lane must stop on the first finding and must not edit,
+    stage, commit, or push
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Reflective Hasattr Subprocess Selection
+
+- Reviewed the returned read-only planning/decomposition spike for the first
+  post-dynamic-import runtime-probe family subprocess slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `82bbb59 Add loader builtin import subprocess support`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted findings:
+  - no focused dynamic-import correction is justified; the worker and runner
+    register the seven pushed exact dynamic-import forms
+  - the current worker subprocess path is dynamic-import-only, so the next
+    family should open one exact handler/runner path rather than generalized
+    runtime support
+  - `reflective_builtin:hasattr/2` is already an attachable planned/admissible
+    runtime observation and does not require public API, schema, MCP, facade,
+    admission, docs, scoring, compiler, or package-root widening
+  - `exec`/`eval`, `dir`, `setattr`, and metaclass behavior are larger because
+    they pull in family-specific replay-input, durable-proof, or broader
+    runtime semantics
+  - `vars/0`, `globals/0`, and `locals/0` are mechanically small but lower
+    proof value for the next north-star reflective-runtime step
+- Selected route:
+  - issue one implementation lane for exact
+    `reflective_builtin:hasattr/2` local-Python subprocess support
+  - preserve pushed dynamic-import subprocess forms and keep adjacent
+    reflective/runtime families fail-closed
+- Non-goals for the next lane:
+  - no generalized reflective-builtin support
+  - no `getattr`, `vars`, `dir`, runtime-mutation, `exec`/`eval`, or metaclass
+    subprocess support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, PLAN.md, BUILDLOG.md, README.md, EVAL.md,
+    PUBLIC_CLAIMS.md, fixture, task, or run-spec changes
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Post-82bbb59 Runtime-Probe Next-Family Planning Selection
+
+- Selected the next bounded north-star lane after pushed commit
+  `82bbb59 Add loader builtin import subprocess support`.
+- Findings: none.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `82bbb59 Add loader builtin import subprocess support`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Control finding:
+  - the exact dynamic-import local-Python subprocess sequence is now pushed
+    through seven exact forms:
+    `dynamic_import:importlib.import_module/1`,
+    `dynamic_import:loader.import_module/1`,
+    `dynamic_import:import_module/1`,
+    `dynamic_import:load_module/1`,
+    `dynamic_import:builtins.__import__/1`,
+    `dynamic_import:loader.__import__/1`, and
+    `dynamic_import:__import__/1`
+  - the next source implementation target is not obvious enough to choose by
+    inertia; the next lane should first compare the remaining runtime-probe
+    families and identify the smallest truthful subprocess slice
+- Selected route:
+  - issue one read-only planning/decomposition spike for the first
+    post-dynamic-import runtime-probe family subprocess slice
+  - candidate areas include reflective builtins, runtime mutation, exec/eval,
+    metaclass behavior, or a focused dynamic-import integration correction if
+    live code shows a concrete gap
+- Non-goals for the planning lane:
+  - no implementation
+  - no source, test, docs, fixture, task, run-spec, package-root, MCP, schema,
+    scoring, compiler, admission, result-assembly, public-claim, or generalized
+    runtime-support changes
+  - no reopening pushed dynamic-import subprocess forms absent a concrete new
+    finding
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Builtins Alias Subprocess Push
+
+- Ryan-authorized push completed for the exact
+  `dynamic_import:loader.__import__/1` local-Python subprocess release unit.
+- Pushed commit:
+  - `82bbb59 Add loader builtin import subprocess support`
+- Commit contents:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth after push and before this continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `82bbb59 Add loader builtin import subprocess support`
+  - latest pushed source/contract authority is
+    `82bbb59 Add loader builtin import subprocess support`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact six-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1235 passed`
+  - no active release gate, staging, local commit, or push remains for this
+    release unit
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Builtins Alias Subprocess Local Commit
+
+- Local commit creation completed for the exact
+  `dynamic_import:loader.__import__/1` local-Python subprocess release unit
+  after release-unit audit, full regression, and commit-gating cleared.
+- Local commit:
+  - `82bbb59 Add loader builtin import subprocess support`
+- Commit contents:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth after local commit and before this continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `82bbb59 Add loader builtin import subprocess support`
+  - `origin/main` remains at
+    `9a88794 Add builtins attribute import subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact six-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1235 passed`
+  - push is not authorized and has not been performed
+  - next control action is Ryan authorization for push, or an explicit hold
+    without pushing
+- Acceptance status: first-pass
+
 ## 2026-05-11 -- Builtins Alias Subprocess Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact

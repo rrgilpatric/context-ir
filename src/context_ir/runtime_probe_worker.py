@@ -103,6 +103,23 @@ _DYNAMIC_IMPORT_WORKER_IMPORT_SHAPE_ERROR_MESSAGES = frozenset(
         "runtime probe dynamic import worker module name is malformed",
     )
 )
+_REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL = "reflective_builtin:hasattr/2"
+_REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT = "hasattr(obj, name)"
+_REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME = "hasattr"
+_REFLECTIVE_BUILTIN_WORKER_FORM_LABELS = (
+    _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL,
+)
+_REFLECTIVE_BUILTIN_HASATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
+    "runtime probe reflective builtin hasattr worker target execution failed"
+)
+_REFLECTIVE_BUILTIN_HASATTR_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
+    (
+        "runtime probe reflective builtin hasattr worker form must be exactly "
+        "hasattr(obj, name)",
+        "runtime probe reflective builtin hasattr worker attribute name must be a "
+        "string",
+    )
+)
 _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "plan_id",
     "request_id",
@@ -196,6 +213,78 @@ class RuntimeProbeLocalPythonDynamicImportReplayTarget:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest:
+    """Worker-local request contract for exact ``hasattr(obj, name)`` probes."""
+
+    plan_id: str
+    request_id: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    source_site_id: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    reason_code: UnresolvedReasonCode
+    boundary_text: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject drifted or non-hasattr reflective worker request metadata."""
+        _validate_runtime_probe_reflective_hasattr_worker_request(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation:
+    """Worker-local observation metadata for exact ``hasattr`` probes."""
+
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest
+    plan_id: str
+    request_id: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    attribute_present: bool
+
+    def __post_init__(self) -> None:
+        """Reject drifted request identity or malformed hasattr observations."""
+        _validate_runtime_probe_reflective_hasattr_worker_observation(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveHasattrReplayTarget:
+    """Worker-local non-executing replay target plan for exact ``hasattr``."""
+
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest
+    plan_id: str
+    request_id: str
+    source_file_path: str
+    source_module_name: str
+    replay_target_seed: str
+    replay_target_attribute_path: tuple[str, ...]
+    replay_selector_seed: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject replay targets whose copied request identity has drifted."""
+        _validate_runtime_probe_reflective_hasattr_replay_target(self)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonWorkerResponse:
     """Typed non-proof worker response that cannot carry stdout payload data."""
 
@@ -225,7 +314,15 @@ RuntimeProbeLocalPythonDynamicImportWorkerObserver: TypeAlias = Callable[
     [RuntimeProbeLocalPythonDynamicImportWorkerRequest],
     RuntimeProbeLocalPythonDynamicImportWorkerObservation,
 ]
+RuntimeProbeLocalPythonReflectiveHasattrWorkerObserver: TypeAlias = Callable[
+    [RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest],
+    RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation,
+]
 RuntimeProbeLocalPythonDynamicImportTargetCallable: TypeAlias = Callable[[], object]
+RuntimeProbeLocalPythonReflectiveHasattrTargetCallable: TypeAlias = Callable[
+    [],
+    object,
+]
 RuntimeProbeLocalPythonDynamicImportObservationSource: TypeAlias = (
     RuntimeProbeLocalPythonDynamicImportWorkerRequest
     | RuntimeProbeLocalPythonDynamicImportReplayTarget
@@ -360,6 +457,34 @@ class _RuntimeProbeDynamicImportCapture:
         sys.modules[name] = controlled_module
 
 
+@dataclass
+class _RuntimeProbeReflectiveHasattrCapture:
+    """Mutable capture state for one controlled ``hasattr`` execution."""
+
+    original_hasattr: Callable[[object, str], bool]
+    captured_attribute_presence: list[bool] = field(default_factory=list)
+    captured_rejections: list[str] = field(default_factory=list)
+
+    def hasattr(self, *args: object, **kwargs: object) -> bool:
+        """Capture one exact two-argument ``hasattr`` call."""
+        if kwargs or len(args) != 2:
+            self.captured_rejections.append("arity")
+            raise ValueError(
+                "runtime probe reflective builtin hasattr worker form must be "
+                "exactly hasattr(obj, name)"
+            )
+        obj, name = args
+        if not isinstance(name, str):
+            self.captured_rejections.append("name")
+            raise ValueError(
+                "runtime probe reflective builtin hasattr worker attribute name "
+                "must be a string"
+            )
+        attribute_present = self.original_hasattr(obj, name)
+        self.captured_attribute_presence.append(attribute_present)
+        return attribute_present
+
+
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter:
     """Adapt parsed worker payloads to an injected dynamic-import observer."""
@@ -382,6 +507,32 @@ class RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter:
             request,
         )
         return materialize_runtime_probe_dynamic_import_worker_success_response(
+            observation
+        )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveHasattrWorkerHandlerAdapter:
+    """Adapt parsed worker payloads to an injected exact-hasattr observer."""
+
+    observer: RuntimeProbeLocalPythonReflectiveHasattrWorkerObserver
+
+    def __post_init__(self) -> None:
+        """Reject malformed observer injection before worker dispatch."""
+        _validate_runtime_probe_reflective_hasattr_worker_observer(self.observer)
+
+    def __call__(
+        self,
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+        """Run the injected observer against a validated worker request."""
+        request = materialize_runtime_probe_reflective_hasattr_worker_request(payload)
+        observation = self.observer(request)
+        _validate_runtime_probe_reflective_hasattr_worker_observation_for_request(
+            observation,
+            request,
+        )
+        return materialize_runtime_probe_reflective_hasattr_worker_success_response(
             observation
         )
 
@@ -707,6 +858,120 @@ def materialize_runtime_probe_dynamic_import_worker_success_response(
     )
 
 
+def materialize_runtime_probe_reflective_hasattr_worker_request(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest:
+    """Derive an exact-hasattr worker request from stdin payload."""
+    _validate_runtime_probe_reflective_hasattr_worker_payload(payload)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    return RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        subject_kind=_runtime_probe_worker_subject_kind_from_replay_field(
+            replay_fields_by_key["subject_kind"]
+        ),
+        subject_id=replay_fields_by_key["subject_id"],
+        source_site_id=replay_fields_by_key["source_site_id"],
+        source_file_path=replay_fields_by_key["source_file_path"],
+        source_start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        source_start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        source_end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        source_end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+        reason_code=_runtime_probe_worker_reflective_hasattr_reason_code_from_replay_field(
+            replay_fields_by_key["reason_code"]
+        ),
+        boundary_text=replay_fields_by_key["boundary_text"],
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        invocation_identity=payload.invocation_identity,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_reflective_hasattr_worker_observation(
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest,
+    *,
+    attribute_present: bool,
+) -> RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation:
+    """Build non-executing exact-hasattr observation metadata from a request."""
+    _validate_runtime_probe_reflective_hasattr_worker_request(request)
+    return RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_contract_revision=request.invocation_contract_revision,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+        attribute_present=attribute_present,
+    )
+
+
+def materialize_runtime_probe_reflective_hasattr_replay_target(
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest,
+) -> RuntimeProbeLocalPythonReflectiveHasattrReplayTarget:
+    """Derive a non-executing local Python replay target from a request."""
+    _validate_runtime_probe_reflective_hasattr_worker_request(request)
+    source_module_name = _runtime_probe_dynamic_import_source_module_name_from_path(
+        request.source_file_path
+    )
+    replay_target_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    return RuntimeProbeLocalPythonReflectiveHasattrReplayTarget(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        source_file_path=request.source_file_path,
+        source_module_name=source_module_name,
+        replay_target_seed=request.replay_target_seed,
+        replay_target_attribute_path=replay_target_attribute_path,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_reflective_hasattr_worker_success_response(
+    observation: RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for one hasattr observation."""
+    _validate_runtime_probe_reflective_hasattr_worker_observation(observation)
+    return RuntimeProbeLocalPythonWorkerSuccessResponse(
+        normalized_payload=(
+            RuntimeProbeReplayField(
+                key="attribute_present",
+                value=("true" if observation.attribute_present else "false"),
+            ),
+        ),
+    )
+
+
 def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
     observation_source: RuntimeProbeLocalPythonDynamicImportObservationSource,
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
@@ -778,6 +1043,48 @@ def observe_runtime_probe_dynamic_import_worker_request(
     )
 
 
+def materialize_runtime_probe_reflective_hasattr_worker_observation_from_target(
+    replay_target: RuntimeProbeLocalPythonReflectiveHasattrReplayTarget,
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonReflectiveHasattrTargetCallable,
+) -> RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation:
+    """Observe one zero-argument target under exact ``hasattr`` interception."""
+    _validate_runtime_probe_reflective_hasattr_replay_target(replay_target)
+    _validate_runtime_probe_reflective_hasattr_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    _validate_runtime_probe_reflective_hasattr_target_callable(target)
+    attribute_present = _runtime_probe_reflective_hasattr_captured_attribute_present(
+        source_module,
+        target,
+    )
+    return materialize_runtime_probe_reflective_hasattr_worker_observation(
+        replay_target.request,
+        attribute_present=attribute_present,
+    )
+
+
+def observe_runtime_probe_reflective_hasattr_worker_request(
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest,
+) -> RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation:
+    """Observe one concrete exact-hasattr worker request in local Python."""
+    _validate_runtime_probe_reflective_hasattr_worker_request(request)
+    replay_target = materialize_runtime_probe_reflective_hasattr_replay_target(request)
+    source_module = import_runtime_probe_reflective_hasattr_replay_target_source_module(
+        replay_target
+    )
+    target = resolve_runtime_probe_reflective_hasattr_replay_target_callable(
+        replay_target,
+        source_module,
+    )
+    return materialize_runtime_probe_reflective_hasattr_worker_observation_from_target(
+        replay_target,
+        source_module,
+        target,
+    )
+
+
 def import_runtime_probe_dynamic_import_replay_target_source_module(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
 ) -> ModuleType:
@@ -813,6 +1120,41 @@ def import_runtime_probe_dynamic_import_replay_target_source_module(
     return imported_module
 
 
+def import_runtime_probe_reflective_hasattr_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonReflectiveHasattrReplayTarget,
+) -> ModuleType:
+    """Import a replay target source module under request-local import state."""
+    _validate_runtime_probe_reflective_hasattr_replay_target(replay_target)
+    request = replay_target.request
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    try:
+        os.chdir(request.working_directory)
+        sys.path[:] = [
+            request.working_directory,
+            *request.python_path_entries,
+            *original_sys_path,
+        ]
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            imported_module = importlib.import_module(replay_target.source_module_name)
+    except Exception as error:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr source module import failed"
+        ) from error
+    finally:
+        sys.path[:] = original_sys_path
+        os.chdir(original_working_directory)
+
+    _validate_runtime_probe_reflective_hasattr_replay_target_source_module(
+        replay_target,
+        imported_module,
+    )
+    return imported_module
+
+
 def resolve_runtime_probe_dynamic_import_replay_target_callable(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
     source_module: ModuleType,
@@ -834,6 +1176,29 @@ def resolve_runtime_probe_dynamic_import_replay_target_callable(
             ) from error
     _validate_runtime_probe_dynamic_import_target_callable(resolved_target)
     return cast(RuntimeProbeLocalPythonDynamicImportTargetCallable, resolved_target)
+
+
+def resolve_runtime_probe_reflective_hasattr_replay_target_callable(
+    replay_target: RuntimeProbeLocalPythonReflectiveHasattrReplayTarget,
+    source_module: ModuleType,
+) -> RuntimeProbeLocalPythonReflectiveHasattrTargetCallable:
+    """Resolve an injected source module replay target without executing it."""
+    _validate_runtime_probe_reflective_hasattr_replay_target(replay_target)
+    _validate_runtime_probe_reflective_hasattr_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    resolved_target: object = source_module
+    for attribute_name in replay_target.replay_target_attribute_path:
+        try:
+            resolved_target = getattr(resolved_target, attribute_name)
+        except AttributeError as error:
+            raise ValueError(
+                "runtime probe reflective builtin hasattr replay target "
+                "replay_target_attribute_path is missing"
+            ) from error
+    _validate_runtime_probe_reflective_hasattr_target_callable(resolved_target)
+    return cast(RuntimeProbeLocalPythonReflectiveHasattrTargetCallable, resolved_target)
 
 
 def build_runtime_probe_dynamic_import_worker_handler_entry(
@@ -861,6 +1226,19 @@ def _build_runtime_probe_dynamic_import_worker_handler_entry(
     )
 
 
+def build_runtime_probe_reflective_hasattr_worker_handler_entry(
+    observer: RuntimeProbeLocalPythonReflectiveHasattrWorkerObserver,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for exact ``hasattr(obj, name)``."""
+    return RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL,
+        handler=RuntimeProbeLocalPythonReflectiveHasattrWorkerHandlerAdapter(
+            observer=observer
+        ),
+    )
+
+
 def _runtime_probe_local_python_worker_handler_entries(
     handler_entries: (
         Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]
@@ -878,13 +1256,796 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
     ...,
 ]:
     """Return the default concrete local-Python worker handler entries."""
-    return tuple(
+    dynamic_import_entries = tuple(
         _build_runtime_probe_dynamic_import_worker_handler_entry(
             observer=observe_runtime_probe_dynamic_import_worker_request,
             form_label=form_label,
         )
         for form_label in _DYNAMIC_IMPORT_WORKER_FORM_LABELS
     )
+    reflective_hasattr_entries = (
+        build_runtime_probe_reflective_hasattr_worker_handler_entry(
+            observe_runtime_probe_reflective_hasattr_worker_request
+        ),
+    )
+    return (*dynamic_import_entries, *reflective_hasattr_entries)
+
+
+def _validate_runtime_probe_reflective_hasattr_worker_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> None:
+    """Reject payloads that cannot become the worker-local hasattr request."""
+    if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker payload must be typed"
+        )
+    _validate_runtime_probe_reflective_hasattr_payload_family_form(
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.plan_id,
+        field_name="plan_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_invocation_identity(payload.invocation_identity)
+    _validate_runtime_probe_worker_argv(payload.argv)
+    _validate_runtime_probe_worker_path_text(
+        payload.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(payload.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(payload.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_metadata(
+        replay_fields_by_key,
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+    if payload.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker invocation_identity "
+            "must match payload replay identity"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_worker_request(
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest,
+) -> None:
+    """Reject exact-hasattr worker requests whose copied metadata drifted."""
+    if not isinstance(
+        request,
+        RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest,
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker request must be typed"
+        )
+    _validate_runtime_probe_reflective_hasattr_payload_family_form(
+        family_label=request.family_label,
+        form_label=request.form_label,
+    )
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker subject_kind is "
+            "unsupported"
+        )
+    if request.reason_code is not UnresolvedReasonCode.REFLECTIVE_BUILTIN:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker reason_code is unsupported"
+        )
+    _validate_runtime_probe_worker_metadata_text(
+        request.plan_id,
+        field_name="plan_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.subject_id,
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_site_id,
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_file_path,
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.boundary_text,
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_reflective_hasattr_worker_request_boundary_text(
+        request.boundary_text
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=request.source_start_line,
+        start_column=request.source_start_column,
+        end_line=request.source_end_line,
+        end_column=request.source_end_column,
+    )
+    _validate_runtime_probe_worker_invocation_identity(request.invocation_identity)
+    _validate_runtime_probe_worker_argv(request.argv)
+    _validate_runtime_probe_worker_path_text(
+        request.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(request.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(request.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_metadata(
+        replay_fields_by_key,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        family_label=request.family_label,
+        form_label=request.form_label,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="subject_kind",
+        expected_value=request.subject_kind.value,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="subject_id",
+        expected_value=request.subject_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_site_id",
+        expected_value=request.source_site_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_file_path",
+        expected_value=request.source_file_path,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_start_line",
+        expected_value=str(request.source_start_line),
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_start_column",
+        expected_value=str(request.source_start_column),
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_end_line",
+        expected_value=str(request.source_end_line),
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="source_end_column",
+        expected_value=str(request.source_end_column),
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="reason_code",
+        expected_value=request.reason_code.value,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="boundary_text",
+        expected_value=request.boundary_text,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        invocation_contract_revision=request.invocation_contract_revision,
+        argv=request.argv,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+        timeout_seconds=request.timeout_seconds,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+    if request.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker invocation_identity "
+            "must match request replay identity"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_worker_request_boundary_text(
+    boundary_text: str,
+) -> None:
+    """Reject exact-hasattr requests that do not carry the approved boundary."""
+    if boundary_text != _REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker boundary_text must be "
+            f"{_REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT}"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_worker_observer(
+    observer: RuntimeProbeLocalPythonReflectiveHasattrWorkerObserver,
+) -> None:
+    """Reject non-callable exact-hasattr observer injections."""
+    if not callable(observer):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker observer must be callable"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_target_callable(
+    target: object,
+) -> None:
+    """Reject non-callable target injections before hasattr interception."""
+    if not callable(target):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker target must be callable"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonReflectiveHasattrReplayTarget,
+    source_module: ModuleType,
+) -> None:
+    """Reject injected source modules that do not match the replay target."""
+    if not isinstance(source_module, ModuleType):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr replay target source module "
+            "must be typed"
+        )
+    if source_module.__name__ != replay_target.source_module_name:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr replay target source module "
+            "must match source_module_name"
+        )
+
+
+def _runtime_probe_reflective_hasattr_captured_attribute_present(
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonReflectiveHasattrTargetCallable,
+) -> bool:
+    """Run a target while capturing one exact bare ``hasattr(obj, name)`` call."""
+    _validate_runtime_probe_reflective_hasattr_source_global_absent(source_module)
+    original_hasattr: Callable[[object, str], bool] = builtins.hasattr
+    capture = _RuntimeProbeReflectiveHasattrCapture(original_hasattr=original_hasattr)
+    controlled_hasattr: Callable[..., bool] = capture.hasattr
+    target_failure: BaseException | None = None
+
+    try:
+        builtins.hasattr = controlled_hasattr
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            target()
+    except BaseException as error:
+        target_failure = error
+    builtin_restore_failure = _restore_runtime_probe_reflective_hasattr_builtin(
+        expected_hasattr=controlled_hasattr,
+        original_hasattr=original_hasattr,
+    )
+    source_restore_failure = _restore_runtime_probe_reflective_hasattr_source_global(
+        source_module
+    )
+
+    if builtin_restore_failure is not None:
+        if target_failure is not None:
+            raise builtin_restore_failure from target_failure
+        raise builtin_restore_failure
+    if source_restore_failure is not None:
+        if target_failure is not None:
+            raise source_restore_failure from target_failure
+        raise source_restore_failure
+    if target_failure is not None:
+        _raise_runtime_probe_reflective_hasattr_target_failure(target_failure)
+
+    return _runtime_probe_reflective_hasattr_capture_attribute_present(capture)
+
+
+def _runtime_probe_reflective_hasattr_capture_attribute_present(
+    capture: _RuntimeProbeReflectiveHasattrCapture,
+) -> bool:
+    """Return the single captured attribute-present result after validation."""
+    _validate_runtime_probe_reflective_hasattr_intercepted_calls(
+        captured_attribute_presence=capture.captured_attribute_presence,
+        captured_rejections=tuple(capture.captured_rejections),
+    )
+    return capture.captured_attribute_presence[0]
+
+
+def _validate_runtime_probe_reflective_hasattr_intercepted_calls(
+    *,
+    captured_attribute_presence: list[bool],
+    captured_rejections: tuple[str, ...],
+) -> None:
+    """Reject intercepted hasattr behavior outside the exact two-argument form."""
+    if "arity" in captured_rejections:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker form must be exactly "
+            "hasattr(obj, name)"
+        )
+    if "name" in captured_rejections:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker attribute name must be "
+            "a string"
+        )
+    if len(captured_attribute_presence) != 1:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker target must capture "
+            "exactly one hasattr call"
+        )
+
+
+def _raise_runtime_probe_reflective_hasattr_target_failure(
+    error: BaseException,
+) -> None:
+    """Raise a sanitized target failure unless the error is a known shape reject."""
+    if (
+        isinstance(error, ValueError)
+        and str(error) in _REFLECTIVE_BUILTIN_HASATTR_WORKER_SHAPE_ERROR_MESSAGES
+    ):
+        raise error
+    raise ValueError(
+        _REFLECTIVE_BUILTIN_HASATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
+    ) from error
+
+
+def _validate_runtime_probe_reflective_hasattr_source_global_absent(
+    source_module: ModuleType,
+) -> None:
+    """Reject source modules that shadow bare ``hasattr`` global resolution."""
+    if (
+        source_module.__dict__.get(
+            _REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker target module "
+            "hasattr global must be absent"
+        )
+
+
+def _restore_runtime_probe_reflective_hasattr_source_global(
+    source_module: ModuleType,
+) -> ValueError | None:
+    """Remove any target-time source ``hasattr`` global and report drift."""
+    module_globals = source_module.__dict__
+    current_global = module_globals.get(
+        _REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if current_global is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
+        return None
+    try:
+        del module_globals[_REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME]
+    except Exception:
+        return ValueError(
+            "runtime probe reflective builtin hasattr worker target module hasattr "
+            "global could not be restored"
+        )
+    if (
+        module_globals.get(
+            _REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        return ValueError(
+            "runtime probe reflective builtin hasattr worker target module hasattr "
+            "global could not be restored"
+        )
+    return ValueError(
+        "runtime probe reflective builtin hasattr worker target module hasattr "
+        "global changed during execution"
+    )
+
+
+def _restore_runtime_probe_reflective_hasattr_builtin(
+    *,
+    expected_hasattr: object,
+    original_hasattr: Callable[[object, str], bool],
+) -> ValueError | None:
+    """Restore builtins.hasattr and report target-time hook drift."""
+    current_hasattr = getattr(
+        builtins,
+        _REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    restore_failure: ValueError | None = None
+    if current_hasattr is not expected_hasattr:
+        restore_failure = ValueError(
+            "runtime probe reflective builtin hasattr worker builtins.hasattr "
+            "changed during execution"
+        )
+    try:
+        builtins.hasattr = original_hasattr
+    except Exception:
+        return ValueError(
+            "runtime probe reflective builtin hasattr worker builtins.hasattr "
+            "could not be restored"
+        )
+    if (
+        getattr(
+            builtins,
+            _REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not original_hasattr
+    ):
+        return ValueError(
+            "runtime probe reflective builtin hasattr worker builtins.hasattr "
+            "could not be restored"
+        )
+    return restore_failure
+
+
+def _validate_runtime_probe_reflective_hasattr_worker_observation_for_request(
+    observation: RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation,
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest,
+) -> None:
+    """Reject observer results that do not belong to the adapted request."""
+    _validate_runtime_probe_reflective_hasattr_worker_request(request)
+    _validate_runtime_probe_reflective_hasattr_worker_observation(observation)
+    if observation.request != request:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker observation request "
+            "must match adapted request"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_worker_observation(
+    observation: RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation,
+) -> None:
+    """Reject exact-hasattr observation metadata that drifted from its request."""
+    if not isinstance(
+        observation,
+        RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation,
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker observation must be typed"
+        )
+    _validate_runtime_probe_reflective_hasattr_worker_request(observation.request)
+    if not isinstance(observation.attribute_present, bool):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker attribute_present "
+            "must be a bool"
+        )
+    _validate_runtime_probe_reflective_hasattr_observation_field_match(
+        field_name="plan_id",
+        value=observation.plan_id,
+        expected_value=observation.request.plan_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_observation_field_match(
+        field_name="request_id",
+        value=observation.request_id,
+        expected_value=observation.request.request_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_observation_field_match(
+        field_name="replay_target_seed",
+        value=observation.replay_target_seed,
+        expected_value=observation.request.replay_target_seed,
+    )
+    _validate_runtime_probe_reflective_hasattr_observation_field_match(
+        field_name="replay_selector_seed",
+        value=observation.replay_selector_seed,
+        expected_value=observation.request.replay_selector_seed,
+    )
+    _validate_runtime_probe_reflective_hasattr_observation_field_match(
+        field_name="invocation_contract_revision",
+        value=observation.invocation_contract_revision,
+        expected_value=observation.request.invocation_contract_revision,
+    )
+    _validate_runtime_probe_reflective_hasattr_observation_field_match(
+        field_name="invocation_identity",
+        value=observation.invocation_identity,
+        expected_value=observation.request.invocation_identity,
+    )
+    if (
+        observation.request_replay_payload_fields
+        != observation.request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker observation "
+            "request_replay_payload_fields must match request"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_replay_target(
+    replay_target: RuntimeProbeLocalPythonReflectiveHasattrReplayTarget,
+) -> None:
+    """Reject non-executing replay targets that drift from their request."""
+    if not isinstance(
+        replay_target,
+        RuntimeProbeLocalPythonReflectiveHasattrReplayTarget,
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr replay target must be typed"
+        )
+    request = replay_target.request
+    _validate_runtime_probe_reflective_hasattr_worker_request(request)
+    _validate_runtime_probe_reflective_hasattr_replay_target_field_match(
+        field_name="plan_id",
+        value=replay_target.plan_id,
+        expected_value=request.plan_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_target_field_match(
+        field_name="request_id",
+        value=replay_target.request_id,
+        expected_value=request.request_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_target_field_match(
+        field_name="source_file_path",
+        value=replay_target.source_file_path,
+        expected_value=request.source_file_path,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_target_field_match(
+        field_name="replay_target_seed",
+        value=replay_target.replay_target_seed,
+        expected_value=request.replay_target_seed,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_target_field_match(
+        field_name="replay_selector_seed",
+        value=replay_target.replay_selector_seed,
+        expected_value=request.replay_selector_seed,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_target_field_match(
+        field_name="invocation_identity",
+        value=replay_target.invocation_identity,
+        expected_value=request.invocation_identity,
+    )
+    if (
+        replay_target.request_replay_payload_fields
+        != request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr replay target "
+            "request_replay_payload_fields must match request"
+        )
+
+    expected_source_module_name = (
+        _runtime_probe_dynamic_import_source_module_name_from_path(
+            request.source_file_path
+        )
+    )
+    if replay_target.source_module_name != expected_source_module_name:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr replay target "
+            "source_module_name must match request source_file_path"
+        )
+    expected_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=expected_source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    if replay_target.replay_target_attribute_path != expected_attribute_path:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr replay target "
+            "replay_target_attribute_path must match request replay_target_seed"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_replay_target_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied replay-target identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr replay target "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_observation_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied observation identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker observation "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_payload_family_form(
+    *,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """Reject unsupported reflective-builtin worker family/form labels."""
+    if family_label is not RuntimeProbeFamily.REFLECTIVE_BUILTIN:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker family_label is "
+            "unsupported"
+        )
+    if form_label not in _REFLECTIVE_BUILTIN_WORKER_FORM_LABELS:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker form_label is unsupported"
+        )
+
+
+def _validate_runtime_probe_reflective_hasattr_replay_metadata(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    plan_id: str,
+    request_id: str,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    replay_target_seed: str,
+    replay_selector_seed: str,
+) -> None:
+    """Reject replay fields that drift from exact-hasattr worker metadata."""
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="plan_id",
+        expected_value=plan_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="request_id",
+        expected_value=request_id,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="family_label",
+        expected_value=family_label.value,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="form_label",
+        expected_value=form_label,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="replay_target_seed",
+        expected_value=replay_target_seed,
+    )
+    _validate_runtime_probe_reflective_hasattr_replay_field_match(
+        replay_fields_by_key,
+        field_key="replay_selector_seed",
+        expected_value=replay_selector_seed,
+    )
+    if replay_fields_by_key["subject_kind"] != (
+        SemanticSubjectKind.UNSUPPORTED_FINDING.value
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker subject_kind is "
+            "unsupported"
+        )
+    if replay_fields_by_key["reason_code"] != (
+        UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker reason_code is unsupported"
+        )
+    _runtime_probe_worker_subject_kind_from_replay_field(
+        replay_fields_by_key["subject_kind"]
+    )
+    _runtime_probe_worker_reflective_hasattr_reason_code_from_replay_field(
+        replay_fields_by_key["reason_code"]
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["subject_id"],
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_site_id"],
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_file_path"],
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["boundary_text"],
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_reflective_hasattr_worker_request_boundary_text(
+        replay_fields_by_key["boundary_text"]
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+    )
+
+
+def _validate_runtime_probe_reflective_hasattr_replay_field_match(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    field_key: str,
+    expected_value: str,
+) -> None:
+    """Require a replay field to match a copied exact-hasattr request field."""
+    if replay_fields_by_key[field_key] != expected_value:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker "
+            f"{field_key} must match request replay payload fields"
+        )
+
+
+def _runtime_probe_worker_reflective_hasattr_reason_code_from_replay_field(
+    value: str,
+) -> UnresolvedReasonCode:
+    """Parse and validate the reflective-builtin reason copied into replay."""
+    try:
+        reason_code = UnresolvedReasonCode(value)
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker reason_code is unsupported"
+        ) from error
+    if reason_code is not UnresolvedReasonCode.REFLECTIVE_BUILTIN:
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker reason_code is unsupported"
+        )
+    return reason_code
 
 
 def _validate_runtime_probe_dynamic_import_worker_payload(
