@@ -27,6 +27,7 @@ from context_ir.runtime_probe_execution import (
     execute_runtime_probe_local_python_subprocess_invocation,
     execute_runtime_probe_local_python_subprocess_invocation_attempt,
     make_runtime_probe_dynamic_import_local_python_subprocess_runner,
+    make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner,
     make_runtime_probe_reflective_getattr_local_python_subprocess_runner,
     make_runtime_probe_reflective_hasattr_local_python_subprocess_runner,
     materialize_runtime_probe_local_python_process_completion,
@@ -246,6 +247,20 @@ def _reflective_getattr_request(
         replay_selector_seed=(
             f"call:main.run:{form_label}@main.py:{start_line}:4:{start_line}:28"
         ),
+    )
+
+
+def _reflective_getattr_default_request(
+    start_line: int = 3,
+    *,
+    form_label: str = _REFLECTIVE_GETATTR_THREE_FORM_LABEL,
+    boundary_text: str = "getattr(obj, name, default)",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one synthetic planned reflective-getattr/3 request."""
+    return _reflective_getattr_request(
+        start_line,
+        form_label=form_label,
+        boundary_text=boundary_text,
     )
 
 
@@ -3476,6 +3491,142 @@ def test_reflective_getattr_local_python_runner_rejects_boundary_drift(
 
 
 @pytest.mark.parametrize(
+    ("source_text", "expected_outcome"),
+    (
+        (
+            """
+            class Example:
+                value = 1
+
+            def run() -> object:
+                obj = Example()
+                name = "value"
+                default = object()
+                return getattr(obj, name, default)
+            """,
+            "returned_value",
+        ),
+        (
+            """
+            class Example:
+                pass
+
+            def run() -> object:
+                obj = Example()
+                name = "missing"
+                default = object()
+                result = getattr(obj, name, default)
+                assert result is default
+                return result
+            """,
+            "returned_default_value",
+        ),
+    ),
+)
+def test_reflective_getattr_default_local_python_runner_executes_getattr_subprocess(
+    source_text: str,
+    expected_outcome: str,
+    tmp_path: Path,
+) -> None:
+    """The composed helper reaches the worker's exact getattr/3 handler."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(source_text).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_getattr_default_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = (
+        make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+        )
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    assert isinstance(runner, runtime_probe_execution.RuntimeProbeDispatchingRunner)
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (_field("lookup_outcome", expected_outcome),)
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_reflective_getattr_default_local_python_runner_rejects_boundary_drift(
+    tmp_path: Path,
+) -> None:
+    """The subprocess worker rejects exact-form requests with drifted boundary text."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class Example:
+                value = 1
+
+            def run() -> object:
+                obj = Example()
+                name = "value"
+                return getattr(obj, name, None)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_getattr_default_request(
+        boundary_text='getattr(obj, "value", None)',
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = (
+        make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+        )
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.failure_detail_fields[0] == _field(
+        "failure_source",
+        "local_python_process_completion",
+    )
+
+
+@pytest.mark.parametrize(
     ("family_label", "form_label"),
     (
         (
@@ -3649,6 +3800,82 @@ def test_reflective_getattr_local_python_runner_registers_only_exact_form(
         python_executable=sys.executable,
         invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
         completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        del kwargs
+        calls.append(tuple(str(arg) for arg in args))
+        raise AssertionError("unsupported helper request reached subprocess")
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = runner(runner_request)
+
+    assert calls == []
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "missing_runtime_probe_handler"),
+        _field("family_label", family_label.value),
+        _field("form_label", form_label),
+        _field("missing_handler_outcome", "setup_failed"),
+    )
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label"),
+    (
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_HASATTR_FORM_LABEL,
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_GETATTR_TWO_FORM_LABEL,
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_VARS_ONE_FORM_LABEL,
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+        ),
+    ),
+)
+def test_reflective_getattr_default_local_python_runner_registers_only_exact_form(
+    monkeypatch: pytest.MonkeyPatch,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """The exact-getattr/3 helper does not register adjacent family/form handlers."""
+    if family_label is runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN:
+        request = _reflective_getattr_default_request(
+            form_label=form_label,
+            boundary_text=(
+                "hasattr(obj, name)"
+                if form_label == _REFLECTIVE_HASATTR_FORM_LABEL
+                else "getattr(obj, name)"
+                if form_label == _REFLECTIVE_GETATTR_TWO_FORM_LABEL
+                else "vars(obj)"
+            ),
+        )
+    else:
+        request = _request(form_label=form_label)
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    runner = (
+        make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+        )
     )
     calls: list[tuple[str, ...]] = []
 
@@ -6612,6 +6839,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_runtime_probe_dynamic_import_local_python_subprocess_runner" in (
         runtime_probe_execution.__all__
     )
+    assert (
+        "make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner"
+        in runtime_probe_execution.__all__
+    )
     assert "make_runtime_probe_reflective_getattr_local_python_subprocess_runner" in (
         runtime_probe_execution.__all__
     )
@@ -6703,6 +6934,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert (
         "make_runtime_probe_dynamic_import_local_python_subprocess_runner"
+        not in context_ir.__all__
+    )
+    assert (
+        "make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner"
         not in context_ir.__all__
     )
     assert (
@@ -6807,6 +7042,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
+    )
+    assert not hasattr(
+        context_ir,
+        "make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner",
     )
     assert not hasattr(
         context_ir,

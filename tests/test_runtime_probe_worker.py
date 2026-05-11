@@ -42,6 +42,7 @@ from context_ir.semantic_types import (
     UnresolvedReasonCode,
 )
 
+_RPW = runtime_probe_worker
 DynamicImportWorkerRequest = (
     runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportWorkerRequest
 )
@@ -69,6 +70,15 @@ ReflectiveGetattrWorkerObservation = (
 ReflectiveGetattrReplayTarget = (
     runtime_probe_worker.RuntimeProbeLocalPythonReflectiveGetattrReplayTarget
 )
+ReflectiveGetattrDefaultWorkerRequest = (
+    runtime_probe_worker.RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerRequest
+)
+ReflectiveGetattrDefaultWorkerObservation = (
+    _RPW.RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerObservation
+)
+ReflectiveGetattrDefaultReplayTarget = (
+    runtime_probe_worker.RuntimeProbeLocalPythonReflectiveGetattrDefaultReplayTarget
+)
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
@@ -90,6 +100,9 @@ _REFLECTIVE_HASATTR_CONCRETE_OBSERVER_HELPER = (
 _REFLECTIVE_GETATTR_CONCRETE_OBSERVER_HELPER = (
     "observe_runtime_probe_reflective_getattr_worker_request"
 )
+_REFLECTIVE_GETATTR_DEFAULT_CONCRETE_OBSERVER_HELPER = (
+    "observe_runtime_probe_reflective_getattr_default_worker_request"
+)
 _REFLECTIVE_HASATTR_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_hasattr_worker_request"
 )
@@ -101,6 +114,12 @@ _REFLECTIVE_GETATTR_REQUEST_MATERIALIZER = (
 )
 _REFLECTIVE_GETATTR_OBSERVATION_MATERIALIZER = (
     "materialize_runtime_probe_reflective_getattr_worker_observation"
+)
+_REFLECTIVE_GETATTR_DEFAULT_REQUEST_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_getattr_default_worker_request"
+)
+_REFLECTIVE_GETATTR_DEFAULT_OBSERVATION_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_getattr_default_worker_observation"
 )
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
@@ -246,6 +265,24 @@ def _reflective_getattr_request(
         form_label=form_label,
         replay_target_seed=replay_target_seed,
         replay_selector_seed=resolved_replay_selector_seed,
+    )
+
+
+def _reflective_getattr_default_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _REFLECTIVE_GETATTR_THREE_FORM_LABEL,
+    boundary_text: str = "getattr(obj, name, default)",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one deterministic reflective-getattr/3 planned request."""
+    return _reflective_getattr_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
     )
 
 
@@ -442,6 +479,36 @@ def _valid_reflective_getattr_worker_request(
     return materialize_request(payload)
 
 
+def _valid_reflective_getattr_default_worker_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _REFLECTIVE_GETATTR_THREE_FORM_LABEL,
+    boundary_text: str = "getattr(obj, name, default)",
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> ReflectiveGetattrDefaultWorkerRequest:
+    """Return one worker-local exact-getattr/3 request contract."""
+    request = _reflective_getattr_default_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+    )
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_GETATTR_DEFAULT_REQUEST_MATERIALIZER,
+    )
+    return materialize_request(payload)
+
+
 def _valid_dynamic_import_replay_target(
     *,
     source_file_path: str = "main.py",
@@ -509,6 +576,28 @@ def _valid_reflective_getattr_replay_target(
     return materialize_replay_target(request)
 
 
+def _valid_reflective_getattr_default_replay_target(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> ReflectiveGetattrDefaultReplayTarget:
+    """Return one worker-local non-executing exact-getattr/3 replay target."""
+    request = _valid_reflective_getattr_default_worker_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+    )
+    materialize_replay_target = (
+        _RPW.materialize_runtime_probe_reflective_getattr_default_replay_target
+    )
+    return materialize_replay_target(request)
+
+
 def _valid_dynamic_import_worker_observation(
     *,
     request: DynamicImportWorkerRequest | None = None,
@@ -556,6 +645,27 @@ def _valid_reflective_getattr_worker_observation(
     materialize_observation = getattr(
         runtime_probe_worker,
         _REFLECTIVE_GETATTR_OBSERVATION_MATERIALIZER,
+    )
+    return materialize_observation(
+        validated_request,
+        lookup_outcome=lookup_outcome,
+    )
+
+
+def _valid_reflective_getattr_default_worker_observation(
+    *,
+    request: ReflectiveGetattrDefaultWorkerRequest | None = None,
+    lookup_outcome: str = "returned_value",
+) -> ReflectiveGetattrDefaultWorkerObservation:
+    """Return one worker-local exact-getattr/3 observation contract."""
+    validated_request = (
+        _valid_reflective_getattr_default_worker_request()
+        if request is None
+        else request
+    )
+    materialize_observation = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_GETATTR_DEFAULT_OBSERVATION_MATERIALIZER,
     )
     return materialize_observation(
         validated_request,
@@ -631,6 +741,17 @@ def _observe_reflective_getattr_worker_request(
     return observe_request(request)
 
 
+def _observe_reflective_getattr_default_worker_request(
+    request: ReflectiveGetattrDefaultWorkerRequest,
+) -> ReflectiveGetattrDefaultWorkerObservation:
+    """Observe one concrete exact-getattr/3 request for worker tests."""
+    observe_request = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_GETATTR_DEFAULT_CONCRETE_OBSERVER_HELPER,
+    )
+    return observe_request(request)
+
+
 def _dynamic_import_worker_request_with_source(
     tmp_path: Path,
     *,
@@ -698,6 +819,32 @@ def _reflective_getattr_worker_request_with_source(
     module_path = python_path / f"{module_name}.py"
     module_path.write_text(source_text, encoding="utf-8")
     return _valid_reflective_getattr_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.{replay_target_name}",
+        form_label=form_label,
+        boundary_text=boundary_text,
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+
+
+def _reflective_getattr_default_worker_request_with_source(
+    tmp_path: Path,
+    *,
+    module_name: str,
+    source_text: str,
+    replay_target_name: str = "run",
+    form_label: str = _REFLECTIVE_GETATTR_THREE_FORM_LABEL,
+    boundary_text: str = "getattr(obj, name, default)",
+) -> ReflectiveGetattrDefaultWorkerRequest:
+    """Return an exact-getattr/3 worker request backed by real temp source."""
+    working_directory = tmp_path / f"{module_name}_workspace"
+    python_path = tmp_path / f"{module_name}_python_path"
+    working_directory.mkdir()
+    python_path.mkdir()
+    module_path = python_path / f"{module_name}.py"
+    module_path.write_text(source_text, encoding="utf-8")
+    return _valid_reflective_getattr_default_worker_request(
         source_file_path=f"{module_name}.py",
         replay_target_seed=f"{module_name}.{replay_target_name}",
         form_label=form_label,
@@ -3849,6 +3996,401 @@ def test_reflective_getattr_worker_concrete_observer_shields_target_streams(
     assert builtins.getattr is original_getattr
 
 
+def test_reflective_getattr_default_worker_request_materializes_replay_contract() -> (
+    None
+):
+    """The worker derives an exact-getattr/3 request from the parent payload."""
+    payload = _valid_worker_payload_for_request(_reflective_getattr_default_request())
+
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_GETATTR_DEFAULT_REQUEST_MATERIALIZER,
+    )
+    request = materialize_request(payload)
+
+    assert request.plan_id == payload.plan_id
+    assert request.request_id == payload.request_id
+    assert request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert request.reason_code is UnresolvedReasonCode.REFLECTIVE_BUILTIN
+    assert (
+        request.family_label
+        is runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN
+    )
+    assert request.form_label == _REFLECTIVE_GETATTR_THREE_FORM_LABEL
+    assert request.boundary_text == "getattr(obj, name, default)"
+    assert request.replay_target_seed == "main.run"
+    assert request.replay_selector_seed == (
+        f"call:main.run:{_REFLECTIVE_GETATTR_THREE_FORM_LABEL}@main.py:3:4:3:28"
+    )
+    assert request.request_replay_payload_fields == (
+        payload.request_replay_payload_fields
+    )
+
+
+@pytest.mark.parametrize(
+    ("form_label", "boundary_text"),
+    (
+        (_REFLECTIVE_HASATTR_FORM_LABEL, "hasattr(obj, name)"),
+        (_REFLECTIVE_GETATTR_TWO_FORM_LABEL, "getattr(obj, name)"),
+        (_REFLECTIVE_VARS_ONE_FORM_LABEL, "vars(obj)"),
+        (_REFLECTIVE_DIR_ZERO_FORM_LABEL, "dir()"),
+    ),
+)
+def test_reflective_getattr_default_worker_request_accepts_only_exact_form(
+    form_label: str,
+    boundary_text: str,
+) -> None:
+    """Adjacent reflective-builtin forms do not materialize as getattr/3 support."""
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_default_request(
+            form_label=form_label,
+            boundary_text=boundary_text,
+        )
+    )
+
+    with pytest.raises(ValueError, match="form_label"):
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_default_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("reason_code", "dynamic_import", "reason_code"),
+        ("boundary_text", 'getattr(obj, "value", None)', "boundary_text"),
+        ("family_label", "dynamic_import", "family_label"),
+        ("form_label", _REFLECTIVE_GETATTR_TWO_FORM_LABEL, "form_label"),
+    ),
+)
+def test_reflective_getattr_default_worker_request_rejects_replay_drift(
+    replay_key: str,
+    replay_value: str,
+    error_match: str,
+) -> None:
+    """Malformed exact-getattr/3 metadata fails before any replay execution."""
+    payload = _worker_payload_with_replay_field(
+        replay_key,
+        replay_value,
+        payload=_valid_worker_payload_for_request(
+            _reflective_getattr_default_request()
+        ),
+    )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_default_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("source_text", "expected_outcome"),
+    (
+        (
+            (
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    default = object()\n"
+                "    result = getattr(obj, name, default)\n"
+                "    assert result == 1\n"
+                "    return result\n"
+            ),
+            "returned_value",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "missing"\n'
+                "    default = object()\n"
+                "    result = getattr(obj, name, default)\n"
+                "    assert result is default\n"
+                "    return result\n"
+            ),
+            "returned_default_value",
+        ),
+    ),
+)
+def test_reflective_getattr_default_worker_concrete_observer_captures_lookup_outcome(
+    source_text: str,
+    expected_outcome: str,
+    tmp_path: Path,
+) -> None:
+    """The concrete observer captures the real three-argument getattr outcome."""
+    module_name = f"runtime_probe_getattr_default_capture_{expected_outcome}_case"
+    request = _reflective_getattr_default_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_getattr = builtins.getattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        observation = _observe_reflective_getattr_default_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert observation.lookup_outcome == expected_outcome
+    assert builtins.getattr is original_getattr
+    assert (
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_default_worker_success_response(
+            observation
+        ).normalized_payload
+        == (_field("lookup_outcome", expected_outcome),)
+    )
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        (
+            (
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run(required):\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    return getattr(obj, name, None)\n"
+            ),
+            "target execution failed",
+        ),
+        (
+            "def run():\n    return None\n",
+            "exactly one getattr call",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    first = getattr(obj, name, None)\n"
+                '    second = getattr(obj, "missing", None)\n'
+                "    return first or second\n"
+            ),
+            "exactly one getattr call",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    return getattr(obj, name)\n"
+            ),
+            "exactly getattr",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    return getattr(obj, name, default=None)\n"
+            ),
+            "exactly getattr",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    name = 42\n"
+                "    return getattr(obj, name, None)\n"
+            ),
+            "attribute name",
+        ),
+    ),
+)
+def test_reflective_getattr_default_worker_concrete_observer_rejects_bad_targets(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Required-argument targets and non-exact captures fail closed."""
+    module_name = "runtime_probe_getattr_default_bad_target_case"
+    request = _reflective_getattr_default_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_getattr = builtins.getattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_reflective_getattr_default_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.getattr is original_getattr
+
+
+def test_reflective_getattr_default_worker_concrete_observer_rejects_shadowed_global(
+    tmp_path: Path,
+) -> None:
+    """Source modules that bind ``getattr`` are not treated as builtin calls."""
+    module_name = "runtime_probe_getattr_default_shadowed_global_case"
+    request = _reflective_getattr_default_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "getattr = object()\n\n"
+            "def run():\n"
+            '    raise AssertionError("target should not execute")\n'
+        ),
+    )
+    original_getattr = builtins.getattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="getattr global must be absent"):
+            _observe_reflective_getattr_default_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.getattr is original_getattr
+
+
+def test_reflective_getattr_default_worker_concrete_observer_restores_rebound_global(
+    tmp_path: Path,
+) -> None:
+    """Target-time source-global ``getattr`` rebound fails closed and is removed."""
+    module_name = "runtime_probe_getattr_default_rebound_global_case"
+    request = _reflective_getattr_default_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "class Example:\n"
+            "    value = 1\n\n"
+            "def run():\n"
+            "    global getattr\n"
+            "    obj = Example()\n"
+            '    name = "value"\n'
+            "    result = getattr(obj, name, None)\n"
+            "    getattr = object()\n"
+            "    return result\n"
+        ),
+    )
+    original_getattr = builtins.getattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="getattr global changed"):
+            _observe_reflective_getattr_default_worker_request(request)
+        source_module = sys.modules[module_name]
+        assert "getattr" not in source_module.__dict__
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.getattr is original_getattr
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        (
+            (
+                "import builtins\n\n"
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    result = getattr(obj, name, None)\n"
+                "    builtins.getattr = object()\n"
+                "    return result\n"
+            ),
+            "builtins.getattr changed",
+        ),
+        (
+            (
+                "import builtins\n\n"
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    result = getattr(obj, name, None)\n"
+                "    del builtins.getattr\n"
+                "    return result\n"
+            ),
+            "builtins.getattr changed",
+        ),
+    ),
+)
+def test_reflective_getattr_default_worker_concrete_observer_restores_builtin_drift(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Target-time ``builtins.getattr`` mutation or deletion fails closed."""
+    module_name = "runtime_probe_getattr_default_builtin_drift_case"
+    request = _reflective_getattr_default_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_getattr = builtins.getattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_reflective_getattr_default_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.getattr is original_getattr
+
+
+def test_reflective_getattr_default_worker_concrete_observer_shields_target_streams(
+    tmp_path: Path,
+) -> None:
+    """Target exceptions are sanitized and stdout/stderr remain shielded."""
+    module_name = "runtime_probe_getattr_default_target_failure_case"
+    request = _reflective_getattr_default_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "import sys\n\n"
+            "def run():\n"
+            '    print("target stdout runtime_probe_stdout_protocol_revision")\n'
+            '    print("target stderr secret-token /private/tmp", file=sys.stderr)\n'
+            '    raise RuntimeError("target failed with secret-token /private/tmp")\n'
+        ),
+    )
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+    original_getattr = builtins.getattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with (
+            contextlib.redirect_stdout(outer_stdout),
+            contextlib.redirect_stderr(outer_stderr),
+            pytest.raises(ValueError, match="target execution failed") as error_info,
+        ):
+            _observe_reflective_getattr_default_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert builtins.getattr is original_getattr
+
+
 def test_reflective_hasattr_worker_default_subprocess_observes_hasattr(
     tmp_path: Path,
 ) -> None:
@@ -3952,6 +4494,83 @@ def test_reflective_getattr_worker_default_subprocess_observes_getattr(
             {
                 "key": "lookup_outcome",
                 "value": "returned_value",
+            },
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    ("source_text", "expected_outcome"),
+    (
+        (
+            (
+                "class Example:\n"
+                "    value = 1\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "value"\n'
+                "    default = object()\n"
+                "    return getattr(obj, name, default)\n"
+            ),
+            "returned_value",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    name = "missing"\n'
+                "    default = object()\n"
+                "    result = getattr(obj, name, default)\n"
+                "    assert result is default\n"
+                "    return result\n"
+            ),
+            "returned_default_value",
+        ),
+    ),
+)
+def test_reflective_getattr_default_worker_default_subprocess_observes_getattr(
+    source_text: str,
+    expected_outcome: str,
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes exact bare getattr/3 calls by default."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = f"runtime_probe_getattr_default_worker_{expected_outcome}_case"
+    (tmp_path / f"{module_name}.py").write_text(source_text, encoding="utf-8")
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_default_request(
+            source_file_path=f"{module_name}.py",
+            replay_target_seed=f"{module_name}.run",
+        ),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "lookup_outcome",
+                "value": expected_outcome,
             },
         ],
     }
@@ -4270,12 +4889,6 @@ def test_dynamic_import_worker_default_handler_observer_failure_fails_closed(
             "dynamic_import:other.__import__/1",
             UnresolvedReasonCode.DYNAMIC_IMPORT,
             "other.__import__(name)",
-        ),
-        (
-            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
-            "reflective_builtin:getattr/3",
-            UnresolvedReasonCode.REFLECTIVE_BUILTIN,
-            "getattr(obj, name, default)",
         ),
         (
             runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
@@ -5046,6 +5659,29 @@ def test_worker_entrypoint_is_importable() -> None:
         _REFLECTIVE_GETATTR_CONCRETE_OBSERVER_HELPER,
     )
     assert callable(reflective_getattr_observe_request)
+    assert callable(
+        runtime_probe_worker.build_runtime_probe_reflective_getattr_default_worker_handler_entry
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerHandlerAdapter",
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerObserver",
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultReplayTarget",
+    )
+    assert callable(
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_default_replay_target
+    )
+    reflective_getattr_default_observe_request = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_GETATTR_DEFAULT_CONCRETE_OBSERVER_HELPER,
+    )
+    assert callable(reflective_getattr_default_observe_request)
 
 
 def test_package_root_exports_remain_unchanged() -> None:
@@ -5079,6 +5715,18 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert (
         "RuntimeProbeLocalPythonReflectiveGetattrReplayTarget" not in context_ir.__all__
     )
+    assert (
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerRequest"
+        not in context_ir.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerObservation"
+        not in context_ir.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultReplayTarget"
+        not in context_ir.__all__
+    )
     assert "RuntimeProbeLocalPythonWorkerSuccessResponse" not in context_ir.__all__
     assert (
         "RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter"
@@ -5103,6 +5751,14 @@ def test_package_root_exports_remain_unchanged() -> None:
         "RuntimeProbeLocalPythonReflectiveGetattrWorkerObserver"
         not in context_ir.__all__
     )
+    assert (
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerHandlerAdapter"
+        not in context_ir.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerObserver"
+        not in context_ir.__all__
+    )
     assert "materialize_runtime_probe_dynamic_import_worker_request" not in (
         context_ir.__all__
     )
@@ -5117,6 +5773,9 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER not in context_ir.__all__
     assert _REFLECTIVE_HASATTR_CONCRETE_OBSERVER_HELPER not in context_ir.__all__
     assert _REFLECTIVE_GETATTR_CONCRETE_OBSERVER_HELPER not in context_ir.__all__
+    assert (
+        _REFLECTIVE_GETATTR_DEFAULT_CONCRETE_OBSERVER_HELPER not in context_ir.__all__
+    )
     assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
         context_ir.__all__
     )
@@ -5139,11 +5798,27 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir.__all__
     )
     assert (
+        "materialize_runtime_probe_reflective_getattr_default_worker_request"
+        not in context_ir.__all__
+    )
+    assert (
+        "materialize_runtime_probe_reflective_getattr_default_worker_observation"
+        not in context_ir.__all__
+    )
+    assert (
+        "materialize_runtime_probe_reflective_getattr_default_replay_target"
+        not in context_ir.__all__
+    )
+    assert (
         "materialize_runtime_probe_reflective_hasattr_worker_success_response"
         not in context_ir.__all__
     )
     assert (
         "materialize_runtime_probe_reflective_getattr_worker_success_response"
+        not in context_ir.__all__
+    )
+    assert (
+        "materialize_runtime_probe_reflective_getattr_default_worker_success_response"
         not in context_ir.__all__
     )
     assert "build_runtime_probe_dynamic_import_worker_handler_entry" not in (
@@ -5154,6 +5829,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert "build_runtime_probe_reflective_getattr_worker_handler_entry" not in (
         context_ir.__all__
+    )
+    assert (
+        "build_runtime_probe_reflective_getattr_default_worker_handler_entry"
+        not in context_ir.__all__
     )
     assert _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER not in context_ir.__all__
     assert "RuntimeProbeLocalPythonDynamicImportTargetCallable" not in (
@@ -5196,6 +5875,18 @@ def test_package_root_exports_remain_unchanged() -> None:
         context_ir,
         "RuntimeProbeLocalPythonReflectiveGetattrReplayTarget",
     )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerRequest",
+    )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerObservation",
+    )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultReplayTarget",
+    )
     assert not hasattr(context_ir, "RuntimeProbeLocalPythonWorkerSuccessResponse")
     assert not hasattr(
         context_ir,
@@ -5217,6 +5908,14 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         "RuntimeProbeLocalPythonReflectiveGetattrWorkerObserver",
+    )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerHandlerAdapter",
+    )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonReflectiveGetattrDefaultWorkerObserver",
     )
     assert not hasattr(
         context_ir,
@@ -5252,6 +5951,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert not hasattr(
         context_ir,
+        _REFLECTIVE_GETATTR_DEFAULT_CONCRETE_OBSERVER_HELPER,
+    )
+    assert not hasattr(
+        context_ir,
         "materialize_runtime_probe_dynamic_import_worker_success_response",
     )
     assert not hasattr(
@@ -5280,11 +5983,27 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert not hasattr(
         context_ir,
+        "materialize_runtime_probe_reflective_getattr_default_worker_request",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_reflective_getattr_default_worker_observation",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_reflective_getattr_default_replay_target",
+    )
+    assert not hasattr(
+        context_ir,
         "materialize_runtime_probe_reflective_hasattr_worker_success_response",
     )
     assert not hasattr(
         context_ir,
         "materialize_runtime_probe_reflective_getattr_worker_success_response",
+    )
+    assert not hasattr(
+        context_ir,
+        "materialize_runtime_probe_reflective_getattr_default_worker_success_response",
     )
     assert not hasattr(
         context_ir,
@@ -5297,6 +6016,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         "build_runtime_probe_reflective_getattr_worker_handler_entry",
+    )
+    assert not hasattr(
+        context_ir,
+        "build_runtime_probe_reflective_getattr_default_worker_handler_entry",
     )
     assert not hasattr(
         context_ir,
