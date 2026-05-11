@@ -46,12 +46,25 @@ _INVALID_RESPONSE_MESSAGE = (
 _DYNAMIC_IMPORT_WORKER_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL = "dynamic_import:loader.import_module/1"
 _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL = "dynamic_import:import_module/1"
+_DYNAMIC_IMPORT_WORKER_LOAD_MODULE_FORM_LABEL = "dynamic_import:load_module/1"
 _DYNAMIC_IMPORT_WORKER_FORM_LABELS = (
     _DYNAMIC_IMPORT_WORKER_FORM_LABEL,
     _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL,
     _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL,
+    _DYNAMIC_IMPORT_WORKER_LOAD_MODULE_FORM_LABEL,
 )
 _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME = "import_module"
+_DYNAMIC_IMPORT_WORKER_LOAD_MODULE_GLOBAL_NAME = "load_module"
+_DYNAMIC_IMPORT_WORKER_SOURCE_GLOBAL_NAMES_BY_FORM_LABEL = MappingProxyType(
+    {
+        _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL: (
+            _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME
+        ),
+        _DYNAMIC_IMPORT_WORKER_LOAD_MODULE_FORM_LABEL: (
+            _DYNAMIC_IMPORT_WORKER_LOAD_MODULE_GLOBAL_NAME
+        ),
+    }
+)
 _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL = object()
 _DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX = (
     "runtime_probe_local_python_subprocess_invocation:"
@@ -606,11 +619,14 @@ def observe_runtime_probe_dynamic_import_worker_request(
         source_module,
     )
     deterministic_target = _runtime_probe_dynamic_import_target_execution_guard(target)
-    if request.form_label == _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL:
+    if request.form_label in _DYNAMIC_IMPORT_WORKER_SOURCE_GLOBAL_NAMES_BY_FORM_LABEL:
         return _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
             replay_target=replay_target,
             source_module=source_module,
             target=deterministic_target,
+            global_name=_runtime_probe_dynamic_import_source_global_name_for_form(
+                request.form_label
+            ),
         )
     return materialize_runtime_probe_dynamic_import_worker_observation_from_target(
         replay_target,
@@ -1046,8 +1062,9 @@ def _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+    global_name: str,
 ) -> RuntimeProbeLocalPythonDynamicImportWorkerObservation:
-    """Observe an imported-name target by rebinding its module global only."""
+    """Observe a target by rebinding its exact import_module/load_module global."""
     _validate_runtime_probe_dynamic_import_replay_target(replay_target)
     _validate_runtime_probe_dynamic_import_replay_target_source_module(
         replay_target,
@@ -1057,6 +1074,7 @@ def _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
     imported_module = _runtime_probe_dynamic_import_captured_import_module_global_name(
         source_module,
         target,
+        global_name=global_name,
     )
     return materialize_runtime_probe_dynamic_import_worker_observation(
         replay_target.request,
@@ -1067,10 +1085,13 @@ def _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
 def _runtime_probe_dynamic_import_captured_import_module_global_name(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+    *,
+    global_name: str,
 ) -> str:
-    """Run a target while capturing its imported ``import_module`` global."""
+    """Run a target while capturing one exact import_module/load_module global."""
     original_import_module = _runtime_probe_dynamic_import_source_import_module_global(
-        source_module
+        source_module,
+        global_name=global_name,
     )
     capture = _RuntimeProbeDynamicImportCapture()
     controlled_import_module = capture.import_module
@@ -1079,9 +1100,7 @@ def _runtime_probe_dynamic_import_captured_import_module_global_name(
     restore_failure: ValueError | None
 
     try:
-        module_globals[_DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME] = (
-            controlled_import_module
-        )
+        module_globals[global_name] = controlled_import_module
         with (
             contextlib.redirect_stdout(io.StringIO()),
             contextlib.redirect_stderr(io.StringIO()),
@@ -1091,6 +1110,7 @@ def _runtime_probe_dynamic_import_captured_import_module_global_name(
         target_failure = error
     restore_failure = _restore_runtime_probe_dynamic_import_source_import_module_global(
         source_module=source_module,
+        global_name=global_name,
         expected_global=controlled_import_module,
         original_global=original_import_module,
     )
@@ -1105,22 +1125,34 @@ def _runtime_probe_dynamic_import_captured_import_module_global_name(
     return _runtime_probe_dynamic_import_capture_imported_module(capture)
 
 
+def _runtime_probe_dynamic_import_source_global_name_for_form(form_label: str) -> str:
+    """Return the exact source-module global controlled for one supported form."""
+    try:
+        return _DYNAMIC_IMPORT_WORKER_SOURCE_GLOBAL_NAMES_BY_FORM_LABEL[form_label]
+    except KeyError as error:
+        raise ValueError(
+            "runtime probe dynamic import worker source global form is unsupported"
+        ) from error
+
+
 def _runtime_probe_dynamic_import_source_import_module_global(
     source_module: ModuleType,
+    *,
+    global_name: str,
 ) -> object:
-    """Return the source module's imported-name global after strict validation."""
+    """Return the exact import_module/load_module global after strict validation."""
     import_module_global = source_module.__dict__.get(
-        _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME,
+        global_name,
         _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
     )
     if import_module_global is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
         raise ValueError(
-            "runtime probe dynamic import worker target module import_module "
+            f"runtime probe dynamic import worker target module {global_name} "
             "global is missing"
         )
     if import_module_global is not importlib.import_module:
         raise ValueError(
-            "runtime probe dynamic import worker target module import_module "
+            f"runtime probe dynamic import worker target module {global_name} "
             "global must be importlib.import_module"
         )
     return import_module_global
@@ -1129,39 +1161,38 @@ def _runtime_probe_dynamic_import_source_import_module_global(
 def _restore_runtime_probe_dynamic_import_source_import_module_global(
     *,
     source_module: ModuleType,
+    global_name: str,
     expected_global: object,
     original_global: object,
 ) -> ValueError | None:
-    """Restore the source module imported-name global and report unsafe drift."""
+    """Restore the exact import_module/load_module global and report unsafe drift."""
     module_globals = source_module.__dict__
     current_global = module_globals.get(
-        _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME,
+        global_name,
         _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
     )
     restore_failure: ValueError | None = None
     if current_global is not expected_global:
         restore_failure = ValueError(
-            "runtime probe dynamic import worker target module import_module "
+            f"runtime probe dynamic import worker target module {global_name} "
             "global changed during execution"
         )
     try:
-        module_globals[_DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME] = (
-            original_global
-        )
+        module_globals[global_name] = original_global
     except Exception:
         return ValueError(
-            "runtime probe dynamic import worker target module import_module "
+            f"runtime probe dynamic import worker target module {global_name} "
             "global could not be restored"
         )
     if (
         module_globals.get(
-            _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME,
+            global_name,
             _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
         )
         is not original_global
     ):
         return ValueError(
-            "runtime probe dynamic import worker target module import_module "
+            f"runtime probe dynamic import worker target module {global_name} "
             "global could not be restored"
         )
     return restore_failure

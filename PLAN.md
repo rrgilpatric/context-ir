@@ -41,14 +41,78 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`db3eb8b Add loader import_module subprocess support`. The latest pushed
+`2035f4f Add imported-name dynamic import subprocess support`. The latest pushed
 source/contract authority is also
-`db3eb8b Add loader import_module subprocess support`. Live git refs and
-worktree state must still be verified from git during control intake; do not
-infer them from committed prose.
+`2035f4f Add imported-name dynamic import subprocess support`. Live git refs
+and worktree state must still be verified from git during control intake; do
+not infer them from committed prose.
 
-Workspace-only accepted `dynamic_import:import_module/1` local-Python
+Workspace-only accepted `dynamic_import:load_module/1` local-Python
 subprocess release candidate:
+
+- `src/context_ir/runtime_probe_worker.py` now accepts exactly four
+  local-Python dynamic-import worker forms:
+  `dynamic_import:importlib.import_module/1`,
+  `dynamic_import:loader.import_module/1`,
+  `dynamic_import:import_module/1`, and
+  `dynamic_import:load_module/1`
+- the worker default handler table registers all four exact forms through the
+  existing dynamic-import handler adapter and concrete observer
+- the imported-alias worker path imports the source module, resolves the
+  replay target, temporarily rebinds only the source module global
+  `load_module` to the existing controlled import-module observer while
+  executing the replay target, and restores the original global on success and
+  failure
+- the worker fails closed if the source module global `load_module` is absent,
+  is not the imported `importlib.import_module` function object, or changes
+  during target execution
+- `src/context_ir/runtime_probe_execution.py` now has
+  `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+  register `dynamic_import:load_module/1` alongside the three previously
+  pushed exact forms
+- focused coverage proves the real `python -m context_ir.runtime_probe_worker`
+  subprocess path observes imported-alias `load_module(...)` as
+  `imported_module=...`
+- adjacent builtin forms including `dynamic_import:__import__/1`,
+  `dynamic_import:builtins.__import__/1`, and
+  `dynamic_import:loader.__import__/1` remain fail-closed
+- no request schema, MCP/schema, package-root export, README, EVAL,
+  PUBLIC_CLAIMS, public benchmark, scoring, compiler, admission, recompile,
+  tool-facade, result-assembly, builtin-import, generalized alias, or
+  generalized dynamic-import support was added
+- implementation review initially found stale private helper docstrings in
+  `src/context_ir/runtime_probe_worker.py`; a narrow correction updated the
+  helper docstrings to describe exact `import_module`/`load_module` source
+  globals without changing behavior
+- corrected implementation review accepted the slice after 1 correction
+- focused control validation passed:
+  - ruff check
+  - ruff format check, `4 files already formatted`
+  - strict mypy over 37 source files
+  - targeted pytest over `tests/test_runtime_probe_worker.py` and
+    `tests/test_runtime_probe_execution.py`, `345 passed`
+  - scoped `git diff --check`
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1200 passed`
+  - Gate 3 commit-gating passed for the exact six-file unit
+- release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: local commit creation for the exact six-file unit
+
+Pushed `dynamic_import:import_module/1` local-Python subprocess release:
 
 - `src/context_ir/runtime_probe_worker.py` now accepts exactly three
   local-Python dynamic-import worker forms:
@@ -92,20 +156,26 @@ subprocess release candidate:
   - Gate 2 full regression passed, including full pytest reporting
     `1195 passed`
   - Gate 3 commit-gating passed for the exact six-file unit
+- local commit creation completed at
+  `2035f4f Add imported-name dynamic import subprocess support`
+- Ryan-authorized push completed for
+  `2035f4f Add imported-name dynamic import subprocess support`
 - release state:
   - accepted in workspace: yes, first-pass
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes
   - commit-gating-cleared: yes
-  - staged: no
-  - locally committed: no
-  - pushed: no
-  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  - staged: yes, then committed
+  - locally committed: yes,
+    `2035f4f Add imported-name dynamic import subprocess support`
+  - pushed: yes
+  - committed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
     `src/context_ir/runtime_probe_execution.py`,
     `src/context_ir/runtime_probe_worker.py`,
     `tests/test_runtime_probe_execution.py`, and
     `tests/test_runtime_probe_worker.py`
-  - next route: local commit creation for the exact six-file unit
+  - next route: exact `dynamic_import:load_module/1` local-Python subprocess
+    implementation slice
 
 Pushed `dynamic_import:loader.import_module/1` local-Python subprocess release:
 
@@ -4016,10 +4086,19 @@ sequencing for `c1a12d7` absent new findings.
   implementation slice
 - [x] Combined read-only release gate for the exact six-file
   `dynamic_import:import_module/1` local-Python subprocess release unit
+- [x] Local commit creation for the exact six-file
+  `dynamic_import:import_module/1` local-Python subprocess release unit
+- [x] Ryan-authorized push for the exact six-file
+  `dynamic_import:import_module/1` local-Python subprocess release unit
+- [x] Post-`2035f4f` control selection of the next bounded north-star lane
+- [x] Exact `dynamic_import:load_module/1` local-Python subprocess
+  implementation slice
+- [x] Combined read-only release gate for the exact six-file
+  `dynamic_import:load_module/1` local-Python subprocess release unit
 - [ ] Local commit creation for the exact six-file
-  `dynamic_import:import_module/1` local-Python subprocess release unit
+  `dynamic_import:load_module/1` local-Python subprocess release unit
 - [ ] Ryan-authorized push for the exact six-file
-  `dynamic_import:import_module/1` local-Python subprocess release unit
+  `dynamic_import:load_module/1` local-Python subprocess release unit
 
 ## What Is In Progress
 
@@ -4928,19 +5007,52 @@ supersession entries.
 ## What Is Next
 
 Immediate next route: local commit creation for the exact six-file
-`dynamic_import:import_module/1` local-Python subprocess release unit. Current
+`dynamic_import:load_module/1` local-Python subprocess release unit. Current
 pushed release authority and latest pushed source/contract authority are
-`db3eb8b Add loader import_module subprocess support`. During release-gate
-acceptance, live git refs verified local `HEAD` and `origin/main` at
-`db3eb8b`. The exact dirty release unit is `BUILDLOG.md`, `PLAN.md`,
+`2035f4f Add imported-name dynamic import subprocess support`. During
+release-gate acceptance, live git refs verified local `HEAD` and `origin/main`
+at `2035f4f`. The exact dirty release unit is `BUILDLOG.md`, `PLAN.md`,
 `src/context_ir/runtime_probe_execution.py`,
 `src/context_ir/runtime_probe_worker.py`,
 `tests/test_runtime_probe_execution.py`, and
 `tests/test_runtime_probe_worker.py`. Nothing is staged; no untracked files
 exist.
 
-Workspace-only accepted `dynamic_import:import_module/1` local-Python
-subprocess behavior:
+Workspace-only accepted `dynamic_import:load_module/1` local-Python subprocess
+behavior:
+
+- worker and parent runner register exactly the new
+  `dynamic_import:load_module/1` form alongside the three already-pushed exact
+  forms
+- the concrete worker observer handles imported-alias `load_module(name)` by
+  rebinding only the replay target source module global `load_module` to the
+  existing controlled import-module observer for target execution, then
+  restoring it
+- missing, mismatched, or target-mutated `load_module` globals fail closed
+- adjacent builtin forms remain fail-closed, including
+  `dynamic_import:__import__/1`,
+  `dynamic_import:builtins.__import__/1`, and
+  `dynamic_import:loader.__import__/1`
+- no request schema, MCP/schema, package-root export, README, EVAL,
+  PUBLIC_CLAIMS, public benchmark, scoring, compiler, admission, recompile,
+  tool-facade, result-assembly, builtin-import, generalized alias, or
+  generalized dynamic-import support was added
+- corrected control validation passed with `345 passed` for the targeted
+  pytest pair
+- combined read-only release gate passed with no findings:
+  - release-unit audit cleared
+  - full regression cleared with `1200 passed`
+  - commit-gating cleared for the exact six-file unit
+- release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+
+Pushed `dynamic_import:import_module/1` local-Python subprocess release:
 
 - worker and parent runner register exactly the new
   `dynamic_import:import_module/1` form alongside the two already-pushed exact
@@ -4969,9 +5081,16 @@ subprocess behavior:
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes
   - commit-gating-cleared: yes
-  - staged: no
-  - locally committed: no
-  - pushed: no
+  - staged: yes, then committed
+  - locally committed: yes,
+    `2035f4f Add imported-name dynamic import subprocess support`
+  - pushed: yes
+  - committed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: control selection of the next bounded north-star lane
 
 Pushed `dynamic_import:loader.import_module/1` local-Python subprocess
 release:
