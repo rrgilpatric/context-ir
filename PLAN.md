@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`50daeab Add reflective getattr subprocess support`. The latest pushed
+`24cb38b Add reflective getattr default subprocess support`. The latest pushed
 source/contract authority is also
-`50daeab Add reflective getattr subprocess support`. Live git refs
+`24cb38b Add reflective getattr default subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -459,6 +459,207 @@ local-Python subprocess release unit:
   - branch `main`
   - local `HEAD` and `origin/main` at
     `50daeab Add reflective getattr subprocess support`
+  - live control verification matched the returned gate report
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - create one local commit for the exact six-file unit
+  - push remains Ryan-gated
+
+Local commit for `reflective_builtin:getattr/3` local-Python subprocess
+release unit:
+
+- local commit creation completed for the exact six-file unit after
+  release-unit audit, full regression, and commit-gating cleared
+- local commit:
+  - `24cb38b Add reflective getattr default subprocess support`
+- repo-backed truth after local commit and before this continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `24cb38b Add reflective getattr default subprocess support`
+  - `origin/main` remains at
+    `50daeab Add reflective getattr subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this docs-only continuity sync
+  - staged files: none before this docs-only continuity sync
+  - untracked files: none before this docs-only continuity sync
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `24cb38b Add reflective getattr default subprocess support`
+  - pushed: no
+- next route:
+  - Ryan authorization for push, or an explicit hold without pushing
+
+Pushed `reflective_builtin:getattr/3` local-Python subprocess release:
+
+- Ryan-authorized push completed for
+  `24cb38b Add reflective getattr default subprocess support`
+- pushed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `24cb38b Add reflective getattr default subprocess support`
+  - pushed: yes
+  - next route: select the next bounded north-star lane
+
+Workspace-only post-`24cb38b` route selection:
+
+- reviewed live repo state after pushed
+  `24cb38b Add reflective getattr default subprocess support`; findings:
+  none
+- selected next bounded north-star lane: exact
+  `reflective_builtin:vars/1` local-Python subprocess support
+- reason:
+  - `vars(obj)` is already a planned and admissible reflective-builtin
+    runtime observation with existing internal evidence for
+    `lookup_outcome=returned_namespace` and
+    `lookup_outcome=raised_type_error`
+  - it is the smallest strong reflective-builtin follow-on after completing
+    the exact attribute lookup sequence through `hasattr/2`, `getattr/2`,
+    and `getattr/3`
+  - the one-argument form can preserve target semantics by wrapping
+    `builtins.vars`, calling the original one-argument builtin, returning the
+    namespace on success, and re-raising `TypeError` for target-handled error
+    branches
+  - it avoids the caller-frame semantics required by zero-argument `vars()`
+    and avoids durable listing artifacts required by `dir()`
+- alternatives deferred:
+  - `reflective_builtin:vars/0`: defer because exact zero-argument `vars()`
+    requires caller-frame namespace semantics that are more delicate than the
+    one-argument builtin wrapper
+  - `reflective_builtin:dir/0` and `reflective_builtin:dir/1`: defer because
+    the accepted proof boundary requires durable listing evidence
+  - `runtime_mutation:globals/0` and `runtime_mutation:locals/0`: defer until
+    the reflective-builtin namespace-introspection path starts with `vars/1`
+  - `runtime_mutation:setattr/3`, `runtime_mutation:delattr/2`,
+    `exec_or_eval:*`, and `metaclass_behavior:keyword`: defer because they
+    require mutation, durable proof, replay-input, or broader
+    behavior-specific handling
+- non-goals for the next lane:
+  - no generalized reflective-builtin support
+  - no `vars/0`, `dir`, runtime-mutation, `exec`/`eval`, or metaclass
+    subprocess support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or
+    run-spec changes
+- next route: exact `reflective_builtin:vars/1` local-Python subprocess
+  implementation lane
+
+Workspace-only accepted `reflective_builtin:vars/1` local-Python subprocess
+release unit:
+
+- reviewed the returned implementation slice; findings: none
+- repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `24cb38b Add reflective getattr default subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- accepted implementation:
+  - `src/context_ir/runtime_probe_worker.py` now registers exact
+    `reflective_builtin:vars/1` in the default local-Python worker table
+  - the worker validates exact reflective metadata, reason
+    `REFLECTIVE_BUILTIN`, unsupported-finding subject kind, replay identity,
+    and boundary text `vars(obj)` before replay execution
+  - the concrete worker observer imports the replay target source module,
+    resolves a zero-argument target, temporarily wraps `builtins.vars`,
+    captures exactly one one-argument lookup, restores `builtins.vars` on
+    success and failure, and emits normalized payload
+    `lookup_outcome=returned_namespace` or
+    `lookup_outcome=raised_type_error`
+  - successful original `vars(obj)` calls return the original namespace to
+    target code; original `TypeError` from `vars(obj)` is captured and
+    re-raised so target-handled error branches remain real
+  - source-global `vars` shadowing or target-time drift, builtin mutation or
+    deletion, malformed metadata, boundary drift, required-argument targets,
+    target exceptions, missing capture, multiple captures, wrong arity,
+    `vars()`/kwargs, adjacent reflective forms, and dynamic-import requests
+    through the reflective runner all fail closed
+  - dynamic-import subprocess behavior, exact `hasattr/2`, exact
+    `getattr/2`, and exact `getattr/3` behavior remain covered
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task,
+    run-spec, or generalized runtime-support widening was introduced
+- focused control validation passed:
+  - `ruff check` on the four touched source/test files
+  - `ruff format --check` on the four touched source/test files,
+    `4 files already formatted`
+  - strict mypy over 37 source files
+  - targeted pytest over `tests/test_runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`,
+    `tests/test_runtime_probe_requests.py`,
+    `tests/test_runtime_observation_admission.py`, and
+    `tests/test_runtime_acquisition.py`, `655 passed`
+  - `git diff --check`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run one combined read-only release gate over the exact six-file unit
+  - the release-gate lane must stop on the first finding and must not edit,
+    stage, commit, or push
+
+Combined read-only release gate for `reflective_builtin:vars/1` local-Python
+subprocess release unit:
+
+- reviewed the returned release-gate result; findings: none
+- release-unit audit cleared:
+  - confirmed the diff is bounded to exact
+    `reflective_builtin:vars/1` local-Python subprocess support
+  - confirmed no `vars/0`, `dir`, runtime-mutation, `exec`/`eval`,
+    metaclass, schema, MCP, tool facade, scoring, compiler, admission,
+    README, EVAL, PUBLIC_CLAIMS, fixture, task, run-spec, package-root
+    export, public/API, or generalized runtime-support widening
+- full regression cleared:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed,
+    `110 files already formatted`
+  - `mypy --strict src/`: passed over 37 source files
+  - `pytest tests/ -v`: passed, `1358 passed`
+  - `git diff --check`: passed
+- commit-gating cleared:
+  - modified files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - scope widening: none found
+- repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `24cb38b Add reflective getattr default subprocess support`
   - live control verification matched the returned gate report
 - release state:
   - accepted in workspace: yes, first-pass
@@ -4717,8 +4918,17 @@ sequencing for `c1a12d7` absent new findings.
   implementation slice
 - [x] Combined read-only release gate for the exact six-file
   `reflective_builtin:getattr/3` local-Python subprocess release unit
-- [ ] Local commit creation for the exact six-file
+- [x] Local commit creation for the exact six-file
   `reflective_builtin:getattr/3` local-Python subprocess release unit
+- [x] Ryan-authorized push for the exact six-file
+  `reflective_builtin:getattr/3` local-Python subprocess release unit
+- [x] Post-`24cb38b` control selection of the next bounded north-star lane
+- [x] Exact `reflective_builtin:vars/1` local-Python subprocess
+  implementation slice
+- [x] Combined read-only release gate for the exact six-file
+  `reflective_builtin:vars/1` local-Python subprocess release unit
+- [ ] Local commit creation for the exact six-file
+  `reflective_builtin:vars/1` local-Python subprocess release unit
 
 ## What Is In Progress
 
@@ -5627,9 +5837,9 @@ supersession entries.
 ## What Is Next
 
 Immediate next route: create one local commit for the exact six-file
-`reflective_builtin:getattr/3` local-Python subprocess release unit. Current
+`reflective_builtin:vars/1` local-Python subprocess release unit. Current
 pushed release authority and latest pushed source/contract authority remain
-`50daeab Add reflective getattr subprocess support`.
+`24cb38b Add reflective getattr default subprocess support`.
 
 Selected next lane:
 
@@ -5638,8 +5848,8 @@ Selected next lane:
   `src/context_ir/runtime_probe_worker.py`,
   `tests/test_runtime_probe_execution.py`, and
   `tests/test_runtime_probe_worker.py`
-- use an imperative commit subject for the exact defaulted reflective
-  `getattr` subprocess unit
+- use an imperative commit subject for the exact one-argument reflective
+  `vars` subprocess unit
 - do not stage unrelated files
 - do not push until Ryan explicitly authorizes it
 
