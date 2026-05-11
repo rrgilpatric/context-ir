@@ -91,6 +91,15 @@ ReflectiveVarsZeroWorkerRequest = (
 ReflectiveVarsZeroWorkerObservation = (
     runtime_probe_worker.RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation
 )
+ReflectiveDirWorkerRequest = (
+    runtime_probe_worker.RuntimeProbeLocalPythonReflectiveDirWorkerRequest
+)
+ReflectiveDirWorkerObservation = (
+    runtime_probe_worker.RuntimeProbeLocalPythonReflectiveDirWorkerObservation
+)
+ReflectiveDirReplayTarget = (
+    runtime_probe_worker.RuntimeProbeLocalPythonReflectiveDirReplayTarget
+)
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
@@ -120,6 +129,9 @@ _REFLECTIVE_VARS_CONCRETE_OBSERVER_HELPER = (
 )
 _REFLECTIVE_VARS_ZERO_CONCRETE_OBSERVER_HELPER = (
     "observe_runtime_probe_reflective_vars_zero_worker_request"
+)
+_REFLECTIVE_DIR_CONCRETE_OBSERVER_HELPER = (
+    "observe_runtime_probe_reflective_dir_worker_request"
 )
 _REFLECTIVE_HASATTR_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_hasattr_worker_request"
@@ -151,6 +163,15 @@ _REFLECTIVE_VARS_ZERO_REQUEST_MATERIALIZER = (
 _REFLECTIVE_VARS_ZERO_OBSERVATION_MATERIALIZER = (
     "materialize_runtime_probe_reflective_vars_zero_worker_observation"
 )
+_REFLECTIVE_DIR_REQUEST_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_dir_worker_request"
+)
+_REFLECTIVE_DIR_OBSERVATION_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_dir_worker_observation"
+)
+_REFLECTIVE_DIR_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_dir_worker_success_response"
+)
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
 _IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
@@ -163,6 +184,7 @@ _REFLECTIVE_GETATTR_TWO_FORM_LABEL = "reflective_builtin:getattr/2"
 _REFLECTIVE_GETATTR_THREE_FORM_LABEL = "reflective_builtin:getattr/3"
 _REFLECTIVE_VARS_ONE_FORM_LABEL = "reflective_builtin:vars/1"
 _REFLECTIVE_VARS_ZERO_FORM_LABEL = "reflective_builtin:vars/0"
+_REFLECTIVE_DIR_ONE_FORM_LABEL = "reflective_builtin:dir/1"
 _REFLECTIVE_DIR_ZERO_FORM_LABEL = "reflective_builtin:dir/0"
 
 
@@ -344,6 +366,24 @@ def _reflective_vars_zero_request(
     boundary_text: str = "vars()",
 ) -> runtime_probe_requests.RuntimeProbeRequest:
     """Return one deterministic reflective-vars/0 planned request."""
+    return _reflective_getattr_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+
+
+def _reflective_dir_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _REFLECTIVE_DIR_ONE_FORM_LABEL,
+    boundary_text: str = "dir(obj)",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one deterministic reflective-dir planned request."""
     return _reflective_getattr_request(
         source_file_path=source_file_path,
         replay_target_seed=replay_target_seed,
@@ -636,6 +676,36 @@ def _valid_reflective_vars_zero_worker_request(
     return materialize_request(payload)
 
 
+def _valid_reflective_dir_worker_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _REFLECTIVE_DIR_ONE_FORM_LABEL,
+    boundary_text: str = "dir(obj)",
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> ReflectiveDirWorkerRequest:
+    """Return one worker-local exact-dir request contract."""
+    request = _reflective_dir_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+    )
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_DIR_REQUEST_MATERIALIZER,
+    )
+    return materialize_request(payload)
+
+
 def _valid_dynamic_import_replay_target(
     *,
     source_file_path: str = "main.py",
@@ -721,6 +791,28 @@ def _valid_reflective_getattr_default_replay_target(
     )
     materialize_replay_target = (
         _RPW.materialize_runtime_probe_reflective_getattr_default_replay_target
+    )
+    return materialize_replay_target(request)
+
+
+def _valid_reflective_dir_replay_target(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> ReflectiveDirReplayTarget:
+    """Return one worker-local non-executing exact-dir replay target."""
+    request = _valid_reflective_dir_worker_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+    )
+    materialize_replay_target = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_dir_replay_target
     )
     return materialize_replay_target(request)
 
@@ -838,6 +930,25 @@ def _valid_reflective_vars_zero_worker_observation(
     )
 
 
+def _valid_reflective_dir_worker_observation(
+    *,
+    request: ReflectiveDirWorkerRequest | None = None,
+    listing_entry_count: int = 2,
+) -> ReflectiveDirWorkerObservation:
+    """Return one worker-local exact-dir observation contract."""
+    validated_request = (
+        _valid_reflective_dir_worker_request() if request is None else request
+    )
+    materialize_observation = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_DIR_OBSERVATION_MATERIALIZER,
+    )
+    return materialize_observation(
+        validated_request,
+        listing_entry_count=listing_entry_count,
+    )
+
+
 def _dynamic_import_worker_observation_from_target(
     observation_source: DynamicImportWorkerRequest | DynamicImportReplayTarget,
     target: runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportTargetCallable,
@@ -935,6 +1046,17 @@ def _observe_reflective_vars_zero_worker_request(
     observe_request = getattr(
         runtime_probe_worker,
         _REFLECTIVE_VARS_ZERO_CONCRETE_OBSERVER_HELPER,
+    )
+    return observe_request(request)
+
+
+def _observe_reflective_dir_worker_request(
+    request: ReflectiveDirWorkerRequest,
+) -> ReflectiveDirWorkerObservation:
+    """Observe one concrete exact-dir request for worker tests."""
+    observe_request = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_DIR_CONCRETE_OBSERVER_HELPER,
     )
     return observe_request(request)
 
@@ -1084,6 +1206,32 @@ def _reflective_vars_zero_worker_request_with_source(
     module_path = python_path / f"{module_name}.py"
     module_path.write_text(source_text, encoding="utf-8")
     return _valid_reflective_vars_zero_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.{replay_target_name}",
+        form_label=form_label,
+        boundary_text=boundary_text,
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+
+
+def _reflective_dir_worker_request_with_source(
+    tmp_path: Path,
+    *,
+    module_name: str,
+    source_text: str,
+    replay_target_name: str = "run",
+    form_label: str = _REFLECTIVE_DIR_ONE_FORM_LABEL,
+    boundary_text: str = "dir(obj)",
+) -> ReflectiveDirWorkerRequest:
+    """Return an exact-dir worker request backed by real temp source."""
+    working_directory = tmp_path / f"{module_name}_workspace"
+    python_path = tmp_path / f"{module_name}_python_path"
+    working_directory.mkdir()
+    python_path.mkdir()
+    module_path = python_path / f"{module_name}.py"
+    module_path.write_text(source_text, encoding="utf-8")
+    return _valid_reflective_dir_worker_request(
         source_file_path=f"{module_name}.py",
         replay_target_seed=f"{module_name}.{replay_target_name}",
         form_label=form_label,
@@ -3526,6 +3674,7 @@ def test_reflective_hasattr_worker_request_materializes_replay_contract() -> Non
         (_REFLECTIVE_GETATTR_TWO_FORM_LABEL, "getattr(obj, name)"),
         (_REFLECTIVE_GETATTR_THREE_FORM_LABEL, "getattr(obj, name, default)"),
         (_REFLECTIVE_VARS_ONE_FORM_LABEL, "vars(obj)"),
+        (_REFLECTIVE_DIR_ONE_FORM_LABEL, "dir(obj)"),
         (_REFLECTIVE_DIR_ZERO_FORM_LABEL, "dir()"),
     ),
 )
@@ -3885,6 +4034,7 @@ def test_reflective_getattr_worker_request_materializes_replay_contract() -> Non
         (_REFLECTIVE_HASATTR_FORM_LABEL, "hasattr(obj, name)"),
         (_REFLECTIVE_GETATTR_THREE_FORM_LABEL, "getattr(obj, name, default)"),
         (_REFLECTIVE_VARS_ONE_FORM_LABEL, "vars(obj)"),
+        (_REFLECTIVE_DIR_ONE_FORM_LABEL, "dir(obj)"),
         (_REFLECTIVE_DIR_ZERO_FORM_LABEL, "dir()"),
     ),
 )
@@ -4272,6 +4422,7 @@ def test_reflective_getattr_default_worker_request_materializes_replay_contract(
         (_REFLECTIVE_HASATTR_FORM_LABEL, "hasattr(obj, name)"),
         (_REFLECTIVE_GETATTR_TWO_FORM_LABEL, "getattr(obj, name)"),
         (_REFLECTIVE_VARS_ONE_FORM_LABEL, "vars(obj)"),
+        (_REFLECTIVE_DIR_ONE_FORM_LABEL, "dir(obj)"),
         (_REFLECTIVE_DIR_ZERO_FORM_LABEL, "dir()"),
     ),
 )
@@ -4666,6 +4817,7 @@ def test_reflective_vars_worker_request_materializes_replay_contract() -> None:
         (_REFLECTIVE_GETATTR_TWO_FORM_LABEL, "getattr(obj, name)"),
         (_REFLECTIVE_GETATTR_THREE_FORM_LABEL, "getattr(obj, name, default)"),
         (_REFLECTIVE_VARS_ZERO_FORM_LABEL, "vars()"),
+        (_REFLECTIVE_DIR_ONE_FORM_LABEL, "dir(obj)"),
         (_REFLECTIVE_DIR_ZERO_FORM_LABEL, "dir()"),
     ),
 )
@@ -5032,6 +5184,7 @@ def test_reflective_vars_zero_worker_request_materializes_replay_contract() -> N
         (_REFLECTIVE_GETATTR_TWO_FORM_LABEL, "getattr(obj, name)"),
         (_REFLECTIVE_GETATTR_THREE_FORM_LABEL, "getattr(obj, name, default)"),
         (_REFLECTIVE_VARS_ONE_FORM_LABEL, "vars(obj)"),
+        (_REFLECTIVE_DIR_ONE_FORM_LABEL, "dir(obj)"),
         (_REFLECTIVE_DIR_ZERO_FORM_LABEL, "dir()"),
     ),
 )
@@ -5306,6 +5459,333 @@ def test_reflective_vars_zero_worker_concrete_observer_shields_target_streams(
     assert outer_stdout.getvalue() == ""
     assert outer_stderr.getvalue() == ""
     assert builtins.vars is original_vars
+
+
+def test_reflective_dir_worker_request_materializes_replay_contract() -> None:
+    """The worker derives an exact-dir request from the parent payload."""
+    payload = _valid_worker_payload_for_request(_reflective_dir_request())
+
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_DIR_REQUEST_MATERIALIZER,
+    )
+    request = materialize_request(payload)
+
+    assert request.plan_id == payload.plan_id
+    assert request.request_id == payload.request_id
+    assert request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert request.reason_code is UnresolvedReasonCode.REFLECTIVE_BUILTIN
+    assert (
+        request.family_label
+        is runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN
+    )
+    assert request.form_label == _REFLECTIVE_DIR_ONE_FORM_LABEL
+    assert request.boundary_text == "dir(obj)"
+    assert request.replay_target_seed == "main.run"
+    assert request.replay_selector_seed == (
+        f"call:main.run:{_REFLECTIVE_DIR_ONE_FORM_LABEL}@main.py:3:4:3:28"
+    )
+    assert request.request_replay_payload_fields == (
+        payload.request_replay_payload_fields
+    )
+
+
+@pytest.mark.parametrize(
+    ("form_label", "boundary_text"),
+    (
+        (_REFLECTIVE_HASATTR_FORM_LABEL, "hasattr(obj, name)"),
+        (_REFLECTIVE_GETATTR_TWO_FORM_LABEL, "getattr(obj, name)"),
+        (_REFLECTIVE_GETATTR_THREE_FORM_LABEL, "getattr(obj, name, default)"),
+        (_REFLECTIVE_VARS_ONE_FORM_LABEL, "vars(obj)"),
+        (_REFLECTIVE_VARS_ZERO_FORM_LABEL, "vars()"),
+        (_REFLECTIVE_DIR_ZERO_FORM_LABEL, "dir()"),
+    ),
+)
+def test_reflective_dir_worker_request_accepts_only_exact_form(
+    form_label: str,
+    boundary_text: str,
+) -> None:
+    """Adjacent reflective-builtin forms do not materialize as dir/1 support."""
+    payload = _valid_worker_payload_for_request(
+        _reflective_dir_request(
+            form_label=form_label,
+            boundary_text=boundary_text,
+        )
+    )
+
+    with pytest.raises(ValueError, match="form_label"):
+        runtime_probe_worker.materialize_runtime_probe_reflective_dir_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("reason_code", "dynamic_import", "reason_code"),
+        ("boundary_text", "dir()", "boundary_text"),
+        ("family_label", "dynamic_import", "family_label"),
+        ("form_label", _REFLECTIVE_VARS_ONE_FORM_LABEL, "form_label"),
+    ),
+)
+def test_reflective_dir_worker_request_rejects_replay_drift(
+    replay_key: str,
+    replay_value: str,
+    error_match: str,
+) -> None:
+    """Malformed exact-dir metadata fails before any replay execution."""
+    payload = _worker_payload_with_replay_field(
+        replay_key,
+        replay_value,
+        payload=_valid_worker_payload_for_request(_reflective_dir_request()),
+    )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_reflective_dir_worker_request(
+            payload
+        )
+
+
+def test_reflective_dir_worker_concrete_observer_captures_listing_count(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer captures real one-argument dir listings."""
+    module_name = "runtime_probe_dir_capture_case"
+    request = _reflective_dir_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "class Example:\n"
+            "    def __dir__(self):\n"
+            "        return ['beta', 'alpha']\n\n"
+            "def run():\n"
+            "    obj = Example()\n"
+            "    listing = dir(obj)\n"
+            "    assert listing == ['alpha', 'beta']\n"
+            "    return listing\n"
+        ),
+    )
+    original_dir = builtins.dir
+    sys.modules.pop(module_name, None)
+
+    try:
+        observation = _observe_reflective_dir_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    expected_artifact_reference = (
+        f"artifact://runtime-probe/dir-listing/{request.request_id}.json"
+    )
+    assert observation.listing_entry_count == 2
+    assert observation.durable_artifact_reference == expected_artifact_reference
+    assert builtins.dir is original_dir
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_DIR_SUCCESS_RESPONSE_MATERIALIZER,
+    )
+    success_response = materialize_success_response(observation)
+    assert success_response.normalized_payload == (_field("listing_entry_count", "2"),)
+    assert success_response.durable_artifact_reference == expected_artifact_reference
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        ("def run(required):\n    return dir(required)\n", "target execution failed"),
+        ("def run():\n    return None\n", "exactly one dir call"),
+        (
+            (
+                "def run():\n"
+                "    obj = object()\n"
+                "    first = dir(obj)\n"
+                "    second = dir(obj)\n"
+                "    return first or second\n"
+            ),
+            "exactly one dir call",
+        ),
+        ("def run():\n    return dir()\n", "exactly dir"),
+        ("def run():\n    return dir(obj=object())\n", "exactly dir"),
+        (
+            (
+                "def run():\n"
+                "    obj = object()\n"
+                "    dir(obj)\n"
+                "    raise RuntimeError('target failure secret-token /private/tmp')\n"
+            ),
+            "target execution failed",
+        ),
+    ),
+)
+def test_reflective_dir_worker_concrete_observer_rejects_bad_targets(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Required-argument targets and non-exact dir captures fail closed."""
+    module_name = "runtime_probe_dir_bad_target_case"
+    request = _reflective_dir_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_dir = builtins.dir
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match) as error_info:
+            _observe_reflective_dir_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert builtins.dir is original_dir
+
+
+def test_reflective_dir_worker_concrete_observer_rejects_shadowed_global(
+    tmp_path: Path,
+) -> None:
+    """Source modules that bind ``dir`` are not treated as builtin calls."""
+    module_name = "runtime_probe_dir_shadowed_global_case"
+    request = _reflective_dir_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "dir = object()\n\n"
+            "def run():\n"
+            "    raise AssertionError('target should not execute')\n"
+        ),
+    )
+    original_dir = builtins.dir
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="dir global must be absent"):
+            _observe_reflective_dir_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.dir is original_dir
+
+
+def test_reflective_dir_worker_concrete_observer_restores_rebound_global(
+    tmp_path: Path,
+) -> None:
+    """Target-time source-global ``dir`` rebound fails closed and is removed."""
+    module_name = "runtime_probe_dir_rebound_global_case"
+    request = _reflective_dir_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "def run():\n"
+            "    global dir\n"
+            "    obj = object()\n"
+            "    listing = dir(obj)\n"
+            "    dir = object()\n"
+            "    return listing\n"
+        ),
+    )
+    original_dir = builtins.dir
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="dir global changed"):
+            _observe_reflective_dir_worker_request(request)
+        source_module = sys.modules[module_name]
+        assert "dir" not in source_module.__dict__
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.dir is original_dir
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        (
+            (
+                "import builtins\n\n"
+                "def run():\n"
+                "    obj = object()\n"
+                "    listing = dir(obj)\n"
+                "    builtins.dir = object()\n"
+                "    return listing\n"
+            ),
+            "builtins.dir changed",
+        ),
+        (
+            (
+                "import builtins\n\n"
+                "def run():\n"
+                "    obj = object()\n"
+                "    listing = dir(obj)\n"
+                "    del builtins.dir\n"
+                "    return listing\n"
+            ),
+            "builtins.dir changed",
+        ),
+    ),
+)
+def test_reflective_dir_worker_concrete_observer_restores_builtin_drift(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Target-time ``builtins.dir`` mutation or deletion fails closed."""
+    module_name = "runtime_probe_dir_builtin_drift_case"
+    request = _reflective_dir_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_dir = builtins.dir
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_reflective_dir_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.dir is original_dir
+
+
+def test_reflective_dir_worker_concrete_observer_shields_target_streams(
+    tmp_path: Path,
+) -> None:
+    """Target exceptions are sanitized and stdout/stderr remain shielded."""
+    module_name = "runtime_probe_dir_target_failure_case"
+    request = _reflective_dir_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "import sys\n\n"
+            "def run():\n"
+            "    print('target stdout runtime_probe_stdout_protocol_revision')\n"
+            "    print('target stderr secret-token /private/tmp', file=sys.stderr)\n"
+            "    raise RuntimeError('target failed with secret-token /private/tmp')\n"
+        ),
+    )
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+    original_dir = builtins.dir
+    sys.modules.pop(module_name, None)
+
+    try:
+        with (
+            contextlib.redirect_stdout(outer_stdout),
+            contextlib.redirect_stderr(outer_stderr),
+            pytest.raises(ValueError, match="target execution failed") as error_info,
+        ):
+            _observe_reflective_dir_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert builtins.dir is original_dir
 
 
 def test_reflective_hasattr_worker_default_subprocess_observes_hasattr(
@@ -5619,6 +6099,66 @@ def test_reflective_vars_zero_worker_default_subprocess_observes_vars(
                 "value": "returned_namespace",
             },
         ],
+    }
+
+
+def test_reflective_dir_worker_default_subprocess_observes_dir(
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes exact bare dir/1 calls by default."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = "runtime_probe_dir_default_worker_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        (
+            "class Example:\n"
+            "    def __dir__(self):\n"
+            "        return ['beta', 'alpha']\n\n"
+            "def run():\n"
+            "    obj = Example()\n"
+            "    listing = dir(obj)\n"
+            "    assert listing == ['alpha', 'beta']\n"
+            "    return listing\n"
+        ),
+        encoding="utf-8",
+    )
+    request = _reflective_dir_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "listing_entry_count",
+                "value": "2",
+            },
+        ],
+        "durable_artifact_reference": (
+            f"artifact://runtime-probe/dir-listing/{payload.request_id}.json"
+        ),
     }
 
 

@@ -80,6 +80,7 @@ _RUNTIME_PROBE_REFLECTIVE_VARS_LOCAL_PYTHON_FORM_LABEL = "reflective_builtin:var
 _RUNTIME_PROBE_REFLECTIVE_VARS_ZERO_LOCAL_PYTHON_FORM_LABEL = (
     "reflective_builtin:vars/0"
 )
+_RUNTIME_PROBE_REFLECTIVE_DIR_LOCAL_PYTHON_FORM_LABEL = "reflective_builtin:dir/1"
 _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABELS = (
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL,
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_LOCAL_PYTHON_FORM_LABEL,
@@ -1841,6 +1842,24 @@ def make_runtime_probe_reflective_vars_zero_local_python_subprocess_runner(
     handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
         family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
         form_label=_RUNTIME_PROBE_REFLECTIVE_VARS_ZERO_LOCAL_PYTHON_FORM_LABEL,
+        python_executable=python_executable,
+        module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+    )
+    return make_dispatching_runtime_probe_runner((handler_entry,))
+
+
+def make_runtime_probe_reflective_dir_local_python_subprocess_runner(
+    *,
+    python_executable: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+) -> RuntimeProbeRunnerCallable:
+    """Return the local-Python runner for exact reflective ``dir/1``."""
+    handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_RUNTIME_PROBE_REFLECTIVE_DIR_LOCAL_PYTHON_FORM_LABEL,
         python_executable=python_executable,
         module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
         invocation_contract_revision=invocation_contract_revision,
@@ -3777,6 +3796,7 @@ __all__ = [
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
+    "make_runtime_probe_reflective_dir_local_python_subprocess_runner",
     "make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner",
     "make_runtime_probe_reflective_getattr_local_python_subprocess_runner",
     "make_runtime_probe_reflective_hasattr_local_python_subprocess_runner",
