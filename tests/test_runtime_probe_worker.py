@@ -100,6 +100,13 @@ ReflectiveDirWorkerObservation = (
 ReflectiveDirReplayTarget = (
     runtime_probe_worker.RuntimeProbeLocalPythonReflectiveDirReplayTarget
 )
+RuntimeMutationGlobalsZeroWorkerRequest = (
+    runtime_probe_worker.RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest
+)
+RuntimeMutationGlobalsZeroWorkerObservation = cast(
+    type[object],
+    _RPW.RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation,
+)
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
@@ -132,6 +139,9 @@ _REFLECTIVE_VARS_ZERO_CONCRETE_OBSERVER_HELPER = (
 )
 _REFLECTIVE_DIR_CONCRETE_OBSERVER_HELPER = (
     "observe_runtime_probe_reflective_dir_worker_request"
+)
+_RUNTIME_MUTATION_GLOBALS_ZERO_CONCRETE_OBSERVER_HELPER = (
+    "observe_runtime_probe_runtime_mutation_globals_zero_worker_request"
 )
 _REFLECTIVE_HASATTR_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_hasattr_worker_request"
@@ -172,6 +182,12 @@ _REFLECTIVE_DIR_OBSERVATION_MATERIALIZER = (
 _REFLECTIVE_DIR_SUCCESS_RESPONSE_MATERIALIZER = (
     "materialize_runtime_probe_reflective_dir_worker_success_response"
 )
+_RUNTIME_MUTATION_GLOBALS_ZERO_REQUEST_MATERIALIZER = (
+    "materialize_runtime_probe_runtime_mutation_globals_zero_worker_request"
+)
+_RUNTIME_MUTATION_GLOBALS_ZERO_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_runtime_mutation_globals_zero_worker_success_response"
+)
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
 _IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
@@ -186,6 +202,7 @@ _REFLECTIVE_VARS_ONE_FORM_LABEL = "reflective_builtin:vars/1"
 _REFLECTIVE_VARS_ZERO_FORM_LABEL = "reflective_builtin:vars/0"
 _REFLECTIVE_DIR_ONE_FORM_LABEL = "reflective_builtin:dir/1"
 _REFLECTIVE_DIR_ZERO_FORM_LABEL = "reflective_builtin:dir/0"
+_RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL = "runtime_mutation:globals/0"
 
 
 def _boundary_text_for_form_label(form_label: str) -> str:
@@ -390,6 +407,43 @@ def _reflective_dir_request(
         replay_selector_seed=replay_selector_seed,
         form_label=form_label,
         boundary_text=boundary_text,
+    )
+
+
+def _runtime_mutation_globals_zero_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL,
+    boundary_text: str = "globals()",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one deterministic runtime-mutation globals/0 planned request."""
+    resolved_replay_selector_seed = (
+        f"call:{replay_target_seed}:{form_label}@{source_file_path}:3:4:3:28"
+        if replay_selector_seed is None
+        else replay_selector_seed
+    )
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=f"unsupported:call:{source_file_path}:3:4",
+        source_site=SourceSite(
+            site_id=f"site:{source_file_path}:3:4",
+            file_path=source_file_path,
+            span=SourceSpan(
+                start_line=3,
+                start_column=4,
+                end_line=3,
+                end_column=28,
+            ),
+            snippet=boundary_text,
+        ),
+        reason_code=UnresolvedReasonCode.RUNTIME_MUTATION,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=form_label,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=resolved_replay_selector_seed,
     )
 
 
@@ -702,6 +756,36 @@ def _valid_reflective_dir_worker_request(
     materialize_request = getattr(
         runtime_probe_worker,
         _REFLECTIVE_DIR_REQUEST_MATERIALIZER,
+    )
+    return materialize_request(payload)
+
+
+def _valid_runtime_mutation_globals_zero_worker_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL,
+    boundary_text: str = "globals()",
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> RuntimeMutationGlobalsZeroWorkerRequest:
+    """Return one worker-local exact-globals/0 request contract."""
+    request = _runtime_mutation_globals_zero_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+    )
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_GLOBALS_ZERO_REQUEST_MATERIALIZER,
     )
     return materialize_request(payload)
 
@@ -1061,6 +1145,17 @@ def _observe_reflective_dir_worker_request(
     return observe_request(request)
 
 
+def _observe_runtime_mutation_globals_zero_worker_request(
+    request: RuntimeMutationGlobalsZeroWorkerRequest,
+) -> RuntimeMutationGlobalsZeroWorkerObservation:
+    """Observe one concrete exact-globals/0 request for worker tests."""
+    observe_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_GLOBALS_ZERO_CONCRETE_OBSERVER_HELPER,
+    )
+    return observe_request(request)
+
+
 def _dynamic_import_worker_request_with_source(
     tmp_path: Path,
     *,
@@ -1232,6 +1327,32 @@ def _reflective_dir_worker_request_with_source(
     module_path = python_path / f"{module_name}.py"
     module_path.write_text(source_text, encoding="utf-8")
     return _valid_reflective_dir_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.{replay_target_name}",
+        form_label=form_label,
+        boundary_text=boundary_text,
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+
+
+def _runtime_mutation_globals_zero_worker_request_with_source(
+    tmp_path: Path,
+    *,
+    module_name: str,
+    source_text: str,
+    replay_target_name: str = "run",
+    form_label: str = _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL,
+    boundary_text: str = "globals()",
+) -> RuntimeMutationGlobalsZeroWorkerRequest:
+    """Return an exact-globals/0 worker request backed by real temp source."""
+    working_directory = tmp_path / f"{module_name}_workspace"
+    python_path = tmp_path / f"{module_name}_python_path"
+    working_directory.mkdir()
+    python_path.mkdir()
+    module_path = python_path / f"{module_name}.py"
+    module_path.write_text(source_text, encoding="utf-8")
+    return _valid_runtime_mutation_globals_zero_worker_request(
         source_file_path=f"{module_name}.py",
         replay_target_seed=f"{module_name}.{replay_target_name}",
         form_label=form_label,
@@ -6052,6 +6173,307 @@ def test_reflective_dir_worker_concrete_observer_shields_target_streams(
     assert builtins.dir is original_dir
 
 
+def test_runtime_mutation_globals_zero_worker_request_materializes_contract() -> None:
+    """The worker derives an exact globals/0 request from the parent payload."""
+    payload = _valid_worker_payload_for_request(
+        _runtime_mutation_globals_zero_request()
+    )
+
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_GLOBALS_ZERO_REQUEST_MATERIALIZER,
+    )
+    request = materialize_request(payload)
+
+    assert request.plan_id == payload.plan_id
+    assert request.request_id == payload.request_id
+    assert request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert request.reason_code is UnresolvedReasonCode.RUNTIME_MUTATION
+    assert (
+        request.family_label
+        is runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION
+    )
+    assert request.form_label == _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL
+    assert request.boundary_text == "globals()"
+    assert request.replay_target_seed == "main.run"
+    assert request.replay_selector_seed == (
+        f"call:main.run:{_RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL}@main.py:3:4:3:28"
+    )
+    assert request.request_replay_payload_fields == (
+        payload.request_replay_payload_fields
+    )
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label", "boundary_text"),
+    (
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:locals/0",
+            "locals()",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:setattr/3",
+            "setattr(obj, name, value)",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:delattr/2",
+            "delattr(obj, name)",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_DIR_ZERO_FORM_LABEL,
+            "dir()",
+        ),
+    ),
+)
+def test_runtime_mutation_globals_zero_worker_request_accepts_only_exact_form(
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+    boundary_text: str,
+) -> None:
+    """Adjacent runtime-mutation forms do not materialize as globals/0 support."""
+    request = replace(
+        _runtime_mutation_globals_zero_request(
+            form_label=form_label,
+            boundary_text=boundary_text,
+        ),
+        family_label=family_label,
+    )
+    payload = _valid_worker_payload_for_request(request)
+
+    with pytest.raises(ValueError, match="form_label|family_label"):
+        runtime_probe_worker.materialize_runtime_probe_runtime_mutation_globals_zero_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("reason_code", "reflective_builtin", "reason_code"),
+        ("boundary_text", "globals( )", "boundary_text"),
+        ("family_label", "reflective_builtin", "family_label"),
+        ("form_label", "runtime_mutation:locals/0", "form_label"),
+    ),
+)
+def test_runtime_mutation_globals_zero_worker_request_rejects_replay_drift(
+    replay_key: str,
+    replay_value: str,
+    error_match: str,
+) -> None:
+    """Malformed exact-globals/0 metadata fails before replay execution."""
+    payload = _worker_payload_with_replay_field(
+        replay_key,
+        replay_value,
+        payload=_valid_worker_payload_for_request(
+            _runtime_mutation_globals_zero_request()
+        ),
+    )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_runtime_mutation_globals_zero_worker_request(
+            payload
+        )
+
+
+def test_runtime_mutation_globals_zero_worker_concrete_observer_captures_module_globals(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer preserves globals() caller module namespace semantics."""
+    module_name = "runtime_probe_globals_zero_capture_case"
+    request = _runtime_mutation_globals_zero_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "MODULE_VALUE = object()\n\n"
+            "def run():\n"
+            "    local_value = object()\n"
+            "    namespace = globals()\n"
+            "    assert namespace['MODULE_VALUE'] is MODULE_VALUE\n"
+            f"    assert namespace['__name__'] == {module_name!r}\n"
+            "    assert 'local_value' not in namespace\n"
+            "    return namespace\n"
+        ),
+    )
+    original_globals = builtins.globals
+    sys.modules.pop(module_name, None)
+
+    try:
+        observation = _observe_runtime_mutation_globals_zero_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert observation.lookup_outcome == "returned_namespace"
+    assert builtins.globals is original_globals
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_GLOBALS_ZERO_SUCCESS_RESPONSE_MATERIALIZER,
+    )
+    assert materialize_success_response(observation).normalized_payload == (
+        _field("lookup_outcome", "returned_namespace"),
+    )
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        ("def run(required):\n    return globals()\n", "target execution failed"),
+        ("def run():\n    return None\n", "exactly one globals call"),
+        (
+            (
+                "def run():\n"
+                "    first = globals()\n"
+                "    second = globals()\n"
+                "    return first or second\n"
+            ),
+            "exactly one globals call",
+        ),
+        ("def run():\n    return globals(object())\n", r"exactly globals\(\)"),
+        ("def run():\n    return globals(obj=object())\n", r"exactly globals\(\)"),
+        (
+            (
+                "def run():\n"
+                "    globals()\n"
+                "    raise RuntimeError('target failure secret-token /private/tmp')\n"
+            ),
+            "target execution failed",
+        ),
+    ),
+)
+def test_runtime_mutation_globals_zero_worker_concrete_observer_rejects_bad_targets(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Required-argument targets and non-exact globals/0 captures fail closed."""
+    module_name = "runtime_probe_globals_zero_bad_target_case"
+    request = _runtime_mutation_globals_zero_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_globals = builtins.globals
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match) as error_info:
+            _observe_runtime_mutation_globals_zero_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert builtins.globals is original_globals
+
+
+def test_runtime_mutation_globals_zero_worker_concrete_observer_rejects_shadowed_global(
+    tmp_path: Path,
+) -> None:
+    """Source modules that bind ``globals`` are not treated as builtin calls."""
+    module_name = "runtime_probe_globals_zero_shadowed_global_case"
+    request = _runtime_mutation_globals_zero_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "globals = object()\n\n"
+            "def run():\n"
+            "    raise AssertionError('target should not execute')\n"
+        ),
+    )
+    original_globals = builtins.globals
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="globals global must be absent"):
+            _observe_runtime_mutation_globals_zero_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.globals is original_globals
+
+
+def test_runtime_mutation_globals_zero_worker_concrete_observer_restores_rebound_global(
+    tmp_path: Path,
+) -> None:
+    """Target-time source-global ``globals`` rebound fails closed and is removed."""
+    module_name = "runtime_probe_globals_zero_rebound_global_case"
+    request = _runtime_mutation_globals_zero_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "def run():\n"
+            "    global globals\n"
+            "    namespace = globals()\n"
+            "    globals = object()\n"
+            "    return namespace\n"
+        ),
+    )
+    original_globals = builtins.globals
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="globals global changed"):
+            _observe_runtime_mutation_globals_zero_worker_request(request)
+        source_module = sys.modules[module_name]
+        assert "globals" not in source_module.__dict__
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.globals is original_globals
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        (
+            (
+                "import builtins\n\n"
+                "def run():\n"
+                "    namespace = globals()\n"
+                "    builtins.globals = object()\n"
+                "    return namespace\n"
+            ),
+            "builtins.globals changed",
+        ),
+        (
+            (
+                "import builtins\n\n"
+                "def run():\n"
+                "    namespace = globals()\n"
+                "    del builtins.globals\n"
+                "    return namespace\n"
+            ),
+            "builtins.globals changed",
+        ),
+    ),
+)
+def test_runtime_mutation_globals_zero_worker_concrete_observer_restores_builtin_drift(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Target-time ``builtins.globals`` mutation or deletion fails closed."""
+    module_name = "runtime_probe_globals_zero_builtin_drift_case"
+    request = _runtime_mutation_globals_zero_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_globals = builtins.globals
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_runtime_mutation_globals_zero_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.globals is original_globals
+
+
 def test_reflective_hasattr_worker_default_subprocess_observes_hasattr(
     tmp_path: Path,
 ) -> None:
@@ -6331,6 +6753,62 @@ def test_reflective_vars_zero_worker_default_subprocess_observes_vars(
     )
     payload = _valid_worker_payload_for_request(
         _reflective_vars_zero_request(
+            source_file_path=f"{module_name}.py",
+            replay_target_seed=f"{module_name}.run",
+        ),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "lookup_outcome",
+                "value": "returned_namespace",
+            },
+        ],
+    }
+
+
+def test_runtime_mutation_globals_zero_worker_default_subprocess_observes_globals(
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes exact bare globals/0 calls by default."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = "runtime_probe_globals_zero_default_worker_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        (
+            "MODULE_VALUE = object()\n\n"
+            "def run():\n"
+            "    local_value = object()\n"
+            "    namespace = globals()\n"
+            "    assert namespace['MODULE_VALUE'] is MODULE_VALUE\n"
+            f"    assert namespace['__name__'] == {module_name!r}\n"
+            "    assert 'local_value' not in namespace\n"
+            "    return namespace\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _runtime_mutation_globals_zero_request(
             source_file_path=f"{module_name}.py",
             replay_target_seed=f"{module_name}.run",
         ),
@@ -6805,6 +7283,12 @@ def test_dynamic_import_worker_default_handler_observer_failure_fails_closed(
             "reflective_builtin:dir/2",
             UnresolvedReasonCode.REFLECTIVE_BUILTIN,
             "dir(obj, other)",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:locals/0",
+            UnresolvedReasonCode.RUNTIME_MUTATION,
+            "locals()",
         ),
     ),
 )
@@ -7632,6 +8116,29 @@ def test_worker_entrypoint_is_importable() -> None:
         _REFLECTIVE_VARS_ZERO_CONCRETE_OBSERVER_HELPER,
     )
     assert callable(reflective_vars_zero_observe_request)
+    assert callable(
+        runtime_probe_worker.build_runtime_probe_runtime_mutation_globals_zero_worker_handler_entry
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerHandlerAdapter",
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObserver",
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget",
+    )
+    assert callable(
+        runtime_probe_worker.materialize_runtime_probe_runtime_mutation_globals_zero_replay_target
+    )
+    runtime_mutation_globals_zero_observe_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_GLOBALS_ZERO_CONCRETE_OBSERVER_HELPER,
+    )
+    assert callable(runtime_mutation_globals_zero_observe_request)
 
 
 def test_package_root_exports_remain_unchanged() -> None:

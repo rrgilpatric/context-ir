@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`01c2907 Add reflective dir subprocess support`. The latest pushed
+`64de22b Add reflective dir zero subprocess support`. The latest pushed
 source/contract authority is also
-`01c2907 Add reflective dir subprocess support`. Live git refs
+`64de22b Add reflective dir zero subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -1236,6 +1236,187 @@ subprocess release unit:
   - local `HEAD` and `origin/main` at
     `01c2907 Add reflective dir subprocess support`
   - live control verification matched the returned gate report
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - create one local commit for the exact six-file unit
+  - push remains Ryan-gated
+
+Local commit for `reflective_builtin:dir/0` local-Python subprocess release
+unit:
+
+- local commit creation completed for the exact six-file unit after
+  release-unit audit, full regression, and commit-gating cleared
+- local commit:
+  - `64de22b Add reflective dir zero subprocess support`
+- repo-backed truth after local commit and before this continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `64de22b Add reflective dir zero subprocess support`
+  - `origin/main` remains at
+    `01c2907 Add reflective dir subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this docs-only continuity sync
+  - staged files: none before this docs-only continuity sync
+  - untracked files: none before this docs-only continuity sync
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `64de22b Add reflective dir zero subprocess support`
+  - pushed: no
+- next route:
+  - Ryan authorization for push, or an explicit hold without pushing
+
+Pushed `reflective_builtin:dir/0` local-Python subprocess release:
+
+- Ryan-authorized push completed for
+  `64de22b Add reflective dir zero subprocess support`
+- pushed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `64de22b Add reflective dir zero subprocess support`
+  - pushed: yes
+  - next route: select the next bounded north-star lane
+
+Workspace-only post-`64de22b` route selection:
+
+- reviewed live repo state after pushed
+  `64de22b Add reflective dir zero subprocess support`; findings: none
+- selected next bounded north-star lane: exact
+  `runtime_mutation:globals/0` local-Python subprocess support
+- reason:
+  - dynamic-import subprocess support and the currently planned
+    reflective-builtin subprocess queue are closed for the pushed exact forms
+    absent a new finding
+  - `runtime_mutation:globals/0` is already emitted by runtime-probe request
+    construction and admitted as `GlobalsRuntimeObservation`
+  - existing runtime-acquisition/admission contracts require
+    `lookup_outcome=returned_namespace` for matched `globals()`
+    observations
+  - `globals()` is the smallest truthful first runtime-mutation subprocess
+    slice because it opens the family with one zero-argument namespace form
+    while avoiding the frame-local semantics of `locals()`, object-state
+    mutation/restoration contracts of `setattr`/`delattr`, replay-source
+    proof for `exec`/`eval`, and class-creation proof for metaclass behavior
+- alternatives deferred:
+  - `runtime_mutation:locals/0`: defer until `globals/0` proves the
+    runtime-mutation subprocess family path; it carries local-frame namespace
+    semantics
+  - `runtime_mutation:setattr/3` and `runtime_mutation:delattr/2`: defer
+    because they need mutation-specific restoration and outcome contracts
+  - `exec_or_eval:*`: defer because replay input and durable source-proof
+    contracts are family-specific
+  - `metaclass_behavior:keyword`: defer because it needs class-creation
+    behavior and durable proof
+- non-goals for the next lane:
+  - no generalized runtime-mutation support
+  - no `locals`, `setattr`, `delattr`, `exec`/`eval`, or metaclass subprocess
+    support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or
+    run-spec changes
+- next route: exact `runtime_mutation:globals/0` local-Python subprocess
+  implementation lane
+
+Workspace-only accepted `runtime_mutation:globals/0` local-Python subprocess
+release unit:
+
+- reviewed the returned implementation slice; findings: none
+- repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `64de22b Add reflective dir zero subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- accepted implementation:
+  - `src/context_ir/runtime_probe_worker.py` now registers exact
+    `runtime_mutation:globals/0` in the default local-Python worker table
+  - the worker validates exact runtime-mutation metadata, reason
+    `RUNTIME_MUTATION`, unsupported-finding subject kind, replay identity, and
+    boundary text `globals()` before replay execution
+  - the concrete worker observer imports the replay target source module,
+    resolves a zero-argument target, temporarily wraps `builtins.globals`,
+    captures exactly one zero-argument call, restores `builtins.globals` on
+    success and failure, and preserves caller source-module global-namespace
+    semantics
+  - the success payload is normalized as
+    `lookup_outcome=returned_namespace`
+  - required-argument targets, target exceptions, malformed metadata, boundary
+    drift, shadowed source-module `globals`, target-time source global drift,
+    non-selected runtime-mutation forms, wrong arity, kwargs, missing capture,
+    multiple captures, and builtin mutation/deletion during replay fail closed
+  - `src/context_ir/runtime_probe_execution.py` now exposes the narrow parent
+    runner factory
+    `make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner(...)`
+- preserved non-goals:
+  - no generalized runtime-mutation support
+  - no `locals`, `setattr`, `delattr`, `exec`/`eval`, or metaclass subprocess
+    support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or
+    run-spec changes
+- focused control validation passed:
+  - ruff check over the four in-scope files
+  - ruff format check over the four in-scope files, `4 files already formatted`
+  - strict mypy over 37 source files
+  - targeted pytest over runtime probe worker, execution, request, admission,
+    and acquisition tests, `776 passed`
+  - `git diff --check`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - create one local commit for the exact six-file release unit
+  - push remains Ryan-gated
+
+Release gate for `runtime_mutation:globals/0` local-Python subprocess release
+unit:
+
+- reviewed the returned combined read-only release-gate result; findings: none
+- release-unit audit passed
+- full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v`, `1479 passed`
+  - `git diff --check`
+- commit-gating passed:
+  - dirty set exactly the six-file release unit
+  - staged files: none
+  - untracked files: none
+  - scope widening: none detected
 - release state:
   - accepted in workspace: yes, first-pass
   - release-unit-audit-cleared: yes
@@ -5529,8 +5710,21 @@ sequencing for `c1a12d7` absent new findings.
   implementation slice
 - [x] Combined read-only release gate for the exact six-file
   `reflective_builtin:dir/0` local-Python subprocess release unit
-- [ ] Local commit creation for the exact six-file
+- [x] Local commit creation for the exact six-file
   `reflective_builtin:dir/0` local-Python subprocess release unit
+- [x] Ryan-authorized push for the exact six-file
+  `reflective_builtin:dir/0` local-Python subprocess release unit
+- [x] Post-`64de22b` control selection of the next bounded north-star lane
+- [x] Exact `runtime_mutation:globals/0` local-Python subprocess implementation
+  slice
+- [x] Release-unit audit for exact `runtime_mutation:globals/0` local-Python
+  subprocess release unit
+- [x] Full regression gate for exact `runtime_mutation:globals/0` local-Python
+  subprocess release unit
+- [x] Commit-gating review for exact `runtime_mutation:globals/0` local-Python
+  subprocess release unit
+- [ ] Local commit creation for exact `runtime_mutation:globals/0` local-Python
+  subprocess release unit
 
 ## What Is In Progress
 
@@ -6438,20 +6632,31 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: local commit creation for the exact six-file
-`reflective_builtin:dir/0` local-Python subprocess release unit after
-release-unit audit, full regression, and commit-gating cleared. Current pushed
-release authority and latest pushed source/contract authority remain
-`01c2907 Add reflective dir subprocess support`.
+Immediate next route: local commit creation for the audit-cleared,
+full-regression-cleared, and commit-gating-cleared exact
+`runtime_mutation:globals/0` local-Python subprocess release unit. Current
+pushed release authority and latest pushed source/contract authority remain
+`64de22b Add reflective dir zero subprocess support`.
 
 Selected next lane:
 
-- create one local commit for `BUILDLOG.md`, `PLAN.md`,
+- stage exactly `BUILDLOG.md`, `PLAN.md`,
   `src/context_ir/runtime_probe_execution.py`,
   `src/context_ir/runtime_probe_worker.py`,
   `tests/test_runtime_probe_execution.py`, and
   `tests/test_runtime_probe_worker.py`
-- push remains Ryan-gated after local commit creation
+- create one local commit for the exact release unit
+- verify post-commit state from git
+- do not push without explicit Ryan authorization
+- treat pushed dynamic-import subprocess forms, exact `hasattr/2`, exact
+  `getattr/2`, exact `getattr/3`, exact `vars/1`, exact `vars/0`, exact
+  `dir/1`, exact `dir/0`, and the workspace-only accepted exact
+  `globals/0` slice as closed absent a new finding
+- do not reopen the pushed exact `dir/0` release unit absent a new finding
+- no implementation, correction, push, public-claim update, package-root
+  export, MCP change, schema change, scoring change, compiler change,
+  admission change, fixture change, task change, run-spec change, or
+  generalized dynamic-runtime support is authorized by this routing state
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 

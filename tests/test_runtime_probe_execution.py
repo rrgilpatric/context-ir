@@ -34,6 +34,7 @@ from context_ir.runtime_probe_execution import (
     make_runtime_probe_reflective_hasattr_local_python_subprocess_runner,
     make_runtime_probe_reflective_vars_local_python_subprocess_runner,
     make_runtime_probe_reflective_vars_zero_local_python_subprocess_runner,
+    make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner,
     materialize_runtime_probe_local_python_process_completion,
     materialize_runtime_probe_local_python_process_completion_attempt,
     materialize_runtime_probe_local_python_stdout_protocol_attempt,
@@ -93,6 +94,7 @@ _REFLECTIVE_VARS_ONE_FORM_LABEL = "reflective_builtin:vars/1"
 _REFLECTIVE_VARS_ZERO_FORM_LABEL = "reflective_builtin:vars/0"
 _REFLECTIVE_DIR_ONE_FORM_LABEL = "reflective_builtin:dir/1"
 _REFLECTIVE_DIR_ZERO_FORM_LABEL = "reflective_builtin:dir/0"
+_RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL = "runtime_mutation:globals/0"
 
 _EXPECTED_CURRENT_FORMS = {
     _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
@@ -310,6 +312,28 @@ def _reflective_dir_request(
         start_line,
         form_label=form_label,
         boundary_text=boundary_text,
+    )
+
+
+def _runtime_mutation_globals_zero_request(
+    start_line: int = 3,
+    *,
+    form_label: str = _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL,
+    boundary_text: str = "globals()",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one synthetic planned runtime-mutation globals/0 request."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=f"unsupported:call:main.py:{start_line}:4",
+        source_site=_source_site(start_line, snippet=boundary_text),
+        reason_code=UnresolvedReasonCode.RUNTIME_MUTATION,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=form_label,
+        replay_target_seed="main.run",
+        replay_selector_seed=(
+            f"call:main.run:{form_label}@main.py:{start_line}:4:{start_line}:28"
+        ),
     )
 
 
@@ -4104,6 +4128,190 @@ def test_reflective_dir_zero_local_python_runner_rejects_boundary_drift(
     )
 
 
+def test_runtime_mutation_globals_zero_local_python_runner_executes_globals_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The composed helper reaches the worker's exact globals/0 handler."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            MODULE_VALUE = object()
+
+            def run() -> object:
+                local_value = object()
+                namespace = globals()
+                assert namespace["MODULE_VALUE"] is MODULE_VALUE
+                assert namespace["__name__"] == "main"
+                assert "local_value" not in namespace
+                return namespace
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _runtime_mutation_globals_zero_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = (
+        make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+        )
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    assert isinstance(runner, runtime_probe_execution.RuntimeProbeDispatchingRunner)
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("lookup_outcome", "returned_namespace"),
+    )
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_runtime_mutation_globals_zero_local_python_runner_rejects_boundary_drift(
+    tmp_path: Path,
+) -> None:
+    """The subprocess worker rejects globals/0 requests with drifted boundaries."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> object:
+                return globals()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _runtime_mutation_globals_zero_request(boundary_text="globals( )")
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = (
+        make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+        )
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields[0] == _field(
+        "failure_source",
+        "local_python_process_completion",
+    )
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label", "boundary_text"),
+    (
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:locals/0",
+            "locals()",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:setattr/3",
+            "setattr(obj, name, value)",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:delattr/2",
+            "delattr(obj, name)",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_DIR_ZERO_FORM_LABEL,
+            "dir()",
+        ),
+    ),
+)
+def test_runtime_mutation_globals_zero_local_python_runner_registers_only_exact_form(
+    monkeypatch: pytest.MonkeyPatch,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+    boundary_text: str,
+) -> None:
+    """The exact-globals/0 helper does not register adjacent handlers."""
+    request = replace(
+        _runtime_mutation_globals_zero_request(
+            form_label=form_label,
+            boundary_text=boundary_text,
+        ),
+        family_label=family_label,
+    )
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    runner = (
+        make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+        )
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        del kwargs
+        calls.append(tuple(str(arg) for arg in args))
+        raise AssertionError("unsupported helper request reached subprocess")
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = runner(runner_request)
+
+    assert calls == []
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "missing_runtime_probe_handler"),
+        _field("family_label", family_label.value),
+        _field("form_label", form_label),
+        _field("missing_handler_outcome", "setup_failed"),
+    )
+
+
 @pytest.mark.parametrize(
     ("family_label", "form_label"),
     (
@@ -7705,6 +7913,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_runtime_probe_reflective_vars_zero_local_python_subprocess_runner" in (
         runtime_probe_execution.__all__
     )
+    assert (
+        "make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner"
+        in runtime_probe_execution.__all__
+    )
     assert "make_runtime_probe_local_python_subprocess_handler_entry" in (
         runtime_probe_execution.__all__
     )
@@ -7814,6 +8026,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert (
         "make_runtime_probe_reflective_vars_zero_local_python_subprocess_runner"
+        not in context_ir.__all__
+    )
+    assert (
+        "make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner"
         not in context_ir.__all__
     )
     assert (

@@ -199,6 +199,19 @@ _REFLECTIVE_BUILTIN_DIR_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
         "runtime probe reflective builtin dir worker form must be exactly dir()",
     )
 )
+_RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_FORM_LABEL = "runtime_mutation:globals/0"
+_RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_BOUNDARY_TEXT = "globals()"
+_RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME = "globals"
+_RUNTIME_MUTATION_GLOBALS_WORKER_RETURNED_NAMESPACE = "returned_namespace"
+_RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
+    "runtime probe runtime mutation globals zero worker target execution failed"
+)
+_RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
+    (
+        "runtime probe runtime mutation globals zero worker form must be exactly "
+        "globals()",
+    )
+)
 _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "plan_id",
     "request_id",
@@ -725,6 +738,78 @@ class RuntimeProbeLocalPythonReflectiveDirReplayTarget:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest:
+    """Worker-local request contract for exact ``globals()`` probes."""
+
+    plan_id: str
+    request_id: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    source_site_id: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    reason_code: UnresolvedReasonCode
+    boundary_text: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject drifted or non-globals/0 runtime-mutation metadata."""
+        _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation:
+    """Worker-local observation metadata for exact ``globals()`` probes."""
+
+    request: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest
+    plan_id: str
+    request_id: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    lookup_outcome: str
+
+    def __post_init__(self) -> None:
+        """Reject drifted request identity or malformed globals/0 observations."""
+        _validate_runtime_probe_runtime_mutation_globals_zero_worker_observation(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget:
+    """Worker-local non-executing replay target plan for exact ``globals/0``."""
+
+    request: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest
+    plan_id: str
+    request_id: str
+    source_file_path: str
+    source_module_name: str
+    replay_target_seed: str
+    replay_target_attribute_path: tuple[str, ...]
+    replay_selector_seed: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject replay targets whose copied request identity has drifted."""
+        _validate_runtime_probe_runtime_mutation_globals_zero_replay_target(self)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonWorkerResponse:
     """Typed non-proof worker response that cannot carry stdout payload data."""
 
@@ -778,6 +863,10 @@ RuntimeProbeLocalPythonReflectiveDirWorkerObserver: TypeAlias = Callable[
     [RuntimeProbeLocalPythonReflectiveDirWorkerRequest],
     RuntimeProbeLocalPythonReflectiveDirWorkerObservation,
 ]
+RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObserver: TypeAlias = Callable[
+    [RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest],
+    RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation,
+]
 RuntimeProbeLocalPythonDynamicImportTargetCallable: TypeAlias = Callable[[], object]
 RuntimeProbeLocalPythonReflectiveHasattrTargetCallable: TypeAlias = Callable[
     [],
@@ -800,6 +889,10 @@ RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable: TypeAlias = Callable[
     object,
 ]
 RuntimeProbeLocalPythonReflectiveDirTargetCallable: TypeAlias = Callable[[], object]
+RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroTargetCallable: TypeAlias = Callable[
+    [],
+    object,
+]
 RuntimeProbeLocalPythonDynamicImportObservationSource: TypeAlias = (
     RuntimeProbeLocalPythonDynamicImportWorkerRequest
     | RuntimeProbeLocalPythonDynamicImportReplayTarget
@@ -1136,6 +1229,28 @@ class _RuntimeProbeReflectiveDirCapture:
         return listing
 
 
+@dataclass
+class _RuntimeProbeRuntimeMutationGlobalsZeroCapture:
+    """Mutable capture state for one controlled zero-argument ``globals`` execution."""
+
+    captured_lookup_outcomes: list[str] = field(default_factory=list)
+    captured_rejections: list[str] = field(default_factory=list)
+
+    def globals(self, *args: object, **kwargs: object) -> object:
+        """Capture one exact zero-argument ``globals`` call."""
+        if kwargs or args:
+            self.captured_rejections.append("arity")
+            raise ValueError(
+                "runtime probe runtime mutation globals zero worker form must be "
+                "exactly globals()"
+            )
+        caller_namespace = sys._getframe(1).f_globals
+        self.captured_lookup_outcomes.append(
+            _RUNTIME_MUTATION_GLOBALS_WORKER_RETURNED_NAMESPACE
+        )
+        return caller_namespace
+
+
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter:
     """Adapt parsed worker payloads to an injected dynamic-import observer."""
@@ -1319,6 +1434,38 @@ class RuntimeProbeLocalPythonReflectiveDirWorkerHandlerAdapter:
             request,
         )
         return materialize_runtime_probe_reflective_dir_worker_success_response(
+            observation
+        )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerHandlerAdapter:
+    """Adapt parsed worker payloads to an injected exact-globals/0 observer."""
+
+    observer: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObserver
+
+    def __post_init__(self) -> None:
+        """Reject malformed observer injection before worker dispatch."""
+        _validate_runtime_probe_runtime_mutation_globals_zero_worker_observer(
+            self.observer
+        )
+
+    def __call__(
+        self,
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+        """Run the injected observer against a validated worker request."""
+        request = (
+            materialize_runtime_probe_runtime_mutation_globals_zero_worker_request(
+                payload
+            )
+        )
+        observation = self.observer(request)
+        _validate_runtime_probe_runtime_mutation_globals_zero_observation_for_request(
+            observation,
+            request,
+        )
+        return _materialize_runtime_mutation_globals_zero_worker_success_response(
             observation
         )
 
@@ -2336,6 +2483,133 @@ def materialize_runtime_probe_reflective_dir_worker_success_response(
     )
 
 
+def materialize_runtime_probe_runtime_mutation_globals_zero_worker_request(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest:
+    """Derive an exact-globals/0 worker request from stdin payload."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_payload(payload)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    return RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        subject_kind=_runtime_probe_worker_subject_kind_from_replay_field(
+            replay_fields_by_key["subject_kind"]
+        ),
+        subject_id=replay_fields_by_key["subject_id"],
+        source_site_id=replay_fields_by_key["source_site_id"],
+        source_file_path=replay_fields_by_key["source_file_path"],
+        source_start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        source_start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        source_end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        source_end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+        reason_code=(
+            _runtime_probe_worker_runtime_mutation_globals_zero_reason_code_from_replay_field(
+                replay_fields_by_key["reason_code"]
+            )
+        ),
+        boundary_text=replay_fields_by_key["boundary_text"],
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        invocation_identity=payload.invocation_identity,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_runtime_mutation_globals_zero_worker_observation(
+    request: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest,
+    *,
+    lookup_outcome: str,
+) -> RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation:
+    """Build non-executing exact-globals/0 observation metadata from a request."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(request)
+    return RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_contract_revision=request.invocation_contract_revision,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+        lookup_outcome=lookup_outcome,
+    )
+
+
+def materialize_runtime_probe_runtime_mutation_globals_zero_replay_target(
+    request: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest,
+) -> RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget:
+    """Derive a non-executing local Python replay target from a globals/0 request."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(request)
+    source_module_name = _runtime_probe_dynamic_import_source_module_name_from_path(
+        request.source_file_path
+    )
+    replay_target_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    return RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        source_file_path=request.source_file_path,
+        source_module_name=source_module_name,
+        replay_target_seed=request.replay_target_seed,
+        replay_target_attribute_path=replay_target_attribute_path,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_runtime_mutation_globals_zero_worker_success_response(
+    observation: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for one globals/0 observation."""
+    return _materialize_runtime_mutation_globals_zero_worker_success_response(
+        observation
+    )
+
+
+def _materialize_runtime_mutation_globals_zero_worker_success_response(
+    observation: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for internal globals/0 callers."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_observation(
+        observation
+    )
+    return RuntimeProbeLocalPythonWorkerSuccessResponse(
+        normalized_payload=(
+            RuntimeProbeReplayField(
+                key="lookup_outcome",
+                value=observation.lookup_outcome,
+            ),
+        ),
+    )
+
+
 def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
     observation_source: RuntimeProbeLocalPythonDynamicImportObservationSource,
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
@@ -2673,6 +2947,57 @@ def observe_runtime_probe_reflective_dir_worker_request(
     )
 
 
+def materialize_runtime_probe_runtime_mutation_globals_zero_observation_from_target(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget,
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroTargetCallable,
+) -> RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation:
+    """Observe one zero-argument target under exact ``globals()`` interception."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_target(replay_target)
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    _validate_runtime_probe_runtime_mutation_globals_zero_target_callable(target)
+    lookup_outcome = (
+        _runtime_probe_runtime_mutation_globals_zero_captured_lookup_outcome(
+            source_module,
+            target,
+        )
+    )
+    return materialize_runtime_probe_runtime_mutation_globals_zero_worker_observation(
+        replay_target.request,
+        lookup_outcome=lookup_outcome,
+    )
+
+
+def observe_runtime_probe_runtime_mutation_globals_zero_worker_request(
+    request: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest,
+) -> RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation:
+    """Observe one concrete exact-globals/0 worker request in local Python."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(request)
+    replay_target = (
+        materialize_runtime_probe_runtime_mutation_globals_zero_replay_target(request)
+    )
+    source_module = (
+        import_runtime_probe_runtime_mutation_globals_zero_replay_target_source_module(
+            replay_target
+        )
+    )
+    target = resolve_runtime_probe_runtime_mutation_globals_zero_replay_target_callable(
+        replay_target,
+        source_module,
+    )
+    materialize_observation = (
+        materialize_runtime_probe_runtime_mutation_globals_zero_observation_from_target
+    )
+    return materialize_observation(
+        replay_target,
+        source_module,
+        target,
+    )
+
+
 def import_runtime_probe_dynamic_import_replay_target_source_module(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
 ) -> ModuleType:
@@ -2919,6 +3244,41 @@ def import_runtime_probe_reflective_dir_replay_target_source_module(
     return imported_module
 
 
+def import_runtime_probe_runtime_mutation_globals_zero_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget,
+) -> ModuleType:
+    """Import a globals/0 replay target source module under request-local state."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_target(replay_target)
+    request = replay_target.request
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    try:
+        os.chdir(request.working_directory)
+        sys.path[:] = [
+            request.working_directory,
+            *request.python_path_entries,
+            *original_sys_path,
+        ]
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            imported_module = importlib.import_module(replay_target.source_module_name)
+    except Exception as error:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero source module import failed"
+        ) from error
+    finally:
+        sys.path[:] = original_sys_path
+        os.chdir(original_working_directory)
+
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_target_source_module(
+        replay_target,
+        imported_module,
+    )
+    return imported_module
+
+
 def resolve_runtime_probe_dynamic_import_replay_target_callable(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
     source_module: ModuleType,
@@ -3086,6 +3446,34 @@ def resolve_runtime_probe_reflective_dir_replay_target_callable(
     return cast(RuntimeProbeLocalPythonReflectiveDirTargetCallable, resolved_target)
 
 
+def resolve_runtime_probe_runtime_mutation_globals_zero_replay_target_callable(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget,
+    source_module: ModuleType,
+) -> RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroTargetCallable:
+    """Resolve a source module globals/0 replay target without executing it."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_target(replay_target)
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    resolved_target: object = source_module
+    for attribute_name in replay_target.replay_target_attribute_path:
+        try:
+            resolved_target = getattr(resolved_target, attribute_name)
+        except AttributeError as error:
+            raise ValueError(
+                "runtime probe runtime mutation globals zero replay target "
+                "replay_target_attribute_path is missing"
+            ) from error
+    _validate_runtime_probe_runtime_mutation_globals_zero_target_callable(
+        resolved_target
+    )
+    return cast(
+        RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroTargetCallable,
+        resolved_target,
+    )
+
+
 def build_runtime_probe_dynamic_import_worker_handler_entry(
     observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
@@ -3202,6 +3590,19 @@ def _build_runtime_probe_reflective_dir_worker_handler_entry(
     )
 
 
+def build_runtime_probe_runtime_mutation_globals_zero_worker_handler_entry(
+    observer: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObserver,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for exact ``globals()``."""
+    return RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=_RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_FORM_LABEL,
+        handler=RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerHandlerAdapter(
+            observer=observer
+        ),
+    )
+
+
 def _runtime_probe_local_python_worker_handler_entries(
     handler_entries: (
         Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]
@@ -3263,6 +3664,11 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
             )
         ),
     )
+    runtime_mutation_globals_zero_entries = (
+        build_runtime_probe_runtime_mutation_globals_zero_worker_handler_entry(
+            observe_runtime_probe_runtime_mutation_globals_zero_worker_request
+        ),
+    )
     return (
         *dynamic_import_entries,
         *reflective_hasattr_entries,
@@ -3271,6 +3677,7 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
         *reflective_vars_entries,
         *reflective_vars_zero_entries,
         *reflective_dir_entries,
+        *runtime_mutation_globals_zero_entries,
     )
 
 
@@ -5159,6 +5566,198 @@ def _restore_runtime_probe_reflective_dir_builtin(
         return ValueError(
             "runtime probe reflective builtin dir worker builtins.dir could not "
             "be restored"
+        )
+    return restore_failure
+
+
+def _runtime_probe_runtime_mutation_globals_zero_captured_lookup_outcome(
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroTargetCallable,
+) -> str:
+    """Run a target while capturing one exact ``globals()`` call."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_source_global_absent(
+        source_module
+    )
+    original_globals: Callable[..., dict[str, object]] = builtins.globals
+    capture = _RuntimeProbeRuntimeMutationGlobalsZeroCapture()
+    controlled_globals: Callable[..., object] = capture.globals
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    shielded_stdout = io.StringIO()
+    shielded_stderr = io.StringIO()
+    target_failure: BaseException | None = None
+
+    try:
+        builtins.__dict__[_RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME] = (
+            controlled_globals
+        )
+        try:
+            sys.stdout = shielded_stdout
+            sys.stderr = shielded_stderr
+            target()
+        finally:
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+    except BaseException as error:
+        target_failure = error
+    builtin_restore_failure = (
+        _restore_runtime_probe_runtime_mutation_globals_zero_builtin(
+            expected_globals=controlled_globals,
+            original_globals=original_globals,
+        )
+    )
+    source_restore_failure = (
+        _restore_runtime_probe_runtime_mutation_globals_zero_source_global(
+            source_module
+        )
+    )
+
+    if builtin_restore_failure is not None:
+        if target_failure is not None:
+            raise builtin_restore_failure from target_failure
+        raise builtin_restore_failure
+    if source_restore_failure is not None:
+        if target_failure is not None:
+            raise source_restore_failure from target_failure
+        raise source_restore_failure
+    if target_failure is not None:
+        _raise_runtime_probe_runtime_mutation_globals_zero_target_failure(
+            target_failure
+        )
+
+    return _runtime_probe_runtime_mutation_globals_zero_capture_lookup_outcome(capture)
+
+
+def _runtime_probe_runtime_mutation_globals_zero_capture_lookup_outcome(
+    capture: _RuntimeProbeRuntimeMutationGlobalsZeroCapture,
+) -> str:
+    """Return the single captured globals/0 lookup outcome after validation."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_intercepted_calls(
+        captured_lookup_outcomes=capture.captured_lookup_outcomes,
+        captured_rejections=tuple(capture.captured_rejections),
+    )
+    return capture.captured_lookup_outcomes[0]
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_intercepted_calls(
+    *,
+    captured_lookup_outcomes: list[str],
+    captured_rejections: tuple[str, ...],
+) -> None:
+    """Reject intercepted globals behavior outside the exact zero-argument form."""
+    if "arity" in captured_rejections:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker form must be "
+            "exactly globals()"
+        )
+    if len(captured_lookup_outcomes) != 1:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker target must capture "
+            "exactly one globals call"
+        )
+
+
+def _raise_runtime_probe_runtime_mutation_globals_zero_target_failure(
+    error: BaseException,
+) -> None:
+    """Raise a sanitized target failure unless the error is a known shape reject."""
+    if (
+        isinstance(error, ValueError)
+        and str(error) in _RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_SHAPE_ERROR_MESSAGES
+    ):
+        raise error
+    raise ValueError(
+        _RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
+    ) from error
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_source_global_absent(
+    source_module: ModuleType,
+) -> None:
+    """Reject source modules that shadow bare ``globals`` global resolution."""
+    if (
+        source_module.__dict__.get(
+            _RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker target module "
+            "globals global must be absent"
+        )
+
+
+def _restore_runtime_probe_runtime_mutation_globals_zero_source_global(
+    source_module: ModuleType,
+) -> ValueError | None:
+    """Remove any target-time source ``globals`` global and report drift."""
+    module_globals = source_module.__dict__
+    current_global = module_globals.get(
+        _RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if current_global is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
+        return None
+    try:
+        del module_globals[_RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME]
+    except Exception:
+        return ValueError(
+            "runtime probe runtime mutation globals zero worker target module "
+            "globals global could not be restored"
+        )
+    if (
+        module_globals.get(
+            _RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        return ValueError(
+            "runtime probe runtime mutation globals zero worker target module "
+            "globals global could not be restored"
+        )
+    return ValueError(
+        "runtime probe runtime mutation globals zero worker target module globals "
+        "global changed during execution"
+    )
+
+
+def _restore_runtime_probe_runtime_mutation_globals_zero_builtin(
+    *,
+    expected_globals: object,
+    original_globals: Callable[..., dict[str, object]],
+) -> ValueError | None:
+    """Restore builtins.globals and report target-time hook drift."""
+    current_globals = builtins.__dict__.get(
+        _RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    restore_failure: ValueError | None = None
+    if current_globals is not expected_globals:
+        restore_failure = ValueError(
+            "runtime probe runtime mutation globals zero worker builtins.globals "
+            "changed during execution"
+        )
+    try:
+        builtins.__dict__[_RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME] = (
+            original_globals
+        )
+    except Exception:
+        return ValueError(
+            "runtime probe runtime mutation globals zero worker builtins.globals "
+            "could not be restored"
+        )
+    if (
+        builtins.__dict__.get(
+            _RUNTIME_MUTATION_GLOBALS_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not original_globals
+    ):
+        return ValueError(
+            "runtime probe runtime mutation globals zero worker builtins.globals "
+            "could not be restored"
         )
     return restore_failure
 
@@ -7648,6 +8247,554 @@ def _runtime_probe_reflective_dir_listing_artifact_reference(request_id: str) ->
     """Return the deterministic durable reference for a captured dir listing."""
     _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
     return f"artifact://runtime-probe/dir-listing/{request_id}.json"
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_worker_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> None:
+    """Reject payloads that cannot become the worker-local globals/0 request."""
+    if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker payload must be typed"
+        )
+    _validate_runtime_probe_runtime_mutation_globals_zero_payload_family_form(
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+    )
+    _validate_runtime_probe_worker_metadata_text(payload.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        payload.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_invocation_identity(payload.invocation_identity)
+    _validate_runtime_probe_worker_argv(payload.argv)
+    _validate_runtime_probe_worker_path_text(
+        payload.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(payload.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(payload.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_metadata(
+        replay_fields_by_key,
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+    if payload.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker invocation_identity "
+            "must match payload replay identity"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(
+    request: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest,
+) -> None:
+    """Reject exact-globals/0 worker requests whose copied metadata drifted."""
+    if not isinstance(
+        request,
+        RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest,
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker request must be typed"
+        )
+    _validate_runtime_probe_runtime_mutation_globals_zero_payload_family_form(
+        family_label=request.family_label,
+        form_label=request.form_label,
+    )
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker subject_kind "
+            "is unsupported"
+        )
+    if request.reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker reason_code "
+            "is unsupported"
+        )
+    _validate_runtime_probe_worker_metadata_text(request.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        request.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.subject_id,
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_site_id,
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_file_path,
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.boundary_text,
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request_boundary_text(
+        request.boundary_text
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=request.source_start_line,
+        start_column=request.source_start_column,
+        end_line=request.source_end_line,
+        end_column=request.source_end_column,
+    )
+    _validate_runtime_probe_worker_invocation_identity(request.invocation_identity)
+    _validate_runtime_probe_worker_argv(request.argv)
+    _validate_runtime_probe_worker_path_text(
+        request.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(request.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(request.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    _validate_runtime_probe_runtime_mutation_globals_zero_replay_metadata(
+        replay_fields_by_key,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        family_label=request.family_label,
+        form_label=request.form_label,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+    )
+    for field_key, expected_value in (
+        ("subject_kind", request.subject_kind.value),
+        ("subject_id", request.subject_id),
+        ("source_site_id", request.source_site_id),
+        ("source_file_path", request.source_file_path),
+        ("source_start_line", str(request.source_start_line)),
+        ("source_start_column", str(request.source_start_column)),
+        ("source_end_line", str(request.source_end_line)),
+        ("source_end_column", str(request.source_end_column)),
+        ("reason_code", request.reason_code.value),
+        ("boundary_text", request.boundary_text),
+    ):
+        _validate_runtime_probe_runtime_mutation_globals_zero_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        invocation_contract_revision=request.invocation_contract_revision,
+        argv=request.argv,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+        timeout_seconds=request.timeout_seconds,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+    if request.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker invocation_identity "
+            "must match request replay identity"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_worker_request_boundary_text(
+    boundary_text: str,
+) -> None:
+    """Reject exact-globals/0 requests that do not carry the approved boundary."""
+    if boundary_text != _RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_BOUNDARY_TEXT:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker boundary_text must be "
+            f"{_RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_BOUNDARY_TEXT}"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_worker_observer(
+    observer: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObserver,
+) -> None:
+    """Reject non-callable exact-globals/0 observer injections."""
+    if not callable(observer):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker observer must "
+            "be callable"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_target_callable(
+    target: object,
+) -> None:
+    """Reject non-callable target injections before globals/0 interception."""
+    if not callable(target):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker target must be callable"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget,
+    source_module: ModuleType,
+) -> None:
+    """Reject injected source modules that do not match the globals/0 replay target."""
+    if not isinstance(source_module, ModuleType):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero replay target source module "
+            "must be typed"
+        )
+    if source_module.__name__ != replay_target.source_module_name:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero replay target source module "
+            "must match source_module_name"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_observation_for_request(
+    observation: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation,
+    request: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerRequest,
+) -> None:
+    """Reject observer results that do not belong to the adapted globals/0 request."""
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(request)
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_observation(
+        observation
+    )
+    if observation.request != request:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker observation request "
+            "must match adapted request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_worker_observation(
+    observation: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation,
+) -> None:
+    """Reject exact-globals/0 observation metadata that drifted from its request."""
+    if not isinstance(
+        observation,
+        RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroWorkerObservation,
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker observation must "
+            "be typed"
+        )
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(
+        observation.request
+    )
+    if (
+        observation.lookup_outcome
+        != _RUNTIME_MUTATION_GLOBALS_WORKER_RETURNED_NAMESPACE
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker lookup_outcome "
+            "is unsupported"
+        )
+    for field_name, value, expected_value in (
+        ("plan_id", observation.plan_id, observation.request.plan_id),
+        ("request_id", observation.request_id, observation.request.request_id),
+        (
+            "replay_target_seed",
+            observation.replay_target_seed,
+            observation.request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            observation.replay_selector_seed,
+            observation.request.replay_selector_seed,
+        ),
+        (
+            "invocation_contract_revision",
+            observation.invocation_contract_revision,
+            observation.request.invocation_contract_revision,
+        ),
+        (
+            "invocation_identity",
+            observation.invocation_identity,
+            observation.request.invocation_identity,
+        ),
+    ):
+        _validate_runtime_probe_runtime_mutation_globals_zero_observation_field_match(
+            field_name=field_name,
+            value=value,
+            expected_value=expected_value,
+        )
+    if (
+        observation.request_replay_payload_fields
+        != observation.request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker observation "
+            "request_replay_payload_fields must match request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_replay_target(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget,
+) -> None:
+    """Reject non-executing globals/0 replay targets that drift from their request."""
+    if not isinstance(
+        replay_target,
+        RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroReplayTarget,
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero replay target must be typed"
+        )
+    request = replay_target.request
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request(request)
+    for field_name, value, expected_value in (
+        ("plan_id", replay_target.plan_id, request.plan_id),
+        ("request_id", replay_target.request_id, request.request_id),
+        ("source_file_path", replay_target.source_file_path, request.source_file_path),
+        (
+            "replay_target_seed",
+            replay_target.replay_target_seed,
+            request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            replay_target.replay_selector_seed,
+            request.replay_selector_seed,
+        ),
+        (
+            "invocation_identity",
+            replay_target.invocation_identity,
+            request.invocation_identity,
+        ),
+    ):
+        _validate_runtime_probe_runtime_mutation_globals_zero_replay_target_field_match(
+            field_name=field_name,
+            value=value,
+            expected_value=expected_value,
+        )
+    if (
+        replay_target.request_replay_payload_fields
+        != request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero replay target "
+            "request_replay_payload_fields must match request"
+        )
+
+    expected_source_module_name = (
+        _runtime_probe_dynamic_import_source_module_name_from_path(
+            request.source_file_path
+        )
+    )
+    if replay_target.source_module_name != expected_source_module_name:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero replay target "
+            "source_module_name must match request source_file_path"
+        )
+    expected_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=expected_source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    if replay_target.replay_target_attribute_path != expected_attribute_path:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero replay target "
+            "replay_target_attribute_path must match request replay_target_seed"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_replay_target_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied globals/0 replay-target identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero replay target "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_observation_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied globals/0 observation identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker observation "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_payload_family_form(
+    *,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """Reject unsupported runtime-mutation globals/0 family/form labels."""
+    if family_label is not RuntimeProbeFamily.RUNTIME_MUTATION:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker family_label "
+            "is unsupported"
+        )
+    if form_label != _RUNTIME_MUTATION_GLOBALS_ZERO_WORKER_FORM_LABEL:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker form_label "
+            "is unsupported"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_replay_metadata(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    plan_id: str,
+    request_id: str,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    replay_target_seed: str,
+    replay_selector_seed: str,
+) -> None:
+    """Reject replay fields that drift from exact-globals/0 worker metadata."""
+    for field_key, expected_value in (
+        ("plan_id", plan_id),
+        ("request_id", request_id),
+        ("family_label", family_label.value),
+        ("form_label", form_label),
+        ("replay_target_seed", replay_target_seed),
+        ("replay_selector_seed", replay_selector_seed),
+    ):
+        _validate_runtime_probe_runtime_mutation_globals_zero_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    if replay_fields_by_key["subject_kind"] != (
+        SemanticSubjectKind.UNSUPPORTED_FINDING.value
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker subject_kind "
+            "is unsupported"
+        )
+    if replay_fields_by_key["reason_code"] != (
+        UnresolvedReasonCode.RUNTIME_MUTATION.value
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker reason_code "
+            "is unsupported"
+        )
+    _runtime_probe_worker_subject_kind_from_replay_field(
+        replay_fields_by_key["subject_kind"]
+    )
+    _runtime_probe_worker_runtime_mutation_globals_zero_reason_code_from_replay_field(
+        replay_fields_by_key["reason_code"]
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["subject_id"],
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_site_id"],
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_file_path"],
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["boundary_text"],
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_runtime_mutation_globals_zero_worker_request_boundary_text(
+        replay_fields_by_key["boundary_text"]
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+    )
+
+
+def _validate_runtime_probe_runtime_mutation_globals_zero_replay_field_match(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    field_key: str,
+    expected_value: str,
+) -> None:
+    """Require a replay field to match a copied exact-globals/0 request field."""
+    if replay_fields_by_key[field_key] != expected_value:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker "
+            f"{field_key} must match request replay payload fields"
+        )
+
+
+def _runtime_probe_worker_runtime_mutation_globals_zero_reason_code_from_replay_field(
+    value: str,
+) -> UnresolvedReasonCode:
+    """Parse and validate the runtime-mutation reason copied into replay."""
+    try:
+        reason_code = UnresolvedReasonCode(value)
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker reason_code "
+            "is unsupported"
+        ) from error
+    if reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+        raise ValueError(
+            "runtime probe runtime mutation globals zero worker reason_code "
+            "is unsupported"
+        )
+    return reason_code
 
 
 def _validate_runtime_probe_dynamic_import_worker_payload(
