@@ -78,11 +78,13 @@ _IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
 _LOAD_MODULE_FORM_LABEL = "dynamic_import:load_module/1"
 _BUILTIN_IMPORT_FORM_LABEL = "dynamic_import:__import__/1"
 _BUILTINS_IMPORT_FORM_LABEL = "dynamic_import:builtins.__import__/1"
+_LOADER_BUILTIN_IMPORT_FORM_LABEL = "dynamic_import:loader.__import__/1"
 
 _EXPECTED_CURRENT_FORMS = {
     _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
     _LOAD_MODULE_FORM_LABEL,
     _BUILTINS_IMPORT_FORM_LABEL,
+    _LOADER_BUILTIN_IMPORT_FORM_LABEL,
     "dynamic_import:__import__/1",
     "reflective_builtin:getattr/2",
     "reflective_builtin:getattr/3",
@@ -115,6 +117,7 @@ def _write_runtime_probe_program(tmp_path: Path) -> None:
         textwrap.dedent(
             """
             import builtins
+            import builtins as loader
             import importlib
             from importlib import import_module as load_module
 
@@ -134,6 +137,7 @@ def _write_runtime_probe_program(tmp_path: Path) -> None:
                 importlib.import_module(name)
                 load_module(name)
                 builtins.__import__(name)
+                loader.__import__(name)
                 __import__(name)
                 getattr(obj, name)
                 getattr(obj, name, default)
@@ -2987,6 +2991,67 @@ def test_dynamic_import_local_python_runner_executes_builtins_import_subprocess(
     assert attempt.failure_detail_fields == ()
 
 
+def test_dynamic_import_local_python_runner_executes_loader_builtin_import_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The composed helper registers exact loader.__import__ for the worker."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    observed_module_name = "plugins.loader_builtin_import_helper_subprocess"
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            f"""
+            import builtins as loader
+            import sys
+
+            def run() -> object:
+                imported_module = loader.__import__("{observed_module_name}")
+                assert sys.modules["{observed_module_name}"] is imported_module
+                return imported_module
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _request(
+        form_label=_LOADER_BUILTIN_IMPORT_FORM_LABEL,
+        boundary_text="loader.__import__(name)",
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_dynamic_import_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("imported_module", observed_module_name),
+    )
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
 def test_dynamic_import_local_python_runner_rejects_builtin_import_literal_boundary(
     tmp_path: Path,
 ) -> None:
@@ -3077,6 +3142,52 @@ def test_dynamic_import_local_python_runner_rejects_builtins_import_literal_boun
     )
 
 
+def test_dynamic_import_local_python_runner_rejects_loader_builtin_literal(
+    tmp_path: Path,
+) -> None:
+    """The subprocess worker rejects loader.__import__ literal requests."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    observed_module_name = "plugins.loader_builtin_import_literal_subprocess"
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            f"""
+            import builtins as loader
+
+            def run() -> object:
+                return loader.__import__("{observed_module_name}")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _request(
+        form_label=_LOADER_BUILTIN_IMPORT_FORM_LABEL,
+        boundary_text=f'loader.__import__("{observed_module_name}")',
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_dynamic_import_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.failure_detail_fields[0] == _field(
+        "failure_source",
+        "local_python_process_completion",
+    )
+
+
 @pytest.mark.parametrize(
     ("family_label", "form_label"),
     (
@@ -3086,7 +3197,7 @@ def test_dynamic_import_local_python_runner_rejects_builtins_import_literal_boun
         ),
         (
             runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
-            "dynamic_import:loader.__import__/1",
+            "dynamic_import:other.__import__/1",
         ),
     ),
 )

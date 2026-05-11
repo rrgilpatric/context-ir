@@ -2,6 +2,217 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-11 -- Builtins Alias Subprocess Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  six-file `dynamic_import:loader.__import__/1` local-Python subprocess
+  release unit.
+- Findings: none.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against the exact
+    six-file unit
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1235 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `9a88794 Add builtins attribute import subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1235 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact six-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Builtins Alias Subprocess Acceptance
+
+- Reviewed the returned exact `dynamic_import:loader.__import__/1`
+  local-Python subprocess implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `9a88794 Add builtins attribute import subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - `src/context_ir/runtime_probe_worker.py` now accepts exactly seven
+    local-Python dynamic-import worker forms:
+    `dynamic_import:importlib.import_module/1`,
+    `dynamic_import:loader.import_module/1`,
+    `dynamic_import:import_module/1`,
+    `dynamic_import:load_module/1`,
+    `dynamic_import:builtins.__import__/1`,
+    `dynamic_import:loader.__import__/1`, and
+    `dynamic_import:__import__/1`
+  - the worker default handler table registers all seven exact forms through
+    the existing dynamic-import handler adapter and concrete observer
+  - the loader-builtin worker path imports the source module, resolves the
+    replay target, requires source-module global `loader` to be present and
+    identical to the real `builtins` module, then reuses the existing
+    controlled `builtins.__import__` hook plus bounded `sys.modules[name]`
+    insertion/restoration core
+  - the worker restores source-module global `loader`,
+    `builtins.__import__`, and prior `sys.modules[name]` state on success and
+    failure, and fails closed if target execution mutates either the source
+    global or `builtins.__import__`
+  - `src/context_ir/runtime_probe_execution.py` now has
+    `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+    register `dynamic_import:loader.__import__/1` alongside the six pushed
+    dynamic-import subprocess forms
+  - focused coverage proves the real `python -m context_ir.runtime_probe_worker`
+    subprocess path observes exact `loader.__import__(name)` as
+    `imported_module=...`
+  - generalized builtins aliases and adjacent non-selected `__import__` forms
+    remain fail-closed
+  - no request schema, package-root export, MCP, README, EVAL, PUBLIC_CLAIMS,
+    public benchmark, scoring, compiler, admission, recompile, tool-facade,
+    result-assembly, additional builtins-alias support, or generalized
+    dynamic-import support was added
+- Control validation rerun:
+  - focused ruff check passed
+  - focused ruff format check reported `4 files already formatted`
+  - strict mypy passed over 37 source files
+  - targeted pytest over `tests/test_runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, `tests/test_dependency_frontier.py`,
+    and `tests/test_runtime_acquisition.py` reported `494 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact six-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Post-9a88794 Builtins Alias Subprocess Selection
+
+- Selected the next bounded north-star lane after pushed commit
+  `9a88794 Add builtins attribute import subprocess support`.
+- Findings: none.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `9a88794 Add builtins attribute import subprocess support`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Selected route:
+  - issue one implementation lane for exact
+    `dynamic_import:loader.__import__/1` local-Python subprocess support
+  - this is now the smallest truthful next subprocess form because
+    `9a88794` proved the builtins-attribute path: exact source-module global
+    module validation plus the shared controlled `builtins.__import__` hook
+    and bounded `sys.modules[name]` insertion/restoration core
+  - `dynamic_import:loader.__import__/1` adds the next exact source binding
+    rule: the replay target source module must bind global `loader` to the
+    real `builtins` module before the existing controlled builtin import hook
+    is used during target execution
+- Non-goals for the next lane:
+  - no generalized builtins alias support beyond exact global `loader`
+  - no additional builtin alias names
+  - no request schema change
+  - no recompile/tool-facade source change unless a focused test exposes an
+    actual delegation bug
+  - no MCP, package-root export, README, EVAL, PUBLIC_CLAIMS, public benchmark,
+    schema, scoring, compiler, admission, result assembly, product, or
+    generalized dynamic-import widening
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Builtins Attribute Subprocess Push
+
+- Ryan-authorized push completed for the exact
+  `dynamic_import:builtins.__import__/1` local-Python subprocess release unit.
+- Pushed commit:
+  - `9a88794 Add builtins attribute import subprocess support`
+- Commit contents:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth after push and before this continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `9a88794 Add builtins attribute import subprocess support`
+  - latest pushed source/contract authority is
+    `9a88794 Add builtins attribute import subprocess support`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact six-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1222 passed`
+  - no active release gate, staging, local commit, or push remains for this
+    release unit
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Builtins Attribute Subprocess Local Commit
+
+- Local commit creation completed for the exact
+  `dynamic_import:builtins.__import__/1` local-Python subprocess release unit
+  after release-unit audit, full regression, and commit-gating cleared.
+- Local commit:
+  - `9a88794 Add builtins attribute import subprocess support`
+- Commit contents:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth after local commit and before this continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `9a88794 Add builtins attribute import subprocess support`
+  - `origin/main` remains at
+    `1b08bb9 Add bare builtin import subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact six-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1222 passed`
+  - push is not authorized and has not been performed
+  - next control action is Ryan authorization for push, or an explicit hold
+    without pushing
+- Acceptance status: first-pass
+
 ## 2026-05-11 -- Builtins Attribute Subprocess Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact
