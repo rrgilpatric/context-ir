@@ -116,6 +116,8 @@ _REFLECTIVE_BUILTIN_GETATTR_WORKER_RAISED_ATTRIBUTE_ERROR = "raised_attribute_er
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_RETURNED_DEFAULT_VALUE = "returned_default_value"
 _REFLECTIVE_BUILTIN_VARS_WORKER_FORM_LABEL = "reflective_builtin:vars/1"
 _REFLECTIVE_BUILTIN_VARS_WORKER_BOUNDARY_TEXT = "vars(obj)"
+_REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_FORM_LABEL = "reflective_builtin:vars/0"
+_REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_BOUNDARY_TEXT = "vars()"
 _REFLECTIVE_BUILTIN_VARS_WORKER_GLOBAL_NAME = "vars"
 _REFLECTIVE_BUILTIN_VARS_WORKER_RETURNED_NAMESPACE = "returned_namespace"
 _REFLECTIVE_BUILTIN_VARS_WORKER_RAISED_TYPE_ERROR = "raised_type_error"
@@ -124,6 +126,7 @@ _REFLECTIVE_BUILTIN_WORKER_FORM_LABELS = (
     _REFLECTIVE_BUILTIN_GETATTR_WORKER_FORM_LABEL,
     _REFLECTIVE_BUILTIN_GETATTR_DEFAULT_WORKER_FORM_LABEL,
     _REFLECTIVE_BUILTIN_VARS_WORKER_FORM_LABEL,
+    _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_FORM_LABEL,
 )
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
     "runtime probe reflective builtin hasattr worker target execution failed"
@@ -163,6 +166,12 @@ _REFLECTIVE_BUILTIN_VARS_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
 )
 _REFLECTIVE_BUILTIN_VARS_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
     ("runtime probe reflective builtin vars worker form must be exactly vars(obj)",)
+)
+_REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
+    "runtime probe reflective builtin vars zero worker target execution failed"
+)
+_REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
+    ("runtime probe reflective builtin vars zero worker form must be exactly vars()",)
 )
 _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "plan_id",
@@ -545,6 +554,78 @@ class RuntimeProbeLocalPythonReflectiveVarsReplayTarget:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest:
+    """Worker-local request contract for exact ``vars()`` probes."""
+
+    plan_id: str
+    request_id: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    source_site_id: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    reason_code: UnresolvedReasonCode
+    boundary_text: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject drifted or non-vars/0 reflective worker request metadata."""
+        _validate_runtime_probe_reflective_vars_zero_worker_request(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation:
+    """Worker-local observation metadata for exact ``vars()`` probes."""
+
+    request: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest
+    plan_id: str
+    request_id: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    lookup_outcome: str
+
+    def __post_init__(self) -> None:
+        """Reject drifted request identity or malformed vars/0 observations."""
+        _validate_runtime_probe_reflective_vars_zero_worker_observation(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget:
+    """Worker-local non-executing replay target plan for exact ``vars/0``."""
+
+    request: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest
+    plan_id: str
+    request_id: str
+    source_file_path: str
+    source_module_name: str
+    replay_target_seed: str
+    replay_target_attribute_path: tuple[str, ...]
+    replay_selector_seed: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject replay targets whose copied request identity has drifted."""
+        _validate_runtime_probe_reflective_vars_zero_replay_target(self)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonWorkerResponse:
     """Typed non-proof worker response that cannot carry stdout payload data."""
 
@@ -590,6 +671,10 @@ RuntimeProbeLocalPythonReflectiveVarsWorkerObserver: TypeAlias = Callable[
     [RuntimeProbeLocalPythonReflectiveVarsWorkerRequest],
     RuntimeProbeLocalPythonReflectiveVarsWorkerObservation,
 ]
+RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObserver: TypeAlias = Callable[
+    [RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest],
+    RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation,
+]
 RuntimeProbeLocalPythonDynamicImportTargetCallable: TypeAlias = Callable[[], object]
 RuntimeProbeLocalPythonReflectiveHasattrTargetCallable: TypeAlias = Callable[
     [],
@@ -604,6 +689,10 @@ RuntimeProbeLocalPythonReflectiveGetattrDefaultTargetCallable: TypeAlias = Calla
     object,
 ]
 RuntimeProbeLocalPythonReflectiveVarsTargetCallable: TypeAlias = Callable[
+    [],
+    object,
+]
+RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable: TypeAlias = Callable[
     [],
     object,
 ]
@@ -871,6 +960,28 @@ class _RuntimeProbeReflectiveVarsCapture:
         return namespace
 
 
+@dataclass
+class _RuntimeProbeReflectiveVarsZeroCapture:
+    """Mutable capture state for one controlled zero-argument ``vars`` execution."""
+
+    captured_lookup_outcomes: list[str] = field(default_factory=list)
+    captured_rejections: list[str] = field(default_factory=list)
+
+    def vars(self, *args: object, **kwargs: object) -> object:
+        """Capture one exact zero-argument ``vars`` call."""
+        if kwargs or args:
+            self.captured_rejections.append("arity")
+            raise ValueError(
+                "runtime probe reflective builtin vars zero worker form must be "
+                "exactly vars()"
+            )
+        caller_namespace = dict(sys._getframe(1).f_locals)
+        self.captured_lookup_outcomes.append(
+            _REFLECTIVE_BUILTIN_VARS_WORKER_RETURNED_NAMESPACE
+        )
+        return caller_namespace
+
+
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter:
     """Adapt parsed worker payloads to an injected dynamic-import observer."""
@@ -1002,6 +1113,32 @@ class RuntimeProbeLocalPythonReflectiveVarsWorkerHandlerAdapter:
             request,
         )
         return materialize_runtime_probe_reflective_vars_worker_success_response(
+            observation
+        )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonReflectiveVarsZeroWorkerHandlerAdapter:
+    """Adapt parsed worker payloads to an injected exact-vars/0 observer."""
+
+    observer: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObserver
+
+    def __post_init__(self) -> None:
+        """Reject malformed observer injection before worker dispatch."""
+        _validate_runtime_probe_reflective_vars_zero_worker_observer(self.observer)
+
+    def __call__(
+        self,
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+        """Run the injected observer against a validated worker request."""
+        request = materialize_runtime_probe_reflective_vars_zero_worker_request(payload)
+        observation = self.observer(request)
+        _validate_runtime_probe_reflective_vars_zero_worker_observation_for_request(
+            observation,
+            request,
+        )
+        return materialize_runtime_probe_reflective_vars_zero_worker_success_response(
             observation
         )
 
@@ -1785,6 +1922,122 @@ def materialize_runtime_probe_reflective_vars_worker_success_response(
     )
 
 
+def materialize_runtime_probe_reflective_vars_zero_worker_request(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest:
+    """Derive an exact-vars/0 worker request from stdin payload."""
+    _validate_runtime_probe_reflective_vars_zero_worker_payload(payload)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    return RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        subject_kind=_runtime_probe_worker_subject_kind_from_replay_field(
+            replay_fields_by_key["subject_kind"]
+        ),
+        subject_id=replay_fields_by_key["subject_id"],
+        source_site_id=replay_fields_by_key["source_site_id"],
+        source_file_path=replay_fields_by_key["source_file_path"],
+        source_start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        source_start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        source_end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        source_end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+        reason_code=(
+            _runtime_probe_worker_reflective_vars_zero_reason_code_from_replay_field(
+                replay_fields_by_key["reason_code"]
+            )
+        ),
+        boundary_text=replay_fields_by_key["boundary_text"],
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        invocation_identity=payload.invocation_identity,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_reflective_vars_zero_worker_observation(
+    request: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest,
+    *,
+    lookup_outcome: str,
+) -> RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation:
+    """Build non-executing exact-vars/0 observation metadata from a request."""
+    _validate_runtime_probe_reflective_vars_zero_worker_request(request)
+    return RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_contract_revision=request.invocation_contract_revision,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+        lookup_outcome=lookup_outcome,
+    )
+
+
+def materialize_runtime_probe_reflective_vars_zero_replay_target(
+    request: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest,
+) -> RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget:
+    """Derive a non-executing local Python replay target from a vars/0 request."""
+    _validate_runtime_probe_reflective_vars_zero_worker_request(request)
+    source_module_name = _runtime_probe_dynamic_import_source_module_name_from_path(
+        request.source_file_path
+    )
+    replay_target_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    return RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        source_file_path=request.source_file_path,
+        source_module_name=source_module_name,
+        replay_target_seed=request.replay_target_seed,
+        replay_target_attribute_path=replay_target_attribute_path,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_reflective_vars_zero_worker_success_response(
+    observation: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for one vars/0 observation."""
+    _validate_runtime_probe_reflective_vars_zero_worker_observation(observation)
+    return RuntimeProbeLocalPythonWorkerSuccessResponse(
+        normalized_payload=(
+            RuntimeProbeReplayField(
+                key="lookup_outcome",
+                value=observation.lookup_outcome,
+            ),
+        ),
+    )
+
+
 def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
     observation_source: RuntimeProbeLocalPythonDynamicImportObservationSource,
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
@@ -2030,6 +2283,55 @@ def observe_runtime_probe_reflective_vars_worker_request(
     )
 
 
+def materialize_runtime_probe_reflective_vars_zero_worker_observation_from_target(
+    replay_target: RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget,
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable,
+) -> RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation:
+    """Observe one zero-argument target under exact ``vars()`` interception."""
+    _validate_runtime_probe_reflective_vars_zero_replay_target(replay_target)
+    _validate_runtime_probe_reflective_vars_zero_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    _validate_runtime_probe_reflective_vars_zero_target_callable(target)
+    lookup_outcome = _runtime_probe_reflective_vars_zero_captured_lookup_outcome(
+        source_module,
+        target,
+    )
+    return materialize_runtime_probe_reflective_vars_zero_worker_observation(
+        replay_target.request,
+        lookup_outcome=lookup_outcome,
+    )
+
+
+def observe_runtime_probe_reflective_vars_zero_worker_request(
+    request: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest,
+) -> RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation:
+    """Observe one concrete exact-vars/0 worker request in local Python."""
+    _validate_runtime_probe_reflective_vars_zero_worker_request(request)
+    replay_target = materialize_runtime_probe_reflective_vars_zero_replay_target(
+        request
+    )
+    source_module = (
+        import_runtime_probe_reflective_vars_zero_replay_target_source_module(
+            replay_target
+        )
+    )
+    target = resolve_runtime_probe_reflective_vars_zero_replay_target_callable(
+        replay_target,
+        source_module,
+    )
+    materialize_observation = (
+        materialize_runtime_probe_reflective_vars_zero_worker_observation_from_target
+    )
+    return materialize_observation(
+        replay_target,
+        source_module,
+        target,
+    )
+
+
 def import_runtime_probe_dynamic_import_replay_target_source_module(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
 ) -> ModuleType:
@@ -2206,6 +2508,41 @@ def import_runtime_probe_reflective_vars_replay_target_source_module(
     return imported_module
 
 
+def import_runtime_probe_reflective_vars_zero_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget,
+) -> ModuleType:
+    """Import a vars/0 replay target source module under request-local state."""
+    _validate_runtime_probe_reflective_vars_zero_replay_target(replay_target)
+    request = replay_target.request
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    try:
+        os.chdir(request.working_directory)
+        sys.path[:] = [
+            request.working_directory,
+            *request.python_path_entries,
+            *original_sys_path,
+        ]
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            imported_module = importlib.import_module(replay_target.source_module_name)
+    except Exception as error:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero source module import failed"
+        ) from error
+    finally:
+        sys.path[:] = original_sys_path
+        os.chdir(original_working_directory)
+
+    _validate_runtime_probe_reflective_vars_zero_replay_target_source_module(
+        replay_target,
+        imported_module,
+    )
+    return imported_module
+
+
 def resolve_runtime_probe_dynamic_import_replay_target_callable(
     replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
     source_module: ModuleType,
@@ -2324,6 +2661,32 @@ def resolve_runtime_probe_reflective_vars_replay_target_callable(
     return cast(RuntimeProbeLocalPythonReflectiveVarsTargetCallable, resolved_target)
 
 
+def resolve_runtime_probe_reflective_vars_zero_replay_target_callable(
+    replay_target: RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget,
+    source_module: ModuleType,
+) -> RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable:
+    """Resolve an injected source module vars/0 replay target without executing it."""
+    _validate_runtime_probe_reflective_vars_zero_replay_target(replay_target)
+    _validate_runtime_probe_reflective_vars_zero_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    resolved_target: object = source_module
+    for attribute_name in replay_target.replay_target_attribute_path:
+        try:
+            resolved_target = getattr(resolved_target, attribute_name)
+        except AttributeError as error:
+            raise ValueError(
+                "runtime probe reflective builtin vars zero replay target "
+                "replay_target_attribute_path is missing"
+            ) from error
+    _validate_runtime_probe_reflective_vars_zero_target_callable(resolved_target)
+    return cast(
+        RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable,
+        resolved_target,
+    )
+
+
 def build_runtime_probe_dynamic_import_worker_handler_entry(
     observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
@@ -2401,6 +2764,19 @@ def build_runtime_probe_reflective_vars_worker_handler_entry(
     )
 
 
+def build_runtime_probe_reflective_vars_zero_worker_handler_entry(
+    observer: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObserver,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for exact ``vars()``."""
+    return RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_FORM_LABEL,
+        handler=RuntimeProbeLocalPythonReflectiveVarsZeroWorkerHandlerAdapter(
+            observer=observer
+        ),
+    )
+
+
 def _runtime_probe_local_python_worker_handler_entries(
     handler_entries: (
         Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]
@@ -2445,12 +2821,18 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
             observe_runtime_probe_reflective_vars_worker_request
         ),
     )
+    reflective_vars_zero_entries = (
+        build_runtime_probe_reflective_vars_zero_worker_handler_entry(
+            observe_runtime_probe_reflective_vars_zero_worker_request
+        ),
+    )
     return (
         *dynamic_import_entries,
         *reflective_hasattr_entries,
         *reflective_getattr_entries,
         *reflective_getattr_default_entries,
         *reflective_vars_entries,
+        *reflective_vars_zero_entries,
     )
 
 
@@ -4030,6 +4412,134 @@ def _restore_runtime_probe_reflective_vars_builtin(
     return restore_failure
 
 
+def _runtime_probe_reflective_vars_zero_captured_lookup_outcome(
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable,
+) -> str:
+    """Run a target while capturing one exact ``vars()`` call."""
+    _validate_runtime_probe_reflective_vars_source_global_absent(source_module)
+    original_vars: Callable[..., object] = builtins.vars
+    capture = _RuntimeProbeReflectiveVarsZeroCapture()
+    controlled_vars: Callable[..., object] = capture.vars
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    shielded_stdout = io.StringIO()
+    shielded_stderr = io.StringIO()
+    target_failure: BaseException | None = None
+
+    try:
+        builtins.__dict__[_REFLECTIVE_BUILTIN_VARS_WORKER_GLOBAL_NAME] = controlled_vars
+        try:
+            sys.stdout = shielded_stdout
+            sys.stderr = shielded_stderr
+            target()
+        finally:
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+    except BaseException as error:
+        target_failure = error
+    builtin_restore_failure = _restore_runtime_probe_reflective_vars_zero_builtin(
+        expected_vars=controlled_vars,
+        original_vars=original_vars,
+    )
+    source_restore_failure = _restore_runtime_probe_reflective_vars_source_global(
+        source_module
+    )
+
+    if builtin_restore_failure is not None:
+        if target_failure is not None:
+            raise builtin_restore_failure from target_failure
+        raise builtin_restore_failure
+    if source_restore_failure is not None:
+        if target_failure is not None:
+            raise source_restore_failure from target_failure
+        raise source_restore_failure
+    if target_failure is not None:
+        _raise_runtime_probe_reflective_vars_zero_target_failure(target_failure)
+
+    return _runtime_probe_reflective_vars_zero_capture_lookup_outcome(capture)
+
+
+def _runtime_probe_reflective_vars_zero_capture_lookup_outcome(
+    capture: _RuntimeProbeReflectiveVarsZeroCapture,
+) -> str:
+    """Return the single captured vars/0 lookup outcome after validation."""
+    _validate_runtime_probe_reflective_vars_zero_intercepted_calls(
+        captured_lookup_outcomes=capture.captured_lookup_outcomes,
+        captured_rejections=tuple(capture.captured_rejections),
+    )
+    return capture.captured_lookup_outcomes[0]
+
+
+def _validate_runtime_probe_reflective_vars_zero_intercepted_calls(
+    *,
+    captured_lookup_outcomes: list[str],
+    captured_rejections: tuple[str, ...],
+) -> None:
+    """Reject intercepted vars behavior outside the exact zero-argument form."""
+    if "arity" in captured_rejections:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker form must be exactly "
+            "vars()"
+        )
+    if len(captured_lookup_outcomes) != 1:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker target must capture "
+            "exactly one vars call"
+        )
+
+
+def _raise_runtime_probe_reflective_vars_zero_target_failure(
+    error: BaseException,
+) -> None:
+    """Raise a sanitized target failure unless the error is a known shape reject."""
+    if (
+        isinstance(error, ValueError)
+        and str(error) in _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_SHAPE_ERROR_MESSAGES
+    ):
+        raise error
+    raise ValueError(
+        _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
+    ) from error
+
+
+def _restore_runtime_probe_reflective_vars_zero_builtin(
+    *,
+    expected_vars: object,
+    original_vars: Callable[..., object],
+) -> ValueError | None:
+    """Restore builtins.vars and report target-time hook drift."""
+    current_vars = builtins.__dict__.get(
+        _REFLECTIVE_BUILTIN_VARS_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    restore_failure: ValueError | None = None
+    if current_vars is not expected_vars:
+        restore_failure = ValueError(
+            "runtime probe reflective builtin vars zero worker builtins.vars changed "
+            "during execution"
+        )
+    try:
+        builtins.__dict__[_REFLECTIVE_BUILTIN_VARS_WORKER_GLOBAL_NAME] = original_vars
+    except Exception:
+        return ValueError(
+            "runtime probe reflective builtin vars zero worker builtins.vars could "
+            "not be restored"
+        )
+    if (
+        builtins.__dict__.get(
+            _REFLECTIVE_BUILTIN_VARS_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not original_vars
+    ):
+        return ValueError(
+            "runtime probe reflective builtin vars zero worker builtins.vars could "
+            "not be restored"
+        )
+    return restore_failure
+
+
 def _validate_runtime_probe_reflective_getattr_worker_observation_for_request(
     observation: RuntimeProbeLocalPythonReflectiveGetattrWorkerObservation,
     request: RuntimeProbeLocalPythonReflectiveGetattrWorkerRequest,
@@ -5406,6 +5916,544 @@ def _runtime_probe_worker_reflective_vars_reason_code_from_replay_field(
     if reason_code is not UnresolvedReasonCode.REFLECTIVE_BUILTIN:
         raise ValueError(
             "runtime probe reflective builtin vars worker reason_code is unsupported"
+        )
+    return reason_code
+
+
+def _validate_runtime_probe_reflective_vars_zero_worker_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> None:
+    """Reject payloads that cannot become the worker-local vars/0 request."""
+    if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker payload must be typed"
+        )
+    _validate_runtime_probe_reflective_vars_zero_payload_family_form(
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+    )
+    _validate_runtime_probe_worker_metadata_text(payload.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        payload.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_invocation_identity(payload.invocation_identity)
+    _validate_runtime_probe_worker_argv(payload.argv)
+    _validate_runtime_probe_worker_path_text(
+        payload.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(payload.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(payload.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    _validate_runtime_probe_reflective_vars_zero_replay_metadata(
+        replay_fields_by_key,
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+    if payload.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker invocation_identity "
+            "must match payload replay identity"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_worker_request(
+    request: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest,
+) -> None:
+    """Reject exact-vars/0 worker requests whose copied metadata drifted."""
+    if not isinstance(request, RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker request must be typed"
+        )
+    _validate_runtime_probe_reflective_vars_zero_payload_family_form(
+        family_label=request.family_label,
+        form_label=request.form_label,
+    )
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker subject_kind "
+            "is unsupported"
+        )
+    if request.reason_code is not UnresolvedReasonCode.REFLECTIVE_BUILTIN:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker reason_code "
+            "is unsupported"
+        )
+    _validate_runtime_probe_worker_metadata_text(request.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        request.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.subject_id,
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_site_id,
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_file_path,
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.boundary_text,
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_reflective_vars_zero_worker_request_boundary_text(
+        request.boundary_text
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=request.source_start_line,
+        start_column=request.source_start_column,
+        end_line=request.source_end_line,
+        end_column=request.source_end_column,
+    )
+    _validate_runtime_probe_worker_invocation_identity(request.invocation_identity)
+    _validate_runtime_probe_worker_argv(request.argv)
+    _validate_runtime_probe_worker_path_text(
+        request.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(request.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(request.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    _validate_runtime_probe_reflective_vars_zero_replay_metadata(
+        replay_fields_by_key,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        family_label=request.family_label,
+        form_label=request.form_label,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+    )
+    for field_key, expected_value in (
+        ("subject_kind", request.subject_kind.value),
+        ("subject_id", request.subject_id),
+        ("source_site_id", request.source_site_id),
+        ("source_file_path", request.source_file_path),
+        ("source_start_line", str(request.source_start_line)),
+        ("source_start_column", str(request.source_start_column)),
+        ("source_end_line", str(request.source_end_line)),
+        ("source_end_column", str(request.source_end_column)),
+        ("reason_code", request.reason_code.value),
+        ("boundary_text", request.boundary_text),
+    ):
+        _validate_runtime_probe_reflective_vars_zero_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        invocation_contract_revision=request.invocation_contract_revision,
+        argv=request.argv,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+        timeout_seconds=request.timeout_seconds,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+    if request.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker invocation_identity "
+            "must match request replay identity"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_worker_request_boundary_text(
+    boundary_text: str,
+) -> None:
+    """Reject exact-vars/0 requests that do not carry the approved boundary."""
+    if boundary_text != _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_BOUNDARY_TEXT:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker boundary_text must be "
+            f"{_REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_BOUNDARY_TEXT}"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_worker_observer(
+    observer: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObserver,
+) -> None:
+    """Reject non-callable exact-vars/0 observer injections."""
+    if not callable(observer):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker observer must "
+            "be callable"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_target_callable(
+    target: object,
+) -> None:
+    """Reject non-callable target injections before vars/0 interception."""
+    if not callable(target):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker target must be callable"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget,
+    source_module: ModuleType,
+) -> None:
+    """Reject injected source modules that do not match the vars/0 replay target."""
+    if not isinstance(source_module, ModuleType):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero replay target source module "
+            "must be typed"
+        )
+    if source_module.__name__ != replay_target.source_module_name:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero replay target source module "
+            "must match source_module_name"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_worker_observation_for_request(
+    observation: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation,
+    request: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerRequest,
+) -> None:
+    """Reject observer results that do not belong to the adapted vars/0 request."""
+    _validate_runtime_probe_reflective_vars_zero_worker_request(request)
+    _validate_runtime_probe_reflective_vars_zero_worker_observation(observation)
+    if observation.request != request:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker observation request "
+            "must match adapted request"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_worker_observation(
+    observation: RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation,
+) -> None:
+    """Reject exact-vars/0 observation metadata that drifted from its request."""
+    if not isinstance(
+        observation,
+        RuntimeProbeLocalPythonReflectiveVarsZeroWorkerObservation,
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker observation must "
+            "be typed"
+        )
+    _validate_runtime_probe_reflective_vars_zero_worker_request(observation.request)
+    if observation.lookup_outcome != _REFLECTIVE_BUILTIN_VARS_WORKER_RETURNED_NAMESPACE:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker lookup_outcome "
+            "is unsupported"
+        )
+    for field_name, value, expected_value in (
+        ("plan_id", observation.plan_id, observation.request.plan_id),
+        ("request_id", observation.request_id, observation.request.request_id),
+        (
+            "replay_target_seed",
+            observation.replay_target_seed,
+            observation.request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            observation.replay_selector_seed,
+            observation.request.replay_selector_seed,
+        ),
+        (
+            "invocation_contract_revision",
+            observation.invocation_contract_revision,
+            observation.request.invocation_contract_revision,
+        ),
+        (
+            "invocation_identity",
+            observation.invocation_identity,
+            observation.request.invocation_identity,
+        ),
+    ):
+        _validate_runtime_probe_reflective_vars_zero_observation_field_match(
+            field_name=field_name,
+            value=value,
+            expected_value=expected_value,
+        )
+    if (
+        observation.request_replay_payload_fields
+        != observation.request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker observation "
+            "request_replay_payload_fields must match request"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_replay_target(
+    replay_target: RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget,
+) -> None:
+    """Reject non-executing vars/0 replay targets that drift from their request."""
+    if not isinstance(
+        replay_target,
+        RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget,
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero replay target must be typed"
+        )
+    request = replay_target.request
+    _validate_runtime_probe_reflective_vars_zero_worker_request(request)
+    for field_name, value, expected_value in (
+        ("plan_id", replay_target.plan_id, request.plan_id),
+        ("request_id", replay_target.request_id, request.request_id),
+        ("source_file_path", replay_target.source_file_path, request.source_file_path),
+        (
+            "replay_target_seed",
+            replay_target.replay_target_seed,
+            request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            replay_target.replay_selector_seed,
+            request.replay_selector_seed,
+        ),
+        (
+            "invocation_identity",
+            replay_target.invocation_identity,
+            request.invocation_identity,
+        ),
+    ):
+        _validate_runtime_probe_reflective_vars_zero_replay_target_field_match(
+            field_name=field_name,
+            value=value,
+            expected_value=expected_value,
+        )
+    if (
+        replay_target.request_replay_payload_fields
+        != request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero replay target "
+            "request_replay_payload_fields must match request"
+        )
+
+    expected_source_module_name = (
+        _runtime_probe_dynamic_import_source_module_name_from_path(
+            request.source_file_path
+        )
+    )
+    if replay_target.source_module_name != expected_source_module_name:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero replay target "
+            "source_module_name must match request source_file_path"
+        )
+    expected_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=expected_source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    if replay_target.replay_target_attribute_path != expected_attribute_path:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero replay target "
+            "replay_target_attribute_path must match request replay_target_seed"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_replay_target_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied vars/0 replay-target identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero replay target "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_observation_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied vars/0 observation identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker observation "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_payload_family_form(
+    *,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """Reject unsupported reflective-builtin vars/0 family/form labels."""
+    if family_label is not RuntimeProbeFamily.REFLECTIVE_BUILTIN:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker family_label "
+            "is unsupported"
+        )
+    if form_label != _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_FORM_LABEL:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker form_label "
+            "is unsupported"
+        )
+
+
+def _validate_runtime_probe_reflective_vars_zero_replay_metadata(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    plan_id: str,
+    request_id: str,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    replay_target_seed: str,
+    replay_selector_seed: str,
+) -> None:
+    """Reject replay fields that drift from exact-vars/0 worker metadata."""
+    for field_key, expected_value in (
+        ("plan_id", plan_id),
+        ("request_id", request_id),
+        ("family_label", family_label.value),
+        ("form_label", form_label),
+        ("replay_target_seed", replay_target_seed),
+        ("replay_selector_seed", replay_selector_seed),
+    ):
+        _validate_runtime_probe_reflective_vars_zero_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    if replay_fields_by_key["subject_kind"] != (
+        SemanticSubjectKind.UNSUPPORTED_FINDING.value
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker subject_kind "
+            "is unsupported"
+        )
+    if replay_fields_by_key["reason_code"] != (
+        UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker reason_code "
+            "is unsupported"
+        )
+    _runtime_probe_worker_subject_kind_from_replay_field(
+        replay_fields_by_key["subject_kind"]
+    )
+    _runtime_probe_worker_reflective_vars_zero_reason_code_from_replay_field(
+        replay_fields_by_key["reason_code"]
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["subject_id"],
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_site_id"],
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_file_path"],
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["boundary_text"],
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_reflective_vars_zero_worker_request_boundary_text(
+        replay_fields_by_key["boundary_text"]
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+    )
+
+
+def _validate_runtime_probe_reflective_vars_zero_replay_field_match(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    field_key: str,
+    expected_value: str,
+) -> None:
+    """Require a replay field to match a copied exact-vars/0 request field."""
+    if replay_fields_by_key[field_key] != expected_value:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker "
+            f"{field_key} must match request replay payload fields"
+        )
+
+
+def _runtime_probe_worker_reflective_vars_zero_reason_code_from_replay_field(
+    value: str,
+) -> UnresolvedReasonCode:
+    """Parse and validate the reflective-builtin reason copied into replay."""
+    try:
+        reason_code = UnresolvedReasonCode(value)
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker reason_code "
+            "is unsupported"
+        ) from error
+    if reason_code is not UnresolvedReasonCode.REFLECTIVE_BUILTIN:
+        raise ValueError(
+            "runtime probe reflective builtin vars zero worker reason_code "
+            "is unsupported"
         )
     return reason_code
 
