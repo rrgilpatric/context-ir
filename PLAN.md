@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`230c8cf Add reflective vars zero subprocess support`. The latest pushed
+`01c2907 Add reflective dir subprocess support`. The latest pushed
 source/contract authority is also
-`230c8cf Add reflective vars zero subprocess support`. Live git refs
+`01c2907 Add reflective dir subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -1038,6 +1038,204 @@ release unit:
   - staged files: none
   - untracked files: none
   - no late scope widening found
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - create one local commit for the exact six-file unit
+  - push remains Ryan-gated
+
+Local commit for `reflective_builtin:dir/1` local-Python subprocess release
+unit:
+
+- local commit creation completed for the exact six-file unit after
+  release-unit audit, full regression, and commit-gating cleared
+- local commit:
+  - `01c2907 Add reflective dir subprocess support`
+- repo-backed truth after local commit and before this continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `01c2907 Add reflective dir subprocess support`
+  - `origin/main` remains at
+    `230c8cf Add reflective vars zero subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this docs-only continuity sync
+  - staged files: none before this docs-only continuity sync
+  - untracked files: none before this docs-only continuity sync
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `01c2907 Add reflective dir subprocess support`
+  - pushed: no
+- next route:
+  - Ryan authorization for push, or an explicit hold without pushing
+
+Pushed `reflective_builtin:dir/1` local-Python subprocess release:
+
+- Ryan-authorized push completed for
+  `01c2907 Add reflective dir subprocess support`
+- pushed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `01c2907 Add reflective dir subprocess support`
+  - pushed: yes
+  - next route: select the next bounded north-star lane
+
+Workspace-only post-`01c2907` route selection:
+
+- reviewed live repo state after pushed
+  `01c2907 Add reflective dir subprocess support`; findings: none
+- selected next bounded north-star lane: exact
+  `reflective_builtin:dir/0` local-Python subprocess support
+- reason:
+  - `dir()` is already a planned and admissible reflective-builtin runtime
+    observation with existing internal evidence for
+    `listing_entry_count=...` and a non-empty durable payload reference
+  - the pushed `dir(obj)` subprocess release proves the durable listing
+    reference path, so zero-argument `dir()` is now the smallest same-family
+    follow-on
+  - this completes the currently planned reflective-builtin listing pair
+    without opening runtime-mutation, exec/eval, or metaclass subprocess
+    families
+- alternatives deferred:
+  - `runtime_mutation:globals/0` and `runtime_mutation:locals/0`: defer
+    because they open a new runtime family and are not required to complete
+    the reflective listing path
+  - `runtime_mutation:setattr/3` and `runtime_mutation:delattr/2`: defer
+    because they require mutation-specific restoration and outcome contracts
+  - `exec_or_eval:*`: defer because they require replay-source validation and
+    source digest/durable proof contracts
+  - `metaclass_behavior:keyword`: defer because class-creation behavior and
+    durable proof make it larger than a same-family reflective builtin slice
+- non-goals for the next lane:
+  - no generalized reflective-builtin support
+  - no runtime-mutation, `exec`/`eval`, or metaclass subprocess support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or
+    run-spec changes
+- next route: exact `reflective_builtin:dir/0` local-Python subprocess
+  implementation lane
+
+Workspace-only accepted `reflective_builtin:dir/0` local-Python subprocess
+release unit:
+
+- reviewed the returned implementation slice; findings: none
+- repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `01c2907 Add reflective dir subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- accepted implementation:
+  - `src/context_ir/runtime_probe_worker.py` now registers exact
+    `reflective_builtin:dir/0` in the default local-Python worker table
+  - the worker validates exact reflective metadata, reason
+    `REFLECTIVE_BUILTIN`, unsupported-finding subject kind, replay identity,
+    and boundary text `dir()` before replay execution
+  - the concrete worker observer imports the replay target source module,
+    resolves a zero-argument target, temporarily wraps `builtins.dir`,
+    captures exactly one zero-argument `dir()` call with caller-frame
+    semantics, restores `builtins.dir` on success and failure, and emits
+    `listing_entry_count=<decimal>`
+  - successful observations carry deterministic durable artifact reference
+    `artifact://runtime-probe/dir-listing/{request_id}.json`
+  - source-global `dir` shadowing or target-time drift, builtin mutation or
+    deletion, malformed metadata, boundary drift, required-argument targets,
+    target exceptions, missing capture, multiple captures, wrong-arity and
+    kwargs forms, adjacent reflective forms, and dynamic-import requests
+    through the reflective runner all fail closed
+  - `src/context_ir/runtime_probe_execution.py` now has
+    `make_runtime_probe_reflective_dir_zero_local_python_subprocess_runner(...)`
+    as a narrow parent runner factory for exactly `reflective_builtin:dir/0`
+  - dynamic-import subprocess behavior, exact `hasattr/2`, exact
+    `getattr/2`, exact `getattr/3`, exact `vars/1`, exact `vars/0`, and exact
+    `dir/1` behavior remain covered
+  - no generalized reflective-builtin support, runtime-mutation, `exec`/`eval`,
+    metaclass support, public API, package-root export, schema, MCP, tool
+    facade, scoring, compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS,
+    fixture, task, or run-spec change was added
+- focused control validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`,
+    `4 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`, `Success: no issues found in
+    37 source files`
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py -v`,
+    `748 passed`
+  - `git diff --check`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run one combined read-only release gate over the exact six-file unit
+  - the release-gate lane must stop on the first finding and must not edit,
+    stage, commit, or push
+
+Combined read-only release gate for `reflective_builtin:dir/0` local-Python
+subprocess release unit:
+
+- reviewed the returned combined read-only release-gate result; findings: none
+- release-unit audit:
+  - passed and confirmed the unit is bounded to exact
+    `reflective_builtin:dir/0` local-Python subprocess support plus
+    continuity updates
+  - confirmed no runtime-mutation, `exec`/`eval`, metaclass, public API,
+    schema, MCP, scoring, compiler, admission, README, EVAL, PUBLIC_CLAIMS,
+    fixture, task, run-spec, package-root export, or generalized
+    runtime-support widening
+  - confirmed pushed dynamic-import subprocess forms, exact `hasattr/2`,
+    exact `getattr/2`, exact `getattr/3`, exact `vars/1`, exact `vars/0`,
+    and exact `dir/1` behavior remain preserved
+- full regression:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1451 passed`
+  - `git diff --check`: passed
+- commit-gating:
+  - passed for exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+- repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `01c2907 Add reflective dir subprocess support`
+  - live control verification matched the returned gate report
 - release state:
   - accepted in workspace: yes, first-pass
   - release-unit-audit-cleared: yes
@@ -5322,8 +5520,17 @@ sequencing for `c1a12d7` absent new findings.
   implementation slice
 - [x] Combined read-only release gate for the exact six-file
   `reflective_builtin:dir/1` local-Python subprocess release unit
-- [ ] Local commit creation for the exact six-file
+- [x] Local commit creation for the exact six-file
   `reflective_builtin:dir/1` local-Python subprocess release unit
+- [x] Ryan-authorized push for the exact six-file
+  `reflective_builtin:dir/1` local-Python subprocess release unit
+- [x] Post-`01c2907` control selection of the next bounded north-star lane
+- [x] Exact `reflective_builtin:dir/0` local-Python subprocess
+  implementation slice
+- [x] Combined read-only release gate for the exact six-file
+  `reflective_builtin:dir/0` local-Python subprocess release unit
+- [ ] Local commit creation for the exact six-file
+  `reflective_builtin:dir/0` local-Python subprocess release unit
 
 ## What Is In Progress
 
@@ -6232,10 +6439,10 @@ supersession entries.
 ## What Is Next
 
 Immediate next route: local commit creation for the exact six-file
-`reflective_builtin:dir/1` local-Python subprocess release unit after
+`reflective_builtin:dir/0` local-Python subprocess release unit after
 release-unit audit, full regression, and commit-gating cleared. Current pushed
-release authority and latest pushed source/contract authority are
-`230c8cf Add reflective vars zero subprocess support`.
+release authority and latest pushed source/contract authority remain
+`01c2907 Add reflective dir subprocess support`.
 
 Selected next lane:
 
@@ -6245,13 +6452,6 @@ Selected next lane:
   `tests/test_runtime_probe_execution.py`, and
   `tests/test_runtime_probe_worker.py`
 - push remains Ryan-gated after local commit creation
-- treat pushed dynamic-import subprocess forms, exact `hasattr/2`, exact
-  `getattr/2`, exact `getattr/3`, exact `vars/1`, and exact `vars/0` as
-  closed absent a new finding
-- do not reopen the pushed zero-argument `vars` release unit absent a new
-  finding
-- keep `reflective_builtin:dir/0` and all runtime-mutation, exec/eval, and
-  metaclass subprocess forms fail-closed
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 

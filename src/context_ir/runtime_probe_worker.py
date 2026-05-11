@@ -123,6 +123,18 @@ _REFLECTIVE_BUILTIN_VARS_WORKER_RETURNED_NAMESPACE = "returned_namespace"
 _REFLECTIVE_BUILTIN_VARS_WORKER_RAISED_TYPE_ERROR = "raised_type_error"
 _REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL = "reflective_builtin:dir/1"
 _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT = "dir(obj)"
+_REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_FORM_LABEL = "reflective_builtin:dir/0"
+_REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_BOUNDARY_TEXT = "dir()"
+_REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT_BY_FORM_LABEL = MappingProxyType(
+    {
+        _REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL: (
+            _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT
+        ),
+        _REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_FORM_LABEL: (
+            _REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_BOUNDARY_TEXT
+        ),
+    }
+)
 _REFLECTIVE_BUILTIN_DIR_WORKER_GLOBAL_NAME = "dir"
 _REFLECTIVE_BUILTIN_WORKER_FORM_LABELS = (
     _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL,
@@ -131,6 +143,7 @@ _REFLECTIVE_BUILTIN_WORKER_FORM_LABELS = (
     _REFLECTIVE_BUILTIN_VARS_WORKER_FORM_LABEL,
     _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_FORM_LABEL,
     _REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL,
+    _REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_FORM_LABEL,
 )
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
     "runtime probe reflective builtin hasattr worker target execution failed"
@@ -181,7 +194,10 @@ _REFLECTIVE_BUILTIN_DIR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
     "runtime probe reflective builtin dir worker target execution failed"
 )
 _REFLECTIVE_BUILTIN_DIR_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
-    ("runtime probe reflective builtin dir worker form must be exactly dir(obj)",)
+    (
+        "runtime probe reflective builtin dir worker form must be exactly dir(obj)",
+        "runtime probe reflective builtin dir worker form must be exactly dir()",
+    )
 )
 _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "plan_id",
@@ -637,7 +653,7 @@ class RuntimeProbeLocalPythonReflectiveVarsZeroReplayTarget:
 
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonReflectiveDirWorkerRequest:
-    """Worker-local request contract for exact ``dir(obj)`` probes."""
+    """Worker-local request contract for selected exact ``dir`` probes."""
 
     plan_id: str
     request_id: str
@@ -670,7 +686,7 @@ class RuntimeProbeLocalPythonReflectiveDirWorkerRequest:
 
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonReflectiveDirWorkerObservation:
-    """Worker-local observation metadata for exact ``dir(obj)`` probes."""
+    """Worker-local observation metadata for selected exact ``dir`` probes."""
 
     request: RuntimeProbeLocalPythonReflectiveDirWorkerRequest
     plan_id: str
@@ -690,7 +706,7 @@ class RuntimeProbeLocalPythonReflectiveDirWorkerObservation:
 
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonReflectiveDirReplayTarget:
-    """Worker-local non-executing replay target plan for exact ``dir/1``."""
+    """Worker-local non-executing replay target plan for exact ``dir`` probes."""
 
     request: RuntimeProbeLocalPythonReflectiveDirWorkerRequest
     plan_id: str
@@ -1074,11 +1090,23 @@ class _RuntimeProbeReflectiveVarsZeroCapture:
 class _RuntimeProbeReflectiveDirCapture:
     """Mutable capture state for one controlled ``dir`` execution."""
 
-    original_dir: Callable[[object], list[str]]
+    expected_form_label: str
+    original_dir: Callable[..., list[str]]
     captured_listings: list[tuple[str, ...]] = field(default_factory=list)
     captured_rejections: list[str] = field(default_factory=list)
 
     def dir(self, *args: object, **kwargs: object) -> list[str]:
+        """Capture one exact selected ``dir`` call."""
+        if self.expected_form_label == _REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_FORM_LABEL:
+            return self._capture_zero_arg_dir(args=args, kwargs=kwargs)
+        return self._capture_one_arg_dir(args=args, kwargs=kwargs)
+
+    def _capture_one_arg_dir(
+        self,
+        *,
+        args: tuple[object, ...],
+        kwargs: dict[str, object],
+    ) -> list[str]:
         """Capture one exact one-argument ``dir`` call."""
         if kwargs or len(args) != 1:
             self.captured_rejections.append("arity")
@@ -1088,6 +1116,22 @@ class _RuntimeProbeReflectiveDirCapture:
             )
         (obj,) = args
         listing = self.original_dir(obj)
+        self.captured_listings.append(tuple(listing))
+        return listing
+
+    def _capture_zero_arg_dir(
+        self,
+        *,
+        args: tuple[object, ...],
+        kwargs: dict[str, object],
+    ) -> list[str]:
+        """Capture one exact zero-argument ``dir`` call."""
+        if kwargs or args:
+            self.captured_rejections.append("arity")
+            raise ValueError(
+                "runtime probe reflective builtin dir worker form must be exactly dir()"
+            )
+        listing = sorted(sys._getframe(2).f_locals)
         self.captured_listings.append(tuple(listing))
         return listing
 
@@ -2601,6 +2645,7 @@ def materialize_runtime_probe_reflective_dir_worker_observation_from_target(
     listing_entry_count = _runtime_probe_reflective_dir_captured_listing_entry_count(
         source_module,
         target,
+        form_label=replay_target.request.form_label,
     )
     return materialize_runtime_probe_reflective_dir_worker_observation(
         replay_target.request,
@@ -3135,9 +3180,22 @@ def build_runtime_probe_reflective_dir_worker_handler_entry(
     observer: RuntimeProbeLocalPythonReflectiveDirWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
     """Return an injected handler entry for exact ``dir(obj)``."""
+    return _build_runtime_probe_reflective_dir_worker_handler_entry(
+        observer=observer,
+        form_label=_REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL,
+    )
+
+
+def _build_runtime_probe_reflective_dir_worker_handler_entry(
+    *,
+    observer: RuntimeProbeLocalPythonReflectiveDirWorkerObserver,
+    form_label: str,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for one selected exact ``dir`` form."""
+    _validate_runtime_probe_reflective_dir_form_label(form_label)
     return RuntimeProbeLocalPythonWorkerHandlerEntry(
         family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
-        form_label=_REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL,
+        form_label=form_label,
         handler=RuntimeProbeLocalPythonReflectiveDirWorkerHandlerAdapter(
             observer=observer
         ),
@@ -3194,8 +3252,15 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
         ),
     )
     reflective_dir_entries = (
-        build_runtime_probe_reflective_dir_worker_handler_entry(
-            observe_runtime_probe_reflective_dir_worker_request
+        *(
+            _build_runtime_probe_reflective_dir_worker_handler_entry(
+                observer=observe_runtime_probe_reflective_dir_worker_request,
+                form_label=form_label,
+            )
+            for form_label in (
+                _REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL,
+                _REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_FORM_LABEL,
+            )
         ),
     )
     return (
@@ -4916,11 +4981,17 @@ def _restore_runtime_probe_reflective_vars_zero_builtin(
 def _runtime_probe_reflective_dir_captured_listing_entry_count(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonReflectiveDirTargetCallable,
+    *,
+    form_label: str,
 ) -> int:
-    """Run a target while capturing one exact ``dir(obj)`` call."""
+    """Run a target while capturing one exact selected ``dir`` call."""
     _validate_runtime_probe_reflective_dir_source_global_absent(source_module)
-    original_dir: Callable[[object], list[str]] = builtins.dir
-    capture = _RuntimeProbeReflectiveDirCapture(original_dir=original_dir)
+    _validate_runtime_probe_reflective_dir_form_label(form_label)
+    original_dir: Callable[..., list[str]] = builtins.dir
+    capture = _RuntimeProbeReflectiveDirCapture(
+        expected_form_label=form_label,
+        original_dir=original_dir,
+    )
     controlled_dir: Callable[..., object] = capture.dir
     original_stdout = sys.stdout
     original_stderr = sys.stderr
@@ -5058,7 +5129,7 @@ def _restore_runtime_probe_reflective_dir_source_global(
 def _restore_runtime_probe_reflective_dir_builtin(
     *,
     expected_dir: object,
-    original_dir: Callable[[object], list[str]],
+    original_dir: Callable[..., list[str]],
 ) -> ValueError | None:
     """Restore builtins.dir and report target-time hook drift."""
     current_dir = builtins.__dict__.get(
@@ -7119,7 +7190,8 @@ def _validate_runtime_probe_reflective_dir_worker_request(
         field_name="boundary_text",
     )
     _validate_runtime_probe_reflective_dir_worker_request_boundary_text(
-        request.boundary_text
+        form_label=request.form_label,
+        boundary_text=request.boundary_text,
     )
     _validate_runtime_probe_worker_metadata_text(
         request.replay_target_seed,
@@ -7195,13 +7267,18 @@ def _validate_runtime_probe_reflective_dir_worker_request(
 
 
 def _validate_runtime_probe_reflective_dir_worker_request_boundary_text(
+    *,
+    form_label: str,
     boundary_text: str,
 ) -> None:
     """Reject exact-dir requests that do not carry the approved boundary."""
-    if boundary_text != _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT:
+    expected_boundary_text = _runtime_probe_reflective_dir_boundary_text_for_form_label(
+        form_label
+    )
+    if boundary_text != expected_boundary_text:
         raise ValueError(
             "runtime probe reflective builtin dir worker boundary_text must be "
-            f"{_REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT}"
+            f"{expected_boundary_text}"
         )
 
 
@@ -7435,10 +7512,23 @@ def _validate_runtime_probe_reflective_dir_payload_family_form(
         raise ValueError(
             "runtime probe reflective builtin dir worker family_label is unsupported"
         )
-    if form_label != _REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL:
+    _validate_runtime_probe_reflective_dir_form_label(form_label)
+
+
+def _validate_runtime_probe_reflective_dir_form_label(form_label: str) -> None:
+    """Reject reflective-dir forms outside the selected local-Python handlers."""
+    if form_label not in _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT_BY_FORM_LABEL:
         raise ValueError(
             "runtime probe reflective builtin dir worker form_label is unsupported"
         )
+
+
+def _runtime_probe_reflective_dir_boundary_text_for_form_label(
+    form_label: str,
+) -> str:
+    """Return the exact source boundary for a selected reflective-dir form."""
+    _validate_runtime_probe_reflective_dir_form_label(form_label)
+    return _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT_BY_FORM_LABEL[form_label]
 
 
 def _validate_runtime_probe_reflective_dir_replay_metadata(
@@ -7500,7 +7590,8 @@ def _validate_runtime_probe_reflective_dir_replay_metadata(
         field_name="boundary_text",
     )
     _validate_runtime_probe_reflective_dir_worker_request_boundary_text(
-        replay_fields_by_key["boundary_text"]
+        form_label=form_label,
+        boundary_text=replay_fields_by_key["boundary_text"],
     )
     _validate_runtime_probe_worker_source_span(
         start_line=_runtime_probe_worker_replay_span_value(
