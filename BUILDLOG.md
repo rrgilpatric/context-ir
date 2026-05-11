@@ -2,6 +2,254 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-11 -- Dynamic Import Local-Python Recompile Helper Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  four-file dynamic-import local-Python recompile helper release unit.
+- Findings: none.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against `AGENTS.md`,
+    `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `README.md`, `EVAL.md`, or
+    `PUBLIC_CLAIMS.md`
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1176 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - latest pushed source/contract authority is
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_observation_recompile.py`, and
+    `tests/test_runtime_observation_recompile.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1176 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Recompile Helper Acceptance
+
+- Reviewed the returned dynamic-import local-Python recompile helper
+  implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - latest pushed source/contract authority is
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_observation_recompile.py`, and
+    `tests/test_runtime_observation_recompile.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - `src/context_ir/runtime_observation_recompile.py` now has internal helper
+    `apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile`
+  - the helper builds
+    `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+    and delegates into the existing
+    `apply_runtime_probe_runner_for_diagnostic_and_recompile(...)` bridge
+  - the Python executable, invocation contract revision, completion contract
+    revision, repository snapshot basis, probe contract revision, runtime
+    assumptions, runner contract revision, timeout, runner environment, and
+    runner assumptions remain explicit caller inputs
+  - focused coverage in `tests/test_runtime_observation_recompile.py` proves
+    the helper runs a real `python -m context_ir.runtime_probe_worker`
+    subprocess through the pushed default dynamic-import worker path, admits
+    `imported_module=plugins.recompile_subprocess`, and recompiles the
+    diagnostic boundary with attached runtime support
+  - export-boundary assertions keep the helper out of package-root exports and
+    `runtime_observation_recompile.__all__`
+  - no public API, MCP, tool facade, package-root export, schema, eval,
+    scoring, compiler, public-claim, stdout-protocol, worker behavior,
+    admission contract, result-assembly, automatic environment discovery,
+    default `sys.executable` policy, or new runtime family/form was added
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `339 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_observation_recompile.py tests/test_runtime_observation_recompile.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_observation_recompile.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_worker.py -q`,
+    reporting `339 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Recompile Helper Next-Lane Routing
+
+- Ryan authorized proceeding with selection of the next implementation lane
+  toward the capability-tier north star after the canonical release-state
+  continuity correction.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - latest pushed source/contract authority is
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - dirty files are limited to workspace-only continuity in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next implementation lane to an internal recompile-layer
+  helper that composes the pushed dynamic-import local-Python subprocess runner
+  factory with the existing runner-to-admission-to-recompile bridge.
+- Selected lane:
+  - add a narrowly scoped helper in
+    `src/context_ir/runtime_observation_recompile.py`
+  - the helper should build the dynamic-import local-Python subprocess runner
+    through
+    `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+    and pass it into the existing
+    `apply_runtime_probe_runner_for_diagnostic_and_recompile(...)` path
+  - the helper must keep the Python executable, invocation contract revision,
+    completion contract revision, repository snapshot basis, probe contract
+    revision, runtime assumptions, runner contract revision, timeout,
+    runner environment, and runner assumptions explicit caller inputs
+  - focused tests belong in `tests/test_runtime_observation_recompile.py`
+  - the helper remains internal and must stay out of package-root exports and
+    `runtime_observation_recompile.__all__` unless the execution lane returns
+    `NEEDS-CONTROL`
+- Explicit non-goals:
+  - no public API, MCP, tool facade, package-root export, schema, eval,
+    scoring, compiler, public-claim, stdout-protocol, worker behavior,
+    admission contract, result-assembly, or new runtime family/form change
+  - no automatic environment discovery, default `sys.executable` policy, or
+    automatic runner selection from the public diagnose/recompile path
+  - no changes to `src/context_ir/runtime_probe_execution.py` unless the
+    execution lane finds a blocker and returns `NEEDS-CONTROL`
+- Alternatives considered:
+  - move directly to public/API/MCP or tool-facade wiring
+  - broaden the dynamic-import family/form set
+  - add another test-only proof around the already-pushed runner factory
+  - start another runtime family before closing the internal dynamic-import
+    orchestration path
+- Reasoning:
+  - `6d4e04c` codified the parent subprocess runner composition but callers
+    still need to wire that runner manually into recompile
+  - the north-star path needs a controlled internal orchestration boundary
+    before any public or tool-facing surface is widened
+  - this slice advances the real hybrid static + runtime path while preserving
+    explicit inputs and narrow dynamic-import semantics
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Canonical Release-State Block Continuity Correction
+
+- Corrected the active canonical release-state block in `PLAN.md` before
+  selecting the next bounded north-star lane.
+- Reason:
+  - the newer `What Is Next` routing and `BUILDLOG.md` post-push entry
+    correctly identified
+    `6d4e04c Add dynamic import subprocess runner factory` as the current
+    pushed release and latest pushed source/contract authority
+  - the top canonical block in `PLAN.md` still named
+    `ced8850 Prove runtime probe subprocess recompile bridge` and
+    `2c21798 Register dynamic import worker default handler`
+  - live git refs confirmed local `HEAD` and `origin/main` at `6d4e04c`
+- Correction:
+  - `PLAN.md` now names `6d4e04c` as both current pushed release authority
+    and latest pushed source/contract authority
+  - `PLAN.md` now includes the pushed dynamic-import local-Python subprocess
+    runner factory in the canonical active release-state block
+- Release state:
+  - this is a workspace-only continuity correction
+  - no implementation lane is active
+  - nothing staged
+  - no untracked files
+  - next control action remains selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Local-Python Runner Factory Post-Push Routing
+
+- Ryan-authorized push completed for the dynamic-import local-Python
+  subprocess runner factory release unit.
+- Pushed commit:
+  - `6d4e04c Add dynamic import subprocess runner factory`
+- Commit contents:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - latest pushed source/contract authority is
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - workspace-only post-push continuity updates are present in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1175 passed`
+  - no active release gate, staging, local commit creation, or push remains for
+    `6d4e04c`
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-10 -- Dynamic Import Local-Python Runner Factory Local Commit Routing
+
+- Local commit creation completed for the dynamic-import local-Python
+  subprocess runner factory release unit.
+- Commit:
+  - `6d4e04c Add dynamic import subprocess runner factory`
+- Commit contents:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - `origin/main` at
+    `ced8850 Prove runtime probe subprocess recompile bridge`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1175 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-10 -- Dynamic Import Local-Python Runner Factory Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact

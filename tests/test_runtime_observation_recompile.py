@@ -25,6 +25,7 @@ from context_ir.runtime_observation_recompile import (
     RuntimeObservationRecompileApplication,
     RuntimeProbeResultBatchRecompileApplication,
     RuntimeProbeRunnerCallableRecompileApplication,
+    apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile,
     apply_runtime_observations_for_diagnostic_and_recompile,
     apply_runtime_probe_result_batch_for_diagnostic_and_recompile,
     apply_runtime_probe_runner_for_diagnostic_and_recompile,
@@ -1162,6 +1163,115 @@ def test_runtime_probe_runner_callable_recompile_uses_local_python_worker_subpro
     )
 
 
+def test_dynamic_import_local_python_subprocess_recompile_helper_uses_default_worker(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The internal helper composes the default worker runner with recompile."""
+    _write_local_python_dynamic_import_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    boundary_text = 'importlib.import_module("plugins.recompile_subprocess")'
+    unsupported_id = _unsupported_id_for(program, boundary_text)
+    previous_result = compile_semantic_context(
+        program,
+        "dynamic import",
+        budget=32,
+    )
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence=boundary_text,
+    )
+    diagnostic = diagnose_semantic_miss(previous_result, miss_evidence, program)
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert diagnostic.omitted_unit_ids == (unsupported_id,)
+    assert len(plan.requests) == 1
+    request = plan.requests[0]
+    assert request.boundary_text == boundary_text
+    assert (
+        request.family_label is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+    )
+    assert request.form_label == "dynamic_import:importlib.import_module/1"
+    assert request.replay_target_seed == "main.run"
+
+    original_run = runtime_probe_execution.subprocess.run
+    subprocess_invocations: list[tuple[str, ...]] = []
+
+    def spying_run(*args: object, **kwargs: object) -> object:
+        argv = args[0]
+        if isinstance(argv, tuple | list):
+            subprocess_invocations.append(tuple(str(part) for part in argv))
+        else:
+            subprocess_invocations.append((str(argv),))
+        return original_run(*args, **kwargs)
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", spying_run)
+
+    result = apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        previous_result,
+        miss_evidence,
+        delta_budget=160,
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        probe_contract_revision="runtime-probe-contract:test.1",
+        runtime_assumptions=_runner_runtime_assumptions(),
+        runner_contract_revision="runtime-probe-runner:test.1",
+        timeout_seconds=30,
+        runner_environment=_local_python_runner_environment(tmp_path),
+        runner_assumptions=_runner_assumptions(),
+    )
+    collection = result.runner_attempt_collection
+    recompile_application = result.result_batch_recompile_application
+    attempt = collection.attempts[0]
+    observed_result = collection.result_batch.results[0]
+    admission = recompile_application.observation_application.admissions[0]
+    recompiled_boundary = _boundary_for(
+        recompile_application.recompile_result.diagnostic,
+        unsupported_id,
+    )
+    expected_payload = (
+        _probe_field("imported_module", "plugins.recompile_subprocess"),
+    )
+
+    assert subprocess_invocations == [
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+    ]
+    assert isinstance(result, RuntimeProbeRunnerCallableRecompileApplication)
+    assert collection.runner_request_batch.request_ids == plan.request_ids
+    assert collection.runner_request_batch.runner_requests[0].request is request
+    assert attempt.request is request
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == expected_payload
+    assert attempt.failure_summary is None
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.request is request
+    assert observed_result.normalized_payload == expected_payload
+    assert observed_result.is_admissible_runtime_backed_proof is True
+    assert admission.request is request
+    assert admission.request_id == observed_result.request_id
+    assert admission.observation.normalized_payload == (
+        _runtime_fields_from_probe_fields(expected_payload)
+    )
+    _assert_observation_copied_probe_result(
+        admission.observation,
+        observed_result,
+    )
+    assert recompile_application.result_batch_admission.non_proof_results == ()
+    assert recompile_application.non_proof_results == ()
+    assert recompile_application.observation_application.updated_program is not program
+    assert recompiled_boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert recompiled_boundary.has_attached_runtime_provenance is True
+    assert (
+        unsupported_id in recompile_application.recompile_result.newly_selected_unit_ids
+    )
+
+
 def test_runtime_probe_runner_callable_recompile_preserves_non_proof_results(
     tmp_path: Path,
 ) -> None:
@@ -1477,6 +1587,12 @@ def test_runtime_probe_result_batch_recompile_helper_is_internal() -> None:
         context_ir,
         "RuntimeProbeRunnerCallableRecompileApplication",
     )
+    helper_name = (
+        "apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile"
+    )
+    assert helper_name not in runtime_observation_recompile.__all__
+    assert helper_name not in context_ir.__all__
+    assert not hasattr(context_ir, helper_name)
 
 
 def test_runtime_observation_recompile_empty_observations_recompile_original_program(
