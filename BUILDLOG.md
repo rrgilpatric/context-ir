@@ -2,6 +2,228 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-11 -- Dynamic Import Local-Python Tool Facade Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  four-file dynamic-import local-Python tool-facade release unit.
+- Findings: none.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against `AGENTS.md`,
+    `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `README.md`, `EVAL.md`, or
+    `PUBLIC_CLAIMS.md`
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1178 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `842ddda Add dynamic import recompile helper`
+  - latest pushed source/contract authority is
+    `842ddda Add dynamic import recompile helper`
+  - dirty files exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1178 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Tool Facade Acceptance
+
+- Reviewed the returned dynamic-import local-Python tool-facade implementation
+  slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `842ddda Add dynamic import recompile helper`
+  - latest pushed source/contract authority is
+    `842ddda Add dynamic import recompile helper`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - `src/context_ir/tool_facade.py` now has
+    `SemanticDynamicImportLocalPythonSubprocessRecompileRequest`,
+    `SemanticDynamicImportLocalPythonSubprocessRecompileResponse`, and
+    `recompile_repository_context_with_dynamic_import_local_python_subprocess`
+  - the facade delegates to
+    `apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile(...)`
+  - caller inputs remain explicit for the Python executable, invocation and
+    completion revisions, repository snapshot basis, probe contract revision,
+    runtime assumptions, runner contract revision, timeout, runner
+    environment, runner assumptions, and optional embedding function
+  - the response mirrors the nested runner preparation, attempt collection,
+    result-batch admission, observation application, recompile result, compile
+    result, diagnostic, budget, and selected/upgraded unit identities
+  - focused coverage in `tests/test_tool_facade.py` proves real subprocess
+    behavior, explicit-input delegation, mirror-field enforcement, package-root
+    export quarantine, and unchanged MCP exports
+  - new names are added to `tool_facade.__all__` only
+  - package-root exports and MCP exports remain unchanged
+  - no README, EVAL, PUBLIC_CLAIMS, public benchmark, eval, scoring, compiler,
+    stdout-protocol, worker behavior, admission contract, result-assembly,
+    automatic environment discovery, default `sys.executable` policy,
+    generalized dynamic-import support claim, or new runtime family/form was
+    added
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `387 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/tool_facade.py tests/test_tool_facade.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/tool_facade.py tests/test_tool_facade.py`,
+    reporting `2 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_tool_facade.py tests/test_runtime_observation_recompile.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_mcp_server.py -q`,
+    reporting `387 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact four-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Tool Facade Next-Lane Routing
+
+- Ryan authorized proceeding with the next bounded north-star step after
+  `842ddda Add dynamic import recompile helper` was pushed.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `842ddda Add dynamic import recompile helper`
+  - latest pushed source/contract authority is
+    `842ddda Add dynamic import recompile helper`
+  - dirty files are limited to workspace-only post-push/next-route continuity
+    in `PLAN.md` and `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next implementation lane to a bounded tool-facade
+  source/contract slice that exposes the dynamic-import local-Python recompile
+  helper through `context_ir.tool_facade`, while keeping package-root and MCP
+  surfaces unchanged.
+- Selected lane:
+  - add a typed request/response facade in `src/context_ir/tool_facade.py`
+    for dynamic-import local-Python subprocess recompile
+  - delegate to
+    `apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile(...)`
+  - preserve explicit caller inputs for Python executable, invocation and
+    completion revisions, repository snapshot basis, probe contract revision,
+    runtime assumptions, runner contract revision, timeout, runner
+    environment, runner assumptions, and optional embedding function
+  - mirror nested recompile/result identities following existing
+    `SemanticRuntimeObservationRecompileResponse` patterns
+  - focused tests belong in `tests/test_tool_facade.py`
+  - `tool_facade.__all__` may add the new facade names because
+    `context_ir.tool_facade` is the highest exposed hybrid entry point
+- Explicit non-goals:
+  - no package-root export changes
+  - no MCP tool or MCP schema changes
+  - no README, EVAL, PUBLIC_CLAIMS, public benchmark, eval, scoring, compiler,
+    stdout-protocol, worker behavior, admission contract, result-assembly, or
+    new runtime family/form changes
+  - no automatic environment discovery, default `sys.executable` policy, or
+    generalized dynamic-import support claim
+  - no changes to `runtime_observation_recompile.py` or
+    `runtime_probe_execution.py` unless the execution lane finds a blocker and
+    returns `NEEDS-CONTROL`
+- Alternatives considered:
+  - wire the helper into MCP immediately
+  - expose the helper at package root
+  - broaden the dynamic-import family/form set
+  - add another internal-only recompile proof without moving the facade
+    boundary
+- Reasoning:
+  - the internal execution and recompile path is now pushed through `842ddda`
+  - the north-star path needs a controlled tool-facing seam before any MCP or
+    package-root widening
+  - the existing `tool_facade` recompile patterns already provide the right
+    mirror/identity discipline for this bounded surface
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Recompile Helper Post-Push Routing
+
+- Ryan-authorized push completed for the dynamic-import local-Python recompile
+  helper release unit.
+- Pushed commit:
+  - `842ddda Add dynamic import recompile helper`
+- Commit contents:
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `842ddda Add dynamic import recompile helper`
+  - latest pushed source/contract authority is
+    `842ddda Add dynamic import recompile helper`
+  - workspace-only post-push continuity updates are present in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1176 passed`
+  - no active release gate, staging, local commit creation, or push remains for
+    `842ddda`
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Recompile Helper Local Commit Routing
+
+- Local commit creation completed for the dynamic-import local-Python
+  recompile helper release unit.
+- Commit:
+  - `842ddda Add dynamic import recompile helper`
+- Commit contents:
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `842ddda Add dynamic import recompile helper`
+  - `origin/main` at
+    `6d4e04c Add dynamic import subprocess runner factory`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1176 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-11 -- Dynamic Import Local-Python Recompile Helper Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact

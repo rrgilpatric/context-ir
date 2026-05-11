@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 import textwrap
 from dataclasses import replace
 from pathlib import Path
@@ -11,16 +12,26 @@ import pytest
 
 import context_ir
 import context_ir.compiler as legacy_compiler
+import context_ir.mcp_server as mcp_server
 import context_ir.optimizer as legacy_optimizer
 import context_ir.parser as legacy_parser
 import context_ir.renderer as legacy_renderer
 import context_ir.runtime_acquisition as runtime_acquisition
 import context_ir.runtime_observation_admission as runtime_observation_admission
 import context_ir.runtime_observation_recompile as runtime_observation_recompile
+import context_ir.runtime_probe_execution as runtime_probe_execution
 import context_ir.runtime_probe_requests as runtime_probe_requests
+import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.scorer as legacy_scorer
 import context_ir.semantic_types as semantic_types
 import context_ir.tool_facade as tool_facade
+from context_ir.runtime_observation_recompile import (
+    apply_runtime_probe_result_batch_for_diagnostic_and_recompile,
+)
+from context_ir.runtime_probe_execution import (
+    collect_runtime_probe_execution_attempts_from_runner_requests,
+    prepare_runtime_probe_runner_requests_for_diagnostic,
+)
 from context_ir.semantic_diagnostics import diagnose_semantic_miss
 from context_ir.semantic_types import (
     CapabilityTier,
@@ -51,9 +62,12 @@ from context_ir.semantic_types import (
 from context_ir.tool_facade import (
     SemanticContextRequest,
     SemanticContextResponse,
+    SemanticDynamicImportLocalPythonSubprocessRecompileRequest,
+    SemanticDynamicImportLocalPythonSubprocessRecompileResponse,
     SemanticRuntimeObservationRecompileRequest,
     SemanticRuntimeObservationRecompileResponse,
     compile_repository_context,
+    recompile_repository_context_with_dynamic_import_local_python_subprocess,
     recompile_repository_context_with_runtime_observations,
 )
 
@@ -742,6 +756,90 @@ def _write_dynamic_import_program(tmp_path: Path) -> None:
     )
 
 
+def _write_local_python_dynamic_import_program(tmp_path: Path) -> None:
+    """Write a dynamic-import fixture importable by the worker subprocess."""
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / "plugins" / "__init__.py").write_text("", encoding="utf-8")
+    (tmp_path / "plugins" / "recompile_subprocess.py").write_text(
+        "VALUE = 'runtime probe subprocess fixture'\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib
+
+            def run() -> None:
+                importlib.import_module("plugins.recompile_subprocess")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
+def _snapshot_basis() -> RepositorySnapshotBasis:
+    """Return stable repository snapshot metadata for runner facade tests."""
+    return RepositorySnapshotBasis(
+        snapshot_kind="git_commit",
+        snapshot_id="abc123def456",
+        is_dirty_worktree=False,
+    )
+
+
+def _probe_field(
+    key: str,
+    value: str,
+) -> runtime_probe_results.RuntimeProbeReplayField:
+    """Return one runtime probe replay field."""
+    return runtime_probe_results.RuntimeProbeReplayField(key=key, value=value)
+
+
+def _runner_runtime_assumptions() -> tuple[
+    runtime_probe_results.RuntimeProbeReplayField, ...
+]:
+    """Return explicit runtime assumptions for subprocess facade tests."""
+    return (
+        _probe_field("python_version", "3.11"),
+        _probe_field("dependency_mode", "offline-fixture"),
+    )
+
+
+def _runner_assumptions() -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return explicit runner assumptions for subprocess facade tests."""
+    return (
+        _probe_field("network", "disabled"),
+        _probe_field("filesystem_mode", "read_only_fixture"),
+    )
+
+
+def _local_python_runner_environment(
+    working_directory: Path,
+) -> tuple[runtime_probe_results.RuntimeProbeReplayField, ...]:
+    """Return local-Python subprocess environment fields for a temp repo."""
+    source_root = Path(context_ir.__file__).resolve().parents[1]
+    return (
+        _probe_field("repository_root", str(working_directory)),
+        _probe_field("working_directory", str(working_directory)),
+        _probe_field("python_path_entry", str(source_root)),
+    )
+
+
+def _probe_execution_attempt(
+    runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    *,
+    normalized_payload: tuple[runtime_probe_results.RuntimeProbeReplayField, ...],
+) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+    """Return one observed runner attempt tied to the supplied request."""
+    return runtime_probe_execution.RuntimeProbeExecutionAttempt(
+        plan_id=runner_request.plan_id,
+        request_id=runner_request.request_id,
+        request=runner_request.request,
+        execution_input=runner_request.execution_input,
+        outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+        normalized_payload=normalized_payload,
+    )
+
+
 def _unsupported_id_for(program: SemanticProgram, construct_text: str) -> str:
     """Return the unsupported construct ID for ``construct_text``."""
     return next(
@@ -797,6 +895,57 @@ def _runtime_observation_recompile_facade_fixture(
         plan,
         request,
         observation,
+        unsupported_id,
+    )
+
+
+def _dynamic_import_local_python_subprocess_recompile_facade_fixture(
+    tmp_path: Path,
+) -> tuple[
+    SemanticContextResponse,
+    SemanticMissEvidence,
+    SemanticDiagnosticResult,
+    runtime_probe_requests.RuntimeProbeRequestPlan,
+    runtime_probe_requests.RuntimeProbeRequest,
+    str,
+]:
+    """Build a prior facade response with one subprocess-runnable request."""
+    _write_local_python_dynamic_import_program(tmp_path)
+    previous_response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="dynamic import",
+            budget=32,
+        )
+    )
+    boundary_text = 'importlib.import_module("plugins.recompile_subprocess")'
+    unsupported_id = _unsupported_id_for(previous_response.program, boundary_text)
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence=boundary_text,
+    )
+    diagnostic = diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert diagnostic.omitted_unit_ids == (unsupported_id,)
+    assert len(plan.requests) == 1
+    request = plan.requests[0]
+    assert request.boundary_text == boundary_text
+    assert (
+        request.family_label is runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT
+    )
+    assert request.form_label == "dynamic_import:importlib.import_module/1"
+    assert request.replay_target_seed == "main.run"
+    return (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
         unsupported_id,
     )
 
@@ -1179,6 +1328,367 @@ def test_recompile_repository_context_response_rejects_broken_mirrors(
             newly_selected_unit_ids=response.newly_selected_unit_ids,
             upgraded_unit_ids=response.upgraded_unit_ids,
         )
+
+
+def test_dynamic_import_local_python_subprocess_recompile_facade_runs_and_mirrors(
+    tmp_path: Path,
+) -> None:
+    """The facade runs subprocess-backed dynamic-import probes and mirrors results."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        unsupported_id,
+    ) = _dynamic_import_local_python_subprocess_recompile_facade_fixture(tmp_path)
+    repository_snapshot_basis = _snapshot_basis()
+    runtime_assumptions = _runner_runtime_assumptions()
+    runner_environment = _local_python_runner_environment(tmp_path)
+    runner_assumptions = _runner_assumptions()
+
+    response = recompile_repository_context_with_dynamic_import_local_python_subprocess(
+        SemanticDynamicImportLocalPythonSubprocessRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            miss_evidence=miss_evidence,
+            delta_budget=160,
+            python_executable=sys.executable,
+            invocation_contract_revision=(
+                "runtime-probe-local-python-subprocess:test.1"
+            ),
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+            repository_snapshot_basis=repository_snapshot_basis,
+            probe_contract_revision="runtime-probe-contract:test.1",
+            runtime_assumptions=runtime_assumptions,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=runner_environment,
+            runner_assumptions=runner_assumptions,
+        )
+    )
+    recompile_application = response.result_batch_recompile_application
+    preparation = response.runner_request_preparation
+    collection = response.runner_attempt_collection
+    runner_request = preparation.runner_request_batch.runner_requests[0]
+    attempt = collection.attempts[0]
+    observed_result = collection.result_batch.results[0]
+    admission = response.observation_application.admissions[0]
+    boundary = _boundary_for(response.diagnostic, unsupported_id)
+    expected_payload = (
+        _probe_field("imported_module", "plugins.recompile_subprocess"),
+    )
+    selected_trace = next(
+        selection.trace_summary
+        for selection in response.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
+
+    assert isinstance(
+        response,
+        SemanticDynamicImportLocalPythonSubprocessRecompileResponse,
+    )
+    assert response.runner_request_preparation is (
+        response.dynamic_import_local_python_subprocess_recompile.runner_request_preparation
+    )
+    assert response.runner_attempt_collection is (
+        response.dynamic_import_local_python_subprocess_recompile.runner_attempt_collection
+    )
+    assert response.result_batch_recompile_application is (
+        response.dynamic_import_local_python_subprocess_recompile.result_batch_recompile_application
+    )
+    assert response.result_batch_admission is (
+        recompile_application.result_batch_admission
+    )
+    assert response.non_proof_results is recompile_application.non_proof_results
+    assert (
+        response.observation_application
+        is recompile_application.observation_application
+    )
+    assert response.recompile_result is recompile_application.recompile_result
+    assert response.program is response.observation_application.updated_program
+    assert response.program is not previous_response.program
+    assert response.compile_result is response.recompile_result.compile_result
+    assert response.diagnostic is response.recompile_result.diagnostic
+    assert response.compile_total_tokens == response.compile_result.total_tokens
+    assert response.compile_budget == previous_response.compile_budget + 160
+    assert response.budget_delta == 160
+    assert response.newly_selected_unit_ids == (
+        response.recompile_result.newly_selected_unit_ids
+    )
+    assert response.upgraded_unit_ids == response.recompile_result.upgraded_unit_ids
+    assert preparation.diagnostic is diagnostic
+    assert preparation.request_plan is plan
+    assert preparation.execution_input_batch.request_ids == plan.request_ids
+    assert (
+        preparation.execution_input_batch.inputs[0].replay_artifact.runtime_assumptions
+        is runtime_assumptions
+    )
+    assert preparation.runner_request_batch.runner_environment is runner_environment
+    assert preparation.runner_request_batch.runner_assumptions is runner_assumptions
+    assert runner_request.request is request
+    assert runner_request.runner_contract_revision == "runtime-probe-runner:test.1"
+    assert runner_request.timeout_seconds == 30
+    assert collection.runner_request_batch is preparation.runner_request_batch
+    assert attempt.request is request
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == expected_payload
+    assert attempt.failure_summary is None
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.request is request
+    assert observed_result.normalized_payload == expected_payload
+    assert observed_result.is_admissible_runtime_backed_proof is True
+    assert response.non_proof_results == ()
+    assert response.result_batch_admission.non_proof_results == ()
+    assert response.observation_application.admissions is (
+        response.result_batch_admission.admissions
+    )
+    assert admission.request is request
+    assert admission.request_id == observed_result.request_id
+    assert tuple(
+        (field.key, field.value) for field in admission.observation.normalized_payload
+    ) == (("imported_module", "plugins.recompile_subprocess"),)
+    assert response.diagnostic.planned_runtime_probe_requests == ()
+    assert response.diagnostic.planned_runtime_probe_request_plan == (
+        runtime_probe_requests.build_runtime_probe_request_plan(())
+    )
+    assert boundary.status is SemanticDiagnosticUnitStatus.OMITTED
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert boundary.has_attached_runtime_provenance is True
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
+    assert unsupported_id in response.newly_selected_unit_ids
+
+    response_kwargs = {
+        "dynamic_import_local_python_subprocess_recompile": (
+            response.dynamic_import_local_python_subprocess_recompile
+        ),
+        "runner_request_preparation": response.runner_request_preparation,
+        "runner_attempt_collection": response.runner_attempt_collection,
+        "result_batch_recompile_application": (
+            response.result_batch_recompile_application
+        ),
+        "result_batch_admission": response.result_batch_admission,
+        "non_proof_results": response.non_proof_results,
+        "observation_application": response.observation_application,
+        "recompile_result": response.recompile_result,
+        "program": response.program,
+        "compile_result": response.compile_result,
+        "diagnostic": response.diagnostic,
+        "compile_total_tokens": response.compile_total_tokens,
+        "compile_budget": response.compile_budget,
+        "budget_delta": response.budget_delta,
+        "newly_selected_unit_ids": response.newly_selected_unit_ids,
+        "upgraded_unit_ids": response.upgraded_unit_ids,
+    }
+
+    with pytest.raises(ValueError, match="result_batch_admission must mirror"):
+        SemanticDynamicImportLocalPythonSubprocessRecompileResponse(
+            **(
+                response_kwargs
+                | {
+                    "result_batch_admission": (
+                        runtime_observation_admission.RuntimeProbeResultBatchAdmission(
+                            admissions=(),
+                            non_proof_results=response.non_proof_results,
+                        )
+                    )
+                }
+            )
+        )
+
+    with pytest.raises(ValueError, match="compile_budget must mirror"):
+        SemanticDynamicImportLocalPythonSubprocessRecompileResponse(
+            **(response_kwargs | {"compile_budget": response.compile_budget + 1})
+        )
+
+
+def test_dynamic_import_local_python_subprocess_recompile_facade_delegates(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade forwards every explicit caller input to the internal helper."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        _unsupported_id,
+    ) = _dynamic_import_local_python_subprocess_recompile_facade_fixture(tmp_path)
+    repository_snapshot_basis = _snapshot_basis()
+    runtime_assumptions = _runner_runtime_assumptions()
+    runner_environment = _local_python_runner_environment(tmp_path)
+    runner_assumptions = _runner_assumptions()
+    calls: list[tuple[object, ...]] = []
+    returned_results: list[
+        runtime_observation_recompile.RuntimeProbeRunnerCallableRecompileApplication
+    ] = []
+
+    def embed_fn(texts: list[str]) -> list[list[float]]:
+        return [[1.0, 0.0] for _text in texts]
+
+    def fake_apply(
+        program: SemanticProgram,
+        received_diagnostic: SemanticDiagnosticResult,
+        previous_result: SemanticCompileResult,
+        received_miss_evidence: SemanticMissEvidence,
+        delta_budget: int,
+        *,
+        python_executable: str,
+        invocation_contract_revision: str,
+        completion_contract_revision: str,
+        repository_snapshot_basis: RepositorySnapshotBasis,
+        probe_contract_revision: str,
+        runtime_assumptions: tuple[
+            runtime_probe_results.RuntimeProbeReplayField,
+            ...,
+        ],
+        runner_contract_revision: str,
+        timeout_seconds: int,
+        runner_environment: tuple[
+            runtime_probe_results.RuntimeProbeReplayField,
+            ...,
+        ],
+        runner_assumptions: tuple[
+            runtime_probe_results.RuntimeProbeReplayField,
+            ...,
+        ],
+        embed_fn: tool_facade.EmbeddingFunction | None = None,
+    ) -> runtime_observation_recompile.RuntimeProbeRunnerCallableRecompileApplication:
+        calls.append(
+            (
+                program,
+                received_diagnostic,
+                previous_result,
+                received_miss_evidence,
+                delta_budget,
+                python_executable,
+                invocation_contract_revision,
+                completion_contract_revision,
+                repository_snapshot_basis,
+                probe_contract_revision,
+                runtime_assumptions,
+                runner_contract_revision,
+                timeout_seconds,
+                runner_environment,
+                runner_assumptions,
+                embed_fn,
+            )
+        )
+        preparation = prepare_runtime_probe_runner_requests_for_diagnostic(
+            received_diagnostic,
+            repository_snapshot_basis=repository_snapshot_basis,
+            probe_contract_revision=probe_contract_revision,
+            runtime_assumptions=runtime_assumptions,
+            runner_contract_revision=runner_contract_revision,
+            timeout_seconds=timeout_seconds,
+            runner_environment=runner_environment,
+            runner_assumptions=runner_assumptions,
+        )
+
+        def runner(
+            runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+        ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+            return _probe_execution_attempt(
+                runner_request,
+                normalized_payload=(
+                    _probe_field("imported_module", "plugins.recompile_subprocess"),
+                ),
+            )
+
+        collection = collect_runtime_probe_execution_attempts_from_runner_requests(
+            preparation.runner_request_batch,
+            runner,
+        )
+        result_batch_recompile_application = (
+            apply_runtime_probe_result_batch_for_diagnostic_and_recompile(
+                program,
+                received_diagnostic,
+                collection.result_batch,
+                previous_result,
+                received_miss_evidence,
+                delta_budget,
+                embed_fn=embed_fn,
+            )
+        )
+        runner_recompile = (
+            runtime_observation_recompile.RuntimeProbeRunnerCallableRecompileApplication
+        )
+        result = runner_recompile(
+            runner_request_preparation=preparation,
+            runner_attempt_collection=collection,
+            result_batch_recompile_application=result_batch_recompile_application,
+        )
+        returned_results.append(result)
+        return result
+
+    monkeypatch.setattr(
+        tool_facade,
+        "apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile",
+        fake_apply,
+    )
+
+    response = recompile_repository_context_with_dynamic_import_local_python_subprocess(
+        SemanticDynamicImportLocalPythonSubprocessRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            miss_evidence=miss_evidence,
+            delta_budget=12,
+            python_executable="/path/to/python",
+            invocation_contract_revision="runtime-probe-invocation:test.1",
+            completion_contract_revision="runtime-probe-completion:test.1",
+            repository_snapshot_basis=repository_snapshot_basis,
+            probe_contract_revision="runtime-probe-contract:test.1",
+            runtime_assumptions=runtime_assumptions,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=7,
+            runner_environment=runner_environment,
+            runner_assumptions=runner_assumptions,
+            embed_fn=embed_fn,
+        )
+    )
+
+    assert calls == [
+        (
+            previous_response.program,
+            diagnostic,
+            previous_response.compile_result,
+            miss_evidence,
+            12,
+            "/path/to/python",
+            "runtime-probe-invocation:test.1",
+            "runtime-probe-completion:test.1",
+            repository_snapshot_basis,
+            "runtime-probe-contract:test.1",
+            runtime_assumptions,
+            "runtime-probe-runner:test.1",
+            7,
+            runner_environment,
+            runner_assumptions,
+            embed_fn,
+        )
+    ]
+    assert (
+        response.dynamic_import_local_python_subprocess_recompile
+        is (returned_results[0])
+    )
+    assert response.runner_request_preparation is (
+        returned_results[0].runner_request_preparation
+    )
+    assert response.runner_attempt_collection is (
+        returned_results[0].runner_attempt_collection
+    )
+    assert response.result_batch_recompile_application is (
+        returned_results[0].result_batch_recompile_application
+    )
+    assert response.compile_budget == previous_response.compile_budget + 12
 
 
 def test_compile_repository_context_returns_typed_response_for_simple_repo(
@@ -2935,23 +3445,51 @@ def test_tool_facade_does_not_change_package_root_exports() -> None:
     """The facade remains an explicit module API rather than a root export."""
     assert tuple(context_ir.__all__) == tuple(semantic_types.__all__)
 
+    new_facade_names = {
+        "SemanticDynamicImportLocalPythonSubprocessRecompileRequest",
+        "SemanticDynamicImportLocalPythonSubprocessRecompileResponse",
+        "recompile_repository_context_with_dynamic_import_local_python_subprocess",
+    }
     facade_names = {
         "EmbeddingFunction",
         "SemanticContextRequest",
         "SemanticContextResponse",
+        *new_facade_names,
         "SemanticRuntimeObservationRecompileRequest",
         "SemanticRuntimeObservationRecompileResponse",
         "compile_repository_context",
         "recompile_repository_context_with_runtime_observations",
     }
 
+    assert new_facade_names.issubset(set(tool_facade.__all__))
+    assert facade_names.issubset(set(tool_facade.__all__))
     assert facade_names.isdisjoint(context_ir.__all__)
     assert not hasattr(context_ir, "SemanticContextRequest")
     assert not hasattr(context_ir, "SemanticContextResponse")
+    assert not hasattr(
+        context_ir,
+        "SemanticDynamicImportLocalPythonSubprocessRecompileRequest",
+    )
+    assert not hasattr(
+        context_ir,
+        "SemanticDynamicImportLocalPythonSubprocessRecompileResponse",
+    )
     assert not hasattr(context_ir, "SemanticRuntimeObservationRecompileRequest")
     assert not hasattr(context_ir, "SemanticRuntimeObservationRecompileResponse")
     assert not hasattr(context_ir, "compile_repository_context")
     assert not hasattr(
         context_ir,
+        "recompile_repository_context_with_dynamic_import_local_python_subprocess",
+    )
+    assert not hasattr(
+        context_ir,
         "recompile_repository_context_with_runtime_observations",
     )
+    assert tuple(mcp_server.__all__) == (
+        "MCP_SERVER",
+        "compile_repository_context",
+        "run_stdio_server",
+    )
+    assert new_facade_names.isdisjoint(mcp_server.__all__)
+    for facade_name in new_facade_names:
+        assert not hasattr(mcp_server, facade_name)
