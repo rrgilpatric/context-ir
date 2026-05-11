@@ -41,11 +41,123 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`88f7c74 Add dynamic import tool facade`. The latest pushed
+`db3eb8b Add loader import_module subprocess support`. The latest pushed
 source/contract authority is also
-`88f7c74 Add dynamic import tool facade`. Live git refs and
+`db3eb8b Add loader import_module subprocess support`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Workspace-only accepted `dynamic_import:import_module/1` local-Python
+subprocess release candidate:
+
+- `src/context_ir/runtime_probe_worker.py` now accepts exactly three
+  local-Python dynamic-import worker forms:
+  `dynamic_import:importlib.import_module/1`,
+  `dynamic_import:loader.import_module/1`, and
+  `dynamic_import:import_module/1`
+- the worker default handler table registers all three exact forms through the
+  existing dynamic-import handler adapter and concrete observer
+- the imported-name worker path imports the source module, resolves the replay
+  target, temporarily rebinds only the source module global `import_module` to
+  the existing controlled import-module observer while executing the replay
+  target, and restores the original global on success and failure
+- the worker fails closed if the source module global `import_module` is
+  absent, is not the imported `importlib.import_module` function object, or
+  changes during target execution
+- `src/context_ir/runtime_probe_execution.py` now has
+  `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+  register `dynamic_import:import_module/1` alongside the two previously
+  pushed exact forms
+- focused coverage proves the real `python -m context_ir.runtime_probe_worker`
+  subprocess path observes imported-name `import_module(...)` as
+  `imported_module=...`
+- adjacent forms including `dynamic_import:load_module/1`,
+  `dynamic_import:__import__/1`,
+  `dynamic_import:builtins.__import__/1`, and
+  `dynamic_import:loader.__import__/1` remain fail-closed
+- no request schema, MCP/schema, package-root export, README, EVAL,
+  PUBLIC_CLAIMS, public benchmark, scoring, compiler, admission, recompile,
+  tool-facade, result-assembly, imported-alias, builtin-import, or generalized
+  dynamic-import support was added
+- implementation review accepted the slice first-pass
+- focused control validation passed:
+  - ruff check
+  - ruff format check, `4 files already formatted`
+  - strict mypy over 37 source files
+  - targeted pytest over `tests/test_runtime_probe_worker.py` and
+    `tests/test_runtime_probe_execution.py`, `340 passed`
+  - scoped `git diff --check`
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1195 passed`
+  - Gate 3 commit-gating passed for the exact six-file unit
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: local commit creation for the exact six-file unit
+
+Pushed `dynamic_import:loader.import_module/1` local-Python subprocess release:
+
+- `src/context_ir/runtime_probe_worker.py` now accepts exactly two
+  local-Python dynamic-import worker forms:
+  `dynamic_import:importlib.import_module/1` and
+  `dynamic_import:loader.import_module/1`
+- the worker default handler table registers both exact forms through the
+  existing dynamic-import handler adapter and concrete observer
+- `src/context_ir/runtime_probe_execution.py` now has
+  `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+  register both exact dynamic-import local-Python subprocess forms
+- the new root-module alias form reuses the existing
+  `importlib.import_module` interception harness
+- focused coverage proves the real `python -m context_ir.runtime_probe_worker`
+  subprocess path observes `loader.import_module(...)` as
+  `imported_module=...`
+- adjacent forms including `dynamic_import:load_module/1`,
+  `dynamic_import:__import__/1`,
+  `dynamic_import:builtins.__import__/1`, and non-dynamic reflective forms
+  remain fail-closed
+- no request schema, MCP/schema, package-root export, README, EVAL,
+  PUBLIC_CLAIMS, public benchmark, scoring, compiler, admission, recompile,
+  result-assembly, generalized alias, imported-name/imported-alias, or
+  builtin-import subprocess support was added
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1186 passed`
+  - Gate 3 commit-gating passed for the exact six-file unit
+- local commit creation completed at
+  `db3eb8b Add loader import_module subprocess support`
+- Ryan-authorized push completed for
+  `db3eb8b Add loader import_module subprocess support`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `db3eb8b Add loader import_module subprocess support`
+  - pushed: yes
+  - committed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - next route: superseded by accepted workspace-only
+    `dynamic_import:import_module/1` local-Python subprocess release
+    candidate above
 
 Pushed dynamic-import local-Python tool facade release:
 
@@ -3893,8 +4005,21 @@ sequencing for `c1a12d7` absent new findings.
   implementation slice
 - [x] Combined read-only release gate for the exact six-file
   `dynamic_import:loader.import_module/1` local-Python subprocess release unit
-- [ ] Local commit creation for the exact six-file
+- [x] Local commit creation for the exact six-file
   `dynamic_import:loader.import_module/1` local-Python subprocess release unit
+- [x] Ryan-authorized push for the exact six-file
+  `dynamic_import:loader.import_module/1` local-Python subprocess release unit
+- [x] Post-`db3eb8b` control selection of the next bounded north-star lane
+- [x] Read-only post-`db3eb8b` dynamic-import subprocess next-form
+  planning/decomposition lane
+- [x] Exact `dynamic_import:import_module/1` local-Python subprocess
+  implementation slice
+- [x] Combined read-only release gate for the exact six-file
+  `dynamic_import:import_module/1` local-Python subprocess release unit
+- [ ] Local commit creation for the exact six-file
+  `dynamic_import:import_module/1` local-Python subprocess release unit
+- [ ] Ryan-authorized push for the exact six-file
+  `dynamic_import:import_module/1` local-Python subprocess release unit
 
 ## What Is In Progress
 
@@ -4803,14 +4928,53 @@ supersession entries.
 ## What Is Next
 
 Immediate next route: local commit creation for the exact six-file
-`dynamic_import:loader.import_module/1` local-Python subprocess release unit.
-Current pushed release authority and latest pushed source/contract authority
-are `88f7c74 Add dynamic import tool facade`. During release-gate acceptance,
-live git refs verified local `HEAD` and `origin/main` at `88f7c74`. Nothing is
-staged; no untracked files exist.
+`dynamic_import:import_module/1` local-Python subprocess release unit. Current
+pushed release authority and latest pushed source/contract authority are
+`db3eb8b Add loader import_module subprocess support`. During release-gate
+acceptance, live git refs verified local `HEAD` and `origin/main` at
+`db3eb8b`. The exact dirty release unit is `BUILDLOG.md`, `PLAN.md`,
+`src/context_ir/runtime_probe_execution.py`,
+`src/context_ir/runtime_probe_worker.py`,
+`tests/test_runtime_probe_execution.py`, and
+`tests/test_runtime_probe_worker.py`. Nothing is staged; no untracked files
+exist.
 
-Workspace-only accepted `dynamic_import:loader.import_module/1` local-Python
-subprocess implementation:
+Workspace-only accepted `dynamic_import:import_module/1` local-Python
+subprocess behavior:
+
+- worker and parent runner register exactly the new
+  `dynamic_import:import_module/1` form alongside the two already-pushed exact
+  forms
+- the concrete worker observer handles imported-name `import_module(name)` by
+  rebinding only the replay target source module global `import_module` to the
+  existing controlled import-module observer for target execution, then
+  restoring it
+- missing, mismatched, or target-mutated `import_module` globals fail closed
+- adjacent forms remain fail-closed, including
+  `dynamic_import:load_module/1`, `dynamic_import:__import__/1`,
+  `dynamic_import:builtins.__import__/1`, and
+  `dynamic_import:loader.__import__/1`
+- no request schema, MCP/schema, package-root export, README, EVAL,
+  PUBLIC_CLAIMS, public benchmark, scoring, compiler, admission, recompile,
+  tool-facade, result-assembly, imported-alias, builtin-import, or generalized
+  dynamic-import support was added
+- focused control validation passed with `340 passed` for the targeted pytest
+  pair
+- combined read-only release gate passed with no findings:
+  - release-unit audit cleared
+  - full regression cleared with `1195 passed`
+  - commit-gating cleared for the exact six-file unit
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+
+Pushed `dynamic_import:loader.import_module/1` local-Python subprocess
+release:
 
 - add exact root-module alias subprocess support for
   `dynamic_import:loader.import_module/1`
@@ -4842,14 +5006,19 @@ subprocess implementation:
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes, full pytest `1186 passed`
   - commit-gating-cleared: yes
-  - staged: no
-  - locally committed: no
-  - pushed: no
-  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  - staged: yes, then committed
+  - locally committed: yes,
+    `db3eb8b Add loader import_module subprocess support`
+  - Ryan-authorized push completed for
+    `db3eb8b Add loader import_module subprocess support`
+  - pushed: yes
+  - committed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
     `src/context_ir/runtime_probe_execution.py`,
     `src/context_ir/runtime_probe_worker.py`,
     `tests/test_runtime_probe_execution.py`, and
     `tests/test_runtime_probe_worker.py`
+  - next route: superseded by accepted workspace-only
+    `dynamic_import:import_module/1` local-Python subprocess release candidate
 
 Pushed dynamic-import local-Python tool facade:
 

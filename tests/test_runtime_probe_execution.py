@@ -74,6 +74,7 @@ _EXPECTED_REPLAY_INPUT_KEYS = (
 
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
+_IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
 
 _EXPECTED_CURRENT_FORMS = {
     _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
@@ -2748,6 +2749,63 @@ def test_dynamic_import_local_python_runner_executes_loader_alias_subprocess(
     assert attempt.failure_detail_fields == ()
 
 
+def test_dynamic_import_local_python_runner_executes_imported_name_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The composed helper registers imported import_module for the worker."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from importlib import import_module
+
+            def run() -> object:
+                return import_module("plugins.imported_name_helper_subprocess")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _request(
+        form_label=_IMPORTED_IMPORT_MODULE_FORM_LABEL,
+        boundary_text="import_module(name)",
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_dynamic_import_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("imported_module", "plugins.imported_name_helper_subprocess"),
+    )
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
 @pytest.mark.parametrize(
     ("family_label", "form_label"),
     (
@@ -2766,6 +2824,10 @@ def test_dynamic_import_local_python_runner_executes_loader_alias_subprocess(
         (
             runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
             "dynamic_import:builtins.__import__/1",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:loader.__import__/1",
         ),
     ),
 )

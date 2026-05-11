@@ -45,10 +45,14 @@ _INVALID_RESPONSE_MESSAGE = (
 )
 _DYNAMIC_IMPORT_WORKER_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL = "dynamic_import:loader.import_module/1"
+_DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL = "dynamic_import:import_module/1"
 _DYNAMIC_IMPORT_WORKER_FORM_LABELS = (
     _DYNAMIC_IMPORT_WORKER_FORM_LABEL,
     _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL,
+    _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL,
 )
+_DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME = "import_module"
+_DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL = object()
 _DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX = (
     "runtime_probe_local_python_subprocess_invocation:"
 )
@@ -193,6 +197,36 @@ RuntimeProbeLocalPythonWorkerCallable: TypeAlias = Callable[
     [RuntimeProbeLocalPythonWorkerRequestPayload],
     RuntimeProbeLocalPythonWorkerHandlerResponse,
 ]
+
+
+@dataclass
+class _RuntimeProbeDynamicImportCapture:
+    """Mutable capture state for one controlled import-module execution."""
+
+    captured_modules: list[str] = field(default_factory=list)
+    captured_rejections: list[str] = field(default_factory=list)
+
+    def import_module(self, name: str, package: str | None = None) -> ModuleType:
+        """Capture one import-module request without importing the real module."""
+        if package is not None:
+            self.captured_rejections.append("package")
+            raise ValueError(
+                "runtime probe dynamic import worker package imports are unsupported"
+            )
+        if isinstance(name, str) and name.startswith("."):
+            self.captured_rejections.append("relative")
+            raise ValueError(
+                "runtime probe dynamic import worker relative imports are unsupported"
+            )
+        try:
+            _validate_runtime_probe_dynamic_import_imported_module(name)
+        except ValueError as error:
+            self.captured_rejections.append("malformed")
+            raise ValueError(
+                "runtime probe dynamic import worker module name is malformed"
+            ) from error
+        self.captured_modules.append(name)
+        return ModuleType(name)
 
 
 @dataclass(frozen=True)
@@ -572,6 +606,12 @@ def observe_runtime_probe_dynamic_import_worker_request(
         source_module,
     )
     deterministic_target = _runtime_probe_dynamic_import_target_execution_guard(target)
+    if request.form_label == _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL:
+        return _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
+            replay_target=replay_target,
+            source_module=source_module,
+            target=deterministic_target,
+        )
     return materialize_runtime_probe_dynamic_import_worker_observation_from_target(
         replay_target,
         deterministic_target,
@@ -985,36 +1025,11 @@ def _runtime_probe_dynamic_import_captured_import_module_name(
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
 ) -> str:
     """Run a target while capturing one importlib.import_module module name."""
-    captured_modules: list[str] = []
-    captured_rejections: list[str] = []
+    capture = _RuntimeProbeDynamicImportCapture()
     original_import_module = importlib.import_module
 
-    def controlled_import_module(
-        name: str,
-        package: str | None = None,
-    ) -> ModuleType:
-        if package is not None:
-            captured_rejections.append("package")
-            raise ValueError(
-                "runtime probe dynamic import worker package imports are unsupported"
-            )
-        if isinstance(name, str) and name.startswith("."):
-            captured_rejections.append("relative")
-            raise ValueError(
-                "runtime probe dynamic import worker relative imports are unsupported"
-            )
-        try:
-            _validate_runtime_probe_dynamic_import_imported_module(name)
-        except ValueError as error:
-            captured_rejections.append("malformed")
-            raise ValueError(
-                "runtime probe dynamic import worker module name is malformed"
-            ) from error
-        captured_modules.append(name)
-        return ModuleType(name)
-
     try:
-        importlib.import_module = controlled_import_module
+        importlib.import_module = capture.import_module
         with (
             contextlib.redirect_stdout(io.StringIO()),
             contextlib.redirect_stderr(io.StringIO()),
@@ -1023,11 +1038,144 @@ def _runtime_probe_dynamic_import_captured_import_module_name(
     finally:
         importlib.import_module = original_import_module
 
-    _validate_runtime_probe_dynamic_import_intercepted_calls(
-        captured_modules=captured_modules,
-        captured_rejections=tuple(captured_rejections),
+    return _runtime_probe_dynamic_import_capture_imported_module(capture)
+
+
+def _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
+    *,
+    replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> RuntimeProbeLocalPythonDynamicImportWorkerObservation:
+    """Observe an imported-name target by rebinding its module global only."""
+    _validate_runtime_probe_dynamic_import_replay_target(replay_target)
+    _validate_runtime_probe_dynamic_import_replay_target_source_module(
+        replay_target,
+        source_module,
     )
-    return captured_modules[0]
+    _validate_runtime_probe_dynamic_import_target_callable(target)
+    imported_module = _runtime_probe_dynamic_import_captured_import_module_global_name(
+        source_module,
+        target,
+    )
+    return materialize_runtime_probe_dynamic_import_worker_observation(
+        replay_target.request,
+        imported_module=imported_module,
+    )
+
+
+def _runtime_probe_dynamic_import_captured_import_module_global_name(
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> str:
+    """Run a target while capturing its imported ``import_module`` global."""
+    original_import_module = _runtime_probe_dynamic_import_source_import_module_global(
+        source_module
+    )
+    capture = _RuntimeProbeDynamicImportCapture()
+    controlled_import_module = capture.import_module
+    module_globals = source_module.__dict__
+    target_failure: BaseException | None = None
+    restore_failure: ValueError | None
+
+    try:
+        module_globals[_DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME] = (
+            controlled_import_module
+        )
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            target()
+    except BaseException as error:
+        target_failure = error
+    restore_failure = _restore_runtime_probe_dynamic_import_source_import_module_global(
+        source_module=source_module,
+        expected_global=controlled_import_module,
+        original_global=original_import_module,
+    )
+
+    if restore_failure is not None:
+        if target_failure is not None:
+            raise restore_failure from target_failure
+        raise restore_failure
+    if target_failure is not None:
+        raise target_failure
+
+    return _runtime_probe_dynamic_import_capture_imported_module(capture)
+
+
+def _runtime_probe_dynamic_import_source_import_module_global(
+    source_module: ModuleType,
+) -> object:
+    """Return the source module's imported-name global after strict validation."""
+    import_module_global = source_module.__dict__.get(
+        _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if import_module_global is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
+        raise ValueError(
+            "runtime probe dynamic import worker target module import_module "
+            "global is missing"
+        )
+    if import_module_global is not importlib.import_module:
+        raise ValueError(
+            "runtime probe dynamic import worker target module import_module "
+            "global must be importlib.import_module"
+        )
+    return import_module_global
+
+
+def _restore_runtime_probe_dynamic_import_source_import_module_global(
+    *,
+    source_module: ModuleType,
+    expected_global: object,
+    original_global: object,
+) -> ValueError | None:
+    """Restore the source module imported-name global and report unsafe drift."""
+    module_globals = source_module.__dict__
+    current_global = module_globals.get(
+        _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    restore_failure: ValueError | None = None
+    if current_global is not expected_global:
+        restore_failure = ValueError(
+            "runtime probe dynamic import worker target module import_module "
+            "global changed during execution"
+        )
+    try:
+        module_globals[_DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME] = (
+            original_global
+        )
+    except Exception:
+        return ValueError(
+            "runtime probe dynamic import worker target module import_module "
+            "global could not be restored"
+        )
+    if (
+        module_globals.get(
+            _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not original_global
+    ):
+        return ValueError(
+            "runtime probe dynamic import worker target module import_module "
+            "global could not be restored"
+        )
+    return restore_failure
+
+
+def _runtime_probe_dynamic_import_capture_imported_module(
+    capture: _RuntimeProbeDynamicImportCapture,
+) -> str:
+    """Return the single captured module name after shape validation."""
+    _validate_runtime_probe_dynamic_import_intercepted_calls(
+        captured_modules=capture.captured_modules,
+        captured_rejections=tuple(capture.captured_rejections),
+    )
+    return capture.captured_modules[0]
 
 
 def _validate_runtime_probe_dynamic_import_intercepted_calls(

@@ -67,12 +67,15 @@ _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER = (
 )
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
+_IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
 
 
 def _boundary_text_for_form_label(form_label: str) -> str:
     """Return the one-argument source boundary represented by a form label."""
     if form_label == _LOADER_IMPORT_MODULE_FORM_LABEL:
         return "loader.import_module(name)"
+    if form_label == _IMPORTED_IMPORT_MODULE_FORM_LABEL:
+        return "import_module(name)"
     return "importlib.import_module(name)"
 
 
@@ -689,13 +692,14 @@ def test_dynamic_import_worker_request_materializes_replay_contract() -> None:
     (
         (_IMPORTLIB_IMPORT_MODULE_FORM_LABEL, "importlib.import_module(name)"),
         (_LOADER_IMPORT_MODULE_FORM_LABEL, "loader.import_module(name)"),
+        (_IMPORTED_IMPORT_MODULE_FORM_LABEL, "import_module(name)"),
     ),
 )
 def test_dynamic_import_worker_request_accepts_exact_import_module_forms(
     form_label: str,
     expected_boundary_text: str,
 ) -> None:
-    """Only the two exact import-module subprocess forms materialize."""
+    """Only the exact import-module subprocess forms materialize."""
     payload = _valid_worker_payload(form_label=form_label)
 
     request = (
@@ -757,6 +761,11 @@ def test_dynamic_import_worker_request_constructor_rejects_blank_boundary() -> N
         (
             runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
             "dynamic_import:builtins.__import__/1",
+            "form_label",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:loader.__import__/1",
             "form_label",
         ),
     ),
@@ -1913,6 +1922,190 @@ def test_dynamic_import_worker_default_subprocess_observes_loader_import_module(
             {
                 "key": "imported_module",
                 "value": "plugins.loader_worker_subprocess",
+            },
+        ],
+    }
+
+
+def test_dynamic_import_worker_concrete_observer_observes_imported_import_module(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer captures a source-global imported import_module."""
+    module_name = "runtime_probe_imported_name_concrete_observer_case"
+    observed_module_name = "plugins.imported_name_concrete"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        form_label=_IMPORTED_IMPORT_MODULE_FORM_LABEL,
+        source_text=(
+            "from importlib import import_module\n"
+            "import sys\n\n"
+            "def run():\n"
+            '    print("target stdout runtime_probe_stdout_protocol_revision")\n'
+            '    print("target stderr secret-token /private/tmp", file=sys.stderr)\n'
+            f'    return import_module("{observed_module_name}")\n'
+        ),
+    )
+    original_import_module = importlib.import_module
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    outer_stdout = StringIO()
+    outer_stderr = StringIO()
+    sys.modules.pop(module_name, None)
+    sys.modules.pop(observed_module_name, None)
+
+    try:
+        with (
+            contextlib.redirect_stdout(outer_stdout),
+            contextlib.redirect_stderr(outer_stderr),
+        ):
+            observation = _observe_dynamic_import_worker_request(request)
+        source_module = sys.modules[module_name]
+        assert source_module.__dict__["import_module"] is original_import_module
+        assert observed_module_name not in sys.modules
+    finally:
+        sys.modules.pop(module_name, None)
+        sys.modules.pop(observed_module_name, None)
+
+    assert observation.request is request
+    assert observation.imported_module == observed_module_name
+    assert outer_stdout.getvalue() == ""
+    assert outer_stderr.getvalue() == ""
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+    assert importlib.import_module is original_import_module
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        (
+            (
+                "import importlib\n\n"
+                "def run():\n"
+                '    return importlib.import_module("plugins.not_reached")\n'
+            ),
+            "import_module global is missing",
+        ),
+        (
+            (
+                "import_module = object()\n\n"
+                "def run():\n"
+                '    raise AssertionError("target should not execute")\n'
+            ),
+            "import_module global must be importlib.import_module",
+        ),
+    ),
+)
+def test_dynamic_import_worker_concrete_observer_rejects_imported_global_drift(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Imported-name forms fail closed unless the module global is exact."""
+    module_name = "runtime_probe_imported_name_global_validation_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        form_label=_IMPORTED_IMPORT_MODULE_FORM_LABEL,
+        source_text=source_text,
+    )
+    original_import_module = importlib.import_module
+    sys.modules.pop(module_name, None)
+    sys.modules.pop("plugins.not_reached", None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+        sys.modules.pop("plugins.not_reached", None)
+
+    assert importlib.import_module is original_import_module
+    assert "plugins.not_reached" not in sys.modules
+
+
+def test_dynamic_import_worker_concrete_observer_restores_imported_global_on_drift(
+    tmp_path: Path,
+) -> None:
+    """Imported-name global tampering fails closed after restoring the source."""
+    module_name = "runtime_probe_imported_name_restore_validation_case"
+    observed_module_name = "plugins.imported_name_restore"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        form_label=_IMPORTED_IMPORT_MODULE_FORM_LABEL,
+        source_text=(
+            "from importlib import import_module\n\n"
+            "def run():\n"
+            "    global import_module\n"
+            f'    imported_module = import_module("{observed_module_name}")\n'
+            "    import_module = object()\n"
+            "    return imported_module\n"
+        ),
+    )
+    original_import_module = importlib.import_module
+    sys.modules.pop(module_name, None)
+    sys.modules.pop(observed_module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="import_module global changed"):
+            _observe_dynamic_import_worker_request(request)
+        source_module = sys.modules[module_name]
+        assert source_module.__dict__["import_module"] is original_import_module
+        assert observed_module_name not in sys.modules
+    finally:
+        sys.modules.pop(module_name, None)
+        sys.modules.pop(observed_module_name, None)
+
+    assert importlib.import_module is original_import_module
+
+
+def test_dynamic_import_worker_default_subprocess_observes_imported_import_module(
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes imported import_module through defaults."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = "runtime_probe_imported_name_default_worker_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        (
+            "from importlib import import_module\n\n"
+            "def run():\n"
+            '    return import_module("plugins.imported_name_worker_subprocess")\n'
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+        form_label=_IMPORTED_IMPORT_MODULE_FORM_LABEL,
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "imported_module",
+                "value": "plugins.imported_name_worker_subprocess",
             },
         ],
     }
