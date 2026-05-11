@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`82bbb59 Add loader builtin import subprocess support`. The latest pushed
+`b9f7bb6 Add reflective hasattr subprocess support`. The latest pushed
 source/contract authority is also
-`82bbb59 Add loader builtin import subprocess support`. Live git refs
+`b9f7bb6 Add reflective hasattr subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -154,8 +154,7 @@ Workspace-only accepted post-dynamic-import next-family planning result:
 - next route: exact `reflective_builtin:hasattr/2` local-Python subprocess
   implementation lane
 
-Workspace-only accepted `reflective_builtin:hasattr/2` local-Python
-subprocess release candidate:
+Pushed `reflective_builtin:hasattr/2` local-Python subprocess release:
 
 - reviewed the returned implementation slice; findings: none
 - current proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
@@ -202,9 +201,10 @@ subprocess release candidate:
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes
   - commit-gating-cleared: yes
-  - staged: no
-  - locally committed: no
-  - pushed: no
+  - staged: yes, then committed
+  - locally committed: yes,
+    `b9f7bb6 Add reflective hasattr subprocess support`
+  - pushed: yes
   - Gate 1 finding:
     `_restore_runtime_probe_reflective_hasattr_builtin()` reads
     `builtins.hasattr` before the restore `try` block, so deletion of
@@ -221,7 +221,114 @@ subprocess release candidate:
     - Gate 2 full regression passed, including full pytest reporting
       `1267 passed`
     - Gate 3 commit-gating passed for the exact six-file unit
-  - next route: local commit creation for the exact six-file unit
+  - Ryan-authorized push completed for
+    `b9f7bb6 Add reflective hasattr subprocess support`
+  - next route: select the next bounded north-star lane
+
+Workspace-only post-`b9f7bb6` route selection:
+
+- reviewed live repo state after pushed
+  `b9f7bb6 Add reflective hasattr subprocess support`; findings: none
+- selected next bounded north-star lane: exact
+  `reflective_builtin:getattr/2` local-Python subprocess support
+- reason:
+  - `getattr(obj, name)` is already a planned and admissible
+    reflective-builtin runtime observation with existing internal eval evidence
+  - it is the closest attribute-reflection sibling to the pushed exact
+    `hasattr(obj, name)` subprocess path
+  - the current worker and parent runner still only support reflective
+    subprocess execution for `hasattr/2`, so this is a focused one-form
+    expansion rather than generalized runtime support
+- alternatives deferred:
+  - `reflective_builtin:getattr/3`: defer until two-argument `getattr` is
+    proven through the subprocess path; the default branch has additional
+    outcome distinctions
+  - `reflective_builtin:vars/0`, `reflective_builtin:vars/1`,
+    `reflective_builtin:dir/0`, and `reflective_builtin:dir/1`: defer because
+    they prove namespace or listing behavior rather than direct attribute
+    lookup behavior
+  - `runtime_mutation:globals/0` and `runtime_mutation:locals/0`: defer until
+    the reflective-builtin attribute lookup path is expanded beyond `hasattr`
+  - `exec_or_eval:*` and `metaclass_behavior:keyword`: defer because they
+    require durable proof, replay-input, or broader behavior-specific handling
+- non-goals for the next lane:
+  - no generalized reflective-builtin support
+  - no `getattr/3`, `vars`, `dir`, runtime-mutation, `exec`/`eval`, or
+    metaclass subprocess support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or
+    run-spec changes
+- next route: exact `reflective_builtin:getattr/2` local-Python subprocess
+  implementation lane
+
+Workspace-only accepted `reflective_builtin:getattr/2` local-Python subprocess
+release unit:
+
+- reviewed the returned implementation slice; findings: none
+- repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `b9f7bb6 Add reflective hasattr subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- accepted implementation:
+  - `src/context_ir/runtime_probe_worker.py` now registers exact
+    `reflective_builtin:getattr/2` in the default local-Python worker table
+  - the worker validates exact reflective metadata, reason
+    `REFLECTIVE_BUILTIN`, unsupported-finding subject kind, replay identity,
+    and boundary text `getattr(obj, name)` before replay execution
+  - the concrete worker observer imports the replay target source module,
+    resolves a zero-argument target, temporarily wraps `builtins.getattr`,
+    captures exactly one two-argument lookup, restores `builtins.getattr` on
+    success and failure, and emits normalized payload
+    `lookup_outcome=returned_value` or
+    `lookup_outcome=raised_attribute_error`
+  - source modules with a shadowing global `getattr`, target-time global
+    `getattr` mutation, builtin mutation/deletion, malformed metadata,
+    boundary drift, required-argument targets, target exceptions, non-selected
+    reflective forms, and dynamic-import requests through the reflective
+    runner remain fail-closed
+  - `src/context_ir/runtime_probe_execution.py` now has
+    `make_runtime_probe_reflective_getattr_local_python_subprocess_runner(...)`
+    as a narrow parent runner factory for exactly
+    `reflective_builtin:getattr/2`
+  - no generalized reflective-builtin support, `getattr/3`, `vars`, `dir`,
+    runtime-mutation, `exec`/`eval`, metaclass support, public API,
+    package-root export, schema, MCP, tool facade, scoring, compiler,
+    admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or run-spec
+    change was added
+- focused control validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`,
+    `4 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`, `Success: no issues found in
+    37 source files`
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py -v`,
+    `592 passed`
+  - `git diff --check`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed and confirmed the unit is bounded to
+    exact `reflective_builtin:getattr/2` local-Python subprocess support
+  - Gate 2 full regression passed, including full pytest reporting
+    `1295 passed`
+  - Gate 3 commit-gating passed for the exact six-file unit
+- next route:
+  - create one local commit for the exact six-file unit
+  - push remains Ryan-gated
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess release:
 
@@ -4450,8 +4557,17 @@ sequencing for `c1a12d7` absent new findings.
   `builtins.hasattr` deletion restoration
 - [x] Combined read-only release gate for the exact six-file
   `reflective_builtin:hasattr/2` local-Python subprocess release unit
-- [ ] Local commit creation for the exact six-file
+- [x] Local commit creation for the exact six-file
   `reflective_builtin:hasattr/2` local-Python subprocess release unit
+- [x] Ryan-authorized push for the exact six-file
+  `reflective_builtin:hasattr/2` local-Python subprocess release unit
+- [x] Post-`b9f7bb6` control selection of the next bounded north-star lane
+- [x] Exact `reflective_builtin:getattr/2` local-Python subprocess
+  implementation slice
+- [x] Combined read-only release gate for the exact six-file
+  `reflective_builtin:getattr/2` local-Python subprocess release unit
+- [ ] Local commit creation for the exact six-file
+  `reflective_builtin:getattr/2` local-Python subprocess release unit
 
 ## What Is In Progress
 
@@ -5359,22 +5475,29 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local commit for the accepted and
-release-gate-cleared `reflective_builtin:hasattr/2` local-Python subprocess
-release candidate. Current pushed release authority and latest pushed
-source/contract authority remain
-`82bbb59 Add loader builtin import subprocess support`.
+Immediate next route: create one local commit for the exact six-file
+`reflective_builtin:getattr/2` local-Python subprocess release unit. Current
+pushed release authority and latest pushed source/contract authority remain
+`b9f7bb6 Add reflective hasattr subprocess support`; push remains
+Ryan-gated.
 
-Selected next lane:
+Commit scope:
 
-- stage exactly `BUILDLOG.md`, `PLAN.md`,
-  `src/context_ir/runtime_probe_execution.py`,
-  `src/context_ir/runtime_probe_worker.py`,
-  `tests/test_runtime_probe_execution.py`, and
-  `tests/test_runtime_probe_worker.py`
-- create one local commit for exact `reflective_builtin:hasattr/2`
-  local-Python subprocess support after verifying the staged set
-- do not push without explicit Ryan authorization
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
+
+Commit readiness:
+
+- implementation review accepted first-pass
+- release-unit audit cleared
+- full regression cleared with full pytest `1295 passed`
+- commit-gating cleared
+- staged files must remain exactly the six-file unit before commit
+- after local commit, push requires explicit Ryan authorization
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 
