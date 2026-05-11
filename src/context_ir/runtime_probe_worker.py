@@ -49,11 +49,15 @@ _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL = "dynamic_import:loader.import_module/
 _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL = "dynamic_import:import_module/1"
 _DYNAMIC_IMPORT_WORKER_LOAD_MODULE_FORM_LABEL = "dynamic_import:load_module/1"
 _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL = "dynamic_import:__import__/1"
+_DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL = (
+    "dynamic_import:builtins.__import__/1"
+)
 _DYNAMIC_IMPORT_WORKER_FORM_LABELS = (
     _DYNAMIC_IMPORT_WORKER_FORM_LABEL,
     _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL,
     _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL,
     _DYNAMIC_IMPORT_WORKER_LOAD_MODULE_FORM_LABEL,
+    _DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL,
     _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL,
 )
 _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME = "import_module"
@@ -696,7 +700,10 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
         observation_source
     )
     _validate_runtime_probe_dynamic_import_target_callable(target)
-    if request.form_label == _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL:
+    if request.form_label in (
+        _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL,
+        _DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL,
+    ):
         imported_module = _runtime_probe_dynamic_import_captured_builtin_import_name(
             target
         )
@@ -735,6 +742,12 @@ def observe_runtime_probe_dynamic_import_worker_request(
         )
     if request.form_label == _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL:
         return _materialize_runtime_probe_dynamic_import_builtin_observation(
+            replay_target=replay_target,
+            source_module=source_module,
+            target=deterministic_target,
+        )
+    if request.form_label == _DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL:
+        return _materialize_runtime_probe_dynamic_import_builtins_observation(
             replay_target=replay_target,
             source_module=source_module,
             target=deterministic_target,
@@ -1080,12 +1093,17 @@ def _validate_runtime_probe_dynamic_import_worker_request_boundary_text(
     boundary_text: str,
 ) -> None:
     """Reject supported __import__ requests that do not carry the exact shape."""
-    if (
-        form_label == _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL
-        and boundary_text != "__import__(name)"
-    ):
+    expected_builtin_import_boundary_texts = {
+        _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL: "__import__(name)",
+        _DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL: (
+            "builtins.__import__(name)"
+        ),
+    }
+    expected_boundary_text = expected_builtin_import_boundary_texts.get(form_label)
+    if expected_boundary_text is not None and boundary_text != expected_boundary_text:
         raise ValueError(
-            "runtime probe dynamic import worker boundary_text must be __import__(name)"
+            "runtime probe dynamic import worker boundary_text must be "
+            f"{expected_boundary_text}"
         )
 
 
@@ -1210,6 +1228,29 @@ def _materialize_runtime_probe_dynamic_import_builtin_observation(
     )
 
 
+def _materialize_runtime_probe_dynamic_import_builtins_observation(
+    *,
+    replay_target: RuntimeProbeLocalPythonDynamicImportReplayTarget,
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> RuntimeProbeLocalPythonDynamicImportWorkerObservation:
+    """Observe a target through its exact source-global builtins module."""
+    _validate_runtime_probe_dynamic_import_replay_target(replay_target)
+    _validate_runtime_probe_dynamic_import_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    _validate_runtime_probe_dynamic_import_target_callable(target)
+    imported_module = _runtime_probe_dynamic_import_captured_builtins_import_name(
+        source_module,
+        target,
+    )
+    return materialize_runtime_probe_dynamic_import_worker_observation(
+        replay_target.request,
+        imported_module=imported_module,
+    )
+
+
 def _runtime_probe_dynamic_import_captured_builtin_import_name(
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
 ) -> str:
@@ -1249,6 +1290,40 @@ def _runtime_probe_dynamic_import_captured_builtin_import_name(
     return _runtime_probe_dynamic_import_capture_imported_module(capture)
 
 
+def _runtime_probe_dynamic_import_captured_builtins_import_name(
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+) -> str:
+    """Run a target while requiring an exact source-global builtins binding."""
+    original_global = _runtime_probe_dynamic_import_source_builtins_global(
+        source_module
+    )
+    target_failure: BaseException | None = None
+    imported_module = ""
+
+    try:
+        imported_module = _runtime_probe_dynamic_import_captured_builtin_import_name(
+            target
+        )
+    except BaseException as error:
+        target_failure = error
+
+    restore_failure = _restore_runtime_probe_dynamic_import_source_builtins_global(
+        source_module=source_module,
+        expected_global=original_global,
+        original_global=original_global,
+    )
+
+    if restore_failure is not None:
+        if target_failure is not None:
+            raise restore_failure from target_failure
+        raise restore_failure
+    if target_failure is not None:
+        raise target_failure
+
+    return imported_module
+
+
 def _validate_runtime_probe_dynamic_import_source_builtin_import_global_absent(
     source_module: ModuleType,
 ) -> None:
@@ -1264,6 +1339,63 @@ def _validate_runtime_probe_dynamic_import_source_builtin_import_global_absent(
             "runtime probe dynamic import worker target module __import__ "
             "global must be absent"
         )
+
+
+def _runtime_probe_dynamic_import_source_builtins_global(
+    source_module: ModuleType,
+) -> ModuleType:
+    """Return the exact source-module builtins global after strict validation."""
+    builtins_global = source_module.__dict__.get(
+        "builtins",
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if builtins_global is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
+        raise ValueError(
+            "runtime probe dynamic import worker target module builtins global "
+            "is missing"
+        )
+    if builtins_global is not builtins:
+        raise ValueError(
+            "runtime probe dynamic import worker target module builtins global "
+            "must be the builtins module"
+        )
+    return builtins_global
+
+
+def _restore_runtime_probe_dynamic_import_source_builtins_global(
+    *,
+    source_module: ModuleType,
+    expected_global: object,
+    original_global: ModuleType,
+) -> ValueError | None:
+    """Restore the source builtins global and report unsafe target-time drift."""
+    module_globals = source_module.__dict__
+    current_global = module_globals.get(
+        "builtins",
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    restore_failure: ValueError | None = None
+    if current_global is not expected_global:
+        restore_failure = ValueError(
+            "runtime probe dynamic import worker target module builtins global "
+            "changed during execution"
+        )
+    try:
+        module_globals["builtins"] = original_global
+    except Exception:
+        return ValueError(
+            "runtime probe dynamic import worker target module builtins global "
+            "could not be restored"
+        )
+    if (
+        module_globals.get("builtins", _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL)
+        is not original_global
+    ):
+        return ValueError(
+            "runtime probe dynamic import worker target module builtins global "
+            "could not be restored"
+        )
+    return restore_failure
 
 
 def _restore_runtime_probe_dynamic_import_builtin_import(
