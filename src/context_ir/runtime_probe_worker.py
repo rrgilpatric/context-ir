@@ -44,6 +44,11 @@ _INVALID_RESPONSE_MESSAGE = (
     "runtime_probe_worker: rejected invalid worker handler response\n"
 )
 _DYNAMIC_IMPORT_WORKER_FORM_LABEL = "dynamic_import:importlib.import_module/1"
+_DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL = "dynamic_import:loader.import_module/1"
+_DYNAMIC_IMPORT_WORKER_FORM_LABELS = (
+    _DYNAMIC_IMPORT_WORKER_FORM_LABEL,
+    _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL,
+)
 _DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX = (
     "runtime_probe_local_python_subprocess_invocation:"
 )
@@ -79,7 +84,7 @@ _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
 
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonDynamicImportWorkerRequest:
-    """Worker-local request contract for importlib.import_module probes only."""
+    """Worker-local request contract for import-module probes only."""
 
     plan_id: str
     request_id: str
@@ -635,9 +640,21 @@ def build_runtime_probe_dynamic_import_worker_handler_entry(
     observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
     """Return an injected handler entry for the import-module worker form."""
+    return _build_runtime_probe_dynamic_import_worker_handler_entry(
+        observer=observer,
+        form_label=_DYNAMIC_IMPORT_WORKER_FORM_LABEL,
+    )
+
+
+def _build_runtime_probe_dynamic_import_worker_handler_entry(
+    *,
+    observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
+    form_label: str,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for one exact dynamic-import form."""
     return RuntimeProbeLocalPythonWorkerHandlerEntry(
         family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label=_DYNAMIC_IMPORT_WORKER_FORM_LABEL,
+        form_label=form_label,
         handler=RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter(
             observer=observer
         ),
@@ -661,10 +678,12 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
     ...,
 ]:
     """Return the default concrete local-Python worker handler entries."""
-    return (
-        build_runtime_probe_dynamic_import_worker_handler_entry(
-            observe_runtime_probe_dynamic_import_worker_request
-        ),
+    return tuple(
+        _build_runtime_probe_dynamic_import_worker_handler_entry(
+            observer=observe_runtime_probe_dynamic_import_worker_request,
+            form_label=form_label,
+        )
+        for form_label in _DYNAMIC_IMPORT_WORKER_FORM_LABELS
     )
 
 
@@ -1343,12 +1362,12 @@ def _validate_runtime_probe_dynamic_import_payload_family_form(
     family_label: RuntimeProbeFamily,
     form_label: str,
 ) -> None:
-    """Reject non-importlib dynamic-import worker request family/form labels."""
+    """Reject unsupported dynamic-import worker request family/form labels."""
     if family_label is not RuntimeProbeFamily.DYNAMIC_IMPORT:
         raise ValueError(
             "runtime probe dynamic import worker family_label is unsupported"
         )
-    if form_label != _DYNAMIC_IMPORT_WORKER_FORM_LABEL:
+    if form_label not in _DYNAMIC_IMPORT_WORKER_FORM_LABELS:
         raise ValueError(
             "runtime probe dynamic import worker form_label is unsupported"
         )

@@ -2,6 +2,286 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-11 -- Dynamic Import loader.import_module Subprocess Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  six-file `dynamic_import:loader.import_module/1` local-Python subprocess
+  release unit.
+- Findings: none.
+- Gate results:
+  - Gate 1 release-unit audit passed with no findings against `AGENTS.md`,
+    `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `README.md`, `EVAL.md`, or
+    `PUBLIC_CLAIMS.md`
+  - Gate 2 full regression passed:
+    - ruff check passed
+    - ruff format check reported `110 files already formatted`
+    - strict mypy passed over 37 source files
+    - full pytest reported `1186 passed`
+    - `git diff --check` passed
+  - Gate 3 commit-gating passed
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `88f7c74 Add dynamic import tool facade`
+  - latest pushed source/contract authority is
+    `88f7c74 Add dynamic import tool facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1186 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: local commit creation for the exact six-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import loader.import_module Subprocess Acceptance
+
+- Reviewed the returned exact `dynamic_import:loader.import_module/1`
+  local-Python subprocess implementation slice.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `88f7c74 Add dynamic import tool facade`
+  - latest pushed source/contract authority is
+    `88f7c74 Add dynamic import tool facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted workspace-only behavior:
+  - `src/context_ir/runtime_probe_worker.py` now accepts exactly two
+    local-Python dynamic-import worker forms:
+    `dynamic_import:importlib.import_module/1` and
+    `dynamic_import:loader.import_module/1`
+  - the worker default handler table registers both exact forms through the
+    existing dynamic-import handler adapter and concrete observer
+  - `src/context_ir/runtime_probe_execution.py` now has
+    `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+    register both exact dynamic-import local-Python subprocess forms
+  - the new root-module alias form reuses the existing
+    `importlib.import_module` interception harness
+  - focused coverage proves the real `python -m context_ir.runtime_probe_worker`
+    subprocess path observes `loader.import_module(...)` as
+    `imported_module=...`
+  - adjacent forms including `dynamic_import:load_module/1`,
+    `dynamic_import:__import__/1`,
+    `dynamic_import:builtins.__import__/1`, and non-dynamic reflective forms
+    remain fail-closed
+  - no request schema, MCP/schema, package-root export, README, EVAL,
+    PUBLIC_CLAIMS, public benchmark, scoring, compiler, admission, recompile,
+    result-assembly, generalized alias, imported-name/imported-alias, or
+    builtin-import subprocess support was added
+- Validation:
+  - implementation lane reported focused ruff, format check, strict mypy,
+    targeted pytest `331 passed`, and `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`,
+    which passed
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`,
+    reporting `4 files already formatted`
+  - control reran `.venv/bin/python -m mypy --strict src/`, reporting no
+    issues in 37 source files
+  - control reran `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py -q`,
+    reporting `331 passed`
+  - control reran `git diff --check`, which passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - next route: combined read-only release gate for the exact six-file unit
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import loader.import_module Subprocess Planning Acceptance
+
+- Reviewed the returned read-only post-tool-facade dynamic-import subprocess
+  form-broadening planning spike.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `88f7c74 Add dynamic import tool facade`
+  - latest pushed source/contract authority is
+    `88f7c74 Add dynamic import tool facade`
+  - dirty files are limited to workspace-only continuity in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Accepted findings:
+  - the request layer already materializes form labels as
+    `family:callee_text/arity`, so the next source slice should not start in
+    `src/context_ir/runtime_probe_requests.py`
+  - the real local-Python subprocess path remains exact-form gated in the
+    parent runner and worker for
+    `dynamic_import:importlib.import_module/1`
+  - `src/context_ir/runtime_observation_recompile.py` and
+    `src/context_ir/tool_facade.py` delegate through the default
+    dynamic-import runner and do not need source changes for the next slice
+  - exact root-module alias `dynamic_import:loader.import_module/1` is the
+    smallest low-risk adjacent form because `import importlib as loader`
+    still points to the same module object intercepted by the existing
+    importlib harness
+  - imported-name/imported-alias forms require rebinding already-imported
+    function objects, and `__import__` forms require separate builtins and
+    `sys.modules` semantics
+- Decision: accept the planning result first-pass and route the next
+  implementation lane to exact root-module alias subprocess support for
+  `dynamic_import:loader.import_module/1`.
+- Selected implementation lane:
+  - update `src/context_ir/runtime_probe_worker.py` so worker form validation
+    and default handler registration accept exactly the existing
+    `dynamic_import:importlib.import_module/1` form and new
+    `dynamic_import:loader.import_module/1` form
+  - update `src/context_ir/runtime_probe_execution.py` so
+    `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+    registers both exact dynamic-import forms
+  - add focused tests in `tests/test_runtime_probe_worker.py` and
+    `tests/test_runtime_probe_execution.py`
+  - preserve fail-closed behavior for adjacent forms such as
+    `dynamic_import:load_module/1`, `dynamic_import:__import__/1`,
+    `dynamic_import:builtins.__import__/1`, and non-dynamic reflective forms
+- Explicit non-goals:
+  - no request schema change
+  - no MCP/schema/package-root export change
+  - no README, EVAL, PUBLIC_CLAIMS, public benchmark, scoring, compiler,
+    admission, recompile, or result-assembly change
+  - no generalized alias support beyond exact `loader.import_module(name)`
+  - no imported-name, imported-alias, or builtin-import subprocess support
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Post-Tool-Facade Dynamic-Import Subprocess Next-Lane Routing
+
+- Ryan authorized proceeding to the next bounded north-star lane after
+  `88f7c74 Add dynamic import tool facade` was pushed.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `88f7c74 Add dynamic import tool facade`
+  - latest pushed source/contract authority is
+    `88f7c74 Add dynamic import tool facade`
+  - dirty files are limited to workspace-only continuity in `PLAN.md` and
+    `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Decision: route the next lane to a bounded read-only planning spike before
+  any new implementation.
+- Selected lane:
+  - decide the smallest truthful next implementation slice after the pushed
+    dynamic-import local-Python tool-facade release
+  - compare extending the real local-Python subprocess path beyond exact
+    `dynamic_import:importlib.import_module/1` against holding that path and
+    widening MCP/package-root/docs later
+  - if dynamic-import form broadening is selected, identify exactly one
+    family/form target and the first layer to change, with expected file scope
+    and validation commands
+  - account for current dispatch boundaries in
+    `src/context_ir/runtime_probe_requests.py`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `src/context_ir/runtime_probe_worker.py`
+  - keep `context_ir.tool_facade` as the highest exposed hybrid entry point
+    unless the spike returns a justified `NEEDS-CONTROL`
+- Explicit non-goals:
+  - no file edits, staging, commits, or push in the planning lane
+  - no MCP tool/schema change
+  - no package-root export change
+  - no README, EVAL, PUBLIC_CLAIMS, public benchmark, scoring, compiler,
+    stdout-protocol, admission, recompile, or result-assembly change
+  - no implementation of a new runtime family/form inside the planning lane
+- Reasoning:
+  - the exact root-module `importlib.import_module/1` path is now pushed
+    through worker, parent runner, recompile helper, and tool facade
+  - adjacent dynamic-import forms already exist in request/eval evidence, but
+    the real subprocess worker and parent dispatch path remain exact-form
+    gated
+  - widening MCP or package-root would reopen more stable public surfaces than
+    needed for the next technical uncertainty
+  - a read-only planning spike is the smallest quality-preserving step because
+    the next source slice should not blur form-selection, worker interception
+    semantics, parent dispatch registration, and public exposure policy
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Tool Facade Post-Push Routing
+
+- Ryan-authorized push completed for the dynamic-import local-Python
+  tool-facade release unit.
+- Pushed commit:
+  - `88f7c74 Add dynamic import tool facade`
+- Commit contents:
+  - `src/context_ir/tool_facade.py`
+  - `tests/test_tool_facade.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after push and before this continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `88f7c74 Add dynamic import tool facade`
+  - latest pushed source/contract authority is
+    `88f7c74 Add dynamic import tool facade`
+  - dirty files are limited to this workspace-only post-push continuity sync
+    in `PLAN.md` and `BUILDLOG.md`
+  - nothing staged
+  - no untracked files
+  - `git diff --check` clean
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1178 passed`
+  - no active release gate, staging, local commit, or push remains for this
+    release unit
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Dynamic Import Local-Python Tool Facade Local Commit Routing
+
+- Local commit creation completed for the dynamic-import local-Python
+  tool-facade release unit.
+- Commit:
+  - `88f7c74 Add dynamic import tool facade`
+- Commit contents:
+  - `src/context_ir/tool_facade.py`
+  - `tests/test_tool_facade.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Repo-backed truth after local commit creation and before this continuity
+  sync:
+  - branch `main`
+  - local `HEAD` at
+    `88f7c74 Add dynamic import tool facade`
+  - `origin/main` at
+    `842ddda Add dynamic import recompile helper`
+  - local branch ahead of `origin/main` by 1
+  - worktree clean before this docs-only continuity sync
+  - nothing staged before this docs-only continuity sync
+  - no untracked files before this docs-only continuity sync
+- Release state:
+  - exact four-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, and locally committed
+  - full regression reported `1178 passed`
+  - push remains Ryan-gated
+  - next control action is Ryan-authorized push sequencing
+- Acceptance status: first-pass
+
 ## 2026-05-11 -- Dynamic Import Local-Python Tool Facade Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact

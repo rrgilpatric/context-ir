@@ -72,8 +72,11 @@ _EXPECTED_REPLAY_INPUT_KEYS = (
     "replay_selector_seed",
 )
 
+_IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
+_LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
+
 _EXPECTED_CURRENT_FORMS = {
-    "dynamic_import:importlib.import_module/1",
+    _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
     "dynamic_import:load_module/1",
     "dynamic_import:builtins.__import__/1",
     "dynamic_import:__import__/1",
@@ -147,7 +150,11 @@ def _write_runtime_probe_program(tmp_path: Path) -> None:
     )
 
 
-def _source_site(start_line: int = 3) -> SourceSite:
+def _source_site(
+    start_line: int = 3,
+    *,
+    snippet: str = "importlib.import_module(name)",
+) -> SourceSite:
     """Return a stable source site for a synthetic runtime probe request."""
     return SourceSite(
         site_id=f"site:main.py:{start_line}:4",
@@ -158,20 +165,25 @@ def _source_site(start_line: int = 3) -> SourceSite:
             end_line=start_line,
             end_column=28,
         ),
-        snippet="importlib.import_module(name)",
+        snippet=snippet,
     )
 
 
-def _request(start_line: int = 3) -> runtime_probe_requests.RuntimeProbeRequest:
+def _request(
+    start_line: int = 3,
+    *,
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+    boundary_text: str = "importlib.import_module(name)",
+) -> runtime_probe_requests.RuntimeProbeRequest:
     """Return one synthetic planned runtime probe request."""
     return runtime_probe_requests.RuntimeProbeRequest(
         subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
         subject_id=f"unsupported:call:main.py:{start_line}:4",
-        source_site=_source_site(start_line),
+        source_site=_source_site(start_line, snippet=boundary_text),
         reason_code=UnresolvedReasonCode.DYNAMIC_IMPORT,
-        boundary_text="importlib.import_module(name)",
+        boundary_text=boundary_text,
         family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:importlib.import_module/1",
+        form_label=form_label,
         replay_target_seed="main.run",
         replay_selector_seed=(
             f"call:main.run:dynamic_import@main.py:{start_line}:4:{start_line}:28"
@@ -290,11 +302,13 @@ def _local_python_runner_request(
     | None = None,
     *,
     timeout_seconds: int = 30,
+    request: runtime_probe_requests.RuntimeProbeRequest | None = None,
 ) -> runtime_probe_execution.RuntimeProbeRunnerRequest:
     """Return one runner request carrying local-Python environment metadata."""
+    selected_request = _request() if request is None else request
     runner_batch = (
         runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
-            _materialized_batch(_plan(_request())),
+            _materialized_batch(_plan(selected_request)),
             runner_contract_revision="runtime-probe-runner:test.1",
             timeout_seconds=timeout_seconds,
             runner_environment=(
@@ -2677,6 +2691,63 @@ def test_dynamic_import_local_python_runner_executes_default_worker_subprocess(
     assert attempt.failure_detail_fields == ()
 
 
+def test_dynamic_import_local_python_runner_executes_loader_alias_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The composed helper registers loader.import_module for the worker."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            import importlib as loader
+
+            def run() -> object:
+                return loader.import_module("plugins.loader_helper_subprocess")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _request(
+        form_label=_LOADER_IMPORT_MODULE_FORM_LABEL,
+        boundary_text="loader.import_module(name)",
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_dynamic_import_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("imported_module", "plugins.loader_helper_subprocess"),
+    )
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
 @pytest.mark.parametrize(
     ("family_label", "form_label"),
     (
@@ -2688,9 +2759,17 @@ def test_dynamic_import_local_python_runner_executes_default_worker_subprocess(
             runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
             "dynamic_import:load_module/1",
         ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:__import__/1",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:builtins.__import__/1",
+        ),
     ),
 )
-def test_dynamic_import_local_python_runner_registers_only_default_form(
+def test_dynamic_import_local_python_runner_registers_only_exact_supported_forms(
     monkeypatch: pytest.MonkeyPatch,
     family_label: runtime_probe_requests.RuntimeProbeFamily,
     form_label: str,

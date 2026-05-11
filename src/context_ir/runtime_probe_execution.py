@@ -49,6 +49,13 @@ _RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME = "context_ir.runtime_probe_worke
 _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL = (
     "dynamic_import:importlib.import_module/1"
 )
+_RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_LOCAL_PYTHON_FORM_LABEL = (
+    "dynamic_import:loader.import_module/1"
+)
+_RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABELS = (
+    _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL,
+    _RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_LOCAL_PYTHON_FORM_LABEL,
+)
 _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY = (
     "runtime_probe_stdout_protocol_revision"
 )
@@ -1705,15 +1712,18 @@ def make_runtime_probe_dynamic_import_local_python_subprocess_runner(
     completion_contract_revision: str,
 ) -> RuntimeProbeRunnerCallable:
     """Return the local-Python runner for the default dynamic-import worker."""
-    handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label=_RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL,
-        python_executable=python_executable,
-        module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
-        invocation_contract_revision=invocation_contract_revision,
-        completion_contract_revision=completion_contract_revision,
+    handler_entries = tuple(
+        make_runtime_probe_local_python_subprocess_handler_entry(
+            family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
+            form_label=form_label,
+            python_executable=python_executable,
+            module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
+            invocation_contract_revision=invocation_contract_revision,
+            completion_contract_revision=completion_contract_revision,
+        )
+        for form_label in _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABELS
     )
-    return make_dispatching_runtime_probe_runner((handler_entry,))
+    return make_dispatching_runtime_probe_runner(handler_entries)
 
 
 def _materialize_runtime_probe_execution_input(

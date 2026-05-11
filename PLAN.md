@@ -41,11 +41,59 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`842ddda Add dynamic import recompile helper`. The latest pushed
+`88f7c74 Add dynamic import tool facade`. The latest pushed
 source/contract authority is also
-`842ddda Add dynamic import recompile helper`. Live git refs and
+`88f7c74 Add dynamic import tool facade`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Pushed dynamic-import local-Python tool facade release:
+
+- `src/context_ir/tool_facade.py` now has
+  `SemanticDynamicImportLocalPythonSubprocessRecompileRequest`,
+  `SemanticDynamicImportLocalPythonSubprocessRecompileResponse`, and
+  `recompile_repository_context_with_dynamic_import_local_python_subprocess`
+- the facade delegates to
+  `apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile(...)`
+- caller inputs remain explicit for the Python executable, invocation and
+  completion revisions, repository snapshot basis, probe contract revision,
+  runtime assumptions, runner contract revision, timeout, runner environment,
+  runner assumptions, and optional embedding function
+- the response mirrors nested runner preparation, attempt collection,
+  result-batch admission, observation application, recompile result, compile
+  result, diagnostic, budget, and selected/upgraded unit identities
+- tests in `tests/test_tool_facade.py` prove real subprocess behavior,
+  explicit-input delegation, mirror-field enforcement, package-root export
+  quarantine, and unchanged MCP exports
+- new names are added to `tool_facade.__all__` only
+- package-root exports and MCP exports remain unchanged
+- the slice does not add README, EVAL, PUBLIC_CLAIMS, public benchmark, eval,
+  scoring, compiler, stdout-protocol, worker behavior, admission contract,
+  result-assembly, automatic environment discovery, default `sys.executable`
+  policy, generalized dynamic-import support claim, or a new runtime
+  family/form
+- implementation review accepted the slice first-pass
+- combined read-only release gate passed with no findings:
+  - Gate 1 release-unit audit passed
+  - Gate 2 full regression passed, including full pytest reporting
+    `1178 passed`
+  - Gate 3 commit-gating passed for the exact four-file unit
+- local commit creation completed at
+  `88f7c74 Add dynamic import tool facade`
+- Ryan-authorized push completed for
+  `88f7c74 Add dynamic import tool facade`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `88f7c74 Add dynamic import tool facade`
+  - pushed: yes
+  - committed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - next route: control selection of the next bounded north-star lane
 
 Pushed dynamic-import local-Python recompile helper release:
 
@@ -3834,8 +3882,19 @@ sequencing for `c1a12d7` absent new findings.
   first-pass as workspace-only state
 - [x] Combined read-only release gate for the exact four-file dynamic-import
   local-Python tool-facade release unit
-- [ ] Local commit creation for the dynamic-import local-Python tool-facade
+- [x] Local commit creation for the dynamic-import local-Python tool-facade
   release unit
+- [x] Ryan-authorized push for the dynamic-import local-Python tool-facade
+  release unit
+- [x] Post-`88f7c74` control selection of the next bounded north-star lane
+- [x] Read-only post-tool-facade dynamic-import subprocess form-broadening
+  planning spike
+- [x] Exact `dynamic_import:loader.import_module/1` local-Python subprocess
+  implementation slice
+- [x] Combined read-only release gate for the exact six-file
+  `dynamic_import:loader.import_module/1` local-Python subprocess release unit
+- [ ] Local commit creation for the exact six-file
+  `dynamic_import:loader.import_module/1` local-Python subprocess release unit
 
 ## What Is In Progress
 
@@ -4743,17 +4802,56 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: local commit creation for the exact four-file
-dynamic-import local-Python tool-facade release unit. Current pushed release
-authority is
-`842ddda Add dynamic import recompile helper`; latest pushed source/contract
-authority is `842ddda Add dynamic import recompile helper`. Local `HEAD` and
-`origin/main` were verified at `842ddda` during release-gate acceptance. The
-exact dirty release unit is `BUILDLOG.md`, `PLAN.md`,
-`src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`. Nothing is
-staged; no untracked files exist; `git diff --check` is clean.
+Immediate next route: local commit creation for the exact six-file
+`dynamic_import:loader.import_module/1` local-Python subprocess release unit.
+Current pushed release authority and latest pushed source/contract authority
+are `88f7c74 Add dynamic import tool facade`. During release-gate acceptance,
+live git refs verified local `HEAD` and `origin/main` at `88f7c74`. Nothing is
+staged; no untracked files exist.
 
-Workspace-only accepted dynamic-import local-Python tool facade:
+Workspace-only accepted `dynamic_import:loader.import_module/1` local-Python
+subprocess implementation:
+
+- add exact root-module alias subprocess support for
+  `dynamic_import:loader.import_module/1`
+- `src/context_ir/runtime_probe_worker.py` now accepts exactly the existing
+  `dynamic_import:importlib.import_module/1` form and new
+  `dynamic_import:loader.import_module/1` form
+- worker default handler registration covers both exact forms through the
+  existing dynamic-import handler adapter and concrete observer
+- `src/context_ir/runtime_probe_execution.py` now has
+  `make_runtime_probe_dynamic_import_local_python_subprocess_runner(...)`
+  registers both exact dynamic-import forms
+- the implementation reuses the existing `importlib.import_module`
+  interception harness and does not add new interception families
+- focused coverage in `tests/test_runtime_probe_worker.py` and
+  `tests/test_runtime_probe_execution.py` proves a real
+  `python -m context_ir.runtime_probe_worker` subprocess observes
+  `loader.import_module(...)` as `imported_module=...`
+- adjacent forms such as `dynamic_import:load_module/1`,
+  `dynamic_import:__import__/1`, `dynamic_import:builtins.__import__/1`, and
+  non-dynamic reflective forms remain fail-closed
+- no request schema, MCP/schema, package-root export, README, EVAL,
+  PUBLIC_CLAIMS, public benchmark, scoring, compiler, admission, recompile,
+  result-assembly, generalized alias, imported-name/imported-alias, or
+  builtin-import subprocess support is authorized
+- validation passed under focused ruff, format check, strict mypy, targeted
+  pytest `331 passed`, and `git diff --check`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes, full pytest `1186 passed`
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+
+Pushed dynamic-import local-Python tool facade:
 
 - `src/context_ir/tool_facade.py` now has
   `SemanticDynamicImportLocalPythonSubprocessRecompileRequest`,
@@ -4783,10 +4881,15 @@ Workspace-only accepted dynamic-import local-Python tool facade:
   - release-unit-audit-cleared: yes
   - full-regression-cleared: yes, full pytest `1178 passed`
   - commit-gating-cleared: yes
-  - staged: no
-  - locally committed: no
-  - pushed: no
-  - next route: local commit creation for the exact four-file unit
+  - staged: yes, then committed
+  - locally committed: yes,
+    `88f7c74 Add dynamic import tool facade`
+  - Ryan-authorized push completed for
+    `88f7c74 Add dynamic import tool facade`
+  - pushed: yes
+  - committed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - next route: control selection of the next bounded north-star lane
 
 Pushed dynamic-import local-Python recompile helper:
 

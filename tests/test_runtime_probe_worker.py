@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import json
 import os
+import subprocess
 import sys
 from collections.abc import Iterable
 from dataclasses import FrozenInstanceError, replace
@@ -63,6 +65,15 @@ _DYNAMIC_IMPORT_SOURCE_MODULE_IMPORT_HELPER = (
 _DYNAMIC_IMPORT_CONCRETE_OBSERVER_HELPER = (
     "observe_runtime_probe_dynamic_import_worker_request"
 )
+_IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
+_LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
+
+
+def _boundary_text_for_form_label(form_label: str) -> str:
+    """Return the one-argument source boundary represented by a form label."""
+    if form_label == _LOADER_IMPORT_MODULE_FORM_LABEL:
+        return "loader.import_module(name)"
+    return "importlib.import_module(name)"
 
 
 def _field(key: str, value: str) -> runtime_probe_results.RuntimeProbeReplayField:
@@ -75,9 +86,10 @@ def _request(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
 ) -> runtime_probe_requests.RuntimeProbeRequest:
     """Return one deterministic planned runtime probe request."""
-    form_label = "dynamic_import:importlib.import_module/1"
+    boundary_text = _boundary_text_for_form_label(form_label)
     resolved_replay_selector_seed = (
         f"call:{replay_target_seed}:{form_label}@{source_file_path}:3:4:3:28"
         if replay_selector_seed is None
@@ -95,10 +107,10 @@ def _request(
                 end_line=3,
                 end_column=28,
             ),
-            snippet="importlib.import_module(name)",
+            snippet=boundary_text,
         ),
         reason_code=UnresolvedReasonCode.DYNAMIC_IMPORT,
-        boundary_text="importlib.import_module(name)",
+        boundary_text=boundary_text,
         family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
         form_label=form_label,
         replay_target_seed=replay_target_seed,
@@ -111,6 +123,8 @@ def _valid_worker_invocation(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+    python_executable: str = "/workspace/context-ir/.venv/bin/python",
     working_directory: str = "/workspace/context-ir",
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonSubprocessInvocation:
@@ -119,9 +133,11 @@ def _valid_worker_invocation(
         source_file_path=source_file_path,
         replay_target_seed=replay_target_seed,
         replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
     )
     return _valid_worker_invocation_for_request(
         request,
+        python_executable=python_executable,
         working_directory=working_directory,
         python_path_entries=python_path_entries,
     )
@@ -130,6 +146,7 @@ def _valid_worker_invocation(
 def _valid_worker_invocation_for_request(
     request: runtime_probe_requests.RuntimeProbeRequest,
     *,
+    python_executable: str = "/workspace/context-ir/.venv/bin/python",
     working_directory: str = "/workspace/context-ir",
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonSubprocessInvocation:
@@ -167,7 +184,7 @@ def _valid_worker_invocation_for_request(
     )
     invocation = materialize_runtime_probe_local_python_subprocess_invocation(
         runner_batch.runner_requests[0],
-        python_executable="/workspace/context-ir/.venv/bin/python",
+        python_executable=python_executable,
         module_name="context_ir.runtime_probe_worker",
         invocation_contract_revision=("runtime-probe-local-python-subprocess:test.1"),
     )
@@ -179,6 +196,8 @@ def _valid_worker_payload(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+    python_executable: str = "/workspace/context-ir/.venv/bin/python",
     working_directory: str = "/workspace/context-ir",
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> RuntimeProbeLocalPythonWorkerRequestPayload:
@@ -187,6 +206,8 @@ def _valid_worker_payload(
         source_file_path=source_file_path,
         replay_target_seed=replay_target_seed,
         replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        python_executable=python_executable,
         working_directory=working_directory,
         python_path_entries=python_path_entries,
     )
@@ -198,6 +219,7 @@ def _valid_dynamic_import_worker_request(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
     working_directory: str = "/workspace/context-ir",
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> DynamicImportWorkerRequest:
@@ -207,6 +229,7 @@ def _valid_dynamic_import_worker_request(
             source_file_path=source_file_path,
             replay_target_seed=replay_target_seed,
             replay_selector_seed=replay_selector_seed,
+            form_label=form_label,
             working_directory=working_directory,
             python_path_entries=python_path_entries,
         )
@@ -218,6 +241,7 @@ def _valid_dynamic_import_replay_target(
     source_file_path: str = "main.py",
     replay_target_seed: str = "main.run",
     replay_selector_seed: str | None = None,
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
     working_directory: str = "/workspace/context-ir",
     python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
 ) -> DynamicImportReplayTarget:
@@ -226,6 +250,7 @@ def _valid_dynamic_import_replay_target(
         source_file_path=source_file_path,
         replay_target_seed=replay_target_seed,
         replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
         working_directory=working_directory,
         python_path_entries=python_path_entries,
     )
@@ -302,6 +327,7 @@ def _dynamic_import_worker_request_with_source(
     module_name: str,
     source_text: str,
     replay_target_name: str = "run",
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
 ) -> DynamicImportWorkerRequest:
     """Return a worker request backed by a real temp source module."""
     working_directory = tmp_path / f"{module_name}_workspace"
@@ -313,6 +339,7 @@ def _dynamic_import_worker_request_with_source(
     return _valid_dynamic_import_worker_request(
         source_file_path=f"{module_name}.py",
         replay_target_seed=f"{module_name}.{replay_target_name}",
+        form_label=form_label,
         working_directory=str(working_directory),
         python_path_entries=(str(python_path),),
     )
@@ -657,6 +684,34 @@ def test_dynamic_import_worker_request_materializes_replay_contract() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("form_label", "expected_boundary_text"),
+    (
+        (_IMPORTLIB_IMPORT_MODULE_FORM_LABEL, "importlib.import_module(name)"),
+        (_LOADER_IMPORT_MODULE_FORM_LABEL, "loader.import_module(name)"),
+    ),
+)
+def test_dynamic_import_worker_request_accepts_exact_import_module_forms(
+    form_label: str,
+    expected_boundary_text: str,
+) -> None:
+    """Only the two exact import-module subprocess forms materialize."""
+    payload = _valid_worker_payload(form_label=form_label)
+
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+            payload
+        )
+    )
+
+    assert request.form_label == form_label
+    assert request.boundary_text == expected_boundary_text
+    assert (
+        _replay_fields_by_key(request.request_replay_payload_fields)["form_label"]
+        == form_label
+    )
+
+
 def test_dynamic_import_worker_request_contract_is_frozen() -> None:
     """Worker-local dynamic-import requests are immutable replay contracts."""
     request = (
@@ -682,24 +737,39 @@ def test_dynamic_import_worker_request_constructor_rejects_blank_boundary() -> N
 
 
 @pytest.mark.parametrize(
-    ("field_name", "field_value", "error_match"),
+    ("family_label", "form_label", "error_match"),
     (
         (
-            "family_label",
             runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            "reflective_builtin:getattr/2",
             "family_label",
         ),
-        ("form_label", "dynamic_import:other_form/1", "form_label"),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:load_module/1",
+            "form_label",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:__import__/1",
+            "form_label",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            "dynamic_import:builtins.__import__/1",
+            "form_label",
+        ),
     ),
 )
 def test_dynamic_import_worker_request_validates_exact_family_form(
-    field_name: str,
-    field_value: object,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
     error_match: str,
 ) -> None:
-    """Only the first importlib.import_module dynamic-import form materializes."""
+    """Adjacent dynamic-import and non-dynamic forms stay fail-closed."""
     payload = _valid_worker_payload()
-    object.__setattr__(payload, field_name, field_value)
+    object.__setattr__(payload, "family_label", family_label)
+    object.__setattr__(payload, "form_label", form_label)
 
     with pytest.raises(ValueError, match=error_match):
         runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
@@ -1796,6 +1866,56 @@ def test_dynamic_import_worker_default_handler_dispatches_concrete_observer(
     )
     assert "source stdout" not in stdout_text
     assert "target stdout" not in stdout_text
+
+
+def test_dynamic_import_worker_default_subprocess_observes_loader_import_module(
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes loader.import_module through defaults."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = "runtime_probe_loader_default_worker_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        (
+            "import importlib as loader\n\n"
+            "def run():\n"
+            '    return loader.import_module("plugins.loader_worker_subprocess")\n'
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+        form_label=_LOADER_IMPORT_MODULE_FORM_LABEL,
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "imported_module",
+                "value": "plugins.loader_worker_subprocess",
+            },
+        ],
+    }
 
 
 def test_dynamic_import_worker_default_handler_observer_failure_fails_closed(
