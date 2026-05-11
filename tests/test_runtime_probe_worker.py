@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import contextlib
 import importlib
 import json
@@ -69,6 +70,7 @@ _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
 _IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
 _LOAD_MODULE_FORM_LABEL = "dynamic_import:load_module/1"
+_BUILTIN_IMPORT_FORM_LABEL = "dynamic_import:__import__/1"
 
 
 def _boundary_text_for_form_label(form_label: str) -> str:
@@ -79,6 +81,8 @@ def _boundary_text_for_form_label(form_label: str) -> str:
         return "import_module(name)"
     if form_label == _LOAD_MODULE_FORM_LABEL:
         return "load_module(name)"
+    if form_label == _BUILTIN_IMPORT_FORM_LABEL:
+        return "__import__(name)"
     return "importlib.import_module(name)"
 
 
@@ -697,6 +701,7 @@ def test_dynamic_import_worker_request_materializes_replay_contract() -> None:
         (_LOADER_IMPORT_MODULE_FORM_LABEL, "loader.import_module(name)"),
         (_IMPORTED_IMPORT_MODULE_FORM_LABEL, "import_module(name)"),
         (_LOAD_MODULE_FORM_LABEL, "load_module(name)"),
+        (_BUILTIN_IMPORT_FORM_LABEL, "__import__(name)"),
     ),
 )
 def test_dynamic_import_worker_request_accepts_exact_import_module_forms(
@@ -744,6 +749,18 @@ def test_dynamic_import_worker_request_constructor_rejects_blank_boundary() -> N
         replace(request, boundary_text=" ")
 
 
+def test_dynamic_import_worker_request_rejects_literal_builtin_import_boundary() -> (
+    None
+):
+    """The bare __import__ worker form is limited to __import__(name)."""
+    request = _valid_dynamic_import_worker_request(
+        form_label=_BUILTIN_IMPORT_FORM_LABEL
+    )
+
+    with pytest.raises(ValueError, match="__import__\\(name\\)"):
+        replace(request, boundary_text='__import__("plugins.weather")')
+
+
 @pytest.mark.parametrize(
     ("family_label", "form_label", "error_match"),
     (
@@ -751,11 +768,6 @@ def test_dynamic_import_worker_request_constructor_rejects_blank_boundary() -> N
             runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
             "reflective_builtin:getattr/2",
             "family_label",
-        ),
-        (
-            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
-            "dynamic_import:__import__/1",
-            "form_label",
         ),
         (
             runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
@@ -1600,6 +1612,56 @@ def test_dynamic_import_worker_target_harness_accepts_replay_target() -> None:
     assert observed_module_name not in sys.modules
 
 
+def test_dynamic_import_worker_target_harness_observes_builtin_import() -> None:
+    """The target harness captures one bare __import__ call and restores globals."""
+    request = _valid_dynamic_import_worker_request(
+        form_label=_BUILTIN_IMPORT_FORM_LABEL
+    )
+    observed_module_name = "plugins.builtin_target_observed"
+    original_builtin_import = builtins.__import__
+    original_module = ModuleType(observed_module_name)
+    sys.modules[observed_module_name] = original_module
+
+    def target() -> object:
+        imported_module = __import__(observed_module_name)
+        assert sys.modules[observed_module_name] is imported_module
+        assert imported_module is not original_module
+        return imported_module
+
+    try:
+        observation = _dynamic_import_worker_observation_from_target(request, target)
+    finally:
+        restored_module = sys.modules.pop(observed_module_name, None)
+
+    assert observation.request is request
+    assert observation.imported_module == observed_module_name
+    assert restored_module is original_module
+    assert builtins.__import__ is original_builtin_import
+
+
+def test_dynamic_import_worker_target_harness_restores_builtin_import_failure() -> None:
+    """The __import__ harness restores sys.modules and builtins after failures."""
+    request = _valid_dynamic_import_worker_request(
+        form_label=_BUILTIN_IMPORT_FORM_LABEL
+    )
+    observed_module_name = "plugins.builtin_target_failure"
+    original_builtin_import = builtins.__import__
+    sys.modules.pop(observed_module_name, None)
+
+    def target() -> None:
+        __import__(observed_module_name)
+        raise RuntimeError("target failed with secret-token")
+
+    try:
+        with pytest.raises(RuntimeError, match="target failed"):
+            _dynamic_import_worker_observation_from_target(request, target)
+        assert observed_module_name not in sys.modules
+    finally:
+        sys.modules.pop(observed_module_name, None)
+
+    assert builtins.__import__ is original_builtin_import
+
+
 def test_dynamic_import_worker_target_harness_is_worker_stdout_safe() -> None:
     """Target stdout and stderr cannot contaminate the worker stdout protocol."""
 
@@ -1676,6 +1738,40 @@ def test_dynamic_import_worker_target_harness_rejects_bad_import_shapes(
         _dynamic_import_worker_observation_from_target(request, target)
 
     assert importlib.import_module is original_import_module
+
+
+@pytest.mark.parametrize(
+    ("target", "error_match"),
+    (
+        (lambda: __import__(), "__import__\\(name\\)"),
+        (
+            lambda: __import__(
+                "plugins.weather",
+                globals(),
+                locals(),
+                ["forecast"],
+            ),
+            "globals locals and fromlist",
+        ),
+        (lambda: __import__("plugins.weather", package="plugins"), "package"),
+        (lambda: __import__(".weather"), "relative"),
+        (lambda: __import__("plugins-weather"), "module name"),
+    ),
+)
+def test_dynamic_import_worker_target_harness_rejects_bad_builtin_import_shapes(
+    target: runtime_probe_worker.RuntimeProbeLocalPythonDynamicImportTargetCallable,
+    error_match: str,
+) -> None:
+    """The __import__ harness accepts only one absolute bare-name call."""
+    request = _valid_dynamic_import_worker_request(
+        form_label=_BUILTIN_IMPORT_FORM_LABEL
+    )
+    original_builtin_import = builtins.__import__
+
+    with pytest.raises(ValueError, match=error_match):
+        _dynamic_import_worker_observation_from_target(request, target)
+
+    assert builtins.__import__ is original_builtin_import
 
 
 def test_dynamic_import_worker_target_harness_rejects_caught_errors() -> None:
@@ -2024,6 +2120,104 @@ def test_dynamic_import_worker_concrete_observer_observes_load_module_alias(
     assert importlib.import_module is original_import_module
 
 
+def test_dynamic_import_worker_concrete_observer_observes_builtin_import(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer captures bare __import__ and restores sys.modules."""
+    module_name = "runtime_probe_builtin_import_concrete_observer_case"
+    observed_module_name = "plugins.builtin_import_concrete"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        form_label=_BUILTIN_IMPORT_FORM_LABEL,
+        source_text=(
+            "import sys\n\n"
+            "def run():\n"
+            f'    imported_module = __import__("{observed_module_name}")\n'
+            f'    assert sys.modules["{observed_module_name}"] is imported_module\n'
+            "    return imported_module\n"
+        ),
+    )
+    original_builtin_import = builtins.__import__
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    sys.modules.pop(module_name, None)
+    sys.modules.pop(observed_module_name, None)
+
+    try:
+        observation = _observe_dynamic_import_worker_request(request)
+        assert observed_module_name not in sys.modules
+    finally:
+        sys.modules.pop(module_name, None)
+        sys.modules.pop(observed_module_name, None)
+
+    assert observation.request is request
+    assert observation.imported_module == observed_module_name
+    assert sys.path == original_sys_path
+    assert os.getcwd() == original_working_directory
+    assert builtins.__import__ is original_builtin_import
+
+
+def test_dynamic_import_worker_concrete_observer_rejects_builtin_import_shadow(
+    tmp_path: Path,
+) -> None:
+    """Bare __import__ forms fail closed when the source module shadows the name."""
+    module_name = "runtime_probe_builtin_import_shadow_case"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        form_label=_BUILTIN_IMPORT_FORM_LABEL,
+        source_text=(
+            "__import__ = object()\n\n"
+            "def run():\n"
+            '    raise AssertionError("target should not execute")\n'
+        ),
+    )
+    original_builtin_import = builtins.__import__
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="__import__ global must be absent"):
+            _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.__import__ is original_builtin_import
+
+
+def test_dynamic_import_worker_concrete_observer_restores_builtin_import_on_drift(
+    tmp_path: Path,
+) -> None:
+    """Target-time builtins.__import__ tampering fails closed after restoration."""
+    module_name = "runtime_probe_builtin_import_restore_validation_case"
+    observed_module_name = "plugins.builtin_import_restore"
+    request = _dynamic_import_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        form_label=_BUILTIN_IMPORT_FORM_LABEL,
+        source_text=(
+            "import builtins\n\n"
+            "def run():\n"
+            f'    imported_module = __import__("{observed_module_name}")\n'
+            "    builtins.__import__ = object()\n"
+            "    return imported_module\n"
+        ),
+    )
+    original_builtin_import = builtins.__import__
+    sys.modules.pop(module_name, None)
+    sys.modules.pop(observed_module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="builtins.__import__ changed"):
+            _observe_dynamic_import_worker_request(request)
+        assert observed_module_name not in sys.modules
+    finally:
+        sys.modules.pop(module_name, None)
+        sys.modules.pop(observed_module_name, None)
+
+    assert builtins.__import__ is original_builtin_import
+
+
 @pytest.mark.parametrize(
     ("source_text", "error_match"),
     (
@@ -2289,6 +2483,60 @@ def test_dynamic_import_worker_default_subprocess_observes_load_module_alias(
             {
                 "key": "imported_module",
                 "value": "plugins.load_module_worker_subprocess",
+            },
+        ],
+    }
+
+
+def test_dynamic_import_worker_default_subprocess_observes_builtin_import(
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes exact bare __import__ calls by default."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = "runtime_probe_builtin_import_default_worker_case"
+    observed_module_name = "plugins.builtin_import_worker_subprocess"
+    (tmp_path / f"{module_name}.py").write_text(
+        (
+            "import sys\n\n"
+            "def run():\n"
+            f'    imported_module = __import__("{observed_module_name}")\n'
+            f'    assert sys.modules["{observed_module_name}"] '
+            "is imported_module\n"
+            "    return imported_module\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.run",
+        form_label=_BUILTIN_IMPORT_FORM_LABEL,
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "imported_module",
+                "value": observed_module_name,
             },
         ],
     }
