@@ -2,6 +2,246 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-12 -- Runtime Mutation Locals Subprocess Release Gate
+
+- Reviewed the returned combined read-only release-gate result for the exact
+  `runtime_mutation:locals/0` local-Python subprocess release unit.
+- Findings: none.
+- Gate results:
+  - release-unit audit: passed
+  - full regression: passed
+  - commit-gating: passed
+- Release-unit audit:
+  - confirmed the unit is bounded to exact
+    `runtime_mutation:locals/0` local-Python subprocess support plus
+    continuity updates
+  - confirmed no `setattr`, `delattr`, `exec`/`eval`, metaclass, public API,
+    schema, MCP, scoring, compiler, admission, README, EVAL, PUBLIC_CLAIMS,
+    fixture, task, run-spec, package-root export, or generalized
+    runtime-support widening
+  - confirmed pushed dynamic-import subprocess forms, exact reflective-builtin
+    subprocess forms through `dir/0`, and exact `runtime_mutation:globals/0`
+    behavior remain preserved
+- Full regression:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1506 passed`
+  - `git diff --check`: passed
+- Commit-gating:
+  - dirty set remained exactly the six-file release unit
+  - staged files: none
+  - untracked files: none
+  - scope widening: none detected
+- Exact release-unit file set:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth during gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `5804c98 Add runtime globals subprocess support`
+  - live control verification matched the returned gate report
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - create one local commit for the exact six-file unit
+  - push remains Ryan-gated
+- Acceptance status: first-pass
+
+## 2026-05-12 -- Runtime Mutation Locals Subprocess Workspace Acceptance
+
+- Reviewed the returned implementation slice for exact
+  `runtime_mutation:locals/0` local-Python subprocess support.
+- Findings: none.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `5804c98 Add runtime globals subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Accepted implementation:
+  - `src/context_ir/runtime_probe_worker.py` now registers exact
+    `runtime_mutation:locals/0` in the default local-Python worker table
+  - the worker validates exact runtime-mutation metadata, reason
+    `RUNTIME_MUTATION`, unsupported-finding subject kind, replay identity, and
+    boundary text `locals()` before replay execution
+  - the concrete worker observer imports the replay target source module,
+    resolves a zero-argument target, temporarily wraps `builtins.locals`,
+    captures exactly one zero-argument call, restores `builtins.locals` on
+    success and failure, and preserves caller target-frame local-namespace
+    semantics
+  - the success payload is normalized as
+    `lookup_outcome=returned_namespace`
+  - required-argument targets, target exceptions, malformed metadata, boundary
+    drift, shadowed source-module `locals`, target-time source global drift,
+    non-selected runtime-mutation forms, wrong arity, kwargs, missing capture,
+    multiple captures, and builtin mutation/deletion during replay fail closed
+  - `src/context_ir/runtime_probe_execution.py` now exposes the narrow parent
+    runner factory
+    `make_runtime_probe_runtime_mutation_locals_zero_local_python_subprocess_runner(...)`
+  - existing dynamic-import, reflective-builtin, and
+    `runtime_mutation:globals/0` subprocess behavior remains covered and
+    preserved
+- Non-goals preserved:
+  - no generalized runtime-mutation support
+  - no `setattr`, `delattr`, `exec`/`eval`, or metaclass subprocess support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or
+    run-spec changes
+- Control validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py`,
+    `4 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_probe_requests.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py -v`,
+    `803 passed`
+  - `git diff --check`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - combined read-only release-gate lane over the exact six-file release unit,
+    with stop-on-first-finding discipline
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Runtime Mutation Locals Subprocess Selection
+
+- Selected the next bounded north-star lane after pushed
+  `5804c98 Add runtime globals subprocess support`.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `5804c98 Add runtime globals subprocess support`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Control findings: none.
+- Selected route:
+  - exact `runtime_mutation:locals/0` local-Python subprocess support
+  - one implementation lane only
+  - preserve pushed dynamic-import subprocess forms, exact reflective-builtin
+    subprocess forms through `dir/0`, and exact `runtime_mutation:globals/0`
+    subprocess behavior
+- Reasoning:
+  - `runtime_mutation:globals/0` is now pushed and proves the first
+    runtime-mutation subprocess namespace form
+  - `runtime_mutation:locals/0` is already planned by runtime-probe request
+    construction and admitted as `LocalsRuntimeObservation`
+  - existing runtime-acquisition/admission contracts require
+    `lookup_outcome=returned_namespace` for matched `locals()`
+    observations
+  - `locals()` is the smallest truthful next runtime-mutation subprocess
+    slice because it keeps the zero-argument namespace payload shape while
+    adding the focused caller-frame local-namespace semantics that `globals()`
+    intentionally avoided
+- Alternatives deferred:
+  - `runtime_mutation:setattr/3` and `runtime_mutation:delattr/2`: defer
+    because they need mutation-specific restoration and outcome contracts
+  - `exec_or_eval:*`: defer because replay input and durable source-proof
+    contracts are family-specific
+  - `metaclass_behavior:keyword`: defer because it needs class-creation
+    behavior and durable proof
+- Non-goals for the selected lane:
+  - no generalized runtime-mutation support
+  - no `setattr`, `delattr`, `exec`/`eval`, or metaclass subprocess support
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, admission, docs, README, EVAL, PUBLIC_CLAIMS, fixture, task, or
+    run-spec changes
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Runtime Mutation Globals Subprocess Push
+
+- Ryan-authorized push completed for the exact
+  `runtime_mutation:globals/0` local-Python subprocess release unit.
+- Pushed commit:
+  - `5804c98 Add runtime globals subprocess support`
+- Commit contents:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth after push and before this continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `5804c98 Add runtime globals subprocess support`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Release state:
+  - exact six-file source/contract unit is accepted first-pass,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - full regression reported `1479 passed`
+  - no active release gate, staging, local commit, or push remains for this
+    release unit
+  - next control action is selection of the next bounded north-star lane
+- Acceptance status: first-pass
+
+## 2026-05-11 -- Runtime Mutation Globals Subprocess Local Commit
+
+- Local commit creation completed for the exact
+  `runtime_mutation:globals/0` local-Python subprocess release unit after
+  release-unit audit, full regression, and commit-gating cleared.
+- Local commit:
+  - `5804c98 Add runtime globals subprocess support`
+- Commit contents:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Repo-backed truth after local commit and before this continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `5804c98 Add runtime globals subprocess support`
+  - `origin/main` remains at
+    `64de22b Add reflective dir zero subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this docs-only continuity sync
+  - staged files: none before this docs-only continuity sync
+  - untracked files: none before this docs-only continuity sync
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `5804c98 Add runtime globals subprocess support`
+  - pushed: no
+- Next control route:
+  - Ryan authorization for push, or an explicit hold without pushing
+- Acceptance status: first-pass
+
 ## 2026-05-11 -- Runtime Mutation Globals Subprocess Release Gate
 
 - Reviewed the returned combined read-only release-gate result for the exact

@@ -85,6 +85,9 @@ _RUNTIME_PROBE_REFLECTIVE_DIR_ZERO_LOCAL_PYTHON_FORM_LABEL = "reflective_builtin
 _RUNTIME_PROBE_RUNTIME_MUTATION_GLOBALS_ZERO_LOCAL_PYTHON_FORM_LABEL = (
     "runtime_mutation:globals/0"
 )
+_RUNTIME_PROBE_RUNTIME_MUTATION_LOCALS_ZERO_LOCAL_PYTHON_FORM_LABEL = (
+    "runtime_mutation:locals/0"
+)
 _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABELS = (
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL,
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_LOCAL_PYTHON_FORM_LABEL,
@@ -1901,6 +1904,26 @@ def make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_run
         family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
         form_label=(
             _RUNTIME_PROBE_RUNTIME_MUTATION_GLOBALS_ZERO_LOCAL_PYTHON_FORM_LABEL
+        ),
+        python_executable=python_executable,
+        module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+    )
+    return make_dispatching_runtime_probe_runner((handler_entry,))
+
+
+def make_runtime_probe_runtime_mutation_locals_zero_local_python_subprocess_runner(
+    *,
+    python_executable: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+) -> RuntimeProbeRunnerCallable:
+    """Return the local-Python runner for exact runtime-mutation ``locals/0``."""
+    handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=(
+            _RUNTIME_PROBE_RUNTIME_MUTATION_LOCALS_ZERO_LOCAL_PYTHON_FORM_LABEL
         ),
         python_executable=python_executable,
         module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
@@ -3846,6 +3869,7 @@ __all__ = [
     "make_runtime_probe_reflective_vars_local_python_subprocess_runner",
     "make_runtime_probe_reflective_vars_zero_local_python_subprocess_runner",
     "make_runtime_probe_runtime_mutation_globals_zero_local_python_subprocess_runner",
+    "make_runtime_probe_runtime_mutation_locals_zero_local_python_subprocess_runner",
     "make_runtime_probe_local_python_subprocess_handler_entry",
     "materialize_runtime_probe_execution_input_batch",
     "materialize_runtime_probe_local_python_process_completion_attempt",
