@@ -114,6 +114,13 @@ RuntimeMutationLocalsZeroWorkerObservation = cast(
     type[object],
     _RPW.RuntimeProbeLocalPythonRuntimeMutationLocalsZeroWorkerObservation,
 )
+RuntimeMutationDelattrWorkerRequest = (
+    runtime_probe_worker.RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest
+)
+RuntimeMutationDelattrWorkerObservation = cast(
+    type[object],
+    _RPW.RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObservation,
+)
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
@@ -152,6 +159,9 @@ _RUNTIME_MUTATION_GLOBALS_ZERO_CONCRETE_OBSERVER_HELPER = (
 )
 _RUNTIME_MUTATION_LOCALS_ZERO_CONCRETE_OBSERVER_HELPER = (
     "observe_runtime_probe_runtime_mutation_locals_zero_worker_request"
+)
+_RUNTIME_MUTATION_DELATTR_CONCRETE_OBSERVER_HELPER = (
+    "observe_runtime_probe_runtime_mutation_delattr_worker_request"
 )
 _REFLECTIVE_HASATTR_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_hasattr_worker_request"
@@ -204,6 +214,12 @@ _RUNTIME_MUTATION_LOCALS_ZERO_REQUEST_MATERIALIZER = (
 _RUNTIME_MUTATION_LOCALS_ZERO_SUCCESS_RESPONSE_MATERIALIZER = (
     "materialize_runtime_probe_runtime_mutation_locals_zero_worker_success_response"
 )
+_RUNTIME_MUTATION_DELATTR_REQUEST_MATERIALIZER = (
+    "materialize_runtime_probe_runtime_mutation_delattr_worker_request"
+)
+_RUNTIME_MUTATION_DELATTR_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_runtime_mutation_delattr_worker_success_response"
+)
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
 _IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
@@ -220,6 +236,7 @@ _REFLECTIVE_DIR_ONE_FORM_LABEL = "reflective_builtin:dir/1"
 _REFLECTIVE_DIR_ZERO_FORM_LABEL = "reflective_builtin:dir/0"
 _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL = "runtime_mutation:globals/0"
 _RUNTIME_MUTATION_LOCALS_ZERO_FORM_LABEL = "runtime_mutation:locals/0"
+_RUNTIME_MUTATION_DELATTR_FORM_LABEL = "runtime_mutation:delattr/2"
 
 
 def _boundary_text_for_form_label(form_label: str) -> str:
@@ -473,6 +490,43 @@ def _runtime_mutation_locals_zero_request(
     boundary_text: str = "locals()",
 ) -> runtime_probe_requests.RuntimeProbeRequest:
     """Return one deterministic runtime-mutation locals/0 planned request."""
+    resolved_replay_selector_seed = (
+        f"call:{replay_target_seed}:{form_label}@{source_file_path}:3:4:3:28"
+        if replay_selector_seed is None
+        else replay_selector_seed
+    )
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=f"unsupported:call:{source_file_path}:3:4",
+        source_site=SourceSite(
+            site_id=f"site:{source_file_path}:3:4",
+            file_path=source_file_path,
+            span=SourceSpan(
+                start_line=3,
+                start_column=4,
+                end_line=3,
+                end_column=28,
+            ),
+            snippet=boundary_text,
+        ),
+        reason_code=UnresolvedReasonCode.RUNTIME_MUTATION,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=form_label,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=resolved_replay_selector_seed,
+    )
+
+
+def _runtime_mutation_delattr_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _RUNTIME_MUTATION_DELATTR_FORM_LABEL,
+    boundary_text: str = "delattr(obj, name)",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one deterministic runtime-mutation delattr/2 planned request."""
     resolved_replay_selector_seed = (
         f"call:{replay_target_seed}:{form_label}@{source_file_path}:3:4:3:28"
         if replay_selector_seed is None
@@ -874,6 +928,36 @@ def _valid_runtime_mutation_locals_zero_worker_request(
     return materialize_request(payload)
 
 
+def _valid_runtime_mutation_delattr_worker_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _RUNTIME_MUTATION_DELATTR_FORM_LABEL,
+    boundary_text: str = "delattr(obj, name)",
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> RuntimeMutationDelattrWorkerRequest:
+    """Return one worker-local exact-delattr request contract."""
+    request = _runtime_mutation_delattr_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        working_directory=working_directory,
+        python_path_entries=python_path_entries,
+    )
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_DELATTR_REQUEST_MATERIALIZER,
+    )
+    return materialize_request(payload)
+
+
 def _valid_dynamic_import_replay_target(
     *,
     source_file_path: str = "main.py",
@@ -1251,6 +1335,17 @@ def _observe_runtime_mutation_locals_zero_worker_request(
     return observe_request(request)
 
 
+def _observe_runtime_mutation_delattr_worker_request(
+    request: RuntimeMutationDelattrWorkerRequest,
+) -> RuntimeMutationDelattrWorkerObservation:
+    """Observe one concrete exact-delattr request for worker tests."""
+    observe_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_DELATTR_CONCRETE_OBSERVER_HELPER,
+    )
+    return observe_request(request)
+
+
 def _dynamic_import_worker_request_with_source(
     tmp_path: Path,
     *,
@@ -1474,6 +1569,32 @@ def _runtime_mutation_locals_zero_worker_request_with_source(
     module_path = python_path / f"{module_name}.py"
     module_path.write_text(source_text, encoding="utf-8")
     return _valid_runtime_mutation_locals_zero_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.{replay_target_name}",
+        form_label=form_label,
+        boundary_text=boundary_text,
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+
+
+def _runtime_mutation_delattr_worker_request_with_source(
+    tmp_path: Path,
+    *,
+    module_name: str,
+    source_text: str,
+    replay_target_name: str = "run",
+    form_label: str = _RUNTIME_MUTATION_DELATTR_FORM_LABEL,
+    boundary_text: str = "delattr(obj, name)",
+) -> RuntimeMutationDelattrWorkerRequest:
+    """Return an exact-delattr worker request backed by real temp source."""
+    working_directory = tmp_path / f"{module_name}_workspace"
+    python_path = tmp_path / f"{module_name}_python_path"
+    working_directory.mkdir()
+    python_path.mkdir()
+    module_path = python_path / f"{module_name}.py"
+    module_path.write_text(source_text, encoding="utf-8")
+    return _valid_runtime_mutation_delattr_worker_request(
         source_file_path=f"{module_name}.py",
         replay_target_seed=f"{module_name}.{replay_target_name}",
         form_label=form_label,
@@ -6898,6 +7019,380 @@ def test_runtime_mutation_locals_zero_worker_concrete_observer_restores_builtin_
     assert builtins.locals is original_locals
 
 
+def test_runtime_mutation_delattr_worker_request_materializes_contract() -> None:
+    """The worker derives an exact delattr/2 request from the parent payload."""
+    payload = _valid_worker_payload_for_request(_runtime_mutation_delattr_request())
+
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_DELATTR_REQUEST_MATERIALIZER,
+    )
+    request = materialize_request(payload)
+
+    assert request.plan_id == payload.plan_id
+    assert request.request_id == payload.request_id
+    assert request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert request.reason_code is UnresolvedReasonCode.RUNTIME_MUTATION
+    assert (
+        request.family_label
+        is runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION
+    )
+    assert request.form_label == _RUNTIME_MUTATION_DELATTR_FORM_LABEL
+    assert request.boundary_text == "delattr(obj, name)"
+    assert request.replay_target_seed == "main.run"
+    assert request.replay_selector_seed == (
+        f"call:main.run:{_RUNTIME_MUTATION_DELATTR_FORM_LABEL}@main.py:3:4:3:28"
+    )
+    assert request.request_replay_payload_fields == (
+        payload.request_replay_payload_fields
+    )
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label", "boundary_text"),
+    (
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL,
+            "globals()",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            _RUNTIME_MUTATION_LOCALS_ZERO_FORM_LABEL,
+            "locals()",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            "runtime_mutation:setattr/3",
+            "setattr(obj, name, value)",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_GETATTR_TWO_FORM_LABEL,
+            "getattr(obj, name)",
+        ),
+    ),
+)
+def test_runtime_mutation_delattr_worker_request_accepts_only_exact_form(
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+    boundary_text: str,
+) -> None:
+    """Adjacent runtime-mutation forms do not materialize as delattr support."""
+    request = replace(
+        _runtime_mutation_delattr_request(
+            form_label=form_label,
+            boundary_text=boundary_text,
+        ),
+        family_label=family_label,
+    )
+    payload = _valid_worker_payload_for_request(request)
+
+    with pytest.raises(ValueError, match="form_label|family_label"):
+        runtime_probe_worker.materialize_runtime_probe_runtime_mutation_delattr_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("reason_code", "reflective_builtin", "reason_code"),
+        ("boundary_text", "delattr(obj,name)", "boundary_text"),
+        ("family_label", "reflective_builtin", "family_label"),
+        ("form_label", "runtime_mutation:locals/0", "form_label"),
+    ),
+)
+def test_runtime_mutation_delattr_worker_request_rejects_replay_drift(
+    replay_key: str,
+    replay_value: str,
+    error_match: str,
+) -> None:
+    """Malformed exact-delattr metadata fails before replay execution."""
+    payload = _worker_payload_with_replay_field(
+        replay_key,
+        replay_value,
+        payload=_valid_worker_payload_for_request(_runtime_mutation_delattr_request()),
+    )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_runtime_mutation_delattr_worker_request(
+            payload
+        )
+
+
+def test_runtime_mutation_delattr_worker_concrete_observer_captures_delete(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer captures one successful two-argument delattr call."""
+    module_name = "runtime_probe_delattr_capture_case"
+    request = _runtime_mutation_delattr_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "class Example:\n"
+            "    pass\n\n"
+            "def run():\n"
+            "    obj = Example()\n"
+            "    obj.value = 1\n"
+            '    name = "value"\n'
+            "    result = delattr(obj, name)\n"
+            "    assert result is None\n"
+            "    assert not hasattr(obj, name)\n"
+            "    return obj\n"
+        ),
+    )
+    original_delattr = builtins.delattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        observation = _observe_runtime_mutation_delattr_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert observation.mutation_outcome == "deleted_attribute"
+    assert builtins.delattr is original_delattr
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_DELATTR_SUCCESS_RESPONSE_MATERIALIZER,
+    )
+    assert materialize_success_response(observation).normalized_payload == (
+        _field("mutation_outcome", "deleted_attribute"),
+    )
+    assert materialize_success_response(observation).durable_artifact_reference is None
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        ("def run(required):\n    return None\n", "target execution failed"),
+        ("def run():\n    return None\n", "exactly one delattr call"),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    obj.first = 1\n"
+                "    obj.second = 2\n"
+                '    delattr(obj, "first")\n'
+                '    delattr(obj, "second")\n'
+            ),
+            "exactly one delattr call",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    obj.value = 1\n"
+                "    return delattr(obj)\n"
+            ),
+            r"exactly delattr\(obj, name\)",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    obj.value = 1\n"
+                '    return delattr(obj, name="value")\n'
+            ),
+            r"exactly delattr\(obj, name\)",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    obj.value = 1\n"
+                "    return delattr(obj, 1)\n"
+            ),
+            "attribute name must be a string",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                '    return delattr(obj, "missing")\n'
+            ),
+            "delattr call must delete an attribute",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    try:\n"
+                '        delattr(obj, "missing")\n'
+                "    except Exception:\n"
+                "        return None\n"
+            ),
+            "delattr call must delete an attribute",
+        ),
+        (
+            (
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    obj.value = 1\n"
+                '    delattr(obj, "value")\n'
+                "    raise RuntimeError('target failure secret-token /private/tmp')\n"
+            ),
+            "target execution failed",
+        ),
+    ),
+)
+def test_runtime_mutation_delattr_worker_concrete_observer_rejects_bad_targets(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Required-argument targets and non-exact delattr/2 captures fail closed."""
+    module_name = "runtime_probe_delattr_bad_target_case"
+    request = _runtime_mutation_delattr_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_delattr = builtins.delattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match) as error_info:
+            _observe_runtime_mutation_delattr_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert "secret-token" not in str(error_info.value)
+    assert "/private/tmp" not in str(error_info.value)
+    assert builtins.delattr is original_delattr
+
+
+def test_runtime_mutation_delattr_worker_concrete_observer_rejects_shadowed_global(
+    tmp_path: Path,
+) -> None:
+    """Source modules that bind ``delattr`` are not treated as builtin calls."""
+    module_name = "runtime_probe_delattr_shadowed_global_case"
+    request = _runtime_mutation_delattr_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "delattr = object()\n\n"
+            "def run():\n"
+            "    raise AssertionError('target should not execute')\n"
+        ),
+    )
+    original_delattr = builtins.delattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="delattr global must be absent"):
+            _observe_runtime_mutation_delattr_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.delattr is original_delattr
+
+
+def test_runtime_mutation_delattr_worker_concrete_observer_restores_rebound_global(
+    tmp_path: Path,
+) -> None:
+    """Target-time source-global ``delattr`` rebound fails closed and is removed."""
+    module_name = "runtime_probe_delattr_rebound_global_case"
+    request = _runtime_mutation_delattr_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=(
+            "class Example:\n"
+            "    pass\n\n"
+            "def run():\n"
+            "    global delattr\n"
+            "    obj = Example()\n"
+            "    obj.value = 1\n"
+            '    delattr(obj, "value")\n'
+            "    delattr = object()\n"
+            "    return obj\n"
+        ),
+    )
+    original_delattr = builtins.delattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match="delattr global changed"):
+            _observe_runtime_mutation_delattr_worker_request(request)
+        source_module = sys.modules[module_name]
+        assert "delattr" not in source_module.__dict__
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.delattr is original_delattr
+
+
+@pytest.mark.parametrize(
+    ("source_text", "error_match"),
+    (
+        (
+            (
+                "import builtins\n\n"
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    obj.value = 1\n"
+                '    delattr(obj, "value")\n'
+                "    builtins.delattr = object()\n"
+                "    return obj\n"
+            ),
+            "builtins.delattr changed",
+        ),
+        (
+            (
+                "import builtins\n\n"
+                "class Example:\n"
+                "    pass\n\n"
+                "def run():\n"
+                "    obj = Example()\n"
+                "    obj.value = 1\n"
+                '    delattr(obj, "value")\n'
+                "    del builtins.delattr\n"
+                "    return obj\n"
+            ),
+            "builtins.delattr changed",
+        ),
+    ),
+)
+def test_runtime_mutation_delattr_worker_concrete_observer_restores_builtin_drift(
+    source_text: str,
+    error_match: str,
+    tmp_path: Path,
+) -> None:
+    """Target-time ``builtins.delattr`` mutation or deletion fails closed."""
+    module_name = "runtime_probe_delattr_builtin_drift_case"
+    request = _runtime_mutation_delattr_worker_request_with_source(
+        tmp_path,
+        module_name=module_name,
+        source_text=source_text,
+    )
+    original_delattr = builtins.delattr
+    sys.modules.pop(module_name, None)
+
+    try:
+        with pytest.raises(ValueError, match=error_match):
+            _observe_runtime_mutation_delattr_worker_request(request)
+    finally:
+        sys.modules.pop(module_name, None)
+
+    assert builtins.delattr is original_delattr
+
+
 def test_reflective_hasattr_worker_default_subprocess_observes_hasattr(
     tmp_path: Path,
 ) -> None:
@@ -7320,6 +7815,64 @@ def test_runtime_mutation_locals_zero_worker_default_subprocess_observes_locals(
             {
                 "key": "lookup_outcome",
                 "value": "returned_namespace",
+            },
+        ],
+    }
+
+
+def test_runtime_mutation_delattr_worker_default_subprocess_observes_delattr(
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes exact bare delattr/2 calls by default."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = "runtime_probe_delattr_default_worker_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        (
+            "class Example:\n"
+            "    pass\n\n"
+            "def run():\n"
+            "    obj = Example()\n"
+            "    obj.value = 1\n"
+            '    name = "value"\n'
+            "    result = delattr(obj, name)\n"
+            "    assert result is None\n"
+            "    assert not hasattr(obj, name)\n"
+            "    return obj\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _runtime_mutation_delattr_request(
+            source_file_path=f"{module_name}.py",
+            replay_target_seed=f"{module_name}.run",
+        ),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "mutation_outcome",
+                "value": "deleted_attribute",
             },
         ],
     }
@@ -8643,6 +9196,29 @@ def test_worker_entrypoint_is_importable() -> None:
         _RUNTIME_MUTATION_LOCALS_ZERO_CONCRETE_OBSERVER_HELPER,
     )
     assert callable(runtime_mutation_locals_zero_observe_request)
+    assert callable(
+        runtime_probe_worker.build_runtime_probe_runtime_mutation_delattr_worker_handler_entry
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerHandlerAdapter",
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObserver",
+    )
+    assert hasattr(
+        runtime_probe_worker,
+        "RuntimeProbeLocalPythonRuntimeMutationDelattrReplayTarget",
+    )
+    assert callable(
+        runtime_probe_worker.materialize_runtime_probe_runtime_mutation_delattr_replay_target
+    )
+    runtime_mutation_delattr_observe_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_DELATTR_CONCRETE_OBSERVER_HELPER,
+    )
+    assert callable(runtime_mutation_delattr_observe_request)
 
 
 def test_package_root_exports_remain_unchanged() -> None:
@@ -8735,6 +9311,14 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert (
         "RuntimeProbeLocalPythonReflectiveVarsWorkerObserver" not in context_ir.__all__
     )
+    assert (
+        "RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerHandlerAdapter"
+        not in context_ir.__all__
+    )
+    assert (
+        "RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObserver"
+        not in context_ir.__all__
+    )
     assert "materialize_runtime_probe_dynamic_import_worker_request" not in (
         context_ir.__all__
     )
@@ -8752,6 +9336,7 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert (
         _REFLECTIVE_GETATTR_DEFAULT_CONCRETE_OBSERVER_HELPER not in context_ir.__all__
     )
+    assert _RUNTIME_MUTATION_DELATTR_CONCRETE_OBSERVER_HELPER not in context_ir.__all__
     assert "materialize_runtime_probe_dynamic_import_worker_success_response" not in (
         context_ir.__all__
     )
@@ -8809,6 +9394,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert "materialize_runtime_probe_reflective_vars_worker_success_response" not in (
         context_ir.__all__
     )
+    assert (
+        "materialize_runtime_probe_runtime_mutation_delattr_worker_success_response"
+        not in context_ir.__all__
+    )
     assert "build_runtime_probe_dynamic_import_worker_handler_entry" not in (
         context_ir.__all__
     )
@@ -8824,6 +9413,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert "build_runtime_probe_reflective_vars_worker_handler_entry" not in (
         context_ir.__all__
+    )
+    assert (
+        "build_runtime_probe_runtime_mutation_delattr_worker_handler_entry"
+        not in context_ir.__all__
     )
     assert _DYNAMIC_IMPORT_TARGET_OBSERVER_HELPER not in context_ir.__all__
     assert "RuntimeProbeLocalPythonDynamicImportTargetCallable" not in (
@@ -8930,6 +9523,14 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert not hasattr(
         context_ir,
+        "RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerHandlerAdapter",
+    )
+    assert not hasattr(
+        context_ir,
+        "RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObserver",
+    )
+    assert not hasattr(
+        context_ir,
         "materialize_runtime_probe_dynamic_import_worker_request",
     )
     assert not hasattr(
@@ -8963,6 +9564,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         _REFLECTIVE_GETATTR_DEFAULT_CONCRETE_OBSERVER_HELPER,
+    )
+    assert not hasattr(
+        context_ir,
+        _RUNTIME_MUTATION_DELATTR_CONCRETE_OBSERVER_HELPER,
     )
     assert not hasattr(
         context_ir,
@@ -9034,6 +9639,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     )
     assert not hasattr(
         context_ir,
+        "materialize_runtime_probe_runtime_mutation_delattr_worker_success_response",
+    )
+    assert not hasattr(
+        context_ir,
         "build_runtime_probe_dynamic_import_worker_handler_entry",
     )
     assert not hasattr(
@@ -9051,6 +9660,10 @@ def test_package_root_exports_remain_unchanged() -> None:
     assert not hasattr(
         context_ir,
         "build_runtime_probe_reflective_vars_worker_handler_entry",
+    )
+    assert not hasattr(
+        context_ir,
+        "build_runtime_probe_runtime_mutation_delattr_worker_handler_entry",
     )
     assert not hasattr(
         context_ir,
