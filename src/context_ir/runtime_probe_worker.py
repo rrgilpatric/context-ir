@@ -222,6 +222,25 @@ _RUNTIME_MUTATION_LOCALS_ZERO_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
 _RUNTIME_MUTATION_LOCALS_ZERO_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
     ("runtime probe runtime mutation locals zero worker form must be exactly locals()",)
 )
+_RUNTIME_MUTATION_SETATTR_WORKER_FORM_LABEL = "runtime_mutation:setattr/3"
+_RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT = "setattr(obj, name, value)"
+_RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME = "setattr"
+_RUNTIME_MUTATION_SETATTR_WORKER_RETURNED_NONE = "returned_none"
+_RUNTIME_MUTATION_SETATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
+    "runtime probe runtime mutation setattr worker target execution failed"
+)
+_RUNTIME_MUTATION_SETATTR_WORKER_MUTATION_FAILED_MESSAGE = (
+    "runtime probe runtime mutation setattr worker setattr call must assign "
+    "an attribute"
+)
+_RUNTIME_MUTATION_SETATTR_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
+    (
+        "runtime probe runtime mutation setattr worker form must be exactly "
+        "setattr(obj, name, value)",
+        "runtime probe runtime mutation setattr worker attribute name must be a string",
+        _RUNTIME_MUTATION_SETATTR_WORKER_MUTATION_FAILED_MESSAGE,
+    )
+)
 _RUNTIME_MUTATION_DELATTR_WORKER_FORM_LABEL = "runtime_mutation:delattr/2"
 _RUNTIME_MUTATION_DELATTR_WORKER_BOUNDARY_TEXT = "delattr(obj, name)"
 _RUNTIME_MUTATION_DELATTR_WORKER_GLOBAL_NAME = "delattr"
@@ -911,6 +930,79 @@ class RuntimeProbeLocalPythonRuntimeMutationLocalsZeroReplayTarget:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest:
+    """Worker-local request contract for exact ``setattr(obj, name, value)``."""
+
+    plan_id: str
+    request_id: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    source_site_id: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    reason_code: UnresolvedReasonCode
+    boundary_text: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject drifted or non-setattr runtime-mutation metadata."""
+        _validate_runtime_probe_runtime_mutation_setattr_worker_request(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation:
+    """Worker-local observation metadata for exact ``setattr`` probes."""
+
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest
+    plan_id: str
+    request_id: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    mutation_outcome: str
+    durable_artifact_reference: str
+
+    def __post_init__(self) -> None:
+        """Reject drifted request identity or malformed setattr observations."""
+        _validate_runtime_probe_runtime_mutation_setattr_worker_observation(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget:
+    """Worker-local non-executing replay target plan for exact ``setattr/3``."""
+
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest
+    plan_id: str
+    request_id: str
+    source_file_path: str
+    source_module_name: str
+    replay_target_seed: str
+    replay_target_attribute_path: tuple[str, ...]
+    replay_selector_seed: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject replay targets whose copied request identity has drifted."""
+        _validate_runtime_probe_runtime_mutation_setattr_replay_target(self)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest:
     """Worker-local request contract for exact ``delattr(obj, name)`` probes."""
 
@@ -1044,6 +1136,10 @@ RuntimeProbeLocalPythonRuntimeMutationLocalsZeroWorkerObserver: TypeAlias = Call
     [RuntimeProbeLocalPythonRuntimeMutationLocalsZeroWorkerRequest],
     RuntimeProbeLocalPythonRuntimeMutationLocalsZeroWorkerObservation,
 ]
+RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObserver: TypeAlias = Callable[
+    [RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest],
+    RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation,
+]
 RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObserver: TypeAlias = Callable[
     [RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest],
     RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObservation,
@@ -1075,6 +1171,10 @@ RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroTargetCallable: TypeAlias = Cal
     object,
 ]
 RuntimeProbeLocalPythonRuntimeMutationLocalsZeroTargetCallable: TypeAlias = Callable[
+    [],
+    object,
+]
+RuntimeProbeLocalPythonRuntimeMutationSetattrTargetCallable: TypeAlias = Callable[
     [],
     object,
 ]
@@ -1463,6 +1563,44 @@ class _RuntimeProbeRuntimeMutationLocalsZeroCapture:
 
 
 @dataclass
+class _RuntimeProbeRuntimeMutationSetattrCapture:
+    """Mutable capture state for one controlled ``setattr`` execution."""
+
+    original_setattr: Callable[[object, str, object], object]
+    captured_mutation_outcomes: list[str] = field(default_factory=list)
+    captured_rejections: list[str] = field(default_factory=list)
+
+    def setattr(self, *args: object, **kwargs: object) -> None:
+        """Capture one exact three-argument ``setattr`` mutation."""
+        if kwargs or len(args) != 3:
+            self.captured_rejections.append("arity")
+            raise ValueError(
+                "runtime probe runtime mutation setattr worker form must be exactly "
+                "setattr(obj, name, value)"
+            )
+        obj, name, value = args
+        if not isinstance(name, str):
+            self.captured_rejections.append("name")
+            raise ValueError(
+                "runtime probe runtime mutation setattr worker attribute name must "
+                "be a string"
+            )
+        try:
+            result = self.original_setattr(obj, name, value)
+        except Exception as error:
+            self.captured_rejections.append("mutation")
+            raise ValueError(
+                _RUNTIME_MUTATION_SETATTR_WORKER_MUTATION_FAILED_MESSAGE
+            ) from error
+        if result is not None:
+            self.captured_rejections.append("mutation")
+            raise ValueError(_RUNTIME_MUTATION_SETATTR_WORKER_MUTATION_FAILED_MESSAGE)
+        self.captured_mutation_outcomes.append(
+            _RUNTIME_MUTATION_SETATTR_WORKER_RETURNED_NONE
+        )
+
+
+@dataclass
 class _RuntimeProbeRuntimeMutationDelattrCapture:
     """Mutable capture state for one controlled ``delattr`` execution."""
 
@@ -1742,6 +1880,34 @@ class RuntimeProbeLocalPythonRuntimeMutationLocalsZeroWorkerHandlerAdapter:
             request,
         )
         return _materialize_runtime_mutation_locals_zero_worker_success_response(
+            observation
+        )
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerHandlerAdapter:
+    """Adapt parsed worker payloads to an injected exact-setattr observer."""
+
+    observer: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObserver
+
+    def __post_init__(self) -> None:
+        """Reject malformed observer injection before worker dispatch."""
+        _validate_runtime_probe_runtime_mutation_setattr_worker_observer(self.observer)
+
+    def __call__(
+        self,
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+        """Run the injected observer against a validated worker request."""
+        request = materialize_runtime_probe_runtime_mutation_setattr_worker_request(
+            payload
+        )
+        observation = self.observer(request)
+        _validate_runtime_probe_runtime_mutation_setattr_observation_for_request(
+            observation,
+            request,
+        )
+        return _materialize_runtime_mutation_setattr_worker_success_response(
             observation
         )
 
@@ -3039,6 +3205,135 @@ def _materialize_runtime_mutation_locals_zero_worker_success_response(
     )
 
 
+def materialize_runtime_probe_runtime_mutation_setattr_worker_request(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest:
+    """Derive an exact-setattr worker request from stdin payload."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_payload(payload)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    return RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        subject_kind=_runtime_probe_worker_subject_kind_from_replay_field(
+            replay_fields_by_key["subject_kind"]
+        ),
+        subject_id=replay_fields_by_key["subject_id"],
+        source_site_id=replay_fields_by_key["source_site_id"],
+        source_file_path=replay_fields_by_key["source_file_path"],
+        source_start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        source_start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        source_end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        source_end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+        reason_code=(
+            _runtime_probe_worker_runtime_mutation_setattr_reason_code_from_replay_field(
+                replay_fields_by_key["reason_code"]
+            )
+        ),
+        boundary_text=replay_fields_by_key["boundary_text"],
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        invocation_identity=payload.invocation_identity,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_runtime_mutation_setattr_worker_observation(
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+    *,
+    mutation_outcome: str,
+) -> RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation:
+    """Build non-executing exact-setattr observation metadata from a request."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    return RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_contract_revision=request.invocation_contract_revision,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+        mutation_outcome=mutation_outcome,
+        durable_artifact_reference=(
+            _runtime_probe_runtime_mutation_setattr_value_artifact_reference(
+                request.request_id
+            )
+        ),
+    )
+
+
+def materialize_runtime_probe_runtime_mutation_setattr_replay_target(
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+) -> RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget:
+    """Derive a non-executing local Python replay target from a setattr request."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    source_module_name = _runtime_probe_dynamic_import_source_module_name_from_path(
+        request.source_file_path
+    )
+    replay_target_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    return RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        source_file_path=request.source_file_path,
+        source_module_name=source_module_name,
+        replay_target_seed=request.replay_target_seed,
+        replay_target_attribute_path=replay_target_attribute_path,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_runtime_mutation_setattr_worker_success_response(
+    observation: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for one setattr observation."""
+    return _materialize_runtime_mutation_setattr_worker_success_response(observation)
+
+
+def _materialize_runtime_mutation_setattr_worker_success_response(
+    observation: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for internal setattr callers."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_observation(observation)
+    return RuntimeProbeLocalPythonWorkerSuccessResponse(
+        normalized_payload=(
+            RuntimeProbeReplayField(
+                key="mutation_outcome",
+                value=observation.mutation_outcome,
+            ),
+        ),
+        durable_artifact_reference=observation.durable_artifact_reference,
+    )
+
+
 def materialize_runtime_probe_runtime_mutation_delattr_worker_request(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
 ) -> RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest:
@@ -3601,6 +3896,55 @@ def observe_runtime_probe_runtime_mutation_locals_zero_worker_request(
     )
 
 
+def materialize_runtime_probe_runtime_mutation_setattr_observation_from_target(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget,
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonRuntimeMutationSetattrTargetCallable,
+) -> RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation:
+    """Observe one zero-argument target under exact ``setattr`` interception."""
+    _validate_runtime_probe_runtime_mutation_setattr_replay_target(replay_target)
+    _validate_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    _validate_runtime_probe_runtime_mutation_setattr_target_callable(target)
+    mutation_outcome = _runtime_probe_runtime_mutation_setattr_captured_outcome(
+        source_module,
+        target,
+    )
+    return materialize_runtime_probe_runtime_mutation_setattr_worker_observation(
+        replay_target.request,
+        mutation_outcome=mutation_outcome,
+    )
+
+
+def observe_runtime_probe_runtime_mutation_setattr_worker_request(
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+) -> RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation:
+    """Observe one concrete exact-setattr worker request in local Python."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    replay_target = materialize_runtime_probe_runtime_mutation_setattr_replay_target(
+        request
+    )
+    source_module = (
+        import_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
+            replay_target
+        )
+    )
+    target = resolve_runtime_probe_runtime_mutation_setattr_replay_target_callable(
+        replay_target,
+        source_module,
+    )
+    materialize_observation = (
+        materialize_runtime_probe_runtime_mutation_setattr_observation_from_target
+    )
+    return materialize_observation(
+        replay_target,
+        source_module,
+        target,
+    )
+
+
 def materialize_runtime_probe_runtime_mutation_delattr_observation_from_target(
     replay_target: RuntimeProbeLocalPythonRuntimeMutationDelattrReplayTarget,
     source_module: ModuleType,
@@ -3966,6 +4310,41 @@ def import_runtime_probe_runtime_mutation_locals_zero_replay_target_source_modul
     return imported_module
 
 
+def import_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget,
+) -> ModuleType:
+    """Import a setattr replay target source module under request-local state."""
+    _validate_runtime_probe_runtime_mutation_setattr_replay_target(replay_target)
+    request = replay_target.request
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    try:
+        os.chdir(request.working_directory)
+        sys.path[:] = [
+            request.working_directory,
+            *request.python_path_entries,
+            *original_sys_path,
+        ]
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            imported_module = importlib.import_module(replay_target.source_module_name)
+    except Exception as error:
+        raise ValueError(
+            "runtime probe runtime mutation setattr source module import failed"
+        ) from error
+    finally:
+        sys.path[:] = original_sys_path
+        os.chdir(original_working_directory)
+
+    _validate_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
+        replay_target,
+        imported_module,
+    )
+    return imported_module
+
+
 def import_runtime_probe_runtime_mutation_delattr_replay_target_source_module(
     replay_target: RuntimeProbeLocalPythonRuntimeMutationDelattrReplayTarget,
 ) -> ModuleType:
@@ -4224,6 +4603,32 @@ def resolve_runtime_probe_runtime_mutation_locals_zero_replay_target_callable(
     )
 
 
+def resolve_runtime_probe_runtime_mutation_setattr_replay_target_callable(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget,
+    source_module: ModuleType,
+) -> RuntimeProbeLocalPythonRuntimeMutationSetattrTargetCallable:
+    """Resolve a source module setattr replay target without executing it."""
+    _validate_runtime_probe_runtime_mutation_setattr_replay_target(replay_target)
+    _validate_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    resolved_target: object = source_module
+    for attribute_name in replay_target.replay_target_attribute_path:
+        try:
+            resolved_target = getattr(resolved_target, attribute_name)
+        except AttributeError as error:
+            raise ValueError(
+                "runtime probe runtime mutation setattr replay target "
+                "replay_target_attribute_path is missing"
+            ) from error
+    _validate_runtime_probe_runtime_mutation_setattr_target_callable(resolved_target)
+    return cast(
+        RuntimeProbeLocalPythonRuntimeMutationSetattrTargetCallable,
+        resolved_target,
+    )
+
+
 def resolve_runtime_probe_runtime_mutation_delattr_replay_target_callable(
     replay_target: RuntimeProbeLocalPythonRuntimeMutationDelattrReplayTarget,
     source_module: ModuleType,
@@ -4392,6 +4797,19 @@ def build_runtime_probe_runtime_mutation_locals_zero_worker_handler_entry(
     )
 
 
+def build_runtime_probe_runtime_mutation_setattr_worker_handler_entry(
+    observer: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObserver,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for exact ``setattr``."""
+    return RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=_RUNTIME_MUTATION_SETATTR_WORKER_FORM_LABEL,
+        handler=RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerHandlerAdapter(
+            observer=observer
+        ),
+    )
+
+
 def build_runtime_probe_runtime_mutation_delattr_worker_handler_entry(
     observer: RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
@@ -4476,6 +4894,11 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
             observe_runtime_probe_runtime_mutation_locals_zero_worker_request
         ),
     )
+    runtime_mutation_setattr_entries = (
+        build_runtime_probe_runtime_mutation_setattr_worker_handler_entry(
+            observe_runtime_probe_runtime_mutation_setattr_worker_request
+        ),
+    )
     runtime_mutation_delattr_entries = (
         build_runtime_probe_runtime_mutation_delattr_worker_handler_entry(
             observe_runtime_probe_runtime_mutation_delattr_worker_request
@@ -4491,6 +4914,7 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
         *reflective_dir_entries,
         *runtime_mutation_globals_zero_entries,
         *runtime_mutation_locals_zero_entries,
+        *runtime_mutation_setattr_entries,
         *runtime_mutation_delattr_entries,
     )
 
@@ -6757,6 +7181,199 @@ def _restore_runtime_probe_runtime_mutation_locals_zero_builtin(
     ):
         return ValueError(
             "runtime probe runtime mutation locals zero worker builtins.locals "
+            "could not be restored"
+        )
+    return restore_failure
+
+
+def _runtime_probe_runtime_mutation_setattr_captured_outcome(
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonRuntimeMutationSetattrTargetCallable,
+) -> str:
+    """Run a target while capturing one exact ``setattr`` mutation."""
+    _validate_runtime_probe_runtime_mutation_setattr_source_global_absent(source_module)
+    original_setattr: Callable[[object, str, object], object] = builtins.setattr
+    capture = _RuntimeProbeRuntimeMutationSetattrCapture(
+        original_setattr=original_setattr
+    )
+    controlled_setattr: Callable[..., None] = capture.setattr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    shielded_stdout = io.StringIO()
+    shielded_stderr = io.StringIO()
+    target_failure: BaseException | None = None
+
+    try:
+        builtins.__dict__[_RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME] = (
+            controlled_setattr
+        )
+        try:
+            sys.stdout = shielded_stdout
+            sys.stderr = shielded_stderr
+            target()
+        finally:
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+    except BaseException as error:
+        target_failure = error
+    builtin_restore_failure = _restore_runtime_probe_runtime_mutation_setattr_builtin(
+        expected_setattr=controlled_setattr,
+        original_setattr=original_setattr,
+    )
+    source_restore_failure = (
+        _restore_runtime_probe_runtime_mutation_setattr_source_global(source_module)
+    )
+
+    if builtin_restore_failure is not None:
+        if target_failure is not None:
+            raise builtin_restore_failure from target_failure
+        raise builtin_restore_failure
+    if source_restore_failure is not None:
+        if target_failure is not None:
+            raise source_restore_failure from target_failure
+        raise source_restore_failure
+    if target_failure is not None:
+        _raise_runtime_probe_runtime_mutation_setattr_target_failure(target_failure)
+
+    return _runtime_probe_runtime_mutation_setattr_capture_outcome(capture)
+
+
+def _runtime_probe_runtime_mutation_setattr_capture_outcome(
+    capture: _RuntimeProbeRuntimeMutationSetattrCapture,
+) -> str:
+    """Return the single captured setattr mutation outcome after validation."""
+    _validate_runtime_probe_runtime_mutation_setattr_intercepted_calls(
+        captured_mutation_outcomes=capture.captured_mutation_outcomes,
+        captured_rejections=tuple(capture.captured_rejections),
+    )
+    return capture.captured_mutation_outcomes[0]
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_intercepted_calls(
+    *,
+    captured_mutation_outcomes: list[str],
+    captured_rejections: tuple[str, ...],
+) -> None:
+    """Reject intercepted setattr behavior outside exact successful assignment."""
+    if "arity" in captured_rejections:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker form must be exactly "
+            "setattr(obj, name, value)"
+        )
+    if "name" in captured_rejections:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker attribute name must be "
+            "a string"
+        )
+    if "mutation" in captured_rejections:
+        raise ValueError(_RUNTIME_MUTATION_SETATTR_WORKER_MUTATION_FAILED_MESSAGE)
+    if len(captured_mutation_outcomes) != 1:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker target must capture "
+            "exactly one setattr call"
+        )
+
+
+def _raise_runtime_probe_runtime_mutation_setattr_target_failure(
+    error: BaseException,
+) -> None:
+    """Raise a sanitized target failure unless the error is a known shape reject."""
+    if (
+        isinstance(error, ValueError)
+        and str(error) in _RUNTIME_MUTATION_SETATTR_WORKER_SHAPE_ERROR_MESSAGES
+    ):
+        raise error
+    raise ValueError(
+        _RUNTIME_MUTATION_SETATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
+    ) from error
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_source_global_absent(
+    source_module: ModuleType,
+) -> None:
+    """Reject source modules that shadow bare ``setattr`` global resolution."""
+    if (
+        source_module.__dict__.get(
+            _RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker target module "
+            "setattr global must be absent"
+        )
+
+
+def _restore_runtime_probe_runtime_mutation_setattr_source_global(
+    source_module: ModuleType,
+) -> ValueError | None:
+    """Remove any target-time source ``setattr`` global and report drift."""
+    module_globals = source_module.__dict__
+    current_global = module_globals.get(
+        _RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if current_global is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
+        return None
+    try:
+        del module_globals[_RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME]
+    except Exception:
+        return ValueError(
+            "runtime probe runtime mutation setattr worker target module setattr "
+            "global could not be restored"
+        )
+    if (
+        module_globals.get(
+            _RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        return ValueError(
+            "runtime probe runtime mutation setattr worker target module setattr "
+            "global could not be restored"
+        )
+    return ValueError(
+        "runtime probe runtime mutation setattr worker target module setattr "
+        "global changed during execution"
+    )
+
+
+def _restore_runtime_probe_runtime_mutation_setattr_builtin(
+    *,
+    expected_setattr: object,
+    original_setattr: Callable[[object, str, object], object],
+) -> ValueError | None:
+    """Restore builtins.setattr and report target-time hook drift."""
+    current_setattr = builtins.__dict__.get(
+        _RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    restore_failure: ValueError | None = None
+    if current_setattr is not expected_setattr:
+        restore_failure = ValueError(
+            "runtime probe runtime mutation setattr worker builtins.setattr "
+            "changed during execution"
+        )
+    try:
+        builtins.__dict__[_RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME] = (
+            original_setattr
+        )
+    except Exception:
+        return ValueError(
+            "runtime probe runtime mutation setattr worker builtins.setattr "
+            "could not be restored"
+        )
+    if (
+        builtins.__dict__.get(
+            _RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not original_setattr
+    ):
+        return ValueError(
+            "runtime probe runtime mutation setattr worker builtins.setattr "
             "could not be restored"
         )
     return restore_failure
@@ -10531,6 +11148,558 @@ def _runtime_probe_worker_runtime_mutation_locals_zero_reason_code_from_replay_f
             "is unsupported"
         )
     return reason_code
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_worker_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> None:
+    """Reject payloads that cannot become the worker-local setattr request."""
+    if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker payload must be typed"
+        )
+    _validate_runtime_probe_runtime_mutation_setattr_payload_family_form(
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+    )
+    _validate_runtime_probe_worker_metadata_text(payload.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        payload.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_invocation_identity(payload.invocation_identity)
+    _validate_runtime_probe_worker_argv(payload.argv)
+    _validate_runtime_probe_worker_path_text(
+        payload.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(payload.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(payload.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    _validate_runtime_probe_runtime_mutation_setattr_replay_metadata(
+        replay_fields_by_key,
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+    if payload.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker invocation_identity "
+            "must match payload replay identity"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_worker_request(
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+) -> None:
+    """Reject exact-setattr worker requests whose copied metadata drifted."""
+    if not isinstance(
+        request,
+        RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker request must be typed"
+        )
+    _validate_runtime_probe_runtime_mutation_setattr_payload_family_form(
+        family_label=request.family_label,
+        form_label=request.form_label,
+    )
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker subject_kind is unsupported"
+        )
+    if request.reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker reason_code is unsupported"
+        )
+    _validate_runtime_probe_worker_metadata_text(request.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        request.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.subject_id,
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_site_id,
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_file_path,
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.boundary_text,
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request_boundary_text(
+        request.boundary_text
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=request.source_start_line,
+        start_column=request.source_start_column,
+        end_line=request.source_end_line,
+        end_column=request.source_end_column,
+    )
+    _validate_runtime_probe_worker_invocation_identity(request.invocation_identity)
+    _validate_runtime_probe_worker_argv(request.argv)
+    _validate_runtime_probe_worker_path_text(
+        request.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(request.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(request.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    _validate_runtime_probe_runtime_mutation_setattr_replay_metadata(
+        replay_fields_by_key,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        family_label=request.family_label,
+        form_label=request.form_label,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+    )
+    for field_key, expected_value in (
+        ("subject_kind", request.subject_kind.value),
+        ("subject_id", request.subject_id),
+        ("source_site_id", request.source_site_id),
+        ("source_file_path", request.source_file_path),
+        ("source_start_line", str(request.source_start_line)),
+        ("source_start_column", str(request.source_start_column)),
+        ("source_end_line", str(request.source_end_line)),
+        ("source_end_column", str(request.source_end_column)),
+        ("reason_code", request.reason_code.value),
+        ("boundary_text", request.boundary_text),
+    ):
+        _validate_runtime_probe_runtime_mutation_setattr_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        invocation_contract_revision=request.invocation_contract_revision,
+        argv=request.argv,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+        timeout_seconds=request.timeout_seconds,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+    if request.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker invocation_identity "
+            "must match request replay identity"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_worker_request_boundary_text(
+    boundary_text: str,
+) -> None:
+    """Reject exact-setattr requests that do not carry the approved boundary."""
+    if boundary_text != _RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker boundary_text must be "
+            f"{_RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT}"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_worker_observer(
+    observer: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObserver,
+) -> None:
+    """Reject non-callable exact-setattr observer injections."""
+    if not callable(observer):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker observer must be callable"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_target_callable(
+    target: object,
+) -> None:
+    """Reject non-callable target injections before setattr interception."""
+    if not callable(target):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker target must be callable"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget,
+    source_module: ModuleType,
+) -> None:
+    """Reject injected source modules that do not match the setattr replay target."""
+    if not isinstance(source_module, ModuleType):
+        raise ValueError(
+            "runtime probe runtime mutation setattr replay target source module "
+            "must be typed"
+        )
+    if source_module.__name__ != replay_target.source_module_name:
+        raise ValueError(
+            "runtime probe runtime mutation setattr replay target source module "
+            "must match source_module_name"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_observation_for_request(
+    observation: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation,
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+) -> None:
+    """Reject observer results that do not belong to the adapted setattr request."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    _validate_runtime_probe_runtime_mutation_setattr_worker_observation(observation)
+    if observation.request != request:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker observation request "
+            "must match adapted request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_worker_observation(
+    observation: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation,
+) -> None:
+    """Reject exact-setattr observation metadata that drifted from its request."""
+    if not isinstance(
+        observation,
+        RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation,
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker observation must be typed"
+        )
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(observation.request)
+    if observation.mutation_outcome != _RUNTIME_MUTATION_SETATTR_WORKER_RETURNED_NONE:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker mutation_outcome "
+            "is unsupported"
+        )
+    expected_artifact_reference = (
+        _runtime_probe_runtime_mutation_setattr_value_artifact_reference(
+            observation.request.request_id
+        )
+    )
+    _validate_runtime_probe_worker_durable_artifact_reference(
+        observation.durable_artifact_reference
+    )
+    if observation.durable_artifact_reference != expected_artifact_reference:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker "
+            "durable_artifact_reference must match request"
+        )
+    for field_name, value, expected_value in (
+        ("plan_id", observation.plan_id, observation.request.plan_id),
+        ("request_id", observation.request_id, observation.request.request_id),
+        (
+            "replay_target_seed",
+            observation.replay_target_seed,
+            observation.request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            observation.replay_selector_seed,
+            observation.request.replay_selector_seed,
+        ),
+        (
+            "invocation_contract_revision",
+            observation.invocation_contract_revision,
+            observation.request.invocation_contract_revision,
+        ),
+        (
+            "invocation_identity",
+            observation.invocation_identity,
+            observation.request.invocation_identity,
+        ),
+    ):
+        _validate_runtime_probe_runtime_mutation_setattr_observation_field_match(
+            field_name=field_name,
+            value=value,
+            expected_value=expected_value,
+        )
+    if (
+        observation.request_replay_payload_fields
+        != observation.request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker observation "
+            "request_replay_payload_fields must match request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_replay_target(
+    replay_target: RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget,
+) -> None:
+    """Reject non-executing setattr replay targets that drift from their request."""
+    if not isinstance(
+        replay_target,
+        RuntimeProbeLocalPythonRuntimeMutationSetattrReplayTarget,
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr replay target must be typed"
+        )
+    request = replay_target.request
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    for field_name, value, expected_value in (
+        ("plan_id", replay_target.plan_id, request.plan_id),
+        ("request_id", replay_target.request_id, request.request_id),
+        ("source_file_path", replay_target.source_file_path, request.source_file_path),
+        (
+            "replay_target_seed",
+            replay_target.replay_target_seed,
+            request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            replay_target.replay_selector_seed,
+            request.replay_selector_seed,
+        ),
+        (
+            "invocation_identity",
+            replay_target.invocation_identity,
+            request.invocation_identity,
+        ),
+    ):
+        _validate_runtime_probe_runtime_mutation_setattr_replay_target_field_match(
+            field_name=field_name,
+            value=value,
+            expected_value=expected_value,
+        )
+    if (
+        replay_target.request_replay_payload_fields
+        != request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr replay target "
+            "request_replay_payload_fields must match request"
+        )
+
+    expected_source_module_name = (
+        _runtime_probe_dynamic_import_source_module_name_from_path(
+            request.source_file_path
+        )
+    )
+    if replay_target.source_module_name != expected_source_module_name:
+        raise ValueError(
+            "runtime probe runtime mutation setattr replay target "
+            "source_module_name must match request source_file_path"
+        )
+    expected_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=expected_source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    if replay_target.replay_target_attribute_path != expected_attribute_path:
+        raise ValueError(
+            "runtime probe runtime mutation setattr replay target "
+            "replay_target_attribute_path must match request replay_target_seed"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_replay_target_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied setattr replay-target identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe runtime mutation setattr replay target "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_observation_field_match(
+    *,
+    field_name: str,
+    value: str,
+    expected_value: str,
+) -> None:
+    """Require a copied setattr observation identity field to match its request."""
+    if value != expected_value:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker observation "
+            f"{field_name} must match request"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_payload_family_form(
+    *,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """Reject unsupported runtime-mutation setattr family/form labels."""
+    if family_label is not RuntimeProbeFamily.RUNTIME_MUTATION:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker family_label is unsupported"
+        )
+    if form_label != _RUNTIME_MUTATION_SETATTR_WORKER_FORM_LABEL:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker form_label is unsupported"
+        )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_replay_metadata(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    plan_id: str,
+    request_id: str,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    replay_target_seed: str,
+    replay_selector_seed: str,
+) -> None:
+    """Reject replay fields that drift from exact-setattr worker metadata."""
+    for field_key, expected_value in (
+        ("plan_id", plan_id),
+        ("request_id", request_id),
+        ("family_label", family_label.value),
+        ("form_label", form_label),
+        ("replay_target_seed", replay_target_seed),
+        ("replay_selector_seed", replay_selector_seed),
+    ):
+        _validate_runtime_probe_runtime_mutation_setattr_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    if replay_fields_by_key["subject_kind"] != (
+        SemanticSubjectKind.UNSUPPORTED_FINDING.value
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker subject_kind is unsupported"
+        )
+    if replay_fields_by_key["reason_code"] != (
+        UnresolvedReasonCode.RUNTIME_MUTATION.value
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker reason_code is unsupported"
+        )
+    _runtime_probe_worker_subject_kind_from_replay_field(
+        replay_fields_by_key["subject_kind"]
+    )
+    _runtime_probe_worker_runtime_mutation_setattr_reason_code_from_replay_field(
+        replay_fields_by_key["reason_code"]
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["subject_id"],
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_site_id"],
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_file_path"],
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["boundary_text"],
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request_boundary_text(
+        replay_fields_by_key["boundary_text"]
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+    )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_replay_field_match(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    field_key: str,
+    expected_value: str,
+) -> None:
+    """Require a replay field to match a copied exact-setattr request field."""
+    if replay_fields_by_key[field_key] != expected_value:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker "
+            f"{field_key} must match request replay payload fields"
+        )
+
+
+def _runtime_probe_worker_runtime_mutation_setattr_reason_code_from_replay_field(
+    value: str,
+) -> UnresolvedReasonCode:
+    """Parse and validate the runtime-mutation reason copied into replay."""
+    try:
+        reason_code = UnresolvedReasonCode(value)
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker reason_code is unsupported"
+        ) from error
+    if reason_code is not UnresolvedReasonCode.RUNTIME_MUTATION:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker reason_code is unsupported"
+        )
+    return reason_code
+
+
+def _runtime_probe_runtime_mutation_setattr_value_artifact_reference(
+    request_id: str,
+) -> str:
+    """Return the deterministic durable reference for the assigned value argument."""
+    _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
+    return f"artifact://runtime-probe/setattr-value/{request_id}.json"
 
 
 def _validate_runtime_probe_runtime_mutation_delattr_worker_payload(
