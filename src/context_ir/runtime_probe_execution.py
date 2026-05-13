@@ -100,11 +100,17 @@ _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL = (
     "runtime_mutation:delattr/2"
 )
 _RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL = "exec_or_eval:exec/1"
+_RUNTIME_PROBE_EXEC_OR_EVAL_EVAL_LOCAL_PYTHON_FORM_LABEL = "exec_or_eval:eval/1"
 _RUNTIME_PROBE_EXEC_SOURCE_SHAPE = "literal_statement"
 _RUNTIME_PROBE_EXEC_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
 _RUNTIME_PROBE_EXEC_BOUNDARY_TEXT = "exec(source)"
+_RUNTIME_PROBE_EVAL_SOURCE_SHAPE = "literal_expression"
+_RUNTIME_PROBE_EVAL_SOURCE_SHA256 = (
+    "c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199"
+)
+_RUNTIME_PROBE_EVAL_BOUNDARY_TEXT = "eval(source)"
 _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABELS = (
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL,
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_LOCAL_PYTHON_FORM_LABEL,
@@ -720,7 +726,7 @@ class RuntimeProbeLocalPythonStdoutProtocolResult:
         _validate_observed_replay_inputs_for_request(
             request=self.completion.invocation.runner_request.request,
             observed_replay_inputs=self.observed_replay_inputs,
-            require_for_exact_exec=True,
+            require_for_exact_source_probe=True,
         )
         if not self.normalized_payload and self.durable_artifact_reference is None:
             raise ValueError(
@@ -2015,6 +2021,24 @@ def make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner(
     handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
         family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
         form_label=_RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL,
+        python_executable=python_executable,
+        module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+    )
+    return make_dispatching_runtime_probe_runner((handler_entry,))
+
+
+def make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner(
+    *,
+    python_executable: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+) -> RuntimeProbeRunnerCallable:
+    """Return the local-Python runner for exact ``exec_or_eval:eval/1``."""
+    handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
+        family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
+        form_label=_RUNTIME_PROBE_EXEC_OR_EVAL_EVAL_LOCAL_PYTHON_FORM_LABEL,
         python_executable=python_executable,
         module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
         invocation_contract_revision=invocation_contract_revision,
@@ -3767,7 +3791,7 @@ def _validate_observed_attempt_metadata(
     _validate_observed_replay_inputs_for_request(
         request=attempt.request,
         observed_replay_inputs=attempt.observed_replay_inputs,
-        require_for_exact_exec=True,
+        require_for_exact_source_probe=True,
     )
     if not attempt.normalized_payload and attempt.durable_artifact_reference is None:
         raise ValueError(
@@ -3841,9 +3865,9 @@ def _validate_observed_replay_inputs_for_request(
     *,
     request: RuntimeProbeRequest,
     observed_replay_inputs: tuple[RuntimeProbeReplayField, ...],
-    require_for_exact_exec: bool,
+    require_for_exact_source_probe: bool,
 ) -> None:
-    """Reject observed replay inputs outside exact exec source proof."""
+    """Reject observed replay inputs outside exact exec/eval source proof."""
     _validate_replay_fields(
         observed_replay_inputs,
         field_name="observed_replay_inputs",
@@ -3853,20 +3877,44 @@ def _validate_observed_replay_inputs_for_request(
         and request.form_label
         == _RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL
     )
+    is_exact_eval = (
+        request.family_label is RuntimeProbeFamily.EXEC_OR_EVAL
+        and request.form_label
+        == _RUNTIME_PROBE_EXEC_OR_EVAL_EVAL_LOCAL_PYTHON_FORM_LABEL
+    )
     if not observed_replay_inputs:
-        if require_for_exact_exec and is_exact_exec:
+        if require_for_exact_source_probe and (is_exact_exec or is_exact_eval):
             raise ValueError(
-                "exec runtime probe observations require observed replay inputs"
+                "exec/eval runtime probe observations require observed replay inputs"
             )
         return
     fields_by_key = _replay_fields_by_key(
         observed_replay_inputs,
         field_name="observed_replay_inputs",
     )
-    if not is_exact_exec:
+    if not is_exact_exec and not is_exact_eval:
         raise ValueError(
-            "observed replay inputs are supported only for exec_or_eval:exec/1"
+            "observed replay inputs are supported only for exact exec/eval source "
+            "probes"
         )
+    if is_exact_exec:
+        _validate_exec_observed_replay_inputs(
+            request=request,
+            fields_by_key=fields_by_key,
+        )
+        return
+    _validate_eval_observed_replay_inputs(
+        request=request,
+        fields_by_key=fields_by_key,
+    )
+
+
+def _validate_exec_observed_replay_inputs(
+    *,
+    request: RuntimeProbeRequest,
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject exact-exec observed replay inputs that drift from pass proof."""
     if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
         raise ValueError("exec observed replay input subject_kind is unsupported")
     if request.reason_code is not UnresolvedReasonCode.EXEC_OR_EVAL:
@@ -3879,6 +3927,28 @@ def _validate_observed_replay_inputs_for_request(
     }:
         raise ValueError(
             "exec observed replay inputs must carry exact literal pass source proof"
+        )
+
+
+def _validate_eval_observed_replay_inputs(
+    *,
+    request: RuntimeProbeRequest,
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject exact-eval observed replay inputs that drift from expression proof."""
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError("eval observed replay input subject_kind is unsupported")
+    if request.reason_code is not UnresolvedReasonCode.EXEC_OR_EVAL:
+        raise ValueError("eval observed replay input reason_code is unsupported")
+    if request.boundary_text != _RUNTIME_PROBE_EVAL_BOUNDARY_TEXT:
+        raise ValueError("eval observed replay input boundary_text is unsupported")
+    if fields_by_key != {
+        "source_shape": _RUNTIME_PROBE_EVAL_SOURCE_SHAPE,
+        "source_sha256": _RUNTIME_PROBE_EVAL_SOURCE_SHA256,
+    }:
+        raise ValueError(
+            "eval observed replay inputs must carry exact literal expression "
+            "source proof"
         )
 
 
@@ -4088,6 +4158,7 @@ __all__ = [
     "make_failure_normalizing_runtime_probe_runner",
     "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
     "make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner",
+    "make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner",
     "make_runtime_probe_reflective_dir_local_python_subprocess_runner",
     "make_runtime_probe_reflective_dir_zero_local_python_subprocess_runner",
     "make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner",

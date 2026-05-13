@@ -2,6 +2,288 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-13 -- Eval Subprocess Commit-Gating Review
+
+- Performed commit-gating review after the exact `exec_or_eval:eval/1`
+  local-Python subprocess release unit cleared release-unit audit and full
+  regression.
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `07bb58f Add runtime exec subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Commit candidate:
+  - exact six-file release unit above
+  - no excluded docs, public/API/package-root/schema/MCP/scoring/compiler/
+    fixture/task/run-spec files are modified
+  - no unrelated workspace changes are present
+  - accepted implementation, release-unit audit, and full regression are all
+    recorded in the active continuity state
+- Findings: none.
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the six-file release unit and create one local commit
+  - do not push; push remains Ryan-gated after local commit creation
+- Acceptance status: first-pass
+
+## 2026-05-13 -- Eval Subprocess Full Regression Gate
+
+- Ran the full regression gate after the exact `exec_or_eval:eval/1`
+  local-Python subprocess release-unit audit cleared first-pass.
+- Repo-backed truth during gate:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `07bb58f Add runtime exec subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+- Commands:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+  - `git diff --check`
+- Results:
+  - ruff check passed
+  - ruff format check passed, `110 files already formatted`
+  - strict mypy passed over 37 source files
+  - full pytest passed, `1605 passed`
+  - `git diff --check` passed
+- Findings: none.
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact six-file release unit before local
+    commit creation
+- Acceptance status: first-pass
+
+## 2026-05-13 -- Eval Subprocess Release-Unit Audit
+
+- Reviewed the returned dedicated read-only release-unit audit for the
+  workspace-only accepted exact `exec_or_eval:eval/1` local-Python subprocess
+  release unit.
+- Repo-backed truth during audit acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `07bb58f Add runtime exec subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Audit result:
+  - Gate Result: PASS
+  - Findings: none
+- Audit checked:
+  - exact eval constants/proof are restricted to `literal_expression` and
+    `c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199`
+  - parent runner registers only `RuntimeProbeFamily.EXEC_OR_EVAL` plus
+    `exec_or_eval:eval/1`
+  - worker default table adds only the exact eval handler alongside existing
+    handlers
+  - observed proof is appended only during observed-result assembly and
+    `_replay_inputs_for_request` remains base metadata only
+  - eval capture wraps/restores `builtins.eval`, preserves caller-frame
+    globals/locals, requires one exact quoted literal source, emits
+    `returned_value` plus `builtins.str`, and fails closed for drift
+  - package root and public docs/claims files are unchanged
+- Audit validation/read-only commands reported:
+  - `git status --short --branch`
+  - `git rev-parse HEAD`
+  - `git rev-parse origin/main`
+  - `git log -1`
+  - `git diff --name-only`
+  - staged and untracked checks
+  - `git diff --stat`
+  - targeted `git diff`, `rg`, `sed`, and `nl` inspections
+  - `git diff --check`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression for the exact release unit before commit-gating
+- Acceptance status: first-pass
+
+## 2026-05-13 -- Eval Subprocess Implementation Acceptance
+
+- Reviewed the returned exact `exec_or_eval:eval/1` local-Python subprocess
+  implementation lane.
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `07bb58f Add runtime exec subprocess support`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Workspace-only state during review:
+  - pre-existing control-state edits remained in `BUILDLOG.md` and `PLAN.md`
+  - implementation edits were exactly
+    `src/context_ir/runtime_probe_worker.py`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `tests/test_runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_execution.py`
+- Control review:
+  - confirmed the worker default table registers exact
+    `RuntimeProbeFamily.EXEC_OR_EVAL` plus `exec_or_eval:eval/1`
+  - confirmed the parent runner factory registers only exact
+    `exec_or_eval:eval/1`
+  - confirmed worker stdout reuses the optional `observed_replay_inputs`
+    field for eval source proof restricted to
+    `source_shape=literal_expression` and
+    `source_sha256=c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199`
+  - confirmed observed eval source proof is merged into observed result
+    replay artifacts at assembly time without mutating
+    `RuntimeProbeExecutionInput` or broadening `_replay_inputs_for_request`
+  - confirmed the concrete worker observes exactly one zero-argument replay
+    target callable that performs one one-argument `eval(source)` call with
+    source exactly `"eval-probe-value"` as a quoted literal expression,
+    restores `builtins.eval`, preserves target caller-frame evaluation
+    context, and fails closed for adjacent forms, malformed metadata, wrong
+    arity/kwargs, bad source, non-string result, missing/multiple captures,
+    target failures, and eval shadow/drift cases
+  - confirmed no generalized eval support, new exec behavior, metaclass
+    behavior, public API, package-root export, schema, MCP, tool facade,
+    scoring, compiler, source/admission behavior, docs, README, EVAL,
+    PUBLIC_CLAIMS, fixture, task, run-spec, or generalized runtime-support
+    change was introduced
+- Control validation rerun:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py`
+    passed, `6 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed over 37 source files
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py tests/test_runtime_probe_requests.py tests/test_runtime_probe_results.py -v`
+    passed, `919 passed`
+  - `git diff --check` passed
+- Findings: none.
+- Acceptance decision:
+  - accepted first-pass as workspace-only implementation state
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - not release-unit-audit-cleared
+  - not full-regression-cleared
+  - not commit-gating-cleared
+  - not staged, not locally committed, not pushed
+- Next control route:
+  - run one dedicated read-only release-unit audit over the exact proposed
+    release unit before full regression or commit-gating
+- Acceptance status: first-pass
+
+## 2026-05-13 -- Post-Exec Subprocess Route Selection
+
+- Ran the control selection lane after pushed
+  `07bb58f Add runtime exec subprocess support`.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `07bb58f Add runtime exec subprocess support`
+  - dirty files are the post-push continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Control findings: none against the pushed exact `exec_or_eval:exec/1`
+  release or the post-push continuity state.
+- Selected next bounded north-star lane:
+  - exact `exec_or_eval:eval/1` local-Python subprocess support
+  - include a narrow observed replay-input source-proof path for
+    `source_shape=literal_expression` and
+    `source_sha256=c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199`
+- Reason:
+  - `eval(source)` is already planned and admissible as an
+    `EXEC_OR_EVAL` observation form
+  - the just-pushed exact `exec_or_eval:exec/1` subprocess release proves the
+    observed replay-input source-proof channel shape
+  - exact eval is the closest source-proof sibling to pushed exact exec, while
+    `metaclass_behavior:keyword` requires a different class-creation proof
+    model and replay semantics
+- Alternatives deferred:
+  - `metaclass_behavior:keyword`: defer until exact eval support is proven
+    through the subprocess path
+  - generalized eval/exec support: out of scope
+  - public/API/package-root/schema/MCP/scoring/compiler/docs/fixtures/tasks/
+    run-spec changes: out of scope
+- Release state:
+  - this is workspace-only routing state
+  - not implementation acceptance
+  - not release-unit-audit clearance
+  - not full-regression clearance
+  - not commit-gating clearance
+  - not staging, local commit, or push authorization
+- Next control route:
+  - issue one implementation lane for exact `exec_or_eval:eval/1`
+    local-Python subprocess support
+- Acceptance status: first-pass
+
+## 2026-05-13 -- Exec Subprocess Push
+
+- Ryan-authorized push completed for
+  `07bb58f Add runtime exec subprocess support`.
+- Repo-backed truth after push and before this post-push continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `07bb58f Add runtime exec subprocess support`
+  - worktree clean
+  - staged files: none
+  - untracked files: none
+- Pushed release unit is exactly:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass with `1584 passed`
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `07bb58f Add runtime exec subprocess support`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane after exact
+    `exec_or_eval:exec/1` subprocess support
+  - do not treat this post-push continuity sync as implementation,
+    release-gate, staging, commit, or push authorization
+- Acceptance status: first-pass routing
+
 ## 2026-05-13 -- Exec Subprocess Commit-Gating Review
 
 - Performed commit-gating review after the exact `exec_or_eval:exec/1`

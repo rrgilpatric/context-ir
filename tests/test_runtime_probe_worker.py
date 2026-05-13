@@ -132,6 +132,10 @@ ExecWorkerRequest = runtime_probe_worker.RuntimeProbeLocalPythonExecWorkerReques
 ExecWorkerObservation = (
     runtime_probe_worker.RuntimeProbeLocalPythonExecWorkerObservation
 )
+EvalWorkerRequest = runtime_probe_worker.RuntimeProbeLocalPythonEvalWorkerRequest
+EvalWorkerObservation = (
+    runtime_probe_worker.RuntimeProbeLocalPythonEvalWorkerObservation
+)
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
@@ -178,6 +182,7 @@ _RUNTIME_MUTATION_DELATTR_CONCRETE_OBSERVER_HELPER = (
     "observe_runtime_probe_runtime_mutation_delattr_worker_request"
 )
 _EXEC_CONCRETE_OBSERVER_HELPER = "observe_runtime_probe_exec_worker_request"
+_EVAL_CONCRETE_OBSERVER_HELPER = "observe_runtime_probe_eval_worker_request"
 _REFLECTIVE_HASATTR_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_hasattr_worker_request"
 )
@@ -244,6 +249,9 @@ _RUNTIME_MUTATION_DELATTR_SUCCESS_RESPONSE_MATERIALIZER = (
 _EXEC_SUCCESS_RESPONSE_MATERIALIZER = (
     "materialize_runtime_probe_exec_worker_success_response"
 )
+_EVAL_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_eval_worker_success_response"
+)
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
 _IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
@@ -263,9 +271,11 @@ _RUNTIME_MUTATION_LOCALS_ZERO_FORM_LABEL = "runtime_mutation:locals/0"
 _RUNTIME_MUTATION_SETATTR_FORM_LABEL = "runtime_mutation:setattr/3"
 _RUNTIME_MUTATION_DELATTR_FORM_LABEL = "runtime_mutation:delattr/2"
 _EXEC_OR_EVAL_EXEC_FORM_LABEL = "exec_or_eval:exec/1"
+_EXEC_OR_EVAL_EVAL_FORM_LABEL = "exec_or_eval:eval/1"
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
+_EVAL_SOURCE_SHA256 = "c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199"
 
 
 def _boundary_text_for_form_label(form_label: str) -> str:
@@ -284,6 +294,8 @@ def _boundary_text_for_form_label(form_label: str) -> str:
         return "__import__(name)"
     if form_label == _EXEC_OR_EVAL_EXEC_FORM_LABEL:
         return "exec(source)"
+    if form_label == _EXEC_OR_EVAL_EVAL_FORM_LABEL:
+        return "eval(source)"
     return "importlib.import_module(name)"
 
 
@@ -660,6 +672,24 @@ def _exec_request(
     )
 
 
+def _eval_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _EXEC_OR_EVAL_EVAL_FORM_LABEL,
+    boundary_text: str = "eval(source)",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one deterministic exact-eval planned request."""
+    return _exec_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+
+
 def _valid_worker_invocation(
     *,
     source_file_path: str = "main.py",
@@ -814,6 +844,33 @@ def _valid_exec_worker_request(
         boundary_text=boundary_text,
     )
     return runtime_probe_worker.materialize_runtime_probe_exec_worker_request(
+        _valid_worker_payload_for_request(
+            request,
+            working_directory=working_directory,
+            python_path_entries=python_path_entries,
+        )
+    )
+
+
+def _valid_eval_worker_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.run",
+    replay_selector_seed: str | None = None,
+    form_label: str = _EXEC_OR_EVAL_EVAL_FORM_LABEL,
+    boundary_text: str = "eval(source)",
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> EvalWorkerRequest:
+    """Return one worker-local exact-eval request contract."""
+    request = _eval_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+    return runtime_probe_worker.materialize_runtime_probe_eval_worker_request(
         _valid_worker_payload_for_request(
             request,
             working_directory=working_directory,
@@ -1254,6 +1311,17 @@ def _valid_exec_worker_observation(
     """Return one worker-local exact-exec observation contract."""
     validated_request = _valid_exec_worker_request() if request is None else request
     return runtime_probe_worker.materialize_runtime_probe_exec_worker_observation(
+        validated_request
+    )
+
+
+def _valid_eval_worker_observation(
+    *,
+    request: EvalWorkerRequest | None = None,
+) -> EvalWorkerObservation:
+    """Return one worker-local exact-eval observation contract."""
+    validated_request = _valid_eval_worker_request() if request is None else request
+    return runtime_probe_worker.materialize_runtime_probe_eval_worker_observation(
         validated_request
     )
 
@@ -2073,6 +2141,61 @@ def test_worker_success_stdout_carries_optional_observed_replay_inputs() -> None
         '"observed_replay_inputs":['
         '{"key":"source_shape","value":"literal_statement"},'
         f'{{"key":"source_sha256","value":"{_EXEC_PASS_SOURCE_SHA256}"}}]}}'
+    )
+
+
+def test_worker_success_stdout_carries_eval_observed_replay_inputs() -> None:
+    """Worker stdout can carry exact eval source proof for parent result assembly."""
+    request = _eval_request()
+    stdin_text = serialize_runtime_probe_local_python_worker_request_payload(
+        _valid_worker_payload_for_request(request)
+    )
+
+    def handler(
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse:
+        assert (
+            payload.family_label
+            is runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL
+        )
+        return runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(
+                _field("evaluation_outcome", "returned_value"),
+                _field("result_type", "builtins.str"),
+            ),
+            durable_artifact_reference=(
+                f"artifact://runtime-probe/eval-source/{request.request_id}.json"
+            ),
+            observed_replay_inputs=(
+                _field("source_shape", "literal_expression"),
+                _field("source_sha256", _EVAL_SOURCE_SHA256),
+            ),
+        )
+
+    entry = runtime_probe_worker.RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+        form_label=_EXEC_OR_EVAL_EVAL_FORM_LABEL,
+        handler=handler,
+    )
+
+    exit_code, stdout_text, stderr_text = _run_worker_with_handlers(
+        stdin_text,
+        (entry,),
+    )
+
+    assert exit_code == 0
+    assert stderr_text == ""
+    assert stdout_text == (
+        '{"runtime_probe_stdout_protocol_revision":'
+        '"runtime_probe_local_python_stdout_protocol:v1",'
+        '"normalized_payload":['
+        '{"key":"evaluation_outcome","value":"returned_value"},'
+        '{"key":"result_type","value":"builtins.str"}],'
+        f'"durable_artifact_reference":"artifact://runtime-probe/eval-source/'
+        f'{request.request_id}.json",'
+        '"observed_replay_inputs":['
+        '{"key":"source_shape","value":"literal_expression"},'
+        f'{{"key":"source_sha256","value":"{_EVAL_SOURCE_SHA256}"}}]}}'
     )
 
 
@@ -9350,6 +9473,45 @@ def test_exec_worker_adapter_materializes_observed_success() -> None:
     )
 
 
+def test_eval_worker_adapter_materializes_observed_success() -> None:
+    """The eval adapter validates payloads and emits exact source proof."""
+    request = _eval_request()
+    observed_requests: list[EvalWorkerRequest] = []
+
+    def observer(request_item: EvalWorkerRequest) -> EvalWorkerObservation:
+        assert isinstance(request_item, EvalWorkerRequest)
+        assert (
+            request_item.family_label
+            is runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL
+        )
+        assert request_item.form_label == _EXEC_OR_EVAL_EVAL_FORM_LABEL
+        observed_requests.append(request_item)
+        return _valid_eval_worker_observation(request=request_item)
+
+    adapter = runtime_probe_worker.RuntimeProbeLocalPythonEvalWorkerHandlerAdapter(
+        observer=observer
+    )
+
+    response = adapter(_valid_worker_payload_for_request(request))
+
+    assert len(observed_requests) == 1
+    assert response == (
+        runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(
+                _field("evaluation_outcome", "returned_value"),
+                _field("result_type", "builtins.str"),
+            ),
+            durable_artifact_reference=(
+                f"artifact://runtime-probe/eval-source/{request.request_id}.json"
+            ),
+            observed_replay_inputs=(
+                _field("source_shape", "literal_expression"),
+                _field("source_sha256", _EVAL_SOURCE_SHA256),
+            ),
+        )
+    )
+
+
 def test_exec_worker_observes_exact_pass_source_from_target() -> None:
     """The concrete exec observer wraps builtins.exec and captures one pass source."""
     request = _valid_exec_worker_request()
@@ -9374,6 +9536,76 @@ def test_exec_worker_observes_exact_pass_source_from_target() -> None:
 
     assert observation == _valid_exec_worker_observation(request=request)
     assert builtins.__dict__["exec"] is original_exec
+
+
+def test_eval_worker_observes_exact_literal_source_from_target() -> None:
+    """The concrete eval observer wraps builtins.eval and captures exact source."""
+    request = _valid_eval_worker_request()
+    replay_target = runtime_probe_worker.materialize_runtime_probe_eval_replay_target(
+        request
+    )
+    source_module = ModuleType("main")
+    original_eval = builtins.__dict__["eval"]
+    exec(
+        "def run():\n    source = '\"eval-probe-value\"'\n    return eval(source)\n",
+        source_module.__dict__,
+    )
+
+    materialize_observation = (
+        runtime_probe_worker.materialize_runtime_probe_eval_observation_from_target
+    )
+    observation = materialize_observation(
+        replay_target,
+        source_module,
+        source_module.run,
+    )
+
+    assert observation == _valid_eval_worker_observation(request=request)
+    assert builtins.__dict__["eval"] is original_eval
+
+
+def test_eval_worker_preserves_one_argument_caller_frame_semantics() -> None:
+    """The eval wrapper delegates one-argument eval through the target caller frame."""
+    request = _valid_eval_worker_request()
+    replay_target = runtime_probe_worker.materialize_runtime_probe_eval_replay_target(
+        request
+    )
+    source_module = ModuleType("main")
+    exec(
+        (
+            "def run():\n"
+            "    marker = 'target-caller-local'\n"
+            "    source = '\"eval-probe-value\"'\n"
+            "    return eval(source)\n"
+        ),
+        source_module.__dict__,
+    )
+    original_eval = builtins.__dict__["eval"]
+    captured_frames: list[tuple[dict[str, object], dict[str, object]]] = []
+
+    def frame_spy_eval(
+        source: str,
+        globals_value: dict[str, object],
+        locals_value: dict[str, object],
+    ) -> str:
+        assert source == '"eval-probe-value"'
+        captured_frames.append((globals_value, locals_value))
+        return "eval-probe-value"
+
+    builtins.__dict__["eval"] = frame_spy_eval
+    try:
+        runtime_probe_worker.materialize_runtime_probe_eval_observation_from_target(
+            replay_target,
+            source_module,
+            source_module.run,
+        )
+    finally:
+        builtins.__dict__["eval"] = original_eval
+
+    assert len(captured_frames) == 1
+    captured_globals, captured_locals = captured_frames[0]
+    assert captured_globals is source_module.__dict__
+    assert captured_locals["marker"] == "target-caller-local"
 
 
 @pytest.mark.parametrize(
@@ -9403,6 +9635,84 @@ def test_exec_worker_rejects_non_exact_runtime_shapes(target_source: str) -> Non
         )
 
     assert builtins.__dict__["exec"] is original_exec
+
+
+@pytest.mark.parametrize(
+    "target_source",
+    (
+        (
+            "def run():\n"
+            "    source = '\"eval-probe-value\"'\n"
+            "    eval(source)\n"
+            "    eval(source)\n"
+        ),
+        "def run():\n    eval(source='\"eval-probe-value\"')\n",
+        "def run():\n    source = '\"other-value\"'\n    eval(source)\n",
+        "eval = lambda source: source\ndef run():\n    eval('\"eval-probe-value\"')\n",
+        (
+            "def run():\n"
+            "    eval = lambda source: source\n"
+            "    eval('\"eval-probe-value\"')\n"
+        ),
+        (
+            "def run():\n"
+            "    builtins_eval = __builtins__['eval']\n"
+            "    del __builtins__['eval']\n"
+            "    builtins_eval('\"eval-probe-value\"')\n"
+        ),
+    ),
+)
+def test_eval_worker_rejects_non_exact_runtime_shapes(target_source: str) -> None:
+    """The eval observer fails closed for drifted source and call shapes."""
+    request = _valid_eval_worker_request()
+    replay_target = runtime_probe_worker.materialize_runtime_probe_eval_replay_target(
+        request
+    )
+    source_module = ModuleType("main")
+    original_eval = builtins.__dict__["eval"]
+    exec(target_source, source_module.__dict__)
+
+    with pytest.raises(ValueError):
+        runtime_probe_worker.materialize_runtime_probe_eval_observation_from_target(
+            replay_target,
+            source_module,
+            source_module.run,
+        )
+
+    assert builtins.__dict__["eval"] is original_eval
+
+
+def test_eval_worker_rejects_non_string_evaluation_result() -> None:
+    """The eval observer fails closed if the delegated eval result is not a string."""
+    request = _valid_eval_worker_request()
+    replay_target = runtime_probe_worker.materialize_runtime_probe_eval_replay_target(
+        request
+    )
+    source_module = ModuleType("main")
+    exec(
+        "def run():\n    source = '\"eval-probe-value\"'\n    return eval(source)\n",
+        source_module.__dict__,
+    )
+    original_eval = builtins.__dict__["eval"]
+
+    def non_string_eval(
+        source: str,
+        globals_value: dict[str, object],
+        locals_value: dict[str, object],
+    ) -> object:
+        del source, globals_value, locals_value
+        return 7
+
+    builtins.__dict__["eval"] = non_string_eval
+    try:
+        with pytest.raises(ValueError, match="result must be a string"):
+            runtime_probe_worker.materialize_runtime_probe_eval_observation_from_target(
+                replay_target,
+                source_module,
+                source_module.run,
+            )
+    finally:
+        builtins.__dict__["eval"] = original_eval
 
 
 def test_dynamic_import_worker_adapter_rejects_payload_before_observer() -> None:
