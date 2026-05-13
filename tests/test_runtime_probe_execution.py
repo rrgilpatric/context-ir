@@ -27,6 +27,7 @@ from context_ir.runtime_probe_execution import (
     execute_runtime_probe_local_python_subprocess_invocation,
     execute_runtime_probe_local_python_subprocess_invocation_attempt,
     make_runtime_probe_dynamic_import_local_python_subprocess_runner,
+    make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner,
     make_runtime_probe_reflective_dir_local_python_subprocess_runner,
     make_runtime_probe_reflective_dir_zero_local_python_subprocess_runner,
     make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner,
@@ -101,6 +102,10 @@ _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL = "runtime_mutation:globals/0"
 _RUNTIME_MUTATION_LOCALS_ZERO_FORM_LABEL = "runtime_mutation:locals/0"
 _RUNTIME_MUTATION_SETATTR_FORM_LABEL = "runtime_mutation:setattr/3"
 _RUNTIME_MUTATION_DELATTR_FORM_LABEL = "runtime_mutation:delattr/2"
+_EXEC_OR_EVAL_EXEC_FORM_LABEL = "exec_or_eval:exec/1"
+_EXEC_PASS_SOURCE_SHA256 = (
+    "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+)
 
 _EXPECTED_CURRENT_FORMS = {
     _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
@@ -409,6 +414,28 @@ def _runtime_mutation_setattr_request(
     )
 
 
+def _exec_request(
+    start_line: int = 3,
+    *,
+    form_label: str = _EXEC_OR_EVAL_EXEC_FORM_LABEL,
+    boundary_text: str = "exec(source)",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one synthetic planned exec request."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=f"unsupported:call:main.py:{start_line}:4",
+        source_site=_source_site(start_line, snippet=boundary_text),
+        reason_code=UnresolvedReasonCode.EXEC_OR_EVAL,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+        form_label=form_label,
+        replay_target_seed="main.run",
+        replay_selector_seed=(
+            f"call:main.run:{form_label}@main.py:{start_line}:4:{start_line}:28"
+        ),
+    )
+
+
 def _plan(
     *requests: runtime_probe_requests.RuntimeProbeRequest,
 ) -> runtime_probe_requests.RuntimeProbeRequestPlan:
@@ -693,6 +720,7 @@ def _local_python_stdout_protocol_text(
     revision: str = "runtime_probe_local_python_stdout_protocol:v1",
     normalized_payload: list[dict[str, str]] | None = None,
     durable_artifact_reference: str | None = None,
+    observed_replay_inputs: list[dict[str, str]] | None = None,
 ) -> str:
     """Return one strict local-Python success stdout protocol document."""
     protocol: dict[str, object] = {
@@ -705,6 +733,8 @@ def _local_python_stdout_protocol_text(
     }
     if durable_artifact_reference is not None:
         protocol["durable_artifact_reference"] = durable_artifact_reference
+    if observed_replay_inputs is not None:
+        protocol["observed_replay_inputs"] = observed_replay_inputs
     return json.dumps(protocol, separators=(",", ":"))
 
 
@@ -811,6 +841,10 @@ def _execution_attempt(
     ),
     normalized_payload: tuple[runtime_probe_results.RuntimeProbeReplayField, ...] = (),
     durable_artifact_reference: str | None = None,
+    observed_replay_inputs: tuple[
+        runtime_probe_results.RuntimeProbeReplayField,
+        ...,
+    ] = (),
     failure_summary: str | None = None,
     failure_detail_fields: tuple[
         runtime_probe_results.RuntimeProbeReplayField, ...
@@ -825,6 +859,7 @@ def _execution_attempt(
         outcome=outcome,
         normalized_payload=normalized_payload,
         durable_artifact_reference=durable_artifact_reference,
+        observed_replay_inputs=observed_replay_inputs,
         failure_summary=failure_summary,
         failure_detail_fields=failure_detail_fields,
     )
@@ -2909,6 +2944,104 @@ def test_dynamic_import_local_python_runner_executes_default_worker_subprocess(
     assert attempt.failure_detail_fields == ()
 
 
+def test_exec_local_python_runner_executes_pass_source_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The exact-exec helper captures only observed pass-source proof."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> None:
+                source = "pass"
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _exec_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("execution_outcome", "completed"),
+        _field("statement_kind", "pass"),
+    )
+    assert attempt.observed_replay_inputs == (
+        _field("source_shape", "literal_statement"),
+        _field("source_sha256", _EXEC_PASS_SOURCE_SHA256),
+    )
+    assert attempt.durable_artifact_reference == (
+        f"artifact://runtime-probe/exec-source/{request.request_id}.json"
+    )
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+@pytest.mark.parametrize("source_text", ("print(1)", "pass\npass"))
+def test_exec_local_python_runner_rejects_non_pass_source_subprocess(
+    tmp_path: Path,
+    source_text: str,
+) -> None:
+    """The exec worker fails closed unless the captured source is exactly pass."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            f"""
+            def run() -> None:
+                source = {source_text!r}
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=_exec_request(),
+    )
+    runner = make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.failure_detail_fields[0] == _field(
+        "failure_source",
+        "local_python_process_completion",
+    )
+
+
 def test_dynamic_import_local_python_runner_executes_loader_alias_subprocess(
     tmp_path: Path,
 ) -> None:
@@ -4988,6 +5121,62 @@ def test_dynamic_import_local_python_runner_registers_only_exact_supported_forms
     ("family_label", "form_label"),
     (
         (
+            runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+            "exec_or_eval:eval/1",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            _RUNTIME_MUTATION_SETATTR_FORM_LABEL,
+        ),
+    ),
+)
+def test_exec_local_python_runner_registers_only_exact_form(
+    monkeypatch: pytest.MonkeyPatch,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """The exact-exec helper does not register adjacent exec/eval handlers."""
+    request = replace(_exec_request(form_label=form_label), family_label=family_label)
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    runner = make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        del kwargs
+        calls.append(tuple(str(arg) for arg in args))
+        raise AssertionError("unsupported helper request reached subprocess")
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = runner(runner_request)
+
+    assert calls == []
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "missing_runtime_probe_handler"),
+        _field("family_label", family_label.value),
+        _field("form_label", form_label),
+        _field("missing_handler_outcome", "setup_failed"),
+    )
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label"),
+    (
+        (
             runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
             _REFLECTIVE_GETATTR_TWO_FORM_LABEL,
         ),
@@ -5965,9 +6154,46 @@ def test_materialize_local_python_stdout_protocol_result_parses_success() -> Non
         _field("second_observed_module", "plugins.forecast"),
     )
     assert result.durable_artifact_reference == "runtime-artifact:local-python:abc123"
+    assert result.observed_replay_inputs == ()
 
     with pytest.raises(FrozenInstanceError):
         result.durable_artifact_reference = "runtime-artifact:mutated"
+
+
+def test_materialize_exec_stdout_protocol_result_parses_observed_replay_inputs() -> (
+    None
+):
+    """Exact exec stdout can carry runtime-observed source replay proof."""
+    invocation = _local_python_subprocess_invocation(
+        _local_python_runner_request(request=_exec_request())
+    )
+    completion = _local_python_process_completion(
+        invocation,
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=[
+                {"key": "execution_outcome", "value": "completed"},
+                {"key": "statement_kind", "value": "pass"},
+            ],
+            durable_artifact_reference=(
+                f"artifact://runtime-probe/exec-source/"
+                f"{invocation.runner_request.request_id}.json"
+            ),
+            observed_replay_inputs=[
+                {"key": "source_shape", "value": "literal_statement"},
+                {"key": "source_sha256", "value": _EXEC_PASS_SOURCE_SHA256},
+            ],
+        ),
+    )
+
+    result = materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+    attempt = materialize_runtime_probe_local_python_stdout_protocol_attempt(result)
+
+    assert result.observed_replay_inputs == (
+        _field("source_shape", "literal_statement"),
+        _field("source_sha256", _EXEC_PASS_SOURCE_SHA256),
+    )
+    assert attempt.observed_replay_inputs == result.observed_replay_inputs
 
 
 def test_local_python_stdout_protocol_result_allows_durable_only_success() -> None:
@@ -6015,6 +6241,49 @@ def test_local_python_stdout_protocol_result_rejects_malformed_durable_reference
             normalized_payload=(),
             durable_artifact_reference=durable_artifact_reference,
         )
+
+
+def test_local_python_stdout_protocol_rejects_observed_replay_inputs_for_non_exec() -> (
+    None
+):
+    """Observed replay-input proof is scoped to exact exec observations."""
+    completion = _local_python_process_completion(
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            observed_replay_inputs=[
+                {"key": "source_shape", "value": "literal_statement"},
+                {"key": "source_sha256", "value": _EXEC_PASS_SOURCE_SHA256},
+            ],
+        ),
+    )
+
+    with pytest.raises(ValueError, match="only for exec_or_eval:exec/1"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+
+def test_local_python_stdout_protocol_rejects_exec_observed_replay_input_drift() -> (
+    None
+):
+    """Exec observed replay inputs are exact singleton source proof fields."""
+    invocation = _local_python_subprocess_invocation(
+        _local_python_runner_request(request=_exec_request())
+    )
+    completion = _local_python_process_completion(
+        invocation,
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=[
+                {"key": "execution_outcome", "value": "completed"},
+            ],
+            observed_replay_inputs=[
+                {"key": "source_shape", "value": "literal_statement"},
+                {"key": "source_shape", "value": "literal_statement"},
+            ],
+        ),
+    )
+
+    with pytest.raises(ValueError, match="duplicate"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(completion)
 
 
 @pytest.mark.parametrize(
@@ -7049,6 +7318,45 @@ def test_assemble_runner_request_results_preserves_order_and_identities() -> Non
     assert third_result.failure_summary == "probe process exited non-zero"
     assert third_result.failure_detail_fields == (_field("exit_code", "1"),)
     assert third_result.is_admissible_runtime_backed_proof is False
+
+
+def test_assemble_exec_observed_result_merges_replay_proof_without_mutating_input() -> (
+    None
+):
+    """Exec observed replay-input proof is appended only in result assembly."""
+    request = _exec_request()
+    plan = _plan(request)
+    input_batch = _materialized_batch(plan)
+    input_item = input_batch.inputs[0]
+    original_replay_artifact = input_item.replay_artifact
+    original_replay_inputs = original_replay_artifact.replay_inputs
+    attempt = _execution_attempt(
+        input_item,
+        normalized_payload=(
+            _field("execution_outcome", "completed"),
+            _field("statement_kind", "pass"),
+        ),
+        durable_artifact_reference=(
+            f"artifact://runtime-probe/exec-source/{request.request_id}.json"
+        ),
+        observed_replay_inputs=(
+            _field("source_shape", "literal_statement"),
+            _field("source_sha256", _EXEC_PASS_SOURCE_SHA256),
+        ),
+    )
+
+    result_batch = _assemble_result_batch(input_batch, (attempt,))
+
+    result = result_batch.results[0]
+    assert isinstance(result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert result.replay_artifact is not original_replay_artifact
+    assert input_item.replay_artifact is original_replay_artifact
+    assert input_item.replay_artifact.replay_inputs == original_replay_inputs
+    assert result.replay_artifact.replay_inputs == (
+        *original_replay_inputs,
+        _field("source_shape", "literal_statement"),
+        _field("source_sha256", _EXEC_PASS_SOURCE_SHA256),
+    )
 
 
 def test_assemble_runner_request_results_supports_empty_batch() -> None:
@@ -8127,6 +8435,18 @@ def test_runtime_probe_execution_attempt_rejects_observed_failure_metadata() -> 
         )
 
 
+def test_runtime_probe_execution_attempt_rejects_exec_missing_replay_inputs() -> None:
+    """Exact exec observations require runtime-observed source replay proof."""
+    input_item = _materialized_batch(_plan(_exec_request())).inputs[0]
+
+    with pytest.raises(ValueError, match="observed replay inputs"):
+        _execution_attempt(
+            input_item,
+            outcome=runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED,
+            normalized_payload=(_field("execution_outcome", "completed"),),
+        )
+
+
 def test_runtime_probe_execution_attempt_rejects_failure_without_summary() -> None:
     """Failure outcomes need a concrete failure summary and cannot carry proof."""
     request = _request()
@@ -8507,6 +8827,9 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_runtime_probe_dynamic_import_local_python_subprocess_runner" in (
         runtime_probe_execution.__all__
     )
+    assert "make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner" in (
+        runtime_probe_execution.__all__
+    )
     assert "make_runtime_probe_reflective_dir_local_python_subprocess_runner" in (
         runtime_probe_execution.__all__
     )
@@ -8630,6 +8953,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_failure_normalizing_runtime_probe_runner" not in context_ir.__all__
     assert (
         "make_runtime_probe_dynamic_import_local_python_subprocess_runner"
+        not in context_ir.__all__
+    )
+    assert (
+        "make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner"
         not in context_ir.__all__
     )
     assert (
@@ -8770,6 +9097,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
+    )
+    assert not hasattr(
+        context_ir,
+        "make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner",
     )
     assert not hasattr(
         context_ir,

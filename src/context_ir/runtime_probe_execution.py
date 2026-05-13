@@ -28,7 +28,12 @@ from context_ir.runtime_probe_results import (
     RuntimeProbeResultBatch,
     RuntimeProbeResultOutcome,
 )
-from context_ir.semantic_types import RepositorySnapshotBasis, SemanticDiagnosticResult
+from context_ir.semantic_types import (
+    RepositorySnapshotBasis,
+    SemanticDiagnosticResult,
+    SemanticSubjectKind,
+    UnresolvedReasonCode,
+)
 
 _RUNTIME_PROBE_EXECUTION_INPUT_BATCH_CONTRACT_VERSION = (
     "runtime_probe_execution_input_batch:v1"
@@ -94,6 +99,12 @@ _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LOCAL_PYTHON_FORM_LABEL = (
 _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL = (
     "runtime_mutation:delattr/2"
 )
+_RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL = "exec_or_eval:exec/1"
+_RUNTIME_PROBE_EXEC_SOURCE_SHAPE = "literal_statement"
+_RUNTIME_PROBE_EXEC_SOURCE_SHA256 = (
+    "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+)
+_RUNTIME_PROBE_EXEC_BOUNDARY_TEXT = "exec(source)"
 _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABELS = (
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL,
     _RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_LOCAL_PYTHON_FORM_LABEL,
@@ -133,6 +144,7 @@ _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_KEYS = frozenset(
         _RUNTIME_PROBE_LOCAL_PYTHON_STDOUT_PROTOCOL_REVISION_KEY,
         "normalized_payload",
         "durable_artifact_reference",
+        "observed_replay_inputs",
     }
 )
 _NON_PROOF_ATTEMPT_OUTCOMES = frozenset(
@@ -680,6 +692,7 @@ class RuntimeProbeLocalPythonStdoutProtocolResult:
     stdout_protocol_revision: str
     normalized_payload: tuple[RuntimeProbeReplayField, ...]
     durable_artifact_reference: str | None = None
+    observed_replay_inputs: tuple[RuntimeProbeReplayField, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject parsed success payloads whose carried completion is invalid."""
@@ -699,6 +712,15 @@ class RuntimeProbeLocalPythonStdoutProtocolResult:
         )
         _parse_runtime_probe_local_python_durable_artifact_reference(
             self.durable_artifact_reference
+        )
+        _validate_replay_fields(
+            self.observed_replay_inputs,
+            field_name="observed_replay_inputs",
+        )
+        _validate_observed_replay_inputs_for_request(
+            request=self.completion.invocation.runner_request.request,
+            observed_replay_inputs=self.observed_replay_inputs,
+            require_for_exact_exec=True,
         )
         if not self.normalized_payload and self.durable_artifact_reference is None:
             raise ValueError(
@@ -848,6 +870,7 @@ class RuntimeProbeExecutionAttempt:
     outcome: RuntimeProbeResultOutcome
     normalized_payload: tuple[RuntimeProbeReplayField, ...] = ()
     durable_artifact_reference: str | None = None
+    observed_replay_inputs: tuple[RuntimeProbeReplayField, ...] = ()
     failure_summary: str | None = None
     failure_detail_fields: tuple[RuntimeProbeReplayField, ...] = ()
 
@@ -878,6 +901,10 @@ class RuntimeProbeExecutionAttempt:
         _validate_replay_fields(
             self.failure_detail_fields,
             field_name="failure_detail_fields",
+        )
+        _validate_replay_fields(
+            self.observed_replay_inputs,
+            field_name="observed_replay_inputs",
         )
 
         if self.outcome is RuntimeProbeResultOutcome.OBSERVED:
@@ -1417,12 +1444,14 @@ def materialize_runtime_probe_local_python_stdout_protocol_result(
         stdout_protocol_revision,
         normalized_payload,
         durable_artifact_reference,
+        observed_replay_inputs,
     ) = _parse_runtime_probe_local_python_stdout_protocol(completion.stdout_text)
     return RuntimeProbeLocalPythonStdoutProtocolResult(
         completion=completion,
         stdout_protocol_revision=stdout_protocol_revision,
         normalized_payload=normalized_payload,
         durable_artifact_reference=durable_artifact_reference,
+        observed_replay_inputs=observed_replay_inputs,
     )
 
 
@@ -1442,6 +1471,7 @@ def materialize_runtime_probe_local_python_stdout_protocol_attempt(
         outcome=RuntimeProbeResultOutcome.OBSERVED,
         normalized_payload=protocol_result.normalized_payload,
         durable_artifact_reference=protocol_result.durable_artifact_reference,
+        observed_replay_inputs=protocol_result.observed_replay_inputs,
     )
 
 
@@ -1967,6 +1997,24 @@ def make_runtime_probe_runtime_mutation_delattr_local_python_subprocess_runner(
     handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
         family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
         form_label=_RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL,
+        python_executable=python_executable,
+        module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+    )
+    return make_dispatching_runtime_probe_runner((handler_entry,))
+
+
+def make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner(
+    *,
+    python_executable: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+) -> RuntimeProbeRunnerCallable:
+    """Return the local-Python runner for exact ``exec_or_eval:exec/1``."""
+    handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
+        family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
+        form_label=_RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL,
         python_executable=python_executable,
         module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
         invocation_contract_revision=invocation_contract_revision,
@@ -3038,6 +3086,7 @@ def _validate_local_python_stdout_protocol_result(
         stdout_protocol_revision=protocol_result.stdout_protocol_revision,
         normalized_payload=protocol_result.normalized_payload,
         durable_artifact_reference=protocol_result.durable_artifact_reference,
+        observed_replay_inputs=protocol_result.observed_replay_inputs,
     )
     _validate_local_python_process_completion(protocol_result.completion)
     _validate_local_python_subprocess_invocation(protocol_result.completion.invocation)
@@ -3314,7 +3363,12 @@ def _parse_runtime_probe_worker_payload_replay_fields(
 
 def _parse_runtime_probe_local_python_stdout_protocol(
     stdout_text: str,
-) -> tuple[str, tuple[RuntimeProbeReplayField, ...], str | None]:
+) -> tuple[
+    str,
+    tuple[RuntimeProbeReplayField, ...],
+    str | None,
+    tuple[RuntimeProbeReplayField, ...],
+]:
     """Parse the strict internal JSON stdout protocol without leaking raw output."""
     _validate_local_python_raw_text(stdout_text, field_name="stdout_text")
     try:
@@ -3356,12 +3410,24 @@ def _parse_runtime_probe_local_python_stdout_protocol(
         if "durable_artifact_reference" in protocol_object
         else None
     )
+    observed_replay_inputs = (
+        _parse_runtime_probe_local_python_normalized_payload(
+            protocol_object.get("observed_replay_inputs")
+        )
+        if "observed_replay_inputs" in protocol_object
+        else ()
+    )
     if not normalized_payload and durable_artifact_reference is None:
         raise ValueError(
             "local Python stdout protocol requires normalized_payload or "
             "durable_artifact_reference"
         )
-    return (revision_value, normalized_payload, durable_artifact_reference)
+    return (
+        revision_value,
+        normalized_payload,
+        durable_artifact_reference,
+        observed_replay_inputs,
+    )
 
 
 def _parse_runtime_probe_local_python_normalized_payload(
@@ -3641,7 +3707,7 @@ def _runtime_probe_result_from_attempt(
             plan_id=attempt.plan_id,
             request_id=attempt.request_id,
             request=attempt.request,
-            replay_artifact=attempt.execution_input.replay_artifact,
+            replay_artifact=_replay_artifact_for_observed_attempt(attempt),
             normalized_payload=attempt.normalized_payload,
             durable_artifact_reference=attempt.durable_artifact_reference,
         )
@@ -3675,6 +3741,13 @@ def _runtime_probe_result_from_runner_request_attempt(
         raise ValueError("runtime probe result request_id must match runner request")
     if result.request is not runner_request.request:
         raise ValueError("runtime probe result request must be runner request request")
+    if attempt.observed_replay_inputs:
+        if result.replay_artifact != _replay_artifact_for_observed_attempt(attempt):
+            raise ValueError(
+                "runtime probe result replay_artifact must be runner request "
+                "replay_artifact plus observed replay inputs"
+            )
+        return result
     if result.replay_artifact is not runner_request.replay_artifact:
         raise ValueError(
             "runtime probe result replay_artifact must be runner request "
@@ -3691,6 +3764,11 @@ def _validate_observed_attempt_metadata(
         raise ValueError(
             "observed runtime probe execution attempts cannot carry failure metadata"
         )
+    _validate_observed_replay_inputs_for_request(
+        request=attempt.request,
+        observed_replay_inputs=attempt.observed_replay_inputs,
+        require_for_exact_exec=True,
+    )
     if not attempt.normalized_payload and attempt.durable_artifact_reference is None:
         raise ValueError(
             "observed runtime probe execution attempts require normalized_payload "
@@ -3711,6 +3789,112 @@ def _validate_non_proof_attempt_metadata(
         raise ValueError(
             "non-proof runtime probe execution attempts cannot carry proof metadata"
         )
+    if attempt.observed_replay_inputs:
+        raise ValueError(
+            "non-proof runtime probe execution attempts cannot carry observed "
+            "replay inputs"
+        )
+
+
+def _replay_artifact_for_observed_attempt(
+    attempt: RuntimeProbeExecutionAttempt,
+) -> RuntimeProbeReplayArtifact:
+    """Return the replay artifact for an observed attempt without mutating inputs."""
+    _validate_observed_attempt_metadata(attempt)
+    replay_artifact = attempt.execution_input.replay_artifact
+    if not attempt.observed_replay_inputs:
+        return replay_artifact
+    return RuntimeProbeReplayArtifact(
+        probe_identifier=replay_artifact.probe_identifier,
+        probe_contract_revision=replay_artifact.probe_contract_revision,
+        repository_snapshot_basis=replay_artifact.repository_snapshot_basis,
+        replay_target=replay_artifact.replay_target,
+        replay_selector=replay_artifact.replay_selector,
+        replay_inputs=_merge_observed_replay_inputs(
+            base_replay_inputs=replay_artifact.replay_inputs,
+            observed_replay_inputs=attempt.observed_replay_inputs,
+        ),
+        runtime_assumptions=replay_artifact.runtime_assumptions,
+    )
+
+
+def _merge_observed_replay_inputs(
+    *,
+    base_replay_inputs: tuple[RuntimeProbeReplayField, ...],
+    observed_replay_inputs: tuple[RuntimeProbeReplayField, ...],
+) -> tuple[RuntimeProbeReplayField, ...]:
+    """Append observed replay proof after rejecting duplicate replay-input keys."""
+    _validate_replay_fields(base_replay_inputs, field_name="replay_inputs")
+    _validate_replay_fields(
+        observed_replay_inputs,
+        field_name="observed_replay_inputs",
+    )
+    seen_keys: set[str] = set()
+    for field_item in (*base_replay_inputs, *observed_replay_inputs):
+        if field_item.key in seen_keys:
+            raise ValueError("runtime probe replay_inputs must not contain duplicates")
+        seen_keys.add(field_item.key)
+    return (*base_replay_inputs, *observed_replay_inputs)
+
+
+def _validate_observed_replay_inputs_for_request(
+    *,
+    request: RuntimeProbeRequest,
+    observed_replay_inputs: tuple[RuntimeProbeReplayField, ...],
+    require_for_exact_exec: bool,
+) -> None:
+    """Reject observed replay inputs outside exact exec source proof."""
+    _validate_replay_fields(
+        observed_replay_inputs,
+        field_name="observed_replay_inputs",
+    )
+    is_exact_exec = (
+        request.family_label is RuntimeProbeFamily.EXEC_OR_EVAL
+        and request.form_label
+        == _RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL
+    )
+    if not observed_replay_inputs:
+        if require_for_exact_exec and is_exact_exec:
+            raise ValueError(
+                "exec runtime probe observations require observed replay inputs"
+            )
+        return
+    fields_by_key = _replay_fields_by_key(
+        observed_replay_inputs,
+        field_name="observed_replay_inputs",
+    )
+    if not is_exact_exec:
+        raise ValueError(
+            "observed replay inputs are supported only for exec_or_eval:exec/1"
+        )
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError("exec observed replay input subject_kind is unsupported")
+    if request.reason_code is not UnresolvedReasonCode.EXEC_OR_EVAL:
+        raise ValueError("exec observed replay input reason_code is unsupported")
+    if request.boundary_text != _RUNTIME_PROBE_EXEC_BOUNDARY_TEXT:
+        raise ValueError("exec observed replay input boundary_text is unsupported")
+    if fields_by_key != {
+        "source_shape": _RUNTIME_PROBE_EXEC_SOURCE_SHAPE,
+        "source_sha256": _RUNTIME_PROBE_EXEC_SOURCE_SHA256,
+    }:
+        raise ValueError(
+            "exec observed replay inputs must carry exact literal pass source proof"
+        )
+
+
+def _replay_fields_by_key(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    field_name: str,
+) -> dict[str, str]:
+    """Return replay fields keyed by exact singleton key."""
+    _validate_replay_fields(fields, field_name=field_name)
+    fields_by_key: dict[str, str] = {}
+    for field_item in fields:
+        if field_item.key in fields_by_key:
+            raise ValueError(f"{field_name} must not contain duplicate keys")
+        fields_by_key[field_item.key] = field_item.value
+    return fields_by_key
 
 
 def _validate_replay_fields(
@@ -3903,6 +4087,7 @@ __all__ = [
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
     "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
+    "make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner",
     "make_runtime_probe_reflective_dir_local_python_subprocess_runner",
     "make_runtime_probe_reflective_dir_zero_local_python_subprocess_runner",
     "make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner",

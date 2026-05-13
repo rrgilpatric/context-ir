@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 import builtins
 import contextlib
 import hashlib
 import importlib
+import inspect
 import io
 import json
 import os
@@ -258,6 +260,26 @@ _RUNTIME_MUTATION_DELATTR_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
         "delattr(obj, name)",
         "runtime probe runtime mutation delattr worker attribute name must be a string",
         _RUNTIME_MUTATION_DELATTR_WORKER_DELETION_FAILED_MESSAGE,
+    )
+)
+_EXEC_OR_EVAL_EXEC_WORKER_FORM_LABEL = "exec_or_eval:exec/1"
+_EXEC_OR_EVAL_EXEC_WORKER_BOUNDARY_TEXT = "exec(source)"
+_EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME = "exec"
+_EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHAPE = "literal_statement"
+_EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHA256 = (
+    "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+)
+_EXEC_OR_EVAL_EXEC_WORKER_EXECUTION_OUTCOME = "completed"
+_EXEC_OR_EVAL_EXEC_WORKER_STATEMENT_KIND = "pass"
+_EXEC_OR_EVAL_EXEC_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
+    "runtime probe exec worker target execution failed"
+)
+_EXEC_OR_EVAL_EXEC_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
+    (
+        "runtime probe exec worker form must be exactly exec(source)",
+        "runtime probe exec worker source must be a string",
+        "runtime probe exec worker source must be exactly pass",
+        "runtime probe exec worker source must parse as exactly one pass statement",
     )
 )
 _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
@@ -1075,6 +1097,82 @@ class RuntimeProbeLocalPythonRuntimeMutationDelattrReplayTarget:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonExecWorkerRequest:
+    """Worker-local request contract for exact ``exec(source)`` probes."""
+
+    plan_id: str
+    request_id: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    source_site_id: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    reason_code: UnresolvedReasonCode
+    boundary_text: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    argv: tuple[str, ...]
+    working_directory: str
+    python_path_entries: tuple[str, ...]
+    timeout_seconds: int
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject drifted or non-exec worker request metadata."""
+        _validate_runtime_probe_exec_worker_request(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonExecWorkerObservation:
+    """Worker-local observation metadata for exact ``exec(source)`` probes."""
+
+    request: RuntimeProbeLocalPythonExecWorkerRequest
+    plan_id: str
+    request_id: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    invocation_contract_revision: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+    source_shape: str
+    source_sha256: str
+    execution_outcome: str
+    statement_kind: str
+    durable_artifact_reference: str
+
+    def __post_init__(self) -> None:
+        """Reject drifted request identity or malformed exec observations."""
+        _validate_runtime_probe_exec_worker_observation(self)
+
+
+@dataclass(frozen=True)
+class RuntimeProbeLocalPythonExecReplayTarget:
+    """Worker-local non-executing replay target plan for exact ``exec``."""
+
+    request: RuntimeProbeLocalPythonExecWorkerRequest
+    plan_id: str
+    request_id: str
+    source_file_path: str
+    source_module_name: str
+    replay_target_seed: str
+    replay_target_attribute_path: tuple[str, ...]
+    replay_selector_seed: str
+    invocation_identity: str
+    request_replay_payload_fields: tuple[RuntimeProbeReplayField, ...]
+
+    def __post_init__(self) -> None:
+        """Reject replay targets whose copied request identity has drifted."""
+        _validate_runtime_probe_exec_replay_target(self)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonWorkerResponse:
     """Typed non-proof worker response that cannot carry stdout payload data."""
 
@@ -1091,6 +1189,7 @@ class RuntimeProbeLocalPythonWorkerSuccessResponse:
 
     normalized_payload: tuple[RuntimeProbeReplayField, ...]
     durable_artifact_reference: str | None = None
+    observed_replay_inputs: tuple[RuntimeProbeReplayField, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject malformed success payload metadata before stdout emission."""
@@ -1144,6 +1243,10 @@ RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObserver: TypeAlias = Callabl
     [RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest],
     RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObservation,
 ]
+RuntimeProbeLocalPythonExecWorkerObserver: TypeAlias = Callable[
+    [RuntimeProbeLocalPythonExecWorkerRequest],
+    RuntimeProbeLocalPythonExecWorkerObservation,
+]
 RuntimeProbeLocalPythonDynamicImportTargetCallable: TypeAlias = Callable[[], object]
 RuntimeProbeLocalPythonReflectiveHasattrTargetCallable: TypeAlias = Callable[
     [],
@@ -1182,6 +1285,7 @@ RuntimeProbeLocalPythonRuntimeMutationDelattrTargetCallable: TypeAlias = Callabl
     [],
     object,
 ]
+RuntimeProbeLocalPythonExecTargetCallable: TypeAlias = Callable[[], object]
 RuntimeProbeLocalPythonDynamicImportObservationSource: TypeAlias = (
     RuntimeProbeLocalPythonDynamicImportWorkerRequest
     | RuntimeProbeLocalPythonDynamicImportReplayTarget
@@ -1635,6 +1739,35 @@ class _RuntimeProbeRuntimeMutationDelattrCapture:
         )
 
 
+@dataclass
+class _RuntimeProbeExecCapture:
+    """Mutable capture state for one controlled ``exec(source)`` execution."""
+
+    original_exec: Callable[..., object]
+    captured_sources: list[str] = field(default_factory=list)
+    captured_rejections: list[str] = field(default_factory=list)
+
+    def exec(self, *args: object, **kwargs: object) -> object:
+        """Capture one exact one-argument ``exec(source)`` call."""
+        if kwargs or len(args) != 1:
+            self.captured_rejections.append("arity")
+            raise ValueError(
+                "runtime probe exec worker form must be exactly exec(source)"
+            )
+        (source,) = args
+        if not isinstance(source, str):
+            self.captured_rejections.append("source_type")
+            raise ValueError("runtime probe exec worker source must be a string")
+        try:
+            _validate_runtime_probe_exec_observed_source(source)
+        except ValueError as error:
+            self.captured_rejections.append("source")
+            raise error
+        self.captured_sources.append(source)
+        caller_frame = sys._getframe(1)
+        return self.original_exec(source, caller_frame.f_globals, caller_frame.f_locals)
+
+
 @dataclass(frozen=True)
 class RuntimeProbeLocalPythonDynamicImportWorkerHandlerAdapter:
     """Adapt parsed worker payloads to an injected dynamic-import observer."""
@@ -1941,6 +2074,27 @@ class RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerHandlerAdapter:
 
 
 @dataclass(frozen=True)
+class RuntimeProbeLocalPythonExecWorkerHandlerAdapter:
+    """Adapt parsed worker payloads to an injected exact-exec observer."""
+
+    observer: RuntimeProbeLocalPythonExecWorkerObserver
+
+    def __post_init__(self) -> None:
+        """Reject malformed observer injection before worker dispatch."""
+        _validate_runtime_probe_exec_worker_observer(self.observer)
+
+    def __call__(
+        self,
+        payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+    ) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+        """Run the injected observer against a validated worker request."""
+        request = materialize_runtime_probe_exec_worker_request(payload)
+        observation = self.observer(request)
+        _validate_runtime_probe_exec_observation_for_request(observation, request)
+        return materialize_runtime_probe_exec_worker_success_response(observation)
+
+
+@dataclass(frozen=True)
 class RuntimeProbeLocalPythonWorkerHandlerEntry:
     """Typed dispatch-table entry for one worker family/form handler."""
 
@@ -2106,6 +2260,12 @@ def serialize_runtime_probe_local_python_worker_success_response(
     }
     if response.durable_artifact_reference is not None:
         protocol["durable_artifact_reference"] = response.durable_artifact_reference
+    if response.observed_replay_inputs:
+        protocol["observed_replay_inputs"] = (
+            _runtime_probe_worker_replay_fields_json_array(
+                response.observed_replay_inputs
+            )
+        )
     return json.dumps(protocol, separators=(",", ":"))
 
 
@@ -3457,6 +3617,139 @@ def _materialize_runtime_mutation_delattr_worker_success_response(
     )
 
 
+def materialize_runtime_probe_exec_worker_request(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> RuntimeProbeLocalPythonExecWorkerRequest:
+    """Derive an exact-exec worker request from stdin payload."""
+    _validate_runtime_probe_exec_worker_payload(payload)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    return RuntimeProbeLocalPythonExecWorkerRequest(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        subject_kind=_runtime_probe_worker_subject_kind_from_replay_field(
+            replay_fields_by_key["subject_kind"]
+        ),
+        subject_id=replay_fields_by_key["subject_id"],
+        source_site_id=replay_fields_by_key["source_site_id"],
+        source_file_path=replay_fields_by_key["source_file_path"],
+        source_start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        source_start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        source_end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        source_end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+        reason_code=_runtime_probe_worker_exec_reason_code_from_replay_field(
+            replay_fields_by_key["reason_code"]
+        ),
+        boundary_text=replay_fields_by_key["boundary_text"],
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        invocation_identity=payload.invocation_identity,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_exec_worker_observation(
+    request: RuntimeProbeLocalPythonExecWorkerRequest,
+) -> RuntimeProbeLocalPythonExecWorkerObservation:
+    """Build exact-exec observation metadata from a validated request."""
+    _validate_runtime_probe_exec_worker_request(request)
+    return RuntimeProbeLocalPythonExecWorkerObservation(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_contract_revision=request.invocation_contract_revision,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+        source_shape=_EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHAPE,
+        source_sha256=_EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHA256,
+        execution_outcome=_EXEC_OR_EVAL_EXEC_WORKER_EXECUTION_OUTCOME,
+        statement_kind=_EXEC_OR_EVAL_EXEC_WORKER_STATEMENT_KIND,
+        durable_artifact_reference=_runtime_probe_exec_source_artifact_reference(
+            request.request_id
+        ),
+    )
+
+
+def materialize_runtime_probe_exec_replay_target(
+    request: RuntimeProbeLocalPythonExecWorkerRequest,
+) -> RuntimeProbeLocalPythonExecReplayTarget:
+    """Derive a non-executing local Python replay target from an exec request."""
+    _validate_runtime_probe_exec_worker_request(request)
+    source_module_name = _runtime_probe_dynamic_import_source_module_name_from_path(
+        request.source_file_path
+    )
+    replay_target_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    return RuntimeProbeLocalPythonExecReplayTarget(
+        request=request,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        source_file_path=request.source_file_path,
+        source_module_name=source_module_name,
+        replay_target_seed=request.replay_target_seed,
+        replay_target_attribute_path=replay_target_attribute_path,
+        replay_selector_seed=request.replay_selector_seed,
+        invocation_identity=request.invocation_identity,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+
+
+def materialize_runtime_probe_exec_worker_success_response(
+    observation: RuntimeProbeLocalPythonExecWorkerObservation,
+) -> RuntimeProbeLocalPythonWorkerSuccessResponse:
+    """Materialize the stdout success response for one exec observation."""
+    _validate_runtime_probe_exec_worker_observation(observation)
+    return RuntimeProbeLocalPythonWorkerSuccessResponse(
+        normalized_payload=(
+            RuntimeProbeReplayField(
+                key="execution_outcome",
+                value=observation.execution_outcome,
+            ),
+            RuntimeProbeReplayField(
+                key="statement_kind",
+                value=observation.statement_kind,
+            ),
+        ),
+        durable_artifact_reference=observation.durable_artifact_reference,
+        observed_replay_inputs=(
+            RuntimeProbeReplayField(
+                key="source_shape",
+                value=observation.source_shape,
+            ),
+            RuntimeProbeReplayField(
+                key="source_sha256",
+                value=observation.source_sha256,
+            ),
+        ),
+    )
+
+
 def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
     observation_source: RuntimeProbeLocalPythonDynamicImportObservationSource,
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
@@ -3992,6 +4285,73 @@ def observe_runtime_probe_runtime_mutation_delattr_worker_request(
         source_module,
         target,
     )
+
+
+def materialize_runtime_probe_exec_observation_from_target(
+    replay_target: RuntimeProbeLocalPythonExecReplayTarget,
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonExecTargetCallable,
+) -> RuntimeProbeLocalPythonExecWorkerObservation:
+    """Observe one zero-argument target under exact ``exec(source)`` interception."""
+    _validate_runtime_probe_exec_replay_target(replay_target)
+    _validate_runtime_probe_exec_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    _validate_runtime_probe_exec_target_callable(target)
+    _runtime_probe_exec_captured_source(source_module, target)
+    return materialize_runtime_probe_exec_worker_observation(replay_target.request)
+
+
+def observe_runtime_probe_exec_worker_request(
+    request: RuntimeProbeLocalPythonExecWorkerRequest,
+) -> RuntimeProbeLocalPythonExecWorkerObservation:
+    """Observe one concrete exact-exec worker request in local Python."""
+    _validate_runtime_probe_exec_worker_request(request)
+    replay_target = materialize_runtime_probe_exec_replay_target(request)
+    source_module = import_runtime_probe_exec_replay_target_source_module(replay_target)
+    target = resolve_runtime_probe_exec_replay_target_callable(
+        replay_target,
+        source_module,
+    )
+    return materialize_runtime_probe_exec_observation_from_target(
+        replay_target,
+        source_module,
+        target,
+    )
+
+
+def import_runtime_probe_exec_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonExecReplayTarget,
+) -> ModuleType:
+    """Import an exec replay target source module under request-local import state."""
+    _validate_runtime_probe_exec_replay_target(replay_target)
+    request = replay_target.request
+    original_sys_path = list(sys.path)
+    original_working_directory = os.getcwd()
+    try:
+        os.chdir(request.working_directory)
+        sys.path[:] = [
+            request.working_directory,
+            *request.python_path_entries,
+            *original_sys_path,
+        ]
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            imported_module = importlib.import_module(replay_target.source_module_name)
+    except Exception as error:
+        raise ValueError("runtime probe exec source module import failed") from error
+    finally:
+        sys.path[:] = original_sys_path
+        os.chdir(original_working_directory)
+
+    _validate_runtime_probe_exec_replay_target_source_module(
+        replay_target,
+        imported_module,
+    )
+    return imported_module
 
 
 def import_runtime_probe_dynamic_import_replay_target_source_module(
@@ -4655,6 +5015,29 @@ def resolve_runtime_probe_runtime_mutation_delattr_replay_target_callable(
     )
 
 
+def resolve_runtime_probe_exec_replay_target_callable(
+    replay_target: RuntimeProbeLocalPythonExecReplayTarget,
+    source_module: ModuleType,
+) -> RuntimeProbeLocalPythonExecTargetCallable:
+    """Resolve a source module exec replay target without executing it."""
+    _validate_runtime_probe_exec_replay_target(replay_target)
+    _validate_runtime_probe_exec_replay_target_source_module(
+        replay_target,
+        source_module,
+    )
+    resolved_target: object = source_module
+    for attribute_name in replay_target.replay_target_attribute_path:
+        try:
+            resolved_target = getattr(resolved_target, attribute_name)
+        except AttributeError as error:
+            raise ValueError(
+                "runtime probe exec replay target replay_target_attribute_path "
+                "is missing"
+            ) from error
+    _validate_runtime_probe_exec_target_callable(resolved_target)
+    return cast(RuntimeProbeLocalPythonExecTargetCallable, resolved_target)
+
+
 def build_runtime_probe_dynamic_import_worker_handler_entry(
     observer: RuntimeProbeLocalPythonDynamicImportWorkerObserver,
 ) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
@@ -4823,6 +5206,17 @@ def build_runtime_probe_runtime_mutation_delattr_worker_handler_entry(
     )
 
 
+def build_runtime_probe_exec_worker_handler_entry(
+    observer: RuntimeProbeLocalPythonExecWorkerObserver,
+) -> RuntimeProbeLocalPythonWorkerHandlerEntry:
+    """Return an injected handler entry for exact ``exec(source)``."""
+    return RuntimeProbeLocalPythonWorkerHandlerEntry(
+        family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
+        form_label=_EXEC_OR_EVAL_EXEC_WORKER_FORM_LABEL,
+        handler=RuntimeProbeLocalPythonExecWorkerHandlerAdapter(observer=observer),
+    )
+
+
 def _runtime_probe_local_python_worker_handler_entries(
     handler_entries: (
         Iterable[RuntimeProbeLocalPythonWorkerHandlerEntry]
@@ -4904,6 +5298,11 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
             observe_runtime_probe_runtime_mutation_delattr_worker_request
         ),
     )
+    exec_entries = (
+        build_runtime_probe_exec_worker_handler_entry(
+            observe_runtime_probe_exec_worker_request
+        ),
+    )
     return (
         *dynamic_import_entries,
         *reflective_hasattr_entries,
@@ -4916,6 +5315,7 @@ def _default_runtime_probe_local_python_worker_handler_entries() -> tuple[
         *runtime_mutation_locals_zero_entries,
         *runtime_mutation_setattr_entries,
         *runtime_mutation_delattr_entries,
+        *exec_entries,
     )
 
 
@@ -13638,6 +14038,679 @@ def _runtime_probe_worker_invocation_identity_from_parts(
     return f"{_DYNAMIC_IMPORT_WORKER_INVOCATION_IDENTITY_PREFIX}{digest}"
 
 
+def _validate_runtime_probe_exec_worker_payload(
+    payload: RuntimeProbeLocalPythonWorkerRequestPayload,
+) -> None:
+    """Reject payloads that cannot become the worker-local exec request."""
+    if not isinstance(payload, RuntimeProbeLocalPythonWorkerRequestPayload):
+        raise ValueError("runtime probe exec worker payload must be typed")
+    _validate_runtime_probe_exec_payload_family_form(
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+    )
+    _validate_runtime_probe_worker_metadata_text(payload.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        payload.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        payload.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_invocation_identity(payload.invocation_identity)
+    _validate_runtime_probe_worker_argv(payload.argv)
+    _validate_runtime_probe_worker_path_text(
+        payload.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(payload.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(payload.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        payload.request_replay_payload_fields
+    )
+    _validate_runtime_probe_exec_replay_metadata(
+        replay_fields_by_key,
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        family_label=payload.family_label,
+        form_label=payload.form_label,
+        replay_target_seed=payload.replay_target_seed,
+        replay_selector_seed=payload.replay_selector_seed,
+    )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=payload.plan_id,
+        request_id=payload.request_id,
+        invocation_contract_revision=payload.invocation_contract_revision,
+        argv=payload.argv,
+        working_directory=payload.working_directory,
+        python_path_entries=payload.python_path_entries,
+        timeout_seconds=payload.timeout_seconds,
+        request_replay_payload_fields=payload.request_replay_payload_fields,
+    )
+    if payload.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe exec worker invocation_identity must match payload "
+            "replay identity"
+        )
+
+
+def _validate_runtime_probe_exec_worker_request(
+    request: RuntimeProbeLocalPythonExecWorkerRequest,
+) -> None:
+    """Reject exact-exec worker requests whose copied metadata drifted."""
+    if not isinstance(request, RuntimeProbeLocalPythonExecWorkerRequest):
+        raise ValueError("runtime probe exec worker request must be typed")
+    _validate_runtime_probe_exec_payload_family_form(
+        family_label=request.family_label,
+        form_label=request.form_label,
+    )
+    if request.subject_kind is not SemanticSubjectKind.UNSUPPORTED_FINDING:
+        raise ValueError("runtime probe exec worker subject_kind is unsupported")
+    if request.reason_code is not UnresolvedReasonCode.EXEC_OR_EVAL:
+        raise ValueError("runtime probe exec worker reason_code is unsupported")
+    _validate_runtime_probe_worker_metadata_text(request.plan_id, field_name="plan_id")
+    _validate_runtime_probe_worker_metadata_text(
+        request.request_id,
+        field_name="request_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.subject_id,
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_site_id,
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.source_file_path,
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.boundary_text,
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_exec_worker_request_boundary_text(request.boundary_text)
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_target_seed,
+        field_name="replay_target_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.replay_selector_seed,
+        field_name="replay_selector_seed",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        request.invocation_contract_revision,
+        field_name="invocation_contract_revision",
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=request.source_start_line,
+        start_column=request.source_start_column,
+        end_line=request.source_end_line,
+        end_column=request.source_end_column,
+    )
+    _validate_runtime_probe_worker_invocation_identity(request.invocation_identity)
+    _validate_runtime_probe_worker_argv(request.argv)
+    _validate_runtime_probe_worker_path_text(
+        request.working_directory,
+        field_name="working_directory",
+    )
+    _validate_runtime_probe_worker_python_path_entries(request.python_path_entries)
+    _validate_runtime_probe_worker_timeout_seconds(request.timeout_seconds)
+
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    _validate_runtime_probe_exec_replay_metadata(
+        replay_fields_by_key,
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        family_label=request.family_label,
+        form_label=request.form_label,
+        replay_target_seed=request.replay_target_seed,
+        replay_selector_seed=request.replay_selector_seed,
+    )
+    for field_key, expected_value in (
+        ("subject_kind", request.subject_kind.value),
+        ("subject_id", request.subject_id),
+        ("source_site_id", request.source_site_id),
+        ("source_file_path", request.source_file_path),
+        ("source_start_line", str(request.source_start_line)),
+        ("source_start_column", str(request.source_start_column)),
+        ("source_end_line", str(request.source_end_line)),
+        ("source_end_column", str(request.source_end_column)),
+        ("reason_code", request.reason_code.value),
+        ("boundary_text", request.boundary_text),
+    ):
+        _validate_runtime_probe_exec_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
+        plan_id=request.plan_id,
+        request_id=request.request_id,
+        invocation_contract_revision=request.invocation_contract_revision,
+        argv=request.argv,
+        working_directory=request.working_directory,
+        python_path_entries=request.python_path_entries,
+        timeout_seconds=request.timeout_seconds,
+        request_replay_payload_fields=request.request_replay_payload_fields,
+    )
+    if request.invocation_identity != expected_identity:
+        raise ValueError(
+            "runtime probe exec worker invocation_identity must match request "
+            "replay identity"
+        )
+
+
+def _validate_runtime_probe_exec_worker_request_boundary_text(
+    boundary_text: str,
+) -> None:
+    """Reject exec requests that do not carry the approved boundary text."""
+    if boundary_text != _EXEC_OR_EVAL_EXEC_WORKER_BOUNDARY_TEXT:
+        raise ValueError(
+            "runtime probe exec worker boundary_text must be "
+            f"{_EXEC_OR_EVAL_EXEC_WORKER_BOUNDARY_TEXT}"
+        )
+
+
+def _validate_runtime_probe_exec_worker_observer(
+    observer: RuntimeProbeLocalPythonExecWorkerObserver,
+) -> None:
+    """Reject non-callable exact-exec observer injections."""
+    if not callable(observer):
+        raise ValueError("runtime probe exec worker observer must be callable")
+
+
+def _validate_runtime_probe_exec_target_callable(target: object) -> None:
+    """Reject non-zero-argument target injections before exec interception."""
+    if not callable(target):
+        raise ValueError("runtime probe exec worker target must be callable")
+    try:
+        signature = inspect.signature(target)
+        signature.bind()
+    except TypeError as error:
+        raise ValueError(
+            "runtime probe exec worker target must accept zero arguments"
+        ) from error
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe exec worker target signature is unavailable"
+        ) from error
+
+
+def _validate_runtime_probe_exec_replay_target_source_module(
+    replay_target: RuntimeProbeLocalPythonExecReplayTarget,
+    source_module: ModuleType,
+) -> None:
+    """Reject injected source modules that do not match the exec replay target."""
+    if not isinstance(source_module, ModuleType):
+        raise ValueError("runtime probe exec replay target source module must be typed")
+    if source_module.__name__ != replay_target.source_module_name:
+        raise ValueError(
+            "runtime probe exec replay target source module must match "
+            "source_module_name"
+        )
+
+
+def _validate_runtime_probe_exec_observation_for_request(
+    observation: RuntimeProbeLocalPythonExecWorkerObservation,
+    request: RuntimeProbeLocalPythonExecWorkerRequest,
+) -> None:
+    """Reject observer results that do not belong to the adapted exec request."""
+    _validate_runtime_probe_exec_worker_request(request)
+    _validate_runtime_probe_exec_worker_observation(observation)
+    if observation.request != request:
+        raise ValueError("runtime probe exec worker observation request must match")
+
+
+def _validate_runtime_probe_exec_worker_observation(
+    observation: RuntimeProbeLocalPythonExecWorkerObservation,
+) -> None:
+    """Reject exact-exec observation metadata that drifted from its request."""
+    if not isinstance(observation, RuntimeProbeLocalPythonExecWorkerObservation):
+        raise ValueError("runtime probe exec worker observation must be typed")
+    _validate_runtime_probe_exec_worker_request(observation.request)
+    if observation.source_shape != _EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHAPE:
+        raise ValueError("runtime probe exec worker source_shape is unsupported")
+    if observation.source_sha256 != _EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHA256:
+        raise ValueError("runtime probe exec worker source_sha256 is unsupported")
+    if observation.execution_outcome != _EXEC_OR_EVAL_EXEC_WORKER_EXECUTION_OUTCOME:
+        raise ValueError("runtime probe exec worker execution_outcome is unsupported")
+    if observation.statement_kind != _EXEC_OR_EVAL_EXEC_WORKER_STATEMENT_KIND:
+        raise ValueError("runtime probe exec worker statement_kind is unsupported")
+    expected_artifact_reference = _runtime_probe_exec_source_artifact_reference(
+        observation.request.request_id
+    )
+    _validate_runtime_probe_worker_durable_artifact_reference(
+        observation.durable_artifact_reference
+    )
+    if observation.durable_artifact_reference != expected_artifact_reference:
+        raise ValueError(
+            "runtime probe exec worker durable_artifact_reference must match request"
+        )
+    for field_name, value, expected_value in (
+        ("plan_id", observation.plan_id, observation.request.plan_id),
+        ("request_id", observation.request_id, observation.request.request_id),
+        (
+            "replay_target_seed",
+            observation.replay_target_seed,
+            observation.request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            observation.replay_selector_seed,
+            observation.request.replay_selector_seed,
+        ),
+        (
+            "invocation_contract_revision",
+            observation.invocation_contract_revision,
+            observation.request.invocation_contract_revision,
+        ),
+        (
+            "invocation_identity",
+            observation.invocation_identity,
+            observation.request.invocation_identity,
+        ),
+    ):
+        if value != expected_value:
+            raise ValueError(
+                f"runtime probe exec worker observation {field_name} must match request"
+            )
+    if (
+        observation.request_replay_payload_fields
+        != observation.request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe exec worker observation request_replay_payload_fields "
+            "must match request"
+        )
+
+
+def _validate_runtime_probe_exec_replay_target(
+    replay_target: RuntimeProbeLocalPythonExecReplayTarget,
+) -> None:
+    """Reject non-executing exec replay targets that drift from their request."""
+    if not isinstance(replay_target, RuntimeProbeLocalPythonExecReplayTarget):
+        raise ValueError("runtime probe exec replay target must be typed")
+    request = replay_target.request
+    _validate_runtime_probe_exec_worker_request(request)
+    for field_name, value, expected_value in (
+        ("plan_id", replay_target.plan_id, request.plan_id),
+        ("request_id", replay_target.request_id, request.request_id),
+        ("source_file_path", replay_target.source_file_path, request.source_file_path),
+        (
+            "replay_target_seed",
+            replay_target.replay_target_seed,
+            request.replay_target_seed,
+        ),
+        (
+            "replay_selector_seed",
+            replay_target.replay_selector_seed,
+            request.replay_selector_seed,
+        ),
+        (
+            "invocation_identity",
+            replay_target.invocation_identity,
+            request.invocation_identity,
+        ),
+    ):
+        if value != expected_value:
+            raise ValueError(
+                f"runtime probe exec replay target {field_name} must match request"
+            )
+    if (
+        replay_target.request_replay_payload_fields
+        != request.request_replay_payload_fields
+    ):
+        raise ValueError(
+            "runtime probe exec replay target request_replay_payload_fields must "
+            "match request"
+        )
+
+    expected_source_module_name = (
+        _runtime_probe_dynamic_import_source_module_name_from_path(
+            request.source_file_path
+        )
+    )
+    if replay_target.source_module_name != expected_source_module_name:
+        raise ValueError(
+            "runtime probe exec replay target source_module_name must match "
+            "request source_file_path"
+        )
+    expected_attribute_path = (
+        _runtime_probe_dynamic_import_replay_target_attribute_path(
+            source_module_name=expected_source_module_name,
+            replay_target_seed=request.replay_target_seed,
+        )
+    )
+    if replay_target.replay_target_attribute_path != expected_attribute_path:
+        raise ValueError(
+            "runtime probe exec replay target replay_target_attribute_path must "
+            "match request replay_target_seed"
+        )
+
+
+def _runtime_probe_exec_captured_source(
+    source_module: ModuleType,
+    target: RuntimeProbeLocalPythonExecTargetCallable,
+) -> str:
+    """Run a target while capturing one exact bare ``exec(source)`` call."""
+    _validate_runtime_probe_exec_source_global_absent(source_module)
+    original_exec = builtins.__dict__.get(
+        _EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if original_exec is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
+        raise ValueError("runtime probe exec worker builtins.exec is missing")
+    capture = _RuntimeProbeExecCapture(
+        original_exec=cast(Callable[..., object], original_exec)
+    )
+    controlled_exec: Callable[..., object] = capture.exec
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    shielded_stdout = io.StringIO()
+    shielded_stderr = io.StringIO()
+    target_failure: BaseException | None = None
+
+    try:
+        builtins.__dict__[_EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME] = controlled_exec
+        try:
+            sys.stdout = shielded_stdout
+            sys.stderr = shielded_stderr
+            target()
+        finally:
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+    except BaseException as error:
+        target_failure = error
+    builtin_restore_failure = _restore_runtime_probe_exec_builtin(
+        expected_exec=controlled_exec,
+        original_exec=original_exec,
+    )
+    source_restore_failure = _restore_runtime_probe_exec_source_global(source_module)
+
+    if builtin_restore_failure is not None:
+        if target_failure is not None:
+            raise builtin_restore_failure from target_failure
+        raise builtin_restore_failure
+    if source_restore_failure is not None:
+        if target_failure is not None:
+            raise source_restore_failure from target_failure
+        raise source_restore_failure
+    if target_failure is not None:
+        _raise_runtime_probe_exec_target_failure(target_failure)
+
+    return _runtime_probe_exec_capture_source(capture)
+
+
+def _runtime_probe_exec_capture_source(capture: _RuntimeProbeExecCapture) -> str:
+    """Return the single captured exec source after validation."""
+    _validate_runtime_probe_exec_intercepted_calls(
+        captured_sources=capture.captured_sources,
+        captured_rejections=tuple(capture.captured_rejections),
+    )
+    return capture.captured_sources[0]
+
+
+def _validate_runtime_probe_exec_intercepted_calls(
+    *,
+    captured_sources: list[str],
+    captured_rejections: tuple[str, ...],
+) -> None:
+    """Reject intercepted exec behavior outside the exact one-argument form."""
+    if "arity" in captured_rejections:
+        raise ValueError("runtime probe exec worker form must be exactly exec(source)")
+    if "source_type" in captured_rejections:
+        raise ValueError("runtime probe exec worker source must be a string")
+    if "source" in captured_rejections:
+        raise ValueError("runtime probe exec worker source must be exactly pass")
+    if len(captured_sources) != 1:
+        raise ValueError(
+            "runtime probe exec worker target must capture exactly one exec call"
+        )
+
+
+def _raise_runtime_probe_exec_target_failure(error: BaseException) -> None:
+    """Raise a sanitized target failure unless the error is a known shape reject."""
+    if (
+        isinstance(error, ValueError)
+        and str(error) in _EXEC_OR_EVAL_EXEC_WORKER_SHAPE_ERROR_MESSAGES
+    ):
+        raise error
+    raise ValueError(
+        _EXEC_OR_EVAL_EXEC_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
+    ) from error
+
+
+def _validate_runtime_probe_exec_source_global_absent(
+    source_module: ModuleType,
+) -> None:
+    """Reject source modules that shadow bare ``exec`` global resolution."""
+    if (
+        source_module.__dict__.get(
+            _EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        raise ValueError(
+            "runtime probe exec worker target module exec global must be absent"
+        )
+
+
+def _restore_runtime_probe_exec_source_global(
+    source_module: ModuleType,
+) -> ValueError | None:
+    """Remove any target-time source ``exec`` global and report drift."""
+    module_globals = source_module.__dict__
+    current_global = module_globals.get(
+        _EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if current_global is _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL:
+        return None
+    try:
+        del module_globals[_EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME]
+    except Exception:
+        return ValueError(
+            "runtime probe exec worker target module exec global could not be restored"
+        )
+    if (
+        module_globals.get(
+            _EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL
+    ):
+        return ValueError(
+            "runtime probe exec worker target module exec global could not be restored"
+        )
+    return ValueError(
+        "runtime probe exec worker target module exec global changed during execution"
+    )
+
+
+def _restore_runtime_probe_exec_builtin(
+    *,
+    expected_exec: object,
+    original_exec: object,
+) -> ValueError | None:
+    """Restore builtins.exec and report target-time hook drift."""
+    current_exec = builtins.__dict__.get(
+        _EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    restore_failure: ValueError | None = None
+    if current_exec is not expected_exec:
+        restore_failure = ValueError(
+            "runtime probe exec worker builtins.exec changed during execution"
+        )
+    try:
+        builtins.__dict__[_EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME] = original_exec
+    except Exception:
+        return ValueError(
+            "runtime probe exec worker builtins.exec could not be restored"
+        )
+    if (
+        builtins.__dict__.get(
+            _EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME,
+            _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+        )
+        is not original_exec
+    ):
+        return ValueError(
+            "runtime probe exec worker builtins.exec could not be restored"
+        )
+    return restore_failure
+
+
+def _validate_runtime_probe_exec_observed_source(source: str) -> None:
+    """Reject executed source outside the exact admitted pass statement."""
+    if source != "pass":
+        raise ValueError("runtime probe exec worker source must be exactly pass")
+    parsed_source = ast.parse(source, mode="exec")
+    if len(parsed_source.body) != 1 or not isinstance(parsed_source.body[0], ast.Pass):
+        raise ValueError(
+            "runtime probe exec worker source must parse as exactly one pass statement"
+        )
+    if hashlib.sha256(source.encode("utf-8")).hexdigest() != (
+        _EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHA256
+    ):
+        raise ValueError("runtime probe exec worker source_sha256 is unsupported")
+
+
+def _validate_runtime_probe_exec_payload_family_form(
+    *,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """Reject unsupported exec worker request family/form labels."""
+    if family_label is not RuntimeProbeFamily.EXEC_OR_EVAL:
+        raise ValueError("runtime probe exec worker family_label is unsupported")
+    if form_label != _EXEC_OR_EVAL_EXEC_WORKER_FORM_LABEL:
+        raise ValueError("runtime probe exec worker form_label is unsupported")
+
+
+def _validate_runtime_probe_exec_replay_metadata(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    plan_id: str,
+    request_id: str,
+    family_label: RuntimeProbeFamily,
+    form_label: str,
+    replay_target_seed: str,
+    replay_selector_seed: str,
+) -> None:
+    """Reject replay fields that drift from exact-exec worker metadata."""
+    for field_key, expected_value in (
+        ("plan_id", plan_id),
+        ("request_id", request_id),
+        ("family_label", family_label.value),
+        ("form_label", form_label),
+        ("replay_target_seed", replay_target_seed),
+        ("replay_selector_seed", replay_selector_seed),
+    ):
+        _validate_runtime_probe_exec_replay_field_match(
+            replay_fields_by_key,
+            field_key=field_key,
+            expected_value=expected_value,
+        )
+    if replay_fields_by_key["subject_kind"] != (
+        SemanticSubjectKind.UNSUPPORTED_FINDING.value
+    ):
+        raise ValueError("runtime probe exec worker subject_kind is unsupported")
+    if replay_fields_by_key["reason_code"] != UnresolvedReasonCode.EXEC_OR_EVAL.value:
+        raise ValueError("runtime probe exec worker reason_code is unsupported")
+    _runtime_probe_worker_subject_kind_from_replay_field(
+        replay_fields_by_key["subject_kind"]
+    )
+    _runtime_probe_worker_exec_reason_code_from_replay_field(
+        replay_fields_by_key["reason_code"]
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["subject_id"],
+        field_name="subject_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_site_id"],
+        field_name="source_site_id",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["source_file_path"],
+        field_name="source_file_path",
+    )
+    _validate_runtime_probe_worker_metadata_text(
+        replay_fields_by_key["boundary_text"],
+        field_name="boundary_text",
+    )
+    _validate_runtime_probe_exec_worker_request_boundary_text(
+        replay_fields_by_key["boundary_text"]
+    )
+    _validate_runtime_probe_worker_source_span(
+        start_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_line"],
+            field_name="source_start_line",
+        ),
+        start_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_start_column"],
+            field_name="source_start_column",
+        ),
+        end_line=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_line"],
+            field_name="source_end_line",
+        ),
+        end_column=_runtime_probe_worker_replay_span_value(
+            replay_fields_by_key["source_end_column"],
+            field_name="source_end_column",
+        ),
+    )
+
+
+def _validate_runtime_probe_exec_replay_field_match(
+    replay_fields_by_key: Mapping[str, str],
+    *,
+    field_key: str,
+    expected_value: str,
+) -> None:
+    """Require a replay field to match a copied exact-exec request field."""
+    if replay_fields_by_key[field_key] != expected_value:
+        raise ValueError(
+            f"runtime probe exec worker {field_key} must match request replay "
+            "payload fields"
+        )
+
+
+def _runtime_probe_worker_exec_reason_code_from_replay_field(
+    value: str,
+) -> UnresolvedReasonCode:
+    """Parse and validate the exec/eval reason copied into replay metadata."""
+    try:
+        reason_code = UnresolvedReasonCode(value)
+    except ValueError as error:
+        raise ValueError(
+            "runtime probe exec worker reason_code is unsupported"
+        ) from error
+    if reason_code is not UnresolvedReasonCode.EXEC_OR_EVAL:
+        raise ValueError("runtime probe exec worker reason_code is unsupported")
+    return reason_code
+
+
+def _runtime_probe_exec_source_artifact_reference(request_id: str) -> str:
+    """Return the deterministic durable artifact reference for exec source proof."""
+    _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
+    return f"artifact://runtime-probe/exec-source/{request_id}.json"
+
+
 def _is_runtime_probe_worker_absolute_path_metadata(value: str) -> bool:
     """Return whether copied worker path metadata is absolute."""
     return PurePosixPath(value).is_absolute() or PureWindowsPath(value).is_absolute()
@@ -13681,6 +14754,13 @@ def _validate_runtime_probe_worker_success_response(
     )
     _validate_runtime_probe_worker_durable_artifact_reference(
         response.durable_artifact_reference
+    )
+    _validate_runtime_probe_worker_replay_fields(
+        response.observed_replay_inputs,
+        field_name="observed_replay_inputs",
+    )
+    _validate_runtime_probe_worker_observed_replay_inputs(
+        response.observed_replay_inputs
     )
     if not response.normalized_payload and response.durable_artifact_reference is None:
         raise ValueError(
@@ -13743,6 +14823,43 @@ def _validate_runtime_probe_worker_durable_artifact_reference(
         or _contains_control_character(durable_artifact_reference)
     ):
         raise ValueError("runtime probe worker durable_artifact_reference is malformed")
+
+
+def _validate_runtime_probe_worker_observed_replay_inputs(
+    observed_replay_inputs: tuple[RuntimeProbeReplayField, ...],
+) -> None:
+    """Reject observed replay inputs outside the exact exec source proof."""
+    if not observed_replay_inputs:
+        return
+    fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        observed_replay_inputs,
+        field_name="observed_replay_inputs",
+    )
+    if fields_by_key != {
+        "source_shape": _EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHAPE,
+        "source_sha256": _EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHA256,
+    }:
+        raise ValueError(
+            "runtime probe worker observed_replay_inputs must carry exact exec "
+            "source proof"
+        )
+
+
+def _runtime_probe_worker_replay_fields_by_key(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    field_name: str,
+) -> dict[str, str]:
+    """Return replay fields keyed by exact singleton key."""
+    _validate_runtime_probe_worker_replay_fields(fields, field_name=field_name)
+    fields_by_key: dict[str, str] = {}
+    for field_item in fields:
+        if field_item.key in fields_by_key:
+            raise ValueError(
+                f"runtime probe worker {field_name} must not contain duplicate keys"
+            )
+        fields_by_key[field_item.key] = field_item.value
+    return fields_by_key
 
 
 def _runtime_probe_worker_replay_fields_json_array(

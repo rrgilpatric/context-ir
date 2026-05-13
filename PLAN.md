@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`5b8da0a Add runtime delattr subprocess support`. The latest pushed
+`1f4b9e3 Add runtime setattr subprocess support`. The latest pushed
 source/contract authority is also
-`5b8da0a Add runtime delattr subprocess support`. Live git refs
+`1f4b9e3 Add runtime setattr subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -1874,6 +1874,158 @@ unit:
 - next route:
   - create one local commit for the exact six-file release unit
   - push remains Ryan-gated
+
+Pushed `runtime_mutation:setattr/3` local-Python subprocess release:
+
+- Ryan-authorized push completed for
+  `1f4b9e3 Add runtime setattr subprocess support`
+- pushed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes
+  - full-regression-cleared: yes
+  - commit-gating-cleared: yes
+  - staged: yes, then committed
+  - locally committed: yes,
+    `1f4b9e3 Add runtime setattr subprocess support`
+  - pushed: yes
+  - next route: select the next bounded north-star lane
+
+Workspace-only post-`1f4b9e3` route selection:
+
+- reviewed live repo state after pushed
+  `1f4b9e3 Add runtime setattr subprocess support`; findings: none
+- selected next bounded north-star lane:
+  read-only `EXEC_OR_EVAL` local-Python subprocess source-proof contract
+  planning spike
+- reason:
+  - pushed dynamic-import, exact reflective-builtin, and exact
+    runtime-mutation subprocess forms are closed for the accepted exact forms
+    absent a new finding
+  - `EXEC_OR_EVAL` is the next runtime-probe family with existing planned
+    forms and already accepted lower-layer observation/admission contracts
+    for `eval(source)` and `exec(source)`
+  - admissible `EXEC_OR_EVAL` observations require runtime-captured source
+    proof in replay inputs (`source_shape` and `source_sha256`) plus
+    durable payload references
+  - the current local-Python worker stdout/result path carries normalized
+    payload and durable artifact reference but not worker-supplied replay
+    inputs, so direct implementation would need a narrow internal contract
+    decision before code changes
+  - `metaclass_behavior:keyword` remains broader because it is a non-call
+    class-creation replay and durable-proof problem
+- next route:
+  - issue one read-only planning lane to select the exact first
+    `EXEC_OR_EVAL` subprocess form and the minimal source-proof/result
+    assembly contract
+  - do not implement `eval`, `exec`, metaclass behavior, stdout protocol
+    changes, result assembly changes, public API, package-root export, schema,
+    MCP, tool facade, scoring, compiler, admission, docs, README, EVAL,
+    PUBLIC_CLAIMS, fixtures, tasks, run specs, or generalized runtime support
+    in that planning lane
+
+Workspace-only accepted `EXEC_OR_EVAL` local-Python subprocess source-proof
+planning result:
+
+- accepted first-pass after control review of the returned read-only planning
+  lane
+- repo-backed current pushed release/source-contract authority remains
+  `1f4b9e3 Add runtime setattr subprocess support`
+- accepted findings:
+  - the current worker stdout protocol carries `normalized_payload` and
+    optional `durable_artifact_reference`, but no worker-supplied replay
+    inputs
+  - admission already supports `exec_or_eval:exec/1` and
+    `exec_or_eval:eval/1` when the proof appears in
+    `RuntimeProbeObservedResult.replay_artifact.replay_inputs`
+  - current execution inputs intentionally keep replay inputs as
+    request-identity fields
+  - a worker-only `EXEC_OR_EVAL` implementation would not become admissible
+    because `source_shape` and `source_sha256` would still be missing
+- selected next implementation:
+  - exact `exec_or_eval:exec/1` local-Python subprocess support
+  - reason: `exec(source)` has the narrower deterministic proof contract:
+    `source_shape=literal_statement`, `source_sha256=sha256(b"pass")`,
+    `execution_outcome=completed`, optional `statement_kind=pass`, and a
+    non-empty durable artifact reference
+- required implementation contract:
+  - add a backward-compatible observed replay-input channel from local-Python
+    worker stdout through parent parsing/result assembly
+  - merge observed proof fields into
+    `RuntimeProbeObservedResult.replay_artifact.replay_inputs` at observed
+    result assembly time
+  - do not mutate `RuntimeProbeExecutionInput`
+  - do not broaden `_replay_inputs_for_request`
+  - reject duplicate replay-input keys
+  - restrict exact `exec_or_eval:exec/1` observed proof to
+    `source_shape=literal_statement` and
+    `source_sha256=sha256(b"pass")`
+- next implementation file boundary:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_observation_admission.py`
+  - optional `tests/test_runtime_acquisition.py` only if needed for
+    end-to-end proof
+- non-goals:
+  - no `exec_or_eval:eval/1`
+  - no generalized exec/eval support
+  - no metaclass subprocess support
+  - no source/admission behavior changes absent a concrete finding
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, docs, README, EVAL, PUBLIC_CLAIMS, fixtures, tasks, run specs,
+    or generalized runtime support
+
+Workspace-only accepted exact `exec_or_eval:exec/1` local-Python subprocess
+implementation:
+
+- accepted first-pass after control review of the returned implementation lane;
+  findings: none
+- repo-backed current pushed release/source-contract authority remains
+  `1f4b9e3 Add runtime setattr subprocess support`
+- accepted implementation files are exactly:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+- existing dirty control-state files `PLAN.md` and `BUILDLOG.md` are included
+  in the proposed release unit as continuity/routing updates
+- accepted behavior:
+  - default worker registers exactly `RuntimeProbeFamily.EXEC_OR_EVAL` plus
+    `exec_or_eval:exec/1`
+  - parent runner exposes a narrow exact-exec subprocess factory
+  - worker stdout can carry optional `observed_replay_inputs`, restricted to
+    `source_shape=literal_statement` and
+    `source_sha256=d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1`
+  - parent result assembly merges observed source proof into observed result
+    replay inputs without mutating `RuntimeProbeExecutionInput` or broadening
+    `_replay_inputs_for_request`
+  - the concrete worker observes exactly one zero-argument target call that
+    performs one one-argument `exec(source)` with source exactly `"pass"`,
+    restores `builtins.exec`, and fails closed for adjacent exec/eval forms,
+    malformed metadata, wrong arity/kwargs, bad source, missing/multiple
+    captures, target failures, and exec shadow/drift cases
+- control validation rerun after implementation review:
+  - ruff check passed
+  - ruff format check passed, `6 files already formatted`
+  - strict mypy passed over 37 source files
+  - targeted pytest passed, `898 passed`
+  - `git diff --check` passed
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - create one local commit for the exact `exec_or_eval:exec/1` release unit
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess release:
 
@@ -6208,13 +6360,36 @@ sequencing for `c1a12d7` absent new findings.
   subprocess release unit
 - [x] Commit-gating review for exact `runtime_mutation:setattr/3` local-Python
   subprocess release unit
-- [ ] Local commit creation for exact `runtime_mutation:setattr/3` local-Python
+- [x] Local commit creation for exact `runtime_mutation:setattr/3` local-Python
   subprocess release unit
-- [ ] Ryan-authorized remote push for exact `runtime_mutation:setattr/3`
+- [x] Ryan-authorized remote push for exact `runtime_mutation:setattr/3`
+  local-Python subprocess release unit
+- [x] Post-`1f4b9e3` control selection of the next bounded north-star lane
+- [x] Read-only `EXEC_OR_EVAL` local-Python subprocess source-proof contract
+  planning spike
+- [x] Exact `exec_or_eval:exec/1` local-Python subprocess implementation slice
+- [x] Release-unit audit for exact `exec_or_eval:exec/1` local-Python
+  subprocess release unit
+- [x] Full regression gate for exact `exec_or_eval:exec/1` local-Python
+  subprocess release unit
+- [x] Commit-gating review for exact `exec_or_eval:exec/1` local-Python
+  subprocess release unit
+- [ ] Local commit creation for exact `exec_or_eval:exec/1` local-Python
+  subprocess release unit
+- [ ] Ryan-authorized remote push for exact `exec_or_eval:exec/1`
   local-Python subprocess release unit
 
 ## What Is In Progress
 
+- Exact `exec_or_eval:exec/1` local-Python subprocess support is accepted
+  first-pass in workspace-only state. The proposed release unit is
+  `BUILDLOG.md`, `PLAN.md`, `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`. It is release-unit-audit-cleared
+  first-pass with no findings and full-regression-cleared first-pass with
+  `1584 passed`. Commit-gating review cleared first-pass with no findings. It
+  is not staged, not locally committed, and not pushed.
 - Runtime probe execution-attempt result assembly is completed and pushed at
   `86be8d7 Assemble runtime probe execution attempts`.
 - The released unit is exactly
@@ -7119,36 +7294,23 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: local commit creation for the audit-cleared,
-full-regression-cleared, and commit-gating-cleared exact
-`runtime_mutation:setattr/3` local-Python subprocess release unit after pushed
-commit `5b8da0a Add runtime delattr subprocess support`. Current pushed
-release authority and latest pushed source/contract authority remain
-`5b8da0a Add runtime delattr subprocess support`.
+Immediate next route: local commit creation for the workspace-only accepted,
+release-unit-audit-cleared, full-regression-cleared, and commit-gating-cleared
+exact `exec_or_eval:exec/1` local-Python subprocess release unit. Current
+pushed release authority and latest pushed source/contract authority remain
+`1f4b9e3 Add runtime setattr subprocess support`.
 
-Commit lane:
+Local commit lane:
 
-- stage exactly the six release-unit files:
+- stage exactly:
   - `BUILDLOG.md`
   - `PLAN.md`
   - `src/context_ir/runtime_probe_execution.py`
   - `src/context_ir/runtime_probe_worker.py`
   - `tests/test_runtime_probe_execution.py`
   - `tests/test_runtime_probe_worker.py`
-- create one local commit for exact `runtime_mutation:setattr/3` local-Python
-  subprocess support plus continuity
-- verify the post-commit state from git
-- do not push without explicit Ryan authorization
-- treat pushed dynamic-import subprocess forms, exact `hasattr/2`, exact
-  `getattr/2`, exact `getattr/3`, exact `vars/1`, exact `vars/0`, exact
-  `dir/1`, exact `dir/0`, exact `runtime_mutation:globals/0`, and exact
-  `runtime_mutation:locals/0`, and exact `runtime_mutation:delattr/2` as
-  closed absent a new finding
-- do not reopen the accepted exact `setattr/3` slice absent a new finding
-- no implementation, correction, push, public-claim update, package-root
-  export, MCP change, schema change, scoring change, compiler change,
-  admission change, fixture change, task change, run-spec change, or
-  generalized dynamic-runtime support is authorized by this routing state
+- commit with a concise imperative message for exact exec subprocess support
+- do not push; push remains Ryan-gated after local commit creation
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 
