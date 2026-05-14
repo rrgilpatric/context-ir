@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`07bb58f Add runtime exec subprocess support`. The latest pushed
+`f3467e5 Add runtime eval subprocess support`. The latest pushed
 source/contract authority is also
-`07bb58f Add runtime exec subprocess support`. Live git refs
+`f3467e5 Add runtime eval subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -2106,12 +2106,126 @@ implementation:
   - release-unit-audit-cleared: yes, first-pass
   - full-regression-cleared: yes, first-pass
   - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `f3467e5 Add runtime eval subprocess support`
+  - pushed: yes
+- next route:
+  - select the next bounded north-star lane after exact
+    `exec_or_eval:eval/1` subprocess support
+  - do not treat this post-push continuity sync as implementation,
+    release-gate, staging, commit, or push authorization
+
+Workspace-only post-`f3467e5` route selection:
+
+- reviewed live repo state after pushed
+  `f3467e5 Add runtime eval subprocess support`; findings: none
+- selected next bounded north-star lane: exact
+  `metaclass_behavior:keyword` local-Python subprocess support
+- reason:
+  - `metaclass_behavior:keyword` is already planned by
+    `derive_runtime_probe_requests(...)` and admissible as a
+    `MetaclassBehaviorRuntimeObservation`
+  - current worker and parent subprocess factories cover pushed dynamic-import,
+    reflective-builtin, runtime-mutation, exec, and eval forms, but do not yet
+    expose the planned metaclass-behavior family through local-Python
+    subprocess execution
+  - exact metaclass behavior is now the remaining north-star runtime family
+    with internal eval evidence and no subprocess worker path
+- alternatives deferred:
+  - integration-gap correction: no live contradiction found in the pushed
+    eval release or active route state
+  - generalized metaclass support: defer; implement only the exact
+    `metaclass_behavior:keyword` form
+  - public/API/package-root/schema/MCP/scoring/compiler/docs/fixtures/tasks/
+    run-spec changes: out of scope
+- non-goals for the next lane:
+  - no generalized metaclass behavior support
+  - no new exec/eval, dynamic-import, reflective-builtin, or runtime-mutation
+    subprocess forms
+  - no public API, package-root export, schema, MCP, tool facade, scoring,
+    compiler, docs, README, EVAL, PUBLIC_CLAIMS, fixtures, tasks, run specs,
+    or generalized runtime support
+- next route:
+  - issue one implementation lane for exact `metaclass_behavior:keyword`
+    local-Python subprocess support
+
+Workspace-only accepted exact `metaclass_behavior:keyword` local-Python
+subprocess implementation:
+
+- accepted first-pass after control review of the returned implementation lane;
+  findings: none
+- repo-backed current pushed release/source-contract authority remains
+  `f3467e5 Add runtime eval subprocess support`
+- accepted implementation files are exactly:
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+- existing dirty control-state files `PLAN.md` and `BUILDLOG.md` are included
+  in the proposed release unit as continuity/routing updates
+- accepted behavior:
+  - default worker registers exactly `RuntimeProbeFamily.METACLASS_BEHAVIOR`
+    plus `metaclass_behavior:keyword`
+  - parent runner exposes a narrow exact-metaclass-keyword subprocess factory
+  - concrete worker validates exact metaclass metadata, imports the source
+    module under a temporary `builtins.__build_class__` wrapper, captures the
+    target class creation without calling the class or an arbitrary replay
+    target callable, and restores `__build_class__` on success and failure
+  - normalized payload is exactly `class_creation_outcome=created_class`,
+    `created_class_qualified_name=...Example`, and
+    `selected_metaclass_qualified_name=...Meta`, with deterministic
+    `artifact://runtime-probe/metaclass-selection/{request_id}.json`
+  - the exec/eval `observed_replay_inputs` proof channel remains narrow and is
+    not used for metaclass observations
+  - pushed exact dynamic-import, reflective-builtin, runtime-mutation,
+    `exec_or_eval:exec/1`, and `exec_or_eval:eval/1` subprocess behavior is
+    preserved
+- control validation rerun after implementation review:
+  - ruff check passed
+  - ruff format check passed, `6 files already formatted`
+  - strict mypy passed over 37 source files
+  - targeted pytest passed, `938 passed`
+  - `git diff --check` passed
+- first release-unit audit found one P1 issue:
+  - worker capture rejected the canonical
+    `class Example(Base, metaclass=Meta)` fixture shape because the
+    `__build_class__` guard allowed only the no-base target class form
+- correction accepted in workspace:
+  - worker capture now accepts
+    `__build_class__(func, "Example", *bases, metaclass=Meta)` while still
+    requiring exact target class name `Example`, exact `metaclass` keyword,
+    and exact selected source-module `Meta`
+  - added coverage for `class Example(Base, metaclass=Meta)` through both the
+    concrete worker observer and parent-runner subprocess path
+  - correction validation passed: ruff check, ruff format check, strict mypy,
+    requested pytest set with `940 passed`, and `git diff --check`
+- corrected release-unit audit passed:
+  - findings: none
+  - confirmed the prior code P1 and continuity P1 are closed
+  - targeted base-class audit tests passed, `2 passed`
+- full regression passed:
+  - ruff check passed
+  - ruff format check passed, `110 files already formatted`
+  - strict mypy passed over 37 source files
+  - full pytest passed, `1626 passed`
+  - `git diff --check` passed
+- commit-gating review passed:
+  - findings: none
+  - confirmed the exact six-file release unit and no staged or untracked files
+  - confirmed no scope widening into generalized metaclass support,
+    non-selected forms, public API, package-root export, schema, MCP, scoring,
+    compiler, fixtures, tasks, run specs, or public claims
+- release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes, after corrected audit
+  - full-regression-cleared: yes, first-pass after corrected audit
+  - commit-gating-cleared: yes, first-pass
   - staged: no
   - locally committed: no
   - pushed: no
 - next route:
-  - stage exactly the six-file `exec_or_eval:eval/1` release unit and create
-    one local commit
+  - stage exactly the six-file release unit and create one local commit
   - do not push without explicit Ryan authorization
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess release:
@@ -6473,22 +6587,56 @@ sequencing for `c1a12d7` absent new findings.
   subprocess release unit
 - [x] Commit-gating review for exact `exec_or_eval:eval/1` local-Python
   subprocess release unit
-- [ ] Local commit creation for exact `exec_or_eval:eval/1` local-Python
+- [x] Local commit creation for exact `exec_or_eval:eval/1` local-Python
   subprocess release unit
-- [ ] Ryan-authorized remote push for exact `exec_or_eval:eval/1`
+- [x] Ryan-authorized remote push for exact `exec_or_eval:eval/1`
+  local-Python subprocess release unit
+- [x] Post-`f3467e5` control selection of the next bounded north-star lane
+- [x] Exact `metaclass_behavior:keyword` local-Python subprocess
+  implementation slice
+- [x] First release-unit audit for exact `metaclass_behavior:keyword`
+  local-Python subprocess release unit returned P1 base-class finding
+- [x] Correction slice for exact `metaclass_behavior:keyword` local-Python
+  subprocess base-class support
+- [x] Corrected release-unit audit for exact `metaclass_behavior:keyword`
+  local-Python subprocess release unit
+- [x] Full regression gate for exact `metaclass_behavior:keyword` local-Python
+  subprocess release unit
+- [x] Commit-gating review for exact `metaclass_behavior:keyword` local-Python
+  subprocess release unit
+- [ ] Local commit creation for exact `metaclass_behavior:keyword`
+  subprocess release unit
+- [ ] Ryan-authorized remote push for exact `metaclass_behavior:keyword`
   local-Python subprocess release unit
 
 ## What Is In Progress
 
+- Exact `metaclass_behavior:keyword` local-Python subprocess support is
+  accepted in workspace-only state after 1 correction. The proposed release
+  unit is
+  `BUILDLOG.md`, `PLAN.md`, `src/context_ir/runtime_probe_execution.py`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_worker.py`. The first release-unit audit returned
+  a P1 base-class finding, and the correction is accepted in workspace: the
+  worker now accepts the existing canonical
+  `class Example(Base, metaclass=Meta)` probe shape while preserving exact
+  target class name, exact `metaclass` keyword, and exact selected
+  source-module `Meta` checks. The corrected release-unit audit passed with no
+  findings, closing both the code P1 and continuity P1. Full regression passed
+  first-pass after corrected audit with `1626 passed`. Commit-gating review
+  passed first-pass with no findings. Local commit creation is the next route.
+  It is not staged, not locally committed, and not pushed.
 - Exact `exec_or_eval:eval/1` local-Python subprocess support is accepted
-  first-pass in workspace-only state. The proposed release unit is
+  first-pass, release-gate-cleared, locally committed, and pushed at
+  `f3467e5 Add runtime eval subprocess support`. The committed release unit is
   `BUILDLOG.md`, `PLAN.md`, `src/context_ir/runtime_probe_execution.py`,
   `src/context_ir/runtime_probe_worker.py`,
   `tests/test_runtime_probe_execution.py`, and
   `tests/test_runtime_probe_worker.py`. It is release-unit-audit-cleared
-  first-pass with no findings and full-regression-cleared first-pass with
-  `1605 passed`. Commit-gating review cleared first-pass with no findings. It
-  is not staged, not locally committed, and not pushed.
+  first-pass with no findings, full-regression-cleared first-pass with
+  `1605 passed`, commit-gating-cleared first-pass with no findings, and has
+  release-gate status no-active-gate.
 - Exact `exec_or_eval:exec/1` local-Python subprocess support is completed and
   pushed at `07bb58f Add runtime exec subprocess support`. The release unit is
   `BUILDLOG.md`, `PLAN.md`, `src/context_ir/runtime_probe_execution.py`,
@@ -7404,20 +7552,23 @@ supersession entries.
 ## What Is Next
 
 Immediate next route: stage exactly the workspace-only accepted,
-release-unit-audit-cleared, full-regression-cleared, and commit-gating-cleared
-exact `exec_or_eval:eval/1` local-Python subprocess release unit and create one
-local commit. Current pushed release authority and latest pushed
-source/contract authority are `07bb58f Add runtime exec subprocess support`.
+corrected-audit-cleared, full-regression-cleared, and commit-gating-cleared
+exact `metaclass_behavior:keyword` local-Python subprocess release unit and
+create one local commit. Current pushed release authority and latest pushed
+source/contract authority are
+`f3467e5 Add runtime eval subprocess support`.
 
 Local commit scope:
 
-- stage exactly `BUILDLOG.md`, `PLAN.md`,
-  `src/context_ir/runtime_probe_execution.py`,
-  `src/context_ir/runtime_probe_worker.py`,
-  `tests/test_runtime_probe_execution.py`, and
-  `tests/test_runtime_probe_worker.py`
-- create one local commit with an imperative message for exact eval subprocess
-  support
+- stage exactly:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- create one local commit with subject
+  `Add metaclass keyword subprocess support`
 - do not push without explicit Ryan authorization
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:

@@ -29,6 +29,7 @@ from context_ir.runtime_probe_execution import (
     make_runtime_probe_dynamic_import_local_python_subprocess_runner,
     make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner,
     make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner,
+    make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner,
     make_runtime_probe_reflective_dir_local_python_subprocess_runner,
     make_runtime_probe_reflective_dir_zero_local_python_subprocess_runner,
     make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner,
@@ -105,6 +106,7 @@ _RUNTIME_MUTATION_SETATTR_FORM_LABEL = "runtime_mutation:setattr/3"
 _RUNTIME_MUTATION_DELATTR_FORM_LABEL = "runtime_mutation:delattr/2"
 _EXEC_OR_EVAL_EXEC_FORM_LABEL = "exec_or_eval:exec/1"
 _EXEC_OR_EVAL_EVAL_FORM_LABEL = "exec_or_eval:eval/1"
+_METACLASS_KEYWORD_FORM_LABEL = "metaclass_behavior:keyword"
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -450,6 +452,30 @@ def _eval_request(
         start_line,
         form_label=form_label,
         boundary_text=boundary_text,
+    )
+
+
+def _metaclass_keyword_request(
+    start_line: int = 3,
+    *,
+    form_label: str = _METACLASS_KEYWORD_FORM_LABEL,
+    boundary_text: str = "metaclass=Meta",
+    replay_target_seed: str = "main.Example",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one synthetic planned metaclass-keyword request."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=f"unsupported:metaclass:main.py:{start_line}:4",
+        source_site=_source_site(start_line, snippet=boundary_text),
+        reason_code=UnresolvedReasonCode.METACLASS_BEHAVIOR,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR,
+        form_label=form_label,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=(
+            f"class:{replay_target_seed}:metaclass@main.py:"
+            f"{start_line}:4:{start_line}:28"
+        ),
     )
 
 
@@ -3071,6 +3097,126 @@ def test_eval_local_python_runner_executes_literal_source_subprocess(
     assert attempt.failure_detail_fields == ()
 
 
+def test_metaclass_keyword_local_python_runner_executes_source_import_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The exact metaclass helper captures class creation during module import."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class Meta(type):
+                pass
+
+            class Example(metaclass=Meta):
+                pass
+
+            def run() -> None:
+                raise AssertionError("metaclass probe must not call run")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _metaclass_keyword_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = (
+        make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision="runtime-probe-local-python-completion:test.1",
+        )
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("class_creation_outcome", "created_class"),
+        _field("created_class_qualified_name", "main.Example"),
+        _field("selected_metaclass_qualified_name", "main.Meta"),
+    )
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference == (
+        f"artifact://runtime-probe/metaclass-selection/{request.request_id}.json"
+    )
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_metaclass_keyword_local_python_runner_executes_base_class_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The parent runner accepts the canonical base-plus-keyword class form."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class Meta(type):
+                pass
+
+            class Base:
+                pass
+
+            class Example(Base, metaclass=Meta):
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _metaclass_keyword_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = (
+        make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision="runtime-probe-local-python-completion:test.1",
+        )
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("class_creation_outcome", "created_class"),
+        _field("created_class_qualified_name", "main.Example"),
+        _field("selected_metaclass_qualified_name", "main.Meta"),
+    )
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference == (
+        f"artifact://runtime-probe/metaclass-selection/{request.request_id}.json"
+    )
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
 @pytest.mark.parametrize("source_text", ("print(1)", "pass\npass"))
 def test_exec_local_python_runner_rejects_non_pass_source_subprocess(
     tmp_path: Path,
@@ -5348,6 +5494,67 @@ def test_eval_local_python_runner_registers_only_exact_form(
     ("family_label", "form_label"),
     (
         (
+            runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR,
+            "metaclass_behavior:base",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+            _EXEC_OR_EVAL_EXEC_FORM_LABEL,
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+            _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+        ),
+    ),
+)
+def test_metaclass_keyword_local_python_runner_registers_only_exact_form(
+    monkeypatch: pytest.MonkeyPatch,
+    family_label: runtime_probe_requests.RuntimeProbeFamily,
+    form_label: str,
+) -> None:
+    """The metaclass helper does not register adjacent family/form handlers."""
+    request = replace(
+        _metaclass_keyword_request(form_label=form_label),
+        family_label=family_label,
+    )
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    runner = (
+        make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner(
+            python_executable=sys.executable,
+            invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+            completion_contract_revision="runtime-probe-local-python-completion:test.1",
+        )
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        del kwargs
+        calls.append(tuple(str(arg) for arg in args))
+        raise AssertionError("unsupported helper request reached subprocess")
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = runner(runner_request)
+
+    assert calls == []
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "missing_runtime_probe_handler"),
+        _field("family_label", family_label.value),
+        _field("form_label", form_label),
+        _field("missing_handler_outcome", "setup_failed"),
+    )
+
+
+@pytest.mark.parametrize(
+    ("family_label", "form_label"),
+    (
+        (
             runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
             _REFLECTIVE_GETATTR_TWO_FORM_LABEL,
         ),
@@ -6457,6 +6664,32 @@ def test_local_python_stdout_protocol_rejects_observed_replay_inputs_for_non_exe
     completion = _local_python_process_completion(
         returncode=0,
         stdout_text=_local_python_stdout_protocol_text(
+            observed_replay_inputs=[
+                {"key": "source_shape", "value": "literal_statement"},
+                {"key": "source_sha256", "value": _EXEC_PASS_SOURCE_SHA256},
+            ],
+        ),
+    )
+
+    with pytest.raises(ValueError, match="only for exact exec/eval"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+
+def test_local_python_stdout_protocol_rejects_metaclass_observed_replay_inputs() -> (
+    None
+):
+    """Metaclass observations must not widen the exec/eval replay-input channel."""
+    invocation = _local_python_subprocess_invocation(
+        _local_python_runner_request(request=_metaclass_keyword_request())
+    )
+    completion = _local_python_process_completion(
+        invocation,
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=[
+                {"key": "class_creation_outcome", "value": "created_class"},
+            ],
+            durable_artifact_reference="artifact://runtime-probe/metaclass/main.json",
             observed_replay_inputs=[
                 {"key": "source_shape", "value": "literal_statement"},
                 {"key": "source_sha256", "value": _EXEC_PASS_SOURCE_SHA256},
@@ -9116,6 +9349,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert "make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner" in (
         runtime_probe_execution.__all__
     )
+    assert (
+        "make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner"
+        in runtime_probe_execution.__all__
+    )
     assert "make_runtime_probe_reflective_dir_local_python_subprocess_runner" in (
         runtime_probe_execution.__all__
     )
@@ -9247,6 +9484,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     )
     assert (
         "make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner"
+        not in context_ir.__all__
+    )
+    assert (
+        "make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner"
         not in context_ir.__all__
     )
     assert (
@@ -9395,6 +9636,10 @@ def test_runtime_probe_execution_contracts_are_frozen_and_module_local() -> None
     assert not hasattr(
         context_ir,
         "make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner",
+    )
+    assert not hasattr(
+        context_ir,
+        "make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner",
     )
     assert not hasattr(
         context_ir,

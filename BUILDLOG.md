@@ -2,6 +2,422 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-14 -- Metaclass Subprocess Commit-Gating Acceptance
+
+- Reviewed the returned read-only commit-gating review for the exact
+  `metaclass_behavior:keyword` local-Python subprocess release unit after
+  corrected audit and full regression cleared.
+- Repo-backed truth during commit-gating acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Gate result:
+  - PASS
+  - Findings: none
+- Commit-gating verification:
+  - release unit file set is exact
+  - no staged or untracked files are present
+  - continuity docs record accepted in workspace, corrected-audit-cleared,
+    full-regression-cleared, not commit-gating-cleared, not staged, not
+    committed, and not pushed before this acceptance update
+  - no scope widening into generalized metaclass support, non-selected forms,
+    public API, package-root export, schema, MCP, scoring, compiler, fixtures,
+    tasks, run specs, or public claims was found
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes, after corrected audit
+  - full-regression-cleared: yes, first-pass after corrected audit
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the six-file release unit and create one local commit with
+    subject `Add metaclass keyword subprocess support`
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass gate after corrected audit and full regression
+
+## 2026-05-14 -- Metaclass Subprocess Full Regression Acceptance
+
+- Reviewed the returned full-regression gate for the corrected-audit-cleared
+  exact `metaclass_behavior:keyword` local-Python subprocess release unit.
+- Repo-backed truth during full-regression acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Gate result:
+  - PASS
+  - Findings: none
+- Full regression validation:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed over 37 source files
+  - `.venv/bin/python -m pytest tests/ -v` passed, `1626 passed`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes, after corrected audit
+  - full-regression-cleared: yes, first-pass after corrected audit
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review for the exact six-file release unit
+  - do not stage, commit, or push until commit-gating clears
+- Acceptance status: first-pass gate after corrected audit
+
+## 2026-05-14 -- Metaclass Subprocess Corrected Audit Acceptance
+
+- Reviewed the returned corrected read-only release-unit audit for the exact
+  `metaclass_behavior:keyword` local-Python subprocess release unit.
+- Repo-backed truth during audit acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Audit result:
+  - Gate Result: PASS
+  - Findings: none
+- Prior findings closed:
+  - code P1 closed: the worker accepts
+    `__build_class__(func, "Example", *bases, metaclass=Meta)` while
+    preserving exact class-name, exact `metaclass` keyword, exact
+    source-module `Meta`, and fail-closed capture/restore checks
+  - continuity P1 closed: `PLAN.md` no longer routes controllers to issue
+    the already-completed correction lane; after this audit acceptance it
+    routes next to full regression
+- Audit verification included targeted base-class tests:
+  - concrete worker base-class observation test passed
+  - parent subprocess base-class runner test passed
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes, after corrected audit
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run the full regression gate for the exact
+    `metaclass_behavior:keyword` release unit
+  - do not stage, commit, or push until full regression and commit-gating
+    both clear
+- Acceptance status: 1 correction
+
+## 2026-05-13 -- Metaclass Subprocess Correction Acceptance
+
+- Reviewed the returned correction for the exact
+  `metaclass_behavior:keyword` local-Python subprocess release unit after the
+  first release-unit audit found a P1 base-class rejection.
+- Repo-backed truth during correction review:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Correction review:
+  - confirmed the worker capture guard now accepts
+    `__build_class__(func, "Example", *bases, metaclass=Meta)` while still
+    requiring the exact target class name `Example`, exact `metaclass`
+    keyword, and exact selected source-module `Meta`
+  - confirmed the canonical `class Example(Base, metaclass=Meta)` shape is
+    covered through both the concrete worker observer and the parent-runner
+    subprocess path
+  - confirmed the correction does not widen into generalized metaclass
+    support, non-selected metaclass forms, public API/package-root/schema/MCP/
+    scoring/compiler/docs/fixtures/tasks/run-spec changes, or adjacent
+    runtime families
+- Control validation rerun:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py`
+    passed, `6 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed over 37 source files
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py tests/test_runtime_probe_requests.py tests/test_runtime_probe_results.py -v`
+    passed, `940 passed`
+  - `git diff --check` passed
+- Findings: none.
+- Acceptance decision:
+  - accept the correction as workspace-only implementation state
+  - the prior P1 audit finding is corrected in workspace
+  - proposed release unit remains exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - not release-unit-audit-cleared after correction
+  - not full-regression-cleared
+  - not commit-gating-cleared
+  - not staged, not locally committed, not pushed
+- Next control route:
+  - rerun the dedicated read-only release-unit audit over the corrected exact
+    release unit before full regression or commit-gating
+- Acceptance status: 1 correction
+
+## 2026-05-13 -- Metaclass Subprocess Release-Unit Audit Failed
+
+- Reviewed the returned dedicated read-only release-unit audit for the
+  workspace-only accepted exact `metaclass_behavior:keyword` local-Python
+  subprocess release unit.
+- Repo-backed truth during audit review:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Audit result:
+  - Gate Result: FAIL
+  - Finding: P1
+- Finding:
+  - the metaclass worker rejects the existing canonical metaclass probe shape
+    when `Example` has a base class
+  - the implementation requires `len(args) == 2` for the captured
+    `__build_class__` call, which only permits
+    `class Example(metaclass=Meta)`
+  - the existing metaclass fixture uses
+    `class Example(Base, metaclass=Meta)` with the exact preserved boundary
+    `metaclass=Meta`
+  - the new tests cover only the no-base variant and therefore miss the
+    canonical fixture shape
+- Control verification:
+  - confirmed the live worker still has the `len(args) == 2` guard
+  - confirmed `evals/fixtures/oracle_signal_metaclass_behavior_probe/main.py`
+    uses `class Example(Base, metaclass=Meta)`
+  - confirmed the new worker and parent runner tests use only
+    `class Example(metaclass=Meta)`
+- Release state:
+  - accepted in workspace: yes, first-pass before audit
+  - release-unit-audit-cleared: no, P1 finding
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - issue one narrow correction lane for the metaclass subprocess worker and
+    tests
+  - do not advance to full regression, commit-gating, staging, commit, or push
+    until correction is accepted and audit is rerun or accepted
+- Acceptance status: held after audit finding
+
+## 2026-05-13 -- Metaclass Subprocess Implementation Acceptance
+
+- Reviewed the returned exact `metaclass_behavior:keyword` local-Python
+  subprocess implementation lane.
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Workspace-only state during review:
+  - pre-existing control-state edits remained in `BUILDLOG.md` and `PLAN.md`
+  - implementation edits were exactly
+    `src/context_ir/runtime_probe_worker.py`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `tests/test_runtime_probe_worker.py`, and
+    `tests/test_runtime_probe_execution.py`
+- Control review:
+  - confirmed the worker default table registers exact
+    `RuntimeProbeFamily.METACLASS_BEHAVIOR` plus
+    `metaclass_behavior:keyword`
+  - confirmed the parent runner factory registers only exact
+    `metaclass_behavior:keyword`
+  - confirmed the concrete worker validates exact metaclass metadata, imports
+    the source module under a temporary `builtins.__build_class__` wrapper,
+    captures the target class creation without calling the class or an
+    arbitrary replay target callable, and restores `__build_class__` on success
+    and failure
+  - confirmed the normalized payload is exactly
+    `class_creation_outcome=created_class`,
+    `created_class_qualified_name=...Example`, and
+    `selected_metaclass_qualified_name=...Meta`, with deterministic
+    `artifact://runtime-probe/metaclass-selection/{request_id}.json`
+  - confirmed metaclass support does not widen the exec/eval
+    `observed_replay_inputs` proof channel
+  - confirmed no generalized metaclass support, new exec/eval,
+    dynamic-import, reflective-builtin, runtime-mutation, public API,
+    package-root export, schema, MCP, tool facade, scoring, compiler, docs,
+    README, EVAL, PUBLIC_CLAIMS, fixture, task, run-spec, source/admission, or
+    generalized runtime-support change was introduced
+- Control validation rerun:
+  - `.venv/bin/python -m ruff check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_worker.py src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py`
+    passed, `6 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed over 37 source files
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_worker.py tests/test_runtime_probe_execution.py tests/test_runtime_observation_admission.py tests/test_runtime_acquisition.py tests/test_runtime_probe_requests.py tests/test_runtime_probe_results.py -v`
+    passed, `938 passed`
+  - `git diff --check` passed
+- Findings: none.
+- Acceptance decision:
+  - accepted first-pass as workspace-only implementation state
+  - proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`,
+    `src/context_ir/runtime_probe_worker.py`,
+    `tests/test_runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_worker.py`
+  - not release-unit-audit-cleared
+  - not full-regression-cleared
+  - not commit-gating-cleared
+  - not staged, not locally committed, not pushed
+- Next control route:
+  - run one dedicated read-only release-unit audit over the exact proposed
+    release unit before full regression or commit-gating
+- Acceptance status: first-pass
+
+## 2026-05-13 -- Post-Eval Subprocess Route Selection
+
+- Ran the control selection lane after pushed
+  `f3467e5 Add runtime eval subprocess support`.
+- Repo-backed truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - dirty files are the post-push continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` clean
+- Control findings: none against the pushed exact `exec_or_eval:eval/1`
+  release or the post-push continuity state.
+- Selected next bounded north-star lane:
+  - exact `metaclass_behavior:keyword` local-Python subprocess support
+- Reason:
+  - `metaclass_behavior:keyword` is already planned by
+    `derive_runtime_probe_requests(...)` and admissible as a
+    `MetaclassBehaviorRuntimeObservation`
+  - current worker and parent subprocess factories cover pushed dynamic-import,
+    reflective-builtin, runtime-mutation, exec, and eval forms, but do not yet
+    expose the planned metaclass-behavior family through local-Python
+    subprocess execution
+  - exact metaclass behavior is now the remaining north-star runtime family
+    with internal eval evidence and no subprocess worker path
+- Alternatives deferred:
+  - integration-gap correction: no live contradiction found in the pushed
+    eval release or active route state
+  - generalized metaclass support: defer; implement only the exact
+    `metaclass_behavior:keyword` form
+  - public/API/package-root/schema/MCP/scoring/compiler/docs/fixtures/tasks/
+    run-spec changes: out of scope
+- Release state:
+  - this is workspace-only routing state
+  - not implementation acceptance
+  - not release-unit-audit clearance
+  - not full-regression clearance
+  - not commit-gating clearance
+  - not staging, local commit, or push authorization
+- Next control route:
+  - issue one implementation lane for exact `metaclass_behavior:keyword`
+    local-Python subprocess support
+- Acceptance status: first-pass
+
+## 2026-05-13 -- Eval Subprocess Push
+
+- Ryan-authorized push completed for
+  `f3467e5 Add runtime eval subprocess support`.
+- Repo-backed truth after push and before this post-push continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - dirty files are the post-commit continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+- Pushed release unit is exactly:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass with `1605 passed`
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `f3467e5 Add runtime eval subprocess support`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane after exact
+    `exec_or_eval:eval/1` subprocess support
+  - do not treat this post-push continuity sync as implementation,
+    release-gate, staging, commit, or push authorization
+- Acceptance status: first-pass routing
+
+## 2026-05-13 -- Eval Subprocess Local Commit Creation
+
+- Local commit creation completed for the exact `exec_or_eval:eval/1`
+  local-Python subprocess release unit.
+- Repo-backed truth immediately after commit:
+  - branch `main`
+  - local `HEAD` at `f3467e5 Add runtime eval subprocess support`
+  - `origin/main` at `07bb58f Add runtime exec subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this workspace-only post-commit continuity update
+  - staged files: none
+  - untracked files: none
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass with `1605 passed`
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `f3467e5 Add runtime eval subprocess support`
+  - pushed: no
+- Next control route:
+  - wait for explicit Ryan push authorization before pushing `f3467e5`
+  - do not start the next bounded north-star lane until push/hold state is
+    resolved
+- Acceptance status: first-pass
+
 ## 2026-05-13 -- Eval Subprocess Commit-Gating Review
 
 - Performed commit-gating review after the exact `exec_or_eval:eval/1`

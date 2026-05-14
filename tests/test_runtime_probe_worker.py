@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import sys
+import textwrap
 from collections.abc import Iterable
 from dataclasses import FrozenInstanceError, replace
 from io import StringIO
@@ -136,6 +137,12 @@ EvalWorkerRequest = runtime_probe_worker.RuntimeProbeLocalPythonEvalWorkerReques
 EvalWorkerObservation = (
     runtime_probe_worker.RuntimeProbeLocalPythonEvalWorkerObservation
 )
+MetaclassKeywordWorkerRequest = (
+    runtime_probe_worker.RuntimeProbeLocalPythonMetaclassKeywordWorkerRequest
+)
+MetaclassKeywordWorkerObservation = (
+    runtime_probe_worker.RuntimeProbeLocalPythonMetaclassKeywordWorkerObservation
+)
 WorkerSuccessResponse = (
     runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse
 )
@@ -183,6 +190,9 @@ _RUNTIME_MUTATION_DELATTR_CONCRETE_OBSERVER_HELPER = (
 )
 _EXEC_CONCRETE_OBSERVER_HELPER = "observe_runtime_probe_exec_worker_request"
 _EVAL_CONCRETE_OBSERVER_HELPER = "observe_runtime_probe_eval_worker_request"
+_METACLASS_KEYWORD_CONCRETE_OBSERVER_HELPER = (
+    "observe_runtime_probe_metaclass_keyword_worker_request"
+)
 _REFLECTIVE_HASATTR_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_hasattr_worker_request"
 )
@@ -252,6 +262,9 @@ _EXEC_SUCCESS_RESPONSE_MATERIALIZER = (
 _EVAL_SUCCESS_RESPONSE_MATERIALIZER = (
     "materialize_runtime_probe_eval_worker_success_response"
 )
+_METACLASS_KEYWORD_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_metaclass_keyword_worker_success_response"
+)
 _IMPORTLIB_IMPORT_MODULE_FORM_LABEL = "dynamic_import:importlib.import_module/1"
 _LOADER_IMPORT_MODULE_FORM_LABEL = "dynamic_import:loader.import_module/1"
 _IMPORTED_IMPORT_MODULE_FORM_LABEL = "dynamic_import:import_module/1"
@@ -272,6 +285,7 @@ _RUNTIME_MUTATION_SETATTR_FORM_LABEL = "runtime_mutation:setattr/3"
 _RUNTIME_MUTATION_DELATTR_FORM_LABEL = "runtime_mutation:delattr/2"
 _EXEC_OR_EVAL_EXEC_FORM_LABEL = "exec_or_eval:exec/1"
 _EXEC_OR_EVAL_EVAL_FORM_LABEL = "exec_or_eval:eval/1"
+_METACLASS_KEYWORD_FORM_LABEL = "metaclass_behavior:keyword"
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -296,6 +310,8 @@ def _boundary_text_for_form_label(form_label: str) -> str:
         return "exec(source)"
     if form_label == _EXEC_OR_EVAL_EVAL_FORM_LABEL:
         return "eval(source)"
+    if form_label == _METACLASS_KEYWORD_FORM_LABEL:
+        return "metaclass=Meta"
     return "importlib.import_module(name)"
 
 
@@ -690,6 +706,43 @@ def _eval_request(
     )
 
 
+def _metaclass_keyword_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.Example",
+    replay_selector_seed: str | None = None,
+    form_label: str = _METACLASS_KEYWORD_FORM_LABEL,
+    boundary_text: str = "metaclass=Meta",
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return one deterministic exact metaclass-keyword planned request."""
+    resolved_replay_selector_seed = (
+        f"class:{replay_target_seed}:metaclass@{source_file_path}:3:4:3:28"
+        if replay_selector_seed is None
+        else replay_selector_seed
+    )
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=f"unsupported:metaclass:{source_file_path}:3:4",
+        source_site=SourceSite(
+            site_id=f"site:{source_file_path}:3:4",
+            file_path=source_file_path,
+            span=SourceSpan(
+                start_line=3,
+                start_column=4,
+                end_line=3,
+                end_column=28,
+            ),
+            snippet=boundary_text,
+        ),
+        reason_code=UnresolvedReasonCode.METACLASS_BEHAVIOR,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR,
+        form_label=form_label,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=resolved_replay_selector_seed,
+    )
+
+
 def _valid_worker_invocation(
     *,
     source_file_path: str = "main.py",
@@ -875,6 +928,35 @@ def _valid_eval_worker_request(
             request,
             working_directory=working_directory,
             python_path_entries=python_path_entries,
+        )
+    )
+
+
+def _valid_metaclass_keyword_worker_request(
+    *,
+    source_file_path: str = "main.py",
+    replay_target_seed: str = "main.Example",
+    replay_selector_seed: str | None = None,
+    form_label: str = _METACLASS_KEYWORD_FORM_LABEL,
+    boundary_text: str = "metaclass=Meta",
+    working_directory: str = "/workspace/context-ir",
+    python_path_entries: tuple[str, ...] = ("/workspace/context-ir/src",),
+) -> MetaclassKeywordWorkerRequest:
+    """Return one worker-local exact metaclass-keyword request contract."""
+    request = _metaclass_keyword_request(
+        source_file_path=source_file_path,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+        form_label=form_label,
+        boundary_text=boundary_text,
+    )
+    return (
+        runtime_probe_worker.materialize_runtime_probe_metaclass_keyword_worker_request(
+            _valid_worker_payload_for_request(
+                request,
+                working_directory=working_directory,
+                python_path_entries=python_path_entries,
+            )
         )
     )
 
@@ -1323,6 +1405,24 @@ def _valid_eval_worker_observation(
     validated_request = _valid_eval_worker_request() if request is None else request
     return runtime_probe_worker.materialize_runtime_probe_eval_worker_observation(
         validated_request
+    )
+
+
+def _valid_metaclass_keyword_worker_observation(
+    *,
+    request: MetaclassKeywordWorkerRequest | None = None,
+    created_class_qualified_name: str = "main.Example",
+    selected_metaclass_qualified_name: str = "main.Meta",
+) -> MetaclassKeywordWorkerObservation:
+    """Return one worker-local exact metaclass-keyword observation contract."""
+    validated_request = (
+        _valid_metaclass_keyword_worker_request() if request is None else request
+    )
+    worker_module = runtime_probe_worker
+    return worker_module.materialize_runtime_probe_metaclass_keyword_worker_observation(
+        validated_request,
+        created_class_qualified_name=created_class_qualified_name,
+        selected_metaclass_qualified_name=selected_metaclass_qualified_name,
     )
 
 
@@ -9083,6 +9183,76 @@ def test_dynamic_import_worker_default_subprocess_observes_loader_builtin_import
     }
 
 
+def test_metaclass_keyword_worker_default_subprocess_observes_class_creation(
+    tmp_path: Path,
+) -> None:
+    """The real worker module observes exact metaclass keyword class creation."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    module_name = "runtime_probe_metaclass_default_worker_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        textwrap.dedent(
+            """
+            class Meta(type):
+                pass
+
+            class Example(metaclass=Meta):
+                pass
+
+            def run() -> None:
+                raise AssertionError("metaclass probe must not call run")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _metaclass_keyword_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.Example",
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "class_creation_outcome",
+                "value": "created_class",
+            },
+            {
+                "key": "created_class_qualified_name",
+                "value": f"{module_name}.Example",
+            },
+            {
+                "key": "selected_metaclass_qualified_name",
+                "value": f"{module_name}.Meta",
+            },
+        ],
+        "durable_artifact_reference": (
+            f"artifact://runtime-probe/metaclass-selection/{request.request_id}.json"
+        ),
+    }
+
+
 def test_dynamic_import_worker_default_handler_observer_failure_fails_closed(
     tmp_path: Path,
 ) -> None:
@@ -9144,6 +9314,12 @@ def test_dynamic_import_worker_default_handler_observer_failure_fails_closed(
             "runtime_mutation:setitem/3",
             UnresolvedReasonCode.RUNTIME_MUTATION,
             "obj[name] = value",
+        ),
+        (
+            runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR,
+            "metaclass_behavior:base",
+            UnresolvedReasonCode.METACLASS_BEHAVIOR,
+            "metaclass=Meta",
         ),
     ),
 )
@@ -9510,6 +9686,300 @@ def test_eval_worker_adapter_materializes_observed_success() -> None:
             ),
         )
     )
+
+
+def test_metaclass_keyword_worker_request_materializes_replay_contract() -> None:
+    """The metaclass worker accepts only exact copied keyword metadata."""
+    request = _metaclass_keyword_request()
+    worker_request = _valid_metaclass_keyword_worker_request()
+
+    assert worker_request.plan_id
+    assert worker_request.request_id == request.request_id
+    assert worker_request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert worker_request.reason_code is UnresolvedReasonCode.METACLASS_BEHAVIOR
+    assert (
+        worker_request.family_label
+        is runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR
+    )
+    assert worker_request.form_label == _METACLASS_KEYWORD_FORM_LABEL
+    assert worker_request.boundary_text == "metaclass=Meta"
+    assert worker_request.replay_target_seed == "main.Example"
+    assert worker_request.replay_selector_seed == (
+        "class:main.Example:metaclass@main.py:3:4:3:28"
+    )
+
+
+@pytest.mark.parametrize(
+    "planned_request",
+    (
+        replace(
+            _metaclass_keyword_request(),
+            family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        ),
+        _metaclass_keyword_request(form_label="metaclass_behavior:base"),
+        replace(
+            _metaclass_keyword_request(),
+            reason_code=UnresolvedReasonCode.DYNAMIC_IMPORT,
+        ),
+        _metaclass_keyword_request(boundary_text="metaclass = Meta"),
+    ),
+)
+def test_metaclass_keyword_worker_request_accepts_only_exact_metadata(
+    planned_request: runtime_probe_requests.RuntimeProbeRequest,
+) -> None:
+    """Wrong family, form, reason, or boundary text fails before observation."""
+    payload = _valid_worker_payload_for_request(planned_request)
+
+    with pytest.raises(ValueError):
+        runtime_probe_worker.materialize_runtime_probe_metaclass_keyword_worker_request(
+            payload
+        )
+
+
+def test_metaclass_keyword_worker_adapter_materializes_observed_success() -> None:
+    """The metaclass adapter validates payloads and emits exact class proof."""
+    request = _metaclass_keyword_request()
+    observed_requests: list[MetaclassKeywordWorkerRequest] = []
+
+    def observer(
+        request_item: MetaclassKeywordWorkerRequest,
+    ) -> MetaclassKeywordWorkerObservation:
+        assert isinstance(request_item, MetaclassKeywordWorkerRequest)
+        assert (
+            request_item.family_label
+            is runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR
+        )
+        assert request_item.form_label == _METACLASS_KEYWORD_FORM_LABEL
+        observed_requests.append(request_item)
+        return _valid_metaclass_keyword_worker_observation(request=request_item)
+
+    adapter_class = (
+        runtime_probe_worker.RuntimeProbeLocalPythonMetaclassKeywordWorkerHandlerAdapter
+    )
+    adapter = adapter_class(observer=observer)
+
+    response = adapter(_valid_worker_payload_for_request(request))
+
+    assert len(observed_requests) == 1
+    assert response == (
+        runtime_probe_worker.RuntimeProbeLocalPythonWorkerSuccessResponse(
+            normalized_payload=(
+                _field("class_creation_outcome", "created_class"),
+                _field("created_class_qualified_name", "main.Example"),
+                _field("selected_metaclass_qualified_name", "main.Meta"),
+            ),
+            durable_artifact_reference=(
+                "artifact://runtime-probe/metaclass-selection/"
+                f"{request.request_id}.json"
+            ),
+        )
+    )
+
+
+def test_metaclass_keyword_worker_observes_class_creation_on_import(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer wraps __build_class__ and does not call the class."""
+    module_name = "runtime_probe_metaclass_concrete_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        textwrap.dedent(
+            """
+            class Meta(type):
+                pass
+
+            class Example(metaclass=Meta):
+                pass
+
+            def run() -> None:
+                raise AssertionError("metaclass probe must not call run")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _valid_metaclass_keyword_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.Example",
+        working_directory=str(tmp_path),
+        python_path_entries=(str(tmp_path),),
+    )
+    original_build_class = builtins.__dict__["__build_class__"]
+
+    observation = (
+        runtime_probe_worker.observe_runtime_probe_metaclass_keyword_worker_request(
+            request
+        )
+    )
+
+    assert observation == _valid_metaclass_keyword_worker_observation(
+        request=request,
+        created_class_qualified_name=f"{module_name}.Example",
+        selected_metaclass_qualified_name=f"{module_name}.Meta",
+    )
+    assert builtins.__dict__["__build_class__"] is original_build_class
+
+
+def test_metaclass_keyword_worker_observes_base_class_creation_on_import(
+    tmp_path: Path,
+) -> None:
+    """The concrete observer accepts the canonical base-plus-keyword form."""
+    module_name = "runtime_probe_metaclass_base_concrete_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        textwrap.dedent(
+            """
+            class Meta(type):
+                pass
+
+            class Base:
+                pass
+
+            class Example(Base, metaclass=Meta):
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _valid_metaclass_keyword_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.Example",
+        working_directory=str(tmp_path),
+        python_path_entries=(str(tmp_path),),
+    )
+    original_build_class = builtins.__dict__["__build_class__"]
+
+    observation = (
+        runtime_probe_worker.observe_runtime_probe_metaclass_keyword_worker_request(
+            request
+        )
+    )
+
+    assert observation == _valid_metaclass_keyword_worker_observation(
+        request=request,
+        created_class_qualified_name=f"{module_name}.Example",
+        selected_metaclass_qualified_name=f"{module_name}.Meta",
+    )
+    assert builtins.__dict__["__build_class__"] is original_build_class
+
+
+@pytest.mark.parametrize(
+    ("module_name", "source_text"),
+    (
+        (
+            "runtime_probe_metaclass_missing_capture_case",
+            "class Meta(type):\n    pass\n\nclass Other(metaclass=Meta):\n    pass\n",
+        ),
+        (
+            "runtime_probe_metaclass_multiple_capture_case",
+            "class Meta(type):\n"
+            "    pass\n\n"
+            "class Example(metaclass=Meta):\n"
+            "    pass\n\n"
+            "class Example(metaclass=Meta):\n"
+            "    pass\n",
+        ),
+    ),
+)
+def test_metaclass_keyword_worker_rejects_missing_or_multiple_captures(
+    module_name: str,
+    source_text: str,
+    tmp_path: Path,
+) -> None:
+    """The observer fails closed unless exactly one target class is created."""
+    (tmp_path / f"{module_name}.py").write_text(source_text, encoding="utf-8")
+    request = _valid_metaclass_keyword_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.Example",
+        working_directory=str(tmp_path),
+        python_path_entries=(str(tmp_path),),
+    )
+
+    with pytest.raises(ValueError, match="exactly one class creation"):
+        runtime_probe_worker.observe_runtime_probe_metaclass_keyword_worker_request(
+            request
+        )
+
+
+def test_metaclass_keyword_worker_rejects_wrong_selected_metaclass(
+    tmp_path: Path,
+) -> None:
+    """The exact keyword form admits only source-module Meta as the selector."""
+    module_name = "runtime_probe_metaclass_wrong_selector_case"
+    (tmp_path / f"{module_name}.py").write_text(
+        textwrap.dedent(
+            """
+            class Meta(type):
+                pass
+
+            class OtherMeta(type):
+                pass
+
+            class Example(metaclass=OtherMeta):
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _valid_metaclass_keyword_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.Example",
+        working_directory=str(tmp_path),
+        python_path_entries=(str(tmp_path),),
+    )
+
+    with pytest.raises(ValueError, match="selected metaclass is unsupported"):
+        runtime_probe_worker.observe_runtime_probe_metaclass_keyword_worker_request(
+            request
+        )
+
+
+@pytest.mark.parametrize(
+    ("module_name", "mutation_source"),
+    (
+        (
+            "runtime_probe_metaclass_build_class_mutation_case",
+            "builtins.__build_class__ = lambda *args, **kwargs: None",
+        ),
+        (
+            "runtime_probe_metaclass_build_class_deletion_case",
+            "del builtins.__dict__['__build_class__']",
+        ),
+    ),
+)
+def test_metaclass_keyword_worker_restores_build_class_drift(
+    module_name: str,
+    mutation_source: str,
+    tmp_path: Path,
+) -> None:
+    """Import-time mutation or deletion of __build_class__ is restored and rejected."""
+    (tmp_path / f"{module_name}.py").write_text(
+        textwrap.dedent(
+            f"""
+            import builtins
+
+            class Meta(type):
+                pass
+
+            {mutation_source}
+
+            class Example(metaclass=Meta):
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _valid_metaclass_keyword_worker_request(
+        source_file_path=f"{module_name}.py",
+        replay_target_seed=f"{module_name}.Example",
+        working_directory=str(tmp_path),
+        python_path_entries=(str(tmp_path),),
+    )
+    original_build_class = builtins.__dict__["__build_class__"]
+
+    with pytest.raises(ValueError, match="changed during import"):
+        runtime_probe_worker.observe_runtime_probe_metaclass_keyword_worker_request(
+            request
+        )
+
+    assert builtins.__dict__["__build_class__"] is original_build_class
 
 
 def test_exec_worker_observes_exact_pass_source_from_target() -> None:

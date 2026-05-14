@@ -101,6 +101,9 @@ _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL = (
 )
 _RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL = "exec_or_eval:exec/1"
 _RUNTIME_PROBE_EXEC_OR_EVAL_EVAL_LOCAL_PYTHON_FORM_LABEL = "exec_or_eval:eval/1"
+_RUNTIME_PROBE_METACLASS_BEHAVIOR_KEYWORD_LOCAL_PYTHON_FORM_LABEL = (
+    "metaclass_behavior:keyword"
+)
 _RUNTIME_PROBE_EXEC_SOURCE_SHAPE = "literal_statement"
 _RUNTIME_PROBE_EXEC_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
@@ -2039,6 +2042,24 @@ def make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner(
     handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
         family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
         form_label=_RUNTIME_PROBE_EXEC_OR_EVAL_EVAL_LOCAL_PYTHON_FORM_LABEL,
+        python_executable=python_executable,
+        module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+    )
+    return make_dispatching_runtime_probe_runner((handler_entry,))
+
+
+def make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner(
+    *,
+    python_executable: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+) -> RuntimeProbeRunnerCallable:
+    """Return the local-Python runner for exact ``metaclass_behavior:keyword``."""
+    handler_entry = make_runtime_probe_local_python_subprocess_handler_entry(
+        family_label=RuntimeProbeFamily.METACLASS_BEHAVIOR,
+        form_label=_RUNTIME_PROBE_METACLASS_BEHAVIOR_KEYWORD_LOCAL_PYTHON_FORM_LABEL,
         python_executable=python_executable,
         module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
         invocation_contract_revision=invocation_contract_revision,
@@ -4159,6 +4180,7 @@ __all__ = [
     "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
     "make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner",
     "make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner",
+    "make_runtime_probe_metaclass_behavior_keyword_local_python_subprocess_runner",
     "make_runtime_probe_reflective_dir_local_python_subprocess_runner",
     "make_runtime_probe_reflective_dir_zero_local_python_subprocess_runner",
     "make_runtime_probe_reflective_getattr_default_local_python_subprocess_runner",
