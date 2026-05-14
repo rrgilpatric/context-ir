@@ -2,6 +2,305 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-14 -- Default Local-Python Facade Wrapper Commit-Gating Acceptance
+
+- Reviewed the returned read-only commit-gating review for the tool-facing
+  default local-Python subprocess recompile wrapper release unit.
+- Repo-backed truth during commit-gating acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `0334911 Add default local-Python recompile helper`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - Gate Result: PASS
+  - findings: none
+  - confirmed package-root and MCP exposure remain unchanged
+  - confirmed scope stays limited to the facade wrapper, focused tests, and
+    continuity updates
+  - confirmed excluded surfaces remain unchanged, including `README.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, and `PUBLIC_CLAIMS.md`
+- Validation basis:
+  - read-only git status/ref/cache/untracked/diff/stat/check commands passed
+  - targeted source, test, continuity, and excluded-surface inspections passed
+  - full regression was not rerun in this gate; the gate relied on the recorded
+    full-regression PASS with `1633 passed`
+- Residual risk:
+  - facade runtime proof remains focused on exact
+    `runtime_mutation:locals/0`; broader default-runner form coverage remains
+    inherited from prior pushed layers
+- Acceptance decision:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the four release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating
+
+## 2026-05-14 -- Default Local-Python Facade Wrapper Full Regression Acceptance
+
+- Reviewed the returned full regression gate for the tool-facing default
+  local-Python subprocess recompile wrapper release unit.
+- Repo-backed truth during full-regression acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `0334911 Add default local-Python recompile helper`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - Gate Result: PASS
+  - findings: none
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed, `110 files already formatted`
+  - `mypy --strict src/` passed, `37 source files`
+  - `pytest tests/ -v` passed, `1633 passed`
+  - final status remained the same four modified release-unit files only
+- Residual risk:
+  - this gate did not redo the prior read-only release-unit audit
+- Acceptance decision:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review for the exact four-file release unit
+  - do not stage, commit, or push before commit-gating clears
+- Acceptance status: first-pass full regression
+
+## 2026-05-14 -- Default Local-Python Facade Wrapper Audit Acceptance
+
+- Reviewed the returned read-only release-unit audit for the tool-facing
+  default local-Python subprocess recompile wrapper release unit.
+- Repo-backed truth during audit acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `0334911 Add default local-Python recompile helper`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Audit result:
+  - Gate Result: PASS
+  - findings: none
+  - confirmed facade request, response, wrapper, and `tool_facade.__all__`
+    export mirror the dynamic-import subprocess facade shape
+  - confirmed focused coverage for exact non-dynamic
+    `runtime_mutation:locals/0` through real subprocess, delegation, and
+    package-root/MCP non-exposure
+  - confirmed `PLAN.md` and `BUILDLOG.md` route to full regression and
+    commit-gating before staging, commit, or push
+- Audit validation basis:
+  - read-only git branch/ref/status/cache/untracked/diff/check commands passed
+  - targeted source, test, and excluded-surface inspections passed
+  - focused ruff check and format check passed
+  - focused audit pytest passed, `3 passed`
+  - an initial system `python3` pytest attempt failed because that interpreter
+    could not import `context_ir`; the `.venv` run passed
+- Residual risk:
+  - strict mypy and full pytest were not rerun in this audit lane
+  - broader default-runner form coverage remains inherited from prior pushed
+    helper layers; this facade audit proof is focused on exact
+    `runtime_mutation:locals/0`
+- Acceptance decision:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run the full regression gate for the exact four-file release unit
+  - do not stage, commit, or push before full regression and commit-gating
+    clear
+- Acceptance status: first-pass audit
+
+## 2026-05-14 -- Default Local-Python Facade Wrapper Workspace Acceptance
+
+- Reviewed the returned implementation lane for the tool-facing default
+  local-Python subprocess recompile wrapper.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `0334911 Add default local-Python recompile helper`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Accepted implementation files:
+  - `src/context_ir/tool_facade.py`
+  - `tests/test_tool_facade.py`
+- Accepted behavior:
+  - added
+    `SemanticDefaultLocalPythonSubprocessRecompileRequest`,
+    `SemanticDefaultLocalPythonSubprocessRecompileResponse`, and
+    `recompile_repository_context_with_default_local_python_subprocess(...)`
+    to `context_ir.tool_facade`
+  - the request mirrors the dynamic-import subprocess facade request shape
+  - the response mirrors nested
+    `RuntimeProbeRunnerCallableRecompileApplication` fields with identity
+    checks and default-local-Python naming
+  - the wrapper delegates every explicit caller input to
+    `apply_default_local_python_subprocess_for_diagnostic_and_recompile(...)`
+  - focused coverage proves a real `python -m context_ir.runtime_probe_worker`
+    subprocess for exact non-dynamic `runtime_mutation:locals/0` flows through
+    facade, worker observation, admission, and attached-runtime recompile
+  - the new facade names are exported only from `context_ir.tool_facade.__all__`
+  - package-root exports and MCP exports remain unchanged
+  - no runtime worker, runner, recompile-helper, request/replay, admission,
+    acquisition, analyzer, schema, docs, fixture, task, run-spec,
+    public-claim, scoring, compiler, generalized runtime, or new-form behavior
+    was widened
+- Validation basis:
+  - implementation lane reported ruff check passed, ruff format check passed,
+    strict mypy passed, requested pytest set passed with `67 tests`, and
+    `git diff --check` passed
+  - control reran focused ruff check and format check over
+    `src/context_ir/tool_facade.py` and `tests/test_tool_facade.py`
+  - control reran the new real-subprocess facade proof, delegation test, and
+    package-root/MCP non-exposure test, `3 passed`
+  - control reran `git diff --check`
+- Acceptance decision:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a read-only release-unit audit for the exact four-file release unit:
+    `BUILDLOG.md`, `PLAN.md`, `src/context_ir/tool_facade.py`, and
+    `tests/test_tool_facade.py`
+  - do not stage, commit, or push before release-unit audit, full regression,
+    and commit-gating clear
+- Acceptance status: first-pass
+
+## 2026-05-14 -- Post-Default Recompile Helper Route Selection
+
+- Control selected the next bounded north-star lane after the Ryan-authorized
+  push of `0334911 Add default local-Python recompile helper`.
+- Live repo/workspace truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `0334911 Add default local-Python recompile helper`
+  - dirty files are the workspace-only post-push continuity updates in
+    `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Route finding:
+  - pushed exact local-Python subprocess support now exists through worker
+    handlers, parent-side default runner, and internal default recompile helper
+  - `src/context_ir/tool_facade.py` still exposes only the dynamic-import
+    local-Python subprocess recompile wrapper at the tool-facing module layer
+  - package root and MCP remain broader exposure boundaries and should stay
+    closed for this slice
+- Selected next implementation lane:
+  - add one tool-facing default local-Python subprocess recompile wrapper in
+    `src/context_ir/tool_facade.py`
+  - prove it with focused coverage in `tests/test_tool_facade.py`, including
+    a real subprocess path for exact non-dynamic `runtime_mutation:locals/0`
+  - expose the new request/response/function through `context_ir.tool_facade`
+    module `__all__` only
+  - keep package-root, MCP, schema, docs, fixtures, tasks, run specs, public
+    claims, scoring, compiler, generalized runtime, and new runtime-probe
+    forms unchanged
+- Rationale:
+  - this is the next layer in the same composition chain: exact worker
+    handlers -> parent default runner -> internal default recompile helper ->
+    tool-facing facade wrapper
+  - package-root and MCP exposure should wait until the tool-facing module
+    wrapper is reviewed in isolation
+- This is workspace-only routing state. It is not implementation acceptance,
+  release-gate clearance, staging, commit, or push authorization.
+- Acceptance status: first-pass route selection
+
+## 2026-05-14 -- Default Local-Python Recompile Helper Push
+
+- Ryan-authorized push completed for
+  `0334911 Add default local-Python recompile helper`.
+- Repo-backed truth after push and before this post-push continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `0334911 Add default local-Python recompile helper`
+  - dirty files are the post-commit continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Pushed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `0334911 Add default local-Python recompile helper`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane after the internal default
+    local-Python subprocess recompile helper release
+  - do not treat this post-push continuity sync as implementation,
+    release-gate, staging, commit, or push authorization
+- Acceptance status: first-pass push
+
+## 2026-05-14 -- Default Local-Python Recompile Helper Local Commit Creation
+
+- Local commit creation completed for the internal default local-Python
+  subprocess recompile helper release unit.
+- Repo-backed truth immediately after commit and before this post-commit
+  continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `0334911 Add default local-Python recompile helper`
+  - `origin/main` at
+    `92824aa Add default local-Python subprocess runner`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this workspace-only post-commit continuity update
+  - staged files: none
+  - untracked files: none
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `0334911 Add default local-Python recompile helper`
+  - pushed: no
+- Next control route:
+  - wait for explicit Ryan push authorization before pushing `0334911`
+  - do not start the next bounded north-star lane until push/hold state is
+    resolved
+- Acceptance status: first-pass local commit creation
+
 ## 2026-05-14 -- Default Local-Python Recompile Helper Commit-Gating Acceptance
 
 - Reviewed the returned read-only commit-gating review for the internal

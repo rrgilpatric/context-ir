@@ -17,6 +17,7 @@ from context_ir.runtime_observation_recompile import (
     RuntimeObservationRecompileApplication,
     RuntimeProbeResultBatchRecompileApplication,
     RuntimeProbeRunnerCallableRecompileApplication,
+    apply_default_local_python_subprocess_for_diagnostic_and_recompile,
     apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile,
     apply_runtime_observations_for_diagnostic_and_recompile,
 )
@@ -326,6 +327,122 @@ class SemanticDynamicImportLocalPythonSubprocessRecompileResponse:
             raise ValueError("upgraded_unit_ids must mirror recompile_result")
 
 
+@dataclass(frozen=True)
+class SemanticDefaultLocalPythonSubprocessRecompileRequest:
+    """Inputs for default local-Python subprocess probing before recompilation."""
+
+    previous_response: SemanticContextResponse
+    diagnostic: SemanticDiagnosticResult
+    miss_evidence: SemanticMissEvidence
+    delta_budget: int
+    python_executable: str
+    invocation_contract_revision: str
+    completion_contract_revision: str
+    repository_snapshot_basis: RepositorySnapshotBasis
+    probe_contract_revision: str
+    runtime_assumptions: Sequence[RuntimeProbeReplayField]
+    runner_contract_revision: str
+    timeout_seconds: int
+    runner_environment: Sequence[RuntimeProbeReplayField]
+    runner_assumptions: Sequence[RuntimeProbeReplayField]
+    embed_fn: EmbeddingFunction | None = None
+
+
+@dataclass(frozen=True)
+class SemanticDefaultLocalPythonSubprocessRecompileResponse:
+    """Transparent facade result for default local-Python subprocess recompile."""
+
+    default_local_python_subprocess_recompile: (
+        RuntimeProbeRunnerCallableRecompileApplication
+    )
+    runner_request_preparation: RuntimeProbeDiagnosticRunnerRequestPreparation
+    runner_attempt_collection: RuntimeProbeRunnerAttemptCollection
+    result_batch_recompile_application: RuntimeProbeResultBatchRecompileApplication
+    result_batch_admission: RuntimeProbeResultBatchAdmission
+    non_proof_results: tuple[RuntimeProbeNonProofResult, ...]
+    observation_application: RuntimeObservationApplication
+    recompile_result: SemanticRecompileResult
+    program: SemanticProgram
+    compile_result: SemanticCompileResult
+    diagnostic: SemanticDiagnosticResult
+    compile_total_tokens: int
+    compile_budget: int
+    budget_delta: int
+    newly_selected_unit_ids: tuple[str, ...]
+    upgraded_unit_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        """Reject facade surfaces that diverge from the nested recompile result."""
+        subprocess_recompile = self.default_local_python_subprocess_recompile
+        if self.runner_request_preparation is not (
+            subprocess_recompile.runner_request_preparation
+        ):
+            raise ValueError(
+                "runner_request_preparation must mirror "
+                "default_local_python_subprocess_recompile"
+            )
+        if self.runner_attempt_collection is not (
+            subprocess_recompile.runner_attempt_collection
+        ):
+            raise ValueError(
+                "runner_attempt_collection must mirror "
+                "default_local_python_subprocess_recompile"
+            )
+        if self.result_batch_recompile_application is not (
+            subprocess_recompile.result_batch_recompile_application
+        ):
+            raise ValueError(
+                "result_batch_recompile_application must mirror "
+                "default_local_python_subprocess_recompile"
+            )
+        if (
+            self.result_batch_admission
+            is not self.result_batch_recompile_application.result_batch_admission
+        ):
+            raise ValueError(
+                "result_batch_admission must mirror result_batch_recompile_application"
+            )
+        if self.non_proof_results is not (
+            self.result_batch_recompile_application.non_proof_results
+        ):
+            raise ValueError(
+                "non_proof_results must mirror result_batch_recompile_application"
+            )
+        if (
+            self.observation_application
+            is not self.result_batch_recompile_application.observation_application
+        ):
+            raise ValueError(
+                "observation_application must mirror result_batch_recompile_application"
+            )
+        if (
+            self.recompile_result
+            is not self.result_batch_recompile_application.recompile_result
+        ):
+            raise ValueError(
+                "recompile_result must mirror result_batch_recompile_application"
+            )
+        if self.program is not self.observation_application.updated_program:
+            raise ValueError("program must mirror observation_application")
+        if self.compile_result is not self.recompile_result.compile_result:
+            raise ValueError("compile_result must mirror recompile_result")
+        if self.diagnostic is not self.recompile_result.diagnostic:
+            raise ValueError("diagnostic must mirror recompile_result")
+        if self.compile_total_tokens != self.compile_result.total_tokens:
+            raise ValueError("compile_total_tokens must mirror compile_result")
+        if self.compile_budget != self.compile_result.budget:
+            raise ValueError("compile_budget must mirror compile_result")
+        if self.budget_delta != self.recompile_result.budget_delta:
+            raise ValueError("budget_delta must mirror recompile_result")
+        if (
+            self.newly_selected_unit_ids
+            != self.recompile_result.newly_selected_unit_ids
+        ):
+            raise ValueError("newly_selected_unit_ids must mirror recompile_result")
+        if self.upgraded_unit_ids != self.recompile_result.upgraded_unit_ids:
+            raise ValueError("upgraded_unit_ids must mirror recompile_result")
+
+
 def compile_repository_context(
     request: SemanticContextRequest,
 ) -> SemanticContextResponse:
@@ -492,15 +609,77 @@ def recompile_repository_context_with_dynamic_import_local_python_subprocess(
     )
 
 
+def recompile_repository_context_with_default_local_python_subprocess(
+    request: SemanticDefaultLocalPythonSubprocessRecompileRequest,
+) -> SemanticDefaultLocalPythonSubprocessRecompileResponse:
+    """Run default local-Python probes and recompile a prior response."""
+    default_local_python_subprocess_recompile = (
+        apply_default_local_python_subprocess_for_diagnostic_and_recompile(
+            request.previous_response.program,
+            request.diagnostic,
+            request.previous_response.compile_result,
+            request.miss_evidence,
+            request.delta_budget,
+            python_executable=request.python_executable,
+            invocation_contract_revision=request.invocation_contract_revision,
+            completion_contract_revision=request.completion_contract_revision,
+            repository_snapshot_basis=request.repository_snapshot_basis,
+            probe_contract_revision=request.probe_contract_revision,
+            runtime_assumptions=request.runtime_assumptions,
+            runner_contract_revision=request.runner_contract_revision,
+            timeout_seconds=request.timeout_seconds,
+            runner_environment=request.runner_environment,
+            runner_assumptions=request.runner_assumptions,
+            embed_fn=request.embed_fn,
+        )
+    )
+    subprocess_recompile = default_local_python_subprocess_recompile
+    result_batch_recompile_application = (
+        subprocess_recompile.result_batch_recompile_application
+    )
+    observation_application = result_batch_recompile_application.observation_application
+    recompile_result = result_batch_recompile_application.recompile_result
+    compile_result = recompile_result.compile_result
+    return SemanticDefaultLocalPythonSubprocessRecompileResponse(
+        default_local_python_subprocess_recompile=(
+            default_local_python_subprocess_recompile
+        ),
+        runner_request_preparation=(
+            default_local_python_subprocess_recompile.runner_request_preparation
+        ),
+        runner_attempt_collection=(
+            default_local_python_subprocess_recompile.runner_attempt_collection
+        ),
+        result_batch_recompile_application=result_batch_recompile_application,
+        result_batch_admission=(
+            result_batch_recompile_application.result_batch_admission
+        ),
+        non_proof_results=result_batch_recompile_application.non_proof_results,
+        observation_application=observation_application,
+        recompile_result=recompile_result,
+        program=observation_application.updated_program,
+        compile_result=compile_result,
+        diagnostic=recompile_result.diagnostic,
+        compile_total_tokens=compile_result.total_tokens,
+        compile_budget=compile_result.budget,
+        budget_delta=recompile_result.budget_delta,
+        newly_selected_unit_ids=recompile_result.newly_selected_unit_ids,
+        upgraded_unit_ids=recompile_result.upgraded_unit_ids,
+    )
+
+
 __all__ = [
     "EmbeddingFunction",
     "SemanticContextRequest",
     "SemanticContextResponse",
+    "SemanticDefaultLocalPythonSubprocessRecompileRequest",
+    "SemanticDefaultLocalPythonSubprocessRecompileResponse",
     "SemanticDynamicImportLocalPythonSubprocessRecompileRequest",
     "SemanticDynamicImportLocalPythonSubprocessRecompileResponse",
     "SemanticRuntimeObservationRecompileRequest",
     "SemanticRuntimeObservationRecompileResponse",
     "compile_repository_context",
+    "recompile_repository_context_with_default_local_python_subprocess",
     "recompile_repository_context_with_dynamic_import_local_python_subprocess",
     "recompile_repository_context_with_runtime_observations",
 ]
