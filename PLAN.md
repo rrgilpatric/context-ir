@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`f3467e5 Add runtime eval subprocess support`. The latest pushed
+`20e6f55 Add metaclass keyword subprocess support`. The latest pushed
 source/contract authority is also
-`f3467e5 Add runtime eval subprocess support`. Live git refs
+`20e6f55 Add metaclass keyword subprocess support`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -2221,12 +2221,122 @@ subprocess implementation:
   - release-unit-audit-cleared: yes, after corrected audit
   - full-regression-cleared: yes, first-pass after corrected audit
   - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `20e6f55 Add metaclass keyword subprocess support`
+  - pushed: yes
+- next route:
+  - stage exactly the accepted parent-side exact default local-Python
+    subprocess runner release-unit files and create the local commit
+  - do not widen recompile helpers, tool facade, package-root exports, MCP,
+    schema, scoring, compiler, docs, fixtures, tasks, run specs, public
+    claims, or generalized runtime support in that gate
+  - do not push without explicit Ryan authorization
+
+Workspace-only accepted parent-side exact default local-Python subprocess
+runner:
+
+- accepted first-pass after control review of the returned implementation
+  lane; findings: none
+- repo-backed current pushed release/source-contract authority remains
+  `20e6f55 Add metaclass keyword subprocess support`
+- accepted implementation files are exactly:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+- existing dirty control-state files `PLAN.md` and `BUILDLOG.md` are included
+  in the proposed release unit as continuity/routing updates
+- accepted behavior:
+  - `make_runtime_probe_default_local_python_subprocess_runner(...)` composes
+    existing local-Python subprocess handler entries into one parent-side
+    dispatching runner
+  - the runner registers exactly the currently pushed exact subprocess forms
+    across dynamic import, reflective builtins, runtime mutation, exec/eval,
+    and metaclass keyword behavior
+  - unsupported/non-selected forms produce the existing missing-handler
+    non-proof attempt without reaching the subprocess worker
+  - all per-form runner factories are preserved
+  - the helper is module-level only in `context_ir.runtime_probe_execution` and
+    remains absent from the package root
+  - no source changes were made to `src/context_ir/runtime_probe_worker.py`
+  - no runtime request, replay-input, admission, acquisition, recompile helper,
+    tool-facade, package-root export, MCP, schema, scoring, compiler, docs,
+    fixture, task, run-spec, public-claim, generalized runtime, or new-form
+    behavior was widened
+- validation basis:
+  - implementation lane reported ruff check passed, ruff format check passed,
+    strict mypy passed, requested pytest set passed with `1015 passed`, and
+    `git diff --check` passed
+  - control reran focused ruff check and format check over
+    `src/context_ir/runtime_probe_execution.py` and
+    `tests/test_runtime_probe_execution.py`
+  - control reran the four new default-runner tests, `4 passed`
+  - `git diff --check` passed
+  - read-only release-unit audit passed first-pass with no findings
+  - full regression passed first-pass:
+    - `.venv/bin/python -m ruff check src/ tests/`
+    - `.venv/bin/python -m ruff format --check src/ tests/`,
+      `110 files already formatted`
+    - `.venv/bin/python -m mypy --strict src/`,
+      `Success: no issues found in 37 source files`
+    - `.venv/bin/python -m pytest tests/ -v`,
+      `1630 passed in 15.16s`
+  - commit-gating review passed first-pass with no findings
+- proposed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
   - staged: no
   - locally committed: no
   - pushed: no
 - next route:
-  - stage exactly the six-file release unit and create one local commit
+  - stage exactly the four release-unit files and create the local commit
   - do not push without explicit Ryan authorization
+
+Workspace-only post-`20e6f55` route selection:
+
+- selected one implementation lane for a parent-side exact default
+  local-Python subprocess runner factory in
+  `src/context_ir/runtime_probe_execution.py`
+- current evidence:
+  - exact local-Python subprocess support is pushed for the current
+    dynamic-import, reflective-builtin, runtime-mutation, exec/eval, and
+    metaclass-keyword probe forms
+  - `src/context_ir/runtime_probe_worker.py` already has a default worker
+    handler table for the exact selected forms
+  - `src/context_ir/runtime_probe_execution.py` has only per-form parent
+    runner factories, with dynamic import as the only multi-form helper
+  - `src/context_ir/runtime_observation_recompile.py` and
+    `src/context_ir/tool_facade.py` remain dynamic-import-specific for
+    local-Python subprocess integration
+- rationale:
+  - composing the existing exact parent runner entries is the smallest
+    post-subprocess integration step
+  - recompile and facade widening should wait until the combined parent
+    runner exists and is reviewed in isolation
+- authorized next implementation scope:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+- explicit non-goals for the next implementation lane:
+  - no source changes to `src/context_ir/runtime_probe_worker.py`
+  - no runtime request, replay-input, admission, acquisition, recompile helper,
+    tool-facade, package-root export, MCP, schema, scoring, compiler, docs,
+    fixture, task, run-spec, public-claim, generalized runtime, or new-form
+    changes
+- release state:
+  - selected in workspace: yes
+  - implementation accepted: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess release:
 
@@ -6604,16 +6714,44 @@ sequencing for `c1a12d7` absent new findings.
   subprocess release unit
 - [x] Commit-gating review for exact `metaclass_behavior:keyword` local-Python
   subprocess release unit
-- [ ] Local commit creation for exact `metaclass_behavior:keyword`
+- [x] Local commit creation for exact `metaclass_behavior:keyword`
   subprocess release unit
-- [ ] Ryan-authorized remote push for exact `metaclass_behavior:keyword`
+- [x] Ryan-authorized remote push for exact `metaclass_behavior:keyword`
   local-Python subprocess release unit
+- [x] Post-`20e6f55` control selection of the next bounded north-star lane
+- [x] Parent-side exact default local-Python subprocess runner factory
+  implementation slice
+- [x] Release-unit audit for parent-side exact default local-Python subprocess
+  runner factory release unit
+- [x] Full regression gate for parent-side exact default local-Python
+  subprocess runner factory release unit
+- [x] Commit-gating review for parent-side exact default local-Python
+  subprocess runner factory release unit
+- [ ] Local commit creation for parent-side exact default local-Python
+  subprocess runner factory release unit
 
 ## What Is In Progress
 
+- Parent-side exact default local-Python subprocess runner factory is accepted
+  in workspace first-pass. The accepted implementation files are
+  `src/context_ir/runtime_probe_execution.py` and
+  `tests/test_runtime_probe_execution.py`; `PLAN.md` and `BUILDLOG.md` are
+  dirty continuity/routing files included in the proposed release unit. The
+  helper composes the currently pushed exact local-Python subprocess forms
+  through the existing default worker and dispatching runner mechanism, while
+  preserving all per-form factories and package-root non-exposure. The
+  accepted slice did not widen `src/context_ir/runtime_probe_worker.py`,
+  runtime request/replay assembly, admission, acquisition, recompile helpers,
+  tool facade, package-root exports, MCP, schema, scoring, compiler, docs,
+  fixtures, tasks, run specs, public claims, generalized runtime support, or
+  new runtime-probe forms. The read-only release-unit audit passed first-pass
+  with no findings. Full regression passed first-pass with `1630 passed`.
+  Commit-gating review passed first-pass with no findings. Next route is
+  staging exactly the four release-unit files and creating the local commit.
+  It is not push authorization.
 - Exact `metaclass_behavior:keyword` local-Python subprocess support is
-  accepted in workspace-only state after 1 correction. The proposed release
-  unit is
+  accepted, release-gate-cleared, locally committed, and pushed at
+  `20e6f55 Add metaclass keyword subprocess support`. The pushed release unit is
   `BUILDLOG.md`, `PLAN.md`, `src/context_ir/runtime_probe_execution.py`,
   `src/context_ir/runtime_probe_worker.py`,
   `tests/test_runtime_probe_execution.py`, and
@@ -6625,8 +6763,9 @@ sequencing for `c1a12d7` absent new findings.
   source-module `Meta` checks. The corrected release-unit audit passed with no
   findings, closing both the code P1 and continuity P1. Full regression passed
   first-pass after corrected audit with `1626 passed`. Commit-gating review
-  passed first-pass with no findings. Local commit creation is the next route.
-  It is not staged, not locally committed, and not pushed.
+  passed first-pass with no findings. Local commit creation completed at
+  `20e6f55 Add metaclass keyword subprocess support`, and Ryan-authorized push
+  completed. It has release-gate status no-active-gate.
 - Exact `exec_or_eval:eval/1` local-Python subprocess support is accepted
   first-pass, release-gate-cleared, locally committed, and pushed at
   `f3467e5 Add runtime eval subprocess support`. The committed release unit is
@@ -7551,25 +7690,23 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: stage exactly the workspace-only accepted,
-corrected-audit-cleared, full-regression-cleared, and commit-gating-cleared
-exact `metaclass_behavior:keyword` local-Python subprocess release unit and
-create one local commit. Current pushed release authority and latest pushed
-source/contract authority are
-`f3467e5 Add runtime eval subprocess support`.
+Immediate next route: stage exactly the four accepted parent-side exact
+default local-Python subprocess runner release-unit files and create the local
+commit. Current pushed release authority and latest pushed source/contract
+authority are `20e6f55 Add metaclass keyword subprocess support`.
 
-Local commit scope:
-
-- stage exactly:
-  - `BUILDLOG.md`
-  - `PLAN.md`
-  - `src/context_ir/runtime_probe_execution.py`
-  - `src/context_ir/runtime_probe_worker.py`
-  - `tests/test_runtime_probe_execution.py`
-  - `tests/test_runtime_probe_worker.py`
-- create one local commit with subject
-  `Add metaclass keyword subprocess support`
-- do not push without explicit Ryan authorization
+The accepted lane is intentionally below the recompile and facade surfaces:
+`src/context_ir/runtime_probe_worker.py` already has a default exact worker
+handler table, while `src/context_ir/runtime_probe_execution.py` still lacks a
+single parent-side runner factory that dispatches all currently pushed exact
+forms on pushed `main`. The accepted workspace slice adds that factory with
+focused `tests/test_runtime_probe_execution.py` coverage only. The proposed
+release unit is `BUILDLOG.md`, `PLAN.md`,
+`src/context_ir/runtime_probe_execution.py`, and
+`tests/test_runtime_probe_execution.py`. The read-only release-unit audit
+passed first-pass with no findings. Full regression passed first-pass with
+`1630 passed`. Commit-gating passed first-pass with no findings. Push remains
+Ryan-gated after local commit creation.
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 

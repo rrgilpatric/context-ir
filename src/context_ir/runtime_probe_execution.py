@@ -201,6 +201,96 @@ _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
 RuntimeProbeRunnerHandlerKey: TypeAlias = tuple[RuntimeProbeFamily, str]
 _LocalPythonEnvironmentParts: TypeAlias = tuple[str, str, tuple[str, ...]]
 
+_RUNTIME_PROBE_DEFAULT_LOCAL_PYTHON_HANDLER_KEYS: tuple[
+    RuntimeProbeRunnerHandlerKey,
+    ...,
+] = (
+    (
+        RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _RUNTIME_PROBE_DYNAMIC_IMPORT_IMPORTED_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _RUNTIME_PROBE_DYNAMIC_IMPORT_LOAD_MODULE_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _RUNTIME_PROBE_DYNAMIC_IMPORT_BUILTINS_IMPORT_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _RUNTIME_PROBE_DYNAMIC_IMPORT_LOADER_BUILTIN_IMPORT_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _RUNTIME_PROBE_DYNAMIC_IMPORT_BUILTIN_IMPORT_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_DEFAULT_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _RUNTIME_PROBE_REFLECTIVE_VARS_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _RUNTIME_PROBE_REFLECTIVE_VARS_ZERO_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _RUNTIME_PROBE_REFLECTIVE_DIR_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _RUNTIME_PROBE_REFLECTIVE_DIR_ZERO_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_GLOBALS_ZERO_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_LOCALS_ZERO_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.EXEC_OR_EVAL,
+        _RUNTIME_PROBE_EXEC_OR_EVAL_EXEC_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.EXEC_OR_EVAL,
+        _RUNTIME_PROBE_EXEC_OR_EVAL_EVAL_LOCAL_PYTHON_FORM_LABEL,
+    ),
+    (
+        RuntimeProbeFamily.METACLASS_BEHAVIOR,
+        _RUNTIME_PROBE_METACLASS_BEHAVIOR_KEYWORD_LOCAL_PYTHON_FORM_LABEL,
+    ),
+)
+
 
 @dataclass(frozen=True)
 class RuntimeProbeExecutionInput:
@@ -1808,6 +1898,29 @@ def make_runtime_probe_dynamic_import_local_python_subprocess_runner(
             completion_contract_revision=completion_contract_revision,
         )
         for form_label in _RUNTIME_PROBE_DYNAMIC_IMPORT_LOCAL_PYTHON_FORM_LABELS
+    )
+    return make_dispatching_runtime_probe_runner(handler_entries)
+
+
+def make_runtime_probe_default_local_python_subprocess_runner(
+    *,
+    python_executable: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+) -> RuntimeProbeRunnerCallable:
+    """Return the default local-Python runner for all pushed exact forms."""
+    handler_entries = tuple(
+        make_runtime_probe_local_python_subprocess_handler_entry(
+            family_label=family_label,
+            form_label=form_label,
+            python_executable=python_executable,
+            module_name=_RUNTIME_PROBE_LOCAL_PYTHON_WORKER_MODULE_NAME,
+            invocation_contract_revision=invocation_contract_revision,
+            completion_contract_revision=completion_contract_revision,
+        )
+        for family_label, form_label in (
+            _RUNTIME_PROBE_DEFAULT_LOCAL_PYTHON_HANDLER_KEYS
+        )
     )
     return make_dispatching_runtime_probe_runner(handler_entries)
 
@@ -4177,6 +4290,7 @@ __all__ = [
     "execute_runtime_probe_local_python_subprocess_invocation_attempt",
     "make_dispatching_runtime_probe_runner",
     "make_failure_normalizing_runtime_probe_runner",
+    "make_runtime_probe_default_local_python_subprocess_runner",
     "make_runtime_probe_dynamic_import_local_python_subprocess_runner",
     "make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner",
     "make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner",

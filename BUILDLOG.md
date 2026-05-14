@@ -2,6 +2,305 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-14 -- Default Local-Python Runner Commit-Gating Acceptance
+
+- Reviewed the returned read-only commit-gating review for the parent-side
+  exact default local-Python subprocess runner factory release unit.
+- Gate result: PASS.
+- Findings: none.
+- Repo-backed truth during commit-gating acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `20e6f55 Add metaclass keyword subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Commit-gating conclusions:
+  - the exact four-file release unit is commit-ready
+  - `PLAN.md` and `BUILDLOG.md` correctly state accepted,
+    release-unit-audit-cleared, full-regression-cleared, not staged, not
+    committed, and not pushed
+  - no scope widening exists beyond `runtime_probe_execution.py`, focused
+    runtime-probe execution tests, and continuity docs
+  - commit should stage exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+- Accepted commit message:
+  - subject: `Add default local-Python subprocess runner`
+  - body:
+    - `Compose the currently pushed exact local-Python handler entries into one parent-side dispatching runner before widening higher-level integration.`
+    - `Keep worker, request/replay, recompile, facade, package-root, MCP, schema, scoring, compiler, docs, fixtures, tasks, run specs, public claims, generalized runtime, and new-form surfaces unchanged.`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the four release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating acceptance
+
+## 2026-05-14 -- Default Local-Python Runner Full Regression Acceptance
+
+- Reviewed the returned full-regression gate for the parent-side exact default
+  local-Python subprocess runner factory release unit.
+- Gate result: PASS.
+- Findings: none.
+- Repo-backed truth during full-regression acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `20e6f55 Add metaclass keyword subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Full-regression validation passed:
+  - `git status --short --branch -uall` showed the expected four modified
+    release-unit files only
+  - `git diff --cached --name-status` showed no staged files
+  - `git ls-files --others --exclude-standard` showed no untracked files
+  - `git diff --check` passed
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed,
+    `1630 passed in 15.16s`
+  - final `git status --short --branch -uall` remained the expected four
+    modified release-unit files only
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact four-file release unit
+  - do not stage, commit, or push before commit-gating clears
+- Acceptance status: first-pass full-regression acceptance
+
+## 2026-05-14 -- Default Local-Python Runner Release-Unit Audit Acceptance
+
+- Reviewed the returned read-only release-unit audit for the parent-side exact
+  default local-Python subprocess runner factory release unit.
+- Gate result: PASS.
+- Findings: none.
+- Repo-backed truth during audit acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `20e6f55 Add metaclass keyword subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Accepted audit conclusions:
+  - the release unit stays confined to the exact four expected files
+  - the new parent-side default runner registers 21 exact handler keys
+  - those keys match the existing worker default handler table
+  - the helper composes through the existing local-Python subprocess
+    handler-entry path
+  - unsupported forms remain on the missing-handler `setup_failed` path before
+    subprocess execution
+  - per-form factories remain present
+  - the helper is exported from `runtime_probe_execution.__all__` only and is
+    not exposed at the package root
+  - no worker, recompile, facade, MCP, schema/request, acquisition, scoring,
+    compiler, public claim, README, architecture, fixture, task, or run-spec
+    surfaces were widened
+  - `PLAN.md` and `BUILDLOG.md` route accurately to full regression, then
+    commit-gating
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run the full regression gate for the exact four-file release unit
+  - do not stage, commit, or push before full regression and commit-gating
+    clear
+- Acceptance status: first-pass audit acceptance
+
+## 2026-05-14 -- Default Local-Python Runner Workspace Acceptance
+
+- Reviewed the returned implementation lane for the parent-side exact default
+  local-Python subprocess runner factory.
+- Repo-backed truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `20e6f55 Add metaclass keyword subprocess support`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Accepted implementation files:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+- Accepted behavior:
+  - `make_runtime_probe_default_local_python_subprocess_runner(...)` composes
+    the existing local-Python subprocess handler-entry path into one
+    parent-side dispatching runner
+  - the composed runner registers exactly the currently pushed exact
+    dynamic-import, reflective-builtin, runtime-mutation, exec/eval, and
+    metaclass-keyword subprocess forms
+  - unsupported/non-selected family-form requests stay on the existing
+    missing-handler non-proof path without reaching the subprocess worker
+  - the helper is exported from `context_ir.runtime_probe_execution.__all__`
+    only and remains absent from the package root
+  - all existing per-form runner factories are preserved
+  - no worker, runtime request/replay, admission, acquisition, recompile
+    helper, tool-facade, package-root export, MCP, schema, scoring, compiler,
+    docs, fixture, task, run-spec, public-claim, generalized runtime, or
+    new-form behavior was widened
+- Validation basis:
+  - implementation lane reported ruff check passed, ruff format check passed,
+    strict mypy passed, requested pytest set passed with `1015 passed`, and
+    `git diff --check` passed
+  - control reran `.venv/bin/python -m ruff check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - control reran `.venv/bin/python -m ruff format --check src/context_ir/runtime_probe_execution.py tests/test_runtime_probe_execution.py`
+  - control reran targeted pytest for the four new default-runner tests,
+    `4 passed`
+- Acceptance decision:
+  - accepted in workspace, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a read-only release-unit audit for the exact four-file release unit:
+    `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/runtime_probe_execution.py`, and
+    `tests/test_runtime_probe_execution.py`
+- Acceptance status: first-pass
+
+## 2026-05-14 -- Post-Metaclass Subprocess Route Selection
+
+- Control selected the next bounded north-star lane after the Ryan-authorized
+  push of `20e6f55 Add metaclass keyword subprocess support`.
+- Live repo/workspace truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `20e6f55 Add metaclass keyword subprocess support`
+  - dirty files are the workspace-only continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Route finding:
+  - exact local-Python subprocess worker and parent factories are pushed for
+    the current runtime-probe forms through dynamic import, reflective
+    builtins, runtime mutation, exec/eval, and metaclass keyword behavior
+  - `runtime_probe_worker.py` already has a default worker handler table for
+    the exact selected forms
+  - `runtime_probe_execution.py` still exposes only per-form parent runner
+    factories, with dynamic import as the only multi-form helper
+  - recompile and facade integration remain dynamic-import-specific, so
+    widening those layers before proving one composed parent runner would cross
+    a broader integration/public-surface boundary
+- Selected next implementation lane:
+  - add one parent-side exact default local-Python subprocess runner factory in
+    `src/context_ir/runtime_probe_execution.py`, plus focused coverage in
+    `tests/test_runtime_probe_execution.py`
+  - compose only the currently pushed exact subprocess forms and preserve all
+    per-form factories
+  - do not change `runtime_probe_worker.py`, runtime request/replay assembly,
+    admission, acquisition, recompile helpers, tool facade, package-root
+    exports, MCP, schema, scoring, compiler, docs, fixtures, tasks, run specs,
+    or public claims
+- This is workspace-only routing state. It is not release-gate, staging,
+  commit, or push authorization.
+- Acceptance status: first-pass route selection
+
+## 2026-05-14 -- Metaclass Subprocess Push
+
+- Ryan-authorized push completed for
+  `20e6f55 Add metaclass keyword subprocess support`.
+- Repo-backed truth after push and before this post-push continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `20e6f55 Add metaclass keyword subprocess support`
+  - dirty files are the post-commit continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+- Pushed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes, after corrected audit
+  - full-regression-cleared: yes, first-pass after corrected audit
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `20e6f55 Add metaclass keyword subprocess support`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane after exact
+    `metaclass_behavior:keyword` subprocess support
+  - do not treat this post-push continuity sync as implementation,
+    release-gate, staging, commit, or push authorization
+- Acceptance status: first-pass push after corrected audit
+
+## 2026-05-14 -- Metaclass Subprocess Local Commit Creation
+
+- Local commit creation completed for the exact
+  `metaclass_behavior:keyword` local-Python subprocess release unit.
+- Repo-backed truth immediately after commit:
+  - branch `main`
+  - local `HEAD` at
+    `20e6f55 Add metaclass keyword subprocess support`
+  - `origin/main` at
+    `f3467e5 Add runtime eval subprocess support`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this workspace-only post-commit continuity update
+  - staged files: none
+  - untracked files: none
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit-audit-cleared: yes, after corrected audit
+  - full-regression-cleared: yes, first-pass after corrected audit
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `20e6f55 Add metaclass keyword subprocess support`
+  - pushed: no
+- Next control route:
+  - wait for explicit Ryan push authorization before pushing `20e6f55`
+  - do not start the next bounded north-star lane until push/hold state is
+    resolved
+- Acceptance status: first-pass local commit creation after corrected audit
+
 ## 2026-05-14 -- Metaclass Subprocess Commit-Gating Acceptance
 
 - Reviewed the returned read-only commit-gating review for the exact

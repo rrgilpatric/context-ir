@@ -26,6 +26,7 @@ from context_ir.runtime_probe_execution import (
     collect_runtime_probe_execution_attempts_from_runner_requests,
     execute_runtime_probe_local_python_subprocess_invocation,
     execute_runtime_probe_local_python_subprocess_invocation_attempt,
+    make_runtime_probe_default_local_python_subprocess_runner,
     make_runtime_probe_dynamic_import_local_python_subprocess_runner,
     make_runtime_probe_exec_or_eval_eval_local_python_subprocess_runner,
     make_runtime_probe_exec_or_eval_exec_local_python_subprocess_runner,
@@ -111,6 +112,93 @@ _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
 _EVAL_SOURCE_SHA256 = "c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199"
+
+_EXPECTED_DEFAULT_LOCAL_PYTHON_RUNNER_HANDLER_KEYS = (
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _LOADER_IMPORT_MODULE_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _IMPORTED_IMPORT_MODULE_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _LOAD_MODULE_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _BUILTINS_IMPORT_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _LOADER_BUILTIN_IMPORT_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        _BUILTIN_IMPORT_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _REFLECTIVE_HASATTR_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _REFLECTIVE_GETATTR_TWO_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _REFLECTIVE_GETATTR_THREE_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _REFLECTIVE_VARS_ONE_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _REFLECTIVE_VARS_ZERO_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _REFLECTIVE_DIR_ONE_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        _REFLECTIVE_DIR_ZERO_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_MUTATION_GLOBALS_ZERO_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_MUTATION_LOCALS_ZERO_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_MUTATION_SETATTR_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        _RUNTIME_MUTATION_DELATTR_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+        _EXEC_OR_EVAL_EXEC_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL,
+        _EXEC_OR_EVAL_EVAL_FORM_LABEL,
+    ),
+    (
+        runtime_probe_requests.RuntimeProbeFamily.METACLASS_BEHAVIOR,
+        _METACLASS_KEYWORD_FORM_LABEL,
+    ),
+)
 
 _EXPECTED_CURRENT_FORMS = {
     _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
@@ -6135,6 +6223,134 @@ def test_reflective_dir_zero_local_python_runner_registers_only_exact_form(
         _field("form_label", form_label),
         _field("missing_handler_outcome", "setup_failed"),
     )
+
+
+def test_default_local_python_runner_registers_exact_current_forms() -> None:
+    """The default local-Python helper registers only pushed exact handlers."""
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    assert isinstance(runner, runtime_probe_execution.RuntimeProbeDispatchingRunner)
+    handler_keys = tuple(
+        (handler_entry.family_label, handler_entry.form_label)
+        for handler_entry in runner.handler_entries
+    )
+    assert handler_keys == _EXPECTED_DEFAULT_LOCAL_PYTHON_RUNNER_HANDLER_KEYS
+    assert len(set(handler_keys)) == len(handler_keys)
+
+
+def test_default_local_python_runner_executes_non_dynamic_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The default helper routes non-dynamic exact forms to the worker."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> object:
+                local_value = object()
+                namespace = locals()
+                assert type(namespace) is dict
+                assert namespace["local_value"] is local_value
+                assert "namespace" not in namespace
+                return namespace
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _runtime_mutation_locals_zero_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    assert expected_invocation.argv == (
+        sys.executable,
+        "-m",
+        "context_ir.runtime_probe_worker",
+    )
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("lookup_outcome", "returned_namespace"),
+    )
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_default_local_python_runner_materializes_missing_handler_attempt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The default helper still fails closed for unsupported forms."""
+    form_label = "runtime_mutation:other/0"
+    request = _runtime_mutation_globals_zero_request(
+        form_label=form_label,
+        boundary_text="other()",
+    )
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        del kwargs
+        calls.append(tuple(str(arg) for arg in args))
+        raise AssertionError("unsupported default request reached subprocess")
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", fake_run)
+
+    attempt = runner(runner_request)
+
+    assert calls == []
+    assert (
+        attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.SETUP_FAILED
+    )
+    assert attempt.normalized_payload == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_detail_fields == (
+        _field("failure_source", "missing_runtime_probe_handler"),
+        _field(
+            "family_label",
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION.value,
+        ),
+        _field("form_label", form_label),
+        _field("missing_handler_outcome", "setup_failed"),
+    )
+
+
+def test_default_local_python_runner_exports_module_local_only() -> None:
+    """The default local-Python factory is exported only from this module."""
+    helper_name = "make_runtime_probe_default_local_python_subprocess_runner"
+
+    assert helper_name in runtime_probe_execution.__all__
+    assert hasattr(runtime_probe_execution, helper_name)
+    assert helper_name not in context_ir.__all__
+    assert not hasattr(context_ir, helper_name)
 
 
 def test_materialize_local_python_timeout_attempt_is_sanitized() -> None:
