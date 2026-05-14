@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`20e6f55 Add metaclass keyword subprocess support`. The latest pushed
+`92824aa Add default local-Python subprocess runner`. The latest pushed
 source/contract authority is also
-`20e6f55 Add metaclass keyword subprocess support`. Live git refs
+`92824aa Add default local-Python subprocess runner`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -2226,12 +2226,12 @@ subprocess implementation:
     `20e6f55 Add metaclass keyword subprocess support`
   - pushed: yes
 - next route:
-  - stage exactly the accepted parent-side exact default local-Python
-    subprocess runner release-unit files and create the local commit
-  - do not widen recompile helpers, tool facade, package-root exports, MCP,
-    schema, scoring, compiler, docs, fixtures, tasks, run specs, public
-    claims, or generalized runtime support in that gate
-  - do not push without explicit Ryan authorization
+  - superseded by the pushed parent-side exact default local-Python
+    subprocess runner release at
+    `92824aa Add default local-Python subprocess runner`
+  - current route is the newer post-`92824aa` selection below: issue one
+    implementation lane for an internal default local-Python subprocess
+    recompile helper
 
 Workspace-only accepted parent-side exact default local-Python subprocess
 runner:
@@ -2291,12 +2291,119 @@ runner:
   - release-unit-audit-cleared: yes, first-pass
   - full-regression-cleared: yes, first-pass
   - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `92824aa Add default local-Python subprocess runner`
+  - pushed: yes
+- next route:
+  - superseded by the audit-cleared internal default local-Python subprocess
+    recompile helper route below; full regression and commit-gating have now
+    cleared
+  - stage exactly the four release-unit files and create the local commit
+  - do not widen tool facade, package-root exports, MCP, schema, scoring,
+    compiler, docs, fixtures, tasks, run specs, public claims, generalized
+    runtime support, or new runtime-probe forms
+  - do not treat this workspace acceptance as push authorization
+
+Workspace-only accepted internal default local-Python subprocess recompile
+helper:
+
+- accepted first-pass after control review of the returned implementation
+  lane; findings: none
+- repo-backed current pushed release/source-contract authority remains
+  `92824aa Add default local-Python subprocess runner`
+- accepted implementation files are exactly:
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+- existing dirty control-state files `PLAN.md` and `BUILDLOG.md` are included
+  in the proposed release unit as continuity/routing updates
+- accepted behavior:
+  - `apply_default_local_python_subprocess_for_diagnostic_and_recompile(...)`
+    is an internal helper in `context_ir.runtime_observation_recompile`
+  - the helper mirrors the existing dynamic-import helper signature, builds
+    `make_runtime_probe_default_local_python_subprocess_runner(...)`, and
+    delegates through the existing generic runner-callable recompile bridge
+  - focused coverage proves a real `python -m context_ir.runtime_probe_worker`
+    subprocess for exact non-dynamic `runtime_mutation:locals/0` flows through
+    observed result, admission, and attached-runtime recompile
+  - the helper remains absent from `runtime_observation_recompile.__all__` and
+    the package root
+  - no source changes were made to `src/context_ir/runtime_probe_worker.py` or
+    `src/context_ir/runtime_probe_execution.py`
+  - no runtime request, replay-input, admission, acquisition, analyzer,
+    tool-facade, package-root export, MCP, schema, scoring, compiler, docs,
+    fixture, task, run-spec, public-claim, generalized runtime, or new-form
+    behavior was widened
+- validation basis:
+  - implementation lane reported ruff check passed, ruff format check passed,
+    strict mypy passed, requested pytest set passed with `1016 passed`, and
+    `git diff --check` passed
+  - control reran focused ruff check and format check over
+    `src/context_ir/runtime_observation_recompile.py` and
+    `tests/test_runtime_observation_recompile.py`
+  - control reran the new subprocess proof and internal-surface tests,
+    `2 passed`
+  - `git diff --check` passed
+- proposed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
   - staged: no
   - locally committed: no
   - pushed: no
 - next route:
   - stage exactly the four release-unit files and create the local commit
   - do not push without explicit Ryan authorization
+
+Workspace-only post-`92824aa` route selection:
+
+- selected one implementation lane for an internal default local-Python
+  subprocess recompile helper in
+  `src/context_ir/runtime_observation_recompile.py`
+- current evidence:
+  - exact local-Python subprocess support is pushed for the current
+    dynamic-import, reflective-builtin, runtime-mutation, exec/eval, and
+    metaclass-keyword probe forms
+  - `src/context_ir/runtime_probe_worker.py` has the default exact worker
+    handler table
+  - `src/context_ir/runtime_probe_execution.py` has
+    `make_runtime_probe_default_local_python_subprocess_runner(...)`
+  - `src/context_ir/runtime_observation_recompile.py` has the generic
+    runner-callable recompile bridge and a dynamic-import-only convenience
+    helper
+  - `src/context_ir/tool_facade.py` remains dynamic-import-specific for
+    local-Python subprocess integration
+- rationale:
+  - the internal recompile helper is the smallest next layer after the pushed
+    default parent runner
+  - tool-facade widening should wait until the internal default recompile
+    helper exists and is reviewed in isolation
+- authorized next implementation scope:
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `tests/test_runtime_observation_recompile.py`
+- explicit non-goals for the next implementation lane:
+  - no source changes to `src/context_ir/runtime_probe_worker.py`
+  - no source changes to `src/context_ir/runtime_probe_execution.py` unless a
+    concrete import/typing issue makes a tiny compatibility edit unavoidable
+  - no runtime request, replay-input, admission, acquisition, analyzer,
+    tool-facade, package-root export, MCP, schema, scoring, compiler, docs,
+    fixture, task, run-spec, public-claim, generalized runtime, or new-form
+    changes
+- release state:
+  - selected in workspace: yes
+  - implementation accepted: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
 
 Workspace-only post-`20e6f55` route selection:
 
@@ -2334,9 +2441,10 @@ Workspace-only post-`20e6f55` route selection:
   - release-unit-audit-cleared: yes, first-pass
   - full-regression-cleared: yes, first-pass
   - commit-gating-cleared: yes, first-pass
-  - staged: no
-  - locally committed: no
-  - pushed: no
+  - staged: yes, then committed
+  - locally committed: yes,
+    `92824aa Add default local-Python subprocess runner`
+  - pushed: yes
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess release:
 
@@ -6727,28 +6835,61 @@ sequencing for `c1a12d7` absent new findings.
   subprocess runner factory release unit
 - [x] Commit-gating review for parent-side exact default local-Python
   subprocess runner factory release unit
-- [ ] Local commit creation for parent-side exact default local-Python
+- [x] Local commit creation for parent-side exact default local-Python
   subprocess runner factory release unit
+- [x] Ryan-authorized remote push for parent-side exact default local-Python
+  subprocess runner factory release unit
+- [x] Post-`92824aa` control selection of the next bounded north-star lane
+- [x] Internal default local-Python subprocess recompile helper implementation
+  slice
+- [x] Release-unit audit for internal default local-Python subprocess
+  recompile helper release unit
+- [x] Full regression gate for internal default local-Python subprocess
+  recompile helper release unit
+- [x] Commit-gating review for internal default local-Python subprocess
+  recompile helper release unit
+- [ ] Local commit creation for internal default local-Python subprocess
+  recompile helper release unit
 
 ## What Is In Progress
 
-- Parent-side exact default local-Python subprocess runner factory is accepted
-  in workspace first-pass. The accepted implementation files are
-  `src/context_ir/runtime_probe_execution.py` and
-  `tests/test_runtime_probe_execution.py`; `PLAN.md` and `BUILDLOG.md` are
-  dirty continuity/routing files included in the proposed release unit. The
-  helper composes the currently pushed exact local-Python subprocess forms
-  through the existing default worker and dispatching runner mechanism, while
-  preserving all per-form factories and package-root non-exposure. The
+- Internal default local-Python subprocess recompile helper is accepted in
+  workspace first-pass, release-unit-audit-cleared first-pass, and
+  full-regression-cleared first-pass, with commit-gating cleared first-pass.
+  The accepted implementation files are
+  `src/context_ir/runtime_observation_recompile.py` and
+  `tests/test_runtime_observation_recompile.py`; `PLAN.md` and `BUILDLOG.md`
+  are dirty continuity/routing files included in the proposed release unit.
+  The helper composes the pushed
+  `make_runtime_probe_default_local_python_subprocess_runner(...)` with the
+  existing generic runner-callable recompile bridge and remains internal to
+  `context_ir.runtime_observation_recompile`. Focused coverage proves exact
+  non-dynamic `runtime_mutation:locals/0` through real local-Python subprocess
+  execution, observed result, admission, and attached-runtime recompile. The
   accepted slice did not widen `src/context_ir/runtime_probe_worker.py`,
-  runtime request/replay assembly, admission, acquisition, recompile helpers,
-  tool facade, package-root exports, MCP, schema, scoring, compiler, docs,
-  fixtures, tasks, run specs, public claims, generalized runtime support, or
-  new runtime-probe forms. The read-only release-unit audit passed first-pass
-  with no findings. Full regression passed first-pass with `1630 passed`.
-  Commit-gating review passed first-pass with no findings. Next route is
-  staging exactly the four release-unit files and creating the local commit.
-  It is not push authorization.
+  `src/context_ir/runtime_probe_execution.py`, runtime request/replay
+  assembly, admission, acquisition, analyzer, tool facade, package-root
+  exports, MCP, schema, scoring, compiler, docs, fixtures, tasks, run specs,
+  public claims, generalized runtime support, or new runtime-probe forms. Next
+  route is staging exactly the four release-unit files and creating the local
+  commit. It is not push authorization.
+- Parent-side exact default local-Python subprocess runner factory is
+  accepted, release-gate-cleared, locally committed, and pushed at
+  `92824aa Add default local-Python subprocess runner`. The committed release
+  unit is `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`, and
+  `tests/test_runtime_probe_execution.py`. The helper composes the currently
+  pushed exact local-Python subprocess forms through the existing default
+  worker and dispatching runner mechanism, while preserving all per-form
+  factories and package-root non-exposure. The accepted slice did not widen
+  `src/context_ir/runtime_probe_worker.py`, runtime request/replay assembly,
+  admission, acquisition, recompile helpers, tool facade, package-root
+  exports, MCP, schema, scoring, compiler, docs, fixtures, tasks, run specs,
+  public claims, generalized runtime support, or new runtime-probe forms. The
+  read-only release-unit audit passed first-pass with no findings. Full
+  regression passed first-pass with `1630 passed`. Commit-gating review passed
+  first-pass with no findings. Ryan-authorized push completed. It has
+  release-gate status no-active-gate.
 - Exact `metaclass_behavior:keyword` local-Python subprocess support is
   accepted, release-gate-cleared, locally committed, and pushed at
   `20e6f55 Add metaclass keyword subprocess support`. The pushed release unit is
@@ -7690,23 +7831,31 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: stage exactly the four accepted parent-side exact
-default local-Python subprocess runner release-unit files and create the local
-commit. Current pushed release authority and latest pushed source/contract
-authority are `20e6f55 Add metaclass keyword subprocess support`.
+Immediate next route: stage exactly the four accepted release-unit files and
+create the local commit for the internal default local-Python subprocess
+recompile helper release unit. Current
+pushed release authority and latest pushed source/contract authority are
+`92824aa Add default local-Python subprocess runner`.
 
-The accepted lane is intentionally below the recompile and facade surfaces:
-`src/context_ir/runtime_probe_worker.py` already has a default exact worker
-handler table, while `src/context_ir/runtime_probe_execution.py` still lacks a
-single parent-side runner factory that dispatches all currently pushed exact
-forms on pushed `main`. The accepted workspace slice adds that factory with
-focused `tests/test_runtime_probe_execution.py` coverage only. The proposed
-release unit is `BUILDLOG.md`, `PLAN.md`,
-`src/context_ir/runtime_probe_execution.py`, and
-`tests/test_runtime_probe_execution.py`. The read-only release-unit audit
-passed first-pass with no findings. Full regression passed first-pass with
-`1630 passed`. Commit-gating passed first-pass with no findings. Push remains
-Ryan-gated after local commit creation.
+The prior parent-side exact default local-Python subprocess runner factory is
+pushed at `92824aa Add default local-Python subprocess runner`. The accepted
+workspace slice now composes that pushed default runner with the existing
+generic recompile bridge in
+`src/context_ir/runtime_observation_recompile.py`. The proposed release unit is
+`BUILDLOG.md`, `PLAN.md`,
+`src/context_ir/runtime_observation_recompile.py`, and
+`tests/test_runtime_observation_recompile.py`.
+
+The accepted workspace slice adds an internal recompile helper that uses
+`make_runtime_probe_default_local_python_subprocess_runner(...)` and the
+existing generic `apply_runtime_probe_runner_for_diagnostic_and_recompile(...)`
+bridge. It proves the real subprocess path for exact non-dynamic
+`runtime_mutation:locals/0`. The release-unit audit passed first-pass with no
+findings. Full regression passed first-pass with `1631 passed`. Commit-gating
+passed first-pass with no findings. The exact stage set is `BUILDLOG.md`,
+`PLAN.md`, `src/context_ir/runtime_observation_recompile.py`, and
+`tests/test_runtime_observation_recompile.py`. Push remains Ryan-gated after
+local commit creation.
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 

@@ -18,6 +18,7 @@ from context_ir.runtime_probe_execution import (
     RuntimeProbeRunnerAttemptCollection,
     RuntimeProbeRunnerCallable,
     collect_runtime_probe_execution_attempts_from_runner_requests,
+    make_runtime_probe_default_local_python_subprocess_runner,
     make_runtime_probe_dynamic_import_local_python_subprocess_runner,
     prepare_runtime_probe_runner_requests_for_diagnostic,
 )
@@ -214,6 +215,49 @@ def apply_dynamic_import_local_python_subprocess_for_diagnostic_and_recompile(
 ) -> RuntimeProbeRunnerCallableRecompileApplication:
     """Apply the default dynamic-import local-Python runner, then recompile."""
     runner = make_runtime_probe_dynamic_import_local_python_subprocess_runner(
+        python_executable=python_executable,
+        invocation_contract_revision=invocation_contract_revision,
+        completion_contract_revision=completion_contract_revision,
+    )
+    return apply_runtime_probe_runner_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        previous_result,
+        miss_evidence,
+        delta_budget,
+        repository_snapshot_basis=repository_snapshot_basis,
+        probe_contract_revision=probe_contract_revision,
+        runtime_assumptions=runtime_assumptions,
+        runner_contract_revision=runner_contract_revision,
+        timeout_seconds=timeout_seconds,
+        runner_environment=runner_environment,
+        runner_assumptions=runner_assumptions,
+        runner=runner,
+        embed_fn=embed_fn,
+    )
+
+
+def apply_default_local_python_subprocess_for_diagnostic_and_recompile(
+    program: SemanticProgram,
+    diagnostic: SemanticDiagnosticResult,
+    previous_result: SemanticCompileResult,
+    miss_evidence: SemanticMissEvidence,
+    delta_budget: int,
+    *,
+    python_executable: str,
+    invocation_contract_revision: str,
+    completion_contract_revision: str,
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    probe_contract_revision: str,
+    runtime_assumptions: Iterable[RuntimeProbeReplayField],
+    runner_contract_revision: str,
+    timeout_seconds: int,
+    runner_environment: Iterable[RuntimeProbeReplayField],
+    runner_assumptions: Iterable[RuntimeProbeReplayField],
+    embed_fn: EmbeddingFunction | None = None,
+) -> RuntimeProbeRunnerCallableRecompileApplication:
+    """Apply the default local-Python runner, then recompile."""
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
         python_executable=python_executable,
         invocation_contract_revision=invocation_contract_revision,
         completion_contract_revision=completion_contract_revision,
