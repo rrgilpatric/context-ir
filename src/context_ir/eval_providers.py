@@ -63,6 +63,18 @@ _GLOBALS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _VARS_ZERO_PROBE_TASK_ID = "oracle_signal_vars_zero_probe"
 _VARS_ZERO_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _VARS_ZERO_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
+_EXEC_PROBE_TASK_ID = "oracle_signal_exec_probe"
+_EXEC_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:4"
+_EXEC_RUNTIME_PAYLOAD = (
+    ("execution_outcome", "completed"),
+    ("statement_kind", "pass"),
+)
+_EVAL_PROBE_TASK_ID = "oracle_signal_eval_probe"
+_EVAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:11"
+_EVAL_RUNTIME_PAYLOAD = (
+    ("evaluation_outcome", "returned_value"),
+    ("result_type", "builtins.str"),
+)
 _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION = (
     "runtime-probe-local-python-subprocess:context-ir-eval-provider.1"
 )
@@ -329,6 +341,24 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         boundary_text="vars()",
         snapshot_id="oracle_signal_vars_zero_probe@default-local-python:v1",
         runtime_payload=_VARS_ZERO_RUNTIME_PAYLOAD,
+    ),
+    _EXEC_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_EXEC_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="exec(source)",
+        family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
+        form_label="exec_or_eval:exec/1",
+        boundary_text="exec(source)",
+        snapshot_id="oracle_signal_exec_probe@default-local-python:v1",
+        runtime_payload=_EXEC_RUNTIME_PAYLOAD,
+    ),
+    _EVAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_EVAL_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="eval(source)",
+        family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
+        form_label="exec_or_eval:eval/1",
+        boundary_text="eval(source)",
+        snapshot_id="oracle_signal_eval_probe@default-local-python:v1",
+        runtime_payload=_EVAL_RUNTIME_PAYLOAD,
     ),
 }
 
@@ -1144,8 +1174,9 @@ def _default_local_python_subprocess_fixture(
     if fixture is None:
         raise ValueError(
             "context_ir_default_local_python_subprocess only supports "
-            "oracle_signal_locals_probe, oracle_signal_globals_probe, or "
-            "oracle_signal_vars_zero_probe"
+            "oracle_signal_locals_probe, oracle_signal_globals_probe, "
+            "oracle_signal_vars_zero_probe, oracle_signal_exec_probe, or "
+            "oracle_signal_eval_probe"
         )
     return fixture
 

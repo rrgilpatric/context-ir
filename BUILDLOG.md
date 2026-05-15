@@ -2,6 +2,268 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Exec/Eval Default Subprocess Provider Commit-Gating
+
+- Commit-gating gate result: PASS.
+- Findings: none.
+- Gate evidence:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `53c82df Preserve exec/eval observed replay inputs`
+  - dirty files are exactly the eight release-unit files
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+  - provider support remains fail-closed to exact locals, globals, vars-zero,
+    exec, and eval fixtures only
+  - no run-spec assets, fixtures, exports, MCP, schema/config, scoring,
+    compiler, runtime worker, runtime-probe form, metaclass provider, or
+    generalized provider/runtime support changed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Recommended commit:
+  - subject: `Add exec/eval default subprocess eval provider`
+  - body: `Extend the internal default local-Python subprocess eval provider to
+    exact exec(source) and eval(source) oracle probes now that observed replay
+    inputs are preserved. Keep support fail-closed to the five exact fixtures
+    and cover runtime-free initial compile, zero-budget subprocess recompile,
+    provider-owned runtime provenance, and unsupported/opaque primary truth.`
+- Next control route:
+  - stage exactly the eight release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating
+
+## 2026-05-15 -- Exec/Eval Default Subprocess Provider Full Regression
+
+- Full regression gate result: PASS.
+- Commands run:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed, `1654 passed`
+  - final `git diff --check` passed
+- Final post-regression repo state:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `53c82df Preserve exec/eval observed replay inputs`
+  - dirty files are exactly the eight release-unit files
+  - staged files: none
+  - untracked files: none
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact eight-file release unit before
+    staging, commit, or push
+- Acceptance status: first-pass full regression
+
+## 2026-05-15 -- Exec/Eval Default Subprocess Provider Release-Unit Audit
+
+- Dedicated read-only release-unit audit result: PASS.
+- Findings: none.
+- Audit evidence:
+  - provider support is bounded to exact locals, globals, vars-zero, exec, and
+    eval fixtures through the fixture map and fail-closed lookup
+  - exec/eval constants, subjects, and payloads match the requested contract
+  - initial compile remains runtime-fixture-free
+  - recompile uses `delta_budget=0` and `sys.executable`
+  - exec/eval tests assert exact family/form/boundary/subject/payload,
+    provider-owned runtime provenance, and `unsupported/opaque` primary truth
+  - unsupported task IDs still fail closed in existing provider tests
+  - no run-spec assets, fixtures, public docs/claims, package-root exports,
+    MCP, schema/config, scoring, compiler, runtime worker, runtime-probe form,
+    metaclass provider support, or generalized provider/runtime support changes
+  - `PLAN.md` and `BUILDLOG.md` route correctly to full regression only after
+    audit pass
+- Repo truth matched expected:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `53c82df Preserve exec/eval observed replay inputs`
+  - dirty files are exactly the eight release-unit files
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression for the exact eight-file release unit before
+    commit-gating, staging, commit, or push
+- Acceptance status: first-pass release-unit audit
+
+## 2026-05-15 -- Exec/Eval Default Subprocess Provider Workspace Acceptance
+
+- Reviewed the completed implementation slice extending the internal
+  `context_ir_default_local_python_subprocess` provider to exact
+  `oracle_signal_exec_probe` and `oracle_signal_eval_probe`.
+- Accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_exec_probe.py`
+  - `tests/test_eval_signal_eval_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Findings: none.
+- Accepted behavior:
+  - provider fixture map now supports exact exec/eval fixtures alongside
+    existing locals/globals/vars-zero support
+  - exact exec provider path validates `RuntimeProbeFamily.EXEC_OR_EVAL`,
+    `exec_or_eval:exec/1`, boundary `exec(source)`, subject
+    `unsupported:call:main.py:3:4`, one runner attempt/result, and payload
+    `execution_outcome=completed`, `statement_kind=pass`
+  - exact eval provider path validates `RuntimeProbeFamily.EXEC_OR_EVAL`,
+    `exec_or_eval:eval/1`, boundary `eval(source)`, subject
+    `unsupported:call:main.py:3:11`, one runner attempt/result, and payload
+    `evaluation_outcome=returned_value`, `result_type=builtins.str`
+  - initial compile remains runtime-fixture-free
+  - default local-Python subprocess recompile uses `sys.executable` and
+    `delta_budget=0`
+  - provider-owned runtime provenance is returned from the recompiled response
+    while selected-unit primary truth remains `unsupported/opaque`
+  - unsupported task IDs still fail closed, with updated exact allowed-task
+    wording
+  - no metaclass provider support, run-spec asset, fixture, public docs/claims,
+    package-root export, MCP, run-spec schema/config, scoring, compiler,
+    runtime worker, runtime-probe form, or generalized runtime/provider support
+    change
+- Control validation run:
+  - `.venv/bin/python -m ruff check src/context_ir/eval_providers.py
+    tests/test_eval_signal_exec_probe.py tests/test_eval_signal_eval_probe.py
+    tests/test_eval_signal_locals_probe.py tests/test_eval_signal_globals_probe.py
+    tests/test_eval_signal_vars_zero_probe.py tests/test_eval_runs.py` passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_providers.py
+    tests/test_eval_signal_exec_probe.py tests/test_eval_signal_eval_probe.py
+    tests/test_eval_signal_locals_probe.py tests/test_eval_signal_globals_probe.py
+    tests/test_eval_signal_vars_zero_probe.py tests/test_eval_runs.py` passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - `.venv/bin/python -m pytest tests/test_eval_signal_exec_probe.py
+    tests/test_eval_signal_eval_probe.py tests/test_eval_signal_locals_probe.py
+    tests/test_eval_signal_globals_probe.py
+    tests/test_eval_signal_vars_zero_probe.py tests/test_eval_runs.py
+    tests/test_eval_metrics.py tests/test_eval_results.py -v` passed,
+    `83 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a dedicated read-only release-unit audit over the exact eight-file
+    release unit before full regression, commit-gating, staging, commit, or
+    push
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-15 -- Post-53c82df Exec/Eval Provider Route Selection
+
+- Verified live repo/workspace state after Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `53c82df Preserve exec/eval observed replay inputs`
+  - worktree is clean
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Pushed release closed:
+  - `53c82df Preserve exec/eval observed replay inputs`
+  - accepted, release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed with explicit Ryan
+    authorization
+- Findings for next route:
+  - the existing internal `context_ir_default_local_python_subprocess`
+    provider currently supports only exact `oracle_signal_locals_probe`,
+    `oracle_signal_globals_probe`, and `oracle_signal_vars_zero_probe`
+  - exact `oracle_signal_exec_probe` and `oracle_signal_eval_probe` already
+    have pushed subprocess worker/default-facade support and existing eval
+    fixture/run-spec/test assets
+  - the pushed `53c82df` correction closes the shared default-facade
+    replay-input blocker for exact exec/eval source proof
+  - metaclass provider support remains a valid later candidate, but it is
+    less immediate than using the just-fixed exec/eval source-proof path
+- Selected next bounded north-star lane:
+  - extend `context_ir_default_local_python_subprocess` to exactly
+    `oracle_signal_exec_probe` and `oracle_signal_eval_probe`
+- Rationale:
+  - this is the smallest non-public provider evidence move enabled by
+    `53c82df`
+  - exec/eval share the same `EXEC_OR_EVAL` source-proof family and the same
+    observed replay-input correction
+  - the lane can stay inside the existing provider-name dispatch path without
+    changing run-spec schema, eval assets, public docs/claims, package-root,
+    MCP, scoring, compiler, runtime worker, runtime-probe forms, or generalized
+    provider support
+- Alternatives considered:
+  - exec-only provider support: smaller, but would duplicate the same exact
+    source-proof provider wiring immediately for eval
+  - metaclass provider support: deferred until the exec/eval source-proof
+    provider path is exercised
+  - run-spec asset/provider matrix widening: deferred; provider support can be
+    proved through focused tests using temporary single-provider run specs
+  - public/API/MCP/docs/claims exposure: rejected for this lane
+- Release state:
+  - route selection accepted in workspace: yes, first-pass
+  - implementation launched: no
+  - release-unit audit cleared for the future provider slice: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - issue one bounded implementation prompt for exact exec/eval support inside
+    `context_ir_default_local_python_subprocess`
+- Acceptance status: first-pass route selection
+
+## 2026-05-15 -- Exec/Eval Replay-Input Correction Remote Push
+
+- Ryan authorized remote push for the locally committed exact exec/eval
+  observed replay-input preservation correction.
+- Pushed commit:
+  - `53c82df Preserve exec/eval observed replay inputs`
+- Remote push result:
+  - `main` advanced from
+    `eef7173 Add vars-zero default subprocess eval provider` to
+    `53c82df Preserve exec/eval observed replay inputs`
+  - local `HEAD` and `origin/main` both resolve to `53c82df`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, after one continuity correction
+  - staged: yes, then committed
+  - locally committed: yes,
+    `53c82df Preserve exec/eval observed replay inputs`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane from the pushed `53c82df`
+    authority
+  - do not route this pushed release back to audit, regression,
+    commit-gating, staging, local commit, or push absent new findings
+- Acceptance status: pushed with explicit Ryan authorization
+
 ## 2026-05-15 -- Exec/Eval Replay-Input Correction Commit-Gating Acceptance
 
 - Commit-gating rerun result: PASS.
