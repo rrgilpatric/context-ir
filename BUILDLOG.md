@@ -2,6 +2,278 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Exec/Eval Replay-Input Correction Commit-Gating Acceptance
+
+- Commit-gating rerun result: PASS.
+- Findings: none.
+- Prior P1 continuity finding status: closed.
+  - `PLAN.md` no longer routes the pushed vars-zero provider release to
+    staging
+  - active workspace state routes to this five-file exec/eval correction
+    commit gate
+- Repo truth matched expected:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `eef7173 Add vars-zero default subprocess eval provider`
+  - dirty files are exactly the five release-unit files
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Accepted scope:
+  - preserves `observed_replay_inputs` during runtime probe execution attempt
+    revalidation
+  - allows only replay-artifact identity or exact observed source-proof replay
+    merges during runner-request result assembly
+  - adds focused exec/eval coverage through runner-request assembly and
+    default local-Python subprocess recompile
+  - no provider support, metaclass provider support, public docs/claims,
+    package-root exports, MCP, run-spec schema/config, eval assets, scoring,
+    compiler, runtime worker, or new runtime-probe forms
+- Accepted commit message:
+  - subject: `Preserve exec/eval observed replay inputs`
+  - body:
+    `Carry exact exec/eval observed replay-input proof through runtime probe
+    execution attempt revalidation and runner-request result assembly.`
+
+    `Keep the correction limited to replay-artifact validation and focused
+    default local-Python subprocess recompile coverage without opening
+    provider support or public/runtime surface changes.`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, after one continuity correction
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the five release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: commit-gating accepted after one continuity correction
+
+## 2026-05-15 -- Exec/Eval Replay-Input Correction Full Regression
+
+- Full regression gate result: PASS.
+- Commands run:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed, `1650 passed`
+  - final `git diff --check` passed
+- Final post-regression repo state:
+  - branch `main`
+  - dirty files are exactly the five release-unit files
+  - staged files: none
+  - untracked files: none
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact five-file release unit before
+    staging, commit, or push
+- Acceptance status: first-pass full regression
+
+## 2026-05-15 -- Exec/Eval Replay-Input Correction Release-Unit Audit
+
+- Dedicated read-only release-unit audit result: PASS.
+- Findings: none.
+- Audit evidence:
+  - `_validate_execution_attempt()` revalidates with
+    `observed_replay_inputs`
+  - runner-attempt replay artifact validation allows identity or exact
+    observed merge only, then calls source-proof validation
+  - exact exec/eval proof remains constrained to expected source shape/hash
+    and request boundary
+  - runner-request assembly tests cover exact exec/eval observed proof
+  - default local-Python subprocess recompile tests cover exact exec/eval
+    through observed result/admission
+  - `PLAN.md` and `BUILDLOG.md` route this as workspace-only accepted and
+    next to audit before full regression
+- Repo truth matched expected:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `eef7173 Add vars-zero default subprocess eval provider`
+  - dirty files are exactly the five release-unit files
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression for the exact five-file release unit before
+    commit-gating, staging, commit, or push
+- Acceptance status: first-pass release-unit audit
+
+## 2026-05-15 -- Exec/Eval Replay-Input Correction Workspace Acceptance
+
+- Reviewed the completed correction slice for exact exec/eval observed
+  replay-input preservation through runtime probe execution/default facade
+  recompile.
+- Accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_observation_recompile.py`
+- Findings: none.
+- Accepted behavior:
+  - `_validate_execution_attempt()` now preserves
+    `observed_replay_inputs` during attempt revalidation
+  - runner-attempt collection validation accepts either replay-artifact
+    identity or the exact observed replay-input merge form for observed
+    results
+  - exact exec/eval observed replay inputs remain restricted by the existing
+    source-proof validation path
+  - regression coverage proves exact `exec(source)` and `eval(source)`
+    through runner-request assembly and default local-Python subprocess
+    recompile
+- Control validation run:
+  - `.venv/bin/python -m ruff check
+    src/context_ir/runtime_probe_execution.py
+    tests/test_runtime_probe_execution.py
+    tests/test_runtime_observation_recompile.py tests/test_tool_facade.py`
+    passed
+  - `.venv/bin/python -m ruff format --check
+    src/context_ir/runtime_probe_execution.py
+    tests/test_runtime_probe_execution.py
+    tests/test_runtime_observation_recompile.py tests/test_tool_facade.py`
+    passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - `.venv/bin/python -m pytest tests/test_runtime_probe_execution.py
+    tests/test_runtime_observation_recompile.py tests/test_tool_facade.py -v`
+    passed, `388 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a dedicated read-only release-unit audit over the exact five-file
+    release unit before full regression, commit-gating, staging, commit, or
+    push
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-15 -- Post-eef7173 Exec/Eval Replay-Input Correction Route Selection
+
+- Verified live repo/workspace state before selecting the next bounded
+  north-star lane:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `eef7173 Add vars-zero default subprocess eval provider`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Reviewed the pushed internal
+  `context_ir_default_local_python_subprocess` provider, the default
+  local-Python subprocess facade, and the remaining replay-equivalent fixture
+  candidates.
+- Findings:
+  - exact `oracle_signal_exec_probe` and `oracle_signal_eval_probe` both plan
+    correctly through diagnostics:
+    - `RuntimeProbeFamily.EXEC_OR_EVAL` /
+      `exec_or_eval:exec/1`, boundary `exec(source)`, subject
+      `unsupported:call:main.py:3:4`
+    - `RuntimeProbeFamily.EXEC_OR_EVAL` /
+      `exec_or_eval:eval/1`, boundary `eval(source)`, subject
+      `unsupported:call:main.py:3:11`
+  - both fail through the default local-Python subprocess recompile path with
+    `ValueError: exec/eval runtime probe observations require observed replay
+    inputs`
+  - root-cause inspection found `_validate_execution_attempt()` reconstructs a
+    `RuntimeProbeExecutionAttempt` without copying
+    `observed_replay_inputs`, so exact exec/eval observed attempts can fail
+    during result-batch assembly even when the worker/runner emitted the
+    source proof
+  - exact `oracle_signal_metaclass_behavior_probe` dry-runs successfully
+    through the default facade, producing payload
+    `class_creation_outcome=created_class`,
+    `created_class_qualified_name=main.Example`, and
+    `selected_metaclass_qualified_name=main.Meta`, with unsupported/opaque
+    primary truth preserved
+- Selected next bounded north-star lane:
+  - fix exact exec/eval observed replay-input preservation through runtime
+    probe execution attempt revalidation and default-facade recompile
+- Rationale:
+  - exec/eval are already pushed exact subprocess forms and already included
+    in the pushed default runner; the default facade failing for them is a
+    foundational integration gap
+  - fixing the shared preservation bug is smaller and more prerequisite-like
+    than adding another provider fixture
+  - the lane should not add provider support yet; provider expansion for
+    exec/eval can follow only after the default facade proves exact source
+    proof end-to-end
+- Alternatives considered:
+  - extend the provider to exact metaclass behavior now: deferred because it
+    works today but is less foundational than the exec/eval default-facade
+    correction
+  - extend the provider to exact exec/eval now: rejected until observed replay
+    inputs survive default-facade result assembly
+  - broaden provider support across all remaining fixtures: deferred because
+    it would mix unrelated proof shapes and hide the exec/eval integration bug
+  - public docs/claims, MCP, package-root, run-spec schema/config, eval asset,
+    scoring, compiler, runtime worker, or new runtime-probe form changes:
+    rejected for this lane
+- Release state:
+  - route selection accepted in workspace: yes, first-pass
+  - implementation launched: no
+  - release-unit audit cleared for the future correction: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - issue one bounded correction implementation prompt for exact exec/eval
+    observed replay-input preservation in runtime probe execution/default
+    facade recompile
+- Acceptance status: first-pass route selection
+
+## 2026-05-15 -- Vars Zero Default Subprocess Eval Provider Remote Push
+
+- Ryan authorized remote push for the locally committed exact
+  `oracle_signal_vars_zero_probe` support inside the internal
+  `context_ir_default_local_python_subprocess` provider.
+- Pushed commit:
+  - `eef7173 Add vars-zero default subprocess eval provider`
+- Remote push result:
+  - `main` advanced from
+    `037e64b Add globals default subprocess eval provider` to
+    `eef7173 Add vars-zero default subprocess eval provider`
+  - local `HEAD` and `origin/main` both resolve to `eef7173`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `eef7173 Add vars-zero default subprocess eval provider`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane from the pushed `eef7173`
+    authority
+  - do not route this pushed release back to audit, regression,
+    commit-gating, staging, local commit, or push absent new findings
+- Acceptance status: pushed with explicit Ryan authorization
+
 ## 2026-05-15 -- Vars Zero Default Subprocess Eval Provider Local Commit Action
 
 - The exact `oracle_signal_vars_zero_probe` support inside the internal

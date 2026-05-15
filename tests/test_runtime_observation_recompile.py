@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import sys
 import textwrap
+from collections.abc import Callable
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 
@@ -54,6 +55,11 @@ from context_ir.semantic_types import (
     SourceSpan,
 )
 
+_EXEC_PASS_SOURCE_SHA256 = (
+    "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+)
+_EVAL_SOURCE_SHA256 = "c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199"
+
 
 def _semantic_program(tmp_path: Path) -> SemanticProgram:
     """Run the accepted semantic pipeline through dependency/frontier derivation."""
@@ -93,6 +99,34 @@ def _write_local_python_dynamic_import_program(tmp_path: Path) -> None:
 
             def run() -> None:
                 importlib.import_module("plugins.recompile_subprocess")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
+def _write_local_python_exec_program(tmp_path: Path) -> None:
+    """Write a replay target with one exact ``exec(source)`` boundary."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> None:
+                source = "pass"
+                exec(source)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
+def _write_local_python_eval_program(tmp_path: Path) -> None:
+    """Write a replay target with one exact ``eval(source)`` boundary."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> str:
+                source = '"eval-probe-value"'
+                return eval(source)
             """
         ).lstrip(),
         encoding="utf-8",
@@ -1399,6 +1433,188 @@ def test_default_local_python_subprocess_recompile_helper_observes_locals(
     assert recompiled_boundary.has_attached_runtime_provenance is True
     assert (
         unsupported_id in recompile_application.recompile_result.newly_selected_unit_ids
+    )
+
+
+def _assert_default_local_python_subprocess_recompile_observes_exact_source(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    write_program: Callable[[Path], None],
+    boundary_text: str,
+    compile_query: str,
+    form_label: str,
+    expected_payload: tuple[runtime_probe_results.RuntimeProbeReplayField, ...],
+    expected_observed_replay_inputs: tuple[
+        runtime_probe_results.RuntimeProbeReplayField,
+        ...,
+    ],
+) -> None:
+    """Assert the default worker carries exact source proof through recompile."""
+    write_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    unsupported_id = _unsupported_id_for(program, boundary_text)
+    previous_result = compile_semantic_context(
+        program,
+        compile_query,
+        budget=32,
+    )
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence=boundary_text,
+    )
+    diagnostic = diagnose_semantic_miss(previous_result, miss_evidence, program)
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert diagnostic.omitted_unit_ids == (unsupported_id,)
+    assert len(plan.requests) == 1
+    request = plan.requests[0]
+    assert request.boundary_text == boundary_text
+    assert (
+        request.family_label is runtime_probe_requests.RuntimeProbeFamily.EXEC_OR_EVAL
+    )
+    assert request.form_label == form_label
+    assert request.replay_target_seed == "main.run"
+
+    original_run = runtime_probe_execution.subprocess.run
+    subprocess_invocations: list[tuple[str, ...]] = []
+
+    def spying_run(*args: object, **kwargs: object) -> object:
+        argv = args[0]
+        if isinstance(argv, tuple | list):
+            subprocess_invocations.append(tuple(str(part) for part in argv))
+        else:
+            subprocess_invocations.append((str(argv),))
+        return original_run(*args, **kwargs)
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", spying_run)
+
+    result = apply_default_local_python_subprocess_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        previous_result,
+        miss_evidence,
+        delta_budget=160,
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+        repository_snapshot_basis=_snapshot_basis(),
+        probe_contract_revision="runtime-probe-contract:test.1",
+        runtime_assumptions=_runner_runtime_assumptions(),
+        runner_contract_revision="runtime-probe-runner:test.1",
+        timeout_seconds=30,
+        runner_environment=_local_python_runner_environment(tmp_path),
+        runner_assumptions=_runner_assumptions(),
+    )
+    collection = result.runner_attempt_collection
+    recompile_application = result.result_batch_recompile_application
+    attempt = collection.attempts[0]
+    observed_result = collection.result_batch.results[0]
+    admission = recompile_application.observation_application.admissions[0]
+    recompiled_boundary = _boundary_for(
+        recompile_application.recompile_result.diagnostic,
+        unsupported_id,
+    )
+    selections = (
+        recompile_application.recompile_result.compile_result.optimization.selections
+    )
+    selected_trace = next(
+        selection.trace_summary
+        for selection in selections
+        if selection.unit_id == unsupported_id
+    )
+    assert subprocess_invocations == [
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+    ]
+    assert isinstance(result, RuntimeProbeRunnerCallableRecompileApplication)
+    assert collection.runner_request_batch.request_ids == plan.request_ids
+    assert collection.runner_request_batch.runner_requests[0].request is request
+    assert attempt.request is request
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == expected_payload
+    assert attempt.observed_replay_inputs == expected_observed_replay_inputs
+    assert attempt.failure_summary is None
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.request is request
+    assert observed_result.normalized_payload == expected_payload
+    assert observed_result.replay_artifact.replay_inputs == (
+        *attempt.execution_input.replay_artifact.replay_inputs,
+        *expected_observed_replay_inputs,
+    )
+    assert observed_result.is_admissible_runtime_backed_proof is True
+    assert admission.request is request
+    assert admission.request_id == observed_result.request_id
+    assert admission.observation.normalized_payload == (
+        _runtime_fields_from_probe_fields(expected_payload)
+    )
+    assert admission.observation.replay_inputs == (
+        _runtime_fields_from_probe_fields(observed_result.replay_artifact.replay_inputs)
+    )
+    _assert_observation_copied_probe_result(
+        admission.observation,
+        observed_result,
+    )
+    assert recompile_application.result_batch_admission.non_proof_results == ()
+    assert recompile_application.non_proof_results == ()
+    assert recompile_application.observation_application.updated_program is not program
+    assert recompiled_boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert (
+        recompiled_boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    )
+    assert recompiled_boundary.has_attached_runtime_provenance is True
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
+    assert (
+        unsupported_id in recompile_application.recompile_result.newly_selected_unit_ids
+    )
+
+
+def test_default_local_python_subprocess_recompile_helper_observes_exact_exec(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The default helper carries exact-exec source proof through recompile."""
+    _assert_default_local_python_subprocess_recompile_observes_exact_source(
+        tmp_path,
+        monkeypatch,
+        write_program=_write_local_python_exec_program,
+        boundary_text="exec(source)",
+        compile_query="exec source",
+        form_label="exec_or_eval:exec/1",
+        expected_payload=(
+            _probe_field("execution_outcome", "completed"),
+            _probe_field("statement_kind", "pass"),
+        ),
+        expected_observed_replay_inputs=(
+            _probe_field("source_shape", "literal_statement"),
+            _probe_field("source_sha256", _EXEC_PASS_SOURCE_SHA256),
+        ),
+    )
+
+
+def test_default_local_python_subprocess_recompile_helper_observes_exact_eval(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The default helper carries exact-eval source proof through recompile."""
+    _assert_default_local_python_subprocess_recompile_observes_exact_source(
+        tmp_path,
+        monkeypatch,
+        write_program=_write_local_python_eval_program,
+        boundary_text="eval(source)",
+        compile_query="eval source",
+        form_label="exec_or_eval:eval/1",
+        expected_payload=(
+            _probe_field("evaluation_outcome", "returned_value"),
+            _probe_field("result_type", "builtins.str"),
+        ),
+        expected_observed_replay_inputs=(
+            _probe_field("source_shape", "literal_expression"),
+            _probe_field("source_sha256", _EVAL_SOURCE_SHA256),
+        ),
     )
 
 

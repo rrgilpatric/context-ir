@@ -8079,6 +8079,80 @@ def test_assemble_eval_observed_result_merges_replay_proof_without_mutating_inpu
     )
 
 
+def test_assemble_runner_request_exec_observed_result_preserves_source_proof() -> None:
+    """Runner-request revalidation preserves exact-exec observed replay proof."""
+    request = _exec_request()
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    input_item = runner_request.execution_input
+    original_replay_artifact = input_item.replay_artifact
+    original_replay_inputs = original_replay_artifact.replay_inputs
+    observed_replay_inputs = (
+        _field("source_shape", "literal_statement"),
+        _field("source_sha256", _EXEC_PASS_SOURCE_SHA256),
+    )
+    attempt = _execution_attempt(
+        input_item,
+        normalized_payload=(
+            _field("execution_outcome", "completed"),
+            _field("statement_kind", "pass"),
+        ),
+        durable_artifact_reference=(
+            f"artifact://runtime-probe/exec-source/{request.request_id}.json"
+        ),
+        observed_replay_inputs=observed_replay_inputs,
+    )
+
+    result_batch = _assemble_runner_request_result_batch(runner_batch, (attempt,))
+
+    result = result_batch.results[0]
+    assert isinstance(result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert result.replay_artifact is not original_replay_artifact
+    assert input_item.replay_artifact is original_replay_artifact
+    assert input_item.replay_artifact.replay_inputs == original_replay_inputs
+    assert result.replay_artifact.replay_inputs == (
+        *original_replay_inputs,
+        *observed_replay_inputs,
+    )
+
+
+def test_assemble_runner_request_eval_observed_result_preserves_source_proof() -> None:
+    """Runner-request revalidation preserves exact-eval observed replay proof."""
+    request = _eval_request()
+    runner_batch = _runner_request_batch(_materialized_batch(_plan(request)))
+    runner_request = runner_batch.runner_requests[0]
+    input_item = runner_request.execution_input
+    original_replay_artifact = input_item.replay_artifact
+    original_replay_inputs = original_replay_artifact.replay_inputs
+    observed_replay_inputs = (
+        _field("source_shape", "literal_expression"),
+        _field("source_sha256", _EVAL_SOURCE_SHA256),
+    )
+    attempt = _execution_attempt(
+        input_item,
+        normalized_payload=(
+            _field("evaluation_outcome", "returned_value"),
+            _field("result_type", "builtins.str"),
+        ),
+        durable_artifact_reference=(
+            f"artifact://runtime-probe/eval-source/{request.request_id}.json"
+        ),
+        observed_replay_inputs=observed_replay_inputs,
+    )
+
+    result_batch = _assemble_runner_request_result_batch(runner_batch, (attempt,))
+
+    result = result_batch.results[0]
+    assert isinstance(result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert result.replay_artifact is not original_replay_artifact
+    assert input_item.replay_artifact is original_replay_artifact
+    assert input_item.replay_artifact.replay_inputs == original_replay_inputs
+    assert result.replay_artifact.replay_inputs == (
+        *original_replay_inputs,
+        *observed_replay_inputs,
+    )
+
+
 def test_assemble_runner_request_results_supports_empty_batch() -> None:
     """Empty runner-request batches assemble into empty result batches."""
     input_batch = _materialized_batch(

@@ -41,11 +41,83 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`037e64b Add globals default subprocess eval provider`. The latest pushed
+`eef7173 Add vars-zero default subprocess eval provider`. The latest pushed
 source/contract authority is also
-`037e64b Add globals default subprocess eval provider`. Live git refs
+`eef7173 Add vars-zero default subprocess eval provider`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
+
+Pushed internal default local-Python subprocess vars-zero eval provider release:
+`eef7173 Add vars-zero default subprocess eval provider`. This commit contains
+the accepted exact `oracle_signal_vars_zero_probe` support inside the internal
+`context_ir_default_local_python_subprocess` provider. It is pushed with
+explicit Ryan authorization and must not be routed back to release-unit audit,
+full regression, commit-gating, staging, local commit, or push absent new
+findings.
+
+Workspace-only post-`eef7173` routing state:
+
+- live repo/workspace state was verified after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `eef7173 Add vars-zero default subprocess eval provider`
+  - no source/test implementation diff remains
+- next route: select the next bounded north-star lane from the pushed
+  `eef7173` authority
+
+Workspace-only post-`eef7173` route selection:
+
+- reviewed live repo/workspace state, default subprocess provider scope, the
+  default local-Python subprocess facade, and remaining replay-equivalent
+  fixture candidates; findings below
+- exact `oracle_signal_exec_probe` and `oracle_signal_eval_probe` both plan
+  correctly through diagnostics:
+  - `RuntimeProbeFamily.EXEC_OR_EVAL` / `exec_or_eval:exec/1`, boundary
+    `exec(source)`, subject `unsupported:call:main.py:3:4`
+  - `RuntimeProbeFamily.EXEC_OR_EVAL` / `exec_or_eval:eval/1`, boundary
+    `eval(source)`, subject `unsupported:call:main.py:3:11`
+- both exec/eval default-facade dry runs fail with
+  `ValueError: exec/eval runtime probe observations require observed replay
+  inputs`
+- root-cause inspection found `_validate_execution_attempt()` reconstructs a
+  `RuntimeProbeExecutionAttempt` without copying `observed_replay_inputs`,
+  so exact exec/eval observed attempts can fail during result-batch assembly
+  even when the worker/runner emitted exact source proof
+- exact `oracle_signal_metaclass_behavior_probe` dry-runs successfully through
+  the default facade, but provider expansion is deferred because the exec/eval
+  issue is a more foundational integration gap in already-pushed exact forms
+- selected next bounded north-star lane: fix exact exec/eval observed
+  replay-input preservation through runtime probe execution attempt
+  revalidation and default local-Python subprocess facade recompile
+- non-goals for the selected lane:
+  - no provider support for exec/eval
+  - no metaclass provider support
+  - no public docs/claims, package-root, MCP, run-spec schema/config, eval
+    asset, scoring, compiler, runtime worker, or new runtime-probe form change
+- correction implementation is accepted in workspace first-pass with no
+  findings:
+  - `_validate_execution_attempt()` preserves `observed_replay_inputs`
+  - runner-attempt collection validation accepts only replay-artifact identity
+    or the exact observed replay-input merge form for observed results
+  - regression coverage proves exact `exec(source)` and `eval(source)` through
+    runner-request assembly and default local-Python subprocess recompile
+- accepted release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_observation_recompile.py`
+- control validation passed: focused ruff check, focused ruff format check,
+  strict mypy, targeted pytest with `388 passed`, and clean
+  `git diff --check`
+- dedicated read-only release-unit audit passed first-pass with no findings
+- full regression passed first-pass: ruff check, ruff format check, strict
+  mypy, full pytest with `1650 passed`, and clean final `git diff --check`
+- commit-gating passed after one continuity correction that removed a stale
+  active vars-zero provider staging route from `PLAN.md`
+- release state: workspace-only accepted, release-unit-audit-cleared,
+  full-regression-cleared, commit-gating-cleared, not staged, not locally
+  committed, and not pushed
+- next route: stage exactly the five-file correction release unit and create
+  the local commit
 
 Pushed internal default local-Python subprocess globals eval provider release:
 `037e64b Add globals default subprocess eval provider`. This commit contains
@@ -7494,32 +7566,59 @@ sequencing for `c1a12d7` absent new findings.
   vars-zero provider release unit
 - [x] Commit-gating review for internal default local-Python subprocess
   vars-zero provider release unit
-- [ ] Local commit creation for internal default local-Python subprocess
+- [x] Local commit creation for internal default local-Python subprocess
   vars-zero provider release unit
+- [x] Ryan-authorized remote push for internal default local-Python subprocess
+  vars-zero provider release unit
+- [x] Post-`eef7173` control selection of the next bounded north-star lane
+- [x] Exec/eval observed replay-input preservation correction for default
+  local-Python subprocess recompile
+- [x] Release-unit audit for exec/eval observed replay-input preservation
+  correction release unit
+- [x] Full regression gate for exec/eval observed replay-input preservation
+  correction release unit
+- [x] Commit-gating review for exec/eval observed replay-input preservation
+  correction release unit
+- [ ] Local commit creation for exec/eval observed replay-input preservation
+  correction release unit
 
 ## What Is In Progress
 
-- Exact `oracle_signal_vars_zero_probe` support inside
-  `context_ir_default_local_python_subprocess` is accepted in workspace
-  first-pass. The accepted release unit is `BUILDLOG.md`, `PLAN.md`,
-  `src/context_ir/eval_providers.py`,
-  `tests/test_eval_signal_globals_probe.py`,
-  `tests/test_eval_signal_locals_probe.py`, and
-  `tests/test_eval_signal_vars_zero_probe.py`. The implementation preserves
-  exact locals/globals provider behavior, adds exact vars-zero fixture support
-  through the pushed default local-Python subprocess facade, validates
-  `RuntimeProbeFamily.REFLECTIVE_BUILTIN` /
-  `reflective_builtin:vars/0`, boundary `vars()`, subject
-  `unsupported:call:main.py:2:11`, and payload
-  `lookup_outcome=returned_namespace`, returns provider-owned runtime
-  provenance, and keeps primary truth `unsupported/opaque`. Focused control
+- Exact exec/eval observed replay-input preservation for default local-Python
+  subprocess recompile is accepted in workspace first-pass with no findings.
+  The accepted release unit is `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/runtime_probe_execution.py`,
+  `tests/test_runtime_probe_execution.py`, and
+  `tests/test_runtime_observation_recompile.py`. The correction preserves
+  `observed_replay_inputs` during execution-attempt revalidation, allows
+  runner-attempt collection validation to accept only replay-artifact identity
+  or the exact observed replay-artifact merge form for observed results, and
+  proves exact `exec(source)` and `eval(source)` through runner-request
+  assembly and default local-Python subprocess recompile. Focused control
   validation passed with ruff, format check, strict mypy, targeted pytest
-  reporting `57 passed`, and clean `git diff --check`. The dedicated read-only
-  release-unit audit passed first-pass with no findings. Full regression
-  passed first-pass with `1646 passed`. The release unit is not
-  staged, not locally committed, and not pushed. Commit-gating passed
-  first-pass with no findings. Route next to staging exactly the six
-  release-unit files and creating the local commit.
+  reporting `388 passed`, and clean `git diff --check`. This release unit is
+  release-unit-audit-cleared first-pass with no findings and
+  full-regression-cleared first-pass with ruff, format check, strict mypy, full
+  pytest reporting `1650 passed`, and clean final `git diff --check`. It is
+  commit-gating-cleared after one continuity correction, not staged, not
+  locally committed, and not pushed. Next route is staging exactly the
+  five-file correction release unit and creating the local commit.
+- Post-`eef7173` control selection is accepted in workspace first-pass. Live
+  git state was verified as branch `main`, `HEAD` and `origin/main` at
+  `eef7173 Add vars-zero default subprocess eval provider`, no staged files,
+  no untracked files, and only `BUILDLOG.md` and `PLAN.md` dirty before that
+  route update. The selected correction implementation is now accepted
+  workspace-only; do not add provider support, metaclass support, public
+  docs/claims, package-root exports, MCP, run-spec schema/config, eval assets,
+  scoring, compiler, runtime worker, or new runtime-probe forms in this
+  release unit.
+- Exact `oracle_signal_vars_zero_probe` support inside
+  `context_ir_default_local_python_subprocess` is locally committed and pushed
+  at `eef7173 Add vars-zero default subprocess eval provider` with explicit
+  Ryan authorization. Do not route it back to release-unit audit, full
+  regression, commit-gating, staging, local commit, or push absent new
+  findings. Route next to selection of the next bounded north-star lane from
+  the pushed `eef7173` authority.
 - Exact `oracle_signal_globals_probe` support inside
   `context_ir_default_local_python_subprocess` is locally committed and pushed
   at `037e64b Add globals default subprocess eval provider` with explicit Ryan
@@ -8669,30 +8768,45 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: stage exactly the accepted, audit-cleared,
-full-regression-cleared, commit-gating-cleared six-file release unit and create
-the local commit. If live git already shows the release unit locally committed,
-hold for explicit Ryan push authorization.
+Immediate next route: stage exactly the five-file exec/eval observed
+replay-input preservation correction release unit and create the local commit.
 Current pushed release authority and latest pushed source/contract authority are
-`037e64b Add globals default subprocess eval provider`.
+`eef7173 Add vars-zero default subprocess eval provider`.
 
-The pushed globals provider release is closed/no-active-gate at
-`037e64b Add globals default subprocess eval provider`; do not route it back to
-release-unit audit, full regression, commit-gating, staging, local commit, or
-push absent new findings.
+The pushed vars-zero provider release is closed/no-active-gate at
+`eef7173 Add vars-zero default subprocess eval provider`; do not route it back
+to release-unit audit, full regression, commit-gating, staging, local commit,
+or push absent new findings.
 
-The proposed release unit is exactly `BUILDLOG.md`, `PLAN.md`,
+The selected correction is accepted in workspace first-pass with no findings.
+It preserves exact exec/eval `observed_replay_inputs` through
+runtime-probe execution attempt revalidation and proves default-facade
+recompile for exact `exec(source)` and `eval(source)`. The exact release unit
+is `BUILDLOG.md`, `PLAN.md`, `src/context_ir/runtime_probe_execution.py`,
+`tests/test_runtime_probe_execution.py`, and
+`tests/test_runtime_observation_recompile.py`. Focused validation passed with
+ruff, format check, strict mypy, targeted pytest with `388 passed`, and clean
+`git diff --check`. Dedicated read-only release-unit audit passed first-pass
+with no findings. Full regression passed first-pass with ruff, format check,
+strict mypy, full pytest reporting `1650 passed`, and clean final
+`git diff --check`. Commit-gating passed after one continuity correction. It
+is not staged, not locally committed, and not pushed. Do not open exec/eval
+default-subprocess eval-provider support until this correction release unit is
+locally committed; remote push remains Ryan-gated.
+
+Historical vars-zero provider release unit was exactly `BUILDLOG.md`, `PLAN.md`,
 `src/context_ir/eval_providers.py`,
 `tests/test_eval_signal_globals_probe.py`,
 `tests/test_eval_signal_locals_probe.py`, and
-`tests/test_eval_signal_vars_zero_probe.py`. The vars-zero implementation is
-workspace-only accepted first-pass and focused validation passed, including
-strict mypy and targeted pytest with `57 passed`. The release-unit audit
+`tests/test_eval_signal_vars_zero_probe.py`. The vars-zero implementation was
+accepted first-pass and focused validation passed, including strict mypy and
+targeted pytest with `57 passed`. The release-unit audit
 passed first-pass with no findings. Full regression passed first-pass with
-`1646 passed`. Commit-gating passed first-pass with no findings. It is not
-staged, not locally committed, and not pushed. Stage exactly the six release
-unit files and create the local commit using the accepted commit message. Do
-not push without explicit Ryan authorization.
+`1646 passed`. Commit-gating passed first-pass with no findings. The exact
+release unit was locally committed as
+`eef7173 Add vars-zero default subprocess eval provider` and pushed with
+explicit Ryan authorization. Do not reopen this pushed release absent new
+findings.
 
 The prior parent-side exact default local-Python subprocess runner factory is
 pushed at `92824aa Add default local-Python subprocess runner`, and the

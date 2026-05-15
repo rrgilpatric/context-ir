@@ -2573,11 +2573,71 @@ def _validate_runner_attempt_collection_result_batch(
                 "runtime probe runner attempt collection result request must be "
                 "runner request request"
             )
-        if result.replay_artifact is not runner_request.replay_artifact:
-            raise ValueError(
-                "runtime probe runner attempt collection result replay_artifact must "
-                "be runner request replay_artifact"
-            )
+        _validate_runner_attempt_collection_result_replay_artifact(
+            result=result,
+            runner_request=runner_request,
+        )
+
+
+def _validate_runner_attempt_collection_result_replay_artifact(
+    *,
+    result: RuntimeProbeResult,
+    runner_request: RuntimeProbeRunnerRequest,
+) -> None:
+    """Allow only identity replay artifacts or exact observed source-proof merges."""
+    if result.replay_artifact is runner_request.replay_artifact:
+        return
+    if not isinstance(result, RuntimeProbeObservedResult):
+        raise ValueError(
+            "runtime probe runner attempt collection result replay_artifact must "
+            "be runner request replay_artifact"
+        )
+
+    base_artifact = runner_request.replay_artifact
+    observed_artifact = result.replay_artifact
+    if (
+        observed_artifact.probe_identifier != base_artifact.probe_identifier
+        or observed_artifact.probe_contract_revision
+        != base_artifact.probe_contract_revision
+        or observed_artifact.repository_snapshot_basis
+        != base_artifact.repository_snapshot_basis
+        or observed_artifact.replay_target != base_artifact.replay_target
+        or observed_artifact.replay_selector != base_artifact.replay_selector
+        or observed_artifact.runtime_assumptions != base_artifact.runtime_assumptions
+    ):
+        raise ValueError(
+            "runtime probe runner attempt collection observed result replay_artifact "
+            "must preserve runner request replay_artifact metadata"
+        )
+
+    base_replay_inputs = base_artifact.replay_inputs
+    if observed_artifact.replay_inputs[: len(base_replay_inputs)] != (
+        base_replay_inputs
+    ):
+        raise ValueError(
+            "runtime probe runner attempt collection observed result replay_inputs "
+            "must preserve runner request replay_inputs prefix"
+        )
+    observed_replay_inputs = observed_artifact.replay_inputs[len(base_replay_inputs) :]
+    if not observed_replay_inputs:
+        raise ValueError(
+            "runtime probe runner attempt collection observed result replay_artifact "
+            "must append observed replay inputs when it is not the runner request "
+            "replay_artifact"
+        )
+    if observed_artifact.replay_inputs != _merge_observed_replay_inputs(
+        base_replay_inputs=base_replay_inputs,
+        observed_replay_inputs=observed_replay_inputs,
+    ):
+        raise ValueError(
+            "runtime probe runner attempt collection observed result replay_inputs "
+            "must be runner request replay_inputs plus observed replay inputs"
+        )
+    _validate_observed_replay_inputs_for_request(
+        request=runner_request.request,
+        observed_replay_inputs=observed_replay_inputs,
+        require_for_exact_source_probe=True,
+    )
 
 
 def _request_plan_for_diagnostic_preparation(
@@ -2781,6 +2841,7 @@ def _validate_execution_attempt(attempt: RuntimeProbeExecutionAttempt) -> None:
         outcome=attempt.outcome,
         normalized_payload=attempt.normalized_payload,
         durable_artifact_reference=attempt.durable_artifact_reference,
+        observed_replay_inputs=attempt.observed_replay_inputs,
         failure_summary=attempt.failure_summary,
         failure_detail_fields=attempt.failure_detail_fields,
     )
