@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Dir Zero Default Subprocess Provider Push
+
+- Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
+  locally committed dir-zero default subprocess provider release with explicit
+  Ryan authorization.
+- Pushed commits:
+  - `686dd18 Add dir-zero default subprocess eval provider`
+  - `bda2800 Sync dir-zero provider release routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `bda2800 Sync dir-zero provider release routing`
+  - no source/test/control diff remains before this post-push continuity sync
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `686dd18`
+  - pushed: yes, with release routing through `bda2800`
+- Routing decision:
+  - do not route `686dd18` or `bda2800` back to release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - next route is the Ryan-authorized tangible north-star checkpoint before
+    continuing broad fixture-by-fixture provider expansion
+- Acceptance status: first-pass push
+
 ## 2026-05-15 -- Dir Zero Default Subprocess Provider Local Commit
 
 - Created the local release commit for the audit-cleared, full-regression

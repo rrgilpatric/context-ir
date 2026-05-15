@@ -41,13 +41,67 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`accdb89 Sync dir-zero correction release routing`. The latest pushed
+`bda2800 Sync dir-zero provider release routing`. The latest pushed
 source/contract authority is
-`c3e08c4 Correct dir-zero eval runtime evidence`. The latest pushed
+`686dd18 Add dir-zero default subprocess eval provider`. The latest pushed
 control-state authority is
-`accdb89 Sync dir-zero correction release routing`. Live git refs and worktree
+`bda2800 Sync dir-zero provider release routing`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed internal default local-Python subprocess dir-zero eval provider release:
+`686dd18 Add dir-zero default subprocess eval provider`. This commit contains
+the accepted exact `oracle_signal_dir_zero_probe` support inside the internal
+`context_ir_default_local_python_subprocess` provider. It is pushed with
+explicit Ryan authorization and must not be routed back to release-unit audit,
+full regression, commit-gating, staging, local commit, or push absent new
+findings.
+
+Pushed dir-zero provider release evidence:
+
+- live repo/workspace state was verified after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `bda2800 Sync dir-zero provider release routing`
+  - no source/test/control diff remains
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- implemented bounded north-star lane:
+  - extend the existing internal
+    `context_ir_default_local_python_subprocess` provider to exactly
+    `oracle_signal_dir_zero_probe`
+- release evidence:
+  - exact fixture-map support added for `oracle_signal_dir_zero_probe`
+  - provider validation requires miss evidence `dir()`,
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, `reflective_builtin:dir/0`,
+    boundary `dir()`, subject `unsupported:call:main.py:2:11`, replay target
+    seed `main.probe_directory`, one planned request, one runner attempt, one
+    observed result, and normalized payload `listing_entry_count=0`
+  - initial compile remains runtime-fixture-free
+  - recompile uses `sys.executable`, `delta_budget=0`, and the real
+    subprocess invocation `(sys.executable, "-m",
+    "context_ir.runtime_probe_worker")`
+  - provider-owned runtime provenance comes from the recompiled response
+  - unsupported/opaque primary truth remains preserved with additive runtime
+    provenance
+  - temporary single-provider run-spec dispatch works without editing
+    committed eval assets
+  - unsupported task IDs remain fail-closed
+  - no eval fixture, task, committed run-spec, public docs/claims, export, MCP,
+    schema/config, scoring, compiler, runtime worker, probe-form,
+    dynamic-import, runtime-mutation, exec/eval, metaclass, other
+    reflective-builtin form, or generalized provider/runtime support files
+    changed
+- release state: accepted, release-unit-audit-cleared,
+  full-regression-cleared, commit-gating-cleared, locally committed, and
+  pushed with explicit Ryan authorization
+- next route:
+  - route the Ryan-authorized tangible north-star checkpoint before continuing
+    broad fixture-by-fixture provider expansion
+  - do not route `686dd18` or `bda2800` back to release-unit audit, full
+    regression, commit-gating, staging, local commit, or push absent new
+    findings
 
 Pushed dir-zero evidence correction release:
 
@@ -233,14 +287,14 @@ acceptance:
   - staged: completed as part of local release commit
   - locally committed: yes,
     `686dd18 Add dir-zero default subprocess eval provider`
-  - pushed: no
+  - pushed: yes, with release routing through
+    `bda2800 Sync dir-zero provider release routing`
 - next route:
-  - hold for Ryan push authorization
-  - do not route `686dd18` back to release-unit audit, full regression,
-    commit-gating, staging, or local commit creation absent new findings
-  - after this provider-support unit is released, route toward the
-    Ryan-authorized tangible north-star checkpoint before continuing broad
-    fixture-by-fixture provider expansion
+  - route toward the Ryan-authorized tangible north-star checkpoint before
+    continuing broad fixture-by-fixture provider expansion
+  - do not route `686dd18` or `bda2800` back to release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
 
 Pushed internal default local-Python subprocess metaclass eval provider release:
 `0650bb8 Add metaclass default subprocess eval provider`. This commit contains
