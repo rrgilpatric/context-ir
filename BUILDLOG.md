@@ -2,6 +2,365 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Globals Default Subprocess Eval Provider Release Authorization
+
+- Ryan authorized staging, local commit creation, and remote push for the
+  accepted exact `oracle_signal_globals_probe` support inside the internal
+  `context_ir_default_local_python_subprocess` provider.
+- Authorized release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_globals_probe.py`
+- Accepted commit message:
+  - subject: `Add globals default subprocess eval provider`
+  - body:
+    `Extend the internal default local-Python subprocess eval provider to
+    replay the globals fixture through the pushed worker facade while
+    preserving unsupported/opaque primary truth and provider-owned runtime
+    provenance.`
+
+    `Keep scope limited to existing provider dispatch and focused tests without
+    widening eval assets, run specs, public surfaces, scoring, compiler, or
+    runtime-probe forms.`
+- Routing note:
+  - if live git shows this release unit is already locally committed and
+    pushed, do not route it back to audit, full regression, commit-gating,
+    staging, local commit, or push
+  - after a verified push, select the next bounded north-star lane from the
+    pushed authority
+- Acceptance status: Ryan-authorized release action
+
+## 2026-05-15 -- Globals Default Subprocess Eval Provider Commit-Gating Acceptance
+
+- Performed commit-gating review for the accepted, audit-cleared,
+  full-regression-cleared exact `oracle_signal_globals_probe` support inside
+  the internal `context_ir_default_local_python_subprocess` provider.
+- Live repo/workspace truth during commit-gating acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, and
+    `tests/test_eval_signal_globals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - commit-gating review: PASS, findings none
+- Gate confirmed:
+  - release-unit audit passed first-pass with no findings
+  - full regression passed first-pass with `1643 passed`
+  - provider scope remains exact to `oracle_signal_locals_probe` and
+    `oracle_signal_globals_probe`
+  - unsupported task IDs fail closed
+  - no durable eval asset, run-spec schema/config, package-root, MCP/tool
+    facade, eval run/result/metric, runtime probe execution/worker, README,
+    ARCHITECTURE, EVAL, or PUBLIC_CLAIMS surface changed
+- Recommended commit:
+  - subject: `Add globals default subprocess eval provider`
+  - body:
+    `Extend the internal default local-Python subprocess eval provider to
+    replay the globals fixture through the pushed worker facade while
+    preserving unsupported/opaque primary truth and provider-owned runtime
+    provenance.`
+
+    `Keep scope limited to existing provider dispatch and focused tests without
+    widening eval assets, run specs, public surfaces, scoring, compiler, or
+    runtime-probe forms.`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the four release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating acceptance
+
+## 2026-05-15 -- Globals Default Subprocess Eval Provider Full Regression Acceptance
+
+- Ran the full regression gate for the audit-cleared exact
+  `oracle_signal_globals_probe` support inside the internal
+  `context_ir_default_local_python_subprocess` provider.
+- Live repo/workspace truth during full regression acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, and
+    `tests/test_eval_signal_globals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed before and after the gate
+- Gate result:
+  - full regression: PASS
+- Commands:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed,
+    `1643 passed in 15.74s`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact four-file release unit
+  - do not stage, commit, or push before commit-gating clears
+- Acceptance status: first-pass full regression acceptance
+
+## 2026-05-15 -- Globals Default Subprocess Eval Provider Audit Acceptance
+
+- Reviewed the returned read-only release-unit audit for the accepted exact
+  `oracle_signal_globals_probe` support inside the internal
+  `context_ir_default_local_python_subprocess` provider.
+- Live repo/workspace truth during audit acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, and
+    `tests/test_eval_signal_globals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - release-unit audit: PASS, findings none
+- Audit confirmed:
+  - provider name remains `context_ir_default_local_python_subprocess`
+  - provider supports exactly `oracle_signal_locals_probe` and
+    `oracle_signal_globals_probe`
+  - unsupported task IDs fail closed
+  - globals path builds the initial compile request without fixture runtime
+    observations, uses `sys.executable`, `delta_budget=0`, validates exact
+    `runtime_mutation:globals/0`, validates payload
+    `lookup_outcome=returned_namespace`, and returns provider-owned runtime
+    provenance from the recompiled response
+  - focused tests prove real worker subprocess invocation, provider-owned
+    runtime provenance, and preserved `unsupported/opaque` primary truth
+  - no durable eval fixture, task, run spec, run-spec schema/config,
+    package-root, MCP/tool facade, eval run/result/metric, runtime probe
+    execution/worker, README, ARCHITECTURE, EVAL, or PUBLIC_CLAIMS surface was
+    widened
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression for the exact four-file release unit
+  - do not stage, commit, or push before full regression and commit-gating
+    clear
+- Acceptance status: first-pass release-unit audit acceptance
+
+## 2026-05-15 -- Globals Default Subprocess Eval Provider Acceptance
+
+- Reviewed the returned implementation slice extending the internal
+  `context_ir_default_local_python_subprocess` provider to exact
+  `oracle_signal_globals_probe`.
+- Live repo/workspace truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, and
+    `tests/test_eval_signal_globals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Findings: none.
+- Accepted implementation:
+  - `src/context_ir/eval_providers.py` now keeps the provider name
+    `context_ir_default_local_python_subprocess` and supports exactly
+    `oracle_signal_locals_probe` and `oracle_signal_globals_probe`
+  - unsupported task IDs still fail closed
+  - the globals path builds the initial compile request without fixture
+    runtime observations, diagnoses exact `globals()`, requires one planned
+    `RuntimeProbeFamily.RUNTIME_MUTATION` request with form
+    `runtime_mutation:globals/0`, boundary `globals()`, and subject
+    `unsupported:call:main.py:2:11`, then uses the pushed default
+    local-Python subprocess facade with `sys.executable` and `delta_budget=0`
+  - the provider validates one observed result with normalized payload
+    `lookup_outcome=returned_namespace` and returns provider-owned runtime
+    provenance records from the recompiled response
+  - focused globals coverage proves real worker subprocess invocation via
+    `(sys.executable, "-m", "context_ir.runtime_probe_worker")`, provider-owned
+    runtime provenance, and preserved `unsupported/opaque` primary truth
+  - existing locals provider behavior remains covered
+  - no durable eval fixture, task, run spec, run-spec schema/config,
+    package-root, MCP, CLI/product, public docs/claims, scoring formula,
+    compiler, runtime-probe form, or generalized provider/runtime surface was
+    changed
+- Focused control validation:
+  - `.venv/bin/python -m ruff check src/context_ir/eval_providers.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_providers.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py`
+    passed, `5 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_globals_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py tests/test_eval_results.py -v`
+    passed, `60 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a dedicated read-only release-unit audit over the exact four-file
+    release unit
+  - do not run full regression, commit-gating, stage, commit, or push before
+    the audit clears
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-15 -- Post-5133ac8 Globals Subprocess Eval Provider Route Selection
+
+- Verified live repo/workspace state before selecting the next bounded
+  north-star lane:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - dirty files are exactly `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Reviewed the pushed internal
+  `context_ir_default_local_python_subprocess` provider and adjacent eval
+  evidence surfaces.
+- Findings:
+  - no repo-backed reason was found to widen package-root, MCP,
+    CLI/product, public docs/claims, scoring formulas, compiler behavior,
+    run-spec schema/config, runtime-probe forms, or generalized provider
+    behavior
+  - the pushed provider is still exact-task scoped to
+    `oracle_signal_locals_probe`
+  - `oracle_signal_globals_probe` is the closest low-risk sibling: it is an
+    existing internal eval fixture, uses existing exact
+    `runtime_mutation:globals/0` subprocess support, preserves
+    `unsupported/opaque` primary truth, and has the same normalized payload
+    shape `lookup_outcome=returned_namespace`
+  - a live read-only dry run through the existing default local-Python
+    subprocess facade planned exactly one
+    `RuntimeProbeFamily.RUNTIME_MUTATION` request with form
+    `runtime_mutation:globals/0`, boundary text `globals()`, subject
+    `unsupported:call:main.py:2:11`, returned one observed result with
+    payload `lookup_outcome=returned_namespace`, and produced provider-ready
+    runtime provenance; the command exited nonzero only after that proof
+    because a trailing control-lane inspection attempted to read a
+    non-existent `SemanticCompileResult.selected_unit_ids` convenience
+    attribute
+- Selected next bounded north-star lane:
+  - extend the existing internal
+    `context_ir_default_local_python_subprocess` provider to also support
+    exact `oracle_signal_globals_probe`
+- Alternatives considered:
+  - add run-spec/provider configuration: deferred as a broader schema/config
+    move
+  - broaden the provider to all replay-equivalent fixtures at once: deferred
+    because it would make review and failure attribution worse
+  - open dynamic-import, one-argument reflective/runtime-mutation, or
+    dir-listing provider support: deferred because prior dry-run evidence
+    showed replay-equivalence or payload-shape risks
+  - update public docs/claims: rejected for this lane because the change is
+    internal eval-provider evidence depth only
+- Release state:
+  - route selection accepted in workspace: yes, first-pass
+  - implementation launched: no
+  - release-unit audit cleared for the future globals-provider extension: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - issue one bounded implementation prompt for exact
+    `oracle_signal_globals_probe` support inside
+    `context_ir_default_local_python_subprocess`
+- Acceptance status: first-pass route selection
+
+## 2026-05-15 -- Default Local-Python Subprocess Eval Provider Remote Push
+
+- Ryan authorized remote push for the locally committed internal default
+  local-Python subprocess eval provider release unit.
+- Pushed commit:
+  - `5133ac8 Add default local-Python subprocess eval provider`
+- Remote push result:
+  - `main` advanced from
+    `165bb43 Carry eval runtime provenance in provider results` to
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - local `HEAD` and `origin/main` both resolve to `5133ac8`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane from the pushed `5133ac8`
+    authority
+  - do not route this pushed release back to audit, regression,
+    commit-gating, staging, local commit, or push absent new findings
+- Acceptance status: pushed with explicit Ryan authorization
+
+## 2026-05-15 -- Default Local-Python Subprocess Eval Provider Local Commit
+
+- Created local commit
+  `5133ac8 Add default local-Python subprocess eval provider` for the accepted
+  internal default local-Python subprocess eval provider release unit.
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_metrics.py`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/eval_runs.py`
+  - `tests/test_eval_metrics.py`
+  - `tests/test_eval_runs.py`
+  - `tests/test_eval_signal_locals_probe.py`
+- Live repo/workspace truth immediately after local commit creation:
+  - branch `main`
+  - local `HEAD` at
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - `origin/main` remains at
+    `165bb43 Carry eval runtime provenance in provider results`
+  - branch is ahead of `origin/main` by 1 commit
+  - staged files: none
+  - untracked files: none
+  - worktree source/test release-unit diff is committed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `5133ac8 Add default local-Python subprocess eval provider`
+  - pushed: yes, superseded by the later remote-push entry above
+- Next control route:
+  - superseded by the later remote-push entry above
+  - select the next bounded north-star lane from the pushed `5133ac8`
+    authority
+- Acceptance status: local commit created; later pushed with explicit Ryan
+  authorization
+
 ## 2026-05-15 -- Default Local-Python Subprocess Eval Provider Commit-Gating Acceptance
 
 - Reviewed the returned read-only commit-gating review for the internal

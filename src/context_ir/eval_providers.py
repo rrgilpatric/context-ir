@@ -57,6 +57,9 @@ IMPORT_SEED_COUNT = 2
 _LOCALS_PROBE_TASK_ID = "oracle_signal_locals_probe"
 _LOCALS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:11"
 _LOCALS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
+_GLOBALS_PROBE_TASK_ID = "oracle_signal_globals_probe"
+_GLOBALS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_GLOBALS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION = (
     "runtime-probe-local-python-subprocess:context-ir-eval-provider.1"
 )
@@ -284,6 +287,38 @@ class EvalProviderResult:
 
 
 @dataclass(frozen=True)
+class _DefaultLocalPythonSubprocessFixture:
+    """Exact eval fixture contract for the default local-Python subprocess provider."""
+
+    unsupported_unit_id: str
+    miss_evidence_text: str
+    form_label: str
+    boundary_text: str
+    snapshot_id: str
+    runtime_payload: tuple[tuple[str, str], ...]
+
+
+_DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
+    _LOCALS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_LOCALS_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="locals()",
+        form_label="runtime_mutation:locals/0",
+        boundary_text="locals()",
+        snapshot_id="oracle_signal_locals_probe@default-local-python:v1",
+        runtime_payload=_LOCALS_RUNTIME_PAYLOAD,
+    ),
+    _GLOBALS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_GLOBALS_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="globals()",
+        form_label="runtime_mutation:globals/0",
+        boundary_text="globals()",
+        snapshot_id="oracle_signal_globals_probe@default-local-python:v1",
+        runtime_payload=_GLOBALS_RUNTIME_PAYLOAD,
+    ),
+}
+
+
+@dataclass(frozen=True)
 class _BaselineFile:
     """Repository file candidate used by deterministic file baselines."""
 
@@ -448,12 +483,8 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
 def build_context_ir_default_local_python_subprocess_pack(
     request: EvalProviderRequest,
 ) -> EvalProviderResult:
-    """Replay the locals-probe fixture through the default local-Python facade."""
-    if request.task_id != _LOCALS_PROBE_TASK_ID:
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "oracle_signal_locals_probe"
-        )
+    """Replay exact probe fixtures through the default local-Python facade."""
+    fixture = _default_local_python_subprocess_fixture(request.task_id)
 
     repo_root = Path(request.repo_root).resolve()
     previous_response = tool_facade.compile_repository_context(
@@ -465,14 +496,17 @@ def build_context_ir_default_local_python_subprocess_pack(
     )
     miss_evidence = SemanticMissEvidence(
         kind=SemanticMissKind.ABSENT_SYMBOL,
-        evidence="locals()",
+        evidence=fixture.miss_evidence_text,
     )
     diagnostic = diagnose_semantic_miss(
         previous_response.compile_result,
         miss_evidence,
         previous_response.program,
     )
-    planned_request = _require_locals_runtime_probe_request(diagnostic)
+    planned_request = _require_default_local_python_runtime_probe_request(
+        diagnostic,
+        fixture,
+    )
     recompile_request = (
         tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest(
             previous_response=previous_response,
@@ -488,7 +522,7 @@ def build_context_ir_default_local_python_subprocess_pack(
             ),
             repository_snapshot_basis=RepositorySnapshotBasis(
                 snapshot_kind="eval_fixture",
-                snapshot_id="oracle_signal_locals_probe@default-local-python:v1",
+                snapshot_id=fixture.snapshot_id,
                 is_dirty_worktree=False,
             ),
             probe_contract_revision=_DEFAULT_LOCAL_PYTHON_PROBE_CONTRACT_REVISION,
@@ -504,8 +538,8 @@ def build_context_ir_default_local_python_subprocess_pack(
             recompile_request
         )
     )
-    _require_locals_runtime_probe_attempt(response, planned_request)
-    _require_locals_runtime_payload(response)
+    _require_default_local_python_runtime_probe_attempt(response, planned_request)
+    _require_default_local_python_runtime_payload(response, fixture)
 
     selected_units = tuple(
         _selected_unit_metadata(record)
@@ -1087,69 +1121,86 @@ def _append_warning(warnings: list[str], code: str) -> None:
         warnings.append(code)
 
 
-def _require_locals_runtime_probe_request(
+def _default_local_python_subprocess_fixture(
+    task_id: str,
+) -> _DefaultLocalPythonSubprocessFixture:
+    """Return the exact fixture supported by the local-Python subprocess provider."""
+    fixture = _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES.get(task_id)
+    if fixture is None:
+        raise ValueError(
+            "context_ir_default_local_python_subprocess only supports "
+            "oracle_signal_locals_probe or oracle_signal_globals_probe"
+        )
+    return fixture
+
+
+def _require_default_local_python_runtime_probe_request(
     diagnostic: SemanticDiagnosticResult,
+    fixture: _DefaultLocalPythonSubprocessFixture,
 ) -> RuntimeProbeRequest:
-    """Return the single accepted locals runtime-probe request or fail closed."""
+    """Return the single accepted runtime-probe request or fail closed."""
     plan = diagnostic.planned_runtime_probe_request_plan
     if plan is None:
-        raise ValueError("locals subprocess provider requires a runtime probe plan")
+        raise ValueError("default local-Python provider requires a runtime probe plan")
     if diagnostic.planned_runtime_probe_requests != plan.requests:
         raise ValueError(
-            "locals subprocess provider requires mirrored planned requests"
+            "default local-Python provider requires mirrored planned requests"
         )
     if len(plan.requests) != 1:
         raise ValueError(
-            "locals subprocess provider requires exactly one planned request"
+            "default local-Python provider requires exactly one planned request"
         )
     request = plan.requests[0]
-    if request.subject_id != _LOCALS_UNSUPPORTED_UNIT_ID:
+    if request.subject_id != fixture.unsupported_unit_id:
         raise ValueError(
-            "locals subprocess provider planned request targets the wrong subject"
+            "default local-Python provider planned request targets the wrong subject"
         )
     if request.family_label is not RuntimeProbeFamily.RUNTIME_MUTATION:
         raise ValueError(
-            "locals subprocess provider planned request must be runtime_mutation"
+            "default local-Python provider planned request must be runtime_mutation"
         )
-    if request.form_label != "runtime_mutation:locals/0":
-        raise ValueError("locals subprocess provider planned request must use locals/0")
-    if request.boundary_text != "locals()":
+    if request.form_label != fixture.form_label:
         raise ValueError(
-            "locals subprocess provider planned request must target locals()"
+            "default local-Python provider planned request has the wrong form"
+        )
+    if request.boundary_text != fixture.boundary_text:
+        raise ValueError(
+            "default local-Python provider planned request has the wrong boundary"
         )
     return request
 
 
-def _require_locals_runtime_probe_attempt(
+def _require_default_local_python_runtime_probe_attempt(
     response: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse,
     planned_request: RuntimeProbeRequest,
 ) -> None:
     """Require the subprocess attempt collection to replay the planned request."""
     attempts = response.runner_attempt_collection.attempts
     if len(attempts) != 1:
-        raise ValueError("locals subprocess provider requires one runner attempt")
+        raise ValueError("default local-Python provider requires one runner attempt")
     if attempts[0].request != planned_request:
         raise ValueError(
-            "locals subprocess provider runner attempt must replay planned request"
+            "default local-Python provider runner attempt must replay planned request"
         )
 
 
-def _require_locals_runtime_payload(
+def _require_default_local_python_runtime_payload(
     response: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse,
+    fixture: _DefaultLocalPythonSubprocessFixture,
 ) -> None:
-    """Require the observed locals payload to match the exact eval oracle signal."""
+    """Require the observed payload to match the exact eval oracle signal."""
     results = response.runner_attempt_collection.result_batch.results
     if len(results) != 1:
-        raise ValueError("locals subprocess provider requires one runner result")
+        raise ValueError("default local-Python provider requires one runner result")
     result = results[0]
     if not isinstance(result, RuntimeProbeObservedResult):
-        raise ValueError("locals subprocess provider requires an observed result")
+        raise ValueError("default local-Python provider requires an observed result")
     observed_payload = tuple(
         (field.key, field.value) for field in result.normalized_payload
     )
-    if observed_payload != _LOCALS_RUNTIME_PAYLOAD:
+    if observed_payload != fixture.runtime_payload:
         raise ValueError(
-            "locals subprocess provider observed an unexpected runtime payload"
+            "default local-Python provider observed an unexpected runtime payload"
         )
 
 
@@ -1170,9 +1221,9 @@ def _default_local_python_runner_environment(
     """Return absolute local-Python runner environment fields for the fixture."""
     source_root = Path(__file__).resolve().parents[1]
     if not repo_root.is_absolute():
-        raise ValueError("locals subprocess provider repo_root must be absolute")
+        raise ValueError("default local-Python provider repo_root must be absolute")
     if not source_root.is_absolute():
-        raise ValueError("locals subprocess provider source root must be absolute")
+        raise ValueError("default local-Python provider source root must be absolute")
     return (
         _runtime_probe_field("repository_root", str(repo_root)),
         _runtime_probe_field("working_directory", str(repo_root)),
