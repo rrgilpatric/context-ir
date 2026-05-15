@@ -60,6 +60,9 @@ _LOCALS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _GLOBALS_PROBE_TASK_ID = "oracle_signal_globals_probe"
 _GLOBALS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _GLOBALS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
+_VARS_ZERO_PROBE_TASK_ID = "oracle_signal_vars_zero_probe"
+_VARS_ZERO_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_VARS_ZERO_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION = (
     "runtime-probe-local-python-subprocess:context-ir-eval-provider.1"
 )
@@ -292,6 +295,7 @@ class _DefaultLocalPythonSubprocessFixture:
 
     unsupported_unit_id: str
     miss_evidence_text: str
+    family_label: RuntimeProbeFamily
     form_label: str
     boundary_text: str
     snapshot_id: str
@@ -302,6 +306,7 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
     _LOCALS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_LOCALS_UNSUPPORTED_UNIT_ID,
         miss_evidence_text="locals()",
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
         form_label="runtime_mutation:locals/0",
         boundary_text="locals()",
         snapshot_id="oracle_signal_locals_probe@default-local-python:v1",
@@ -310,10 +315,20 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
     _GLOBALS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_GLOBALS_UNSUPPORTED_UNIT_ID,
         miss_evidence_text="globals()",
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
         form_label="runtime_mutation:globals/0",
         boundary_text="globals()",
         snapshot_id="oracle_signal_globals_probe@default-local-python:v1",
         runtime_payload=_GLOBALS_RUNTIME_PAYLOAD,
+    ),
+    _VARS_ZERO_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_VARS_ZERO_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="vars()",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:vars/0",
+        boundary_text="vars()",
+        snapshot_id="oracle_signal_vars_zero_probe@default-local-python:v1",
+        runtime_payload=_VARS_ZERO_RUNTIME_PAYLOAD,
     ),
 }
 
@@ -1129,7 +1144,8 @@ def _default_local_python_subprocess_fixture(
     if fixture is None:
         raise ValueError(
             "context_ir_default_local_python_subprocess only supports "
-            "oracle_signal_locals_probe or oracle_signal_globals_probe"
+            "oracle_signal_locals_probe, oracle_signal_globals_probe, or "
+            "oracle_signal_vars_zero_probe"
         )
     return fixture
 
@@ -1155,9 +1171,9 @@ def _require_default_local_python_runtime_probe_request(
         raise ValueError(
             "default local-Python provider planned request targets the wrong subject"
         )
-    if request.family_label is not RuntimeProbeFamily.RUNTIME_MUTATION:
+    if request.family_label is not fixture.family_label:
         raise ValueError(
-            "default local-Python provider planned request must be runtime_mutation"
+            "default local-Python provider planned request has the wrong family"
         )
     if request.form_label != fixture.form_label:
         raise ValueError(
