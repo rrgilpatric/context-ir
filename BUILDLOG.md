@@ -2,6 +2,311 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Default Local-Python Subprocess Eval Provider Commit-Gating Acceptance
+
+- Reviewed the returned read-only commit-gating review for the internal
+  `context_ir_default_local_python_subprocess` provider release unit.
+- Live repo/workspace truth during commit-gating acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `165bb43 Carry eval runtime provenance in provider results`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_metrics.py`, `src/context_ir/eval_providers.py`,
+    `src/context_ir/eval_runs.py`, `tests/test_eval_metrics.py`,
+    `tests/test_eval_runs.py`, and `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - commit-gating review: PASS, findings none
+- Gate confirmed:
+  - release-unit audit passed first-pass with no findings
+  - full regression passed first-pass with `1640 passed`
+  - excluded surfaces show no diff: eval assets, run specs/tasks/fixtures,
+    package root, MCP, docs/claims, compiler, runtime worker, runtime-probe
+    files, and schema/config-related files
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Recommended commit:
+  - subject: `Add default local-Python subprocess eval provider`
+  - body:
+    `Prove the locals-probe eval path through the pushed default local-Python
+    subprocess facade and carry provider-owned runtime provenance in eval
+    records.`
+
+    `Keep the change scoped to the existing provider-name dispatch path and
+    semantic selected-unit metrics without widening run specs, public
+    surfaces, compiler behavior, or runtime-probe forms.`
+- Next control route:
+  - stage exactly the eight release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating acceptance
+
+## 2026-05-15 -- Default Local-Python Subprocess Eval Provider Full Regression Acceptance
+
+- Ran the full regression gate for the accepted internal
+  `context_ir_default_local_python_subprocess` provider release unit after
+  release-unit audit clearance.
+- Live repo/workspace truth during full regression acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `165bb43 Carry eval runtime provenance in provider results`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_metrics.py`, `src/context_ir/eval_providers.py`,
+    `src/context_ir/eval_runs.py`, `tests/test_eval_metrics.py`,
+    `tests/test_eval_runs.py`, and `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed before and after the gate
+- Gate result:
+  - full regression: PASS
+- Commands:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed,
+    `1640 passed in 16.16s`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact eight-file release unit
+  - do not stage, commit, or push before commit-gating clears
+- Acceptance status: first-pass full regression acceptance
+
+## 2026-05-15 -- Default Local-Python Subprocess Eval Provider Audit Acceptance
+
+- Reviewed the returned read-only release-unit audit for the internal
+  `context_ir_default_local_python_subprocess` provider release unit.
+- Live repo/workspace truth during audit acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `165bb43 Carry eval runtime provenance in provider results`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_metrics.py`, `src/context_ir/eval_providers.py`,
+    `src/context_ir/eval_runs.py`, `tests/test_eval_metrics.py`,
+    `tests/test_eval_runs.py`, and `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - release-unit audit: PASS, findings none
+- Audit confirmed:
+  - provider name is exactly
+    `context_ir_default_local_python_subprocess`
+  - provider fails closed for non-`oracle_signal_locals_probe` task IDs
+  - registration uses the existing provider-name dispatch mechanism with no
+    run-spec schema/config widening
+  - initial compile request is runtime-fixture-free
+  - recompile uses `delta_budget=0`, `sys.executable`, absolute runner
+    environment fields, and the default local-Python subprocess facade
+  - provider validates exact `locals()`, `runtime_mutation:locals/0`, one
+    runner attempt, and payload `lookup_outcome=returned_namespace`
+  - provider-owned runtime provenance is returned from
+    `response.program.provenance_records` and serialized by the existing eval
+    results path
+  - metrics classify the new provider as semantic selected-unit based without
+    scoring formula changes
+  - no eval asset, package-root, MCP/server, docs/claims, compiler, runtime
+    worker, runtime form, or runtime execution file changed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression for the exact eight-file release unit
+  - do not stage, commit, or push before full regression and commit-gating
+    clear
+- Acceptance status: first-pass release-unit audit acceptance
+
+## 2026-05-15 -- Default Local-Python Subprocess Eval Provider Acceptance
+
+- Reviewed the returned implementation slice for the internal exact
+  `context_ir_default_local_python_subprocess` provider.
+- Live repo/workspace truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `165bb43 Carry eval runtime provenance in provider results`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_metrics.py`, `src/context_ir/eval_providers.py`,
+    `src/context_ir/eval_runs.py`, `tests/test_eval_metrics.py`,
+    `tests/test_eval_runs.py`, and `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Findings: none.
+- Accepted implementation:
+  - adds the internal provider name
+    `context_ir_default_local_python_subprocess`
+  - registers it through the existing provider-name dispatch path without
+    changing run-spec schema
+  - supports exactly `oracle_signal_locals_probe` and fails closed for other
+    task IDs
+  - compiles the initial fixture response without fixture-loaded runtime
+    observations
+  - diagnoses exact `locals()` and requires the planned request to be
+    `RuntimeProbeFamily.RUNTIME_MUTATION` plus
+    `runtime_mutation:locals/0`
+  - runs the pushed default local-Python subprocess facade with
+    `sys.executable`, `delta_budget=0`, and explicit local contract revisions
+  - validates the exact observed payload
+    `lookup_outcome=returned_namespace`
+  - returns provider-owned runtime provenance records and proves the selected
+    unsupported unit references provider-owned subprocess provenance rather
+    than only fixture-loaded oracle setup provenance
+  - treats the new provider as a semantic selected-unit provider for eval
+    metrics without changing scoring formulas
+- Focused validation:
+  - `.venv/bin/python -m ruff check src/context_ir/eval_providers.py src/context_ir/eval_runs.py src/context_ir/eval_metrics.py tests/test_eval_signal_locals_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/eval_providers.py src/context_ir/eval_runs.py src/context_ir/eval_metrics.py tests/test_eval_signal_locals_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py`
+    passed, `6 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py tests/test_eval_results.py -v`
+    passed, `51 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a read-only release-unit audit over the exact eight-file release unit
+  - do not stage, commit, or push before audit, full regression, and
+    commit-gating clear
+- Acceptance status: first-pass implementation acceptance
+
+## 2026-05-15 -- Post-165bb43 Subprocess Eval Provider Route Selection
+
+- Reviewed live repo state and the pushed internal eval provider/result
+  provenance-carrier release at
+  `165bb43 Carry eval runtime provenance in provider results`.
+- Live repo/workspace truth during route selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `165bb43 Carry eval runtime provenance in provider results`
+  - staged files: none
+  - untracked files: none
+  - current dirty files are expected workspace-only continuity updates in
+    `BUILDLOG.md` and `PLAN.md`
+  - `git diff --check` passed
+- Findings:
+  - the provenance-carrier prerequisite is pushed and no longer blocks a
+    subprocess-backed internal eval provider
+  - `execute_eval_run_spec()` still accepts provider names only, so a provider
+    configuration/schema expansion is not the smallest safe move
+  - adding a new provider name requires metrics to treat that provider as a
+    semantic selected-unit provider, not as a whole-file baseline
+  - the `oracle_signal_locals_probe` path can replay through the default
+    local-Python subprocess facade within the original eval budget
+  - the next slice must prove the provider-selected unit references
+    provider-owned subprocess provenance; durable oracle setup provenance may
+    remain an oracle expectation but must not be mistaken for provider proof
+- Selected next bounded north-star lane:
+  - add one internal exact provider,
+    `context_ir_default_local_python_subprocess`, scoped initially to
+    `oracle_signal_locals_probe`
+  - register it with the existing run-spec provider-name mechanism
+  - keep run-spec schema, durable eval assets, public/API/MCP/package-root,
+    docs/claims, scoring formulas, compiler, runtime-probe forms, and
+    generalized provider support unchanged
+- Alternatives considered:
+  - run-spec provider configuration: deferred as a schema/config widening
+  - public/package-root/MCP exposure: rejected for this lane
+  - broader subprocess provider across all replay-equivalent fixtures:
+    deferred until the exact locals provider proves the integration path
+  - docs/claims update: held until subprocess-backed provider evidence exists
+    in the internal eval harness
+- Acceptance status: first-pass route selection
+
+## 2026-05-15 -- Eval Provenance-Carrier Remote Push
+
+- Ryan authorized remote push for the locally committed internal eval
+  provider/result provenance-carrier release unit.
+- Pushed commit:
+  - `165bb43 Carry eval runtime provenance in provider results`
+- Remote push result:
+  - `main` advanced from
+    `667fcdc Prove locals fixture through default subprocess facade` to
+    `165bb43 Carry eval runtime provenance in provider results`
+  - local `HEAD` and `origin/main` both resolve to `165bb43`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `165bb43 Carry eval runtime provenance in provider results`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane from the pushed `165bb43`
+    authority
+  - do not route this pushed release back to audit, regression,
+    commit-gating, staging, local commit, or push absent new findings
+- Acceptance status: pushed with explicit Ryan authorization
+
+## 2026-05-15 -- Eval Provenance-Carrier Local Commit
+
+- Created local commit
+  `165bb43 Carry eval runtime provenance in provider results` for the accepted
+  internal eval provider/result provenance-carrier release unit.
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/eval_results.py`
+  - `tests/test_eval_results.py`
+  - `tests/test_eval_signal_locals_probe.py`
+- Live repo/workspace truth immediately after local commit creation:
+  - branch `main`
+  - local `HEAD` at
+    `165bb43 Carry eval runtime provenance in provider results`
+  - `origin/main` remains at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - branch is ahead of `origin/main` by 1 commit
+  - staged files: none
+  - untracked files: none
+  - source/test release-unit diff is committed
+  - current remaining dirty files are expected workspace-only post-commit
+    continuity updates in `BUILDLOG.md` and `PLAN.md`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `165bb43 Carry eval runtime provenance in provider results`
+  - pushed: yes, superseded by the later remote-push entry above
+- Next control route:
+  - superseded by the later remote-push entry above
+  - select the next bounded north-star lane from the pushed `165bb43`
+    authority
+- Acceptance status: local commit created; later pushed with explicit Ryan
+  authorization
+
 ## 2026-05-15 -- Eval Provenance-Carrier Commit-Gating Acceptance
 
 - Reviewed the returned read-only commit-gating review for the internal eval

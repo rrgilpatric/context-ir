@@ -18,6 +18,7 @@ from context_ir.eval_oracles import (
     UnsupportedOracleSelector,
 )
 from context_ir.eval_providers import (
+    CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
     CONTEXT_IR_PROVIDER,
     LEXICAL_TOP_K_FILES_PROVIDER,
     PROVIDER_ALGORITHM_VERSION,
@@ -211,6 +212,7 @@ def _document_for_total_tokens(total_tokens: int) -> str:
 
 def _context_ir_result(
     *,
+    provider_name: str = CONTEXT_IR_PROVIDER,
     task_id: str = "task",
     selected_units: tuple[EvalSelectedUnit, ...] = (),
     omitted_unit_ids: tuple[str, ...] = (),
@@ -225,7 +227,7 @@ def _context_ir_result(
         warning_details=warning_details,
     )
     return EvalProviderResult(
-        provider_name=CONTEXT_IR_PROVIDER,
+        provider_name=provider_name,
         provider_algorithm_version=PROVIDER_ALGORITHM_VERSION,
         provider_config=EvalProviderConfig(),
         task_id=task_id,
@@ -523,6 +525,63 @@ def test_selected_uncertainty_at_adequate_detail_gets_full_credit_and_span_token
     )
     assert metrics.uncertainty_honesty == pytest.approx(1.0)
     assert metrics.credited_relevant_tokens == expected_tokens
+
+
+def test_default_local_python_subprocess_provider_scores_selected_units_like_context_ir(
+    tmp_path: Path,
+) -> None:
+    """The exact subprocess provider uses semantic selected-unit scoring."""
+    source_text = "def edit() -> None:\n    risky_call()\n"
+    _write_file(tmp_path, "main.py", source_text)
+    edit_span = _span_for_snippet(source_text, "def edit() -> None:\n")
+    uncertainty_span = _span_for_snippet(source_text, "risky_call()")
+    setup = _setup(
+        tmp_path,
+        resolved_selectors=(
+            _resolved_symbol_selector(
+                qualified_name="main.edit",
+                role="edit",
+                min_detail="summary",
+                unit_id="def:main.py:main.edit",
+                file_path="main.py",
+                span=edit_span,
+            ),
+            _resolved_unsupported_selector(
+                file_path="main.py",
+                construct_text="risky_call()",
+                min_detail="identity",
+                unit_id="unsupported:main.py:risky_call",
+                span=uncertainty_span,
+            ),
+        ),
+    )
+    result = _context_ir_result(
+        provider_name=CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
+        selected_units=(
+            EvalSelectedUnit(
+                unit_id="def:main.py:main.edit",
+                detail="summary",
+                token_count=6,
+                basis="heuristic_candidate",
+            ),
+            EvalSelectedUnit(
+                unit_id="unsupported:main.py:risky_call",
+                detail="identity",
+                token_count=3,
+                basis="unsupported_boundary",
+            ),
+        ),
+        total_tokens=40,
+    )
+
+    metrics = eval_metrics.score_eval_run(setup, result)
+
+    assert metrics.uncertainty_honesty == pytest.approx(1.0)
+    assert metrics.selected_matched_selector_ids == (
+        "def:main.py:main.edit",
+        "unsupported:main.py:risky_call",
+    )
+    assert metrics.credited_relevant_tokens == 9
 
 
 def test_selected_uncertainty_below_required_detail_gets_half_credit(

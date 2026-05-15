@@ -41,11 +41,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`667fcdc Prove locals fixture through default subprocess facade`. The latest
-pushed source/contract authority is also
-`667fcdc Prove locals fixture through default subprocess facade`. Live git refs
+`165bb43 Carry eval runtime provenance in provider results`. The latest pushed
+source/contract authority is also
+`165bb43 Carry eval runtime provenance in provider results`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
+
+Pushed internal eval provider/result provenance-carrier release:
+`165bb43 Carry eval runtime provenance in provider results`. This commit
+contains the accepted internal eval provider/result provenance-carrier release
+unit. It is pushed with explicit Ryan authorization and must not be routed back
+to release-unit audit, full regression, commit-gating, staging, local commit,
+or push absent new findings.
 
 Pushed test-only eval-fixture subprocess proof release:
 `667fcdc Prove locals fixture through default subprocess facade`. This commit
@@ -7058,11 +7065,42 @@ sequencing for `c1a12d7` absent new findings.
   release unit
 - [x] Commit-gating review for internal eval provider/result provenance-carrier
   release unit
-- [ ] Local commit creation for internal eval provider/result provenance-carrier
+- [x] Local commit creation for internal eval provider/result provenance-carrier
   release unit
+- [x] Ryan-authorized remote push for internal eval provider/result
+  provenance-carrier release unit
+- [x] Post-`165bb43` control selection of the next bounded north-star lane
+- [x] Internal `context_ir_default_local_python_subprocess` provider slice for
+  exact `oracle_signal_locals_probe`
+- [x] Release-unit audit for internal default local-Python subprocess eval
+  provider release unit
+- [x] Full regression gate for internal default local-Python subprocess eval
+  provider release unit
+- [x] Commit-gating review for internal default local-Python subprocess eval
+  provider release unit
+- [ ] Local commit creation for internal default local-Python subprocess eval
+  provider release unit
 
 ## What Is In Progress
 
+- Internal `context_ir_default_local_python_subprocess` provider implementation
+  is accepted in workspace first-pass. The accepted release unit is
+  `BUILDLOG.md`, `PLAN.md`, `src/context_ir/eval_metrics.py`,
+  `src/context_ir/eval_providers.py`, `src/context_ir/eval_runs.py`,
+  `tests/test_eval_metrics.py`, `tests/test_eval_runs.py`, and
+  `tests/test_eval_signal_locals_probe.py`. The slice adds one internal exact
+  provider for `oracle_signal_locals_probe`, registers it through the existing
+  provider-name dispatch path, compiles the initial fixture without
+  fixture-loaded runtime observations, diagnoses exact `locals()`, runs the
+  pushed default local-Python subprocess facade with `sys.executable` and
+  `delta_budget=0`, validates `lookup_outcome=returned_namespace`, carries
+  provider-owned runtime provenance records, and treats the new provider as a
+  semantic selected-unit provider for eval metrics without changing scoring
+  formulas. Focused validation passed, including strict mypy and targeted
+  pytest with `51 passed`. The release-unit audit passed first-pass with no
+  findings. Full regression passed first-pass with `1640 passed`.
+  Commit-gating passed first-pass with no findings. The release unit is not
+  staged, committed, or pushed.
 - Internal eval provider/result provenance-carrier implementation is accepted
   in workspace first-pass, release-unit-audit-cleared first-pass, and
   full-regression-cleared first-pass, and commit-gating-cleared first-pass.
@@ -7078,29 +7116,40 @@ sequencing for `c1a12d7` absent new findings.
   without fixture-loaded setup provenance. It does not add a provider, modify
   run specs/tasks/fixtures, widen public/package-root/MCP surfaces, change
   docs/claims/scoring/compiler behavior, add generalized runtime support, or
-  add runtime-probe forms. Full regression passed with `1636 passed`. Next
-  route is to stage exactly the six release-unit files and create the local
-  commit. Push remains Ryan-gated.
-- Ryan authorized the internal eval provider/result provenance-carrier
-  contract slice recommended by the accepted planning spike. The next lane is
-  one bounded implementation slice in `src/context_ir/eval_providers.py`,
-  `src/context_ir/eval_results.py`, and focused tests only. It must add
+  add runtime-probe forms. Full regression passed with `1636 passed`. It is
+  locally committed and pushed at
+  `165bb43 Carry eval runtime provenance in provider results` with explicit
+  Ryan authorization. Do not route this pushed release back to release-unit
+  audit, full regression, commit-gating, staging, local commit, or push absent
+  new findings.
+- Ryan-authorized internal eval provider/result provenance-carrier contract
+  implementation is consumed by the pushed `165bb43` release. It added
   provider-owned runtime provenance carrying so future subprocess-backed
-  providers do not depend on fixture-loaded provenance IDs. It must not add a
-  new provider, modify run specs/tasks/fixtures, widen public/package-root/MCP
-  surfaces, change scoring/compiler/docs/claims, add generalized runtime
-  support, or add runtime-probe forms.
+  providers do not depend on fixture-loaded provenance IDs, without adding a
+  new provider, modifying run specs/tasks/fixtures, widening public,
+  package-root, or MCP surfaces, changing scoring/compiler/docs/claims, adding
+  generalized runtime support, or adding runtime-probe forms.
 - The read-only eval-provider/run-spec subprocess integration planning spike is
-  accepted first-pass and held for Ryan authorization before implementation.
-  The accepted finding is that a subprocess-backed eval provider is not honest
-  until `EvalProviderResult` / eval record serialization can carry
-  provider-derived runtime provenance records instead of resolving all attached
-  runtime provenance IDs against the fixture-loaded oracle setup program. The
-  recommended next implementation candidate is a narrow internal provenance
-  carrier contract slice in `src/context_ir/eval_providers.py` and
-  `src/context_ir/eval_results.py`, proved only with the already-safe
-  `oracle_signal_locals_probe` subprocess path. Ryan has authorized this
-  internal contract change for the next bounded implementation lane.
+  accepted first-pass and consumed by the pushed `165bb43` internal
+  provenance-carrier release. The accepted finding was that a
+  subprocess-backed eval provider is not honest until `EvalProviderResult` /
+  eval record serialization can carry provider-derived runtime provenance
+  records instead of resolving all attached runtime provenance IDs against the
+  fixture-loaded oracle setup program. The recommended narrow internal
+  provenance-carrier contract slice has been implemented, release-gated,
+  locally committed, and pushed with explicit Ryan authorization.
+- Post-`165bb43` control selected the next bounded north-star lane: one
+  internal exact provider named
+  `context_ir_default_local_python_subprocess`, scoped initially to
+  `oracle_signal_locals_probe`. The provider must replay the existing locals
+  fixture through the pushed default local-Python subprocess facade, return
+  provider-owned runtime provenance records, and register through the existing
+  run-spec provider-name mechanism. The slice may update semantic-provider
+  metric classification so the new provider is scored like `context_ir`, but
+  it must not add run-spec configuration fields, edit durable eval assets,
+  widen public/package-root/MCP surfaces, change docs/claims/scoring formulas,
+  add generalized runtime support, add runtime-probe forms, or broaden beyond
+  the exact locals fixture.
 - Post-`667fcdc` control selected one read-only planning/decomposition spike
   as the next bounded north-star lane. The spike should decide whether and how
   to integrate the pushed default local-Python subprocess facade into the
@@ -8138,11 +8187,11 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: stage exactly the six accepted internal eval
-provider/result provenance-carrier release-unit files and create the local
-commit. Do not push without explicit Ryan authorization.
+Immediate next route: stage exactly the accepted eight-file release unit and
+create the local commit for the internal
+`context_ir_default_local_python_subprocess` provider release.
 Current pushed release authority and latest pushed source/contract authority are
-`667fcdc Prove locals fixture through default subprocess facade`.
+`165bb43 Carry eval runtime provenance in provider results`.
 
 The prior parent-side exact default local-Python subprocess runner factory is
 pushed at `92824aa Add default local-Python subprocess runner`, and the
@@ -8202,7 +8251,35 @@ eval provider/result contract change. Ryan authorization has been granted for
 the implementation prompt, and the implementation is accepted in workspace
 first-pass. Release-unit audit passed first-pass with no findings; full
 regression passed first-pass with `1636 passed`; commit-gating passed
-first-pass with no findings. Local commit creation is next.
+first-pass with no findings. The exact release unit was locally committed as
+`165bb43 Carry eval runtime provenance in provider results` and pushed with
+explicit Ryan authorization. Do not route it back to release gates, staging,
+local commit, or push absent new findings.
+
+The post-`165bb43` route selection is accepted with no findings. The next
+implementation lane is one internal provider/run-spec integration slice: add a
+new provider name `context_ir_default_local_python_subprocess`, support only
+the exact `oracle_signal_locals_probe` task at first, replay through the real
+default local-Python subprocess facade inside the requested eval budget, and
+carry provider-owned runtime provenance into raw eval records. The slice must
+also make eval metrics treat the new provider as a semantic selected-unit
+provider. It must not change durable eval run specs, tasks, fixtures, public
+interfaces, MCP, package-root exports, docs/claims, scoring formulas,
+compiler behavior, generalized runtime support, or runtime-probe forms.
+
+That implementation slice is accepted in workspace first-pass with no
+findings. Focused validation passed: ruff check, ruff format check, strict
+mypy, targeted pytest over `tests/test_eval_signal_locals_probe.py`,
+`tests/test_eval_runs.py`, `tests/test_eval_metrics.py`, and
+`tests/test_eval_results.py` with `51 passed`, and `git diff --check`. The
+proposed release unit is `BUILDLOG.md`, `PLAN.md`,
+`src/context_ir/eval_metrics.py`, `src/context_ir/eval_providers.py`,
+`src/context_ir/eval_runs.py`, `tests/test_eval_metrics.py`,
+`tests/test_eval_runs.py`, and `tests/test_eval_signal_locals_probe.py`.
+The release-unit audit passed first-pass with no findings. Run full regression
+passed first-pass with `1640 passed`. Commit-gating passed first-pass with no
+findings. Stage exactly the eight release-unit files and create the local
+commit. Push remains Ryan-gated.
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 

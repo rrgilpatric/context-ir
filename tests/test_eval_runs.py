@@ -14,6 +14,7 @@ import context_ir.eval_runs as eval_runs
 import context_ir.semantic_types as semantic_types
 from context_ir.eval_oracles import EvalOracleSetup, setup_eval_oracle_task
 from context_ir.eval_providers import (
+    CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
     CONTEXT_IR_PROVIDER,
     FILE_ORDER_FLOOR_PROVIDER,
     IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
@@ -255,7 +256,8 @@ def test_unknown_provider_names_fail_loudly(tmp_path: Path) -> None:
     with pytest.raises(
         eval_runs.EvalRunSpecError,
         match=(
-            r"must be one of context_ir, lexical_top_k_files, "
+            r"must be one of context_ir, "
+            r"context_ir_default_local_python_subprocess, lexical_top_k_files, "
             r"import_neighborhood_files, file_order_floor"
         ),
     ):
@@ -266,6 +268,10 @@ def test_provider_dispatch_map_covers_accepted_internal_names() -> None:
     """Provider dispatch maps only the accepted internal provider builders."""
     assert eval_runs._provider_builder(CONTEXT_IR_PROVIDER) is (
         eval_runs.build_context_ir_provider_pack
+    )
+    assert (
+        eval_runs._provider_builder(CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER)
+        is eval_runs.build_context_ir_default_local_python_subprocess_pack
     )
     assert eval_runs._provider_builder(LEXICAL_TOP_K_FILES_PROVIDER) is (
         eval_runs.build_lexical_top_k_files_pack

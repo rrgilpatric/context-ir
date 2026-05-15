@@ -8,6 +8,7 @@ from typing import Literal
 
 from context_ir.eval_oracles import EvalOracleSetup, ResolvedOracleSelector
 from context_ir.eval_providers import (
+    CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
     CONTEXT_IR_PROVIDER,
     EvalProviderResult,
     EvalSelectedUnit,
@@ -27,6 +28,12 @@ _AGGREGATE_WEIGHTS = {
     "uncertainty_honesty": 0.15,
     "noise_efficiency": 0.10,
 }
+_SEMANTIC_SELECTED_UNIT_PROVIDERS = frozenset(
+    {
+        CONTEXT_IR_PROVIDER,
+        CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
+    }
+)
 
 _SelectorCategory = Literal["edit", "support", "uncertainty"]
 
@@ -374,7 +381,7 @@ def _matched_surface(
     min_detail = _minimum_detail(resolved_selector)
     min_rank = _detail_rank(min_detail)
     selector_id = _selector_id(resolved_selector)
-    if result.provider_name == CONTEXT_IR_PROVIDER:
+    if result.provider_name in _SEMANTIC_SELECTED_UNIT_PROVIDERS:
         selected_unit = selected_units.get(selector_id)
         if selected_unit is None:
             return _MatchedSurface(

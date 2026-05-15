@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import re
+import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -23,10 +24,20 @@ from context_ir.eval_oracles import (
     load_fixture_setattr_runtime_observations,
     load_fixture_vars_runtime_observations,
 )
+from context_ir.runtime_probe_requests import RuntimeProbeFamily, RuntimeProbeRequest
+from context_ir.runtime_probe_results import (
+    RuntimeProbeObservedResult,
+    RuntimeProbeReplayField,
+)
+from context_ir.semantic_diagnostics import diagnose_semantic_miss
 from context_ir.semantic_types import (
     CapabilityTier,
     EvidenceOriginKind,
     ReplayStatus,
+    RepositorySnapshotBasis,
+    SemanticDiagnosticResult,
+    SemanticMissEvidence,
+    SemanticMissKind,
     SemanticOptimizationWarning,
     SemanticProvenanceRecord,
     SemanticSelectionRecord,
@@ -34,12 +45,36 @@ from context_ir.semantic_types import (
 )
 
 CONTEXT_IR_PROVIDER = "context_ir"
+CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER = (
+    "context_ir_default_local_python_subprocess"
+)
 LEXICAL_TOP_K_FILES_PROVIDER = "lexical_top_k_files"
 IMPORT_NEIGHBORHOOD_FILES_PROVIDER = "import_neighborhood_files"
 FILE_ORDER_FLOOR_PROVIDER = "file_order_floor"
 PROVIDER_ALGORITHM_VERSION = "v1"
 LEXICAL_MAX_CANDIDATES = 8
 IMPORT_SEED_COUNT = 2
+_LOCALS_PROBE_TASK_ID = "oracle_signal_locals_probe"
+_LOCALS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:11"
+_LOCALS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
+_DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION = (
+    "runtime-probe-local-python-subprocess:context-ir-eval-provider.1"
+)
+_DEFAULT_LOCAL_PYTHON_COMPLETION_CONTRACT_REVISION = (
+    "runtime-probe-local-python-completion:context-ir-eval-provider.1"
+)
+_DEFAULT_LOCAL_PYTHON_PROBE_CONTRACT_REVISION = (
+    "runtime-probe-contract:context-ir-eval-provider.1"
+)
+_DEFAULT_LOCAL_PYTHON_RUNNER_CONTRACT_REVISION = (
+    "runtime-probe-runner:context-ir-eval-provider.1"
+)
+_SEMANTIC_SELECTED_UNIT_PROVIDERS = frozenset(
+    {
+        CONTEXT_IR_PROVIDER,
+        CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
+    }
+)
 
 _RAW_TOKEN_PATTERN = re.compile(r"[^A-Za-z0-9]+")
 _CAMEL_PART_PATTERN = re.compile(r"[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z]?[a-z]+|[0-9]+")
@@ -235,7 +270,7 @@ class EvalProviderResult:
                 raise ValueError(
                     "runtime_provenance_records must contain runtime-backed records"
                 )
-        if self.provider_name == CONTEXT_IR_PROVIDER:
+        if self.provider_name in _SEMANTIC_SELECTED_UNIT_PROVIDERS:
             if self.selected_unit_ids != tuple(
                 unit.unit_id for unit in self.metadata.selected_units
             ):
@@ -407,6 +442,115 @@ def build_context_ir_provider_pack(request: EvalProviderRequest) -> EvalProvider
         omitted_unit_ids=response.omitted_unit_ids,
         warnings=warnings,
         metadata=metadata,
+    )
+
+
+def build_context_ir_default_local_python_subprocess_pack(
+    request: EvalProviderRequest,
+) -> EvalProviderResult:
+    """Replay the locals-probe fixture through the default local-Python facade."""
+    if request.task_id != _LOCALS_PROBE_TASK_ID:
+        raise ValueError(
+            "context_ir_default_local_python_subprocess only supports "
+            "oracle_signal_locals_probe"
+        )
+
+    repo_root = Path(request.repo_root).resolve()
+    previous_response = tool_facade.compile_repository_context(
+        tool_facade.SemanticContextRequest(
+            repo_root=repo_root,
+            query=request.query,
+            budget=request.budget,
+        )
+    )
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence="locals()",
+    )
+    diagnostic = diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    planned_request = _require_locals_runtime_probe_request(diagnostic)
+    recompile_request = (
+        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            miss_evidence=miss_evidence,
+            delta_budget=0,
+            python_executable=sys.executable,
+            invocation_contract_revision=(
+                _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION
+            ),
+            completion_contract_revision=(
+                _DEFAULT_LOCAL_PYTHON_COMPLETION_CONTRACT_REVISION
+            ),
+            repository_snapshot_basis=RepositorySnapshotBasis(
+                snapshot_kind="eval_fixture",
+                snapshot_id="oracle_signal_locals_probe@default-local-python:v1",
+                is_dirty_worktree=False,
+            ),
+            probe_contract_revision=_DEFAULT_LOCAL_PYTHON_PROBE_CONTRACT_REVISION,
+            runtime_assumptions=_default_local_python_runtime_assumptions(),
+            runner_contract_revision=_DEFAULT_LOCAL_PYTHON_RUNNER_CONTRACT_REVISION,
+            timeout_seconds=30,
+            runner_environment=_default_local_python_runner_environment(repo_root),
+            runner_assumptions=_default_local_python_runner_assumptions(),
+        )
+    )
+    response = (
+        tool_facade.recompile_repository_context_with_default_local_python_subprocess(
+            recompile_request
+        )
+    )
+    _require_locals_runtime_probe_attempt(response, planned_request)
+    _require_locals_runtime_payload(response)
+
+    selected_units = tuple(
+        _selected_unit_metadata(record)
+        for record in response.compile_result.optimization.selections
+    )
+    warning_details = tuple(
+        _provider_warning_metadata(warning)
+        for warning in response.compile_result.optimization.warnings
+    )
+    selected_unit_ids = tuple(record.unit_id for record in selected_units)
+    warnings = tuple(warning.code for warning in warning_details)
+    metadata = EvalProviderMetadata(
+        selected_units=selected_units,
+        warning_details=warning_details,
+        unresolved_unit_ids=tuple(
+            access.access_id for access in response.program.unresolved_frontier
+        ),
+        unsupported_unit_ids=tuple(
+            construct.construct_id
+            for construct in response.program.unsupported_constructs
+        ),
+        syntax_diagnostic_ids=tuple(
+            diagnostic.diagnostic_id
+            for diagnostic in response.program.syntax.diagnostics
+        ),
+        semantic_diagnostic_ids=tuple(
+            diagnostic.diagnostic_id for diagnostic in response.program.diagnostics
+        ),
+    )
+    return EvalProviderResult(
+        provider_name=CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
+        provider_algorithm_version=PROVIDER_ALGORITHM_VERSION,
+        provider_config=EvalProviderConfig(),
+        task_id=request.task_id,
+        query=request.query,
+        budget=request.budget,
+        document=response.compile_result.document,
+        total_tokens=response.compile_total_tokens,
+        selected_files=(),
+        omitted_candidate_files=(),
+        selected_unit_ids=selected_unit_ids,
+        omitted_unit_ids=response.compile_result.omitted_unit_ids,
+        warnings=warnings,
+        metadata=metadata,
+        runtime_provenance_records=tuple(response.program.provenance_records),
     )
 
 
@@ -943,6 +1087,115 @@ def _append_warning(warnings: list[str], code: str) -> None:
         warnings.append(code)
 
 
+def _require_locals_runtime_probe_request(
+    diagnostic: SemanticDiagnosticResult,
+) -> RuntimeProbeRequest:
+    """Return the single accepted locals runtime-probe request or fail closed."""
+    plan = diagnostic.planned_runtime_probe_request_plan
+    if plan is None:
+        raise ValueError("locals subprocess provider requires a runtime probe plan")
+    if diagnostic.planned_runtime_probe_requests != plan.requests:
+        raise ValueError(
+            "locals subprocess provider requires mirrored planned requests"
+        )
+    if len(plan.requests) != 1:
+        raise ValueError(
+            "locals subprocess provider requires exactly one planned request"
+        )
+    request = plan.requests[0]
+    if request.subject_id != _LOCALS_UNSUPPORTED_UNIT_ID:
+        raise ValueError(
+            "locals subprocess provider planned request targets the wrong subject"
+        )
+    if request.family_label is not RuntimeProbeFamily.RUNTIME_MUTATION:
+        raise ValueError(
+            "locals subprocess provider planned request must be runtime_mutation"
+        )
+    if request.form_label != "runtime_mutation:locals/0":
+        raise ValueError("locals subprocess provider planned request must use locals/0")
+    if request.boundary_text != "locals()":
+        raise ValueError(
+            "locals subprocess provider planned request must target locals()"
+        )
+    return request
+
+
+def _require_locals_runtime_probe_attempt(
+    response: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse,
+    planned_request: RuntimeProbeRequest,
+) -> None:
+    """Require the subprocess attempt collection to replay the planned request."""
+    attempts = response.runner_attempt_collection.attempts
+    if len(attempts) != 1:
+        raise ValueError("locals subprocess provider requires one runner attempt")
+    if attempts[0].request != planned_request:
+        raise ValueError(
+            "locals subprocess provider runner attempt must replay planned request"
+        )
+
+
+def _require_locals_runtime_payload(
+    response: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse,
+) -> None:
+    """Require the observed locals payload to match the exact eval oracle signal."""
+    results = response.runner_attempt_collection.result_batch.results
+    if len(results) != 1:
+        raise ValueError("locals subprocess provider requires one runner result")
+    result = results[0]
+    if not isinstance(result, RuntimeProbeObservedResult):
+        raise ValueError("locals subprocess provider requires an observed result")
+    observed_payload = tuple(
+        (field.key, field.value) for field in result.normalized_payload
+    )
+    if observed_payload != _LOCALS_RUNTIME_PAYLOAD:
+        raise ValueError(
+            "locals subprocess provider observed an unexpected runtime payload"
+        )
+
+
+def _default_local_python_runtime_assumptions() -> tuple[
+    RuntimeProbeReplayField,
+    ...,
+]:
+    """Return explicit runtime assumptions for exact local fixture replay."""
+    return (
+        _runtime_probe_field("python_version", "test"),
+        _runtime_probe_field("dependency_mode", "offline-fixture"),
+    )
+
+
+def _default_local_python_runner_environment(
+    repo_root: Path,
+) -> tuple[RuntimeProbeReplayField, ...]:
+    """Return absolute local-Python runner environment fields for the fixture."""
+    source_root = Path(__file__).resolve().parents[1]
+    if not repo_root.is_absolute():
+        raise ValueError("locals subprocess provider repo_root must be absolute")
+    if not source_root.is_absolute():
+        raise ValueError("locals subprocess provider source root must be absolute")
+    return (
+        _runtime_probe_field("repository_root", str(repo_root)),
+        _runtime_probe_field("working_directory", str(repo_root)),
+        _runtime_probe_field("python_path_entry", str(source_root)),
+    )
+
+
+def _default_local_python_runner_assumptions() -> tuple[
+    RuntimeProbeReplayField,
+    ...,
+]:
+    """Return explicit runner assumptions for exact local fixture replay."""
+    return (
+        _runtime_probe_field("network", "disabled"),
+        _runtime_probe_field("filesystem_mode", "read_only_fixture"),
+    )
+
+
+def _runtime_probe_field(key: str, value: str) -> RuntimeProbeReplayField:
+    """Return one local subprocess replay field."""
+    return RuntimeProbeReplayField(key=key, value=value)
+
+
 def _selected_unit_metadata(
     record: SemanticSelectionRecord,
 ) -> EvalSelectedUnit:
@@ -995,6 +1248,7 @@ def _attached_runtime_support(
 
 
 __all__ = [
+    "CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER",
     "CONTEXT_IR_PROVIDER",
     "FILE_ORDER_FLOOR_PROVIDER",
     "IMPORT_NEIGHBORHOOD_FILES_PROVIDER",
@@ -1009,6 +1263,7 @@ __all__ = [
     "EvalProviderWarning",
     "EvalSelectedUnit",
     "LexicalFileScore",
+    "build_context_ir_default_local_python_subprocess_pack",
     "build_context_ir_provider_pack",
     "build_file_order_floor_pack",
     "build_import_neighborhood_files_pack",

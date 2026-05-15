@@ -11,12 +11,14 @@ from typing import cast
 from context_ir.eval_metrics import score_eval_run
 from context_ir.eval_oracles import setup_eval_oracle_task
 from context_ir.eval_providers import (
+    CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
     CONTEXT_IR_PROVIDER,
     FILE_ORDER_FLOOR_PROVIDER,
     IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
     LEXICAL_TOP_K_FILES_PROVIDER,
     EvalProviderRequest,
     EvalProviderResult,
+    build_context_ir_default_local_python_subprocess_pack,
     build_context_ir_provider_pack,
     build_file_order_floor_pack,
     build_import_neighborhood_files_pack,
@@ -37,6 +39,9 @@ EvalProviderBuilder = Callable[[EvalProviderRequest], EvalProviderResult]
 
 _PROVIDER_BUILDERS: dict[str, EvalProviderBuilder] = {
     CONTEXT_IR_PROVIDER: build_context_ir_provider_pack,
+    CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER: (
+        build_context_ir_default_local_python_subprocess_pack
+    ),
     LEXICAL_TOP_K_FILES_PROVIDER: build_lexical_top_k_files_pack,
     IMPORT_NEIGHBORHOOD_FILES_PROVIDER: build_import_neighborhood_files_pack,
     FILE_ORDER_FLOOR_PROVIDER: build_file_order_floor_pack,
