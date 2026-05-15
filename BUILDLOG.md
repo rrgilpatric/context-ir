@@ -2,6 +2,330 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-14 -- Test-Only Eval-Fixture Subprocess Proof Release-Gate Acceptance
+
+- Reviewed the returned combined read-only release gate for the test-only
+  eval-fixture subprocess proof release unit.
+- Live repo/workspace truth during release-gate acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `7ee092b Add default local-Python recompile facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate results:
+  - Gate 1 release-unit audit: PASS, findings none
+  - Gate 2 full regression: PASS
+  - Gate 3 commit-gating review: PASS, findings none
+- Audit confirmed:
+  - the test-only change is confined to
+    `tests/test_eval_signal_locals_probe.py` plus continuity docs
+  - no `src/`, eval fixture/task/run-spec, provider/schema, package-root, MCP,
+    CLI/product, README, EVAL, PUBLIC_CLAIMS, scoring, compiler,
+    generalized runtime, or runtime-probe form changes were introduced
+  - the new test verifies the default local-Python subprocess facade invokes
+    `(sys.executable, "-m", "context_ir.runtime_probe_worker")`
+  - primary truth remains `unsupported/opaque` with additive runtime-backed
+    provenance
+- Full regression:
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `mypy --strict src/` passed over `37 source files`
+  - `pytest tests/ -v` passed, `1634 passed`
+- Residual risk:
+  - broader subprocess eval-provider/run-spec integration remains
+    intentionally deferred
+- Acceptance decision:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly `BUILDLOG.md`, `PLAN.md`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass combined release gate
+
+## 2026-05-14 -- Test-Only Eval-Fixture Subprocess Proof Workspace Acceptance
+
+- Reviewed the returned implementation slice for the default local-Python
+  subprocess facade proof against the existing `oracle_signal_locals_probe`
+  internal eval fixture.
+- Live repo/workspace truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `7ee092b Add default local-Python recompile facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Findings:
+  - none
+- Accepted implementation:
+  - added one test-only proof in `tests/test_eval_signal_locals_probe.py`
+  - builds an initial `SemanticContextResponse` for
+    `evals/fixtures/oracle_signal_locals_probe` without fixture-loaded runtime
+    observations
+  - diagnoses `SemanticMissEvidence(kind=ABSENT_SYMBOL, evidence="locals()")`
+  - verifies the planned request is exact `RuntimeProbeFamily.RUNTIME_MUTATION`
+    with form `runtime_mutation:locals/0` and boundary text `locals()`
+  - calls
+    `recompile_repository_context_with_default_local_python_subprocess(...)`
+    with `sys.executable`, explicit test contract revisions, and fixture-root
+    local-Python runner environment fields
+  - spies on `runtime_probe_execution.subprocess.run` and proves the real
+    worker invocation is `(sys.executable, "-m",
+    "context_ir.runtime_probe_worker")`
+  - verifies observed/admitted payload `lookup_outcome=returned_namespace`
+  - verifies additive runtime provenance attaches to the unsupported
+    `locals()` boundary while primary truth remains `unsupported/opaque`
+- Scope boundary:
+  - no `src/` changes
+  - no eval fixture, task, run-spec, provider, schema, docs, README, EVAL,
+    PUBLIC_CLAIMS, package-root, MCP, CLI/product, scoring, compiler,
+    generalized runtime, or new runtime-probe form changes
+- Validation:
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_locals_probe.py`
+    passed
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_locals_probe.py`
+    passed, `1 file already formatted`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_tool_facade.py tests/test_runtime_observation_recompile.py -v`
+    passed, `65 passed`
+  - `git diff --check` passed
+- Acceptance decision:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a combined read-only release gate for the exact three-file test-only
+    release unit: `BUILDLOG.md`, `PLAN.md`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - the combined gate must stop on the first finding and must not edit, stage,
+    commit, or push
+- Acceptance status: first-pass implementation acceptance
+
+## 2026-05-14 -- Non-Public North-Star Planning Acceptance
+
+- Reviewed the returned read-only non-public north-star planning/decomposition
+  spike after the accepted no-exposure decision for the pushed default
+  local-Python subprocess recompile facade.
+- Live repo/workspace truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `7ee092b Add default local-Python recompile facade`
+  - dirty files are workspace-only continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Findings:
+  - none
+- Accepted planning result:
+  - no repo-backed reason exists to reopen package-root, MCP, CLI/product, or
+    public-claims exposure
+  - `context_ir.tool_facade` remains the highest exposed boundary for the
+    default local-Python subprocess recompile capability
+  - the concrete non-public gap is evidence depth: facade-level real
+    subprocess proof is focused on exact `runtime_mutation:locals/0`, while
+    broader default-runner coverage is inherited from lower layers
+  - the internal eval harness currently uses fixture-loaded runtime
+    observations rather than subprocess-derived observations
+- Selected next implementation lane:
+  - one test-only internal eval proof in `tests/test_eval_signal_locals_probe.py`
+  - prove the pushed default local-Python subprocess facade can replay the
+    existing `oracle_signal_locals_probe` fixture through a real
+    `python -m context_ir.runtime_probe_worker` subprocess and recompile with
+    additive runtime provenance
+- Rationale:
+  - the slice uses an existing eval fixture and existing facade
+  - it adds no source API, runtime form, eval provider, run spec, docs/claims,
+    public exposure, or generalized runtime behavior
+  - it upgrades confidence from temp facade fixture proof to accepted internal
+    eval asset proof
+- Alternatives deferred:
+  - non-public caller ergonomics: defer until eval-fixture subprocess usage is
+    proven
+  - broader runtime evidence hardening: defer behind the eval-fixture
+    subprocess proof
+  - full subprocess eval provider/run-spec integration: defer because it needs
+    provider and miss-evidence design
+  - docs/claims hold: already accepted; no further docs work needed
+- Escalation condition for the implementation lane:
+  - stop and return `ESCALATE` if the proof cannot be completed without
+    changing source, eval assets, provider schema, run specs, public claims, or
+    exposure boundaries
+- This is workspace-only planning acceptance. It is not implementation
+  acceptance, release-gate clearance, staging, commit, or push authorization.
+- Acceptance status: first-pass planning acceptance
+
+## 2026-05-14 -- Exposure-Boundary Planning Acceptance
+
+- Reviewed the returned read-only exposure-boundary planning/decomposition
+  spike after the pushed default local-Python subprocess recompile facade.
+- Live repo/workspace truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `7ee092b Add default local-Python recompile facade`
+  - dirty files are workspace-only continuity updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Findings:
+  - none
+- Accepted planning result:
+  - no repo-backed reason exists to widen exposure now
+  - `context_ir.tool_facade` remains the highest exposed boundary for the
+    default local-Python subprocess recompile capability
+  - package-root exposure is intentionally blocked by current package-root
+    policy and tests
+  - MCP remains intentionally compile-only with exactly one
+    `compile_repository_context` tool
+  - README, EVAL, and PUBLIC_CLAIMS remain conservative and do not need a
+    public-claim update for this internal expert facade
+- Rejected alternatives:
+  - package-root exposure: rejected absent a proven consumer need
+  - new MCP recompile tool: rejected because it requires state/handle,
+    JSON-safe replay, diagnostic, miss-evidence, snapshot, runner-setting, and
+    error-path design
+  - CLI/product exposure: rejected until workflow, install/run ergonomics, and
+    error-handling evidence exist
+  - docs/claims update: held unless Ryan explicitly wants public copy to
+    mention the recompile facade
+- Next control route:
+  - issue one read-only non-public north-star planning/decomposition spike
+  - choose the next internal runtime-backed or evidence/ergonomics lane after
+    accepting the no-exposure boundary
+  - do not issue package-root, MCP, CLI/product, or public-claims
+    implementation absent explicit Ryan authorization
+- This is workspace-only planning acceptance. It is not implementation,
+  release-gate clearance, staging, commit, or push authorization.
+- Acceptance status: first-pass planning acceptance
+
+## 2026-05-14 -- Post-Facade Push Exposure-Boundary Route Selection
+
+- Control selected the next bounded north-star lane after the Ryan-authorized
+  push of `7ee092b Add default local-Python recompile facade`.
+- Live repo/workspace truth during selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `7ee092b Add default local-Python recompile facade`
+  - dirty files are the workspace-only post-push continuity updates in
+    `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Route finding:
+  - exact local-Python subprocess support is pushed through the worker, parent
+    default runner, internal recompile helper, and
+    `context_ir.tool_facade` wrapper
+  - package-root exports still intentionally exclude the default local-Python
+    recompile facade names
+  - the MCP server still registers exactly one minimal compile tool,
+    `compile_repository_context`
+  - package-root and MCP changes are public/stable exposure boundaries, not a
+    low-risk forwarding continuation
+- Selected next lane:
+  - one read-only exposure-boundary planning/decomposition spike
+  - decide whether the next truthful surface after `context_ir.tool_facade`
+    should be package-root exposure, an MCP tool, a CLI/product-facing path, a
+    docs/claims hold, or no exposure change yet
+  - produce a specific next implementation prompt only if the evidence supports
+    a bounded scope
+- Explicit non-goals for the planning lane:
+  - no implementation
+  - no edits to source, tests, docs, eval artifacts, run specs, fixtures, or
+    public claims
+  - no staging, commit, push, reset, restore, or discard
+  - no package-root, MCP, schema, scoring, compiler, runtime-probe,
+    recompile-helper, facade, docs, README, EVAL, PUBLIC_CLAIMS, fixture,
+    task, run-spec, generalized runtime, or new-form changes
+- This is workspace-only routing state. It is not implementation acceptance,
+  release-gate clearance, staging, commit, or push authorization.
+- Acceptance status: first-pass route selection
+
+## 2026-05-14 -- Default Local-Python Facade Wrapper Push
+
+- Ryan-authorized push completed for
+  `7ee092b Add default local-Python recompile facade`.
+- Repo-backed truth after push and before this post-push continuity sync:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `7ee092b Add default local-Python recompile facade`
+  - dirty files are the workspace-only post-commit continuity updates in
+    `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Pushed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/tool_facade.py`
+  - `tests/test_tool_facade.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `7ee092b Add default local-Python recompile facade`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane after the tool-facing default
+    local-Python subprocess recompile facade release
+  - do not route the pushed `7ee092b` release back to release-unit audit, full
+    regression, commit-gating, staging, local commit, or push handling absent
+    new findings
+- Acceptance status: first-pass push
+
+## 2026-05-14 -- Default Local-Python Facade Wrapper Local Commit Creation
+
+- Local commit creation completed for the tool-facing default local-Python
+  subprocess recompile wrapper release unit.
+- Repo-backed truth immediately after commit and before this post-commit
+  continuity sync:
+  - branch `main`
+  - local `HEAD` at
+    `7ee092b Add default local-Python recompile facade`
+  - `origin/main` at
+    `0334911 Add default local-Python recompile helper`
+  - local branch is ahead of `origin/main` by 1 commit
+  - worktree clean before this workspace-only post-commit continuity update
+  - staged files: none
+  - untracked files: none
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/tool_facade.py`
+  - `tests/test_tool_facade.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `7ee092b Add default local-Python recompile facade`
+  - pushed: no
+- Next control route:
+  - wait for explicit Ryan push authorization before pushing `7ee092b`
+  - do not start the next bounded north-star lane until push/hold state is
+    resolved
+- Acceptance status: first-pass local commit creation
+
 ## 2026-05-14 -- Default Local-Python Facade Wrapper Commit-Gating Acceptance
 
 - Reviewed the returned read-only commit-gating review for the tool-facing

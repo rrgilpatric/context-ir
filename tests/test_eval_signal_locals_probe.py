@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import cast
+
+import pytest
 
 import context_ir
 import context_ir.eval_providers as eval_providers
 import context_ir.eval_report as eval_report
 import context_ir.eval_runs as eval_runs
 import context_ir.eval_summary as eval_summary
+import context_ir.runtime_probe_execution as runtime_probe_execution
+import context_ir.runtime_probe_requests as runtime_probe_requests
+import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.semantic_types as semantic_types
 from context_ir.eval_oracles import (
     SymbolOracleSelector,
@@ -18,11 +24,24 @@ from context_ir.eval_oracles import (
     load_fixture_locals_runtime_observations,
     setup_eval_oracle_task,
 )
+from context_ir.semantic_diagnostics import diagnose_semantic_miss
 from context_ir.semantic_types import (
     CapabilityTier,
     EvidenceOriginKind,
     ReplayStatus,
+    RepositorySnapshotBasis,
+    SemanticDiagnosticBoundaryKind,
+    SemanticDiagnosticUnitStatus,
+    SemanticMissEvidence,
+    SemanticMissKind,
+    SemanticSubjectKind,
     UnresolvedReasonCode,
+)
+from context_ir.tool_facade import (
+    SemanticContextRequest,
+    SemanticDefaultLocalPythonSubprocessRecompileRequest,
+    compile_repository_context,
+    recompile_repository_context_with_default_local_python_subprocess,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -46,6 +65,7 @@ QUERY = (
     "output aligned"
 )
 UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:11"
+RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 
 
 def _parsed_ledger_records(ledger_path: Path) -> list[dict[str, object]]:
@@ -79,6 +99,49 @@ def _selected_units(record: dict[str, object]) -> list[dict[str, object]]:
 def _resolved_selectors(record: dict[str, object]) -> list[dict[str, object]]:
     """Return structured resolved-selector metadata from one raw ledger record."""
     return cast(list[dict[str, object]], record["resolved_selectors"])
+
+
+def _probe_field(
+    key: str,
+    value: str,
+) -> runtime_probe_results.RuntimeProbeReplayField:
+    """Return one runtime probe replay field."""
+    return runtime_probe_results.RuntimeProbeReplayField(key=key, value=value)
+
+
+def _fixture_root_runner_environment() -> tuple[
+    runtime_probe_results.RuntimeProbeReplayField,
+    ...,
+]:
+    """Return local-Python runner environment fields for the fixture root."""
+    source_root = Path(context_ir.__file__).resolve().parents[1]
+    return (
+        _probe_field("repository_root", str(FIXTURE_ROOT)),
+        _probe_field("working_directory", str(FIXTURE_ROOT)),
+        _probe_field("python_path_entry", str(source_root)),
+    )
+
+
+def _runner_runtime_assumptions() -> tuple[
+    runtime_probe_results.RuntimeProbeReplayField,
+    ...,
+]:
+    """Return explicit runtime assumptions for subprocess fixture replay."""
+    return (
+        _probe_field("python_version", "test"),
+        _probe_field("dependency_mode", "offline-fixture"),
+    )
+
+
+def _runner_assumptions() -> tuple[
+    runtime_probe_results.RuntimeProbeReplayField,
+    ...,
+]:
+    """Return explicit runner assumptions for subprocess fixture replay."""
+    return (
+        _probe_field("network", "disabled"),
+        _probe_field("filesystem_mode", "read_only_fixture"),
+    )
 
 
 def test_locals_probe_task_resolves_expected_selectors_deterministically() -> None:
@@ -153,6 +216,150 @@ def test_locals_probe_assets_stay_internal() -> None:
     assert tuple(context_ir.__all__) == tuple(semantic_types.__all__)
     assert "oracle_signal_locals_probe" not in context_ir.__all__
     assert not hasattr(context_ir, "oracle_signal_locals_probe")
+
+
+def test_locals_probe_default_subprocess_replay_adds_runtime_provenance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The local-Python subprocess facade replays the eval fixture through worker."""
+    previous_response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=FIXTURE_ROOT,
+            query=QUERY,
+            budget=100,
+        )
+    )
+    unsupported = next(
+        construct
+        for construct in previous_response.program.unsupported_constructs
+        if construct.construct_id == UNSUPPORTED_UNIT_ID
+    )
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence="locals()",
+    )
+    diagnostic = diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    plan = diagnostic.planned_runtime_probe_request_plan
+
+    assert tuple(previous_response.program.provenance_records) == ()
+    assert unsupported.construct_text == "locals()"
+    assert plan is not None
+    assert diagnostic.planned_runtime_probe_requests == plan.requests
+    assert len(plan.requests) == 1
+    request = plan.requests[0]
+    assert request.subject_id == UNSUPPORTED_UNIT_ID
+    assert request.family_label is (
+        runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION
+    )
+    assert request.form_label == "runtime_mutation:locals/0"
+    assert request.boundary_text == "locals()"
+
+    original_run = runtime_probe_execution.subprocess.run
+    subprocess_invocations: list[tuple[str, ...]] = []
+
+    def spying_run(*args: object, **kwargs: object) -> object:
+        argv = args[0]
+        if isinstance(argv, tuple | list):
+            subprocess_invocations.append(tuple(str(part) for part in argv))
+        else:
+            subprocess_invocations.append((str(argv),))
+        return original_run(*args, **kwargs)
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", spying_run)
+
+    response = recompile_repository_context_with_default_local_python_subprocess(
+        SemanticDefaultLocalPythonSubprocessRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            miss_evidence=miss_evidence,
+            delta_budget=160,
+            python_executable=sys.executable,
+            invocation_contract_revision=(
+                "runtime-probe-local-python-subprocess:test.1"
+            ),
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+            repository_snapshot_basis=RepositorySnapshotBasis(
+                snapshot_kind="git_commit",
+                snapshot_id="oracle-signal-locals-probe-test",
+                is_dirty_worktree=False,
+            ),
+            probe_contract_revision="runtime-probe-contract:test.1",
+            runtime_assumptions=_runner_runtime_assumptions(),
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=_fixture_root_runner_environment(),
+            runner_assumptions=_runner_assumptions(),
+        )
+    )
+
+    collection = response.runner_attempt_collection
+    observed_result = collection.result_batch.results[0]
+    admission = response.observation_application.admissions[0]
+    boundary = next(
+        candidate
+        for candidate in response.diagnostic.boundary_classifications
+        if candidate.unit_id == UNSUPPORTED_UNIT_ID
+    )
+    selected_trace = next(
+        selection.trace_summary
+        for selection in response.compile_result.optimization.selections
+        if selection.unit_id == UNSUPPORTED_UNIT_ID
+    )
+    provenance_record = next(
+        record
+        for record in response.program.provenance_records
+        if record.subject_id == UNSUPPORTED_UNIT_ID
+    )
+
+    assert subprocess_invocations == [
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+    ]
+    assert (
+        collection.runner_request_batch
+        is response.runner_request_preparation.runner_request_batch
+    )
+    assert collection.attempts[0].request is request
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.request is request
+    assert (
+        tuple((field.key, field.value) for field in observed_result.normalized_payload)
+        == RUNTIME_PAYLOAD
+    )
+    assert (
+        tuple(
+            (field.key, field.value)
+            for field in admission.observation.normalized_payload
+        )
+        == RUNTIME_PAYLOAD
+    )
+    assert admission.request is request
+    assert response.non_proof_results == ()
+    assert boundary.status is SemanticDiagnosticUnitStatus.TOO_SHALLOW
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert boundary.has_attached_runtime_provenance is True
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        selected_trace.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert selected_trace.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert selected_trace.has_attached_runtime_provenance is True
+    assert provenance_record.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+    assert provenance_record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert provenance_record.evidence_origin is (
+        EvidenceOriginKind.RUNTIME_PROBE_IDENTITY
+    )
+    assert provenance_record.replay_status is ReplayStatus.REPRODUCIBLE_RUNTIME
 
 
 def test_locals_probe_run_executes_with_additive_runtime_provenance(

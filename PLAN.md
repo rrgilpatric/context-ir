@@ -41,9 +41,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`0334911 Add default local-Python recompile helper`. The latest pushed
+`7ee092b Add default local-Python recompile facade`. The latest pushed
 source/contract authority is also
-`0334911 Add default local-Python recompile helper`. Live git refs
+`7ee092b Add default local-Python recompile facade`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
 
@@ -2403,11 +2403,127 @@ Workspace-only post-`0334911` route selection:
   - release-unit-audit-cleared: yes, first-pass
   - full-regression-cleared: yes, first-pass
   - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `7ee092b Add default local-Python recompile facade`
+  - pushed: yes
+- next route:
+  - superseded by the post-`7ee092b` push state: select the next bounded
+    north-star lane
+  - do not route the pushed `7ee092b` release back to release-unit audit, full
+    regression, commit-gating, staging, local commit, or push handling absent
+    new findings
+
+Workspace-only post-`7ee092b` route selection:
+
+- selected one read-only exposure-boundary planning/decomposition spike as the
+  next bounded north-star lane
+- current evidence:
+  - exact local-Python subprocess support is pushed through the worker, parent
+    default runner, internal recompile helper, and
+    `context_ir.tool_facade` wrapper
+  - `src/context_ir/tool_facade.py` now exposes
+    `SemanticDefaultLocalPythonSubprocessRecompileRequest`,
+    `SemanticDefaultLocalPythonSubprocessRecompileResponse`, and
+    `recompile_repository_context_with_default_local_python_subprocess(...)`
+    from `context_ir.tool_facade.__all__`
+  - `src/context_ir/__init__.py` still intentionally excludes those facade
+    names from package-root exports
+  - `src/context_ir/mcp_server.py` still registers exactly one minimal MCP
+    tool, `compile_repository_context`
+  - `README.md`, `EVAL.md`, and `PUBLIC_CLAIMS.md` continue to describe the
+    MCP wrapper as minimal and public claims as bounded
+- rationale:
+  - the next possible moves touch package-root, MCP, CLI/product, docs/claims,
+    or an explicit exposure hold
+  - package-root and MCP are public/stable exposure boundaries and should not be
+    widened as a mechanical follow-on to the tool-facade wrapper
+  - a read-only planning lane is the smallest truthful move that can authorize
+    a bounded implementation lane without broadening scope prematurely
+- selected planning scope:
+  - inspect `src/context_ir/tool_facade.py`, `src/context_ir/__init__.py`,
+    `src/context_ir/mcp_server.py`, `tests/test_tool_facade.py`,
+    `tests/test_mcp_server.py`, `tests/test_public_api.py`, `README.md`,
+    `ARCHITECTURE.md`, `EVAL.md`, and `PUBLIC_CLAIMS.md`
+  - decide whether the next implementation should be package-root exposure, an
+    MCP tool, a CLI/product-facing path, a docs/claims hold, or no exposure
+    change yet
+  - return one exact next implementation prompt only if a bounded next
+    implementation lane is justified
+- explicit non-goals for the planning lane:
+  - no implementation
+  - no edits to source, tests, docs, eval artifacts, run specs, fixtures, or
+    public claims
+  - no staging, commit, push, reset, restore, or discard
+  - no package-root, MCP, schema, scoring, compiler, runtime-probe,
+    recompile-helper, facade, docs, README, EVAL, PUBLIC_CLAIMS, fixture,
+    task, run-spec, generalized runtime, or new-form changes
+- release state:
+  - selected in workspace: yes
+  - planning result accepted: yes, first-pass
+  - implementation authorized: no exposure implementation authorized
+  - release-unit-audit-cleared: not applicable
+  - full-regression-cleared: not applicable
+  - commit-gating-cleared: not applicable
   - staged: no
   - locally committed: no
   - pushed: no
 - next route:
-  - stage exactly the four release-unit files and create the local commit
+  - issue one read-only non-public north-star planning/decomposition spike
+  - choose the next internal runtime-backed or evidence/ergonomics lane after
+    accepting the no-exposure boundary
+  - do not issue package-root, MCP, CLI/product, or public-claims
+    implementation absent explicit Ryan authorization
+
+Workspace-only accepted non-public north-star planning result:
+
+- reviewed the returned read-only non-public north-star planning/decomposition
+  spike after the accepted no-exposure decision; findings: none
+- accepted decision:
+  - keep `context_ir.tool_facade` as the highest exposed boundary for the
+    default local-Python subprocess recompile capability
+  - do not open package-root, MCP, CLI/product, or public-claims
+    implementation absent explicit Ryan authorization
+  - the concrete non-public gap is evidence depth: the default subprocess
+    facade has real-subprocess facade proof for exact `runtime_mutation:locals/0`,
+    but not yet against an accepted internal eval asset
+  - the internal eval harness still uses fixture-loaded runtime observations,
+    not subprocess-derived observations
+- selected next bounded lane:
+  - one test-only internal eval proof in `tests/test_eval_signal_locals_probe.py`
+  - prove that
+    `recompile_repository_context_with_default_local_python_subprocess(...)`
+    can replay the existing `oracle_signal_locals_probe` fixture through a
+    real `python -m context_ir.runtime_probe_worker` subprocess and attach
+    additive runtime provenance through recompile
+- rationale:
+  - this uses existing eval assets and existing facade machinery
+  - it does not require source changes, eval provider/run-spec design, public
+    exposure, docs/claims updates, or a new runtime-probe form
+- alternatives deferred:
+  - non-public caller ergonomics
+  - broader runtime evidence hardening
+  - full subprocess eval provider/run-spec integration
+  - docs/claims update
+- explicit non-goals for the implementation lane:
+  - no source changes
+  - no eval fixture, task, or run-spec changes
+  - no package-root, MCP, CLI/product, docs, README, EVAL, PUBLIC_CLAIMS,
+    schema, scoring, compiler, eval-provider, generalized runtime, or
+    runtime-probe form changes
+- release state:
+  - selected in workspace: yes
+  - implementation accepted: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - stage exactly `BUILDLOG.md`, `PLAN.md`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - create the local commit
   - do not push without explicit Ryan authorization
 
 Workspace-only post-`92824aa` route selection:
@@ -6911,18 +7027,63 @@ sequencing for `c1a12d7` absent new findings.
   recompile wrapper release unit
 - [x] Commit-gating review for tool-facing default local-Python subprocess
   recompile wrapper release unit
-- [ ] Local commit creation for tool-facing default local-Python subprocess
+- [x] Local commit creation for tool-facing default local-Python subprocess
   recompile wrapper release unit
+- [x] Ryan-authorized remote push for tool-facing default local-Python subprocess
+  recompile wrapper release unit
+- [x] Post-`7ee092b` control selection of the next bounded north-star lane
+- [x] Exposure-boundary planning spike after default local-Python facade
+- [x] Non-public north-star planning spike after no-exposure decision
+- [x] Test-only eval-fixture subprocess proof for default local-Python facade
+- [x] Combined read-only release gate for test-only eval-fixture subprocess
+  proof release unit
+- [ ] Local commit creation for test-only eval-fixture subprocess proof release
+  unit
 
 ## What Is In Progress
 
-- Tool-facing default local-Python subprocess recompile wrapper is accepted in
-  workspace first-pass, release-unit-audit-cleared first-pass, and
-  full-regression-cleared first-pass, with commit-gating cleared first-pass.
-  The accepted implementation files are
+- Test-only eval-fixture subprocess proof for the default local-Python facade
+  is accepted in workspace first-pass and has passed release-unit audit, full
+  regression, and commit-gating first-pass. The accepted release unit is
+  exactly `BUILDLOG.md`, `PLAN.md`, and
+  `tests/test_eval_signal_locals_probe.py`. The test builds the existing
+  `oracle_signal_locals_probe` fixture response without fixture-loaded runtime
+  observations, diagnoses exact `locals()`, proves the planned request is
+  exact `runtime_mutation:locals/0`, invokes the real
+  `python -m context_ir.runtime_probe_worker` path through
+  `recompile_repository_context_with_default_local_python_subprocess(...)`,
+  and confirms additive runtime provenance while primary truth remains
+  `unsupported/opaque`. The accepted slice did not touch `src/`, eval assets,
+  provider/schema/run-specs, package-root, MCP, CLI/product, docs, README,
+  EVAL, PUBLIC_CLAIMS, scoring, compiler, generalized runtime, or new
+  runtime-probe forms. Next route is to stage exactly the three release-unit
+  files and create the local commit; push remains Ryan-gated.
+- Non-public north-star planning after the no-exposure decision is accepted
+  first-pass with no findings. The selected next lane is one test-only internal
+  eval proof in `tests/test_eval_signal_locals_probe.py`: prove that the pushed
+  default local-Python subprocess facade can replay the existing
+  `oracle_signal_locals_probe` fixture through a real
+  `python -m context_ir.runtime_probe_worker` subprocess and attach additive
+  runtime provenance through recompile. This is not a source/API, eval-provider,
+  run-spec, public exposure, docs/claims, or generalized runtime slice.
+- Exposure-boundary planning after `7ee092b` is accepted first-pass with no
+  findings. The accepted decision is no exposure change yet:
+  `context_ir.tool_facade` remains the highest exposed boundary for the default
+  local-Python subprocess recompile capability. Package-root exposure, MCP
+  recompile tooling, CLI/product exposure, and public-claims updates are held
+  absent explicit Ryan authorization or a new control finding. The next bounded
+  lane is one read-only non-public north-star planning/decomposition spike to
+  choose the next internal runtime-backed or evidence/ergonomics move.
+- The prior post-`7ee092b` route selection has been consumed by the accepted
+  exposure-boundary planning result. It has release-gate status no-active-gate
+  and must not be rerun absent a new finding.
+- Tool-facing default local-Python subprocess recompile wrapper is accepted,
+  release-gate-cleared, locally committed, and pushed at
+  `7ee092b Add default local-Python recompile facade`. The committed release
+  unit is
   `src/context_ir/tool_facade.py` and `tests/test_tool_facade.py`; `PLAN.md`
-  and `BUILDLOG.md` are dirty continuity/routing files included in the
-  proposed release unit. The wrapper composes the pushed
+  and `BUILDLOG.md` were included as continuity/routing files. The wrapper
+  composes the pushed
   `apply_default_local_python_subprocess_for_diagnostic_and_recompile(...)`
   helper, exposes request/response/function names only through
   `context_ir.tool_facade.__all__`, and proves exact non-dynamic
@@ -6931,9 +7092,8 @@ sequencing for `c1a12d7` absent new findings.
   slice did not widen package-root exports, MCP, schema, scoring, compiler,
   docs, fixtures, tasks, run specs, public claims, generalized runtime
   support, or new runtime-probe forms. Full regression passed first-pass with
-  `1633 passed`. Commit-gating passed first-pass with no findings. Next route
-  is staging exactly the four release-unit files and creating the local commit.
-  Push remains Ryan-gated after local commit creation.
+  `1633 passed`. Commit-gating passed first-pass with no findings.
+  Ryan-authorized push completed. It has release-gate status no-active-gate.
 - Internal default local-Python subprocess recompile helper is pushed at
   `0334911 Add default local-Python recompile helper`. The helper composes the
   pushed
@@ -7906,11 +8066,12 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: stage exactly the four accepted release-unit files and
-create the local commit for the
-tool-facing default local-Python subprocess recompile wrapper release unit.
+Immediate next route: stage exactly `BUILDLOG.md`, `PLAN.md`, and
+`tests/test_eval_signal_locals_probe.py`, then create the local commit for the
+test-only eval-fixture subprocess proof release unit. Do not push without
+explicit Ryan authorization.
 Current pushed release authority and latest pushed source/contract authority are
-`0334911 Add default local-Python recompile helper`.
+`7ee092b Add default local-Python recompile facade`.
 
 The prior parent-side exact default local-Python subprocess runner factory is
 pushed at `92824aa Add default local-Python subprocess runner`, and the
@@ -7930,9 +8091,34 @@ runtime-probe forms unchanged. The proposed release unit is `BUILDLOG.md`,
 `PLAN.md`, `src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`.
 The release-unit audit passed first-pass with no findings. Full regression
 passed first-pass with `1633 passed`. Commit-gating passed first-pass with no
-findings. The exact stage set is `BUILDLOG.md`, `PLAN.md`,
-`src/context_ir/tool_facade.py`, and `tests/test_tool_facade.py`. Push remains
-Ryan-gated after local commit creation.
+findings. The exact release unit was locally committed as
+`7ee092b Add default local-Python recompile facade` and pushed with explicit
+Ryan authorization. It has release-gate status no-active-gate.
+
+The exposure-boundary planning result is accepted with no findings:
+no exposure change is justified. Do not open package-root, MCP, CLI/product, or
+public-claims implementation from that spike. The next planning lane should
+stay non-public and decide the smallest internal north-star move, likely among
+default-subprocess internal eval proof, non-public caller ergonomics, runtime
+evidence hardening, or an explicit hold.
+
+The non-public planning result is also accepted with no findings. The selected
+implementation slice is test-only in `tests/test_eval_signal_locals_probe.py`:
+prove the existing `oracle_signal_locals_probe` fixture can be replayed through
+the default local-Python subprocess facade and recompiled with additive runtime
+provenance. No source, eval asset, provider, run-spec, package-root, MCP,
+CLI/product, docs, public-claims, schema, scoring, compiler, generalized
+runtime, or new-form change is authorized.
+
+That test-only implementation slice is accepted in workspace first-pass with no
+findings. Focused validation passed: ruff check, ruff format check, targeted
+pytest over `tests/test_eval_signal_locals_probe.py`, `tests/test_tool_facade.py`,
+and `tests/test_runtime_observation_recompile.py` with `65 passed`, and
+`git diff --check`. The exact release unit is `BUILDLOG.md`, `PLAN.md`, and
+`tests/test_eval_signal_locals_probe.py`. The combined read-only release gate
+passed first-pass: release-unit audit PASS, full regression PASS with
+`1634 passed`, and commit-gating PASS with no findings. The next action is
+local commit creation for exactly those three files.
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 
