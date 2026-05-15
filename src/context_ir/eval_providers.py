@@ -63,6 +63,9 @@ _GLOBALS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _VARS_ZERO_PROBE_TASK_ID = "oracle_signal_vars_zero_probe"
 _VARS_ZERO_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _VARS_ZERO_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
+_DIR_ZERO_PROBE_TASK_ID = "oracle_signal_dir_zero_probe"
+_DIR_ZERO_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_DIR_ZERO_RUNTIME_PAYLOAD = (("listing_entry_count", "0"),)
 _EXEC_PROBE_TASK_ID = "oracle_signal_exec_probe"
 _EXEC_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:4"
 _EXEC_RUNTIME_PAYLOAD = (
@@ -354,6 +357,16 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         replay_target_seed="main.probe_local_namespace",
         snapshot_id="oracle_signal_vars_zero_probe@default-local-python:v1",
         runtime_payload=_VARS_ZERO_RUNTIME_PAYLOAD,
+    ),
+    _DIR_ZERO_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_DIR_ZERO_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="dir()",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:dir/0",
+        boundary_text="dir()",
+        replay_target_seed="main.probe_directory",
+        snapshot_id="oracle_signal_dir_zero_probe@default-local-python:v1",
+        runtime_payload=_DIR_ZERO_RUNTIME_PAYLOAD,
     ),
     _EXEC_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_EXEC_UNSUPPORTED_UNIT_ID,
@@ -1200,8 +1213,8 @@ def _default_local_python_subprocess_fixture(
         raise ValueError(
             "context_ir_default_local_python_subprocess only supports "
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
-            "oracle_signal_vars_zero_probe, oracle_signal_exec_probe, "
-            "oracle_signal_eval_probe, or "
+            "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
+            "oracle_signal_exec_probe, oracle_signal_eval_probe, or "
             "oracle_signal_metaclass_behavior_probe"
         )
     return fixture

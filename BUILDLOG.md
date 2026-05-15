@@ -2,6 +2,198 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Dir Zero Default Subprocess Provider Acceptance
+
+- Reviewed the returned implementation slice for exact
+  `oracle_signal_dir_zero_probe` support inside
+  `context_ir_default_local_python_subprocess`.
+- Review result: accepted first-pass.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `accdb89 Sync dir-zero correction release routing`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Workspace-only accepted implementation:
+  - exact fixture-map support added for `oracle_signal_dir_zero_probe`
+  - provider validation requires miss evidence `dir()`,
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, `reflective_builtin:dir/0`,
+    boundary `dir()`, subject `unsupported:call:main.py:2:11`, replay target
+    seed `main.probe_directory`, one planned request, one runner attempt, one
+    observed result, and normalized payload `listing_entry_count=0`
+  - initial compile remains runtime-fixture-free
+  - recompile uses `sys.executable` and `delta_budget=0`
+  - tests prove the real subprocess invocation includes
+    `(sys.executable, "-m", "context_ir.runtime_probe_worker")`
+  - provider-owned runtime provenance comes from the recompiled response
+  - unsupported/opaque primary truth remains preserved with additive runtime
+    provenance
+  - temporary single-provider run-spec dispatch works without editing
+    committed eval assets
+  - unsupported task IDs remain fail-closed
+- Accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- Validation rerun by control:
+  - requested ruff check passed
+  - requested ruff format check passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - requested pytest subset passed with `101 passed`
+  - final `git diff --check` passed
+- Dedicated read-only release-unit audit result: PASS.
+- Audit findings: none.
+- Audit evidence:
+  - workspace diff exactly matched the eight-file release unit
+  - no staged files
+  - no untracked files
+  - no eval fixtures, tasks, committed run specs, public docs/claims, exports,
+    MCP, schema/config, scoring, compiler, runtime worker, probe-form,
+    dynamic-import, runtime-mutation, exec/eval, metaclass, or generalized
+    provider/runtime support changes were present
+- Audit validation rerun:
+  - `git diff --check` passed
+  - focused ruff check passed
+  - focused ruff format check passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - focused pytest over the five touched probe test files passed with
+    `46 passed`
+- Full regression gate result: PASS.
+- Full regression commands:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed with `1662 passed`
+  - final `git diff --check` passed
+- Commit-gating gate result: PASS.
+- Commit-gating findings: none.
+- Commit-gating evidence:
+  - dirty set exactly matched the eight-file release unit
+  - no staged files
+  - no untracked files
+  - no eval fixtures, tasks, committed run specs, public docs/claims, exports,
+    MCP, schema/config, scoring, compiler, runtime worker, probe-form,
+    dynamic-import, runtime-mutation, exec/eval, metaclass, or generalized
+    provider/runtime support files changed
+  - exact dir-zero provider support is limited to the provider fixture map and
+    fail-closed wording updates
+  - `git diff --check` passed
+- Recommended commit:
+  - subject: `Add dir-zero default subprocess eval provider`
+  - body: `Route the zero-argument dir() oracle through the internal default
+    local-Python subprocess eval provider. Keep the support exact to the
+    existing fixture contract, preserve unsupported/opaque primary truth with
+    additive provider-owned runtime provenance, and prove temporary run-spec
+    dispatch without widening committed eval assets or public claims.`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the eight release-unit files and create the local release
+    commit
+  - after this provider-support unit is released, route toward the
+    Ryan-authorized tangible north-star checkpoint before continuing broad
+    fixture-by-fixture provider expansion
+- Acceptance status: first-pass
+
+## 2026-05-15 -- Tangible North-Star Checkpoint Direction
+
+- Ryan explicitly asked to start seeing a tangible north-star checkpoint after
+  roughly two weeks of careful foundation work.
+- Control response:
+  - keep the in-flight exact `oracle_signal_dir_zero_probe`
+    provider-support lane intact
+  - do not review or accept implementation diffs until the external lane
+    returns its completion result
+  - after that lane is reviewed under the normal quality gate, route toward a
+    bounded tangible checkpoint before continuing broad fixture-by-fixture
+    provider expansion
+- Candidate checkpoint shapes:
+  - one command or run path that exercises the supported runtime-backed
+    eval/provider set
+  - a compact evidence table showing what Context IR now proves
+  - a small fixture-demo walkthrough showing static unsupported/opaque truth
+    plus additive runtime-backed provenance
+  - a clear unsupported/remaining-gap statement
+- Constraints:
+  - no public claim widening without evidence and review
+  - no generalized runtime-analysis claim unless implemented and proven
+  - no release-gate bypass for the in-flight provider lane
+- Release state:
+  - roadmap direction accepted by Ryan
+  - no implementation result has been accepted from the in-flight lane yet
+  - no release gate, staging, local commit, or push is authorized from this
+    checkpoint direction
+- Acceptance status: first-pass roadmap direction
+
+## 2026-05-15 -- Post-Dir-Zero Push Route Selection
+
+- Control lane verified live repo/workspace state after the Ryan-authorized
+  push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `accdb89 Sync dir-zero correction release routing`
+  - no source/test/control diff was present before this route-selection update
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- Repo-backed truth:
+  - pushed source/contract release:
+    `c3e08c4 Correct dir-zero eval runtime evidence`
+  - pushed control-state release:
+    `accdb89 Sync dir-zero correction release routing`
+  - the dir-zero correction is accepted, audit-cleared,
+    full-regression-cleared, commit-gating-cleared, locally committed, and
+    pushed with explicit Ryan authorization
+- Control finding:
+  - committed continuity before this workspace-only update still described the
+    dir-zero correction as awaiting push and still named `0650bb8` as the
+    current pushed authority
+  - live git refs supersede that stale pre-push routing text, and this entry
+    records the corrected active route
+- Route decision:
+  - selected next bounded north-star lane: extend the internal
+    `context_ir_default_local_python_subprocess` provider to support exactly
+    `oracle_signal_dir_zero_probe`
+- Route evidence:
+  - the pushed dir-zero correction resolved the prior fixture/runtime truth
+    mismatch by aligning active evidence and docs to
+    `listing_entry_count=0`
+  - direct fixture execution prints `dir:0`
+  - focused tests prove exact default local-Python subprocess facade planning
+    for `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:dir/0`, boundary `dir()`, subject
+    `unsupported:call:main.py:2:11`, replay target seed
+    `main.probe_directory`, and observed payload `listing_entry_count=0`
+  - `context_ir_default_local_python_subprocess` currently remains
+    fail-closed for `oracle_signal_dir_zero_probe`
+- Scope guard:
+  - no eval fixture, task, or committed run-spec changes are selected
+  - no public docs/claims, package-root exports, MCP, schema/config, scoring,
+    compiler, runtime worker, runtime-probe form, dynamic-import,
+    runtime-mutation, exec/eval, metaclass, other reflective-builtin forms, or
+    generalized runtime/provider support change is selected
+- Release state:
+  - route selected in workspace-only control state
+  - no implementation result has returned yet
+  - no release gate, staging, local commit, or push is authorized from this
+    route selection
+- Acceptance status: first-pass route selection
+
 ## 2026-05-15 -- Dir Zero Evidence Correction Local Commit
 
 - Created the local release commit for the audit-cleared, full-regression
