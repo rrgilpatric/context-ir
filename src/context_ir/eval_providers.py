@@ -75,6 +75,15 @@ _EVAL_RUNTIME_PAYLOAD = (
     ("evaluation_outcome", "returned_value"),
     ("result_type", "builtins.str"),
 )
+_METACLASS_BEHAVIOR_PROBE_TASK_ID = "oracle_signal_metaclass_behavior_probe"
+_METACLASS_BEHAVIOR_UNSUPPORTED_UNIT_ID = (
+    "unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1"
+)
+_METACLASS_BEHAVIOR_RUNTIME_PAYLOAD = (
+    ("class_creation_outcome", "created_class"),
+    ("created_class_qualified_name", "main.Example"),
+    ("selected_metaclass_qualified_name", "main.Meta"),
+)
 _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION = (
     "runtime-probe-local-python-subprocess:context-ir-eval-provider.1"
 )
@@ -310,6 +319,7 @@ class _DefaultLocalPythonSubprocessFixture:
     family_label: RuntimeProbeFamily
     form_label: str
     boundary_text: str
+    replay_target_seed: str
     snapshot_id: str
     runtime_payload: tuple[tuple[str, str], ...]
 
@@ -321,6 +331,7 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
         form_label="runtime_mutation:locals/0",
         boundary_text="locals()",
+        replay_target_seed="main.probe_local_namespace",
         snapshot_id="oracle_signal_locals_probe@default-local-python:v1",
         runtime_payload=_LOCALS_RUNTIME_PAYLOAD,
     ),
@@ -330,6 +341,7 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
         form_label="runtime_mutation:globals/0",
         boundary_text="globals()",
+        replay_target_seed="main.probe_global_namespace",
         snapshot_id="oracle_signal_globals_probe@default-local-python:v1",
         runtime_payload=_GLOBALS_RUNTIME_PAYLOAD,
     ),
@@ -339,6 +351,7 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
         form_label="reflective_builtin:vars/0",
         boundary_text="vars()",
+        replay_target_seed="main.probe_local_namespace",
         snapshot_id="oracle_signal_vars_zero_probe@default-local-python:v1",
         runtime_payload=_VARS_ZERO_RUNTIME_PAYLOAD,
     ),
@@ -348,6 +361,7 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
         form_label="exec_or_eval:exec/1",
         boundary_text="exec(source)",
+        replay_target_seed="main.probe_exec_source",
         snapshot_id="oracle_signal_exec_probe@default-local-python:v1",
         runtime_payload=_EXEC_RUNTIME_PAYLOAD,
     ),
@@ -357,8 +371,19 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         family_label=RuntimeProbeFamily.EXEC_OR_EVAL,
         form_label="exec_or_eval:eval/1",
         boundary_text="eval(source)",
+        replay_target_seed="main.probe_eval_source",
         snapshot_id="oracle_signal_eval_probe@default-local-python:v1",
         runtime_payload=_EVAL_RUNTIME_PAYLOAD,
+    ),
+    _METACLASS_BEHAVIOR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_METACLASS_BEHAVIOR_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="metaclass=Meta",
+        family_label=RuntimeProbeFamily.METACLASS_BEHAVIOR,
+        form_label="metaclass_behavior:keyword",
+        boundary_text="metaclass=Meta",
+        replay_target_seed="main.Example",
+        snapshot_id=("oracle_signal_metaclass_behavior_probe@default-local-python:v1"),
+        runtime_payload=_METACLASS_BEHAVIOR_RUNTIME_PAYLOAD,
     ),
 }
 
@@ -1175,8 +1200,9 @@ def _default_local_python_subprocess_fixture(
         raise ValueError(
             "context_ir_default_local_python_subprocess only supports "
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
-            "oracle_signal_vars_zero_probe, oracle_signal_exec_probe, or "
-            "oracle_signal_eval_probe"
+            "oracle_signal_vars_zero_probe, oracle_signal_exec_probe, "
+            "oracle_signal_eval_probe, or "
+            "oracle_signal_metaclass_behavior_probe"
         )
     return fixture
 
@@ -1213,6 +1239,10 @@ def _require_default_local_python_runtime_probe_request(
     if request.boundary_text != fixture.boundary_text:
         raise ValueError(
             "default local-Python provider planned request has the wrong boundary"
+        )
+    if request.replay_target_seed != fixture.replay_target_seed:
+        raise ValueError(
+            "default local-Python provider planned request has the wrong replay target"
         )
     return request
 

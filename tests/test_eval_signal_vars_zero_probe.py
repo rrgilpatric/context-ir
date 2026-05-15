@@ -429,8 +429,9 @@ def test_vars_zero_probe_default_subprocess_provider_fails_closed_for_other_task
         match=(
             "context_ir_default_local_python_subprocess only supports "
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
-            "oracle_signal_vars_zero_probe, oracle_signal_exec_probe, or "
-            "oracle_signal_eval_probe"
+            "oracle_signal_vars_zero_probe, oracle_signal_exec_probe, "
+            "oracle_signal_eval_probe, or "
+            "oracle_signal_metaclass_behavior_probe"
         ),
     ):
         eval_providers.build_context_ir_default_local_python_subprocess_pack(

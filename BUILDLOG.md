@@ -2,6 +2,243 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Metaclass Default Subprocess Provider Commit-Gating
+
+- Commit-gating gate result: PASS.
+- Findings: none.
+- Gate evidence:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `125c44e Add exec/eval default subprocess eval provider`
+  - dirty files are exactly the seven release-unit files
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+  - provider support remains fail-closed to exact locals, globals, vars-zero,
+    exec, eval, and metaclass fixtures only
+  - no run-spec assets, fixtures, public docs/claims, package-root exports,
+    MCP, schema/config, scoring, compiler, runtime worker, runtime-probe form,
+    dynamic-import, reflective-builtin, runtime-mutation, exec/eval, or
+    generalized provider/runtime support changed
+  - release-state wording now routes to local commit creation only after
+    workspace acceptance, release-unit audit, full regression, and
+    commit-gating clearance
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Recommended commit:
+  - subject: `Add metaclass default subprocess eval provider`
+  - body: `Extend the internal default local-Python subprocess eval provider to
+    the exact metaclass behavior oracle probe now that the lower-layer
+    metaclass keyword subprocess path is available. Keep support fail-closed to
+    exact fixtures and cover runtime-free initial compile, zero-budget
+    subprocess recompile, provider-owned runtime provenance, unsupported/opaque
+    primary truth, and no selected metaclass symbol.`
+- Next control route:
+  - stage exactly the seven release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating
+
+## 2026-05-15 -- Metaclass Default Subprocess Provider Full Regression
+
+- Full regression gate result: PASS.
+- Commands run:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed, `1657 passed`
+  - final `git diff --check` passed
+- Final post-regression repo state:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `125c44e Add exec/eval default subprocess eval provider`
+  - dirty files are exactly the seven release-unit files
+  - staged files: none
+  - untracked files: none
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact seven-file release unit before
+    staging, local commit, or push
+- Acceptance status: first-pass full regression
+
+## 2026-05-15 -- Metaclass Default Subprocess Provider Release-Unit Audit
+
+- Dedicated read-only release-unit audit result: PASS.
+- Findings: none.
+- Audit evidence:
+  - workspace diff is limited to the exact seven-file release unit
+  - provider support is bounded to exact locals, globals, vars-zero, exec,
+    eval, and metaclass fixtures through the fixture map and fail-closed
+    lookup
+  - metaclass constants, subject, replay target seed, and payload match the
+    requested contract
+  - initial compile remains runtime-fixture-free
+  - recompile uses `delta_budget=0` and `sys.executable`
+  - metaclass tests assert exact family/form/boundary/subject/replay target,
+    provider-owned runtime provenance, `unsupported/opaque` primary truth, and
+    no selected `def:main.py:main.Meta`
+  - unsupported task IDs still fail closed in existing provider tests
+  - no run-spec assets, fixtures, public docs/claims, package-root exports,
+    MCP, schema/config, scoring, compiler, runtime worker, runtime-probe form,
+    dynamic-import, reflective-builtin, runtime-mutation, exec/eval, or
+    generalized provider/runtime support changed
+  - unchanged public docs remain valid because they already classify metaclass
+    evidence as internal eval-only, additive, and non-public-widening
+- Repo truth matched expected:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `125c44e Add exec/eval default subprocess eval provider`
+  - dirty files are exactly the seven release-unit files
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression for the exact seven-file release unit before
+    commit-gating, staging, local commit, or push
+- Acceptance status: first-pass release-unit audit
+
+## 2026-05-15 -- Metaclass Default Subprocess Provider Workspace Acceptance
+
+- Reviewed the completed implementation slice extending the internal
+  `context_ir_default_local_python_subprocess` provider to exact
+  `oracle_signal_metaclass_behavior_probe`.
+- Findings: none.
+- Accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Accepted behavior:
+  - provider fixture map now supports exact
+    `oracle_signal_metaclass_behavior_probe` alongside existing exact
+    locals/globals/vars-zero/exec/eval support
+  - metaclass provider path validates
+    `RuntimeProbeFamily.METACLASS_BEHAVIOR`, `metaclass_behavior:keyword`,
+    boundary `metaclass=Meta`, subject
+    `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, replay
+    target seed `main.Example`, one runner attempt, one observed result, and
+    payload `class_creation_outcome=created_class`,
+    `created_class_qualified_name=main.Example`, and
+    `selected_metaclass_qualified_name=main.Meta`
+  - initial compile remains runtime-fixture-free
+  - default local-Python subprocess recompile uses `sys.executable` and
+    `delta_budget=0`
+  - provider-owned runtime provenance is returned from the recompiled response
+    while selected-unit primary truth remains `unsupported/opaque`
+  - `def:main.py:main.Meta` is not selected
+  - unsupported task IDs still fail closed, with updated exact allowed-task
+    wording
+  - no run-spec assets, fixtures, public docs/claims, package-root exports,
+    MCP, run-spec schema/config, scoring, compiler, runtime worker,
+    runtime-probe form, dynamic-import, reflective-builtin, runtime-mutation,
+    exec/eval, or generalized runtime/provider support changed
+- Control validation run:
+  - `.venv/bin/python -m ruff check src/context_ir/eval_providers.py
+    tests/test_eval_signal_metaclass_behavior_probe.py
+    tests/test_eval_signal_locals_probe.py
+    tests/test_eval_signal_globals_probe.py
+    tests/test_eval_signal_vars_zero_probe.py tests/test_eval_runs.py` passed
+  - `.venv/bin/python -m ruff format --check
+    src/context_ir/eval_providers.py
+    tests/test_eval_signal_metaclass_behavior_probe.py
+    tests/test_eval_signal_locals_probe.py
+    tests/test_eval_signal_globals_probe.py
+    tests/test_eval_signal_vars_zero_probe.py tests/test_eval_runs.py` passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - `.venv/bin/python -m pytest
+    tests/test_eval_signal_metaclass_behavior_probe.py
+    tests/test_eval_signal_locals_probe.py
+    tests/test_eval_signal_globals_probe.py
+    tests/test_eval_signal_vars_zero_probe.py tests/test_eval_runs.py
+    tests/test_eval_metrics.py tests/test_eval_results.py -v` passed,
+    `77 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a dedicated read-only release-unit audit over the exact seven-file
+    release unit before full regression, commit-gating, staging, local commit,
+    or push
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-15 -- Post-125c44e Metaclass Provider Route Selection
+
+- Live repo/workspace state verified after Ryan-authorized push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `125c44e Add exec/eval default subprocess eval provider`
+  - no source/test/control diff remains
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Closed release:
+  - `125c44e Add exec/eval default subprocess eval provider` is pushed with
+    explicit Ryan authorization
+  - do not route that release back to release-unit audit, full regression,
+    commit-gating, staging, local commit, or push absent new findings
+- Selected next bounded north-star lane:
+  - extend the existing internal
+    `context_ir_default_local_python_subprocess` provider to exactly
+    `oracle_signal_metaclass_behavior_probe`
+- Route evidence:
+  - the pushed provider now supports exact locals/globals/vars-zero/exec/eval
+    fixtures
+  - lower-layer exact `metaclass_behavior:keyword` local-Python subprocess
+    support is already pushed
+  - the metaclass eval fixture already exists with stable unsupported
+    `metaclass=Meta` boundary and additive runtime provenance contract
+  - a read-only control dry run planned exactly
+    `RuntimeProbeFamily.METACLASS_BEHAVIOR`, `metaclass_behavior:keyword`,
+    boundary `metaclass=Meta`, subject
+    `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, and replay
+    target seed `main.Example`
+  - the same dry run through the default local-Python subprocess facade emitted
+    normalized payload `class_creation_outcome=created_class`,
+    `created_class_qualified_name=main.Example`, and
+    `selected_metaclass_qualified_name=main.Meta`
+- Non-goals:
+  - no run-spec asset or fixture changes
+  - no provider support beyond exact `oracle_signal_metaclass_behavior_probe`
+  - no public docs/claims, package-root exports, MCP, run-spec schema/config,
+    scoring, compiler, runtime worker, runtime-probe form, dynamic-import,
+    reflective-builtin, runtime-mutation, exec/eval, or generalized
+    runtime/provider support change
+- Next control route:
+  - issue one bounded implementation prompt for exact metaclass provider
+    support inside `context_ir_default_local_python_subprocess`
+- Acceptance status: first-pass route selection
+
 ## 2026-05-15 -- Exec/Eval Default Subprocess Provider Commit-Gating
 
 - Commit-gating gate result: PASS.
