@@ -6,7 +6,10 @@ import copy
 import hashlib
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
+
+import pytest
 
 import context_ir
 import context_ir.eval_results as eval_results
@@ -125,6 +128,96 @@ def _smoke_provider_result(setup: EvalOracleSetup) -> EvalProviderResult:
         omitted_unit_ids=(frontier_unit_id, unsupported_unit_id),
         warnings=tuple(warning.code for warning in warning_details),
         metadata=metadata,
+    )
+
+
+def _source_site_for_selector(
+    resolved_selector: ResolvedOracleSelector,
+) -> semantic_types.SourceSite:
+    """Return a stable source site for one resolved smoke selector."""
+    span = resolved_selector.resolved_span
+    file_path = resolved_selector.resolved_file_path
+    if span is None or file_path is None:
+        raise AssertionError("resolved selector is missing source location evidence")
+    return semantic_types.SourceSite(
+        site_id=f"site:{_resolved_unit_id(resolved_selector)}",
+        file_path=file_path,
+        span=span,
+        snippet="provider-owned runtime evidence",
+    )
+
+
+def _provider_runtime_provenance_record(
+    *,
+    record_id: str,
+    subject_id: str,
+    site: semantic_types.SourceSite,
+    payload_value: str,
+) -> semantic_types.SemanticProvenanceRecord:
+    """Return one provider-owned runtime provenance record for raw eval tests."""
+    return semantic_types.SemanticProvenanceRecord(
+        record_id=record_id,
+        subject_kind=semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=subject_id,
+        capability_tier=semantic_types.CapabilityTier.RUNTIME_BACKED,
+        evidence_origin=semantic_types.EvidenceOriginKind.RUNTIME_PROBE_IDENTITY,
+        origin_detail=json.dumps(
+            {"normalized_payload": {"provider_payload": payload_value}},
+            sort_keys=True,
+        ),
+        replay_status=semantic_types.ReplayStatus.REPRODUCIBLE_RUNTIME,
+        repository_snapshot_basis=semantic_types.RepositorySnapshotBasis(
+            snapshot_kind="git_commit",
+            snapshot_id="provider-owned-runtime-test",
+        ),
+        attachment_links=(
+            semantic_types.RuntimeAttachmentLink(
+                attachment_id=f"attachment:{record_id}:stdout",
+                attachment_role="stdout",
+            ),
+        ),
+        subject_sites=(site,),
+    )
+
+
+def _smoke_result_with_provider_runtime_provenance(
+    setup: EvalOracleSetup,
+    *,
+    record_id: str,
+    runtime_provenance_records: tuple[semantic_types.SemanticProvenanceRecord, ...],
+) -> EvalProviderResult:
+    """Return a smoke provider result whose unsupported unit references runtime."""
+    base_result = _smoke_provider_result(setup)
+    frontier_selector = setup.resolved_selectors[2]
+    unsupported_selector = setup.resolved_selectors[3]
+    unsupported_unit_id = _resolved_unit_id(unsupported_selector)
+    unsupported_unit = EvalSelectedUnit(
+        unit_id=unsupported_unit_id,
+        detail="identity",
+        token_count=4,
+        basis="provider_runtime_probe",
+        reason="Provider-owned runtime probe preserved additive evidence.",
+        edit_score=0.0,
+        support_score=0.1,
+        primary_capability_tier=semantic_types.CapabilityTier.UNSUPPORTED_OPAQUE,
+        primary_evidence_origin=(
+            semantic_types.EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+        ),
+        primary_replay_status=semantic_types.ReplayStatus.OPAQUE_BOUNDARY,
+        has_attached_runtime_provenance=True,
+        attached_runtime_provenance_record_ids=(record_id,),
+    )
+    selected_units = (*base_result.metadata.selected_units, unsupported_unit)
+    metadata = replace(
+        base_result.metadata,
+        selected_units=selected_units,
+    )
+    return replace(
+        base_result,
+        metadata=metadata,
+        selected_unit_ids=tuple(unit.unit_id for unit in selected_units),
+        omitted_unit_ids=(_resolved_unit_id(frontier_selector),),
+        runtime_provenance_records=runtime_provenance_records,
     )
 
 
@@ -341,6 +434,73 @@ def test_selector_tier_expectations_are_preserved_in_raw_record(
     assert isinstance(original_selector, dict)
     assert original_selector["expected_primary_capability_tier"] == "statically_proved"
     assert original_selector["expect_attached_runtime_provenance"] is False
+
+
+def test_provider_owned_runtime_provenance_records_are_serialized() -> None:
+    """Selected-unit runtime IDs can resolve from provider-owned records."""
+    setup = _smoke_setup()
+    record_id = "provider-runtime:smoke:unsupported"
+    unsupported_selector = setup.resolved_selectors[3]
+    provenance_record = _provider_runtime_provenance_record(
+        record_id=record_id,
+        subject_id=_resolved_unit_id(unsupported_selector),
+        site=_source_site_for_selector(unsupported_selector),
+        payload_value="provider-owned",
+    )
+    result = _smoke_result_with_provider_runtime_provenance(
+        setup,
+        record_id=record_id,
+        runtime_provenance_records=(provenance_record,),
+    )
+    metrics = score_eval_run(setup, result)
+
+    payload = eval_results.eval_run_record_to_json(
+        eval_results.build_eval_run_record(
+            setup,
+            result,
+            metrics,
+            run_id="run-provider-runtime",
+            git_commit="deadbeef",
+            python_version="3.11.9",
+            package_version=context_ir.__version__,
+        )
+    )
+
+    assert record_id not in {
+        record.record_id for record in setup.semantic_program.provenance_records
+    }
+    assert payload["runtime_provenance_records"] == [
+        {
+            "record_id": record_id,
+            "normalized_payload": {"provider_payload": "provider-owned"},
+        }
+    ]
+
+
+def test_missing_attached_runtime_provenance_record_fails_closed() -> None:
+    """Selected-unit runtime IDs must exist in setup or provider records."""
+    setup = _smoke_setup()
+    record_id = "provider-runtime:missing"
+    result = _smoke_result_with_provider_runtime_provenance(
+        setup,
+        record_id=record_id,
+        runtime_provenance_records=(),
+    )
+    metrics = score_eval_run(setup, result)
+
+    with pytest.raises(
+        ValueError,
+        match=rf"attached runtime provenance record_id is missing: {record_id}",
+    ):
+        eval_results.build_eval_run_record(
+            setup,
+            result,
+            metrics,
+            run_id="run-missing-provider-runtime",
+            git_commit="deadbeef",
+            python_version="3.11.9",
+            package_version=context_ir.__version__,
+        )
 
 
 def test_fixture_file_hashes_are_deterministic_and_sorted() -> None:

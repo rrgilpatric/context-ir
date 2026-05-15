@@ -12,16 +12,20 @@ import pytest
 import context_ir
 import context_ir.eval_providers as eval_providers
 import context_ir.eval_report as eval_report
+import context_ir.eval_results as eval_results
 import context_ir.eval_runs as eval_runs
 import context_ir.eval_summary as eval_summary
 import context_ir.runtime_probe_execution as runtime_probe_execution
 import context_ir.runtime_probe_requests as runtime_probe_requests
 import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.semantic_types as semantic_types
+from context_ir.eval_metrics import score_eval_run
 from context_ir.eval_oracles import (
     SymbolOracleSelector,
     UnsupportedOracleSelector,
+    load_eval_oracle_task,
     load_fixture_locals_runtime_observations,
+    resolve_eval_oracle_task,
     setup_eval_oracle_task,
 )
 from context_ir.semantic_diagnostics import diagnose_semantic_miss
@@ -360,6 +364,73 @@ def test_locals_probe_default_subprocess_replay_adds_runtime_provenance(
         EvidenceOriginKind.RUNTIME_PROBE_IDENTITY
     )
     assert provenance_record.replay_status is ReplayStatus.REPRODUCIBLE_RUNTIME
+
+    runtime_free_setup = resolve_eval_oracle_task(
+        load_eval_oracle_task(TASK_PATH),
+        FIXTURE_ROOT,
+    )
+    selected_units = tuple(
+        eval_providers._selected_unit_metadata(record)
+        for record in response.compile_result.optimization.selections
+    )
+    warning_details = tuple(
+        eval_providers._provider_warning_metadata(warning)
+        for warning in response.compile_result.optimization.warnings
+    )
+    provider_metadata = eval_providers.EvalProviderMetadata(
+        selected_units=selected_units,
+        warning_details=warning_details,
+        unresolved_unit_ids=tuple(
+            access.access_id for access in response.program.unresolved_frontier
+        ),
+        unsupported_unit_ids=tuple(
+            construct.construct_id
+            for construct in response.program.unsupported_constructs
+        ),
+        syntax_diagnostic_ids=tuple(
+            diagnostic.diagnostic_id
+            for diagnostic in response.program.syntax.diagnostics
+        ),
+        semantic_diagnostic_ids=tuple(
+            diagnostic.diagnostic_id for diagnostic in response.program.diagnostics
+        ),
+    )
+    provider_result = eval_providers.EvalProviderResult(
+        provider_name=eval_providers.CONTEXT_IR_PROVIDER,
+        provider_algorithm_version=eval_providers.PROVIDER_ALGORITHM_VERSION,
+        provider_config=eval_providers.EvalProviderConfig(),
+        task_id=runtime_free_setup.task.task_id,
+        query=QUERY,
+        budget=response.compile_budget,
+        document=response.compile_result.document,
+        total_tokens=response.compile_total_tokens,
+        selected_files=(),
+        omitted_candidate_files=(),
+        selected_unit_ids=tuple(unit.unit_id for unit in selected_units),
+        omitted_unit_ids=response.compile_result.omitted_unit_ids,
+        warnings=tuple(warning.code for warning in warning_details),
+        metadata=provider_metadata,
+        runtime_provenance_records=tuple(response.program.provenance_records),
+    )
+    payload = eval_results.eval_run_record_to_json(
+        eval_results.build_eval_run_record(
+            runtime_free_setup,
+            provider_result,
+            score_eval_run(runtime_free_setup, provider_result),
+            run_id="locals-provider-owned-runtime",
+            git_commit="abc1234",
+            python_version="3.11.9",
+            package_version=context_ir.__version__,
+        )
+    )
+
+    assert tuple(runtime_free_setup.semantic_program.provenance_records) == ()
+    assert payload["runtime_provenance_records"] == [
+        {
+            "record_id": provenance_record.record_id,
+            "normalized_payload": {"lookup_outcome": "returned_namespace"},
+        }
+    ]
 
 
 def test_locals_probe_run_executes_with_additive_runtime_provenance(

@@ -41,11 +41,16 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`7ee092b Add default local-Python recompile facade`. The latest pushed
-source/contract authority is also
-`7ee092b Add default local-Python recompile facade`. Live git refs
+`667fcdc Prove locals fixture through default subprocess facade`. The latest
+pushed source/contract authority is also
+`667fcdc Prove locals fixture through default subprocess facade`. Live git refs
 and worktree state must still be verified from git during control intake; do
 not infer them from committed prose.
+
+Pushed test-only eval-fixture subprocess proof release:
+`667fcdc Prove locals fixture through default subprocess facade`. This commit
+contains the accepted `oracle_signal_locals_probe` fixture proof through the
+default local-Python subprocess facade.
 
 Pushed `dynamic_import:loader.__import__/1` local-Python subprocess release:
 
@@ -2517,14 +2522,15 @@ Workspace-only accepted non-public north-star planning result:
   - release-unit-audit-cleared: yes, first-pass
   - full-regression-cleared: yes, first-pass
   - commit-gating-cleared: yes, first-pass
-  - staged: no
-  - locally committed: no
-  - pushed: no
+  - staged: yes, then committed
+  - locally committed: yes,
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - pushed: yes
 - next route:
-  - stage exactly `BUILDLOG.md`, `PLAN.md`, and
-    `tests/test_eval_signal_locals_probe.py`
-  - create the local commit
-  - do not push without explicit Ryan authorization
+  - superseded by the pushed `667fcdc` state: select the next bounded
+    north-star lane
+  - do not route this pushed release back to audit, regression,
+    commit-gating, staging, local commit, or push absent new findings
 
 Workspace-only post-`92824aa` route selection:
 
@@ -7037,15 +7043,79 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Test-only eval-fixture subprocess proof for default local-Python facade
 - [x] Combined read-only release gate for test-only eval-fixture subprocess
   proof release unit
-- [ ] Local commit creation for test-only eval-fixture subprocess proof release
+- [x] Local commit creation for test-only eval-fixture subprocess proof release
   unit
+- [x] Ryan-authorized remote push for test-only eval-fixture subprocess proof
+  release unit
+- [x] Post-`667fcdc` control selection of the next bounded north-star lane
+- [x] Read-only eval-provider/run-spec subprocess integration planning spike
+- [x] Ryan authorization for internal eval provider/result provenance-carrier
+  contract slice
+- [x] Internal eval provider/result provenance-carrier implementation slice
+- [x] Release-unit audit for internal eval provider/result provenance-carrier
+  release unit
+- [x] Full regression gate for internal eval provider/result provenance-carrier
+  release unit
+- [x] Commit-gating review for internal eval provider/result provenance-carrier
+  release unit
+- [ ] Local commit creation for internal eval provider/result provenance-carrier
+  release unit
 
 ## What Is In Progress
 
+- Internal eval provider/result provenance-carrier implementation is accepted
+  in workspace first-pass, release-unit-audit-cleared first-pass, and
+  full-regression-cleared first-pass, and commit-gating-cleared first-pass.
+  The accepted release unit is `BUILDLOG.md`, `PLAN.md`,
+  `src/context_ir/eval_providers.py`, `src/context_ir/eval_results.py`,
+  `tests/test_eval_results.py`, and
+  `tests/test_eval_signal_locals_probe.py`. The slice adds a default-empty
+  provider-owned runtime provenance carrier to `EvalProviderResult`, keeps raw
+  eval JSON top-level keys compatible, resolves attached runtime provenance
+  from fixture-loaded setup records first and provider-owned records second,
+  fails closed on missing attached runtime provenance IDs, and proves
+  subprocess-derived `oracle_signal_locals_probe` provenance serialization
+  without fixture-loaded setup provenance. It does not add a provider, modify
+  run specs/tasks/fixtures, widen public/package-root/MCP surfaces, change
+  docs/claims/scoring/compiler behavior, add generalized runtime support, or
+  add runtime-probe forms. Full regression passed with `1636 passed`. Next
+  route is to stage exactly the six release-unit files and create the local
+  commit. Push remains Ryan-gated.
+- Ryan authorized the internal eval provider/result provenance-carrier
+  contract slice recommended by the accepted planning spike. The next lane is
+  one bounded implementation slice in `src/context_ir/eval_providers.py`,
+  `src/context_ir/eval_results.py`, and focused tests only. It must add
+  provider-owned runtime provenance carrying so future subprocess-backed
+  providers do not depend on fixture-loaded provenance IDs. It must not add a
+  new provider, modify run specs/tasks/fixtures, widen public/package-root/MCP
+  surfaces, change scoring/compiler/docs/claims, add generalized runtime
+  support, or add runtime-probe forms.
+- The read-only eval-provider/run-spec subprocess integration planning spike is
+  accepted first-pass and held for Ryan authorization before implementation.
+  The accepted finding is that a subprocess-backed eval provider is not honest
+  until `EvalProviderResult` / eval record serialization can carry
+  provider-derived runtime provenance records instead of resolving all attached
+  runtime provenance IDs against the fixture-loaded oracle setup program. The
+  recommended next implementation candidate is a narrow internal provenance
+  carrier contract slice in `src/context_ir/eval_providers.py` and
+  `src/context_ir/eval_results.py`, proved only with the already-safe
+  `oracle_signal_locals_probe` subprocess path. Ryan has authorized this
+  internal contract change for the next bounded implementation lane.
+- Post-`667fcdc` control selected one read-only planning/decomposition spike
+  as the next bounded north-star lane. The spike should decide whether and how
+  to integrate the pushed default local-Python subprocess facade into the
+  internal eval provider/run-spec path. This is not an implementation lane.
+  It must not widen package-root, MCP, CLI/product, public claims, schema,
+  scoring, compiler, docs, eval fixtures, tasks, run specs, generalized
+  runtime, or runtime-probe forms. The concrete question is how to move beyond
+  fixture-loaded runtime observations in `src/context_ir/eval_providers.py`
+  without broadening public exposure or losing additive-only runtime
+  provenance discipline.
 - Test-only eval-fixture subprocess proof for the default local-Python facade
   is accepted in workspace first-pass and has passed release-unit audit, full
-  regression, and commit-gating first-pass. The accepted release unit is
-  exactly `BUILDLOG.md`, `PLAN.md`, and
+  regression, commit-gating, local commit creation, and Ryan-authorized remote
+  push first-pass. The
+  accepted release unit is exactly `BUILDLOG.md`, `PLAN.md`, and
   `tests/test_eval_signal_locals_probe.py`. The test builds the existing
   `oracle_signal_locals_probe` fixture response without fixture-loaded runtime
   observations, diagnoses exact `locals()`, proves the planned request is
@@ -7056,8 +7126,10 @@ sequencing for `c1a12d7` absent new findings.
   `unsupported/opaque`. The accepted slice did not touch `src/`, eval assets,
   provider/schema/run-specs, package-root, MCP, CLI/product, docs, README,
   EVAL, PUBLIC_CLAIMS, scoring, compiler, generalized runtime, or new
-  runtime-probe forms. Next route is to stage exactly the three release-unit
-  files and create the local commit; push remains Ryan-gated.
+  runtime-probe forms. It is locally committed at
+  `667fcdc Prove locals fixture through default subprocess facade` and pushed
+  with explicit Ryan authorization. Do not route it back to release gates
+  absent new findings.
 - Non-public north-star planning after the no-exposure decision is accepted
   first-pass with no findings. The selected next lane is one test-only internal
   eval proof in `tests/test_eval_signal_locals_probe.py`: prove that the pushed
@@ -8066,12 +8138,11 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: stage exactly `BUILDLOG.md`, `PLAN.md`, and
-`tests/test_eval_signal_locals_probe.py`, then create the local commit for the
-test-only eval-fixture subprocess proof release unit. Do not push without
-explicit Ryan authorization.
+Immediate next route: stage exactly the six accepted internal eval
+provider/result provenance-carrier release-unit files and create the local
+commit. Do not push without explicit Ryan authorization.
 Current pushed release authority and latest pushed source/contract authority are
-`7ee092b Add default local-Python recompile facade`.
+`667fcdc Prove locals fixture through default subprocess facade`.
 
 The prior parent-side exact default local-Python subprocess runner factory is
 pushed at `92824aa Add default local-Python subprocess runner`, and the
@@ -8117,8 +8188,21 @@ and `tests/test_runtime_observation_recompile.py` with `65 passed`, and
 `git diff --check`. The exact release unit is `BUILDLOG.md`, `PLAN.md`, and
 `tests/test_eval_signal_locals_probe.py`. The combined read-only release gate
 passed first-pass: release-unit audit PASS, full regression PASS with
-`1634 passed`, and commit-gating PASS with no findings. The next action is
-local commit creation for exactly those three files.
+`1634 passed`, and commit-gating PASS with no findings. The exact release unit
+was locally committed as
+`667fcdc Prove locals fixture through default subprocess facade` and pushed
+with explicit Ryan authorization.
+
+The accepted planning result recommends one bounded internal contract slice:
+add provider-owned runtime provenance carrying to `EvalProviderResult` and eval
+record serialization, proved only with `oracle_signal_locals_probe`. This is
+not a public schema, package-root, MCP, CLI/product, docs, scoring, compiler,
+fixture, task, run-spec, or new-runtime-form lane, but it is still an internal
+eval provider/result contract change. Ryan authorization has been granted for
+the implementation prompt, and the implementation is accepted in workspace
+first-pass. Release-unit audit passed first-pass with no findings; full
+regression passed first-pass with `1636 passed`; commit-gating passed
+first-pass with no findings. Local commit creation is next.
 
 Pushed `dynamic_import:builtins.__import__/1` local-Python subprocess behavior:
 

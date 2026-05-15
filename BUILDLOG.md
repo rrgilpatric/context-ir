@@ -2,6 +2,386 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Eval Provenance-Carrier Commit-Gating Acceptance
+
+- Reviewed the returned read-only commit-gating review for the internal eval
+  provider/result provenance-carrier release unit.
+- Live repo/workspace truth during commit-gating acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, `src/context_ir/eval_results.py`,
+    `tests/test_eval_results.py`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - commit-gating review: PASS, findings none
+- Gate confirmed:
+  - release-unit audit passed first-pass with no findings
+  - full regression passed first-pass with `1636 passed`
+  - no eval asset, run spec, task, fixture, package-root, MCP, README, EVAL,
+    PUBLIC_CLAIMS, scoring/compiler, generalized runtime, or runtime-probe
+    surface changes are present
+  - continuity states accepted, audit-cleared, full-regression-cleared, not
+    staged, not locally committed, and not pushed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Recommended commit:
+  - subject: `Carry eval runtime provenance in provider results`
+  - body:
+    `Allow internal eval provider results to supply runtime-backed provenance
+    records for selected-unit attachments while preserving fixture-loaded
+    setup precedence and fail-closed missing-ID behavior.`
+
+    `Prove provider-owned serialization with raw eval tests and the locals
+    subprocess fixture path without widening provider, run-spec, fixture,
+    package-root, MCP, claims, scoring, compiler, or runtime-probe surfaces.`
+- Next control route:
+  - stage exactly the six release-unit files and create the local commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating acceptance
+
+## 2026-05-15 -- Eval Provenance-Carrier Full Regression Acceptance
+
+- Ran the full regression gate for the accepted internal eval provider/result
+  provenance-carrier release unit after release-unit audit clearance.
+- Live repo/workspace truth during full regression acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, `src/context_ir/eval_results.py`,
+    `tests/test_eval_results.py`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed before the gate
+- Gate result:
+  - full regression: PASS
+- Commands:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed,
+    `1636 passed in 15.28s`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact six-file release unit
+  - do not stage, commit, or push before commit-gating clears
+- Acceptance status: first-pass full regression acceptance
+
+## 2026-05-15 -- Eval Provenance-Carrier Release-Unit Audit Acceptance
+
+- Reviewed the returned read-only release-unit audit for the internal eval
+  provider/result provenance-carrier release unit.
+- Live repo/workspace truth during audit acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, `src/context_ir/eval_results.py`,
+    `tests/test_eval_results.py`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Gate result:
+  - release-unit audit: PASS, findings none
+- Audit confirmed:
+  - `EvalProviderResult.runtime_provenance_records` is default-empty and
+    validates unique runtime-backed records
+  - `eval_results` resolves fixture-loaded setup provenance first,
+    provider-owned provenance second, and fails closed when neither contains
+    an attached ID
+  - raw eval JSON top-level keys are unchanged
+  - provider-owned serialization and missing-ID failure are covered in focused
+    tests
+  - the `oracle_signal_locals_probe` subprocess proof serializes
+    provider-owned runtime provenance while the oracle setup has no
+    fixture-loaded provenance
+  - no eval asset, run spec, task, fixture, package-root, MCP,
+    scoring/compiler, runtime-probe, README, EVAL, or PUBLIC_CLAIMS surface
+    changed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression for the exact accepted release unit
+  - do not stage, commit, or push before full regression and commit-gating
+    clear
+- Acceptance status: first-pass release-unit audit acceptance
+
+## 2026-05-15 -- Eval Provenance-Carrier Implementation Acceptance
+
+- Reviewed the returned internal eval provider/result provenance-carrier
+  implementation slice.
+- Live repo/workspace truth during acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - dirty files are exactly `BUILDLOG.md`, `PLAN.md`,
+    `src/context_ir/eval_providers.py`, `src/context_ir/eval_results.py`,
+    `tests/test_eval_results.py`, and
+    `tests/test_eval_signal_locals_probe.py`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Findings:
+  - none
+- Accepted implementation:
+  - added a default-empty provider-owned `runtime_provenance_records` carrier
+    to `EvalProviderResult`
+  - validates provider-owned runtime provenance records have unique
+    `record_id` values and are runtime-backed
+  - `eval_results` now resolves attached runtime provenance payloads from the
+    fixture-loaded oracle setup first, then provider-owned provenance records
+  - missing attached runtime provenance IDs still fail closed
+  - existing raw eval JSON top-level keys remain unchanged
+  - existing fixture-loaded `context_ir` provider behavior remains unchanged
+  - focused tests prove provider-owned serialization, missing-ID failure, and
+    subprocess-derived `oracle_signal_locals_probe` provenance serialization
+    without fixture-loaded setup provenance
+- Validation:
+  - implementation lane reported:
+    - `.venv/bin/python -m ruff check src/ tests/` passed
+    - `.venv/bin/python -m ruff format --check src/ tests/` passed
+    - `.venv/bin/python -m mypy --strict src/` passed
+    - `.venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_runs.py tests/test_eval_results.py -v`
+      passed, `36 tests`
+    - `git diff --check` passed
+  - control reran focused validation:
+    - `.venv/bin/python -m ruff check src/context_ir/eval_providers.py src/context_ir/eval_results.py tests/test_eval_results.py tests/test_eval_signal_locals_probe.py`
+      passed
+    - `.venv/bin/python -m ruff format --check src/context_ir/eval_providers.py src/context_ir/eval_results.py tests/test_eval_results.py tests/test_eval_signal_locals_probe.py`
+      passed, `4 files already formatted`
+    - `.venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_results.py -v`
+      passed, `19 passed`
+- Scope boundary:
+  - no new provider
+  - no run-spec, task, fixture, README, EVAL, PUBLIC_CLAIMS, scoring,
+    compiler, MCP, CLI, package-root export, generalized runtime, or
+    runtime-probe form changes
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: no
+  - full-regression-cleared: no
+  - commit-gating-cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run a read-only release-unit audit over the exact six-file release unit
+  - do not stage, commit, or push before audit, full regression, and
+    commit-gating clear
+- Acceptance status: first-pass implementation acceptance
+
+## 2026-05-15 -- Eval Provenance-Carrier Implementation Authorization
+
+- Ryan explicitly authorized the narrow internal eval provider/result
+  provenance-carrier implementation lane recommended by the accepted
+  eval-subprocess integration planning spike.
+- Live repo/workspace truth during authorization:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - dirty files are expected control-state updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Authorized implementation boundary:
+  - add provider-owned runtime provenance carrying to `EvalProviderResult`
+    and eval record serialization
+  - prove the carrier with the already-safe `oracle_signal_locals_probe`
+    subprocess-derived provenance path
+- Explicit non-goals remain active:
+  - no new provider
+  - no run-spec, task, fixture, README, EVAL, PUBLIC_CLAIMS, scoring,
+    compiler, MCP, CLI, package-root export, generalized runtime, or
+    runtime-probe form changes
+  - no change to existing `context_ir` fixture-loaded provider behavior
+- Acceptance status: Ryan-authorized implementation prompt; not
+  implementation acceptance, release-gate clearance, staging, commit, or push
+
+## 2026-05-15 -- Eval-Subprocess Integration Planning Acceptance
+
+- Reviewed the returned read-only eval-provider/run-spec subprocess
+  integration planning spike after the pushed
+  `667fcdc Prove locals fixture through default subprocess facade` release.
+- Live repo/workspace truth during planning acceptance:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - dirty files are expected control-state updates in `BUILDLOG.md` and
+    `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Findings:
+  - the planning result is accepted first-pass
+  - `src/context_ir/eval_providers.py` still builds the `context_ir` provider
+    by loading fixture runtime observations from `eval_runtime_observations.json`
+    and passing them into `tool_facade.compile_repository_context(...)`
+  - the default subprocess path is available only through the diagnostic /
+    recompile flow:
+    `tool_facade.py` -> `runtime_observation_recompile.py` ->
+    `runtime_probe_execution.py`
+  - run specs currently admit provider names only; adding provider
+    configuration or schema fields is not the smallest safe next move
+  - a subprocess-backed provider is not safe yet because
+    `src/context_ir/eval_results.py` serializes runtime provenance payloads by
+    resolving attached record IDs against the fixture-loaded oracle setup
+    program; subprocess-derived provenance IDs need a provider-owned carrier
+    before ledger output is honest
+- Accepted replay inventory from the planning lane:
+  - replay-equivalent fixture dry-runs:
+    `oracle_signal_eval_probe`, `oracle_signal_exec_probe`,
+    `oracle_signal_globals_probe`, `oracle_signal_locals_probe`,
+    `oracle_signal_metaclass_behavior_probe`, and
+    `oracle_signal_vars_zero_probe`
+  - risky or non-equivalent fixture dry-runs:
+    dynamic-import fixtures, one-argument `hasattr` / `getattr` / `vars` /
+    `dir`, `setattr`, `delattr`, and zero-argument `dir()`
+- Recommended implementation candidate:
+  - add an internal provider-owned runtime provenance carrier to
+    `EvalProviderResult` and eval record serialization
+  - prove it only through the already-safe `oracle_signal_locals_probe`
+    subprocess-derived provenance path
+- Control hold:
+  - this is an internal eval provider/result contract change
+  - Ryan authorization is required before issuing the implementation prompt
+  - do not stage, commit, push, or start implementation until Ryan gives an
+    explicit go
+- Acceptance status: first-pass planning acceptance; held for Ryan
+  authorization of the internal contract slice
+
+## 2026-05-14 -- Post-667fcdc Eval-Subprocess Integration Route Selection
+
+- Selected the next bounded north-star lane after the Ryan-authorized push of
+  `667fcdc Prove locals fixture through default subprocess facade`.
+- Live repo/workspace truth during route selection:
+  - branch `main`
+  - local `HEAD` and `origin/main` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - dirty files are expected post-push control-state updates in
+    `BUILDLOG.md` and `PLAN.md`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Route finding:
+  - the no-exposure decision remains active: do not widen package-root, MCP,
+    CLI/product, public claims, schema, scoring, compiler, or docs from this
+    route
+  - the pushed default local-Python subprocess facade has one accepted
+    eval-fixture proof for `oracle_signal_locals_probe`
+  - `src/context_ir/eval_providers.py` still builds the Context IR provider by
+    loading fixture runtime observations directly from
+    `eval_runtime_observations.json`
+  - full subprocess eval-provider/run-spec integration remains a design
+    question because it must account for provider identity, run-spec schema or
+    config, diagnostic miss evidence, replay environment fields, failure
+    behavior, and how subprocess-derived observations coexist with existing
+    fixture-loaded observations
+- Selected next lane:
+  - one read-only planning/decomposition spike for internal eval-provider /
+    run-spec integration of the default local-Python subprocess facade
+  - the spike must decide the smallest next implementation slice or return an
+    explicit hold
+- Explicit non-goals:
+  - no implementation
+  - no edits outside the control-state route selection already recorded here
+  - no source, test, eval fixture, task, run-spec, package-root, MCP,
+    CLI/product, docs, README, EVAL, PUBLIC_CLAIMS, schema, scoring, compiler,
+    generalized runtime, or new runtime-probe form changes in the planning
+    lane
+- Acceptance status: route selected; planning lane prompt authorized
+
+## 2026-05-14 -- Test-Only Eval-Fixture Subprocess Proof Remote Push
+
+- Ryan authorized remote push for the locally committed test-only
+  eval-fixture subprocess proof release unit.
+- Pushed commit:
+  - `667fcdc Prove locals fixture through default subprocess facade`
+- Remote push result:
+  - `main` advanced from
+    `7ee092b Add default local-Python recompile facade` to
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - local `HEAD` and `origin/main` both resolve to `667fcdc`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - pushed: yes
+- Next control route:
+  - select the next bounded north-star lane from the pushed `667fcdc`
+    authority
+  - do not route the pushed test-only eval-fixture subprocess proof release
+    back to audit, regression, commit-gating, staging, local commit, or push
+    absent new findings
+- Acceptance status: pushed with explicit Ryan authorization
+
+## 2026-05-14 -- Test-Only Eval-Fixture Subprocess Proof Local Commit
+
+- Created local commit
+  `667fcdc Prove locals fixture through default subprocess facade` for the
+  accepted test-only eval-fixture subprocess proof release unit.
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `tests/test_eval_signal_locals_probe.py`
+- Live repo/workspace truth immediately after local commit creation:
+  - branch `main`
+  - local `HEAD` at
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - `origin/main` remains at
+    `7ee092b Add default local-Python recompile facade`
+  - branch is ahead of `origin/main` by 1 commit
+  - staged files: none
+  - untracked files: none
+  - source/test release-unit diff is committed
+  - current remaining dirty files are expected workspace-only post-commit
+    continuity updates in `BUILDLOG.md` and `PLAN.md`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit-audit-cleared: yes, first-pass
+  - full-regression-cleared: yes, first-pass
+  - commit-gating-cleared: yes, first-pass
+  - staged: yes, then committed
+  - locally committed: yes,
+    `667fcdc Prove locals fixture through default subprocess facade`
+  - pushed: no
+- Next control route:
+  - superseded by the remote push entry above
+- Acceptance status: local commit created; later pushed with Ryan
+  authorization
+
 ## 2026-05-14 -- Test-Only Eval-Fixture Subprocess Proof Release-Gate Acceptance
 
 - Reviewed the returned combined read-only release gate for the test-only

@@ -512,15 +512,20 @@ def _runtime_provenance_records(
     if not attached_record_ids:
         return ()
 
-    provenance_by_id = {
+    setup_provenance_by_id = {
         provenance_record.record_id: provenance_record
         for provenance_record in setup.semantic_program.provenance_records
+    }
+    provider_provenance_by_id = {
+        provenance_record.record_id: provenance_record
+        for provenance_record in result.runtime_provenance_records
     }
     return tuple(
         _runtime_provenance_record(
             _require_runtime_provenance_record(
                 record_id,
-                provenance_by_id,
+                setup_provenance_by_id,
+                provider_provenance_by_id,
             )
         )
         for record_id in attached_record_ids
@@ -529,15 +534,17 @@ def _runtime_provenance_records(
 
 def _require_runtime_provenance_record(
     record_id: str,
-    provenance_by_id: dict[str, SemanticProvenanceRecord],
+    setup_provenance_by_id: dict[str, SemanticProvenanceRecord],
+    provider_provenance_by_id: dict[str, SemanticProvenanceRecord],
 ) -> SemanticProvenanceRecord:
     """Return one attached runtime provenance record or fail loudly."""
-    try:
-        return provenance_by_id[record_id]
-    except KeyError as error:
-        raise ValueError(
-            f"attached runtime provenance record_id is missing: {record_id}"
-        ) from error
+    setup_record = setup_provenance_by_id.get(record_id)
+    if setup_record is not None:
+        return setup_record
+    provider_record = provider_provenance_by_id.get(record_id)
+    if provider_record is not None:
+        return provider_record
+    raise ValueError(f"attached runtime provenance record_id is missing: {record_id}")
 
 
 def _runtime_provenance_record(

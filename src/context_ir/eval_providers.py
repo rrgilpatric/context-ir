@@ -28,6 +28,7 @@ from context_ir.semantic_types import (
     EvidenceOriginKind,
     ReplayStatus,
     SemanticOptimizationWarning,
+    SemanticProvenanceRecord,
     SemanticSelectionRecord,
     SemanticUnitTraceSummary,
 )
@@ -202,6 +203,7 @@ class EvalProviderResult:
     omitted_unit_ids: tuple[str, ...]
     warnings: tuple[str, ...]
     metadata: EvalProviderMetadata
+    runtime_provenance_records: tuple[SemanticProvenanceRecord, ...] = ()
 
     def __post_init__(self) -> None:
         """Keep provider outputs budget-honest and internally consistent."""
@@ -223,6 +225,16 @@ class EvalProviderResult:
             raise ValueError("total_tokens must match the provider token estimator")
         if self.omitted_candidate_files != self.metadata.omitted_candidate_files:
             raise ValueError("omitted_candidate_files must mirror metadata")
+        provenance_record_ids = tuple(
+            record.record_id for record in self.runtime_provenance_records
+        )
+        if len(provenance_record_ids) != len(set(provenance_record_ids)):
+            raise ValueError("runtime_provenance_records must have unique record_ids")
+        for record in self.runtime_provenance_records:
+            if record.capability_tier is not CapabilityTier.RUNTIME_BACKED:
+                raise ValueError(
+                    "runtime_provenance_records must contain runtime-backed records"
+                )
         if self.provider_name == CONTEXT_IR_PROVIDER:
             if self.selected_unit_ids != tuple(
                 unit.unit_id for unit in self.metadata.selected_units
