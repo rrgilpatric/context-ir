@@ -680,7 +680,7 @@ Proven by current unit and integration tests:
   pilot covers only `oracle_signal_dir_zero_probe_matrix`: 1 task x 2 budgets
   x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`. Runtime payload
-  remains `listing_entry_count=3`; runtime proof remains via non-empty
+  remains `listing_entry_count=0`; runtime proof remains via non-empty
   `durable_payload_reference`; `listing_entry_count` is additive summary only.
   Baseline providers remain empty at both budgets. At budgets `220` and `100`,
   `context_ir` selects the same units:
@@ -1117,7 +1117,7 @@ Architecturally intended but not yet evaluated:
   `oracle_signal_dir_zero_probe_matrix` covers only 1 task x 2 budgets x 3
   providers at budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`; runtime payload
-  remains `listing_entry_count=3`; runtime proof remains via non-empty
+  remains `listing_entry_count=0`; runtime proof remains via non-empty
   `durable_payload_reference`; `listing_entry_count` is additive summary only;
   baseline providers remain empty at both budgets; at budgets `220` and `100`,
   `context_ir` selects the same units:
@@ -1332,7 +1332,7 @@ The following claims are allowed because current repo artifacts support them:
   `oracle_signal_dir_zero_probe_matrix`: 1 task x 2 budgets x 3 providers at
   budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`; runtime payload
-  remains `listing_entry_count=3`; runtime proof remains via non-empty
+  remains `listing_entry_count=0`; runtime proof remains via non-empty
   `durable_payload_reference`; `listing_entry_count` is additive summary only;
   baseline providers remain empty at both budgets; at budgets `220` and `100`,
   `context_ir` selects the same units:

@@ -125,9 +125,103 @@ Pushed metaclass provider release evidence:
 - full regression passed first-pass: ruff check, ruff format check, strict
   mypy, full pytest with `1657 passed`, and clean final `git diff --check`
 - commit-gating passed first-pass with no findings
+- workspace-only post-`0650bb8` route-selection findings:
+  - local control state has one docs-only continuity commit ahead of
+    `origin/main`; the pushed source/contract authority remains
+    `0650bb8 Add metaclass default subprocess eval provider`
+  - a read-only control dry run rejected exact
+    `oracle_signal_dir_zero_probe` provider support as the immediate next
+    implementation lane: the existing default local-Python subprocess facade
+    plans `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:dir/0`, boundary `dir()`, subject
+    `unsupported:call:main.py:2:11`, and replay target seed
+    `main.probe_directory`, but the live subprocess payload is
+    `listing_entry_count=0` while the committed eval fixture expects
+    `listing_entry_count=3`; direct fixture execution also returns `dir:0`
+  - read-only dry runs for remaining non-zero reflective-builtin and
+    runtime-mutation fixtures plan to exact lower-layer forms but do not
+    produce observed results through the runtime-fixture-free default facade
+    because the planned requests have no observed replay inputs
+  - read-only dry runs for remaining dynamic-import fixtures plan to exact
+    lower-layer forms but return non-proof crashed subprocess results through
+    the same default facade
+- release/control state:
+  - Ryan approved advancing from the route-selection hold on 2026-05-15
+  - no provider implementation prompt is currently selected; the next lane is
+    a prerequisite correction slice
+  - no release gate, staging, local commit, or push is authorized from these
+    findings
+- recommended next route:
+  - run one bounded correction lane to resolve the
+    `oracle_signal_dir_zero_probe` fixture/runtime truth mismatch and add a
+    focused regression guard before selecting another exact
+    `context_ir_default_local_python_subprocess` provider implementation slice
+
+Workspace-only `oracle_signal_dir_zero_probe` evidence correction acceptance:
+
+- implementation result reviewed findings-first against live repo state and
+  accepted first-pass with no findings
+- corrected runtime evidence and active claim docs from
+  `listing_entry_count=3` to `listing_entry_count=0`
+- added focused tests proving:
+  - fixture source executes as `dir:0`
+  - the default local-Python subprocess facade plans exact
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, `reflective_builtin:dir/0`,
+    boundary `dir()`, subject `unsupported:call:main.py:2:11`, replay target
+    seed `main.probe_directory`, and observes payload
+    `listing_entry_count=0`
+  - `context_ir_default_local_python_subprocess` remains fail-closed and does
+    not support `oracle_signal_dir_zero_probe`
+- accepted release unit is exactly:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/fixtures/oracle_signal_dir_zero_probe/eval_runtime_observations.json`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+- validation rerun by control:
+  - direct fixture execution printed `dir:0`
+  - focused ruff check passed
+  - focused ruff format check passed
+  - strict mypy over `src/` passed
+  - focused pytest passed with `49 passed`
+  - `git diff --check` passed
+- dedicated read-only release-unit audit passed first-pass with no findings:
+  - dirty set exactly matched the declared eight-file correction unit
+  - active docs and fixture evidence now agree on `listing_entry_count=0`
+  - tests prove direct fixture truth, exact `dir/0` subprocess facade replay,
+    additive runtime provenance, and fail-closed provider behavior
+  - no provider source, runtime worker, schema, MCP, run-spec, task, fixture
+    source, or generalized support files changed
+- full regression passed first-pass:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed with
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    37 source files
+  - `.venv/bin/python -m pytest tests/ -v` passed with `1660 passed`
+- commit-gating passed first-pass with no findings:
+  - dirty set exactly matched the eight-file correction unit
+  - active dir-zero docs and fixture evidence agree on `listing_entry_count=0`
+  - no active dir-zero `listing_entry_count=3` claims remain
+  - provider source, runtime worker, schema, MCP, run-spec, task, fixture
+    source, and generalized support files are unchanged
+  - `context_ir_default_local_python_subprocess` remains fail-closed for
+    `oracle_signal_dir_zero_probe`
+  - `git diff --check` passed
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
 - next route:
-  - select the next bounded north-star lane from the pushed `0650bb8`
-    authority
+  - stage exactly the eight-file correction unit and create the local commit
+  - push remains Ryan-gated
 
 Pushed internal default local-Python subprocess exec/eval eval provider release:
 `125c44e Add exec/eval default subprocess eval provider`. This commit contains

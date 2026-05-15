@@ -173,7 +173,7 @@ The current internal zero-argument `dir()` pilot covers only
 `oracle_signal_dir_zero_probe_matrix`: 1 task x 2 budgets x 3 providers at
 budgets `[220, 100]`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`; runtime payload remains
-`listing_entry_count=3`; runtime proof remains via non-empty
+`listing_entry_count=0`; runtime proof remains via non-empty
 `durable_payload_reference`; `listing_entry_count` is additive summary only;
 baseline providers remain empty at both budgets; at budgets `220` and `100`,
 `context_ir` selects the same units: `def:main.py:main.probe_directory`,
@@ -743,7 +743,7 @@ Current evidence includes:
   `oracle_signal_dir_zero_probe_matrix`: 1 task x 2 budgets x 3 providers at
   budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`; runtime payload
-  remains `listing_entry_count=3`; runtime proof remains via non-empty
+  remains `listing_entry_count=0`; runtime proof remains via non-empty
   `durable_payload_reference`; `listing_entry_count` is additive summary only;
   baseline providers remain empty at both budgets; at budgets `220` and `100`,
   `context_ir` selects the same units:

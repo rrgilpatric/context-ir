@@ -33,7 +33,7 @@
       "normalized_payload": [
         {
           "key": "listing_entry_count",
-          "value": "3"
+          "value": "0"
         }
       ],
       "durable_payload_reference": "artifact://dir/zero-local-directory-observation.json"

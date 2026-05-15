@@ -2,6 +2,207 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Dir Zero Evidence Correction Commit-Gating
+
+- Commit-gating gate result: PASS.
+- Findings: none.
+- Gate evidence:
+  - dirty set exactly matches the eight-file correction release unit
+  - no staged files
+  - no untracked files
+  - active dir-zero docs and fixture evidence agree on `listing_entry_count=0`
+  - no active dir-zero `listing_entry_count=3` claims remain
+  - `src/`, provider source, runtime worker, schema, MCP, run-spec, task,
+    fixture source, and generalized support files are unchanged
+  - `context_ir_default_local_python_subprocess` remains fail-closed for
+    `oracle_signal_dir_zero_probe`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Recommended commit:
+  - subject: `Correct dir-zero eval runtime evidence`
+  - body: `Align the zero-argument dir() eval evidence and active claims with
+    live local-Python behavior. Add focused coverage that executes the fixture,
+    proves exact dir/0 subprocess replay, preserves unsupported/opaque primary
+    truth with additive runtime provenance, and keeps the default subprocess
+    eval provider fail-closed.`
+- Next control route:
+  - stage exactly the eight-file correction release unit and create the local
+    commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating
+
+## 2026-05-15 -- Dir Zero Evidence Correction Full Regression
+
+- Full regression gate result: PASS.
+- Commands run:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed,
+    `110 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed,
+    `Success: no issues found in 37 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed with `1660 passed`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact eight-file correction unit before
+    staging, local commit, or push
+- Acceptance status: first-pass full regression
+
+## 2026-05-15 -- Dir Zero Evidence Correction Release-Unit Audit
+
+- Dedicated read-only release-unit audit result: PASS.
+- Findings: none.
+- Audit evidence:
+  - dirty set exactly matches the declared eight-file correction release unit
+  - no staged files
+  - no untracked files
+  - active docs now claim `listing_entry_count=0`
+  - fixture evidence records `"value": "0"` and fixture source remains
+    unchanged as zero-argument `dir()`
+  - tests pin the corrected payload, direct `dir:0` execution, exact `dir/0`
+    default local-Python subprocess facade planning, additive runtime
+    provenance, and fail-closed provider behavior
+  - no `src/`, provider source, runtime worker, schema, MCP, run-spec, task,
+    fixture source, or generalized support files are modified
+  - remaining `listing_entry_count=3` mentions are superseded historical
+    `BUILDLOG.md` entries or separate one-argument `dir(obj)` evidence, not
+    active dir-zero claims
+- Validation rerun by audit:
+  - direct fixture execution printed `dir:0`
+  - focused ruff check passed
+  - focused ruff format check passed
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    37 source files
+  - focused pytest passed with `49 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression over the exact eight-file correction release unit
+    before commit-gating, staging, local commit, or push
+- Acceptance status: first-pass audit
+
+## 2026-05-15 -- Dir Zero Evidence Correction Acceptance
+
+- Reviewed the returned correction slice for the reproducible
+  `oracle_signal_dir_zero_probe` fixture/runtime truth mismatch.
+- Review result: accepted first-pass.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` resolves to
+    `f8e63a9 Sync metaclass provider release routing`
+  - `origin/main` resolves to
+    `0650bb8 Add metaclass default subprocess eval provider`
+  - local `HEAD` remains one docs-only continuity commit ahead of
+    `origin/main`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Accepted workspace-only correction:
+  - committed dir-zero runtime evidence now records
+    `listing_entry_count=0`
+  - active claim docs now describe the zero-argument `dir()` pilot with
+    `listing_entry_count=0`
+  - tests now prove the fixture source executes as `dir:0`
+  - tests now prove the default local-Python subprocess facade plans exact
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, `reflective_builtin:dir/0`,
+    boundary `dir()`, subject `unsupported:call:main.py:2:11`, replay target
+    seed `main.probe_directory`, and observes payload
+    `listing_entry_count=0`
+  - tests now prove `context_ir_default_local_python_subprocess` remains
+    fail-closed for `oracle_signal_dir_zero_probe`
+  - historical BUILDLOG entries may still mention the old value as superseded
+    history; this entry and the active docs control current routing
+- Accepted release unit:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/fixtures/oracle_signal_dir_zero_probe/eval_runtime_observations.json`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+- Validation rerun by control:
+  - direct fixture execution printed `dir:0`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_dir_zero_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py tests/test_eval_results.py` passed
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_dir_zero_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py tests/test_eval_results.py` passed
+  - `.venv/bin/python -m mypy --strict src/` passed
+  - `.venv/bin/python -m pytest tests/test_eval_signal_dir_zero_probe.py tests/test_eval_runs.py tests/test_eval_metrics.py tests/test_eval_results.py -v` passed with `49 passed`
+  - final `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run dedicated read-only release-unit audit over the exact eight-file
+    correction unit before full regression, commit-gating, staging, local
+    commit, or push
+- Acceptance status: first-pass
+
+## 2026-05-15 -- Post-Metaclass Provider Route Selection Hold
+
+- Control lane reviewed the next bounded north-star route after the pushed
+  metaclass default subprocess provider release.
+- Live repo/workspace state during route selection:
+  - branch `main`
+  - local `HEAD` resolves to
+    `f8e63a9 Sync metaclass provider release routing`
+  - `origin/main` resolves to
+    `0650bb8 Add metaclass default subprocess eval provider`
+  - local `HEAD` is one docs-only continuity commit ahead of `origin/main`
+  - worktree was clean before route-selection docs were updated
+  - no staged or untracked files were present
+  - `git diff --check` passed
+- Findings:
+  - exact `oracle_signal_dir_zero_probe` provider support is not cleanly
+    selectable as the next implementation lane: the default local-Python
+    subprocess facade plans `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:dir/0`, boundary `dir()`, subject
+    `unsupported:call:main.py:2:11`, replay target seed
+    `main.probe_directory`, one attempt, and one result, but the live
+    subprocess payload is `listing_entry_count=0` while the committed eval
+    fixture expects `listing_entry_count=3`; direct fixture execution returns
+    `dir:0`
+  - remaining non-zero reflective-builtin and runtime-mutation fixtures plan
+    to exact lower-layer forms through the default facade, but the planned
+    requests have no observed replay inputs and dry runs return non-observed
+    subprocess results
+  - remaining dynamic-import fixtures also plan to exact lower-layer forms
+    through the default facade, but dry runs return non-proof crashed
+    subprocess results
+- Recommendation:
+  - Ryan approved advancing from the hold on 2026-05-15
+  - next, run one bounded correction lane to resolve the reproducible
+    `oracle_signal_dir_zero_probe` fixture/runtime truth mismatch and add a
+    focused regression guard before selecting another exact
+    `context_ir_default_local_python_subprocess` provider implementation
+    slice
+- Acceptance status: held until the correction lane returns
+
 ## 2026-05-15 -- Metaclass Default Subprocess Provider Push
 
 - Ryan authorized pushing the local metaclass provider release commit.
