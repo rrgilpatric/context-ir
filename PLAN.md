@@ -216,12 +216,15 @@ Workspace-only `oracle_signal_dir_zero_probe` evidence correction acceptance:
   - release-unit audit cleared: yes, first-pass
   - full-regression cleared: yes, first-pass
   - commit-gating cleared: yes, first-pass
-  - staged: no
-  - locally committed: no
+  - staged: completed as part of local release commit
+  - locally committed: yes, `c3e08c4 Correct dir-zero eval runtime evidence`
   - pushed: no
 - next route:
-  - stage exactly the eight-file correction unit and create the local commit
-  - push remains Ryan-gated
+  - hold for Ryan push authorization
+  - do not route `c3e08c4` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after Ryan-authorized push, select the next bounded north-star lane from
+    the pushed authority
 
 Pushed internal default local-Python subprocess exec/eval eval provider release:
 `125c44e Add exec/eval default subprocess eval provider`. This commit contains

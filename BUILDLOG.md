@@ -2,6 +2,39 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Dir Zero Evidence Correction Local Commit
+
+- Created the local release commit for the audit-cleared, full-regression
+  cleared, and commit-gating-cleared dir-zero evidence correction.
+- Local release commit:
+  - `c3e08c4 Correct dir-zero eval runtime evidence`
+- Committed release unit:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `evals/fixtures/oracle_signal_dir_zero_probe/eval_runtime_observations.json`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `c3e08c4`
+  - pushed: no
+- Routing decision:
+  - push remains Ryan-gated
+  - do not route `c3e08c4` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after Ryan-authorized push, select the next bounded north-star lane from
+    the pushed authority
+- Scope guard:
+  - this entry is a docs-only continuity sync after local commit creation
+  - live git refs and worktree state remain authoritative
+- Acceptance status: first-pass local commit
+
 ## 2026-05-15 -- Dir Zero Evidence Correction Commit-Gating
 
 - Commit-gating gate result: PASS.
