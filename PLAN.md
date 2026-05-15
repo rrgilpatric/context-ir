@@ -41,31 +41,31 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`125c44e Add exec/eval default subprocess eval provider`. The latest pushed
+`0650bb8 Add metaclass default subprocess eval provider`. The latest pushed
 source/contract authority is also
-`125c44e Add exec/eval default subprocess eval provider`. Live git refs and
+`0650bb8 Add metaclass default subprocess eval provider`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
 
-Pushed internal default local-Python subprocess exec/eval eval provider release:
-`125c44e Add exec/eval default subprocess eval provider`. This commit contains
-the accepted exact `oracle_signal_exec_probe` and `oracle_signal_eval_probe`
-support inside the internal `context_ir_default_local_python_subprocess`
-provider. It is pushed with explicit Ryan authorization and must not be routed
-back to release-unit audit, full regression, commit-gating, staging, local
-commit, or push absent new findings.
+Pushed internal default local-Python subprocess metaclass eval provider release:
+`0650bb8 Add metaclass default subprocess eval provider`. This commit contains
+the accepted exact `oracle_signal_metaclass_behavior_probe` support inside the
+internal `context_ir_default_local_python_subprocess` provider. It is pushed
+with explicit Ryan authorization and must not be routed back to release-unit
+audit, full regression, commit-gating, staging, local commit, or push absent
+new findings.
 
-Workspace-only post-`125c44e` routing state:
+Pushed metaclass provider release evidence:
 
 - live repo/workspace state was verified after push:
   - branch `main`
   - local `HEAD` and `origin/main` both resolve to
-    `125c44e Add exec/eval default subprocess eval provider`
+    `0650bb8 Add metaclass default subprocess eval provider`
   - no source/test/control diff remains
   - no staged files
   - no untracked files
   - `git diff --check` passed
-- selected next bounded north-star lane:
+- implemented bounded north-star lane:
   - extend the existing internal
     `context_ir_default_local_python_subprocess` provider to exactly
     `oracle_signal_metaclass_behavior_probe`
@@ -118,16 +118,24 @@ Workspace-only post-`125c44e` routing state:
   `tests/test_eval_signal_locals_probe.py`,
   `tests/test_eval_signal_globals_probe.py`, and
   `tests/test_eval_signal_vars_zero_probe.py`
-- release state: workspace-only accepted, release-unit-audit-cleared,
-  full-regression-cleared, not commit-gating-cleared, not staged, not locally
-  committed, and not pushed
+- release state: accepted, release-unit-audit-cleared,
+  full-regression-cleared, commit-gating-cleared, locally committed, and
+  pushed at `0650bb8 Add metaclass default subprocess eval provider`
 - dedicated read-only release-unit audit passed first-pass with no findings
 - full regression passed first-pass: ruff check, ruff format check, strict
   mypy, full pytest with `1657 passed`, and clean final `git diff --check`
 - commit-gating passed first-pass with no findings
 - next route:
-  - stage exactly the seven-file metaclass provider-support release unit and
-    create the local commit; do not push without explicit Ryan authorization
+  - select the next bounded north-star lane from the pushed `0650bb8`
+    authority
+
+Pushed internal default local-Python subprocess exec/eval eval provider release:
+`125c44e Add exec/eval default subprocess eval provider`. This commit contains
+the accepted exact `oracle_signal_exec_probe` and `oracle_signal_eval_probe`
+support inside the internal `context_ir_default_local_python_subprocess`
+provider. It is pushed with explicit Ryan authorization and must not be routed
+back to release-unit audit, full regression, commit-gating, staging, local
+commit, or push absent new findings.
 
 Pushed exec/eval observed replay-input preservation correction release:
 `53c82df Preserve exec/eval observed replay inputs`. This commit contains the
@@ -7696,8 +7704,11 @@ sequencing for `c1a12d7` absent new findings.
   metaclass provider release unit
 - [x] Commit-gating review for internal default local-Python subprocess
   metaclass provider release unit
-- [ ] Local commit creation for internal default local-Python subprocess
+- [x] Local commit creation for internal default local-Python subprocess
   metaclass provider release unit
+- [x] Ryan-authorized remote push for internal default local-Python subprocess
+  metaclass provider release unit
+- [ ] Post-`0650bb8` control selection of the next bounded north-star lane
 
 ## What Is In Progress
 
@@ -7706,24 +7717,15 @@ sequencing for `c1a12d7` absent new findings.
   pushed at `125c44e Add exec/eval default subprocess eval provider` with
   explicit Ryan authorization. Do not route it back to release-unit audit, full
   regression, commit-gating, staging, local commit, or push absent new findings.
-- Post-`125c44e` route selection is accepted in workspace first-pass. Live git
-  state was verified as branch `main`, `HEAD` and `origin/main` at
-  `125c44e Add exec/eval default subprocess eval provider`, clean worktree, no
-  staged files, no untracked files, and clean `git diff --check`. The selected
-  next bounded north-star lane is one exact internal provider-support slice:
-  extend `context_ir_default_local_python_subprocess` to exact
-  `oracle_signal_metaclass_behavior_probe`. A read-only control dry run planned
-  exact `RuntimeProbeFamily.METACLASS_BEHAVIOR` /
-  `metaclass_behavior:keyword`, boundary `metaclass=Meta`, subject
-  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, replay
-  target seed `main.Example`, and observed the expected created-class payload
-  through the default local-Python subprocess facade. Do not add run-spec
-  assets, fixtures, public docs/claims, package-root exports, MCP, run-spec
-  schema/config, scoring, compiler, runtime worker, runtime-probe forms, other
-  provider support, or generalized runtime/provider support in this lane.
+- Post-`125c44e` route selection is complete and superseded by the pushed
+  `0650bb8 Add metaclass default subprocess eval provider` release. It
+  selected the exact internal provider-support slice for
+  `oracle_signal_metaclass_behavior_probe`, and that slice has now completed
+  all release gates, local commit creation, and Ryan-authorized push.
 - Exact `oracle_signal_metaclass_behavior_probe` support inside
-  `context_ir_default_local_python_subprocess` is accepted in workspace
-  first-pass with no findings. The accepted release unit is `BUILDLOG.md`,
+  `context_ir_default_local_python_subprocess` is locally committed and pushed
+  at `0650bb8 Add metaclass default subprocess eval provider` with explicit
+  Ryan authorization. The release unit is `BUILDLOG.md`,
   `PLAN.md`, `src/context_ir/eval_providers.py`,
   `tests/test_eval_signal_metaclass_behavior_probe.py`,
   `tests/test_eval_signal_locals_probe.py`,
@@ -7742,11 +7744,14 @@ sequencing for `c1a12d7` absent new findings.
   release-unit audit passed first-pass with no findings. Full regression passed
   first-pass with ruff, format check, strict mypy, full pytest reporting
   `1657 passed`, and clean final `git diff --check`. This release unit is
-  release-unit-audit-cleared, full-regression-cleared, not
-  commit-gating-cleared, not staged, not locally committed, and not pushed.
-  Commit-gating passed first-pass with no findings. Next route is staging
-  exactly the seven release-unit files and creating the local commit; push
-  remains gated on explicit Ryan authorization.
+  release-unit-audit-cleared, full-regression-cleared,
+  commit-gating-cleared, locally committed, and pushed. Do not route it back
+  to release-unit audit, full regression, commit-gating, staging, local commit,
+  or push absent new findings. Next route is control selection of the next
+  bounded north-star lane from the pushed `0650bb8` authority.
+- No implementation or release-gate lane is currently in progress. The active
+  control action is selecting the next bounded north-star lane from the pushed
+  `0650bb8` authority.
 - Exact exec/eval observed replay-input preservation for default local-Python
   subprocess recompile is locally committed and pushed at
   `53c82df Preserve exec/eval observed replay inputs` with explicit Ryan
@@ -8920,11 +8925,15 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: stage exactly the seven-file metaclass provider-support
-release unit and create the local commit. Push remains gated on explicit Ryan
-authorization.
+Immediate next route: select the next bounded north-star lane from the pushed
+`0650bb8 Add metaclass default subprocess eval provider` authority.
 Current pushed release authority and latest pushed source/contract authority are
-`125c44e Add exec/eval default subprocess eval provider`.
+`0650bb8 Add metaclass default subprocess eval provider`.
+
+The pushed metaclass provider release is closed/no-active-gate at
+`0650bb8 Add metaclass default subprocess eval provider`; do not route it back
+to release-unit audit, full regression, commit-gating, staging, local commit,
+or push absent new findings.
 
 The pushed exec/eval provider release is closed/no-active-gate at
 `125c44e Add exec/eval default subprocess eval provider`; do not route it back
@@ -8941,8 +8950,9 @@ The pushed vars-zero provider release is closed/no-active-gate at
 to release-unit audit, full regression, commit-gating, staging, local commit,
 or push absent new findings.
 
-The selected metaclass provider-support lane is accepted in workspace
-first-pass with no findings. The exact release unit is `BUILDLOG.md`,
+The metaclass provider-support release is pushed at
+`0650bb8 Add metaclass default subprocess eval provider`. The exact release
+unit is `BUILDLOG.md`,
 `PLAN.md`, `src/context_ir/eval_providers.py`,
 `tests/test_eval_signal_metaclass_behavior_probe.py`,
 `tests/test_eval_signal_locals_probe.py`,
@@ -8953,8 +8963,8 @@ ruff, format check, strict mypy, targeted pytest with `77 passed`, and clean
 with no findings. Full regression passed first-pass with ruff, format check,
 strict mypy, full pytest reporting `1657 passed`, and clean final
 `git diff --check`. It is release-unit-audit-cleared,
-full-regression-cleared, and commit-gating-cleared. It is not staged, not
-locally committed, and not pushed.
+full-regression-cleared, commit-gating-cleared, locally committed, and pushed
+at `0650bb8 Add metaclass default subprocess eval provider`.
 
 Historical vars-zero provider release unit was exactly `BUILDLOG.md`, `PLAN.md`,
 `src/context_ir/eval_providers.py`,

@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Metaclass Default Subprocess Provider Push
+
+- Ryan authorized pushing the local metaclass provider release commit.
+- Push result:
+  - `0650bb8 Add metaclass default subprocess eval provider` pushed to
+    `origin/main`
+  - remote advanced from
+    `125c44e Add exec/eval default subprocess eval provider` to
+    `0650bb8 Add metaclass default subprocess eval provider`
+- Post-push repo state verified:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `0650bb8 Add metaclass default subprocess eval provider`
+  - worktree clean
+  - staged files: none
+  - untracked files: none
+- Closed release:
+  - exact `oracle_signal_metaclass_behavior_probe` support inside
+    `context_ir_default_local_python_subprocess` is accepted,
+    release-unit-audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - do not route this release back to release-unit audit, full regression,
+    commit-gating, staging, local commit, or push absent new findings
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `0650bb8`
+  - pushed: yes, `0650bb8`
+- Next control route:
+  - select the next bounded north-star lane from the pushed `0650bb8`
+    authority
+- Acceptance status: first-pass push
+
 ## 2026-05-15 -- Metaclass Default Subprocess Provider Commit-Gating
 
 - Commit-gating gate result: PASS.
