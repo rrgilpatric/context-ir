@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-15 -- Dir Zero Default Subprocess Provider Local Commit
+
+- Created the local release commit for the audit-cleared, full-regression
+  cleared, and commit-gating-cleared dir-zero default subprocess provider
+  support release.
+- Local release commit:
+  - `686dd18 Add dir-zero default subprocess eval provider`
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `686dd18`
+  - pushed: no
+- Routing decision:
+  - push remains Ryan-gated
+  - do not route `686dd18` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after Ryan-authorized push, route toward the Ryan-authorized tangible
+    north-star checkpoint before continuing broad fixture-by-fixture provider
+    expansion
+- Scope guard:
+  - this entry is a docs-only continuity sync after local commit creation
+  - live git refs and worktree state remain authoritative
+- Acceptance status: first-pass local commit
+
 ## 2026-05-15 -- Dir Zero Default Subprocess Provider Acceptance
 
 - Reviewed the returned implementation slice for exact
@@ -99,12 +134,13 @@ Most recent supersession entries override older architectural decisions when the
   - release-unit audit cleared: yes, first-pass
   - full-regression cleared: yes, first-pass
   - commit-gating cleared: yes, first-pass
-  - staged: no
-  - locally committed: no
+  - staged: completed as part of local release commit
+  - locally committed: yes, `686dd18`
   - pushed: no
 - Next control route:
-  - stage exactly the eight release-unit files and create the local release
-    commit
+  - hold for Ryan push authorization
+  - do not route `686dd18` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
   - after this provider-support unit is released, route toward the
     Ryan-authorized tangible north-star checkpoint before continuing broad
     fixture-by-fixture provider expansion

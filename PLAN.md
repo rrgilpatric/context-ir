@@ -230,12 +230,14 @@ acceptance:
   - release-unit audit cleared: yes, first-pass
   - full-regression cleared: yes, first-pass
   - commit-gating cleared: yes, first-pass
-  - staged: no
-  - locally committed: no
+  - staged: completed as part of local release commit
+  - locally committed: yes,
+    `686dd18 Add dir-zero default subprocess eval provider`
   - pushed: no
 - next route:
-  - stage exactly the eight release-unit files and create the local release
-    commit
+  - hold for Ryan push authorization
+  - do not route `686dd18` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
   - after this provider-support unit is released, route toward the
     Ryan-authorized tangible north-star checkpoint before continuing broad
     fixture-by-fixture provider expansion
