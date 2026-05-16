@@ -276,6 +276,37 @@ def test_file_order_floor_is_diagnostic_only(tmp_path: Path) -> None:
     assert result.selected_files == ("a.py", "b.py")
 
 
+def test_baseline_discovery_skips_dependency_and_cache_dirs(
+    tmp_path: Path,
+) -> None:
+    """Whole-file baselines use the shared eligible source boundary."""
+    _write_file(tmp_path, "main.py", "target = 1\n")
+    excluded_dirs = (
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "env",
+        "node_modules",
+        "venv",
+    )
+    for directory_name in excluded_dirs:
+        skipped_file = tmp_path / directory_name / "ignored.py"
+        skipped_file.parent.mkdir(parents=True, exist_ok=True)
+        skipped_file.write_bytes(b"\xff")
+
+    result = eval_providers.build_file_order_floor_pack(
+        _request(tmp_path, query="target", budget=1000)
+    )
+
+    assert result.selected_files == ("main.py",)
+    assert result.metadata.candidate_files == ("main.py",)
+
+
 def test_context_ir_provider_delegates_to_facade_with_no_embed_fn(
     tmp_path: Path,
     monkeypatch,

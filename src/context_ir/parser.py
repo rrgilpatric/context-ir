@@ -48,6 +48,21 @@ from context_ir.types import Edge, EdgeKind, SymbolGraph, SymbolKind, SymbolNode
 # ---------------------------------------------------------------------------
 
 _UPPER_SNAKE_RE: re.Pattern[str] = re.compile(r"^[A-Z][A-Z0-9_]*$")
+_EXCLUDED_PYTHON_SOURCE_DIRS = frozenset(
+    {
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "env",
+        "node_modules",
+        "venv",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -64,7 +79,7 @@ def extract_syntax(repo_root: Path | str) -> SyntaxProgram:
     root = Path(repo_root)
     program = SyntaxProgram(repo_root=root)
 
-    for file_path in sorted(root.rglob("*.py")):
+    for file_path in _eligible_python_source_files(root):
         _extract_syntax_into_program(
             file_path=file_path,
             repo_root=root,
@@ -81,6 +96,33 @@ def extract_syntax_file(file_path: Path | str, repo_root: Path | str) -> SyntaxP
     program = SyntaxProgram(repo_root=root)
     _extract_syntax_into_program(file_path=path, repo_root=root, program=program)
     return program
+
+
+def _eligible_python_source_files(repo_root: Path | str) -> tuple[Path, ...]:
+    """Return eligible repository Python files in deterministic path order."""
+    root = Path(repo_root)
+    discovered: list[Path] = []
+    _collect_eligible_python_source_files(root, discovered)
+    return tuple(sorted(discovered, key=lambda path: path.relative_to(root).as_posix()))
+
+
+def _collect_eligible_python_source_files(
+    directory: Path,
+    discovered: list[Path],
+) -> None:
+    """Collect source files while pruning dependency and generated directories."""
+    try:
+        entries = sorted(directory.iterdir(), key=lambda path: path.name)
+    except OSError:
+        return
+
+    for entry in entries:
+        if entry.is_dir():
+            if entry.name in _EXCLUDED_PYTHON_SOURCE_DIRS or entry.is_symlink():
+                continue
+            _collect_eligible_python_source_files(entry, discovered)
+        elif entry.is_file() and entry.suffix == ".py":
+            discovered.append(entry)
 
 
 def _extract_syntax_into_program(
@@ -1308,8 +1350,7 @@ def parse_repository(root: Path) -> SymbolGraph:
     """
     graph = SymbolGraph()
 
-    # Discover all .py files.
-    py_files = sorted(root.rglob("*.py"))
+    py_files = _eligible_python_source_files(root)
 
     # Build MODULE nodes for packages (directories with __init__.py).
     package_dirs: set[Path] = set()

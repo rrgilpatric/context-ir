@@ -24,6 +24,7 @@ from context_ir.eval_oracles import (
     load_fixture_setattr_runtime_observations,
     load_fixture_vars_runtime_observations,
 )
+from context_ir.parser import _eligible_python_source_files
 from context_ir.runtime_probe_requests import RuntimeProbeFamily, RuntimeProbeRequest
 from context_ir.runtime_probe_results import (
     RuntimeProbeObservedResult,
@@ -834,7 +835,7 @@ def _baseline_result(
 def _discover_baseline_files(repo_root: Path) -> tuple[_BaselineFile, ...]:
     """Return all regular UTF-8 Python files below ``repo_root`` in path order."""
     discovered: list[_BaselineFile] = []
-    for path in sorted(repo_root.rglob("*.py"), key=lambda item: item.as_posix()):
+    for path in _eligible_python_source_files(repo_root):
         if not path.is_file():
             continue
         relative_path = path.relative_to(repo_root).as_posix()

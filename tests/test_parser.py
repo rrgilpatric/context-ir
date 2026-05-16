@@ -59,6 +59,53 @@ def test_extract_syntax_returns_syntax_program() -> None:
     }
 
 
+def test_repository_source_discovery_skips_dependency_and_cache_dirs(
+    tmp_path: Path,
+) -> None:
+    """Repo-root syntax and legacy parsing ignore generated dependency trees."""
+    (tmp_path / "app.py").write_text("VALUE = 1\n", encoding="utf-8")
+    excluded_dirs = (
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "env",
+        "node_modules",
+        "venv",
+    )
+    for directory_name in excluded_dirs:
+        skipped_file = tmp_path / directory_name / "bad.py"
+        skipped_file.parent.mkdir(parents=True, exist_ok=True)
+        skipped_file.write_bytes(b"\xff")
+
+    syntax = extract_syntax(tmp_path)
+    graph = parse_repository(tmp_path)
+
+    assert set(syntax.source_files) == {"file:app.py"}
+    assert {
+        node_id for node_id, node in graph.nodes.items() if node.kind is SymbolKind.FILE
+    } == {"file:app.py"}
+
+
+def test_explicit_single_file_parsing_keeps_skipped_dir_behavior(
+    tmp_path: Path,
+) -> None:
+    """Explicit single-file APIs still parse the file selected by the caller."""
+    selected_file = tmp_path / ".venv" / "manual.py"
+    selected_file.parent.mkdir(parents=True)
+    selected_file.write_text("VALUE = 1\n", encoding="utf-8")
+
+    syntax = extract_syntax_file(selected_file, tmp_path)
+    graph = parse_file(selected_file, tmp_path)
+
+    assert set(syntax.source_files) == {"file:.venv/manual.py"}
+    assert "file:.venv/manual.py" in graph.nodes
+
+
 def test_extract_syntax_captures_raw_facts_and_decorator_spans(
     tmp_path: Path,
 ) -> None:

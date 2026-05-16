@@ -100,6 +100,208 @@ Pushed exact `hasattr` provider/checkpoint release evidence:
   - do not continue broad fixture-by-fixture expansion before the value
     checkpoint
 
+Accepted value checkpoint spike result:
+
+- read-only value checkpoint spike returned PARTIAL differentiated signal and
+  was accepted first-pass
+- artifacts:
+  - checkpoint:
+    `/private/tmp/context-ir-value-checkpoint.1824ca8-spike-001/checkpoint`
+  - comparison:
+    `/private/tmp/context-ir-value-checkpoint.1824ca8-spike-001/comparison`
+  - qualitative probe:
+    `/private/tmp/context-ir-value-checkpoint.1824ca8-spike-001/repo_probe_relevant_modules/summary.json`
+- evidence:
+  - eight exact default-subprocess checkpoint probes produced runtime payloads
+  - budget-100 comparison showed `context_ir` aggregate `0.957`,
+    `context_ir_default_local_python_subprocess` aggregate `0.790`, and
+    lexical/import baselines aggregate `0.298`
+  - context providers preserved uncertainty/runtime evidence while
+    lexical/import baselines had uncertainty honesty `0.000`
+  - repo-realistic qualitative probe showed `context_ir` could send a tight
+    symbol-level pack where file baselines selected no files under budget
+  - the same real-repo probe still omitted the exact
+    `_selected_unit_metadata` target under budget pressure
+  - direct full-root probing failed because analyzer traversal reached `.venv`
+    and hit a non-UTF-8 Python file
+  - broader tracked/package probes were too slow for the bounded spike
+- routing decision:
+  - do not make public claims from this checkpoint
+  - do not continue broad fixture-by-fixture expansion yet
+  - next route is a deeper research/debug spike focused on:
+    full-root source exclusion, repo-scale analysis latency, and one
+    repeatable real-repo qualitative eval that completes without a hand-built
+    mini-snapshot
+
+Accepted source-discovery research/debug spike result:
+
+- deeper read-only research/debug spike returned a concrete implementation
+  route and was accepted first-pass
+- findings:
+  - full-root failure is source-discovery hygiene:
+    `extract_syntax(...)` uses unfiltered `root.rglob("*.py")`
+  - repo-root analysis walks `.venv`; live scale check showed `11,690` Python
+    files under `.venv` versus `181` tracked Python files
+  - the non-UTF-8 crash is a consequence of dependency traversal under `.venv`
+  - `_discover_baseline_files(...)` in `eval_providers.py` duplicates raw
+    `repo_root.rglob("*.py")` traversal and UTF-8 reads for baselines
+  - legacy `parse_repository(...)` also uses raw `root.rglob("*.py")`
+  - after source exclusion, repo-scale latency still needs follow-up work in
+    optimizer/render candidate materialization
+  - the prior `_selected_unit_metadata` miss was budget/targeting behavior, not
+    a broken metadata serializer
+- next implementation route:
+  - add one shared eligible Python source-discovery helper
+  - use it in `extract_syntax(...)`, `_discover_baseline_files(...)`, and
+    legacy `parse_repository(...)`
+  - tests must prove ignored `.venv` and non-UTF-8 dependency files are
+    skipped
+- held follow-ups:
+  - optimizer/render caching and repo-scale latency improvement
+  - repeatable real-repo qualitative eval after source discovery is fixed
+  - broad fixture-by-fixture expansion remains paused
+
+Workspace-only source-discovery hygiene implementation acceptance:
+
+- implementation result reviewed findings-first and accepted first-pass with
+  no findings
+- accepted behavior:
+  - one shared internal eligible Python source-discovery helper was added in
+    `src/context_ir/parser.py`
+  - `extract_syntax(...)`, legacy `parse_repository(...)`, and eval baseline
+    discovery now use the shared helper
+  - dependency/generated/cache directories are pruned, including `.venv`,
+    `venv`, `env`, `.git`, `__pycache__`, `.mypy_cache`, `.pytest_cache`,
+    `.ruff_cache`, `build`, `dist`, and `node_modules`
+  - explicit single-file parsing still works for caller-selected files inside
+    skipped directories
+  - skipped non-UTF-8 dependency/cache files do not crash repo-root syntax
+    extraction, legacy parsing, or baseline discovery
+- accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/parser.py`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_parser.py`
+  - `tests/test_eval_providers.py`
+- validation rerun by control:
+  - focused ruff check passed
+  - focused ruff format check passed with `4 files already formatted`
+  - strict mypy over `src/` passed with no issues in `38 source files`
+  - focused pytest passed with `84 passed`
+  - `git diff --check` passed
+  - root-level smoke check showed `extract_syntax(".")` discovers `181`
+    source files and no `.venv` paths
+  - baseline-discovery smoke check showed `181` source files and no `.venv`
+    paths
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run dedicated read-only release-unit audit over the exact six-file release
+    unit before full regression, commit-gating, staging, local commit, or push
+
+Workspace-only source-discovery hygiene release-unit audit clearance:
+
+- dedicated read-only release-unit audit returned PASS
+- findings: none
+- audit-cleared release unit remains exactly:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/parser.py`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_parser.py`
+  - `tests/test_eval_providers.py`
+- audit evidence:
+  - shared source-discovery helper is bounded and deterministic
+  - dependency/generated/cache directories are pruned, including `.venv`
+  - `extract_syntax(...)`, legacy `parse_repository(...)`, and
+    `_discover_baseline_files(...)` use the shared source boundary
+  - explicit single-file parsing remains intact
+  - no scoring, optimizer, renderer, compiler, runtime/provider support,
+    public docs/claims, MCP/API/schema/config, or package export behavior was
+    widened
+  - actual-repo smoke check found `181` syntax files, `181` baseline files, no
+    forbidden-dir paths, and deterministic discovery
+- live repo/workspace state was verified:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `1824ca8 Sync hasattr provider push routing`
+  - no staged files
+  - no untracked files
+  - dirty set exactly matches the accepted release unit
+  - `git diff --check` passed
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run full regression before commit-gating, staging, local commit, or push
+
+Workspace-only source-discovery hygiene full regression clearance:
+
+- full regression gate passed first-pass after release-unit audit clearance
+- validation:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed with
+    `112 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    `38 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed with `1684 passed`
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run commit-gating review over the exact six-file release unit before
+    staging, local commit, or push
+
+Workspace-only source-discovery hygiene commit-gating clearance:
+
+- commit-gating review passed first-pass with no findings
+- commit-gating evidence:
+  - dirty file set exactly matches the accepted six-file release unit
+  - no staged files were present during review
+  - no untracked files were present during review
+  - local `HEAD` and `origin/main` both resolved to
+    `1824ca8 Sync hasattr provider push routing`
+  - `git diff --check` passed
+  - implementation diff is limited to `parser.py`, `eval_providers.py`, and
+    focused parser/eval-provider tests
+  - `extract_syntax(...)`, legacy `parse_repository(...)`, and
+    `_discover_baseline_files(...)` now use the shared eligible Python source
+    boundary
+  - explicit single-file parsing remains intact
+  - remaining raw fixture hashing traversal in `eval_results.py` is outside
+    the repo-root source-discovery/baseline path and was not changed
+  - no eval assets, public docs/claims, package-root exports, MCP,
+    schema/config, scoring, optimizer, renderer, compiler, runtime/provider
+    support, or package export surfaces have diffs
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - stage exactly the six-file release unit and create a local release commit
+  - do not push without explicit Ryan authorization
+
 Pushed exact `hasattr/2` replay-input bridge release:
 `2140cf5 Add exact hasattr replay-input bridge`. This commit contains the
 accepted lower-layer exact replay-input bridge for only
