@@ -232,12 +232,12 @@ Workspace-only tangible runtime checkpoint acceptance:
   - release-unit audit cleared: yes, first-pass
   - full-regression cleared: yes, first-pass
   - commit-gating cleared: yes, first-pass
-  - staged: no
-  - locally committed: no
+  - staged: completed as part of local release commit
+  - locally committed: yes, `8b6923a Add tangible runtime evidence checkpoint`
   - pushed: no
 - next route:
-  - stage exactly the four-file release unit and create the local release
-    commit
+  - await explicit Ryan authorization before pushing the local tangible runtime
+    checkpoint release
   - do not push without explicit Ryan authorization
 
 Pushed dir-zero evidence correction release:

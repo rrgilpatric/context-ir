@@ -2,6 +2,30 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Tangible Runtime Checkpoint Local Commit
+
+- Created the local release commit for the accepted, release-unit-audit-cleared,
+  full-regression-cleared, and commit-gating-cleared internal tangible
+  runtime-evidence checkpoint release unit.
+- Local release commit:
+  - `8b6923a Add tangible runtime evidence checkpoint`
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_checkpoint.py`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `8b6923a`
+  - pushed: no
+- Next control route:
+  - await explicit Ryan authorization before pushing the local tangible runtime
+    checkpoint release
+- Acceptance status: first-pass local commit
+
 ## 2026-05-16 -- Tangible Runtime Checkpoint Commit-Gating
 
 - Performed commit-gating review for the audit-cleared and
