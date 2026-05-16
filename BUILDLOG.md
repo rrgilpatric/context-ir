@@ -2,6 +2,48 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Exact Hasattr Provider and Checkpoint Local Commit
+
+- Created the local release commit for the accepted, release-unit-audit-cleared,
+  full-regression-cleared, and commit-gating-cleared exact
+  `oracle_signal_hasattr_probe` default-subprocess provider support and
+  checkpoint inclusion release unit.
+- Local release commit:
+  - `3fb8b15 Add hasattr default subprocess eval provider`
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_checkpoint.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- Live repo state immediately after local commit:
+  - branch `main`
+  - local `HEAD` resolves to `3fb8b15`
+  - `origin/main` resolves to `32a4c67 Sync hasattr bridge push routing`
+  - branch is ahead of `origin/main` by one commit before this continuity sync
+  - no staged files
+  - no untracked files
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `3fb8b15`
+  - pushed: no
+- Next control route:
+  - push the local release commit only after explicit Ryan authorization
+  - do not route `3fb8b15` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after this release is pushed, proceed to the value checkpoint spike rather
+    than broad fixture-by-fixture expansion
+- Acceptance status: first-pass local commit
+
 ## 2026-05-16 -- Exact Hasattr Provider and Checkpoint Commit-Gating Clearance
 
 - Performed commit-gating review after first-pass release-unit audit clearance

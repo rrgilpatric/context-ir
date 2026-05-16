@@ -332,6 +332,43 @@ Workspace-only exact `hasattr` provider/checkpoint commit-gating clearance:
     commit
   - do not push without explicit Ryan authorization
 
+Locally committed exact `hasattr` provider/checkpoint release:
+
+- local release commit:
+  - `3fb8b15 Add hasattr default subprocess eval provider`
+- committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_checkpoint.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- live repo/workspace state immediately after local commit:
+  - branch `main`
+  - local `HEAD` resolves to `3fb8b15`
+  - `origin/main` resolves to `32a4c67 Sync hasattr bridge push routing`
+  - branch is ahead of `origin/main` by one commit before this continuity sync
+  - no staged files
+  - no untracked files
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `3fb8b15`
+  - pushed: no
+- next route:
+  - push the local release commit only after explicit Ryan authorization
+  - do not route `3fb8b15` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after this release is pushed, proceed to the value checkpoint spike rather
+    than broad fixture-by-fixture expansion
+
 Pushed internal default local-Python subprocess dir-zero eval provider release:
 `686dd18 Add dir-zero default subprocess eval provider`. This commit contains
 the accepted exact `oracle_signal_dir_zero_probe` support inside the internal
