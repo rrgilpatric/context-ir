@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Push
+
+- Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
+  locally committed exact `hasattr/2` replay-input bridge release with explicit
+  Ryan authorization.
+- Pushed commits:
+  - `2140cf5 Add exact hasattr replay-input bridge`
+  - `dc02adf Sync hasattr bridge local release routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `dc02adf Sync hasattr bridge local release routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+- Release evidence:
+  - exact lower-layer replay-input bridge for only
+    `oracle_signal_hasattr_probe` / `reflective_builtin:hasattr/2`
+  - exact replay inputs remain `object_type=builtins.int` and
+    `attribute_name=bit_length`
+  - replay inputs travel through `request_replay_payload_fields`, not
+    `observed_replay_inputs`
+  - worker consumes only the exact pair and calls
+    `main.probe_attribute(1, "bit_length")`
+  - zero-argument `hasattr` behavior remains preserved
+  - `observed_replay_inputs` remains exec/eval-only
+  - provider support remains intentionally deferred
+- Routing decision:
+  - do not route `2140cf5` or `dc02adf` back to release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - next route is control selection of the next bounded north-star lane from
+    the pushed exact bridge state
+- Acceptance status: first-pass push
+
 ## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Local Commit
 
 - Created the local release commit for the accepted, corrected,

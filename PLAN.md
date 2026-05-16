@@ -41,24 +41,24 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`13d5472 Sync checkpoint push routing`. The latest pushed
+`dc02adf Sync hasattr bridge local release routing`. The latest pushed
 source/contract authority is
-`8b6923a Add tangible runtime evidence checkpoint`. The latest pushed
+`2140cf5 Add exact hasattr replay-input bridge`. The latest pushed
 control-state authority is
-`13d5472 Sync checkpoint push routing`. Live git refs and worktree
+`dc02adf Sync hasattr bridge local release routing`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
-Local committed exact `hasattr/2` replay-input bridge release:
+Pushed exact `hasattr/2` replay-input bridge release:
 `2140cf5 Add exact hasattr replay-input bridge`. This commit contains the
 accepted lower-layer exact replay-input bridge for only
-`oracle_signal_hasattr_probe` / `reflective_builtin:hasattr/2`. It is locally
-committed after release-unit audit, full regression, and commit-gating passed,
-but it is not pushed. Push remains Ryan-gated. Do not route `2140cf5` back to
-release-unit audit, full regression, commit-gating, staging, or local commit
-creation absent new findings.
+`oracle_signal_hasattr_probe` / `reflective_builtin:hasattr/2`. It was pushed
+with explicit Ryan authorization through
+`dc02adf Sync hasattr bridge local release routing`. Do not route `2140cf5` or
+`dc02adf` back to release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push absent new findings.
 
-Local exact `hasattr/2` release evidence:
+Pushed exact `hasattr/2` release evidence:
 
 - implemented exact pre-observation replay-input bridge:
   - parent runtime-probe execution appends only
@@ -85,9 +85,9 @@ Local exact `hasattr/2` release evidence:
   - full-regression cleared: yes, first-pass with `1678 passed`
   - commit-gating cleared: yes, first-pass
   - locally committed: yes, `2140cf5`
-  - pushed: no
+  - pushed: yes, with explicit Ryan authorization
 - next route:
-  - push only after explicit Ryan authorization
+  - select the next bounded north-star lane from the pushed exact bridge state
 
 Pushed internal default local-Python subprocess dir-zero eval provider release:
 `686dd18 Add dir-zero default subprocess eval provider`. This commit contains
