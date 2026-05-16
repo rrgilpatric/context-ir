@@ -2,6 +2,51 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Optimizer/Render Push
+
+- Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
+  locally committed optimizer/render latency release with explicit Ryan
+  authorization.
+- Pushed commits:
+  - `204173a Optimize semantic compile candidate selection`
+  - `cda9fa9 Sync optimizer render local release routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `cda9fa9 Sync optimizer render local release routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+- Release evidence:
+  - request-scoped semantic render session builds renderer lookup indexes once
+    per optimizer run
+  - optimizer candidate construction caches rendered `(unit_id, detail)`
+    materialization locally
+  - optimizer avoids repeated full pending-candidate sorting each loop using
+    `_CandidateSortState`
+  - optimizer walks pending candidates by cursor rather than repeated `pop(0)`
+    list shifting
+  - exact real-repo smoke for the full `_selected_unit_metadata` query at
+    budget `220` produced a non-empty in-budget pack before the `180s` alarm
+  - no scoring, targeting, source discovery, eval provider, runtime behavior,
+    public docs/claims, MCP/API/schema/config, package export, compiler
+    contract, or winner-selection widening was included
+- Release state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: yes, after 1 documentation correction
+  - full-regression cleared: yes, first-pass with `1687 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `204173a`
+  - pushed: yes, with explicit Ryan authorization
+- Routing decision:
+  - do not route `204173a` or `cda9fa9` back to release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - next route is targeting/budget research on the same exact
+    `_selected_unit_metadata` query
+  - do not proceed to demo/report artifact or public claim work yet
+- Acceptance status: first-pass push
+
 ## 2026-05-16 -- Optimizer/Render Local Commit
 
 - Created the local release commit for the accepted, release-unit-audit-cleared,

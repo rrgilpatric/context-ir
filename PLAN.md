@@ -41,19 +41,22 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`a46fa94 Sync source discovery push routing`. The latest pushed
-source/contract authority before the local optimizer/render release is
-`7261d02 Add eligible Python source discovery`. Live git refs and worktree state
-must still be verified from git during control intake; do not infer them from
-committed prose.
+`cda9fa9 Sync optimizer render local release routing`. The latest pushed
+source/contract authority is
+`204173a Optimize semantic compile candidate selection`. Live git refs and
+worktree state must still be verified from git during control intake; do not
+infer them from committed prose.
 
-Local optimizer/render latency release:
-`204173a Optimize semantic compile candidate selection`. This local commit
-contains the accepted, audit-cleared, full-regression-cleared, and
-commit-gating-cleared optimizer/render caching correction release unit. It is
-not pushed yet. Push requires explicit Ryan authorization.
+Pushed optimizer/render latency release:
+`204173a Optimize semantic compile candidate selection`. This commit contains
+the accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed optimizer/render caching correction release unit.
+It was pushed with explicit Ryan authorization through
+`cda9fa9 Sync optimizer render local release routing`. Do not route `204173a`
+or `cda9fa9` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
 
-Local optimizer/render latency release evidence:
+Pushed optimizer/render latency release evidence:
 
 - request-scoped semantic render session builds renderer lookup indexes once
   per optimizer run
@@ -79,12 +82,10 @@ Local optimizer/render latency release evidence:
   - full-regression cleared: yes, first-pass with `1687 passed`
   - commit-gating cleared: yes, first-pass
   - locally committed: yes, `204173a`
-  - pushed: no
+  - pushed: yes, with explicit Ryan authorization
 - next route:
-  - push `204173a` and this local-release continuity sync only after explicit
-    Ryan authorization
-  - after push, run targeting/budget research on the same exact
-    `_selected_unit_metadata` query
+  - run targeting/budget research on the same exact `_selected_unit_metadata`
+    query
   - do not proceed to demo/report artifact or public claim work yet
 
 Pushed source-discovery hygiene release:
@@ -253,11 +254,9 @@ Workspace-only optimizer/render caching correction acceptance:
   - full-regression cleared: yes, first-pass after audit clearance
   - commit-gating cleared: yes, first-pass
   - locally committed: yes, `204173a`
-  - pushed: no
+  - pushed: yes, with explicit Ryan authorization
 - next route:
-  - push only after explicit Ryan authorization
-  - after this release is pushed, run targeting/budget research on the same
-    `_selected_unit_metadata` query
+  - run targeting/budget research on the same `_selected_unit_metadata` query
   - do not proceed to demo/report artifact or public claim work yet
 
 Pushed exact `hasattr` provider/checkpoint release:
