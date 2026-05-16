@@ -2,6 +2,42 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Local Commit
+
+- Created the local release commit for the accepted, corrected,
+  release-unit-audit-cleared, full-regression-cleared, and
+  commit-gating-cleared exact `hasattr/2` replay-input bridge release unit.
+- Local release commit:
+  - `2140cf5 Add exact hasattr replay-input bridge`
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Live repo state immediately after local commit:
+  - branch `main`
+  - local `HEAD` resolves to `2140cf5`
+  - `origin/main` resolves to `13d5472 Sync checkpoint push routing`
+  - branch is ahead of `origin/main` by one commit before this continuity sync
+  - no staged files
+  - no untracked files
+- Release state:
+  - accepted in workspace: yes, including correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `2140cf5`
+  - pushed: no
+- Next control route:
+  - push the local release commit only after explicit Ryan authorization
+  - do not route `2140cf5` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+- Acceptance status: first-pass local commit
+
 ## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Commit-Gating Clearance
 
 - Performed commit-gating review after release-unit audit and full regression

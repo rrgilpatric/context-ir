@@ -49,6 +49,46 @@ control-state authority is
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
+Local committed exact `hasattr/2` replay-input bridge release:
+`2140cf5 Add exact hasattr replay-input bridge`. This commit contains the
+accepted lower-layer exact replay-input bridge for only
+`oracle_signal_hasattr_probe` / `reflective_builtin:hasattr/2`. It is locally
+committed after release-unit audit, full regression, and commit-gating passed,
+but it is not pushed. Push remains Ryan-gated. Do not route `2140cf5` back to
+release-unit audit, full regression, commit-gating, staging, or local commit
+creation absent new findings.
+
+Local exact `hasattr/2` release evidence:
+
+- implemented exact pre-observation replay-input bridge:
+  - parent runtime-probe execution appends only
+    `object_type=builtins.int` and `attribute_name=bit_length` for the exact
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:hasattr/2`, boundary `hasattr(obj, name)`, subject
+    `unsupported:call:main.py:2:11`, replay target seed
+    `main.probe_attribute` request
+  - the pair travels through existing `request_replay_payload_fields`
+  - the worker consumes only that exact pair and calls
+    `main.probe_attribute(1, "bit_length")`
+  - existing zero-argument `hasattr` behavior remains preserved
+  - `observed_replay_inputs` remains exec/eval-only
+- provider support remains intentionally deferred:
+  - `src/context_ir/eval_providers.py` was not changed
+  - `oracle_signal_hasattr_probe` was not added to the default provider
+    fixture map
+- no eval assets, public docs/claims, exports, MCP, schema/config, compiler,
+  scoring, dynamic-import, runtime-mutation, or generalized provider/runtime
+  support was widened
+- release state:
+  - accepted in workspace: yes, including correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full-regression cleared: yes, first-pass with `1678 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `2140cf5`
+  - pushed: no
+- next route:
+  - push only after explicit Ryan authorization
+
 Pushed internal default local-Python subprocess dir-zero eval provider release:
 `686dd18 Add dir-zero default subprocess eval provider`. This commit contains
 the accepted exact `oracle_signal_dir_zero_probe` support inside the internal
