@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Source Discovery Hygiene Push
+
+- Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
+  locally committed source-discovery hygiene release with explicit Ryan
+  authorization.
+- Pushed commits:
+  - `7261d02 Add eligible Python source discovery`
+  - `eb4ba7e Sync source discovery local release routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `eb4ba7e Sync source discovery local release routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+- Release evidence:
+  - repo-root source discovery now prunes dependency/generated/cache
+    directories, including `.venv`
+  - `extract_syntax(...)`, legacy `parse_repository(...)`, and
+    `_discover_baseline_files(...)` use the shared eligible Python source
+    boundary
+  - explicit single-file parsing remains intact
+  - no scoring, optimizer, renderer, compiler, runtime/provider support,
+    public docs/claims, MCP/API/schema/config, package exports, or eval assets
+    were widened
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass with `1684 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `7261d02`
+  - pushed: yes, with explicit Ryan authorization
+- Routing decision:
+  - do not route `7261d02` or `eb4ba7e` back to release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - next route is to rerun the real-repo value checkpoint path on the pushed
+    source-discovery release before optimizer/render caching or broader
+    fixture expansion
+- Acceptance status: first-pass push
+
 ## 2026-05-16 -- Source Discovery Hygiene Local Commit
 
 - Created the local release commit for the accepted, release-unit-audit-cleared,

@@ -41,13 +41,52 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`97c48c0 Sync hasattr provider local release routing`. The latest pushed
+`eb4ba7e Sync source discovery local release routing`. The latest pushed
 source/contract authority is
-`3fb8b15 Add hasattr default subprocess eval provider`. The latest pushed
+`7261d02 Add eligible Python source discovery`. The latest pushed
 control-state authority before this post-push continuity sync is
-`97c48c0 Sync hasattr provider local release routing`. Live git refs and worktree
+`eb4ba7e Sync source discovery local release routing`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed source-discovery hygiene release:
+`7261d02 Add eligible Python source discovery`. This commit contains the
+accepted source-discovery hygiene fix that prunes dependency/generated/cache
+directories from repo-root syntax extraction, legacy parsing, and eval
+baseline discovery. It was pushed with explicit Ryan authorization through
+`eb4ba7e Sync source discovery local release routing`. Do not route `7261d02`
+or `eb4ba7e` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
+
+Pushed source-discovery hygiene release evidence:
+
+- one shared internal eligible Python source-discovery helper is used by:
+  - `extract_syntax(...)`
+  - legacy `parse_repository(...)`
+  - `_discover_baseline_files(...)`
+- dependency/generated/cache directories are pruned, including `.venv`,
+  `venv`, `env`, `.git`, `__pycache__`, `.mypy_cache`, `.pytest_cache`,
+  `.ruff_cache`, `build`, `dist`, and `node_modules`
+- explicit single-file parsing remains intact for caller-selected files inside
+  skipped directories
+- root-level smoke checks before commit showed `181` syntax files, `181`
+  baseline files, and no `.venv` paths
+- no eval assets, public docs/claims, exports, MCP/API/schema/config, scoring,
+  optimizer, renderer, compiler, runtime/provider support, or package exports
+  were widened
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass with `1684 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `7261d02`
+  - pushed: yes, with explicit Ryan authorization
+- next route:
+  - rerun the real-repo value checkpoint path on the pushed source-discovery
+    release
+  - if the real-repo checkpoint still misses targets or times out, route next
+    to optimizer/render caching or targeting research
+  - broad fixture-by-fixture expansion remains paused
 
 Pushed exact `hasattr` provider/checkpoint release:
 `3fb8b15 Add hasattr default subprocess eval provider`. This commit contains
