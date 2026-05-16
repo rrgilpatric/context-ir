@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Tangible Runtime Checkpoint Push
+
+- Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
+  locally committed tangible runtime-evidence checkpoint release with explicit
+  Ryan authorization.
+- Pushed commits:
+  - `8b6923a Add tangible runtime evidence checkpoint`
+  - `2afe7a9 Sync checkpoint local release routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `2afe7a9 Sync checkpoint local release routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `8b6923a`
+  - pushed: yes, with release routing through `2afe7a9`
+- Routing decision:
+  - do not route `8b6923a` or `2afe7a9` back to release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - next route is control selection of the next bounded north-star lane from
+    the pushed tangible checkpoint state
+- Acceptance status: first-pass push
+
 ## 2026-05-16 -- Tangible Runtime Checkpoint Local Commit
 
 - Created the local release commit for the accepted, release-unit-audit-cleared,

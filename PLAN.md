@@ -41,11 +41,11 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`65cf927 Sync dir-zero provider push routing`. The latest pushed
+`2afe7a9 Sync checkpoint local release routing`. The latest pushed
 source/contract authority is
-`686dd18 Add dir-zero default subprocess eval provider`. The latest pushed
+`8b6923a Add tangible runtime evidence checkpoint`. The latest pushed
 control-state authority is
-`65cf927 Sync dir-zero provider push routing`. Live git refs and worktree
+`2afe7a9 Sync checkpoint local release routing`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
@@ -100,6 +100,42 @@ Pushed dir-zero provider release evidence:
   - route the Ryan-authorized tangible north-star checkpoint before continuing
     broad fixture-by-fixture provider expansion
   - do not route `686dd18` or `bda2800` back to release-unit audit, full
+    regression, commit-gating, staging, local commit, or push absent new
+    findings
+
+Pushed internal tangible runtime-evidence checkpoint release:
+
+- live repo/workspace state was verified after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `2afe7a9 Sync checkpoint local release routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- pushed release/source-contract authority:
+  - `8b6923a Add tangible runtime evidence checkpoint`
+- pushed control-state authority:
+  - `2afe7a9 Sync checkpoint local release routing`
+- pushed release evidence:
+  - added internal `context_ir.eval_checkpoint` module
+  - provides `python -m context_ir.eval_checkpoint --output-dir <dir>`
+  - writes generated output-local `run_spec.json`, `ledger.jsonl`,
+    `report.md`, `manifest.json`, and `checkpoint.md`
+  - reuses existing eval bundle/pipeline/report/manifest machinery
+  - fails closed when target artifact files already exist
+  - checkpoint scope is exactly the seven currently supported
+    `context_ir_default_local_python_subprocess` fixtures at budget `100`:
+    locals, globals, vars-zero, dir-zero, exec, eval, and metaclass behavior
+  - public docs/claims, package-root exports, console scripts, committed eval
+    assets, provider/runtime support, compiler, scoring, MCP, schema/config,
+    and semantic support were not widened
+- release state: accepted, release-unit-audit-cleared,
+  full-regression-cleared, commit-gating-cleared, locally committed, and
+  pushed with explicit Ryan authorization
+- next route:
+  - select the next bounded north-star lane from the pushed checkpoint state
+  - do not route `8b6923a` or `2afe7a9` back to release-unit audit, full
     regression, commit-gating, staging, local commit, or push absent new
     findings
 
