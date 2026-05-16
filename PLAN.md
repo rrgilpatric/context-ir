@@ -41,13 +41,51 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`eb4ba7e Sync source discovery local release routing`. The latest pushed
-source/contract authority is
-`7261d02 Add eligible Python source discovery`. The latest pushed
-control-state authority before this post-push continuity sync is
-`eb4ba7e Sync source discovery local release routing`. Live git refs and worktree
-state must still be verified from git during control intake; do not infer them
-from committed prose.
+`a46fa94 Sync source discovery push routing`. The latest pushed
+source/contract authority before the local optimizer/render release is
+`7261d02 Add eligible Python source discovery`. Live git refs and worktree state
+must still be verified from git during control intake; do not infer them from
+committed prose.
+
+Local optimizer/render latency release:
+`204173a Optimize semantic compile candidate selection`. This local commit
+contains the accepted, audit-cleared, full-regression-cleared, and
+commit-gating-cleared optimizer/render caching correction release unit. It is
+not pushed yet. Push requires explicit Ryan authorization.
+
+Local optimizer/render latency release evidence:
+
+- request-scoped semantic render session builds renderer lookup indexes once
+  per optimizer run
+- optimizer candidate construction caches rendered `(unit_id, detail)`
+  materialization locally
+- public `render_semantic_unit(...)` behavior remains unchanged
+- optimizer avoids repeated full pending-candidate sorting each loop using
+  `_CandidateSortState`
+- optimizer walks pending candidates by cursor rather than repeated `pop(0)`
+  list shifting
+- remaining suffix is re-sorted only when focus-dependent dynamic sort state
+  changes
+- existing optimizer selection/order/warning/token behavior is preserved by
+  focused regressions
+- exact real-repo smoke for the full `_selected_unit_metadata` query at budget
+  `220` produced a non-empty in-budget pack before the `180s` alarm
+- no scoring, targeting, source discovery, eval provider, runtime behavior,
+  public docs/claims, MCP/API/schema/config, package export, compiler contract,
+  or winner-selection widening is included
+- release state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: yes, after 1 documentation correction
+  - full-regression cleared: yes, first-pass with `1687 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `204173a`
+  - pushed: no
+- next route:
+  - push `204173a` and this local-release continuity sync only after explicit
+    Ryan authorization
+  - after push, run targeting/budget research on the same exact
+    `_selected_unit_metadata` query
+  - do not proceed to demo/report artifact or public claim work yet
 
 Pushed source-discovery hygiene release:
 `7261d02 Add eligible Python source discovery`. This commit contains the
@@ -214,11 +252,10 @@ Workspace-only optimizer/render caching correction acceptance:
   - release-unit audit cleared: yes, after 1 documentation correction
   - full-regression cleared: yes, first-pass after audit clearance
   - commit-gating cleared: yes, first-pass
-  - staged: no
-  - locally committed: no
+  - locally committed: yes, `204173a`
   - pushed: no
 - next route:
-  - stage exactly the six-file release unit and create a local release commit
+  - push only after explicit Ryan authorization
   - after this release is pushed, run targeting/budget research on the same
     `_selected_unit_metadata` query
   - do not proceed to demo/report artifact or public claim work yet

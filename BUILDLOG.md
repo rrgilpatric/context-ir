@@ -2,6 +2,43 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Optimizer/Render Local Commit
+
+- Created the local release commit for the accepted, release-unit-audit-cleared,
+  full-regression-cleared, and commit-gating-cleared optimizer/render caching
+  correction release unit.
+- Local release commit:
+  - `204173a Optimize semantic compile candidate selection`
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_renderer.py`
+- Live repo state immediately after local commit:
+  - branch `main`
+  - local `HEAD` resolves to `204173a`
+  - `origin/main` resolves to `a46fa94 Sync source discovery push routing`
+  - branch is ahead of `origin/main` by one commit before this continuity sync
+  - no staged files
+  - no untracked files
+- Release state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: yes, after 1 documentation correction
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `204173a`
+  - pushed: no
+- Next control route:
+  - push the local release commit and this continuity sync only after explicit
+    Ryan authorization
+  - do not route `204173a` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after push, run targeting/budget research on the same exact
+    `_selected_unit_metadata` query
+- Acceptance status: first-pass local commit
+
 ## 2026-05-16 -- Optimizer/Render Commit-Gating Clearance
 
 - Performed commit-gating review after release-unit audit clearance and full
