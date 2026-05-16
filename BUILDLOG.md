@@ -2,6 +2,203 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Tangible Runtime Checkpoint Commit-Gating
+
+- Performed commit-gating review for the audit-cleared and
+  full-regression-cleared internal tangible runtime-evidence checkpoint
+  release unit.
+- Gate result: PASS.
+- Findings: none.
+- Repo-backed truth during the gate:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `65cf927 Sync dir-zero provider push routing`
+  - dirty tracked files: `BUILDLOG.md`, `PLAN.md`
+  - untracked files: `src/context_ir/eval_checkpoint.py`,
+    `tests/test_eval_checkpoint.py`
+  - staged files: none
+  - `git diff --check` passed
+- Commit-gating evidence:
+  - release unit exactly matched the four approved paths:
+    `BUILDLOG.md`, `PLAN.md`, `src/context_ir/eval_checkpoint.py`, and
+    `tests/test_eval_checkpoint.py`
+  - source review confirmed the checkpoint command remains internal,
+    output-local, fail-closed on existing artifacts, and bounded to the seven
+    exact default local-Python subprocess provider fixtures at budget `100`
+  - test review confirmed generated run-spec shape, ledger rows, exact
+    normalized payloads, artifact rendering, fail-closed behavior, and
+    package-root/public-surface non-widening
+  - no README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, package-root export,
+    console script, committed eval asset, provider/runtime, compiler,
+    scoring, MCP, schema/config, or semantic-widening changes were present
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the four-file release unit and create the local release
+    commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating
+
+## 2026-05-16 -- Tangible Runtime Checkpoint Full Regression Gate
+
+- Ran the full regression gate for the audit-cleared internal tangible
+  runtime-evidence checkpoint release unit.
+- Gate result: PASS.
+- Findings: none.
+- Release unit remains exactly:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_checkpoint.py`
+- Full regression commands:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    38 source files
+  - `.venv/bin/python -m pytest tests/ -v` passed with `1665 passed`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact four-file release unit before
+    staging, local commit, or push
+- Acceptance status: first-pass full regression
+
+## 2026-05-15 -- Tangible Runtime Checkpoint Acceptance
+
+- Reviewed the returned implementation slice for the internal tangible
+  runtime-evidence checkpoint.
+- Review result: accepted first-pass.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `65cf927 Sync dir-zero provider push routing`
+  - staged files: none
+  - untracked files: `src/context_ir/eval_checkpoint.py` and
+    `tests/test_eval_checkpoint.py`
+  - `git diff --check` passed
+- Workspace-only accepted implementation:
+  - added internal `context_ir.eval_checkpoint` module
+  - provides `python -m context_ir.eval_checkpoint --output-dir <dir>`
+  - writes generated output-local `run_spec.json`, `ledger.jsonl`,
+    `report.md`, `manifest.json`, and `checkpoint.md`
+  - reuses the existing eval bundle/pipeline/report/manifest machinery
+  - fails closed when target artifact files already exist
+  - checkpoint scope is exactly the currently supported
+    `context_ir_default_local_python_subprocess` fixtures at budget `100`:
+    locals, globals, vars-zero, dir-zero, exec, eval, and metaclass behavior
+  - `checkpoint.md` includes an internal-only caveat, artifact path table,
+    exact normalized payload table, and unsupported/remaining-gap statement
+  - no package-root export, public claim/docs widening, committed eval asset,
+    product CLI, runtime worker, runtime-probe form, compiler, scoring, MCP,
+    schema/config, dynamic-import, runtime-mutation, exec/eval, metaclass,
+    reflective-builtin semantic widening, or generalized runtime/provider
+    support change
+- Accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_checkpoint.py`
+- Validation rerun by control:
+  - requested ruff check passed
+  - requested ruff format check passed
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    38 source files
+  - requested pytest subset passed with `69 passed`
+  - fresh module run succeeded under
+    `/private/tmp/context-ir-eval-checkpoint.review.XwUNGH`
+  - generated checkpoint had seven supported-probe evidence rows and the
+    required internal-only/remaining-gap language
+  - final `git diff --check` passed
+- Dedicated read-only release-unit audit result: PASS.
+- Audit findings: none.
+- Audit evidence:
+  - release unit exactly matched the requested four paths
+  - no staged files
+  - new module and test remained untracked before staging, as expected
+  - no README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, package-root export, console
+    script, eval asset, provider/runtime, compiler, scoring, MCP,
+    schema/config, or semantic-widening changes were detected
+- Audit validation rerun:
+  - `git diff --check` passed
+  - focused ruff check passed
+  - focused ruff format check passed
+  - `.venv/bin/python -m mypy --strict src/` passed with cache outside the repo
+  - focused pytest passed with `3 passed`
+  - fresh module run generated all five artifacts with seven ledger rows
+  - same-output-dir module rerun failed closed before overwrite or append
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression over the exact four-file release unit before
+    commit-gating, staging, local commit, or push
+- Acceptance status: first-pass
+
+## 2026-05-15 -- Tangible Runtime Checkpoint Route Selection
+
+- Control lane verified live repo/workspace state after the pushed dir-zero
+  provider release:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `65cf927 Sync dir-zero provider push routing`
+  - no source/test/control diff was present before this route-selection update
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- Route decision:
+  - selected next bounded north-star lane: add an internal tangible
+    runtime-evidence checkpoint command/module
+- Route evidence:
+  - Ryan explicitly asked to start seeing inspectable results after the
+    foundation work
+  - existing internal eval bundle, pipeline, report, summary, manifest, and
+    run-spec machinery are already present and tested
+  - exact default local-Python subprocess provider support is now pushed for
+    locals, globals, vars-zero, dir-zero, exec, eval, and metaclass behavior
+  - the smallest useful checkpoint is a generated internal artifact bundle
+    over those accepted exact provider fixtures, not new runtime semantics
+- Selected checkpoint shape:
+  - a `python -m context_ir.eval_checkpoint --output-dir ...` run path
+  - generated `run_spec.json`, `ledger.jsonl`, `report.md`, `manifest.json`,
+    and compact `checkpoint.md` artifacts in the caller-selected output
+    directory
+  - a compact evidence table showing the exact supported probes and payloads
+  - an explicit unsupported/remaining-gap statement
+- Scope guard:
+  - no public claim widening or benchmark claim
+  - no README, EVAL, PUBLIC_CLAIMS, or ARCHITECTURE update
+  - no package-root export or product CLI/console-script addition
+  - no eval fixture, task, or committed run-spec change
+  - no new runtime-probe form, runtime worker, compiler, scoring, MCP,
+    schema/config, dynamic-import, runtime-mutation, exec/eval, metaclass,
+    reflective-builtin semantics, or generalized runtime/provider support
+    change
+- Release state:
+  - route selected in workspace-only control state
+  - no implementation result has returned yet
+  - no release gate, staging, local commit, or push is authorized from this
+    route selection
+- Acceptance status: first-pass route selection
+
 ## 2026-05-15 -- Dir Zero Default Subprocess Provider Push
 
 - Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
