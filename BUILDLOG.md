@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Exact Hasattr Provider and Checkpoint Push
+
+- Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
+  locally committed exact `oracle_signal_hasattr_probe` default-subprocess
+  provider support and checkpoint inclusion release with explicit Ryan
+  authorization.
+- Pushed commits:
+  - `3fb8b15 Add hasattr default subprocess eval provider`
+  - `97c48c0 Sync hasattr provider local release routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `97c48c0 Sync hasattr provider local release routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+- Release evidence:
+  - exact `oracle_signal_hasattr_probe` support is now included in the
+    internal `context_ir_default_local_python_subprocess` provider
+  - checkpoint now enumerates eight exact default-subprocess rows including
+    `oracle_signal_hasattr_probe`
+  - no eval assets, public docs/claims, exports, MCP, schema/config, compiler,
+    scoring, runtime worker, or generalized runtime/provider support surfaces
+    were widened
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass with `1681 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `3fb8b15`
+  - pushed: yes, with explicit Ryan authorization
+- Routing decision:
+  - do not route `3fb8b15` or `97c48c0` back to release-unit audit, full
+    regression, commit-gating, staging, local commit creation, or push absent
+    new findings
+  - next route is the value checkpoint spike to test differentiated behavior
+    against simple baselines on a realistic coding task
+  - do not continue broad fixture-by-fixture expansion before that value
+    checkpoint
+- Acceptance status: first-pass push
+
 ## 2026-05-16 -- Exact Hasattr Provider and Checkpoint Local Commit
 
 - Created the local release commit for the accepted, release-unit-audit-cleared,

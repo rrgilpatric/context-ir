@@ -41,13 +41,64 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`32a4c67 Sync hasattr bridge push routing`. The latest pushed
+`97c48c0 Sync hasattr provider local release routing`. The latest pushed
 source/contract authority is
-`2140cf5 Add exact hasattr replay-input bridge`. The latest pushed
-control-state authority is
-`32a4c67 Sync hasattr bridge push routing`. Live git refs and worktree
+`3fb8b15 Add hasattr default subprocess eval provider`. The latest pushed
+control-state authority before this post-push continuity sync is
+`97c48c0 Sync hasattr provider local release routing`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed exact `hasattr` provider/checkpoint release:
+`3fb8b15 Add hasattr default subprocess eval provider`. This commit contains
+the accepted exact `oracle_signal_hasattr_probe` support inside the internal
+`context_ir_default_local_python_subprocess` provider and includes the
+`oracle_signal_hasattr_probe` row in the internal tangible checkpoint bundle.
+It was pushed with explicit Ryan authorization through
+`97c48c0 Sync hasattr provider local release routing`. Do not route `3fb8b15`
+or `97c48c0` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
+
+Pushed exact `hasattr` provider/checkpoint release evidence:
+
+- provider support remains exact to `oracle_signal_hasattr_probe`:
+  - miss evidence is `hasattr(obj, name)`
+  - family is `RuntimeProbeFamily.REFLECTIVE_BUILTIN`
+  - form is `reflective_builtin:hasattr/2`
+  - boundary is `hasattr(obj, name)`
+  - subject is `unsupported:call:main.py:2:11`
+  - replay target seed is `main.probe_attribute`
+  - replay inputs remain `object_type=builtins.int` and
+    `attribute_name=bit_length` through `request_replay_payload_fields`
+  - normalized payload is `attribute_present=true`
+  - initial compile remains runtime-fixture-free
+  - recompile uses `sys.executable`, `delta_budget=0`, and the real worker
+    subprocess invocation
+    `(sys.executable, "-m", "context_ir.runtime_probe_worker")`
+  - provider-owned runtime provenance comes from the recompiled response
+  - unsupported/opaque primary truth remains preserved with additive runtime
+    provenance
+  - unsupported task IDs remain fail-closed
+- checkpoint support:
+  - `context_ir.eval_checkpoint` now enumerates eight exact default-subprocess
+    rows, including `oracle_signal_hasattr_probe`
+- no eval assets, public docs/claims, exports, MCP, schema/config, compiler,
+  scoring, runtime worker, or generalized runtime/provider support surfaces
+  were widened
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass with `1681 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `3fb8b15`
+  - pushed: yes, with explicit Ryan authorization
+- next route:
+  - run the value checkpoint spike to test actual differentiated behavior
+    against simple baselines on a realistic coding task
+  - if the value checkpoint is weak, pause implementation expansion and run a
+    serious research/debug spike before adding more internal fixtures
+  - do not continue broad fixture-by-fixture expansion before the value
+    checkpoint
 
 Pushed exact `hasattr/2` replay-input bridge release:
 `2140cf5 Add exact hasattr replay-input bridge`. This commit contains the
