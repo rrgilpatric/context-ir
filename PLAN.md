@@ -82,11 +82,146 @@ Pushed source-discovery hygiene release evidence:
   - locally committed: yes, `7261d02`
   - pushed: yes, with explicit Ryan authorization
 - next route:
-  - rerun the real-repo value checkpoint path on the pushed source-discovery
-    release
-  - if the real-repo checkpoint still misses targets or times out, route next
-    to optimizer/render caching or targeting research
+  - the real-repo value checkpoint rerun on the pushed source-discovery
+    release is complete and accepted as a partial signal result
+  - route next to optimizer/render caching before targeting research
   - broad fixture-by-fixture expansion remains paused
+
+Accepted real-repo checkpoint rerun after source discovery:
+
+- read-only real-repo checkpoint rerun returned PARTIAL real-repo
+  differentiated signal and was accepted first-pass as a routing spike result
+- repo truth reported by the spike:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `a46fa94 Sync source discovery push routing`
+  - worktree, index, untracked files, and `git diff --check` were clean
+- source-discovery proof:
+  - raw repo `*.py` files: `11,871`
+  - raw `.venv` `*.py` files: `11,690`
+  - eligible syntax files: `181`
+  - baseline files: `181`
+  - forbidden dependency/cache/generated paths in eligible syntax: `0`
+  - syntax diagnostics: `0`
+- performance evidence:
+  - source discovery count completed in about `0.54s`
+  - `extract_syntax(".")` completed in about `13.6-13.8s`
+  - `analyze_repository(".")` completed in about `14.8-15.6s`
+  - `score_semantic_units(...)` completed in about `75.9s` total
+  - full `context_ir` compile/provider path at budget `220` did not produce a
+    pack within the bounded run
+  - stack sample identified
+    `optimize_semantic_units -> _build_candidates -> render_semantic_unit ->
+    _unresolved_by_id`
+- comparison evidence:
+  - lexical and import baselines completed quickly at budgets `220`, `600`,
+    and `1000`, but selected no files under those budgets
+  - target file ranked `31` for lexical whole-file packing and was outside the
+    top-8 candidate set
+  - import-neighborhood did not seed the target
+  - the exact target function
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+    was visible to semantic scoring but ranked `180th`
+- routing decision:
+  - do not proceed to an internal demo/report artifact yet
+  - do not resume broad fixture-by-fixture expansion yet
+  - next implementation slice is optimizer/render candidate-materialization
+    caching only
+  - targeting/budget research on the same `_selected_unit_metadata` query
+    remains the follow-up after compile latency is corrected
+  - no public docs/claims should be widened from this partial result
+
+Workspace-only optimizer/render caching implementation review:
+
+- returned implementation added a request-scoped semantic render session and
+  local `(unit_id, detail)` render cache for optimizer candidate construction
+- focused validation passed:
+  - ruff check over touched optimizer/renderer/test files
+  - ruff format check over touched optimizer/renderer/test files
+  - strict mypy over `src/`
+  - focused pytest over semantic optimizer, renderer, and compiler tests with
+    `33 passed`
+  - `git diff --check`
+- control reran a bounded real-repo compile smoke on the same
+  `_selected_unit_metadata` query at budget `220`
+- smoke evidence:
+  - analysis completed in about `14.849s`
+  - scoring completed in about `75.048s`
+  - compile still did not produce a pack before the `180s` alarm
+  - timeout now landed in
+    `optimize_semantic_units -> pending_candidates.sort ->
+    _candidate_sort_key`
+- review decision:
+  - held with finding, not accepted
+  - the render-session work appears useful but does not yet satisfy the
+    real-repo latency objective
+  - do not run release-unit audit, full regression, commit-gating, staging,
+    local commit creation, or push for this unit yet
+  - next route is a narrow correction pass for optimizer selection-loop
+    sorting/repeated-optimization latency, preserving the render-session work
+    unless the correction proves it must change
+
+Workspace-only optimizer/render caching correction acceptance:
+
+- correction result reviewed findings-first and accepted first-pass
+- accepted behavior:
+  - optimizer candidate construction keeps the request-scoped render session
+    and local `(unit_id, detail)` render cache from the prior implementation
+  - optimizer selection no longer repeatedly sorts the full pending-candidate
+    list on every loop iteration
+  - optimizer selection uses a `_CandidateSortState` guard and cursor over the
+    pending list
+  - remaining suffix is re-sorted only when focus-dependent dynamic sort state
+    changes
+  - repeated `pop(0)` list shifting is removed from the selection loop
+  - existing optimizer selection/order/warning/token behavior remains covered
+    by focused regressions
+- validation rerun by control:
+  - focused ruff check passed
+  - focused ruff format check passed with `6 files already formatted`
+  - strict mypy over `src/` passed with no issues in `38 source files`
+  - focused pytest over semantic optimizer, renderer, and compiler tests passed
+    with `34 passed`
+  - `git diff --check` passed
+- bounded real-repo smoke rerun by control:
+  - exact query:
+    `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+  - budget: `220`
+  - command shape: analyze `Path(".")`, score semantic units with the exact
+    query, then call `compile_semantic_context(..., budget=220, scoring=scoring)`
+  - compile produced a pack before the `180s` alarm
+  - total elapsed time observed by control was about `126.863s`
+  - the pack was non-empty and within budget with `total_tokens <= 220`
+  - exact selected-unit, warning, token, and omitted counts are descriptive
+    smoke output only, not release-state invariants
+- release-unit audit correction:
+  - first audit failed because this block previously shortened the query to
+    `_selected_unit_metadata` and recorded exact pack counts as if they were
+    invariants
+  - corrected pass condition is exact-query latency, non-empty pack, and budget
+    compliance before the `180s` alarm
+  - release-unit audit must be rerun from the top before full regression,
+    commit-gating, staging, local commit creation, or push
+- accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_renderer.py`
+- release/control state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: yes, after 1 documentation correction
+  - full-regression cleared: yes, first-pass after audit clearance
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - stage exactly the six-file release unit and create a local release commit
+  - after this release is pushed, run targeting/budget research on the same
+    `_selected_unit_metadata` query
+  - do not proceed to demo/report artifact or public claim work yet
 
 Pushed exact `hasattr` provider/checkpoint release:
 `3fb8b15 Add hasattr default subprocess eval provider`. This commit contains

@@ -2,6 +2,326 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Optimizer/Render Commit-Gating Clearance
+
+- Performed commit-gating review after release-unit audit clearance and full
+  regression clearance for the optimizer/render caching correction release
+  unit.
+- Commit-gating result: PASS.
+- Findings: none.
+- Commit-gating evidence:
+  - dirty file set exactly matches the accepted six-file release unit
+  - no staged files were present during review
+  - no untracked files were present during review
+  - local `HEAD` and `origin/main` both resolved to
+    `a46fa94 Sync source discovery push routing`
+  - `git diff --check` passed
+  - implementation diff is limited to `semantic_optimizer.py`,
+    `semantic_renderer.py`, and focused semantic optimizer/renderer tests
+  - control docs record audit correction, audit clearance, full regression
+    clearance, and push remains explicitly Ryan-gated
+  - no README, ARCHITECTURE, EVAL, PUBLIC_CLAIMS, scoring, source discovery,
+    eval provider, runtime behavior, MCP/API/schema/config, compiler contract,
+    package export, or winner-selection surfaces have diffs
+- Release state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: yes, after 1 documentation correction
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage exactly the six-file release unit and create a local release commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating clearance
+
+## 2026-05-16 -- Optimizer/Render Full Regression Clearance
+
+- Ran full regression after release-unit audit clearance for the
+  optimizer/render caching correction release unit.
+- Full regression result: PASS.
+- Validation:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed with
+    `112 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    `38 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed with `1687 passed`
+- Release state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: yes, after 1 documentation correction
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact six-file release unit before
+    staging, local commit creation, or push
+- Acceptance status: first-pass full regression clearance
+
+## 2026-05-16 -- Optimizer/Render Release-Unit Audit Clearance
+
+- Reviewed the rerun release-unit audit for the optimizer/render caching
+  correction release unit.
+- Audit result: PASS.
+- Findings: none.
+- Audit-cleared release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_renderer.py`
+- Audit evidence:
+  - live git state matched expected release shape: branch `main`, local `HEAD`
+    and `origin/main` both at `a46fa94`
+  - no staged files
+  - no untracked files
+  - only the six accepted files were modified
+  - no scoring, targeting, source discovery, eval provider, runtime behavior,
+    public docs/claims, MCP/API/schema/config, package export, compiler
+    contract, or winner-selection widening was found
+  - prior audit finding was corrected: `PLAN.md` and `BUILDLOG.md` now record
+    the exact full smoke query and define the smoke pass condition as latency
+    before `180s`, non-empty pack, and budget compliance
+  - exact selected/warning/omitted counts are descriptive output only, not
+    release invariants
+- Validation rerun by audit:
+  - `git diff --check` passed
+  - focused ruff check passed
+  - focused ruff format check passed
+  - `mypy --strict --no-incremental src/` passed with `38` source files
+  - focused semantic optimizer/renderer/compiler pytest passed with `34 passed`
+  - exact real-repo smoke passed before the `180s` alarm at about `127.193s`
+    with a non-empty in-budget pack
+- Release state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: yes, after 1 documentation correction
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression over `ruff check src/ tests/`,
+    `ruff format --check src/ tests/`, `mypy --strict src/`, and
+    `pytest tests/ -v`
+  - do not run commit-gating, stage, create a local commit, or push until full
+    regression clears
+- Acceptance status: audit clearance after 1 correction
+
+## 2026-05-16 -- Optimizer/Render Audit Finding Correction
+
+- Reviewed the release-unit audit failure for the optimizer/render caching
+  correction release unit.
+- Audit result reviewed: FAIL.
+- Finding accepted:
+  - `PLAN.md` and `BUILDLOG.md` recorded the real-repo smoke query too
+    tersely as `_selected_unit_metadata`
+  - the same blocks also recorded exact selected-unit, token, warning, and
+    omitted counts as if they were release-state invariants
+  - audit reruns still produced non-empty in-budget packs before `180s`, but
+    count details differed from the recorded continuity evidence
+- Correction:
+  - replaced the smoke query with the exact full query:
+    `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+  - clarified the command shape as analyze `Path(".")`, score semantic units
+    with the exact query, and call
+    `compile_semantic_context(..., budget=220, scoring=scoring)`
+  - changed the smoke evidence/pass condition to latency, non-empty pack, and
+    budget compliance before the `180s` alarm
+  - removed exact selected-unit, warning, token, and omitted counts as
+    release-state invariants
+- Release state:
+  - accepted in workspace: yes, with audit-finding documentation correction
+  - release-unit audit cleared: no at this entry; superseded by later audit
+    clearance entry
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - rerun the dedicated read-only release-unit audit from the top over the same
+    six-file release unit
+  - do not run full regression, commit-gating, staging, local commit creation,
+    or push until the rerun audit clears
+- Acceptance status: 1 correction
+
+## 2026-05-16 -- Optimizer/Render Caching Correction Acceptance
+
+- Reviewed the returned optimizer selection-loop latency correction after the
+  held optimizer/render caching review.
+- Review result: accepted first-pass.
+- Findings: none.
+- Accepted behavior:
+  - request-scoped semantic render session and local render materialization
+    cache remain in optimizer candidate construction
+  - repeated full `pending_candidates.sort(...)` on every optimizer loop
+    iteration was replaced with `_CandidateSortState`
+  - the optimizer now walks the pending list with a cursor instead of
+    repeatedly using `pop(0)`
+  - the remaining suffix is re-sorted only when focus-dependent dynamic sort
+    state changes
+  - focused tests prove one render session per run, bounded sort-key calls when
+    focus state is stable, and unchanged selection/warning/token behavior for
+    an existing focus-sensitive optimizer scenario
+- Validation rerun by control:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_optimizer.py src/context_ir/semantic_renderer.py src/context_ir/semantic_compiler.py tests/test_semantic_optimizer.py tests/test_semantic_renderer.py tests/test_semantic_compiler.py`
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_optimizer.py src/context_ir/semantic_renderer.py src/context_ir/semantic_compiler.py tests/test_semantic_optimizer.py tests/test_semantic_renderer.py tests/test_semantic_compiler.py`
+    passed with `6 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    `38 source files`
+  - `.venv/bin/python -m pytest tests/test_semantic_optimizer.py tests/test_semantic_renderer.py tests/test_semantic_compiler.py -v`
+    passed with `34 passed`
+  - `git diff --check` passed
+- Bounded real-repo smoke rerun by control:
+  - exact query:
+    `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+  - budget: `220`
+  - command shape: analyze `Path(".")`, score semantic units with the exact
+    query, then call `compile_semantic_context(..., budget=220, scoring=scoring)`
+  - compile produced a pack before the `180s` alarm
+  - total elapsed time was about `126.863s`
+  - the pack was non-empty and within budget with `total_tokens <= 220`
+  - exact selected-unit, warning, token, and omitted counts are descriptive
+    smoke output only, not release-state invariants
+- Known follow-up:
+  - full-root compile remains heavy at about `126s`
+  - the `_selected_unit_metadata` target miss remains a separate
+    targeting/budget research item after this release is pushed
+  - this result is not demo/report/public-claim readiness
+- Accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_renderer.py`
+- Release state:
+  - accepted in workspace: yes, first-pass correction acceptance
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run dedicated read-only release-unit audit over the exact six-file release
+    unit
+  - do not run full regression, commit-gating, staging, local commit creation,
+    or push until the audit clears
+- Acceptance status: first-pass correction acceptance
+
+## 2026-05-16 -- Optimizer/Render Caching Implementation Review Held
+
+- Reviewed the returned optimizer/render caching implementation slice.
+- Review result: held with finding.
+- Finding:
+  - The implementation addresses the prior render-index hotspot but does not
+    yet meet the stated real-repo full-root compile-latency objective.
+  - Control reran the same real-repo `_selected_unit_metadata` compile smoke at
+    budget `220`; analysis completed in about `14.849s`, scoring completed in
+    about `75.048s`, but compile still did not produce a pack before the
+    `180s` alarm.
+  - The timeout now landed in
+    `optimize_semantic_units -> pending_candidates.sort ->
+    _candidate_sort_key`, specifically around
+    `src/context_ir/semantic_optimizer.py` lines `147` and `478`.
+- Accepted/reusable evidence from the returned implementation:
+  - focused ruff check passed
+  - focused ruff format check passed
+  - strict mypy over `src/` passed
+  - focused pytest over semantic optimizer, renderer, and compiler tests passed
+    with `33 passed`
+  - `git diff --check` passed
+  - public `render_semantic_unit` remains exported and on its per-call path
+  - optimizer candidate construction now uses a request-scoped render session
+    that builds renderer lookup indexes once per optimizer run
+- Repo/workspace state during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `a46fa94 Sync source discovery push routing`
+  - no staged files
+  - no untracked files
+  - dirty files were `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_optimizer.py`,
+    `src/context_ir/semantic_renderer.py`,
+    `tests/test_semantic_optimizer.py`, and
+    `tests/test_semantic_renderer.py`
+- Release state:
+  - accepted in workspace: no, held with finding
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - issue a narrow correction pass for optimizer selection-loop
+    sorting/repeated-optimization latency
+  - preserve the request-scoped render-session work unless the correction
+    proves it must change
+  - do not route this unit to release-unit audit, full regression,
+    commit-gating, staging, commit, or push until the correction is reviewed
+- Acceptance status: held
+
+## 2026-05-16 -- Real-Repo Checkpoint Rerun After Source Discovery
+
+- Reviewed the returned read-only real-repo checkpoint rerun after the pushed
+  source-discovery hygiene release.
+- Result: accepted first-pass as a routing spike result.
+- Verdict: PARTIAL real-repo differentiated signal.
+- Repo-backed truth reported by the spike:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `a46fa94 Sync source discovery push routing`
+  - latest log included `7261d02`, `eb4ba7e`, and `a46fa94`
+  - worktree, index, untracked files, and `git diff --check` were clean
+- Source-discovery evidence:
+  - raw repo `*.py` files: `11,871`
+  - raw `.venv` `*.py` files: `11,690`
+  - eligible syntax files and baseline files: `181`
+  - no `.venv`, cache, `node_modules`, `build`, or `dist` paths remained in
+    eligible syntax discovery
+  - syntax diagnostics: `0`
+- Real-repo performance evidence:
+  - source discovery count completed in about `0.54s`
+  - `extract_syntax(".")` completed in about `13.6-13.8s`
+  - `analyze_repository(".")` completed in about `14.8-15.6s`
+  - scoring completed in about `75.9s` total
+  - `context_ir` compile/provider path at budget `220` timed out before
+    producing a pack
+  - stack sample identified
+    `optimize_semantic_units -> _build_candidates -> render_semantic_unit ->
+    _unresolved_by_id`
+- Differentiation evidence:
+  - `context_ir` can now analyze the real repo root and build a semantic
+    universe over actual tracked source
+  - the semantic universe included `24,196` resolved symbols, `37,113`
+    unresolved frontier items, and `5,626` unsupported constructs
+  - lexical and import baselines completed quickly but selected no files at
+    budgets `220`, `600`, or `1000`
+  - the target file ranked `31` for lexical whole-file packing and import
+    neighborhood did not seed the target
+  - the exact target function
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+    was visible to semantic scoring but ranked `180th`
+- Control decision:
+  - source-discovery hygiene is validated on the real repo root
+  - optimizer/render candidate-materialization latency is the primary next
+    blocker
+  - targeting weakness is real but remains the second step after compile
+    latency is corrected
+  - do not proceed to demo/report artifact or public claim work from this
+    partial result
+  - broad fixture-by-fixture expansion remains paused
+  - next route is a focused optimizer/render caching implementation slice
+- Acceptance status: first-pass spike acceptance
+
 ## 2026-05-16 -- Source Discovery Hygiene Push
 
 - Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,

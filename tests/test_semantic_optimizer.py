@@ -6,13 +6,20 @@ import textwrap
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
+
 import context_ir.runtime_acquisition as runtime_acquisition
+import context_ir.semantic_optimizer as semantic_optimizer
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
 from context_ir.semantic_optimizer import optimize_semantic_units
-from context_ir.semantic_renderer import RenderDetail, render_semantic_unit
+from context_ir.semantic_renderer import (
+    RenderDetail,
+    RenderedUnit,
+    render_semantic_unit,
+)
 from context_ir.semantic_scorer import (
     SemanticScoringResult,
     SemanticUnitScore,
@@ -180,6 +187,138 @@ def test_optimize_semantic_units_returns_separate_result_without_mutation(
     assert program.unsupported_constructs == unsupported_before
     assert program.diagnostics == diagnostics_before
     assert dict(scoring.scores) == scores_before
+
+
+def test_optimize_semantic_units_reuses_one_render_session_per_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Candidate construction requests each render once through one session."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "helpers.py").write_text(
+        "def helper() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.helpers import *
+            from pkg.helpers import helper
+
+            def run() -> None:
+                helper()
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    scoring = score_semantic_units(program, "run missing_call helper")
+    expected_result = optimize_semantic_units(program, scoring, budget=200)
+    original_session = semantic_optimizer._SemanticRenderSession
+    session_count = 0
+    render_calls: dict[tuple[str, RenderDetail], int] = {}
+
+    class CountingRenderSession:
+        """Counting proxy for the optimizer's request-scoped renderer."""
+
+        def __init__(self, program_arg: SemanticProgram) -> None:
+            nonlocal session_count
+            session_count += 1
+            self._delegate = original_session(program_arg)
+
+        def render(self, unit_id: str, detail: RenderDetail) -> RenderedUnit:
+            cache_key = (unit_id, detail)
+            render_calls[cache_key] = render_calls.get(cache_key, 0) + 1
+            return self._delegate.render(unit_id, detail)
+
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_SemanticRenderSession",
+        CountingRenderSession,
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=200)
+
+    expected_render_calls = {
+        (unit_id, detail)
+        for unit_id in _renderable_unit_ids(program)
+        for detail in (
+            RenderDetail.IDENTITY,
+            RenderDetail.SUMMARY,
+            RenderDetail.SOURCE,
+        )
+    }
+    assert result == expected_result
+    assert session_count == 1
+    assert set(render_calls) == expected_render_calls
+    assert all(count == 1 for count in render_calls.values())
+
+
+def test_optimize_semantic_units_bounds_sorting_when_focus_state_is_unchanged(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stable dynamic sort state does not trigger repeated full pending sorts."""
+    (tmp_path / "main.py").write_text(
+        "\n\n".join(
+            f"def helper_{index}() -> int:\n    return {index}" for index in range(40)
+        ),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    renderable_unit_ids = _renderable_unit_ids(program)
+    scoring = SemanticScoringResult(
+        query="low relevance smoke",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=0.04,
+                p_support=0.0,
+            )
+            for unit_id in renderable_unit_ids
+        },
+    )
+    expected_result = optimize_semantic_units(program, scoring, budget=500)
+    original_candidate_sort_key = semantic_optimizer._candidate_sort_key
+    sort_key_calls = 0
+
+    def counting_candidate_sort_key(
+        candidate: semantic_optimizer._SemanticCandidate,
+        *,
+        current_focus_id: str | None = None,
+        current_focus_file_scope_id: str | None = None,
+        current_focus_has_support: bool = False,
+        current_focus_has_uncertainty_surface: bool = False,
+    ) -> tuple[float, float, float, float, int, str, int, int, str]:
+        nonlocal sort_key_calls
+        sort_key_calls += 1
+        return original_candidate_sort_key(
+            candidate,
+            current_focus_id=current_focus_id,
+            current_focus_file_scope_id=current_focus_file_scope_id,
+            current_focus_has_support=current_focus_has_support,
+            current_focus_has_uncertainty_surface=(
+                current_focus_has_uncertainty_surface
+            ),
+        )
+
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_candidate_sort_key",
+        counting_candidate_sort_key,
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=500)
+
+    assert result == expected_result
+    assert result.selections == ()
+    assert set(result.omitted_unit_ids) == renderable_unit_ids
+    assert sort_key_calls <= len(renderable_unit_ids) * 3
 
 
 def test_optimize_semantic_units_emits_tier_aware_trace_summaries(
@@ -866,12 +1005,23 @@ def test_optimize_semantic_units_keeps_direct_caller_uncertainty_before_support_
     result = optimize_semantic_units(program, scoring, budget=152)
     selections = _selection_by_unit_id(result)
 
+    assert tuple(selection.unit_id for selection in result.selections) == (
+        router_id,
+        run_id,
+        frontier_id,
+        summary_id,
+    )
+    assert result.total_tokens == 146
     assert selections[router_id].detail == RenderDetail.SOURCE.value
     assert selections[run_id].detail == RenderDetail.SOURCE.value
     assert selections[frontier_id].detail == RenderDetail.IDENTITY.value
     assert selections[summary_id].detail == RenderDetail.SOURCE.value
     assert registry_id not in selections
     assert main_frontier_id not in selections
+    assert tuple(warning.code for warning in result.warnings) == (
+        SemanticOptimizationWarningCode.BUDGET_PRESSURE,
+    )
+    assert result.warnings[0].unit_id == router_id
     assert all(warning.unit_id != main_frontier_id for warning in result.warnings)
 
 

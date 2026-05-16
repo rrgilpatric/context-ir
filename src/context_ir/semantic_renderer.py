@@ -56,6 +56,44 @@ class _DataclassFacts:
     fields: tuple[DataclassField, ...]
 
 
+_EMPTY_DATACLASS_FACTS = _DataclassFacts(model=None, fields=())
+
+
+@dataclass(frozen=True)
+class _SemanticRenderContext:
+    """Request-scoped lookup indexes for semantic rendering."""
+
+    dataclass_facts_by_symbol_id: dict[str, _DataclassFacts]
+    unresolved_by_id: dict[str, UnresolvedAccess]
+    unsupported_by_id: dict[str, UnsupportedConstruct]
+
+
+class _SemanticRenderSession:
+    """Request-scoped semantic renderer with local materialization caches."""
+
+    def __init__(self, program: SemanticProgram) -> None:
+        """Build render lookup indexes once for one optimization request."""
+        self._program = program
+        self._context = _build_render_context(program)
+        self._renders: dict[tuple[str, RenderDetail], RenderedUnit] = {}
+
+    def render(self, unit_id: str, detail: RenderDetail) -> RenderedUnit:
+        """Render ``unit_id`` at ``detail`` once per session."""
+        cache_key = (unit_id, detail)
+        rendered = self._renders.get(cache_key)
+        if rendered is not None:
+            return rendered
+
+        rendered = _render_semantic_unit_with_context(
+            program=self._program,
+            unit_id=unit_id,
+            detail=detail,
+            context=self._context,
+        )
+        self._renders[cache_key] = rendered
+        return rendered
+
+
 def render_semantic_unit(
     program: SemanticProgram,
     unit_id: str,
@@ -64,7 +102,12 @@ def render_semantic_unit(
     """Render one semantic unit or frontier item from ``program``."""
     symbol = program.resolved_symbols.get(unit_id)
     if symbol is not None:
-        content = _render_symbol(program=program, symbol=symbol, detail=detail)
+        content = _render_symbol(
+            program=program,
+            symbol=symbol,
+            detail=detail,
+            dataclass_facts=_dataclass_facts_for_symbol(program, symbol.symbol_id),
+        )
         return RenderedUnit(
             unit_id=unit_id,
             detail=detail,
@@ -104,15 +147,72 @@ def render_semantic_unit(
     raise KeyError(unit_id)
 
 
+def _render_semantic_unit_with_context(
+    *,
+    program: SemanticProgram,
+    unit_id: str,
+    detail: RenderDetail,
+    context: _SemanticRenderContext,
+) -> RenderedUnit:
+    """Render one semantic unit using request-scoped lookup indexes."""
+    symbol = program.resolved_symbols.get(unit_id)
+    if symbol is not None:
+        content = _render_symbol(
+            program=program,
+            symbol=symbol,
+            detail=detail,
+            dataclass_facts=context.dataclass_facts_by_symbol_id.get(
+                symbol.symbol_id,
+                _EMPTY_DATACLASS_FACTS,
+            ),
+        )
+        return RenderedUnit(
+            unit_id=unit_id,
+            detail=detail,
+            kind=RenderedUnitKind.PROVEN_SYMBOL,
+            proof_status=ProofStatus.PROVEN,
+            provenance=symbol.definition_site,
+            content=content,
+            token_count=_estimate_tokens(content),
+        )
+
+    unresolved_access = context.unresolved_by_id.get(unit_id)
+    if unresolved_access is not None:
+        content = _render_unresolved(unresolved_access, detail)
+        return RenderedUnit(
+            unit_id=unit_id,
+            detail=detail,
+            kind=RenderedUnitKind.UNRESOLVED_FRONTIER,
+            proof_status=unresolved_access.proof_status,
+            provenance=unresolved_access.site,
+            content=content,
+            token_count=_estimate_tokens(content),
+        )
+
+    unsupported_construct = context.unsupported_by_id.get(unit_id)
+    if unsupported_construct is not None:
+        content = _render_unsupported(unsupported_construct, detail)
+        return RenderedUnit(
+            unit_id=unit_id,
+            detail=detail,
+            kind=RenderedUnitKind.UNSUPPORTED_CONSTRUCT,
+            proof_status=unsupported_construct.proof_status,
+            provenance=unsupported_construct.site,
+            content=content,
+            token_count=_estimate_tokens(content),
+        )
+
+    raise KeyError(unit_id)
+
+
 def _render_symbol(
     *,
     program: SemanticProgram,
     symbol: ResolvedSymbol,
     detail: RenderDetail,
+    dataclass_facts: _DataclassFacts,
 ) -> str:
     """Render one proven semantic symbol at ``detail``."""
-    dataclass_facts = _dataclass_facts_for_symbol(program, symbol.symbol_id)
-
     if detail is RenderDetail.IDENTITY:
         return _join_lines(
             (
@@ -238,6 +338,15 @@ def _render_unsupported(
     return _join_lines(lines)
 
 
+def _build_render_context(program: SemanticProgram) -> _SemanticRenderContext:
+    """Build per-request lookup indexes used by semantic rendering."""
+    return _SemanticRenderContext(
+        dataclass_facts_by_symbol_id=_dataclass_facts_by_symbol_id(program),
+        unresolved_by_id=_unresolved_by_id(program),
+        unsupported_by_id=_unsupported_by_id(program),
+    )
+
+
 def _dataclass_facts_for_symbol(
     program: SemanticProgram,
     symbol_id: str,
@@ -268,6 +377,50 @@ def _dataclass_facts_for_symbol(
         )
     )
     return _DataclassFacts(model=model, fields=fields)
+
+
+def _dataclass_facts_by_symbol_id(
+    program: SemanticProgram,
+) -> dict[str, _DataclassFacts]:
+    """Index proven dataclass facts by class symbol ID."""
+    models_by_symbol_id: dict[str, DataclassModel] = {}
+    for dataclass_model in program.dataclass_models:
+        models_by_symbol_id.setdefault(
+            dataclass_model.class_symbol_id,
+            dataclass_model,
+        )
+
+    fields_by_symbol_id: dict[str, list[DataclassField]] = {}
+    for dataclass_field in program.dataclass_fields:
+        fields_by_symbol_id.setdefault(
+            dataclass_field.class_symbol_id,
+            [],
+        ).append(dataclass_field)
+
+    facts_by_symbol_id: dict[str, _DataclassFacts] = {}
+    for symbol_id in models_by_symbol_id.keys() | fields_by_symbol_id.keys():
+        fields = fields_by_symbol_id.get(symbol_id)
+        ordered_fields = (
+            ()
+            if fields is None
+            else tuple(
+                sorted(
+                    fields,
+                    key=lambda field: (
+                        field.site.span.start_line,
+                        field.site.span.start_column,
+                        field.site.span.end_line,
+                        field.site.span.end_column,
+                        field.name,
+                    ),
+                )
+            )
+        )
+        facts_by_symbol_id[symbol_id] = _DataclassFacts(
+            model=models_by_symbol_id.get(symbol_id),
+            fields=ordered_fields,
+        )
+    return facts_by_symbol_id
 
 
 def _format_dataclass_field(field: DataclassField) -> str:

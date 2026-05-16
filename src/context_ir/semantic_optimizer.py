@@ -8,7 +8,7 @@ from context_ir.semantic_renderer import (
     RenderDetail,
     RenderedUnit,
     RenderedUnitKind,
-    render_semantic_unit,
+    _SemanticRenderSession,
 )
 from context_ir.semantic_scorer import SemanticScoringResult, SemanticUnitScore
 from context_ir.semantic_types import (
@@ -71,6 +71,16 @@ class _SemanticCandidate:
     outgoing_dependency_targets: tuple[str, ...]
     enclosing_scope_id: str | None
     trace_summary: SemanticUnitTraceSummary
+
+
+@dataclass(frozen=True)
+class _CandidateSortState:
+    """Dynamic optimizer state that can change pending candidate order."""
+
+    current_focus_id: str | None
+    current_focus_file_scope_id: str | None
+    current_focus_has_support: bool
+    current_focus_has_uncertainty_surface: bool
 
 
 _PRIMARY_TRACE_DEFAULTS: dict[
@@ -137,25 +147,38 @@ def optimize_semantic_units(
     focus_unit_ids: set[str] = set()
     suppressed_uncertainty_unit_ids: set[str] = set()
 
+    active_sort_state = _CandidateSortState(
+        current_focus_id=None,
+        current_focus_file_scope_id=None,
+        current_focus_has_support=False,
+        current_focus_has_uncertainty_surface=False,
+    )
     pending_candidates = list(ordered_candidates)
-    while pending_candidates:
-        current_focus_file_scope_id = (
-            candidate_by_id[current_focus_id].file_scope_id
-            if current_focus_id is not None
-            else None
+    pending_start_index = 0
+    while pending_start_index < len(pending_candidates):
+        sort_state = _candidate_sort_state(
+            current_focus_id=current_focus_id,
+            candidate_by_id=candidate_by_id,
+            current_focus_support_count=current_focus_support_count,
+            current_focus_has_uncertainty_surface=(
+                current_focus_has_uncertainty_surface
+            ),
         )
-        pending_candidates.sort(
-            key=lambda candidate: _candidate_sort_key(
-                candidate,
-                current_focus_id=current_focus_id,
-                current_focus_file_scope_id=current_focus_file_scope_id,
-                current_focus_has_support=current_focus_support_count > 0,
-                current_focus_has_uncertainty_surface=(
-                    current_focus_has_uncertainty_surface
-                ),
+        if sort_state != active_sort_state:
+            if pending_start_index > 0:
+                pending_candidates = pending_candidates[pending_start_index:]
+                pending_start_index = 0
+            pending_candidates.sort(
+                key=lambda candidate: _candidate_sort_key_for_state(
+                    candidate,
+                    sort_state,
+                )
             )
-        )
-        candidate = pending_candidates.pop(0)
+            active_sort_state = sort_state
+
+        current_focus_file_scope_id = sort_state.current_focus_file_scope_id
+        candidate = pending_candidates[pending_start_index]
+        pending_start_index += 1
         chosen_detail = _choose_detail(
             candidate,
             remaining_budget,
@@ -221,6 +244,7 @@ def optimize_semantic_units(
                     current_focus_id,
                     current_focus_file_scope_id,
                     pending_candidates,
+                    start_index=pending_start_index,
                 ):
                     pending_focus_id = candidate.unit_id
                     continue
@@ -298,12 +322,13 @@ def _build_candidates(
     enclosing_scope_ids = _enclosing_scope_ids(program)
     file_scope_ids = _file_scope_ids(program)
     trace_summaries = _trace_summaries_by_subject(program)
+    render_session = _SemanticRenderSession(program)
     candidates: list[_SemanticCandidate] = []
 
     for unit_id in renderable_unit_ids:
-        identity = render_semantic_unit(program, unit_id, RenderDetail.IDENTITY)
-        summary = render_semantic_unit(program, unit_id, RenderDetail.SUMMARY)
-        source = render_semantic_unit(program, unit_id, RenderDetail.SOURCE)
+        identity = render_session.render(unit_id, RenderDetail.IDENTITY)
+        summary = render_session.render(unit_id, RenderDetail.SUMMARY)
+        source = render_session.render(unit_id, RenderDetail.SOURCE)
         subject_kind = _SUBJECT_KIND_BY_RENDERED_UNIT[identity.kind]
         renders = {
             RenderDetail.IDENTITY: identity,
@@ -474,6 +499,43 @@ def _outgoing_dependency_targets(
     }
 
 
+def _candidate_sort_state(
+    *,
+    current_focus_id: str | None,
+    candidate_by_id: dict[str, _SemanticCandidate],
+    current_focus_support_count: int,
+    current_focus_has_uncertainty_surface: bool,
+) -> _CandidateSortState:
+    """Return the dynamic sort inputs for the current selection step."""
+    current_focus_file_scope_id = (
+        candidate_by_id[current_focus_id].file_scope_id
+        if current_focus_id is not None
+        else None
+    )
+    return _CandidateSortState(
+        current_focus_id=current_focus_id,
+        current_focus_file_scope_id=current_focus_file_scope_id,
+        current_focus_has_support=current_focus_support_count > 0,
+        current_focus_has_uncertainty_surface=current_focus_has_uncertainty_surface,
+    )
+
+
+def _candidate_sort_key_for_state(
+    candidate: _SemanticCandidate,
+    sort_state: _CandidateSortState,
+) -> tuple[float, float, float, float, int, str, int, int, str]:
+    """Return ``candidate``'s key for a materialized dynamic sort state."""
+    return _candidate_sort_key(
+        candidate,
+        current_focus_id=sort_state.current_focus_id,
+        current_focus_file_scope_id=sort_state.current_focus_file_scope_id,
+        current_focus_has_support=sort_state.current_focus_has_support,
+        current_focus_has_uncertainty_surface=(
+            sort_state.current_focus_has_uncertainty_surface
+        ),
+    )
+
+
 def _candidate_sort_key(
     candidate: _SemanticCandidate,
     *,
@@ -641,21 +703,27 @@ def _focus_has_uncertainty_candidate(
     focus_unit_id: str,
     focus_file_scope_id: str | None,
     candidates: list[_SemanticCandidate],
+    *,
+    start_index: int = 0,
 ) -> bool:
     """Return whether ``focus_unit_id`` still has a relevant uncertainty candidate."""
-    return any(
-        _is_uncertainty_for_focus(
+    for index in range(start_index, len(candidates)):
+        candidate = candidates[index]
+        if not _is_uncertainty_for_focus(
             candidate,
             focus_unit_id=focus_unit_id,
             focus_file_scope_id=focus_file_scope_id,
-        )
-        and _uncertainty_preferred_detail(
-            candidate,
-            focus_file_scope_id=focus_file_scope_id,
-        )
-        is not None
-        for candidate in candidates
-    )
+        ):
+            continue
+        if (
+            _uncertainty_preferred_detail(
+                candidate,
+                focus_file_scope_id=focus_file_scope_id,
+            )
+            is not None
+        ):
+            return True
+    return False
 
 
 def _choose_detail(

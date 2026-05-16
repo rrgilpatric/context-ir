@@ -7,12 +7,14 @@ from pathlib import Path
 
 import pytest
 
+import context_ir.semantic_renderer as semantic_renderer
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
 from context_ir.semantic_renderer import (
     RenderDetail,
+    RenderedUnit,
     RenderedUnitKind,
     render_semantic_unit,
 )
@@ -280,3 +282,88 @@ def test_render_semantic_unit_does_not_mutate_lower_layer_outputs(
     assert program.unresolved_frontier == unresolved_before
     assert program.unsupported_constructs == unsupported_before
     assert program.diagnostics == diagnostics_before
+
+
+def test_semantic_render_session_reuses_context_and_rendered_units(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Request-scoped rendering builds indexes once and caches exact renders."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "helpers.py").write_text(
+        "def helper() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.helpers import *
+
+            def run() -> None:
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    run_id = _definition_id_for(program, "main.run")
+    unresolved_id = _unresolved_id_for(program, "missing_call")
+    unsupported_id = _unsupported_id_for(program, "from pkg.helpers import *")
+    original_build_context = semantic_renderer._build_render_context
+    original_render_with_context = semantic_renderer._render_semantic_unit_with_context
+    build_context_calls = 0
+    render_calls: dict[tuple[str, RenderDetail], int] = {}
+
+    def counting_build_context(
+        program_arg: SemanticProgram,
+    ) -> semantic_renderer._SemanticRenderContext:
+        nonlocal build_context_calls
+        build_context_calls += 1
+        return original_build_context(program_arg)
+
+    def counting_render_with_context(
+        *,
+        program: SemanticProgram,
+        unit_id: str,
+        detail: RenderDetail,
+        context: semantic_renderer._SemanticRenderContext,
+    ) -> RenderedUnit:
+        cache_key = (unit_id, detail)
+        render_calls[cache_key] = render_calls.get(cache_key, 0) + 1
+        return original_render_with_context(
+            program=program,
+            unit_id=unit_id,
+            detail=detail,
+            context=context,
+        )
+
+    monkeypatch.setattr(
+        semantic_renderer,
+        "_build_render_context",
+        counting_build_context,
+    )
+    monkeypatch.setattr(
+        semantic_renderer,
+        "_render_semantic_unit_with_context",
+        counting_render_with_context,
+    )
+
+    session = semantic_renderer._SemanticRenderSession(program)
+    first_summary = session.render(run_id, RenderDetail.SUMMARY)
+    second_summary = session.render(run_id, RenderDetail.SUMMARY)
+    first_unresolved_source = session.render(unresolved_id, RenderDetail.SOURCE)
+    second_unresolved_source = session.render(unresolved_id, RenderDetail.SOURCE)
+    unsupported_identity = session.render(unsupported_id, RenderDetail.IDENTITY)
+
+    assert first_summary is second_summary
+    assert first_unresolved_source is second_unresolved_source
+    assert unsupported_identity.kind is RenderedUnitKind.UNSUPPORTED_CONSTRUCT
+    assert build_context_calls == 1
+    assert render_calls == {
+        (run_id, RenderDetail.SUMMARY): 1,
+        (unresolved_id, RenderDetail.SOURCE): 1,
+        (unsupported_id, RenderDetail.IDENTITY): 1,
+    }
