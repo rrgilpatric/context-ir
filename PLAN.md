@@ -302,6 +302,38 @@ Workspace-only source-discovery hygiene commit-gating clearance:
   - stage exactly the six-file release unit and create a local release commit
   - do not push without explicit Ryan authorization
 
+Locally committed source-discovery hygiene release:
+
+- local release commit:
+  - `7261d02 Add eligible Python source discovery`
+- committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/parser.py`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_parser.py`
+  - `tests/test_eval_providers.py`
+- live repo/workspace state immediately after local commit:
+  - branch `main`
+  - local `HEAD` resolves to `7261d02`
+  - `origin/main` resolves to `1824ca8 Sync hasattr provider push routing`
+  - branch is ahead of `origin/main` by one commit before this continuity sync
+  - no staged files
+  - no untracked files
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `7261d02`
+  - pushed: no
+- next route:
+  - push the local release commit only after explicit Ryan authorization
+  - do not route `7261d02` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after this release is pushed, rerun the real-repo value checkpoint path
+    before optimizer/render caching or broader fixture expansion
+
 Pushed exact `hasattr/2` replay-input bridge release:
 `2140cf5 Add exact hasattr replay-input bridge`. This commit contains the
 accepted lower-layer exact replay-input bridge for only

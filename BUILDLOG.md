@@ -2,6 +2,42 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Source Discovery Hygiene Local Commit
+
+- Created the local release commit for the accepted, release-unit-audit-cleared,
+  full-regression-cleared, and commit-gating-cleared source-discovery hygiene
+  release unit.
+- Local release commit:
+  - `7261d02 Add eligible Python source discovery`
+- Committed release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/parser.py`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_parser.py`
+  - `tests/test_eval_providers.py`
+- Live repo state immediately after local commit:
+  - branch `main`
+  - local `HEAD` resolves to `7261d02`
+  - `origin/main` resolves to `1824ca8 Sync hasattr provider push routing`
+  - branch is ahead of `origin/main` by one commit before this continuity sync
+  - no staged files
+  - no untracked files
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `7261d02`
+  - pushed: no
+- Next control route:
+  - push the local release commit only after explicit Ryan authorization
+  - do not route `7261d02` back to release-unit audit, full regression,
+    commit-gating, staging, or local commit creation absent new findings
+  - after this release is pushed, rerun the real-repo value checkpoint path
+    before optimizer/render caching or broader fixture expansion
+- Acceptance status: first-pass local commit
+
 ## 2026-05-16 -- Source Discovery Hygiene Commit-Gating Clearance
 
 - Performed commit-gating review after first-pass release-unit audit clearance
