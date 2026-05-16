@@ -66,6 +66,9 @@ _VARS_ZERO_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _DIR_ZERO_PROBE_TASK_ID = "oracle_signal_dir_zero_probe"
 _DIR_ZERO_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _DIR_ZERO_RUNTIME_PAYLOAD = (("listing_entry_count", "0"),)
+_HASATTR_PROBE_TASK_ID = "oracle_signal_hasattr_probe"
+_HASATTR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_HASATTR_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
 _EXEC_PROBE_TASK_ID = "oracle_signal_exec_probe"
 _EXEC_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:4"
 _EXEC_RUNTIME_PAYLOAD = (
@@ -367,6 +370,16 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         replay_target_seed="main.probe_directory",
         snapshot_id="oracle_signal_dir_zero_probe@default-local-python:v1",
         runtime_payload=_DIR_ZERO_RUNTIME_PAYLOAD,
+    ),
+    _HASATTR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_HASATTR_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="hasattr(obj, name)",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:hasattr/2",
+        boundary_text="hasattr(obj, name)",
+        replay_target_seed="main.probe_attribute",
+        snapshot_id="oracle_signal_hasattr_probe@default-local-python:v1",
+        runtime_payload=_HASATTR_RUNTIME_PAYLOAD,
     ),
     _EXEC_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_EXEC_UNSUPPORTED_UNIT_ID,
@@ -1214,8 +1227,8 @@ def _default_local_python_subprocess_fixture(
             "context_ir_default_local_python_subprocess only supports "
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
             "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
-            "oracle_signal_exec_probe, oracle_signal_eval_probe, or "
-            "oracle_signal_metaclass_behavior_probe"
+            "oracle_signal_hasattr_probe, oracle_signal_exec_probe, "
+            "oracle_signal_eval_probe, or oracle_signal_metaclass_behavior_probe"
         )
     return fixture
 

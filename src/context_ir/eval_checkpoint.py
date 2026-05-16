@@ -34,6 +34,7 @@ _SUPPORTED_PROBE_SPECS: tuple[tuple[str, str], ...] = (
     ("oracle_signal_globals_probe", "oracle_signal_globals_probe_matrix.json"),
     ("oracle_signal_vars_zero_probe", "oracle_signal_vars_zero_probe_matrix.json"),
     ("oracle_signal_dir_zero_probe", "oracle_signal_dir_zero_probe_matrix.json"),
+    ("oracle_signal_hasattr_probe", "oracle_signal_hasattr_probe_matrix.json"),
     ("oracle_signal_exec_probe", "oracle_signal_exec_probe_matrix.json"),
     ("oracle_signal_eval_probe", "oracle_signal_eval_probe_matrix.json"),
     (

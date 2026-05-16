@@ -21,6 +21,7 @@ EXPECTED_TASK_IDS = (
     "oracle_signal_globals_probe",
     "oracle_signal_vars_zero_probe",
     "oracle_signal_dir_zero_probe",
+    "oracle_signal_hasattr_probe",
     "oracle_signal_exec_probe",
     "oracle_signal_eval_probe",
     "oracle_signal_metaclass_behavior_probe",
@@ -30,6 +31,7 @@ EXPECTED_PAYLOADS = {
     "oracle_signal_globals_probe": (("lookup_outcome", "returned_namespace"),),
     "oracle_signal_vars_zero_probe": (("lookup_outcome", "returned_namespace"),),
     "oracle_signal_dir_zero_probe": (("listing_entry_count", "0"),),
+    "oracle_signal_hasattr_probe": (("attribute_present", "true"),),
     "oracle_signal_exec_probe": (
         ("execution_outcome", "completed"),
         ("statement_kind", "pass"),

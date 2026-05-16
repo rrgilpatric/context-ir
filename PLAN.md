@@ -41,11 +41,11 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`dc02adf Sync hasattr bridge local release routing`. The latest pushed
+`32a4c67 Sync hasattr bridge push routing`. The latest pushed
 source/contract authority is
 `2140cf5 Add exact hasattr replay-input bridge`. The latest pushed
 control-state authority is
-`dc02adf Sync hasattr bridge local release routing`. Live git refs and worktree
+`32a4c67 Sync hasattr bridge push routing`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
@@ -88,6 +88,249 @@ Pushed exact `hasattr/2` release evidence:
   - pushed: yes, with explicit Ryan authorization
 - next route:
   - select the next bounded north-star lane from the pushed exact bridge state
+
+Workspace-only post-`32a4c67` route selection:
+
+- live repo/workspace state was verified:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `32a4c67 Sync hasattr bridge push routing`
+  - no source/test/control diff was present before this route-selection update
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- route-selection finding:
+  - the pushed exact lower-layer `hasattr/2` bridge completed the prerequisite
+    for default local-Python subprocess provider support
+  - existing `oracle_signal_hasattr_probe` eval assets already define the exact
+    fixture source, task, run spec, replay inputs, and normalized payload
+  - a live confidence check over the lower exact `hasattr` subprocess path
+    passed with `4 passed`
+  - provider support remains absent by design:
+    `oracle_signal_hasattr_probe` is not in
+    `_DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES`
+  - the internal tangible checkpoint currently enumerates the prior seven
+    default-subprocess fixtures, so adding provider support should update the
+    checkpoint's exact supported fixture list in the same bounded lane
+- selected next bounded north-star lane:
+  - extend `context_ir_default_local_python_subprocess` to exactly
+    `oracle_signal_hasattr_probe`
+  - update `context_ir.eval_checkpoint` to include the exact
+    `oracle_signal_hasattr_probe` row in the internal checkpoint bundle
+- expected exact provider behavior:
+  - miss evidence `hasattr(obj, name)`
+  - `RuntimeProbeFamily.REFLECTIVE_BUILTIN`
+  - form `reflective_builtin:hasattr/2`
+  - boundary `hasattr(obj, name)`
+  - subject `unsupported:call:main.py:2:11`
+  - replay target seed `main.probe_attribute`
+  - exact pre-observation replay inputs remain
+    `object_type=builtins.int` and `attribute_name=bit_length` through
+    `request_replay_payload_fields`
+  - normalized payload exactly `attribute_present=true`
+  - initial compile remains runtime-fixture-free
+  - recompile uses `sys.executable`, `delta_budget=0`, and the real worker
+    subprocess invocation
+    `(sys.executable, "-m", "context_ir.runtime_probe_worker")`
+  - provider-owned runtime provenance comes from the recompiled response
+  - unsupported/opaque primary truth remains preserved with additive runtime
+    provenance
+  - unsupported task IDs remain fail-closed
+- selected implementation file scope:
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_checkpoint.py`
+  - existing default-subprocess fail-closed wording tests only if needed:
+    `tests/test_eval_signal_locals_probe.py`,
+    `tests/test_eval_signal_globals_probe.py`,
+    `tests/test_eval_signal_vars_zero_probe.py`,
+    `tests/test_eval_signal_dir_zero_probe.py`, and
+    `tests/test_eval_signal_metaclass_behavior_probe.py`
+- out of scope:
+  - eval fixtures, eval tasks, committed run specs, public README/EVAL/
+    PUBLIC_CLAIMS/ARCHITECTURE updates, package-root exports, MCP, product
+    CLI, schema/config, compiler, scoring, dynamic-import, runtime-mutation,
+    exec/eval, metaclass, other reflective-builtin forms, generalized
+    replay-input support, generalized provider/runtime support, release gate,
+    staging, local commit, or push
+- release/control state:
+  - route selected in workspace-only control state
+  - no implementation result has been returned yet
+  - no release gate, staging, local commit, or push is authorized from this
+    route selection
+
+Workspace-only exact `hasattr` provider/checkpoint acceptance:
+
+- implementation result reviewed findings-first against live repo state and
+  accepted first-pass with no findings
+- implemented exact `oracle_signal_hasattr_probe` support inside
+  `context_ir_default_local_python_subprocess`
+- provider behavior:
+  - miss evidence is exactly `hasattr(obj, name)`
+  - planned request validation remains exact:
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:hasattr/2`, boundary `hasattr(obj, name)`, subject
+    `unsupported:call:main.py:2:11`, and replay target seed
+    `main.probe_attribute`
+  - exact replay inputs remain `object_type=builtins.int` and
+    `attribute_name=bit_length` through `request_replay_payload_fields`
+  - normalized payload is exactly `attribute_present=true`
+  - initial compile remains runtime-fixture-free
+  - recompile uses `sys.executable`, `delta_budget=0`, and the real worker
+    subprocess invocation
+    `(sys.executable, "-m", "context_ir.runtime_probe_worker")`
+  - provider-owned runtime provenance comes from the recompiled response
+  - unsupported/opaque primary truth remains preserved with additive runtime
+    provenance
+  - temporary single-provider run-spec dispatch works without editing
+    committed eval assets
+  - unsupported task IDs remain fail-closed
+- checkpoint behavior:
+  - `context_ir.eval_checkpoint` now includes `oracle_signal_hasattr_probe`
+    as the eighth exact default-subprocess checkpoint row
+  - checkpoint normalized payload for that row is
+    `attribute_present=true`
+- accepted release unit is exactly:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_checkpoint.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- validation rerun by control:
+  - focused ruff check passed
+  - focused ruff format check passed
+  - strict mypy over `src/` passed with no issues in `38 source files`
+  - requested pytest subset passed with `99 passed`
+  - `git diff --check` passed
+- program routing decision:
+  - after this release unit is audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed, pause broad
+    fixture-by-fixture expansion
+  - next program gate after this release is a value checkpoint spike to test
+    actual differentiated behavior against simple baselines on a realistic
+    coding task
+  - if the value checkpoint is weak, pause implementation expansion and run a
+    serious research/debug spike before adding more internal fixtures
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run dedicated read-only release-unit audit over the exact eleven-file
+    release unit before full regression, commit-gating, staging, local commit,
+    or push
+
+Workspace-only exact `hasattr` provider/checkpoint release-unit audit clearance:
+
+- dedicated read-only release-unit audit returned PASS
+- findings: none
+- audit-cleared release unit remains exactly:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/eval_checkpoint.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_checkpoint.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+- audit evidence:
+  - provider support is limited to `oracle_signal_hasattr_probe`
+  - exact planned-request identity, replay target, replay inputs, payload
+    validation, provider-owned provenance from the recompiled response, and
+    fail-closed unsupported-task behavior are preserved
+  - checkpoint now enumerates eight exact default-subprocess rows including
+    `oracle_signal_hasattr_probe`
+  - no eval assets, public docs/claims, exports, MCP, schema/config, compiler,
+    scoring, runtime worker, or generalized runtime/provider support surfaces
+    were widened
+- live repo/workspace state was verified:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `32a4c67 Sync hasattr bridge push routing`
+  - no staged files
+  - no untracked files
+  - dirty set exactly matches the accepted release unit
+  - `git diff --check` passed
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run full regression before commit-gating, staging, local commit, or push
+
+Workspace-only exact `hasattr` provider/checkpoint full regression clearance:
+
+- full regression gate passed first-pass after release-unit audit clearance
+- validation:
+  - `.venv/bin/python -m ruff check src/ tests/` passed
+  - `.venv/bin/python -m ruff format --check src/ tests/` passed with
+    `112 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/` passed with no issues in
+    `38 source files`
+  - `.venv/bin/python -m pytest tests/ -v` passed with `1681 passed`
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - run commit-gating review over the exact eleven-file release unit before
+    staging, local commit, or push
+
+Workspace-only exact `hasattr` provider/checkpoint commit-gating clearance:
+
+- commit-gating review passed first-pass with no findings
+- commit-gating evidence:
+  - dirty file set exactly matches the accepted eleven-file release unit
+  - no staged files were present during review
+  - no untracked files were present during review
+  - local `HEAD` and `origin/main` both resolved to
+    `32a4c67 Sync hasattr bridge push routing`
+  - `git diff --check` passed
+  - provider diff is limited to exact `oracle_signal_hasattr_probe`
+    fixture-map support and fail-closed support-list wording
+  - checkpoint diff is limited to adding the exact
+    `oracle_signal_hasattr_probe` checkpoint row and expected payload
+  - tests cover exact request identity, replay inputs, real subprocess
+    invocation, provider-owned runtime provenance, run-spec dispatch, and
+    unsupported-task fail-closed behavior
+  - no eval assets, public docs/claims, package-root exports, MCP,
+    schema/config, compiler, scoring, runtime worker, runtime execution,
+    runtime observation recompile, tool facade, or generalized runtime/provider
+    support surfaces have diffs
+- release/control state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next route:
+  - stage exactly the eleven-file release unit and create a local release
+    commit
+  - do not push without explicit Ryan authorization
 
 Pushed internal default local-Python subprocess dir-zero eval provider release:
 `686dd18 Add dir-zero default subprocess eval provider`. This commit contains
