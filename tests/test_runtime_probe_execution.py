@@ -341,6 +341,36 @@ def _reflective_hasattr_request(
     )
 
 
+def _reflective_hasattr_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact hasattr pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=29,
+            ),
+            snippet="hasattr(obj, name)",
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text="hasattr(obj, name)",
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_HASATTR_FORM_LABEL,
+        replay_target_seed="main.probe_attribute",
+        replay_selector_seed=(
+            "call:main.probe_attribute:"
+            f"{_REFLECTIVE_HASATTR_FORM_LABEL}@main.py:2:11:2:29"
+        ),
+    )
+
+
 def _reflective_getattr_request(
     start_line: int = 3,
     *,
@@ -1125,6 +1155,41 @@ def test_materialize_runtime_probe_execution_inputs_preserves_plan_order_and_rep
     assert program.unsupported_constructs == original_unsupported
     assert program.unresolved_frontier == original_frontier
     assert program.provenance_records == original_provenance_records
+
+
+def test_exact_hasattr_probe_appends_request_replay_payload_fields() -> None:
+    """The exact hasattr pilot appends pre-observation replay inputs."""
+    request = _reflective_hasattr_exact_replay_input_request()
+    runner_request = _local_python_runner_request(request=request)
+    invocation = _local_python_subprocess_invocation(runner_request)
+    payload = _local_python_worker_request_payload(invocation)
+    transport = _local_python_worker_request_stdin_transport(invocation)
+    expected_replay_inputs = (
+        *_EXPECTED_REPLAY_INPUT_KEYS,
+        "object_type",
+        "attribute_name",
+    )
+
+    assert (
+        tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
+        == expected_replay_inputs
+    )
+    assert runner_request.replay_artifact.replay_inputs[-2:] == (
+        _field("object_type", "builtins.int"),
+        _field("attribute_name", "bit_length"),
+    )
+    assert invocation.request_replay_payload_fields is (
+        runner_request.replay_artifact.replay_inputs
+    )
+    assert payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
 
 
 def test_materialize_runtime_probe_runner_requests_preserves_order_and_identities() -> (
@@ -3937,6 +4002,52 @@ def test_reflective_hasattr_local_python_runner_executes_hasattr_subprocess(
     _assert_attempt_identity(attempt, expected_invocation)
     assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
     assert attempt.normalized_payload == (_field("attribute_present", expected_value),)
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_default_local_python_subprocess_runner_executes_exact_hasattr_replay_inputs(
+    tmp_path: Path,
+) -> None:
+    """The default runner observes the exact hasattr/2 replay-input pilot."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_attribute(obj: object, name: str) -> bool:
+                return hasattr(obj, name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_hasattr_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (_field("attribute_present", "true"),)
+    assert attempt.observed_replay_inputs == ()
     assert attempt.durable_artifact_reference is None
     assert attempt.failure_summary is None
     assert attempt.failure_detail_fields == ()

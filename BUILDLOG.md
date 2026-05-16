@@ -2,6 +2,331 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Commit-Gating Clearance
+
+- Performed commit-gating review after release-unit audit and full regression
+  passed for the exact `hasattr/2` replay-input bridge release unit.
+- Commit-gating result: PASS.
+- Findings: none.
+- Commit-gated release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Commit-gating evidence:
+  - dirty set exactly matches the audit-cleared release unit
+  - no staged files
+  - no untracked files
+  - no eval provider support, eval assets, public docs/claims, exports, MCP,
+    schema/config, compiler, scoring, dynamic-import, runtime-mutation, or
+    generalized provider/runtime widening
+  - `git diff --check` passed
+  - full regression already passed with `1678 passed`
+- Release state:
+  - accepted in workspace: yes, including correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: yes, first-pass
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - stage the exact eight-file release unit and create the local release commit
+  - do not push without explicit Ryan authorization
+- Acceptance status: first-pass commit-gating clearance
+
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Full Regression Clearance
+
+- Ran the full regression gate for the audit-cleared exact `hasattr/2`
+  replay-input bridge release unit.
+- Full regression result: PASS.
+- Commands:
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed with `112 files already
+    formatted`
+  - `mypy --strict src/` passed with no issues in `38 source files`
+  - `pytest tests/ -v` passed with `1678 passed`
+- Release state:
+  - accepted in workspace: yes, including correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full-regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run commit-gating review over the exact eight-file release unit
+  - do not stage, create a local commit, or push until commit-gating clears
+- Acceptance status: first-pass full-regression clearance
+
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Release-Unit Audit Clearance
+
+- Reviewed the rerun dedicated read-only release-unit audit for the exact
+  `hasattr/2` replay-input bridge release unit after the docstring correction.
+- Audit result: PASS.
+- Findings: none.
+- Audit-cleared release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Audit evidence:
+  - the prior stale-docstring finding is corrected
+  - the bridge remains exact to `oracle_signal_hasattr_probe` /
+    `reflective_builtin:hasattr/2`
+  - exact replay inputs remain `object_type=builtins.int` and
+    `attribute_name=bit_length` through `request_replay_payload_fields`
+  - worker consumption maps the exact pilot to
+    `main.probe_attribute(1, "bit_length")`
+  - existing zero-argument `hasattr` behavior remains covered
+  - `observed_replay_inputs` remains exec/eval-only
+  - no provider support, public docs/claims, eval assets, exports, MCP,
+    schema/config, compiler, scoring, dynamic-import, runtime-mutation, or
+    generalized provider/runtime support was widened
+- Repo-backed truth during audit review:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `13d5472 Sync checkpoint push routing`
+  - no staged files
+  - no untracked files
+  - dirty set remains exactly the eight release-unit files
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, including correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run full regression over `ruff check src/ tests/`,
+    `ruff format --check src/ tests/`, `mypy --strict src/`, and
+    `pytest tests/ -v`
+  - do not run commit-gating, staging, local commit, or push until full
+    regression clears
+- Acceptance status: first-pass audit clearance after correction
+
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Audit Finding Correction
+
+- Reviewed the narrow correction for the exact `hasattr/2` replay-input bridge
+  release-unit audit finding.
+- Correction result: accepted first-pass.
+- Findings: none.
+- Corrected finding:
+  - `src/context_ir/runtime_probe_worker.py` no longer describes the exact
+    hasattr observation helper as only a zero-argument target path
+  - the helper docstring now covers both preserved zero-argument behavior and
+    exact pilot replay inputs
+  - no runtime behavior change was introduced by the correction
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `13d5472 Sync checkpoint push routing`
+  - no staged files
+  - no untracked files
+  - dirty set remains exactly the eight release-unit files
+- Validation rerun by control:
+  - `ruff check src/context_ir/runtime_probe_worker.py` passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py` passed
+  - `mypy --strict src/context_ir/runtime_probe_worker.py` passed
+  - `pytest tests/test_runtime_probe_worker.py -k "hasattr" -v` passed with
+    `37 passed, 421 deselected`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, including correction
+  - release-unit audit cleared: no, rerun required from the top
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - rerun the dedicated read-only release-unit audit over the exact eight-file
+    release unit from the top
+  - do not run full regression, commit-gating, staging, local commit, or push
+    until that audit passes
+- Acceptance status: first-pass correction acceptance
+
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Audit Hold
+
+- Reviewed the returned dedicated read-only release-unit audit for the exact
+  `hasattr/2` replay-input bridge release unit.
+- Audit result: FAIL.
+- Finding:
+  - `src/context_ir/runtime_probe_worker.py` has a stale docstring on the exact
+    hasattr observation helper, still describing a "zero-argument target" even
+    though this release unit now routes the exact replay-input pilot through
+    `target_args` and can call `main.probe_attribute(1, "bit_length")`
+- Audit scope boundary before stop:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `13d5472 Sync checkpoint push routing`
+  - no staged files
+  - no untracked files
+  - dirty set exactly matches the eight accepted release-unit files
+- Release state:
+  - accepted in workspace: yes, but held on audit finding
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - issue one narrow correction for the stale docstring only
+  - rerun focused validation after the correction
+  - rerun the release-unit audit from the top before full regression,
+    commit-gating, staging, local commit, or push
+- Acceptance status: held on audit finding
+
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Acceptance
+
+- Reviewed the returned implementation slice for the exact lower-layer
+  `hasattr/2` replay-input bridge.
+- Review result: accepted first-pass.
+- Findings: none.
+- Repo-backed truth during review:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `13d5472 Sync checkpoint push routing`
+  - staged files: none
+  - untracked files: none
+  - `git diff --check` passed
+- Workspace-only accepted implementation:
+  - parent runtime-probe execution appends exactly
+    `object_type=builtins.int` and `attribute_name=bit_length` for only the
+    exact `oracle_signal_hasattr_probe` /
+    `reflective_builtin:hasattr/2` request identity
+  - existing `request_replay_payload_fields` carries the exact pair through
+    runner request, invocation, transport, and worker payload
+  - worker consumes only that exact pair to call
+    `main.probe_attribute(1, "bit_length")`
+  - bad exact-pilot replay inputs are rejected for missing, wrong, duplicate,
+    or extra keys
+  - existing zero-argument `hasattr` behavior remains preserved
+  - `observed_replay_inputs` remains unchanged and exec/eval-only
+  - provider support remains deferred; `src/context_ir/eval_providers.py` was
+    not changed
+- Accepted release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Validation rerun by control:
+  - focused ruff check passed
+  - focused ruff format check passed
+  - strict mypy over the requested source files passed
+  - targeted pytest passed with `69 passed, 781 deselected`
+  - `git diff --check` passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full-regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- Next control route:
+  - run dedicated read-only release-unit audit over the exact eight-file
+    release unit before full regression, commit-gating, staging, local commit,
+    or push
+- Acceptance status: first-pass
+
+## 2026-05-16 -- Exact Hasattr Replay-Input Bridge Spike Acceptance
+
+- Reviewed the returned read-only contract/decomposition spike for exact
+  non-zero replay inputs in the default local-Python subprocess path.
+- Review result: accepted first-pass.
+- Findings with the spike result: none.
+- Accepted spike findings:
+  - the crash is not a provider fixture-map problem yet
+  - the default subprocess path plans exact `reflective_builtin:hasattr/2`,
+    but runner preparation only materializes request identity fields into
+    `request_replay_payload_fields`
+  - the worker already has an exact `hasattr/2` handler, but its observation
+    path assumes a zero-argument target and calls `target()`
+  - the real fixture target is `probe_attribute(obj, name)`
+  - exact fixture replay inputs are `object_type=builtins.int` and
+    `attribute_name=bit_length`
+  - `observed_replay_inputs` is the wrong seam and must remain exec/eval-only
+- Route decision:
+  - issue one implementation slice for the lower-layer exact
+    `hasattr/2` replay-input bridge
+  - defer `oracle_signal_hasattr_probe` provider support until the bridge is
+    proven
+- Implementation scope selected:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_observation_recompile.py`
+  - `src/context_ir/tool_facade.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_tool_facade.py`
+- Scope guard:
+  - no `eval_providers.py`
+  - no eval fixtures, tasks, committed run specs, public docs/claims,
+    package-root export, product CLI, MCP, schema/config, compiler, scoring,
+    dynamic-import, generalized reflective-builtin support, generalized
+    runtime-mutation support, generalized provider/runtime support, release
+    gate, staging, local commit, or push is authorized from this route
+- Acceptance status: first-pass spike acceptance
+
+## 2026-05-16 -- Post-Checkpoint Route Selection
+
+- Control lane verified live repo/workspace state after the pushed tangible
+  runtime checkpoint release:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolve to
+    `13d5472 Sync checkpoint push routing`
+  - no source/test/control diff was present before this route-selection update
+  - no staged files
+  - no untracked files
+  - `git diff --check` passed
+- Route-selection finding:
+  - the tangible checkpoint is pushed and covers the seven exact
+    `context_ir_default_local_python_subprocess` fixtures already supported
+  - read-only dry runs for remaining exact non-zero reflective-builtin and
+    runtime-mutation candidates planned one correct request each, then returned
+    non-proof crashed subprocess results with return code `78`
+  - checked candidates included `oracle_signal_hasattr_probe`,
+    `oracle_signal_getattr_probe`, `oracle_signal_getattr_default_probe`,
+    `oracle_signal_getattr_default_value_probe`,
+    `oracle_signal_vars_probe`, `oracle_signal_dir_probe`,
+    `oracle_signal_setattr_probe`, and `oracle_signal_delattr_probe`
+  - the immediate blocker is a replay-input contract for exact non-zero
+    argument replay, not a provider fixture-map entry
+  - current observed replay-input validation is explicitly scoped to exact
+    exec/eval source proof
+  - dynamic-import candidates remain less ready for the default-provider route:
+    simple ABSENT_SYMBOL dry runs for `importlib.import_module(name)` and
+    `__import__(name)` produced no planned requests in this check
+- Route decision:
+  - select one read-only contract/decomposition spike for exact non-zero replay
+    inputs in the default local-Python subprocess path
+  - use `oracle_signal_hasattr_probe` / `reflective_builtin:hasattr/2` as the
+    first pilot candidate
+- Scope guard:
+  - no implementation before the spike returns
+  - no eval fixture, task, committed run-spec, public docs/claims,
+    package-root export, product CLI, MCP, schema/config, scoring, compiler,
+    dynamic-import, generalized runtime/provider support, release gate,
+    staging, local commit, or push is authorized from this route selection
+- Acceptance status: first-pass route selection
+
 ## 2026-05-16 -- Tangible Runtime Checkpoint Push
 
 - Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,

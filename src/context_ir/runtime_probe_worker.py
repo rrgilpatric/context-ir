@@ -108,6 +108,17 @@ _DYNAMIC_IMPORT_WORKER_IMPORT_SHAPE_ERROR_MESSAGES = frozenset(
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL = "reflective_builtin:hasattr/2"
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT = "hasattr(obj, name)"
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME = "hasattr"
+_REFLECTIVE_BUILTIN_HASATTR_OBJECT_TYPE_REPLAY_KEY = "object_type"
+_REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY = "attribute_name"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SUBJECT_ID = "unsupported:call:main.py:2:11"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH = "main.py"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE = "2"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN = "11"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE = "2"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN = "29"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED = "main.probe_attribute"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_FORM_LABEL = "reflective_builtin:getattr/2"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_BOUNDARY_TEXT = "getattr(obj, name)"
 _REFLECTIVE_BUILTIN_GETATTR_DEFAULT_WORKER_FORM_LABEL = "reflective_builtin:getattr/3"
@@ -343,6 +354,13 @@ _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "form_label",
     "replay_target_seed",
     "replay_selector_seed",
+)
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS = frozenset(
+    (
+        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
+        _REFLECTIVE_BUILTIN_HASATTR_OBJECT_TYPE_REPLAY_KEY,
+        _REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY,
+    )
 )
 
 
@@ -1452,7 +1470,7 @@ RuntimeProbeLocalPythonMetaclassKeywordWorkerObserver: TypeAlias = Callable[
 ]
 RuntimeProbeLocalPythonDynamicImportTargetCallable: TypeAlias = Callable[[], object]
 RuntimeProbeLocalPythonReflectiveHasattrTargetCallable: TypeAlias = Callable[
-    [],
+    ...,
     object,
 ]
 RuntimeProbeLocalPythonReflectiveGetattrTargetCallable: TypeAlias = Callable[
@@ -4452,16 +4470,18 @@ def materialize_runtime_probe_reflective_hasattr_worker_observation_from_target(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonReflectiveHasattrTargetCallable,
 ) -> RuntimeProbeLocalPythonReflectiveHasattrWorkerObservation:
-    """Observe one zero-argument target under exact ``hasattr`` interception."""
+    """Observe a ``hasattr`` target with zero args or exact pilot replay inputs."""
     _validate_runtime_probe_reflective_hasattr_replay_target(replay_target)
     _validate_runtime_probe_reflective_hasattr_replay_target_source_module(
         replay_target,
         source_module,
     )
     _validate_runtime_probe_reflective_hasattr_target_callable(target)
+    target_args = _runtime_probe_reflective_hasattr_target_args(replay_target.request)
     attribute_present = _runtime_probe_reflective_hasattr_captured_attribute_present(
         source_module,
         target,
+        target_args=target_args,
     )
     return materialize_runtime_probe_reflective_hasattr_worker_observation(
         replay_target.request,
@@ -6152,6 +6172,10 @@ def _validate_runtime_probe_reflective_hasattr_worker_payload(
         replay_target_seed=payload.replay_target_seed,
         replay_selector_seed=payload.replay_selector_seed,
     )
+    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs_if_needed(
+        payload.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
         plan_id=payload.plan_id,
         request_id=payload.request_id,
@@ -6259,6 +6283,10 @@ def _validate_runtime_probe_reflective_hasattr_worker_request(
         replay_target_seed=request.replay_target_seed,
         replay_selector_seed=request.replay_selector_seed,
     )
+    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs_if_needed(
+        request.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     _validate_runtime_probe_reflective_hasattr_replay_field_match(
         replay_fields_by_key,
         field_key="subject_kind",
@@ -6357,6 +6385,30 @@ def _validate_runtime_probe_reflective_hasattr_target_callable(
         )
 
 
+def _runtime_probe_reflective_hasattr_target_args(
+    request: RuntimeProbeLocalPythonReflectiveHasattrWorkerRequest,
+) -> tuple[object, ...]:
+    """Return target arguments for the exact pilot, otherwise zero arguments."""
+    _validate_runtime_probe_reflective_hasattr_worker_request(request)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    if not _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return ()
+
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        request.request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(exact_fields_by_key)
+    return (
+        1,
+        exact_fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY],
+    )
+
+
 def _validate_runtime_probe_reflective_hasattr_replay_target_source_module(
     replay_target: RuntimeProbeLocalPythonReflectiveHasattrReplayTarget,
     source_module: ModuleType,
@@ -6377,6 +6429,8 @@ def _validate_runtime_probe_reflective_hasattr_replay_target_source_module(
 def _runtime_probe_reflective_hasattr_captured_attribute_present(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonReflectiveHasattrTargetCallable,
+    *,
+    target_args: tuple[object, ...],
 ) -> bool:
     """Run a target while capturing one exact bare ``hasattr(obj, name)`` call."""
     _validate_runtime_probe_reflective_hasattr_source_global_absent(source_module)
@@ -6391,7 +6445,7 @@ def _runtime_probe_reflective_hasattr_captured_attribute_present(
             contextlib.redirect_stdout(io.StringIO()),
             contextlib.redirect_stderr(io.StringIO()),
         ):
-            target()
+            target(*target_args)
     except BaseException as error:
         target_failure = error
     builtin_restore_failure = _restore_runtime_probe_reflective_hasattr_builtin(
@@ -6843,6 +6897,77 @@ def _validate_runtime_probe_reflective_hasattr_replay_metadata(
             field_name="source_end_column",
         ),
     )
+
+
+def _validate_runtime_probe_reflective_hasattr_exact_replay_inputs_if_needed(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    replay_fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject drifted request replay inputs for the exact hasattr pilot."""
+    if not _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(exact_fields_by_key)
+
+
+def _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
+    replay_fields_by_key: Mapping[str, str],
+) -> bool:
+    """Return whether replay identity targets the single exact hasattr pilot."""
+    return (
+        replay_fields_by_key["subject_id"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SUBJECT_ID
+        and replay_fields_by_key["source_file_path"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
+        and replay_fields_by_key["source_start_line"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+        and replay_fields_by_key["source_start_column"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+        and replay_fields_by_key["source_end_line"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE
+        and replay_fields_by_key["source_end_column"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN
+        and replay_fields_by_key["reason_code"]
+        == UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
+        and replay_fields_by_key["boundary_text"]
+        == _REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT
+        and replay_fields_by_key["family_label"]
+        == RuntimeProbeFamily.REFLECTIVE_BUILTIN.value
+        and replay_fields_by_key["form_label"]
+        == _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
+        and replay_fields_by_key["replay_target_seed"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
+    )
+
+
+def _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Require the exact pilot to carry only the accepted replay input pair."""
+    if (
+        set(fields_by_key)
+        != _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker exact replay inputs "
+            "must contain only object_type and attribute_name"
+        )
+    if (
+        fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_OBJECT_TYPE_REPLAY_KEY]
+        != _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE
+        or fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY]
+        != _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker exact replay inputs "
+            "must be object_type=builtins.int and attribute_name=bit_length"
+        )
 
 
 def _validate_runtime_probe_reflective_hasattr_replay_field_match(
