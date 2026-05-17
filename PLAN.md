@@ -57,49 +57,51 @@ not route `9407d63`, `36227e9`, or `cb34fa9` back to release-unit audit, full
 regression, commit-gating, staging, local commit creation, or push absent new
 findings.
 
-Ryan-authorized Task 1 portfolio checkpoint:
+Task 1 portfolio checkpoint returned FAIL and now controls routing:
 
-- Ryan agreed to proceed with Task 1 after Task 0 bundle push
-- scope is read-only checkpoint execution, not implementation
 - Task 1 query:
   `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
-- budgets:
+- budgets checked:
   - primary: `260`
   - ceiling: `360`
-- providers:
+- providers checked:
   - `context_ir`
   - `lexical_top_k_files`
   - `import_neighborhood_files`
-- expected evidence waypoints:
-  - `discover_semantic_eval_runtime_evidence`
-  - compact `oracle_signal_hasattr_probe` evidence
-  - semantic eval evidence type/contract surface needed to keep the evidence
-    internal
-  - semantic rendering path that emits `runtime=additive`
-  - no package-root/public API export widening evidence
-  - `attribute_present=true`
-- Task 1 classification rules:
-  - STRONG: `context_ir` stays within primary budget `260`, selects every
-    evidence waypoint at useful detail, preserves internal-only and
-    additive-runtime truth, and baselines fail under the same budget or require
-    materially larger/irrelevant whole-file context
-  - PARTIAL: `context_ir` needs ceiling budget `360` or omits noncritical
-    support with honest budget pressure while preserving the primary evidence
-    path
-  - FAIL: `context_ir` misses the primary target, loses internal/export or
-    additive-runtime truth, exceeds ceiling budget, or baselines provide
-    comparable context under the same budget
-- non-goals:
-  - do not run Tasks 2-3
-  - do not edit repo files
-  - do not update product-differentiation bundle files unless a later
-    artifact-update slice is explicitly authorized
-  - do not update public claims, demo positioning, MCP/API/schema, runtime,
-    provider, scoring, optimizer, compiler, tests, or package exports
+- returned result:
+  - `context_ir` missed the primary Task 1 target at both budgets
+  - at budget `260`, `context_ir` used `254` tokens in about `112.720s` and
+    selected seven unrelated runtime-probe/test helper units
+  - at budget `360`, `context_ir` used `360` tokens in about `120.061s` and
+    still selected unrelated runtime-probe/dependency-frontier helper units
+  - `context_ir` did not select `discover_semantic_eval_runtime_evidence`,
+    compact `oracle_signal_hasattr_probe` evidence, internal semantic eval
+    evidence contracts, the semantic rendering path for `runtime=additive`,
+    package-root export-boundary evidence, or `attribute_present=true`
+  - lexical and import baselines also selected zero files/units under both
+    budgets, but `context_ir` failure means this cannot be STRONG or PARTIAL
+- scratch artifacts reported by the checkpoint:
+  - `/private/tmp/context_ir_portfolio_001_task1_primary260_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task1_primary260_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task1_primary260_documents/`
+  - `/private/tmp/context_ir_portfolio_001_task1_ceiling360_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task1_ceiling360_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task1_ceiling360_documents/`
+- control decision:
+  - accept this as a failed checkpoint result, not as product-level evidence
+  - hold Tasks 2-3 and any demo/report/public-claim advancement
+  - do not update `evals/product_differentiation/portfolio_001/` artifacts
+    until an explicit artifact-update slice is authorized
+  - do not treat the Task 0 STRONG result as repeated product-level proof
 - next route:
-  - issue a read-only Task 1 checkpoint prompt
-  - review returned results before deciding whether Task 1 is accepted,
-    requires research, or should lead to an artifact update slice
+  - Ryan go/no-go is required before advancement because Task 1 produced a
+    finding
+  - recommended next lane is a read-only targeting diagnosis to determine why
+    the semantic provider routed the query toward runtime-probe helper
+    infrastructure instead of `eval_evidence.py`, `semantic_renderer.py`,
+    `semantic_types.py`, and package-root export-boundary evidence
+  - no implementation slice is authorized until that diagnosis identifies the
+    smallest principled correction or recommends a strategy pause
 
 Pushed semantic eval-evidence integration release:
 `fc2ddc6 Integrate compact eval evidence into semantic context`. This commit

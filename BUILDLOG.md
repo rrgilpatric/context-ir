@@ -2,6 +2,55 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 1 Portfolio Checkpoint Failed
+
+- Reviewed the returned read-only Task 1 portfolio checkpoint.
+- Verdict: FAIL.
+- Query:
+  `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
+- Budgets checked:
+  - primary: `260`
+  - ceiling: `360`
+- Provider results:
+  - `context_ir` at budget `260`: `254` tokens, about `112.720s`, seven
+    selected units, missed the target path
+  - `context_ir` at budget `360`: `360` tokens, about `120.061s`, ten
+    selected units, still missed the target path
+  - `lexical_top_k_files` selected zero files/units at both budgets
+  - `import_neighborhood_files` selected zero files/units at both budgets with
+    `import_not_resolved`
+- Finding:
+  - `context_ir` routed the query toward runtime-probe/test helper units
+    rather than the predeclared Task 1 waypoints:
+    `discover_semantic_eval_runtime_evidence`, compact
+    `oracle_signal_hasattr_probe` evidence, semantic eval evidence contracts,
+    semantic rendering of `runtime=additive`, package-root export-boundary
+    evidence, and `attribute_present=true`
+  - because `context_ir` missed the primary path at both budgets, this result
+    cannot be accepted as STRONG or PARTIAL even though both baselines also
+    failed under budget
+- Scratch artifacts inspected:
+  - `/private/tmp/context_ir_portfolio_001_task1_primary260_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task1_primary260_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task1_primary260_documents/context_ir.txt`
+  - `/private/tmp/context_ir_portfolio_001_task1_ceiling360_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task1_ceiling360_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task1_ceiling360_documents/context_ir.txt`
+- Control decision:
+  - record Task 1 as a failed checkpoint result, not product-level evidence
+  - hold Tasks 2-3 and any demo/report/public-claim advancement
+  - do not update `evals/product_differentiation/portfolio_001/` artifacts
+    from this failed run unless a later artifact-update slice is explicitly
+    authorized
+  - because this is a finding, Ryan go/no-go is required before advancing
+- Recommended next route:
+  - read-only targeting diagnosis focused on why the semantic provider chose
+    runtime-probe helper infrastructure instead of the eval-evidence/rendering
+    path
+  - no implementation slice until that diagnosis identifies the smallest
+    principled correction or recommends a strategy pause
+- Acceptance status: held after failed checkpoint
+
 ## 2026-05-17 -- Task 1 Portfolio Checkpoint Authorized
 
 - Ryan agreed to proceed with the next portfolio checkpoint after Task 0
