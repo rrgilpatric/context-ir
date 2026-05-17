@@ -144,12 +144,75 @@ Accepted product-level differentiation proof plan:
   - public claims remain held until repeated evidence and a reviewable artifact
     are accepted
 - next route:
-  - issue a read-only product-differentiation proof-plan lane
-  - that lane should define the smallest internal artifact and a 2-4 task
-    follow-up portfolio with budgets, baselines, pass/fail rubric, and artifact
-    capture requirements
+  - Ryan approval is required before creating the internal evidence bundle or
+    running the additional portfolio tasks
+  - if Ryan approves, create the internal evidence bundle preserving Task 0
+    first, then run the additional proof tasks sequentially with
+    stop-on-first-finding review
   - no implementation, docs/public-claim updates, demo polishing, MCP/API
     changes, or benchmark claims are authorized by this planning route
+
+Accepted product-differentiation proof-plan lane result:
+
+- read-only proof-plan lane returned DONE and is accepted with no findings
+- recommended internal evidence bundle shape:
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- artifact boundary:
+  - internal evidence bundle, not a public report
+  - first entry should preserve the accepted STRONG Task 0 checkpoint exactly,
+    including budget, query, selected units, baseline failures/overinclude
+    analysis, warnings, timing, and caveats
+- accepted task portfolio:
+  - Task 0, accepted checkpoint:
+    `_selected_unit_metadata` / `hasattr` runtime-provenance evidence path,
+    budget `220`
+  - Task 1, compact eval evidence discovery/rendering:
+    `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
+    with primary budget `260` and ceiling `360`
+  - Task 2, runtime probe recompile path:
+    `Fix default local Python subprocess recompile so exec(source) runtime probe results attach additive provenance to unsupported EXEC_OR_EVAL units without promoting primary truth`
+    with primary budget `320` and ceiling `480`
+  - Task 3, static semantic dependency/frontier path:
+    `Fix transitive sole-provider self-call resolution for MemberSignalCompiler.compile_member_digest while preserving alias_chain frontier on pkg_alias.labels.build_member_label`
+    with primary budget `280` and ceiling `400`
+  - optional Task 4 only if evidence is too concentrated: eval artifact
+    reproducibility around `eval_bundle`, `eval_pipeline`, `eval_manifest`,
+    and `eval_report`
+- accepted rubric:
+  - compare `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - STRONG means `context_ir` stays within primary budget, selects every
+    predeclared evidence waypoint at useful detail, preserves
+    uncertainty/runtime truth honestly, and baselines fail under the same
+    budget or require materially larger/irrelevant whole-file context
+  - PARTIAL means `context_ir` finds the main edit target and most support but
+    needs ceiling budget or omits noncritical support with honest
+    `budget_pressure`
+  - FAIL means it misses the primary target, loses required
+    runtime/uncertainty truth, exceeds budget, or baselines provide comparable
+    context under the same budget
+- accepted stop conditions:
+  - move to internal demo/report only if at least 3 of 4 total tasks are STRONG
+    across at least three utility modes, and the remaining task is no worse
+    than PARTIAL with a bounded caveat
+  - trigger research pause if fewer than 3 STRONG results appear, any task
+    exposes incorrect primary truth, baselines match or beat `context_ir` on
+    two tasks, wins depend only on exact-name coincidence, or evidence cannot
+    be reproduced from captured commands/artifacts
+- control verification:
+  - live state during review remained branch `main`
+  - local `HEAD` was `e014400`; `origin/main` was `0145ef6`
+  - worktree, index, and untracked files were clean before this continuity
+    update
+  - searched repo surfaces for all proposed task anchors; Task 1, Task 2, and
+    Task 3 anchors exist in current repo/eval assets
+- next route:
+  - ask Ryan to explicitly approve or modify this artifact shape and portfolio
+  - do not create the bundle, run portfolio tasks, or update public/demo claims
+    until Ryan gives that go-ahead
 
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the

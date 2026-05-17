@@ -2,6 +2,63 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Product Differentiation Proof Plan Accepted
+
+- Reviewed the read-only product-differentiation proof-plan lane result.
+- Result: accepted with no findings.
+- Recommended artifact:
+  - internal evidence bundle under
+    `evals/product_differentiation/portfolio_001/`
+  - minimum files: `README.md`, `manifest.json`, `runs.jsonl`,
+    `evidence.md`
+  - first entry preserves the accepted STRONG Task 0 checkpoint exactly,
+    including budget, query, selected units, baseline failures/overinclude
+    analysis, warnings, timing, and caveats
+- Accepted task portfolio:
+  - Task 0: accepted `_selected_unit_metadata` / `hasattr`
+    runtime-provenance evidence path, budget `220`
+  - Task 1: compact eval evidence discovery/rendering, primary budget `260`,
+    ceiling `360`
+  - Task 2: default local Python subprocess `exec(source)` additive
+    provenance path, primary budget `320`, ceiling `480`
+  - Task 3: transitive sole-provider self-call plus `alias_chain` frontier
+    preservation in `oracle_signal_smoke_e`, primary budget `280`, ceiling
+    `400`
+  - optional Task 4 only if evidence is too concentrated: eval artifact
+    reproducibility around `eval_bundle`, `eval_pipeline`, `eval_manifest`,
+    and `eval_report`
+- Accepted rubric:
+  - compare `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - STRONG requires `context_ir` to stay within primary budget, select every
+    predeclared evidence waypoint at useful detail, preserve
+    uncertainty/runtime truth honestly, and beat baselines that fail under the
+    same budget or require materially larger/irrelevant whole-file context
+  - PARTIAL allows ceiling-budget success or omission of noncritical support
+    with honest `budget_pressure`
+  - FAIL covers missed primary target, lost runtime/uncertainty truth, budget
+    failure, or comparable baseline context under the same budget
+- Stop conditions:
+  - move to internal demo/report only if at least 3 of 4 total tasks are STRONG
+    across at least three utility modes and the remaining task is no worse than
+    PARTIAL with a bounded caveat
+  - trigger research pause if fewer than 3 STRONG results appear, any task
+    exposes incorrect primary truth, baselines match or beat `context_ir` on
+    two tasks, wins depend only on exact-name coincidence, or evidence cannot
+    be reproduced from captured commands/artifacts
+- Control verification:
+  - live state during review: branch `main`, local `HEAD` `e014400`,
+    `origin/main` `0145ef6`
+  - worktree, index, and untracked files were clean before this continuity
+    update
+  - proposed Task 1, Task 2, and Task 3 anchors exist in current repo/eval
+    assets
+- Next route:
+  - ask Ryan to explicitly approve or modify this artifact shape and portfolio
+  - do not create the bundle, run portfolio tasks, or update public/demo claims
+    until Ryan gives that go-ahead
+- Acceptance status: proof plan accepted
+
 ## 2026-05-17 -- Product-Level Differentiation Proof Plan Authorized
 
 - Ryan agreed with the control plan to move from one STRONG checkpoint toward
