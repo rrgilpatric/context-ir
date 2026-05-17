@@ -2,6 +2,50 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 1 Portfolio Checkpoint Authorized
+
+- Ryan agreed to proceed with the next portfolio checkpoint after Task 0
+  evidence bundle push.
+- Scope:
+  - read-only Task 1 checkpoint execution
+  - no implementation
+  - no repo edits
+  - no Tasks 2-3
+  - no public/demo claim updates
+- Task 1 query:
+  `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
+- Budgets:
+  - primary: `260`
+  - ceiling: `360`
+- Providers:
+  - `context_ir`
+  - `lexical_top_k_files`
+  - `import_neighborhood_files`
+- Expected evidence waypoints:
+  - `discover_semantic_eval_runtime_evidence`
+  - compact `oracle_signal_hasattr_probe` evidence
+  - internal semantic eval evidence type/contract surface
+  - semantic rendering path that emits `runtime=additive`
+  - no package-root/public API export widening evidence
+  - `attribute_present=true`
+- Classification:
+  - STRONG requires `context_ir` to stay within primary budget `260`, select
+    every evidence waypoint at useful detail, preserve internal-only and
+    additive-runtime truth, and beat baselines that fail under the same budget
+    or require materially larger/irrelevant whole-file context
+  - PARTIAL allows ceiling-budget `360` success or omitted noncritical support
+    with honest budget pressure
+  - FAIL covers missed primary target, lost internal/export or additive-runtime
+    truth, ceiling-budget failure, or comparable baseline context
+- Current repo state at authorization:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to `cb34fa9`
+  - worktree, index, and untracked files clean
+- Next route:
+  - issue the read-only Task 1 checkpoint prompt
+  - review returned results before authorizing Task 2 or any artifact update
+- Acceptance status: Task 1 checkpoint authorized
+
 ## 2026-05-17 -- Task 0 Evidence Bundle Push Completed
 
 - Ryan explicitly authorized push for the Task 0 product-differentiation

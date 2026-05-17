@@ -41,7 +41,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`36227e9 Sync task 0 evidence bundle local routing`. The latest pushed
+`cb34fa9 Sync task 0 evidence bundle push routing`. The latest pushed
 source/contract authority remains
 `fc2ddc6 Integrate compact eval evidence into semantic context`. Live git refs and
 worktree state must still be verified from git during control intake; do not
@@ -52,9 +52,54 @@ Pushed Task 0 product-differentiation evidence bundle release:
 the accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
 locally committed, and pushed internal evidence bundle for Task 0 of the
 product-differentiation portfolio. It was pushed with explicit Ryan
-authorization through `36227e9 Sync task 0 evidence bundle local routing`. Do
-not route `9407d63` or `36227e9` back to release-unit audit, full regression,
-commit-gating, staging, local commit creation, or push absent new findings.
+authorization through `cb34fa9 Sync task 0 evidence bundle push routing`. Do
+not route `9407d63`, `36227e9`, or `cb34fa9` back to release-unit audit, full
+regression, commit-gating, staging, local commit creation, or push absent new
+findings.
+
+Ryan-authorized Task 1 portfolio checkpoint:
+
+- Ryan agreed to proceed with Task 1 after Task 0 bundle push
+- scope is read-only checkpoint execution, not implementation
+- Task 1 query:
+  `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
+- budgets:
+  - primary: `260`
+  - ceiling: `360`
+- providers:
+  - `context_ir`
+  - `lexical_top_k_files`
+  - `import_neighborhood_files`
+- expected evidence waypoints:
+  - `discover_semantic_eval_runtime_evidence`
+  - compact `oracle_signal_hasattr_probe` evidence
+  - semantic eval evidence type/contract surface needed to keep the evidence
+    internal
+  - semantic rendering path that emits `runtime=additive`
+  - no package-root/public API export widening evidence
+  - `attribute_present=true`
+- Task 1 classification rules:
+  - STRONG: `context_ir` stays within primary budget `260`, selects every
+    evidence waypoint at useful detail, preserves internal-only and
+    additive-runtime truth, and baselines fail under the same budget or require
+    materially larger/irrelevant whole-file context
+  - PARTIAL: `context_ir` needs ceiling budget `360` or omits noncritical
+    support with honest budget pressure while preserving the primary evidence
+    path
+  - FAIL: `context_ir` misses the primary target, loses internal/export or
+    additive-runtime truth, exceeds ceiling budget, or baselines provide
+    comparable context under the same budget
+- non-goals:
+  - do not run Tasks 2-3
+  - do not edit repo files
+  - do not update product-differentiation bundle files unless a later
+    artifact-update slice is explicitly authorized
+  - do not update public claims, demo positioning, MCP/API/schema, runtime,
+    provider, scoring, optimizer, compiler, tests, or package exports
+- next route:
+  - issue a read-only Task 1 checkpoint prompt
+  - review returned results before deciding whether Task 1 is accepted,
+    requires research, or should lead to an artifact update slice
 
 Pushed semantic eval-evidence integration release:
 `fc2ddc6 Integrate compact eval evidence into semantic context`. This commit
