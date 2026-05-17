@@ -2,6 +2,38 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 0 Evidence Bundle Slice Approved
+
+- Ryan explicitly approved the accepted artifact shape and portfolio.
+- Decision:
+  - proceed with the first bounded artifact slice
+  - create the internal evidence bundle and preserve/reproduce Task 0 only
+  - keep Tasks 1-3 for later sequential slices
+- Authorized Task 0 artifact paths:
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Task 0 checkpoint:
+  - query:
+    `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+  - budget: `220`
+  - providers: `context_ir`, `lexical_top_k_files`,
+    `import_neighborhood_files`
+  - expected evidence path: `_selected_unit_metadata`, `EvalSelectedUnit`,
+    eval-summary report accounting, compact `oracle_signal_hasattr_probe`
+    evidence, `attribute_present=true`, unsupported/opaque primary truth, and
+    additive runtime evidence
+- Non-goals:
+  - do not run Tasks 1-3 in this slice
+  - do not make public claims or polished demo artifacts
+  - do not edit README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, MCP/API/schema,
+    runtime/provider behavior, scoring, optimizer, compiler, or package exports
+- Next route:
+  - issue the Task 0 evidence bundle implementation prompt
+  - review the returned bundle under the quality gate before authorizing Task 1
+- Acceptance status: artifact slice approved
+
 ## 2026-05-17 -- Product Differentiation Proof Plan Accepted
 
 - Reviewed the read-only product-differentiation proof-plan lane result.

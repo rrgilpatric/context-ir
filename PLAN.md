@@ -210,9 +210,51 @@ Accepted product-differentiation proof-plan lane result:
   - searched repo surfaces for all proposed task anchors; Task 1, Task 2, and
     Task 3 anchors exist in current repo/eval assets
 - next route:
-  - ask Ryan to explicitly approve or modify this artifact shape and portfolio
-  - do not create the bundle, run portfolio tasks, or update public/demo claims
-    until Ryan gives that go-ahead
+  - Ryan approved this artifact shape and portfolio
+  - next authorized execution slice is to create the internal evidence bundle
+    and preserve Task 0 only
+  - do not run Tasks 1-3, update public/demo claims, or broaden MCP/API/schema
+    behavior in the Task 0 artifact slice
+
+Ryan-approved Task 0 evidence bundle slice:
+
+- Ryan explicitly approved the accepted artifact shape and portfolio
+- next execution slice:
+  - create `evals/product_differentiation/portfolio_001/`
+  - add the internal bundle files:
+    - `README.md`
+    - `manifest.json`
+    - `runs.jsonl`
+    - `evidence.md`
+  - preserve/reproduce Task 0 only:
+    `_selected_unit_metadata` / `hasattr` runtime-provenance evidence path,
+    budget `220`
+  - compare `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - capture exact commands, repo state, provider outputs or stable artifact
+    references, selected units/files, warnings, omitted candidates, timing,
+    budgets, caveats, and pass/fail classification
+- Task 0 expected result remains STRONG only if:
+  - `context_ir` selects `_selected_unit_metadata`
+  - `context_ir` selects `EvalSelectedUnit`
+  - `context_ir` selects eval-summary report accounting
+  - `context_ir` selects compact `oracle_signal_hasattr_probe` eval evidence
+  - rendered context includes `attribute_present=true`
+  - unsupported/opaque remains primary truth and runtime evidence remains
+    additive
+  - total tokens stay within `220`
+  - baselines fail under the same budget or require materially larger and
+    irrelevant whole-file context
+- non-goals:
+  - do not run or record Tasks 1-3 in this slice
+  - do not make public claims
+  - do not update README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, MCP/API/schema,
+    runtime/provider behavior, scoring, optimizer, compiler, or package exports
+  - do not create a polished demo
+- after the Task 0 artifact slice returns:
+  - review the bundle under the quality gate
+  - only after acceptance decide whether to run Task 1 as the next sequential
+    portfolio slice
 
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the
