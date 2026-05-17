@@ -11,6 +11,7 @@ from context_ir.eval_evidence import (
     EvalEvidenceError,
     EvalRuntimeEvidence,
     discover_eval_runtime_evidence,
+    discover_semantic_eval_runtime_evidence,
     render_eval_runtime_evidence,
 )
 from context_ir.semantic_types import CapabilityTier, UnresolvedReasonCode
@@ -209,6 +210,25 @@ def test_render_eval_runtime_evidence_is_compact() -> None:
         "hasattr(obj, name); primary=unsupported/opaque; runtime=additive; "
         "payload=attribute_present=true"
     )
+
+
+def test_semantic_eval_runtime_evidence_units_preserve_payload_surface() -> None:
+    """Catalog records can become internal semantic support units."""
+    [evidence] = [
+        unit
+        for unit in discover_semantic_eval_runtime_evidence(REPO_ROOT)
+        if unit.fixture_id == "oracle_signal_hasattr_probe"
+    ]
+
+    assert evidence.unit_id.startswith(
+        "eval_evidence:oracle_signal_hasattr_probe:hasattr:"
+    )
+    assert evidence.site.file_path == (
+        "evals/fixtures/oracle_signal_hasattr_probe/main.py"
+    )
+    assert evidence.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert evidence.expect_attached_runtime_provenance is True
+    assert evidence.normalized_payload_mapping()["attribute_present"] == "true"
 
 
 def test_missing_task_for_observation_fixture_fails_closed(tmp_path: Path) -> None:

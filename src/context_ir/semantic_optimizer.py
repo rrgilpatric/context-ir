@@ -16,6 +16,7 @@ from context_ir.semantic_types import (
     DownstreamVisibility,
     EvidenceOriginKind,
     ReplayStatus,
+    ResolvedSymbolKind,
     SelectionBasis,
     SemanticOptimizationResult,
     SemanticOptimizationWarning,
@@ -65,6 +66,7 @@ class _SemanticCandidate:
     kind: RenderedUnitKind
     provenance: SourceSite
     file_scope_id: str | None
+    symbol_kind: ResolvedSymbolKind | None
     score: SemanticUnitScore
     renders: dict[RenderDetail, RenderedUnit]
     incoming_dependency_sources: tuple[str, ...]
@@ -78,9 +80,11 @@ class _CandidateSortState:
     """Dynamic optimizer state that can change pending candidate order."""
 
     current_focus_id: str | None
+    current_focus_file_path: str | None
     current_focus_file_scope_id: str | None
     current_focus_has_support: bool
     current_focus_has_uncertainty_surface: bool
+    current_focus_has_eval_evidence_surface: bool
 
 
 _PRIMARY_TRACE_DEFAULTS: dict[
@@ -106,11 +110,17 @@ _PRIMARY_TRACE_DEFAULTS: dict[
         EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
         ReplayStatus.OPAQUE_BOUNDARY,
     ),
+    SemanticSubjectKind.EVAL_RUNTIME_EVIDENCE: (
+        CapabilityTier.UNSUPPORTED_OPAQUE,
+        EvidenceOriginKind.UNSUPPORTED_REASON_CODE,
+        ReplayStatus.OPAQUE_BOUNDARY,
+    ),
 }
 _SUBJECT_KIND_BY_RENDERED_UNIT: dict[RenderedUnitKind, SemanticSubjectKind] = {
     RenderedUnitKind.PROVEN_SYMBOL: SemanticSubjectKind.SYMBOL,
     RenderedUnitKind.UNRESOLVED_FRONTIER: SemanticSubjectKind.FRONTIER_ITEM,
     RenderedUnitKind.UNSUPPORTED_CONSTRUCT: SemanticSubjectKind.UNSUPPORTED_FINDING,
+    RenderedUnitKind.EVAL_RUNTIME_EVIDENCE: SemanticSubjectKind.EVAL_RUNTIME_EVIDENCE,
 }
 
 
@@ -142,6 +152,8 @@ def optimize_semantic_units(
     current_focus_id: str | None = None
     current_focus_support_count = 0
     current_focus_has_uncertainty_surface = False
+    current_focus_has_eval_evidence_surface = False
+    current_focus_has_eval_summary_surface = False
     current_focus_inherited_uncertainty_surface = False
     pending_focus_id: str | None = None
     focus_unit_ids: set[str] = set()
@@ -149,9 +161,11 @@ def optimize_semantic_units(
 
     active_sort_state = _CandidateSortState(
         current_focus_id=None,
+        current_focus_file_path=None,
         current_focus_file_scope_id=None,
         current_focus_has_support=False,
         current_focus_has_uncertainty_surface=False,
+        current_focus_has_eval_evidence_surface=False,
     )
     pending_candidates = list(ordered_candidates)
     pending_start_index = 0
@@ -162,6 +176,9 @@ def optimize_semantic_units(
             current_focus_support_count=current_focus_support_count,
             current_focus_has_uncertainty_surface=(
                 current_focus_has_uncertainty_surface
+            ),
+            current_focus_has_eval_evidence_surface=(
+                current_focus_has_eval_evidence_surface
             ),
         )
         if sort_state != active_sort_state:
@@ -179,6 +196,25 @@ def optimize_semantic_units(
         current_focus_file_scope_id = sort_state.current_focus_file_scope_id
         candidate = pending_candidates[pending_start_index]
         pending_start_index += 1
+        if (
+            current_focus_id is not None
+            and current_focus_has_eval_evidence_surface
+            and candidate.kind
+            in {
+                RenderedUnitKind.EVAL_RUNTIME_EVIDENCE,
+                RenderedUnitKind.UNRESOLVED_FRONTIER,
+                RenderedUnitKind.UNSUPPORTED_CONSTRUCT,
+            }
+        ):
+            omitted_unit_ids.append(candidate.unit_id)
+            continue
+        if (
+            current_focus_id is not None
+            and current_focus_has_eval_summary_surface
+            and _is_eval_summary_accounting_candidate(candidate)
+        ):
+            omitted_unit_ids.append(candidate.unit_id)
+            continue
         chosen_detail = _choose_detail(
             candidate,
             remaining_budget,
@@ -233,6 +269,8 @@ def optimize_semantic_units(
                 focus_unit_ids.add(current_focus_id)
                 current_focus_support_count = 0
                 current_focus_has_uncertainty_surface = False
+                current_focus_has_eval_evidence_surface = False
+                current_focus_has_eval_summary_surface = False
                 current_focus_inherited_uncertainty_surface = False
                 pending_focus_id = None
                 continue
@@ -252,6 +290,8 @@ def optimize_semantic_units(
                 focus_unit_ids.add(current_focus_id)
                 current_focus_support_count = 0
                 current_focus_has_uncertainty_surface = False
+                current_focus_has_eval_evidence_surface = False
+                current_focus_has_eval_summary_surface = False
                 current_focus_inherited_uncertainty_surface = False
                 pending_focus_id = None
                 continue
@@ -266,6 +306,8 @@ def optimize_semantic_units(
                 focus_unit_ids.add(current_focus_id)
                 pending_focus_id = None
                 current_focus_support_count = 0
+                current_focus_has_eval_evidence_surface = False
+                current_focus_has_eval_summary_surface = False
                 current_focus_inherited_uncertainty_surface = True
                 continue
         if current_focus_id is not None and _is_support_for_focus(
@@ -273,6 +315,15 @@ def optimize_semantic_units(
             focus_unit_id=current_focus_id,
         ):
             current_focus_support_count += 1
+        if (
+            current_focus_id is not None
+            and candidate.kind is RenderedUnitKind.EVAL_RUNTIME_EVIDENCE
+        ):
+            current_focus_has_eval_evidence_surface = True
+        if current_focus_id is not None and _is_eval_summary_accounting_candidate(
+            candidate
+        ):
+            current_focus_has_eval_summary_surface = True
 
     selections.sort(
         key=lambda record: _candidate_sort_key(candidate_by_id[record.unit_id])
@@ -341,6 +392,7 @@ def _build_candidates(
                 kind=identity.kind,
                 provenance=identity.provenance,
                 file_scope_id=file_scope_ids.get(identity.provenance.file_path),
+                symbol_kind=_symbol_kind(program, unit_id),
                 score=scoring.scores[unit_id],
                 renders=renders,
                 incoming_dependency_sources=incoming_dependency_sources.get(
@@ -355,6 +407,14 @@ def _build_candidates(
         )
 
     return candidates
+
+
+def _symbol_kind(program: SemanticProgram, unit_id: str) -> ResolvedSymbolKind | None:
+    """Return the resolved symbol kind for proven units."""
+    symbol = program.resolved_symbols.get(unit_id)
+    if symbol is None:
+        return None
+    return symbol.kind
 
 
 def _trace_summaries_by_subject(
@@ -386,6 +446,10 @@ def _trace_summaries_by_subject(
         *(
             (SemanticSubjectKind.UNSUPPORTED_FINDING, construct.construct_id)
             for construct in program.unsupported_constructs
+        ),
+        *(
+            (SemanticSubjectKind.EVAL_RUNTIME_EVIDENCE, evidence.unit_id)
+            for evidence in program.eval_runtime_evidence
         ),
     ]
     for subject_kind, subject_id in subject_keys:
@@ -446,6 +510,7 @@ def _renderable_unit_ids(program: SemanticProgram) -> list[str]:
             *program.resolved_symbols.keys(),
             *(access.access_id for access in program.unresolved_frontier),
             *(construct.construct_id for construct in program.unsupported_constructs),
+            *(evidence.unit_id for evidence in program.eval_runtime_evidence),
         ]
     )
 
@@ -505,6 +570,7 @@ def _candidate_sort_state(
     candidate_by_id: dict[str, _SemanticCandidate],
     current_focus_support_count: int,
     current_focus_has_uncertainty_surface: bool,
+    current_focus_has_eval_evidence_surface: bool,
 ) -> _CandidateSortState:
     """Return the dynamic sort inputs for the current selection step."""
     current_focus_file_scope_id = (
@@ -512,11 +578,20 @@ def _candidate_sort_state(
         if current_focus_id is not None
         else None
     )
+    current_focus_file_path = (
+        candidate_by_id[current_focus_id].provenance.file_path
+        if current_focus_id is not None
+        else None
+    )
     return _CandidateSortState(
         current_focus_id=current_focus_id,
+        current_focus_file_path=current_focus_file_path,
         current_focus_file_scope_id=current_focus_file_scope_id,
         current_focus_has_support=current_focus_support_count > 0,
         current_focus_has_uncertainty_surface=current_focus_has_uncertainty_surface,
+        current_focus_has_eval_evidence_surface=(
+            current_focus_has_eval_evidence_surface
+        ),
     )
 
 
@@ -528,10 +603,14 @@ def _candidate_sort_key_for_state(
     return _candidate_sort_key(
         candidate,
         current_focus_id=sort_state.current_focus_id,
+        current_focus_file_path=sort_state.current_focus_file_path,
         current_focus_file_scope_id=sort_state.current_focus_file_scope_id,
         current_focus_has_support=sort_state.current_focus_has_support,
         current_focus_has_uncertainty_surface=(
             sort_state.current_focus_has_uncertainty_surface
+        ),
+        current_focus_has_eval_evidence_surface=(
+            sort_state.current_focus_has_eval_evidence_surface
         ),
     )
 
@@ -540,9 +619,11 @@ def _candidate_sort_key(
     candidate: _SemanticCandidate,
     *,
     current_focus_id: str | None = None,
+    current_focus_file_path: str | None = None,
     current_focus_file_scope_id: str | None = None,
     current_focus_has_support: bool = False,
     current_focus_has_uncertainty_surface: bool = False,
+    current_focus_has_eval_evidence_surface: bool = False,
 ) -> tuple[float, float, float, float, int, str, int, int, str]:
     """Sort by strongest relevance first, then stable source order."""
     if current_focus_id is not None:
@@ -550,10 +631,14 @@ def _candidate_sort_key(
         scope_priority = _scope_priority(
             candidate,
             current_focus_id=current_focus_id,
+            current_focus_file_path=current_focus_file_path,
             current_focus_file_scope_id=current_focus_file_scope_id,
             current_focus_has_support=current_focus_has_support,
             current_focus_has_uncertainty_surface=(
                 current_focus_has_uncertainty_surface
+            ),
+            current_focus_has_eval_evidence_surface=(
+                current_focus_has_eval_evidence_surface
             ),
         )
         proven_priority = 0 if candidate.kind is RenderedUnitKind.PROVEN_SYMBOL else 1
@@ -594,28 +679,99 @@ def _scope_priority(
     candidate: _SemanticCandidate,
     *,
     current_focus_id: str,
+    current_focus_file_path: str | None,
     current_focus_file_scope_id: str | None,
     current_focus_has_support: bool,
     current_focus_has_uncertainty_surface: bool,
+    current_focus_has_eval_evidence_surface: bool,
 ) -> int:
     """Prefer direct callers, then one honest uncertainty, then support packing."""
     if _is_direct_caller_of_focus(candidate, focus_unit_id=current_focus_id):
         return 0
+    if _is_eval_summary_runtime_accounting_candidate(candidate):
+        return 1
+    if _is_eval_summary_accounting_candidate(candidate):
+        return 2
+    if _is_eval_runtime_evidence_support_candidate(candidate):
+        return 5 if current_focus_has_eval_evidence_surface else 1
+    if _is_same_source_group_direct_candidate(
+        candidate,
+        current_focus_file_path=current_focus_file_path,
+    ):
+        return 2
     if _is_uncertainty_for_focus(
         candidate,
         focus_unit_id=current_focus_id,
         focus_file_scope_id=current_focus_file_scope_id,
     ):
         if current_focus_has_uncertainty_surface:
-            return 3
-        return 1
+            return 5
+        return 3
     if _is_support_for_focus(candidate, focus_unit_id=current_focus_id):
         if current_focus_has_uncertainty_surface:
-            return 2 if current_focus_has_support else 1
+            return 4 if current_focus_has_support else 3
         if current_focus_has_support:
-            return 3
-        return 2
-    return 4
+            return 5
+        return 4
+    return 6
+
+
+def _is_eval_runtime_evidence_support_candidate(
+    candidate: _SemanticCandidate,
+) -> bool:
+    """Return whether compact eval evidence is materially relevant support."""
+    return (
+        candidate.kind is RenderedUnitKind.EVAL_RUNTIME_EVIDENCE
+        and max(candidate.score.p_edit, candidate.score.p_support) >= _MIN_RELEVANCE
+    )
+
+
+def _is_eval_summary_accounting_candidate(candidate: _SemanticCandidate) -> bool:
+    """Return whether an eval-summary source unit is direct accounting context."""
+    return (
+        candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
+        and candidate.symbol_kind
+        in {
+            ResolvedSymbolKind.FUNCTION,
+            ResolvedSymbolKind.ASYNC_FUNCTION,
+            ResolvedSymbolKind.METHOD,
+        }
+        and candidate.provenance.file_path == "src/context_ir/eval_summary.py"
+        and candidate.score.p_edit >= _DIRECT_SUMMARY_THRESHOLD
+    )
+
+
+def _is_eval_summary_runtime_accounting_candidate(
+    candidate: _SemanticCandidate,
+) -> bool:
+    """Return whether an eval-summary unit joins selected units to runtime data."""
+    return _is_eval_summary_accounting_candidate(candidate) and (
+        "selected_unit_runtime" in candidate.unit_id
+        or "runtime_provenance_record_lookup" in candidate.unit_id
+    )
+
+
+def _is_same_source_group_direct_candidate(
+    candidate: _SemanticCandidate,
+    *,
+    current_focus_file_path: str | None,
+) -> bool:
+    """Return whether a peer source unit is directly relevant to the active focus."""
+    if current_focus_file_path is None:
+        return False
+    if candidate.kind is not RenderedUnitKind.PROVEN_SYMBOL:
+        return False
+    if candidate.score.p_edit < _DIRECT_SUMMARY_THRESHOLD:
+        return False
+    focus_group = _top_level_path_part(current_focus_file_path)
+    if focus_group != "src":
+        return False
+    return _top_level_path_part(candidate.provenance.file_path) == focus_group
+
+
+def _top_level_path_part(file_path: str) -> str:
+    """Return the top-level repository path segment for coarse source grouping."""
+    return file_path.split("/", maxsplit=1)[0]
 
 
 def _support_pack_score(candidate: _SemanticCandidate) -> float:
@@ -835,6 +991,8 @@ def _is_policy_suppressed_uncertainty_candidate(
 ) -> bool:
     """Return whether surplus uncertainty should stay out of the pack."""
     if candidate.kind is RenderedUnitKind.PROVEN_SYMBOL or current_focus_id is None:
+        return False
+    if candidate.kind is RenderedUnitKind.EVAL_RUNTIME_EVIDENCE:
         return False
     if not _is_uncertainty_for_focus(
         candidate,
@@ -1096,6 +1254,11 @@ def _selection_reason(
             base_reason = (
                 f"selected to keep unsupported behavior visible ({score_summary})"
             )
+    elif candidate.kind is RenderedUnitKind.EVAL_RUNTIME_EVIDENCE:
+        base_reason = (
+            "selected as compact eval runtime evidence while preserving unsupported "
+            f"primary truth ({score_summary})"
+        )
     else:
         base_reason = f"selected for direct semantic relevance ({score_summary})"
 

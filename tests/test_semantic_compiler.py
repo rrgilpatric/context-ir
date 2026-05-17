@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import textwrap
 from dataclasses import replace
 from pathlib import Path
@@ -37,6 +38,7 @@ from context_ir.semantic_types import (
     SemanticSubjectKind,
     SemanticUnitTraceSummary,
     SourceSite,
+    SyntaxProgram,
 )
 
 
@@ -60,6 +62,86 @@ def _definition_id_for(program: SemanticProgram, qualified_name: str) -> str:
 def _estimate_tokens(text: str) -> int:
     """Mirror compile-level token estimation for assembled documents."""
     return max(1, (len(text) + 3) // 4)
+
+
+def _write_minimal_eval_evidence_assets(tmp_path: Path) -> None:
+    """Write one compact eval evidence catalog asset set."""
+    task_path = tmp_path / "evals" / "tasks" / "oracle_signal_hasattr_probe.json"
+    run_spec_path = (
+        tmp_path / "evals" / "run_specs" / "oracle_signal_hasattr_probe_matrix.json"
+    )
+    observation_path = (
+        tmp_path
+        / "evals"
+        / "fixtures"
+        / "oracle_signal_hasattr_probe"
+        / "eval_runtime_observations.json"
+    )
+    task_path.parent.mkdir(parents=True, exist_ok=True)
+    run_spec_path.parent.mkdir(parents=True, exist_ok=True)
+    observation_path.parent.mkdir(parents=True, exist_ok=True)
+    task_path.write_text(
+        json.dumps(
+            {
+                "task_id": "oracle_signal_hasattr_probe",
+                "fixture_id": "oracle_signal_hasattr_probe",
+                "expected_selectors": [
+                    {
+                        "kind": "unsupported",
+                        "file_path": "main.py",
+                        "construct_text": "hasattr(obj, name)",
+                        "reason_code": "reflective_builtin",
+                        "source_snippet": "hasattr(obj, name)",
+                        "expected_primary_capability_tier": "unsupported/opaque",
+                        "expect_attached_runtime_provenance": True,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    run_spec_path.write_text(
+        json.dumps(
+            {
+                "plan_id": "oracle_signal_hasattr_probe_matrix",
+                "cases": [
+                    {
+                        "case_id": "signal_hasattr_probe",
+                        "task_path": "evals/tasks/oracle_signal_hasattr_probe.json",
+                        "query": "hasattr",
+                        "budgets": [220],
+                        "providers": ["context_ir"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    observation_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "v1",
+                "hasattr_runtime_observations": [
+                    {
+                        "file_path": "main.py",
+                        "start_line": 2,
+                        "start_column": 11,
+                        "source_snippet": "hasattr(obj, name)",
+                        "normalized_payload": [
+                            {
+                                "key": "attribute_present",
+                                "value": "true",
+                            }
+                        ],
+                        "durable_payload_reference": (
+                            "artifact://hasattr/int-bit-length-observation.json"
+                        ),
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def _runtime_backed_record(
@@ -424,6 +506,34 @@ def test_compile_semantic_context_is_conservative_for_empty_query(
     assert result.total_tokens == _estimate_tokens(result.document)
     assert result.total_tokens <= result.budget
     assert result.confidence == 0.0
+
+
+def test_compile_semantic_context_discovers_compact_eval_evidence(
+    tmp_path: Path,
+) -> None:
+    """Compiler-owned scoring can select compact eval runtime evidence."""
+    _write_minimal_eval_evidence_assets(tmp_path)
+    program = SemanticProgram(
+        repo_root=tmp_path,
+        syntax=SyntaxProgram(repo_root=tmp_path),
+    )
+
+    result = compile_semantic_context(
+        program,
+        "unsupported hasattr runtime provenance attribute_present",
+        budget=160,
+    )
+
+    selected_unit_ids = tuple(
+        selection.unit_id for selection in result.optimization.selections
+    )
+    assert selected_unit_ids == (
+        "eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+    )
+    assert "primary=unsupported/opaque" in result.document
+    assert "runtime=additive" in result.document
+    assert "payload=attribute_present=true" in result.document
+    assert result.total_tokens <= 160
 
 
 def test_compile_semantic_context_accounts_for_document_assembly_overhead(

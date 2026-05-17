@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 import context_ir
+import context_ir.semantic_types as semantic_types
 from context_ir import (
     CapabilityTier,
     DownstreamVisibility,
@@ -51,6 +52,8 @@ from context_ir.semantic_types import (
     ResolverDiagnostic,
     SemanticDependency,
     SemanticDependencyKind,
+    SemanticEvalRuntimeEvidence,
+    SemanticEvalRuntimeEvidenceField,
     SyntaxDiagnostic,
     SyntaxDiagnosticCode,
 )
@@ -132,6 +135,21 @@ def test_package_root_does_not_reexport_held_old_stack_contracts() -> None:
 
     for public_name in forbidden_public_names:
         assert not hasattr(context_ir, public_name)
+
+
+def test_eval_runtime_evidence_types_remain_internal() -> None:
+    """Compact eval runtime evidence types are direct-importable but internal."""
+    internal_names = {
+        "SemanticEvalRuntimeEvidence",
+        "SemanticEvalRuntimeEvidenceField",
+    }
+
+    assert internal_names.isdisjoint(set(semantic_types.__all__))
+    assert internal_names.isdisjoint(set(context_ir.__all__))
+    assert SemanticEvalRuntimeEvidence.__name__ == "SemanticEvalRuntimeEvidence"
+    assert (
+        SemanticEvalRuntimeEvidenceField.__name__ == "SemanticEvalRuntimeEvidenceField"
+    )
 
 
 def test_proven_dependency_and_heuristic_candidate_are_distinct_contracts() -> None:

@@ -11,6 +11,7 @@ from context_ir.semantic_types import (
     DataclassModel,
     ProofStatus,
     ResolvedSymbol,
+    SemanticEvalRuntimeEvidence,
     SemanticProgram,
     SourceSite,
     SourceSpan,
@@ -33,6 +34,7 @@ class RenderedUnitKind(Enum):
     PROVEN_SYMBOL = "proven_symbol"
     UNRESOLVED_FRONTIER = "unresolved_frontier"
     UNSUPPORTED_CONSTRUCT = "unsupported_construct"
+    EVAL_RUNTIME_EVIDENCE = "eval_runtime_evidence"
 
 
 @dataclass(frozen=True)
@@ -66,6 +68,7 @@ class _SemanticRenderContext:
     dataclass_facts_by_symbol_id: dict[str, _DataclassFacts]
     unresolved_by_id: dict[str, UnresolvedAccess]
     unsupported_by_id: dict[str, UnsupportedConstruct]
+    eval_evidence_by_id: dict[str, SemanticEvalRuntimeEvidence]
 
 
 class _SemanticRenderSession:
@@ -144,6 +147,19 @@ def render_semantic_unit(
             token_count=_estimate_tokens(content),
         )
 
+    eval_evidence = _eval_evidence_by_id(program).get(unit_id)
+    if eval_evidence is not None:
+        content = _render_eval_runtime_evidence(eval_evidence, detail)
+        return RenderedUnit(
+            unit_id=unit_id,
+            detail=detail,
+            kind=RenderedUnitKind.EVAL_RUNTIME_EVIDENCE,
+            proof_status=eval_evidence.proof_status,
+            provenance=eval_evidence.site,
+            content=content,
+            token_count=_estimate_tokens(content),
+        )
+
     raise KeyError(unit_id)
 
 
@@ -198,6 +214,19 @@ def _render_semantic_unit_with_context(
             kind=RenderedUnitKind.UNSUPPORTED_CONSTRUCT,
             proof_status=unsupported_construct.proof_status,
             provenance=unsupported_construct.site,
+            content=content,
+            token_count=_estimate_tokens(content),
+        )
+
+    eval_evidence = context.eval_evidence_by_id.get(unit_id)
+    if eval_evidence is not None:
+        content = _render_eval_runtime_evidence(eval_evidence, detail)
+        return RenderedUnit(
+            unit_id=unit_id,
+            detail=detail,
+            kind=RenderedUnitKind.EVAL_RUNTIME_EVIDENCE,
+            proof_status=eval_evidence.proof_status,
+            provenance=eval_evidence.site,
             content=content,
             token_count=_estimate_tokens(content),
         )
@@ -338,12 +367,49 @@ def _render_unsupported(
     return _join_lines(lines)
 
 
+def _render_eval_runtime_evidence(
+    evidence: SemanticEvalRuntimeEvidence,
+    detail: RenderDetail,
+) -> str:
+    """Render compact eval runtime evidence without promoting it to proof."""
+    payload = _format_payload(evidence.normalized_payload_mapping())
+    if detail is RenderDetail.IDENTITY:
+        return (
+            f"eval_evidence: {evidence.fixture_id}; "
+            f"primary={evidence.primary_capability_tier.value}; "
+            f"runtime=additive; payload={payload}"
+        )
+
+    lines = [
+        "eval runtime evidence",
+        f"unit_id: {evidence.unit_id}",
+        f"fixture_id: {evidence.fixture_id}",
+        f"runtime_family: {evidence.runtime_family}",
+        f"primary_capability_tier: {evidence.primary_capability_tier.value}",
+        "runtime: additive",
+        f"reason_code: {evidence.reason_code.value}",
+        f"construct_text: {evidence.construct_text}",
+        f"payload: {payload}",
+        f"artifact_path: {evidence.artifact_path}",
+    ]
+    if detail is RenderDetail.SOURCE:
+        lines.extend(
+            (
+                f"task_ids: {','.join(evidence.task_ids)}",
+                f"run_spec_ids: {','.join(evidence.run_spec_ids)}",
+                f"durable_payload_reference: {evidence.durable_payload_reference}",
+            )
+        )
+    return _join_lines(lines)
+
+
 def _build_render_context(program: SemanticProgram) -> _SemanticRenderContext:
     """Build per-request lookup indexes used by semantic rendering."""
     return _SemanticRenderContext(
         dataclass_facts_by_symbol_id=_dataclass_facts_by_symbol_id(program),
         unresolved_by_id=_unresolved_by_id(program),
         unsupported_by_id=_unsupported_by_id(program),
+        eval_evidence_by_id=_eval_evidence_by_id(program),
     )
 
 
@@ -441,6 +507,18 @@ def _unsupported_by_id(program: SemanticProgram) -> dict[str, UnsupportedConstru
         construct.construct_id: construct
         for construct in program.unsupported_constructs
     }
+
+
+def _eval_evidence_by_id(
+    program: SemanticProgram,
+) -> dict[str, SemanticEvalRuntimeEvidence]:
+    """Index compact eval evidence by stable semantic unit ID."""
+    return {evidence.unit_id: evidence for evidence in program.eval_runtime_evidence}
+
+
+def _format_payload(payload: dict[str, str]) -> str:
+    """Return normalized payload fields in deterministic compact form."""
+    return ",".join(f"{key}={payload[key]}" for key in sorted(payload))
 
 
 def _format_span(span: SourceSpan) -> str:

@@ -10,7 +10,16 @@ from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
 from context_ir.semantic_scorer import score_semantic_units
-from context_ir.semantic_types import SemanticProgram
+from context_ir.semantic_types import (
+    CapabilityTier,
+    SemanticEvalRuntimeEvidence,
+    SemanticEvalRuntimeEvidenceField,
+    SemanticProgram,
+    SourceSite,
+    SourceSpan,
+    SyntaxProgram,
+    UnresolvedReasonCode,
+)
 
 
 def _semantic_program(tmp_path: Path) -> SemanticProgram:
@@ -45,6 +54,52 @@ def _unsupported_id_for(program: SemanticProgram, construct_text: str) -> str:
         construct.construct_id
         for construct in program.unsupported_constructs
         if construct.construct_text == construct_text
+    )
+
+
+def _semantic_eval_evidence_program(tmp_path: Path) -> SemanticProgram:
+    """Return a minimal program with one compact eval runtime evidence unit."""
+    return SemanticProgram(
+        repo_root=tmp_path,
+        syntax=SyntaxProgram(repo_root=tmp_path),
+        eval_runtime_evidence=[
+            SemanticEvalRuntimeEvidence(
+                unit_id="eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+                evidence_id="oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+                runtime_family="hasattr",
+                fixture_id="oracle_signal_hasattr_probe",
+                task_ids=("oracle_signal_hasattr_probe",),
+                run_spec_ids=("oracle_signal_hasattr_probe_matrix",),
+                artifact_path=(
+                    "evals/fixtures/oracle_signal_hasattr_probe/"
+                    "eval_runtime_observations.json"
+                ),
+                site=SourceSite(
+                    site_id="site:eval-evidence:hasattr",
+                    file_path="evals/fixtures/oracle_signal_hasattr_probe/main.py",
+                    span=SourceSpan(
+                        start_line=2,
+                        start_column=11,
+                        end_line=2,
+                        end_column=29,
+                    ),
+                    snippet="hasattr(obj, name)",
+                ),
+                construct_text="hasattr(obj, name)",
+                reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+                expect_attached_runtime_provenance=True,
+                normalized_payload=(
+                    SemanticEvalRuntimeEvidenceField(
+                        key="attribute_present",
+                        value="true",
+                    ),
+                ),
+                durable_payload_reference=(
+                    "artifact://hasattr/int-bit-length-observation.json"
+                ),
+            )
+        ],
     )
 
 
@@ -251,6 +306,23 @@ def test_score_semantic_units_does_not_anchor_single_titlecase_command_words(
     assert result.scores[target_id].p_edit >= 0.85
     assert result.scores[command_id].p_edit < 0.85
     assert result.scores[target_id].p_edit > result.scores[command_id].p_edit
+
+
+def test_score_semantic_units_scores_eval_runtime_evidence_as_support(
+    tmp_path: Path,
+) -> None:
+    """Compact eval evidence becomes a searchable internal support unit."""
+    program = _semantic_eval_evidence_program(tmp_path)
+    evidence_id = program.eval_runtime_evidence[0].unit_id
+
+    result = score_semantic_units(
+        program,
+        "unsupported hasattr runtime provenance attribute_present",
+    )
+
+    assert set(result.scores) == {evidence_id}
+    assert result.scores[evidence_id].p_support >= 0.20
+    assert result.scores[evidence_id].p_support > result.scores[evidence_id].p_edit
 
 
 def test_score_semantic_units_preserves_digit_and_camel_exact_identifier_anchors(

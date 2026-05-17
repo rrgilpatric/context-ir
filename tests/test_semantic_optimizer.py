@@ -32,6 +32,8 @@ from context_ir.semantic_types import (
     RepositorySnapshotBasis,
     RuntimeAttachmentLink,
     SelectionBasis,
+    SemanticEvalRuntimeEvidence,
+    SemanticEvalRuntimeEvidenceField,
     SemanticOptimizationResult,
     SemanticOptimizationWarningCode,
     SemanticProgram,
@@ -39,6 +41,8 @@ from context_ir.semantic_types import (
     SemanticSelectionRecord,
     SemanticSubjectKind,
     SourceSite,
+    SourceSpan,
+    UnresolvedReasonCode,
 )
 
 
@@ -65,6 +69,7 @@ def _renderable_unit_ids(program: SemanticProgram) -> set[str]:
         *program.resolved_symbols.keys(),
         *(access.access_id for access in program.unresolved_frontier),
         *(construct.construct_id for construct in program.unsupported_constructs),
+        *(evidence.unit_id for evidence in program.eval_runtime_evidence),
     }
 
 
@@ -131,6 +136,43 @@ def _dynamic_import_runtime_observation(
                 value="pkg.dynamic",
             ),
         ),
+    )
+
+
+def _eval_hasattr_evidence() -> SemanticEvalRuntimeEvidence:
+    """Return one compact eval evidence unit for optimizer tests."""
+    return SemanticEvalRuntimeEvidence(
+        unit_id="eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+        evidence_id="oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+        runtime_family="hasattr",
+        fixture_id="oracle_signal_hasattr_probe",
+        task_ids=("oracle_signal_hasattr_probe",),
+        run_spec_ids=("oracle_signal_hasattr_probe_matrix",),
+        artifact_path=(
+            "evals/fixtures/oracle_signal_hasattr_probe/eval_runtime_observations.json"
+        ),
+        site=SourceSite(
+            site_id="site:eval-evidence:hasattr",
+            file_path="evals/fixtures/oracle_signal_hasattr_probe/main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=29,
+            ),
+            snippet="hasattr(obj, name)",
+        ),
+        construct_text="hasattr(obj, name)",
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+        expect_attached_runtime_provenance=True,
+        normalized_payload=(
+            SemanticEvalRuntimeEvidenceField(
+                key="attribute_present",
+                value="true",
+            ),
+        ),
+        durable_payload_reference="artifact://hasattr/int-bit-length-observation.json",
     )
 
 
@@ -518,6 +560,98 @@ def test_optimize_semantic_units_keeps_importlib_dynamic_import_primary_unsuppor
     assert trace.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
     assert trace.attached_runtime_provenance_record_ids == (record.record_id,)
     assert trace.has_attached_runtime_provenance is True
+
+
+def test_optimize_semantic_units_prefers_eval_evidence_over_frontier_spillover(
+    tmp_path: Path,
+) -> None:
+    """Compact eval evidence and peer source context displace low-value frontier."""
+    eval_providers_dir = tmp_path / "src" / "context_ir"
+    eval_providers_dir.mkdir(parents=True)
+    (eval_providers_dir / "eval_providers.py").write_text(
+        textwrap.dedent(
+            """
+            class EvalSelectedUnit:
+                pass
+
+            def _selected_unit_metadata(record: object) -> EvalSelectedUnit:
+                record.trace_summary
+                record.unit_id
+                record.detail
+                return EvalSelectedUnit()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (eval_providers_dir / "eval_summary.py").write_text(
+        textwrap.dedent(
+            """
+            def build_eval_ledger_summary(ledger: object) -> str:
+                selected_unit_runtime_outcome_counts = {}
+                runtime_provenance_records_by_id = {}
+                return "eval report accounting"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = _semantic_program(tmp_path)
+    target_id = _definition_id_for(
+        base_program,
+        "src.context_ir.eval_providers._selected_unit_metadata",
+    )
+    summary_id = _definition_id_for(
+        base_program,
+        "src.context_ir.eval_summary.build_eval_ledger_summary",
+    )
+    frontier_id = next(
+        access.access_id
+        for access in base_program.unresolved_frontier
+        if access.enclosing_scope_id == target_id
+    )
+    evidence = _eval_hasattr_evidence()
+    program = replace(base_program, eval_runtime_evidence=[evidence])
+    scoring = SemanticScoringResult(
+        query="selected unit metadata eval report accounting hasattr runtime",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    0.90
+                    if unit_id == target_id
+                    else 0.30
+                    if unit_id == summary_id
+                    else 0.04
+                ),
+                p_support=(
+                    0.45
+                    if unit_id == evidence.unit_id
+                    else 0.34
+                    if unit_id == frontier_id
+                    else 0.0
+                ),
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+    budget = (
+        render_semantic_unit(program, target_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, summary_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(
+            program,
+            evidence.unit_id,
+            RenderDetail.IDENTITY,
+        ).token_count
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=budget)
+    selections = _selection_by_unit_id(result)
+
+    assert target_id in selections
+    assert summary_id in selections
+    assert evidence.unit_id in selections
+    assert frontier_id not in selections
+    assert result.total_tokens <= budget
 
 
 def test_optimize_semantic_units_uses_compact_summary_and_cheaper_source_when_available(

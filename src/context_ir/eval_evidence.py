@@ -7,7 +7,14 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import cast
 
-from context_ir.semantic_types import CapabilityTier, UnresolvedReasonCode
+from context_ir.semantic_types import (
+    CapabilityTier,
+    SemanticEvalRuntimeEvidence,
+    SemanticEvalRuntimeEvidenceField,
+    SourceSite,
+    SourceSpan,
+    UnresolvedReasonCode,
+)
 
 _OBSERVATION_FILENAME = "eval_runtime_observations.json"
 _OBSERVATION_LIST_SUFFIX = "_runtime_observations"
@@ -44,6 +51,9 @@ class EvalRuntimeEvidence:
     task_ids: tuple[str, ...]
     run_spec_ids: tuple[str, ...]
     artifact_path: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
     construct_text: str
     reason_code: UnresolvedReasonCode
     expected_primary_capability_tier: CapabilityTier
@@ -65,6 +75,12 @@ class EvalRuntimeEvidence:
             raise EvalEvidenceError("run_spec_ids must be non-empty")
         if not self.artifact_path:
             raise EvalEvidenceError("artifact_path must be non-empty")
+        if not self.source_file_path:
+            raise EvalEvidenceError("source_file_path must be non-empty")
+        if self.source_start_line <= 0:
+            raise EvalEvidenceError("source_start_line must be positive")
+        if self.source_start_column <= 0:
+            raise EvalEvidenceError("source_start_column must be positive")
         if not self.construct_text:
             raise EvalEvidenceError("construct_text must be non-empty")
         if not self.normalized_payload:
@@ -173,6 +189,9 @@ def discover_eval_runtime_evidence(repo_root: Path | str) -> EvalRuntimeEvidence
                 task_ids=(task.task_id,),
                 run_spec_ids=run_spec_ids,
                 artifact_path=observation.artifact_path,
+                source_file_path=observation.file_path,
+                source_start_line=observation.start_line,
+                source_start_column=observation.start_column,
                 construct_text=selector.construct_text,
                 reason_code=selector.reason_code,
                 expected_primary_capability_tier=expected_primary_capability_tier,
@@ -197,6 +216,60 @@ def render_eval_runtime_evidence(evidence: EvalRuntimeEvidence) -> str:
         f"{evidence.fixture_id} unsupported {evidence.construct_text}; "
         f"primary={evidence.expected_primary_capability_tier.value}; "
         f"runtime=additive; payload={payload}"
+    )
+
+
+def discover_semantic_eval_runtime_evidence(
+    repo_root: Path | str,
+) -> tuple[SemanticEvalRuntimeEvidence, ...]:
+    """Discover compact eval runtime evidence as semantic support units."""
+    catalog = discover_eval_runtime_evidence(repo_root)
+    return tuple(_semantic_evidence_unit(record) for record in catalog.records)
+
+
+def _semantic_evidence_unit(
+    evidence: EvalRuntimeEvidence,
+) -> SemanticEvalRuntimeEvidence:
+    """Convert one catalog record into an internal semantic support unit."""
+    unit_id = f"eval_evidence:{evidence.evidence_id}"
+    source_file_path = (
+        PurePosixPath("evals")
+        / "fixtures"
+        / evidence.fixture_id
+        / evidence.source_file_path
+    ).as_posix()
+    start_column = evidence.source_start_column
+    end_column = start_column + len(evidence.construct_text)
+    return SemanticEvalRuntimeEvidence(
+        unit_id=unit_id,
+        evidence_id=evidence.evidence_id,
+        runtime_family=evidence.runtime_family,
+        fixture_id=evidence.fixture_id,
+        task_ids=evidence.task_ids,
+        run_spec_ids=evidence.run_spec_ids,
+        artifact_path=evidence.artifact_path,
+        site=SourceSite(
+            site_id=f"site:{unit_id}",
+            file_path=source_file_path,
+            span=SourceSpan(
+                start_line=evidence.source_start_line,
+                start_column=start_column,
+                end_line=evidence.source_start_line,
+                end_column=end_column,
+            ),
+            snippet=evidence.construct_text,
+        ),
+        construct_text=evidence.construct_text,
+        reason_code=evidence.reason_code,
+        primary_capability_tier=evidence.expected_primary_capability_tier,
+        expect_attached_runtime_provenance=(
+            evidence.expect_attached_runtime_provenance
+        ),
+        normalized_payload=tuple(
+            SemanticEvalRuntimeEvidenceField(key=field.key, value=field.value)
+            for field in evidence.normalized_payload
+        ),
+        durable_payload_reference=evidence.durable_payload_reference,
     )
 
 
@@ -618,5 +691,6 @@ __all__ = [
     "EvalRuntimeEvidenceCatalog",
     "EvalRuntimeEvidencePayloadField",
     "discover_eval_runtime_evidence",
+    "discover_semantic_eval_runtime_evidence",
     "render_eval_runtime_evidence",
 ]

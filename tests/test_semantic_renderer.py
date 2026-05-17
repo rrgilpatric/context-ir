@@ -18,7 +18,16 @@ from context_ir.semantic_renderer import (
     RenderedUnitKind,
     render_semantic_unit,
 )
-from context_ir.semantic_types import SemanticProgram, SourceSite, SourceSpan
+from context_ir.semantic_types import (
+    CapabilityTier,
+    SemanticEvalRuntimeEvidence,
+    SemanticEvalRuntimeEvidenceField,
+    SemanticProgram,
+    SourceSite,
+    SourceSpan,
+    SyntaxProgram,
+    UnresolvedReasonCode,
+)
 
 
 def _semantic_program(tmp_path: Path) -> SemanticProgram:
@@ -53,6 +62,52 @@ def _unsupported_id_for(program: SemanticProgram, construct_text: str) -> str:
         construct.construct_id
         for construct in program.unsupported_constructs
         if construct.construct_text == construct_text
+    )
+
+
+def _semantic_eval_evidence_program(tmp_path: Path) -> SemanticProgram:
+    """Return a minimal program with one compact eval runtime evidence unit."""
+    return SemanticProgram(
+        repo_root=tmp_path,
+        syntax=SyntaxProgram(repo_root=tmp_path),
+        eval_runtime_evidence=[
+            SemanticEvalRuntimeEvidence(
+                unit_id="eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+                evidence_id="oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+                runtime_family="hasattr",
+                fixture_id="oracle_signal_hasattr_probe",
+                task_ids=("oracle_signal_hasattr_probe",),
+                run_spec_ids=("oracle_signal_hasattr_probe_matrix",),
+                artifact_path=(
+                    "evals/fixtures/oracle_signal_hasattr_probe/"
+                    "eval_runtime_observations.json"
+                ),
+                site=SourceSite(
+                    site_id="site:eval-evidence:hasattr",
+                    file_path="evals/fixtures/oracle_signal_hasattr_probe/main.py",
+                    span=SourceSpan(
+                        start_line=2,
+                        start_column=11,
+                        end_line=2,
+                        end_column=29,
+                    ),
+                    snippet="hasattr(obj, name)",
+                ),
+                construct_text="hasattr(obj, name)",
+                reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+                primary_capability_tier=CapabilityTier.UNSUPPORTED_OPAQUE,
+                expect_attached_runtime_provenance=True,
+                normalized_payload=(
+                    SemanticEvalRuntimeEvidenceField(
+                        key="attribute_present",
+                        value="true",
+                    ),
+                ),
+                durable_payload_reference=(
+                    "artifact://hasattr/int-bit-length-observation.json"
+                ),
+            )
+        ],
     )
 
 
@@ -215,6 +270,27 @@ def test_render_semantic_unit_renders_unsupported_construct_with_truthful_fallba
     assert "source_snippet:" in source.content
     assert "from pkg.helpers import *" in source.content
     assert source.token_count > 0
+
+
+def test_render_semantic_unit_renders_eval_runtime_evidence_as_additive(
+    tmp_path: Path,
+) -> None:
+    """Compact eval evidence renders as unsupported-primary additive support."""
+    program = _semantic_eval_evidence_program(tmp_path)
+    evidence = program.eval_runtime_evidence[0]
+
+    identity = render_semantic_unit(program, evidence.unit_id, RenderDetail.IDENTITY)
+    summary = render_semantic_unit(program, evidence.unit_id, RenderDetail.SUMMARY)
+
+    assert identity.kind is RenderedUnitKind.EVAL_RUNTIME_EVIDENCE
+    assert identity.provenance == evidence.site
+    assert "primary=unsupported/opaque" in identity.content
+    assert "runtime=additive" in identity.content
+    assert "payload=attribute_present=true" in identity.content
+    assert "construct_text: hasattr(obj, name)" in summary.content
+    assert "artifact_path: evals/fixtures/oracle_signal_hasattr_probe/" in (
+        summary.content
+    )
 
 
 def test_render_semantic_unit_raises_key_error_for_unknown_unit(

@@ -77,6 +77,8 @@ _BODY_SIGNAL_KINDS = frozenset(
         ResolvedSymbolKind.METHOD,
     }
 )
+_EVAL_EVIDENCE_SUPPORT_WEIGHT = 0.85
+_EVAL_REPORT_ACCOUNTING_EDIT_FLOOR = 0.34
 
 
 @dataclass(frozen=True)
@@ -234,6 +236,45 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
             )
         )
 
+    for evidence in sorted(
+        program.eval_runtime_evidence,
+        key=lambda item: item.unit_id,
+    ):
+        summary = render_semantic_unit(
+            program,
+            evidence.unit_id,
+            RenderDetail.SUMMARY,
+        )
+        candidates.append(
+            _CandidateProfile(
+                unit_id=evidence.unit_id,
+                kind=summary.kind,
+                primary_text=_join_searchable_text(
+                    evidence.fixture_id,
+                    evidence.runtime_family,
+                    evidence.construct_text,
+                    _payload_text(evidence.normalized_payload_mapping()),
+                ),
+                file_path=evidence.artifact_path,
+                scope_id=None,
+                symbol_kind=None,
+                searchable_text=_join_searchable_text(
+                    evidence.fixture_id,
+                    " ".join(evidence.task_ids),
+                    " ".join(evidence.run_spec_ids),
+                    evidence.artifact_path,
+                    evidence.runtime_family,
+                    evidence.construct_text,
+                    evidence.reason_code.value,
+                    evidence.primary_capability_tier.value,
+                    "unsupported opaque runtime provenance additive evidence",
+                    _payload_text(evidence.normalized_payload_mapping()),
+                    summary.content,
+                ),
+                body_text=None,
+            )
+        )
+
     return candidates
 
 
@@ -281,11 +322,20 @@ def _direct_scores_for_candidates(
                 candidate=candidate,
                 query_identifier_mentions=query_identifier_mentions,
             ),
+            _eval_report_accounting_edit_score(
+                candidate=candidate,
+                query_terms=query_terms,
+            ),
         )
         p_support = _clamp_probability(
             lexical_score * _DIRECT_SUPPORT_WEIGHT
             + semantic_score * _SEMANTIC_SUPPORT_WEIGHT
         )
+        if candidate.kind is RenderedUnitKind.EVAL_RUNTIME_EVIDENCE:
+            p_support = max(
+                p_support,
+                _clamp_probability(lexical_score * _EVAL_EVIDENCE_SUPPORT_WEIGHT),
+            )
         scores[candidate.unit_id] = SemanticUnitScore(
             unit_id=candidate.unit_id,
             p_edit=p_edit,
@@ -548,6 +598,30 @@ def _exact_identifier_edit_score(
     return 0.0
 
 
+def _eval_report_accounting_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_terms: tuple[str, ...],
+) -> float:
+    """Return a direct-edit floor for eval ledger summary/report queries."""
+    if candidate.symbol_kind not in {
+        ResolvedSymbolKind.FUNCTION,
+        ResolvedSymbolKind.ASYNC_FUNCTION,
+        ResolvedSymbolKind.METHOD,
+    }:
+        return 0.0
+    query_term_set = frozenset(query_terms)
+    if "eval" not in query_term_set:
+        return 0.0
+    if not {"report", "accounting"} & query_term_set:
+        return 0.0
+
+    primary_terms = frozenset(_extract_terms(candidate.primary_text))
+    if {"ledger", "summary"}.issubset(primary_terms):
+        return _EVAL_REPORT_ACCOUNTING_EDIT_FLOOR
+    return 0.0
+
+
 def _identifier_surfaces(text: str) -> frozenset[str]:
     """Return exact matchable surfaces for a symbol name or qualified name."""
     if _IDENTIFIER_SURFACE_RE.fullmatch(text) is None:
@@ -604,6 +678,11 @@ def _body_text_for_symbol(
 def _join_searchable_text(*parts: str | None) -> str:
     """Join optional profile parts without introducing placeholder text."""
     return "\n".join(part for part in parts if part)
+
+
+def _payload_text(payload: Mapping[str, str]) -> str:
+    """Return normalized payload fields as a compact searchable surface."""
+    return " ".join(f"{key}={payload[key]}" for key in sorted(payload))
 
 
 def _merge_support(current_support: float, boost: float) -> float:

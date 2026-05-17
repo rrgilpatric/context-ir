@@ -208,6 +208,7 @@ class SemanticSubjectKind(Enum):
     DEPENDENCY = "dependency"
     FRONTIER_ITEM = "frontier_item"
     UNSUPPORTED_FINDING = "unsupported_finding"
+    EVAL_RUNTIME_EVIDENCE = "eval_runtime_evidence"
 
 
 @dataclass(frozen=True)
@@ -274,6 +275,7 @@ _SUBJECT_KIND_CAPABILITY_TIERS: dict[
         CapabilityTier.UNSUPPORTED_OPAQUE,
         CapabilityTier.RUNTIME_BACKED,
     ),
+    SemanticSubjectKind.EVAL_RUNTIME_EVIDENCE: (CapabilityTier.UNSUPPORTED_OPAQUE,),
 }
 
 
@@ -805,6 +807,83 @@ class UnsupportedConstruct:
             raise ValueError(
                 "unsupported constructs must have proof_status=UNSUPPORTED"
             )
+
+
+@dataclass(frozen=True)
+class SemanticEvalRuntimeEvidenceField:
+    """Normalized payload key/value retained for compact eval runtime evidence."""
+
+    key: str
+    value: str
+
+    def __post_init__(self) -> None:
+        """Reject incomplete compact runtime payload fields."""
+        if not self.key.strip():
+            raise ValueError("eval runtime evidence field key must be non-empty")
+        if not self.value.strip():
+            raise ValueError("eval runtime evidence field value must be non-empty")
+
+
+@dataclass(frozen=True)
+class SemanticEvalRuntimeEvidence:
+    """Internal semantic support unit for compact eval runtime evidence."""
+
+    unit_id: str
+    evidence_id: str
+    runtime_family: str
+    fixture_id: str
+    task_ids: tuple[str, ...]
+    run_spec_ids: tuple[str, ...]
+    artifact_path: str
+    site: SourceSite
+    construct_text: str
+    reason_code: UnresolvedReasonCode
+    primary_capability_tier: CapabilityTier
+    expect_attached_runtime_provenance: bool
+    normalized_payload: tuple[SemanticEvalRuntimeEvidenceField, ...]
+    durable_payload_reference: str
+    proof_status: ProofStatus = ProofStatus.UNSUPPORTED
+
+    def __post_init__(self) -> None:
+        """Keep eval evidence compact, unsupported-primary, and non-proof."""
+        if not self.unit_id:
+            raise ValueError("unit_id must be non-empty")
+        if not self.evidence_id:
+            raise ValueError("evidence_id must be non-empty")
+        if not self.runtime_family:
+            raise ValueError("runtime_family must be non-empty")
+        if not self.fixture_id:
+            raise ValueError("fixture_id must be non-empty")
+        if not self.task_ids:
+            raise ValueError("task_ids must be non-empty")
+        if not self.run_spec_ids:
+            raise ValueError("run_spec_ids must be non-empty")
+        if not self.artifact_path:
+            raise ValueError("artifact_path must be non-empty")
+        if not self.construct_text:
+            raise ValueError("construct_text must be non-empty")
+        if self.primary_capability_tier is not CapabilityTier.UNSUPPORTED_OPAQUE:
+            raise ValueError(
+                "eval runtime evidence must preserve unsupported/opaque primary truth"
+            )
+        if self.expect_attached_runtime_provenance is not True:
+            raise ValueError(
+                "eval runtime evidence must represent expected additive runtime support"
+            )
+        if not self.normalized_payload:
+            raise ValueError("normalized_payload must be non-empty")
+        if not self.durable_payload_reference:
+            raise ValueError("durable_payload_reference must be non-empty")
+        if self.proof_status is not ProofStatus.UNSUPPORTED:
+            raise ValueError("eval runtime evidence must have proof_status=UNSUPPORTED")
+
+        payload_keys = [field.key for field in self.normalized_payload]
+        if len(payload_keys) != len(set(payload_keys)):
+            raise ValueError("normalized_payload keys must be unique")
+
+    def normalized_payload_mapping(self) -> dict[str, str]:
+        """Return normalized payload fields keyed by payload name."""
+        return {field.key: field.value for field in self.normalized_payload}
 
 
 @dataclass(frozen=True)
@@ -1346,6 +1425,9 @@ class SemanticProgram:
     proven_dependencies: list[SemanticDependency] = field(default_factory=list)
     unresolved_frontier: list[UnresolvedAccess] = field(default_factory=list)
     unsupported_constructs: list[UnsupportedConstruct] = field(default_factory=list)
+    eval_runtime_evidence: list[SemanticEvalRuntimeEvidence] = field(
+        default_factory=list
+    )
     provenance_records: list[SemanticProvenanceRecord] = field(default_factory=list)
     diagnostics: list[ResolverDiagnostic] = field(default_factory=list)
 

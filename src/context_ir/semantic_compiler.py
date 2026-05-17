@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 
+from context_ir.eval_evidence import discover_semantic_eval_runtime_evidence
 from context_ir.semantic_optimizer import optimize_semantic_units
 from context_ir.semantic_renderer import (
     RenderDetail,
@@ -37,12 +39,20 @@ def compile_semantic_context(
     if scoring is not None and scoring.query != query:
         raise ValueError("scoring.query must match compile_semantic_context(query=...)")
 
+    active_program = program
+    if scoring is None:
+        active_program = _with_discovered_eval_runtime_evidence(program)
+
     active_scoring = scoring
     if active_scoring is None:
-        active_scoring = score_semantic_units(program, query, embed_fn=embed_fn)
+        active_scoring = score_semantic_units(
+            active_program,
+            query,
+            embed_fn=embed_fn,
+        )
 
     optimization, rendered_units, document = _compile_budget_honest_artifact(
-        program=program,
+        program=active_program,
         scoring=active_scoring,
         query=query,
         budget=budget,
@@ -57,6 +67,18 @@ def compile_semantic_context(
         confidence=optimization.confidence,
         compile_context=SemanticCompileContext(query=query),
     )
+
+
+def _with_discovered_eval_runtime_evidence(
+    program: SemanticProgram,
+) -> SemanticProgram:
+    """Attach repo-discovered compact eval evidence for compiler-owned scoring."""
+    if program.eval_runtime_evidence:
+        return program
+    evidence_units = discover_semantic_eval_runtime_evidence(program.repo_root)
+    if not evidence_units:
+        return program
+    return replace(program, eval_runtime_evidence=list(evidence_units))
 
 
 def _compile_budget_honest_artifact(

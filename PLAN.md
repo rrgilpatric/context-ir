@@ -310,6 +310,181 @@ Pushed eval evidence catalog discovery release unit:
   - keep north-star demo/report/public-claim work held until the final
     budget-`220` evidence-path checkpoint passes
 
+Workspace-accepted semantic eval-evidence integration release unit:
+
+- release unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_types.py`
+  - `src/context_ir/eval_evidence.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_semantic_renderer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_types.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- accepted behavior:
+  - compact eval runtime evidence records become internal semantic support
+    units
+  - renderer exposes those records as unsupported-primary, additive runtime
+    evidence without promoting runtime payloads to primary proof
+  - scorer makes compact eval evidence searchable for runtime-provenance
+    queries and adds a bounded eval-report/accounting anchor
+  - optimizer can prefer one compact eval evidence surface and eval-summary
+    accounting support over low-value frontier spillover under tight budgets
+  - compiler-owned scoring discovers compact eval evidence; callers that pass
+    explicit scoring keep the existing explicit-scoring contract
+  - repos without eval assets still compile normally
+  - malformed discovered eval assets continue to fail closed through
+    `EvalEvidenceError`
+- review evidence:
+  - live git state during review: branch `main`, local `HEAD` and
+    `origin/main` both resolved to `989c8f0`
+  - no staged files
+  - no untracked files
+  - dirty set before this continuity update was exactly the 11 declared
+    source/test files
+  - focused validation rerun passed:
+    - `ruff check` on the 11 touched source/test files
+    - `ruff format --check` on the 11 touched source/test files
+    - `mypy --strict src/`
+    - `pytest tests/test_semantic_renderer.py tests/test_semantic_scorer.py tests/test_semantic_optimizer.py tests/test_semantic_compiler.py tests/test_eval_evidence.py -v`
+      with `67 passed`
+    - additional `pytest tests/test_semantic_types.py -v` with `24 passed`
+    - `git diff --check`
+  - exact real-repo budget-`220` smoke rerun passed:
+    - query:
+      `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+    - elapsed: `107.911s`
+    - total tokens: `219 / 220`
+    - selected units:
+      - `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+      - `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalSelectedUnit`
+      - `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalProviderMetadata`
+      - `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalProviderResult`
+      - `def:src/context_ir/eval_summary.py:src.context_ir.eval_summary._build_runtime_provenance_record_lookup`
+      - `eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11`
+    - required checks all true:
+      `_selected_unit_metadata`, `EvalSelectedUnit`, eval report-accounting
+      path, compact `oracle_signal_hasattr_probe` evidence,
+      `attribute_present=true`, and budget compliance
+- correction evidence:
+  - full regression found an export-surface boundary issue after first-pass
+    audit clearance:
+    - `semantic_types.__all__` included
+      `SemanticEvalRuntimeEvidence` and `SemanticEvalRuntimeEvidenceField`
+    - `context_ir.__all__` intentionally did not include them
+    - this caused 43 full-regression failures against the package-root export
+      invariant and violated the no-public-export-widening boundary
+  - accepted correction keeps compact eval-evidence semantic dataclasses
+    internal:
+    - removed `SemanticEvalRuntimeEvidence` and
+      `SemanticEvalRuntimeEvidenceField` from `semantic_types.__all__`
+    - did not add either type to `context_ir.__all__`
+    - direct imports from `context_ir.semantic_types` remain available
+    - added `tests/test_semantic_types.py` coverage for the internal-only
+      boundary
+  - focused correction validation passed:
+    - `ruff check src/context_ir/semantic_types.py tests/test_semantic_types.py`
+    - `ruff format --check src/context_ir/semantic_types.py tests/test_semantic_types.py`
+    - `mypy --strict src/`
+    - focused pytest over semantic-types, public API, MCP/facade, eval-summary,
+      and `hasattr` eval-signal tests with `117 passed`
+    - scratch export-boundary check confirmed direct imports remain available,
+      neither type is package-root exported, and
+      `tuple(context_ir.__all__) == tuple(semantic_types.__all__)`
+    - `git diff --check`
+- boundary:
+  - no eval fixture, task, run-spec, provider, runtime/probe worker,
+    `eval_summary.py`, public docs/claims, MCP/API/schema/config,
+    package-root export, or demo/report artifact changes are included
+  - this slice does not make a public claim or produce a demo artifact
+  - real-repo latency remains about two minutes for this checkpoint
+- release state:
+  - accepted in workspace: yes, after 1 export-surface correction
+  - release-unit audit cleared: yes, first-pass after export-surface
+    correction
+  - full-regression cleared: yes, first-pass after corrected audit with
+    `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: no
+  - pushed: no
+- commit-gating evidence:
+  - live state during commit-gating remained branch `main` with local `HEAD`
+    and `origin/main` at `989c8f0`
+  - no staged files
+  - no untracked files
+  - dirty files exactly matched the corrected 14-file release unit
+  - `git diff --check` remained clean
+  - diff stat was limited to the expected semantic eval-evidence integration,
+    tests, and continuity docs
+  - export-boundary smoke confirmed:
+    - `SemanticEvalRuntimeEvidence` direct import works
+    - `SemanticEvalRuntimeEvidenceField` direct import works
+    - neither name is present in `semantic_types.__all__`
+    - neither name is present in `context_ir.__all__`
+    - `tuple(context_ir.__all__) == tuple(semantic_types.__all__)`
+  - no public docs, eval fixtures/tasks/run specs, provider/runtime paths,
+    MCP/API/schema/config, package-root export, or demo/report artifacts were
+    modified
+- full-regression evidence:
+  - after corrected audit clearance, full regression passed:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1714 passed`
+- corrected audit evidence:
+  - read-only release-unit audit returned PASS with no findings
+  - live state matched expected:
+    - branch `main`
+    - local `HEAD` and `origin/main` both resolved to `989c8f0`
+    - no staged files
+    - no untracked files
+    - dirty files exactly matched the corrected 14-file release unit
+    - `git diff --check` was clean
+  - no eval fixture, task, run-spec, provider/runtime path, public doc, API,
+    MCP, schema/config, package-root export, or demo/report artifact changes
+    were present
+  - export-boundary smoke confirmed `SemanticEvalRuntimeEvidence` and
+    `SemanticEvalRuntimeEvidenceField` remain directly importable from
+    `context_ir.semantic_types`, but absent from both `semantic_types.__all__`
+    and `context_ir.__all__`
+  - exact budget-`220` evidence path rerun passed with `219 / 220` tokens,
+    selecting `_selected_unit_metadata`, `EvalSelectedUnit`, eval-summary
+    `_build_runtime_provenance_record_lookup`, compact
+    `oracle_signal_hasattr_probe` evidence, and rendering
+    `attribute_present=true`
+- prior audit evidence, superseded for release readiness by the later
+  source/test correction:
+  - read-only release-unit audit returned PASS with no findings
+  - live state matched expected:
+    - branch `main`
+    - local `HEAD` and `origin/main` both resolved to `989c8f0`
+    - no staged files
+    - no untracked files
+    - dirty set exactly matched the 13-file release unit
+  - no excluded eval fixtures/tasks/run-specs, provider/runtime paths, public
+    docs/claims, API/MCP/schema/config/export, or demo/report artifacts changed
+  - validation rerun passed:
+    - `git diff --check`
+    - focused `ruff check`
+    - focused `ruff format --check`
+    - `mypy --strict src/`
+    - focused pytest with `91 passed`
+  - exact budget-`220` smoke passed with `219 / 220` tokens and selected the
+    required full evidence path including `attribute_present=true`
+- next required action:
+  - stage exactly the corrected 14-file release unit and create the local
+    source/continuity release commit
+  - do not push or issue the baseline comparison checkpoint until local commit
+    state is clear and Ryan authorizes push
+  - keep north-star demo/report/public-claim work held until the final
+    evidence-path checkpoint with baselines passes
+
 Pushed selected-unit runtime accounting release unit:
 
 - release unit files:

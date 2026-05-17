@@ -2,6 +2,310 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Semantic Eval Evidence Integration Commit-Gating Cleared
+
+- Performed commit-gating review for the corrected, audit-cleared, and
+  full-regression-cleared semantic eval-evidence integration release unit.
+- Result: commit-gating cleared.
+- Evidence:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to `989c8f0`
+  - no staged files
+  - no untracked files
+  - dirty files exactly matched the corrected 14-file release unit
+  - `git diff --check` was clean
+  - diff stat was limited to expected semantic eval-evidence integration,
+    tests, and continuity docs
+  - export-boundary smoke confirmed direct imports for
+    `SemanticEvalRuntimeEvidence` and `SemanticEvalRuntimeEvidenceField`,
+    absence from both `semantic_types.__all__` and `context_ir.__all__`, and
+    equality of package-root and semantic type export tuples
+  - no public docs, eval fixtures/tasks/run specs, provider/runtime paths,
+    MCP/API/schema/config, package-root export, or demo/report artifacts were
+    modified
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full regression cleared: yes, first-pass after corrected audit with
+    `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - local commit not yet created
+  - push not authorized
+- Next route:
+  - stage exactly the corrected 14-file release unit and create the local
+    source/continuity release commit
+  - do not push or issue the baseline comparison checkpoint until local commit
+    state is clear and Ryan authorizes push
+- Acceptance status: commit-gating cleared first-pass
+
+## 2026-05-17 -- Semantic Eval Evidence Integration Full Regression Cleared
+
+- Ran full regression after corrected release-unit audit clearance.
+- Result: passed.
+- Validation:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed, `114 files already formatted`
+  - `mypy --strict src/`: passed, no issues in 39 source files
+  - `pytest tests/ -v`: passed, `1714 passed`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full regression cleared: yes, first-pass after corrected audit
+  - commit-gating, staging, local commit creation, and push are not yet allowed
+- Next route:
+  - run commit-gating review over the exact corrected 14-file release unit
+  - keep baseline comparison checkpoint, demo/report/public-claim work,
+    staging, commit, and push held until commit-gating clears
+- Acceptance status: full regression cleared first-pass after corrected audit
+
+## 2026-05-17 -- Semantic Eval Evidence Integration Corrected Audit Cleared
+
+- Reviewed the read-only release-unit audit result after the export-surface
+  correction.
+- Result: audit-cleared.
+- Audit result: PASS.
+- Findings: none.
+- Corrected release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_types.py`
+  - `src/context_ir/eval_evidence.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_semantic_renderer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_types.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- Audit evidence:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to `989c8f0`
+  - no staged files
+  - no untracked files
+  - dirty files exactly matched the corrected 14-file release unit
+  - `git diff --check` was clean
+  - no eval fixture, task, run-spec, provider/runtime path, public doc,
+    API/MCP/schema/config, package-root export, or demo/report artifact changes
+    were present
+  - `SemanticEvalRuntimeEvidence` and `SemanticEvalRuntimeEvidenceField`
+    remained directly importable from `context_ir.semantic_types`, but absent
+    from both `semantic_types.__all__` and `context_ir.__all__`
+  - exact budget-`220` evidence path rerun passed with `219 / 220` tokens and
+    selected `_selected_unit_metadata`, `EvalSelectedUnit`, eval-summary
+    `_build_runtime_provenance_record_lookup`, compact
+    `oracle_signal_hasattr_probe` evidence, and rendered
+    `attribute_present=true`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full regression: not yet rerun after corrected audit
+  - commit-gating, staging, local commit creation, and push are not allowed
+- Next route:
+  - run full regression from the top:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v`
+  - if full regression passes, proceed to commit-gating over the exact
+    corrected release unit
+  - keep the baseline comparison checkpoint, demo/report/public-claim work,
+    staging, commit, and push held
+- Acceptance status: corrected release-unit audit cleared first-pass
+
+## 2026-05-17 -- Semantic Eval Evidence Integration Export Correction Accepted
+
+- Reviewed the narrow correction for the semantic eval-evidence integration
+  full-regression export-surface failure.
+- Result: accepted in workspace after 1 correction.
+- Correction files:
+  - `src/context_ir/semantic_types.py`
+  - `tests/test_semantic_types.py`
+- Finding corrected:
+  - removed `SemanticEvalRuntimeEvidence` and
+    `SemanticEvalRuntimeEvidenceField` from `semantic_types.__all__`
+  - did not add either internal type to `context_ir.__all__`
+  - direct imports from `context_ir.semantic_types` remain available
+  - added focused coverage that the new eval-evidence semantic dataclasses stay
+    internal and are not package-root exports
+- Control validation:
+  - live state during review: branch `main`, local `HEAD` and `origin/main`
+    both resolved to `989c8f0`
+  - no staged files
+  - no untracked files
+  - dirty set exactly matched the corrected 14-file release unit
+  - focused validation passed:
+    - `ruff check src/context_ir/semantic_types.py tests/test_semantic_types.py`
+    - `ruff format --check src/context_ir/semantic_types.py tests/test_semantic_types.py`
+    - `mypy --strict src/`
+    - focused pytest over semantic-types, public API, MCP/facade,
+      eval-summary, and `hasattr` eval-signal tests with `117 passed`
+    - scratch export-boundary check confirmed direct imports remain available,
+      neither type is package-root exported, and
+      `tuple(context_ir.__all__) == tuple(semantic_types.__all__)`
+    - `git diff --check`
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - prior release-unit audit is superseded for release readiness by this
+    source/test correction
+  - full regression is not cleared; the prior failure is corrected in focused
+    validation only
+  - commit-gating, staging, local commit creation, and push are not allowed
+- Next route:
+  - run a read-only release-unit audit from the top over the exact 14-file
+    corrected release unit
+  - after audit passes, rerun full regression from the top
+  - keep the baseline comparison checkpoint, demo/report/public-claim work,
+    staging, commit, and push held
+- Acceptance status: correction accepted
+
+## 2026-05-17 -- Semantic Eval Evidence Integration Full Regression Failed
+
+- Ran full regression after first-pass release-unit audit clearance.
+- Result: failed.
+- Finding:
+  - `semantic_types.__all__` now includes
+    `SemanticEvalRuntimeEvidence` and `SemanticEvalRuntimeEvidenceField`, while
+    `context_ir.__all__` remains unchanged.
+  - This violates the release boundary that the compact eval-evidence
+    integration must not widen public/package-root export surfaces.
+  - The failure manifested as 43 tests failing the same
+    `tuple(context_ir.__all__) == tuple(semantic_types.__all__)` invariant
+    across eval internal-surface and public API checks.
+- Validation status:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: failed with `43 failed, 1670 passed`
+- Recommended correction:
+  - keep the new semantic eval-evidence dataclasses internal
+  - remove them from `semantic_types.__all__` unless Ryan explicitly authorizes
+    public semantic/package-root surface widening
+  - add or update focused tests if needed to pin that they remain internal
+- Next route:
+  - hold the release unit
+  - issue a narrow correction prompt only after Ryan confirms go-ahead
+  - after correction acceptance, rerun the release-unit audit from the top
+    before rerunning full regression
+  - do not stage, commit, push, or proceed to the baseline comparison checkpoint
+    while this finding is open
+- Acceptance status: held; full regression finding
+
+## 2026-05-17 -- Semantic Eval Evidence Integration Audit Cleared
+
+- Reviewed the read-only release-unit audit result for the semantic
+  eval-evidence integration slice.
+- Result: audit-cleared.
+- Audit result: PASS.
+- Findings: none.
+- Release-unit files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_types.py`
+  - `src/context_ir/eval_evidence.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_semantic_renderer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- Audit evidence:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to `989c8f0`
+  - no staged files
+  - no untracked files
+  - dirty set exactly matched the 13-file release unit
+  - no excluded eval fixtures/tasks/run-specs, provider/runtime paths, public
+    docs/claims, API/MCP/schema/config/export, or demo/report artifacts changed
+  - validation rerun passed:
+    - `git diff --check`
+    - focused `ruff check`
+    - focused `ruff format --check`
+    - `mypy --strict src/`
+    - focused pytest with `91 passed`
+  - exact budget-`220` smoke passed with `219 / 220` tokens and selected the
+    required full evidence path including `attribute_present=true`
+- Next route:
+  - run full regression from the top
+  - do not stage, commit, push, or issue the baseline comparison checkpoint
+    until full regression and commit-gating pass
+  - keep north-star demo/report/public-claim work held until the final
+    evidence-path checkpoint with baselines passes
+- Acceptance status: release-unit audit cleared first-pass
+
+## 2026-05-17 -- Semantic Eval Evidence Integration Slice Accepted
+
+- Reviewed the implementation slice that integrates compact eval runtime
+  evidence into semantic rendering, scoring, optimization, and compiler-owned
+  scoring.
+- Result: accepted in workspace.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_types.py`
+  - `src/context_ir/eval_evidence.py`
+  - `src/context_ir/semantic_renderer.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_semantic_renderer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- Behavior accepted:
+  - compact eval runtime evidence records are internal semantic support units
+  - renderer keeps them unsupported-primary and runtime-additive
+  - scorer makes compact eval evidence searchable for runtime-provenance
+    queries and adds a bounded eval-report/accounting anchor
+  - optimizer can prefer one compact eval evidence surface and eval-summary
+    accounting support over low-value frontier spillover under tight budgets
+  - compiler-owned scoring discovers compact eval evidence while explicit
+    scoring remains explicit
+  - repos without eval assets continue normally
+  - malformed discovered eval assets fail closed through `EvalEvidenceError`
+- Control review evidence:
+  - live git state during review: branch `main`, local `HEAD` and
+    `origin/main` both resolved to `989c8f0`
+  - no staged files
+  - no untracked files
+  - dirty set before this continuity update was exactly the 11 declared
+    source/test files
+  - focused validation rerun passed:
+    - `ruff check` on the 11 touched source/test files
+    - `ruff format --check` on the 11 touched source/test files
+    - `mypy --strict src/`
+    - focused pytest with `67 passed`
+    - additional `pytest tests/test_semantic_types.py -v` with `24 passed`
+    - `git diff --check`
+  - exact real-repo budget-`220` smoke passed:
+    - elapsed: `107.911s`
+    - tokens: `219 / 220`
+    - selected `_selected_unit_metadata`
+    - selected `EvalSelectedUnit`
+    - selected eval report-accounting path via
+      `_build_runtime_provenance_record_lookup`
+    - selected compact `oracle_signal_hasattr_probe` evidence
+    - rendered `attribute_present=true`
+- Boundary:
+  - no eval fixture, task, run-spec, provider, runtime/probe worker,
+    `eval_summary.py`, public docs/claims, MCP/API/schema/config,
+    package-root export, or demo/report artifact changes are included
+  - this slice does not create a demo artifact or public claim
+  - real-repo compile latency remains about two minutes for this checkpoint
+- Next route:
+  - run a read-only release-unit audit over the exact 13-file workspace unit
+  - do not run full regression, stage, commit, push, or issue the baseline
+    comparison checkpoint until audit passes
+  - keep north-star demo/report/public-claim work held until the final
+    evidence-path checkpoint with baselines passes
+- Acceptance status: first-pass workspace acceptance
+
 ## 2026-05-17 -- Eval Evidence Catalog Discovery Push
 
 - Ryan explicitly authorized push for the eval evidence catalog discovery
