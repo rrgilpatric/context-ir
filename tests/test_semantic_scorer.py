@@ -135,6 +135,184 @@ def test_score_semantic_units_prefers_direct_symbol_matches_for_edit_likelihood(
     assert result.scores[helper_id].p_edit > 0.5
 
 
+def test_score_semantic_units_boosts_snake_case_exact_identifier_edit_anchor(
+    tmp_path: Path,
+) -> None:
+    """A leading-underscore symbol mention becomes a strong direct edit anchor."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def _selected_unit_metadata() -> str:
+                return "target"
+
+            def selected_unit_metadata_support() -> str:
+                return "selected unit metadata support"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    target_id = _definition_id_for(program, "main._selected_unit_metadata")
+    support_id = _definition_id_for(program, "main.selected_unit_metadata_support")
+
+    result = score_semantic_units(
+        program,
+        (
+            "Fix _selected_unit_metadata while keeping selected unit metadata "
+            "support aligned"
+        ),
+    )
+
+    assert result.scores[target_id].p_edit >= 0.85
+    assert result.scores[target_id].p_edit > result.scores[support_id].p_edit
+    assert result.scores[target_id].p_edit > result.scores[target_id].p_support
+
+
+def test_score_semantic_units_does_not_exact_anchor_unqualified_probe_names(
+    tmp_path: Path,
+) -> None:
+    """Unqualified non-leading snake_case query names do not get exact floors."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_directory() -> str:
+                return "directory"
+
+            def probe_namespace() -> str:
+                return "namespace"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    directory_id = _definition_id_for(program, "main.probe_directory")
+    namespace_id = _definition_id_for(program, "main.probe_namespace")
+
+    directory_result = score_semantic_units(program, "probe_directory")
+    namespace_result = score_semantic_units(program, "probe_namespace")
+
+    assert directory_result.scores[directory_id].p_edit < 0.85
+    assert namespace_result.scores[namespace_id].p_edit < 0.85
+
+
+def test_score_semantic_units_preserves_qualified_exact_identifier_anchors(
+    tmp_path: Path,
+) -> None:
+    """A qualified symbol mention still becomes a strong direct edit anchor."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_directory() -> str:
+                return "directory"
+
+            def probe_namespace() -> str:
+                return "namespace"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    directory_id = _definition_id_for(program, "main.probe_directory")
+    namespace_id = _definition_id_for(program, "main.probe_namespace")
+
+    directory_result = score_semantic_units(program, "main.probe_directory")
+    namespace_result = score_semantic_units(program, "main.probe_namespace")
+
+    assert directory_result.scores[directory_id].p_edit >= 0.85
+    assert namespace_result.scores[namespace_id].p_edit >= 0.85
+
+
+def test_score_semantic_units_does_not_anchor_single_titlecase_command_words(
+    tmp_path: Path,
+) -> None:
+    """A Titlecase prose command does not become an exact identifier anchor."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def Fix() -> str:
+                return "prose command"
+
+            def _selected_unit_metadata() -> str:
+                return "target"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    command_id = _definition_id_for(program, "main.Fix")
+    target_id = _definition_id_for(program, "main._selected_unit_metadata")
+
+    result = score_semantic_units(program, "Fix _selected_unit_metadata")
+
+    assert result.scores[target_id].p_edit >= 0.85
+    assert result.scores[command_id].p_edit < 0.85
+    assert result.scores[target_id].p_edit > result.scores[command_id].p_edit
+
+
+def test_score_semantic_units_preserves_digit_and_camel_exact_identifier_anchors(
+    tmp_path: Path,
+) -> None:
+    """Digit-bearing and multi-part Pascal/Camel names still get exact floors."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def parser2() -> str:
+                return "digit"
+
+            class EvalSelectedUnit:
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    parser_id = _definition_id_for(program, "main.parser2")
+    eval_selected_id = _definition_id_for(program, "main.EvalSelectedUnit")
+
+    digit_result = score_semantic_units(program, "parser2")
+    camel_result = score_semantic_units(program, "EvalSelectedUnit")
+
+    assert digit_result.scores[parser_id].p_edit >= 0.85
+    assert camel_result.scores[eval_selected_id].p_edit >= 0.85
+
+
+def test_score_semantic_units_exact_identifier_anchor_requires_whole_symbol_name(
+    tmp_path: Path,
+) -> None:
+    """The raw identifier anchor does not fire for adjacent symbol names."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def _selected_unit_metadata() -> str:
+                return "target"
+
+            def _selected_unit_metadata_extra() -> str:
+                return "extra"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    target_id = _definition_id_for(program, "main._selected_unit_metadata")
+    extra_id = _definition_id_for(program, "main._selected_unit_metadata_extra")
+
+    exact_result = score_semantic_units(program, "Fix _selected_unit_metadata")
+    partial_result = score_semantic_units(program, "Fix selected_unit_metadata")
+
+    assert exact_result.scores[target_id].p_edit >= 0.85
+    assert exact_result.scores[target_id].p_edit > exact_result.scores[extra_id].p_edit
+    assert exact_result.scores[extra_id].p_edit < 0.85
+    assert (
+        partial_result.scores[target_id].p_edit < exact_result.scores[target_id].p_edit
+    )
+
+
 def test_score_semantic_units_scores_direct_unresolved_matches(
     tmp_path: Path,
 ) -> None:

@@ -24,9 +24,18 @@ EmbeddingFunction: TypeAlias = Callable[[list[str]], list[list[float]]]
 
 _TOKEN_SPLIT_RE = re.compile(r"[^A-Za-z0-9]+")
 _CAMEL_CASE_RE = re.compile(r"[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z]?[a-z]+|[0-9]+")
+_IDENTIFIER_MENTION_RE = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*"
+    r"(?![A-Za-z0-9_])"
+)
+_IDENTIFIER_SURFACE_RE = re.compile(
+    r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$"
+)
 _DIRECT_SUPPORT_WEIGHT = 0.30
 _SEMANTIC_EDIT_WEIGHT = 0.20
 _SEMANTIC_SUPPORT_WEIGHT = 0.20
+_EXACT_IDENTIFIER_EDIT_FLOOR = 1.0
 _MIN_RELEVANCE = 0.05
 _DEPENDENCY_SUPPORT_WEIGHT = 0.50
 _UNCERTAINTY_SCOPE_SUPPORT_WEIGHT = 0.40
@@ -115,6 +124,7 @@ class _CandidateProfile:
     primary_text: str
     file_path: str
     scope_id: str | None
+    symbol_kind: ResolvedSymbolKind | None
     searchable_text: str
     body_text: str | None
 
@@ -164,6 +174,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 primary_text=symbol.qualified_name,
                 file_path=symbol.definition_site.file_path,
                 scope_id=None,
+                symbol_kind=symbol.kind,
                 searchable_text=_join_searchable_text(
                     symbol.qualified_name,
                     symbol.definition_site.file_path,
@@ -182,6 +193,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 primary_text=access.access_text,
                 file_path=access.site.file_path,
                 scope_id=access.enclosing_scope_id,
+                symbol_kind=None,
                 searchable_text=_join_searchable_text(
                     access.access_text,
                     access.site.file_path,
@@ -210,6 +222,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 primary_text=construct.construct_text,
                 file_path=construct.site.file_path,
                 scope_id=construct.enclosing_scope_id,
+                symbol_kind=None,
                 searchable_text=_join_searchable_text(
                     construct.construct_text,
                     construct.site.file_path,
@@ -243,6 +256,7 @@ def _direct_scores_for_candidates(
         }
 
     normalized_query = _normalize_text(query)
+    query_identifier_mentions = _extract_identifier_mentions(query)
     semantic_similarities = _semantic_similarity_by_unit(
         query=query,
         candidates=candidates,
@@ -260,6 +274,13 @@ def _direct_scores_for_candidates(
         p_edit = _clamp_probability(
             lexical_score * (1.0 - _SEMANTIC_EDIT_WEIGHT)
             + semantic_score * _SEMANTIC_EDIT_WEIGHT
+        )
+        p_edit = max(
+            p_edit,
+            _exact_identifier_edit_score(
+                candidate=candidate,
+                query_identifier_mentions=query_identifier_mentions,
+            ),
         )
         p_support = _clamp_probability(
             lexical_score * _DIRECT_SUPPORT_WEIGHT
@@ -486,6 +507,53 @@ def _extract_terms(text: str) -> tuple[str, ...]:
             seen.add(normalized)
             terms.append(normalized)
     return tuple(terms)
+
+
+def _extract_identifier_mentions(text: str) -> frozenset[str]:
+    """Extract raw identifier and qualified-name mentions from ``text``."""
+    return frozenset(
+        mention
+        for match in _IDENTIFIER_MENTION_RE.finditer(text)
+        if _is_code_identifier_mention(mention := match.group(0))
+    )
+
+
+def _is_code_identifier_mention(mention: str) -> bool:
+    """Return whether ``mention`` looks like a literal code identifier."""
+    if "." in mention:
+        return True
+    if mention.startswith("_") and "_" in mention:
+        return True
+    if any(character.isdigit() for character in mention):
+        return True
+    if "_" in mention:
+        return False
+    return len(_CAMEL_CASE_RE.findall(mention)) > 1
+
+
+def _exact_identifier_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_identifier_mentions: frozenset[str],
+) -> float:
+    """Return the exact-symbol edit floor for raw identifier query mentions."""
+    if candidate.symbol_kind not in _BODY_SIGNAL_KINDS:
+        return 0.0
+    if not query_identifier_mentions:
+        return 0.0
+
+    candidate_identifier_surfaces = _identifier_surfaces(candidate.primary_text)
+    if candidate_identifier_surfaces & query_identifier_mentions:
+        return _EXACT_IDENTIFIER_EDIT_FLOOR
+    return 0.0
+
+
+def _identifier_surfaces(text: str) -> frozenset[str]:
+    """Return exact matchable surfaces for a symbol name or qualified name."""
+    if _IDENTIFIER_SURFACE_RE.fullmatch(text) is None:
+        return frozenset()
+    primary_name = text.rsplit(".", maxsplit=1)[-1]
+    return frozenset({text, primary_name})
 
 
 def _focus_terms(query_terms: tuple[str, ...]) -> tuple[str, ...]:
