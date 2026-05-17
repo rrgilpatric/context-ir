@@ -2,6 +2,161 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 0 Evidence Bundle Commit-Gating Cleared
+
+- Performed commit-gating review for the audit-cleared and
+  full-regression-cleared Task 0 evidence bundle release unit.
+- Result: commit-gating cleared.
+- Evidence:
+  - branch `main`
+  - local `HEAD` `64203e5`
+  - `origin/main` `0145ef6`
+  - exact release unit remained `PLAN.md`, `BUILDLOG.md`, and the four
+    `evals/product_differentiation/portfolio_001` artifact files
+  - no staged files before staging
+  - no excluded surface diffs in `README.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, `ARCHITECTURE.md`, `src`, `tests`, or
+    `pyproject.toml`
+  - `git diff --check` was clean
+  - structured artifact consistency check passed for classification, query,
+    budget, provider order, selected units, token budget, rendered payload,
+    truth boundary, and baseline zero-selection results
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass with `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - local commit not created
+  - push not authorized
+- Next route:
+  - stage exactly the six-file evidence bundle release unit and create the
+    local artifact release commit
+  - do not push, run Tasks 1-3, or update public/demo claims until local commit
+    state is clear and Ryan authorizes push
+- Acceptance status: commit-gating cleared first-pass
+
+## 2026-05-17 -- Task 0 Evidence Bundle Full Regression Cleared
+
+- Ran full regression after Task 0 evidence bundle release-unit audit
+  clearance.
+- Result: passed.
+- Validation:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed, `114 files already formatted`
+  - `mypy --strict src/`: passed, no issues in 39 source files
+  - `pytest tests/ -v`: passed, `1714 passed`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass
+  - commit-gating cleared: no
+  - local commit not created
+  - push not authorized
+- Next route:
+  - run commit-gating over the exact six-file evidence bundle release unit
+  - do not run Tasks 1-3, stage, commit, push, or update public/demo claims
+    until commit-gating clears
+- Acceptance status: full regression cleared first-pass
+
+## 2026-05-17 -- Task 0 Evidence Bundle Audit Cleared
+
+- Reviewed the read-only release-unit audit result for the Task 0 internal
+  evidence bundle.
+- Result: audit-cleared.
+- Audit result: PASS.
+- Findings: none.
+- Scope boundary:
+  - branch `main`
+  - local `HEAD` `64203e5`
+  - `origin/main` `0145ef6`
+  - branch ahead by four local continuity commits
+  - no staged files
+  - dirty/untracked files exactly matched `PLAN.md`, `BUILDLOG.md`, and the
+    four `evals/product_differentiation/portfolio_001` artifact files
+  - no diffs found in `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`,
+    `ARCHITECTURE.md`, `src`, `tests`, or `pyproject.toml`
+- Audit validation:
+  - `git diff --check`: passed
+  - `manifest.json` JSON parse and structured checks: passed
+  - `runs.jsonl` line count exactly 3: passed
+  - `runs.jsonl` structured checks passed for provider order, Task 0 query,
+    budget `220`, STRONG evidence shape, `context_ir` token budget
+    `219 / 220`, required selected units, `attribute_present=true`,
+    `primary=unsupported/opaque`, and `runtime=additive`
+  - baseline checks passed for zero selected files/units plus candidate and
+    omitted evidence
+  - README/evidence wording checks passed for internal-only scope, public
+    claims held, Tasks 1-3 not run, caveats, and no broad superiority claim
+  - artifact trailing-whitespace/final-newline hygiene passed
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - push not authorized
+- Next route:
+  - run full regression from the top
+  - if full regression passes, proceed to commit-gating over the exact six-file
+    release unit
+  - do not run Tasks 1-3, stage, commit, push, or update public/demo claims
+    until gates clear
+- Acceptance status: release-unit audit cleared first-pass
+
+## 2026-05-17 -- Task 0 Evidence Bundle Accepted
+
+- Reviewed the Task 0 internal evidence bundle implementation slice.
+- Result: accepted in workspace first-pass.
+- Release unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Accepted artifact behavior:
+  - created the internal-only product-differentiation evidence bundle
+  - reproduced only Task 0 at budget `220`
+  - captured `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - classified Task 0 as STRONG
+  - preserved the selected `context_ir` evidence path:
+    `_selected_unit_metadata`, `EvalSelectedUnit`, eval-summary report
+    accounting, compact `oracle_signal_hasattr_probe` evidence, and
+    `attribute_present=true`
+  - preserved unsupported/opaque as primary truth and runtime evidence as
+    additive
+  - recorded baseline failure/overinclude evidence
+  - kept public claims held and documented caveats
+- Control validation:
+  - live state during review: branch `main`, local `HEAD` `64203e5`,
+    `origin/main` `0145ef6`
+  - only the four artifact files were untracked before this continuity update
+  - no staged files
+  - no source/test/runtime/provider/public-doc/API/schema changes
+  - `manifest.json` parsed as valid JSON
+  - `runs.jsonl` parsed as exactly three JSON rows, one per provider
+  - structured consistency check passed for classification, query, budget,
+    provider order, required selected units, token budget, rendered payload,
+    truth boundary, and baseline zero-selection results
+  - artifact whitespace/final-newline check passed
+  - `README.md` and `evidence.md` mention internal-only scope, public claims
+    held, classification, Tasks 1-3 not run, and caveats
+  - `git diff --check` remained clean for tracked diffs
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - push not authorized
+- Next route:
+  - run a read-only release-unit audit over the exact six-file evidence bundle
+    release unit
+  - do not run Tasks 1-3, stage, commit, push, or update public/demo claims
+    until this artifact release unit clears its gates
+- Acceptance status: first-pass workspace acceptance
+
 ## 2026-05-17 -- Task 0 Evidence Bundle Slice Approved
 
 - Ryan explicitly approved the accepted artifact shape and portfolio.

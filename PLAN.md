@@ -256,6 +256,111 @@ Ryan-approved Task 0 evidence bundle slice:
   - only after acceptance decide whether to run Task 1 as the next sequential
     portfolio slice
 
+Workspace-accepted Task 0 evidence bundle release unit:
+
+- release unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- accepted behavior:
+  - created the internal-only product-differentiation evidence bundle for
+    Task 0
+  - reproduced only Task 0 at budget `220`
+  - recorded `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files` provider outputs
+  - classified Task 0 as STRONG
+  - preserved selected `context_ir` evidence path:
+    `_selected_unit_metadata`, `EvalSelectedUnit`, eval-summary report
+    accounting, compact `oracle_signal_hasattr_probe` evidence, and
+    `attribute_present=true`
+  - preserved the main truth boundary: `unsupported/opaque` remains primary
+    and runtime evidence remains additive
+  - recorded baseline failure/overinclude evidence under budget `220`
+  - kept public claims held and stated caveats, including latency,
+    summary-level selected repo units, and compact eval evidence being an
+    internal evidence surface
+- artifact review evidence:
+  - live state during review: branch `main`, local `HEAD` `64203e5`,
+    `origin/main` `0145ef6`
+  - only the four bundle files were untracked before this continuity update
+  - no staged files
+  - no tracked implementation/source/test/docs changes outside
+    `PLAN.md` and `BUILDLOG.md`
+  - `manifest.json` is valid JSON
+  - `runs.jsonl` contains exactly three valid JSON rows, one per provider
+  - structured consistency check passed:
+    - manifest classification is `STRONG`
+    - manifest task budget is `220`
+    - all run rows use the same query and budget
+    - provider order is `context_ir`, `lexical_top_k_files`,
+      `import_neighborhood_files`
+    - required `context_ir` selected units are present
+    - `context_ir` tokens are `219 / 220`
+    - rendered context includes `attribute_present=true`,
+      `primary=unsupported/opaque`, and `runtime=additive`
+    - baseline rows selected zero files and zero units
+  - artifact whitespace/final-newline check passed for all four bundle files
+  - `README.md` and `evidence.md` mention internal-only scope, public claims
+    held, classification, Tasks 1-3 not run, and caveats
+  - `git diff --check` remained clean for tracked diffs
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass with `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: no
+  - pushed: no
+- commit-gating evidence:
+  - live state during commit-gating remained branch `main`, local `HEAD`
+    `64203e5`, and `origin/main` `0145ef6`
+  - exact release unit remained `PLAN.md`, `BUILDLOG.md`, and the four Task 0
+    bundle artifact files
+  - no staged files before staging
+  - no excluded surfaces changed: `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`,
+    `ARCHITECTURE.md`, `src`, `tests`, and `pyproject.toml` had no diff
+  - `git diff --check` was clean
+  - structured artifact consistency check passed for classification, query,
+    budget, provider order, selected units, token budget, rendered payload,
+    truth boundary, and baseline zero-selection results
+- full-regression evidence:
+  - after release-unit audit clearance, full regression passed:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1714 passed`
+- audit evidence:
+  - read-only release-unit audit returned PASS with no findings
+  - live state matched expected:
+    - branch `main`
+    - local `HEAD` `64203e5`
+    - `origin/main` `0145ef6`
+    - branch ahead by four local continuity commits
+    - no staged files
+    - dirty/untracked files exactly matched the six-file release unit
+  - no diffs found in `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`,
+    `ARCHITECTURE.md`, `src`, `tests`, or `pyproject.toml`
+  - validation rerun passed:
+    - `git diff --check`
+    - `manifest.json` JSON parse and structured checks
+    - `runs.jsonl` line count exactly 3
+    - `runs.jsonl` structured checks for provider order, Task 0 query, budget
+      `220`, STRONG evidence shape, `context_ir` token budget `219 / 220`,
+      required selected units, `attribute_present=true`,
+      `primary=unsupported/opaque`, and `runtime=additive`
+    - baseline checks for zero selected files/units plus candidate/omitted
+      evidence
+    - internal-only, public-claims-held, Tasks 1-3-not-run, caveat, and
+      no-broad-superiority wording checks
+    - artifact trailing-whitespace/final-newline hygiene
+- next route:
+  - stage exactly the six-file evidence bundle release unit and create the
+    local artifact release commit
+  - do not push, run Tasks 1-3, or update public/demo claims until local commit
+    state is clear and Ryan authorizes push
+
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the
 accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
