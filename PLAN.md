@@ -120,6 +120,37 @@ Accepted post-push evidence-path baseline comparison checkpoint:
     public-claim widening
   - do not broaden claims beyond this checkpoint without additional evidence
 
+Accepted product-level differentiation proof plan:
+
+- Ryan agreed to the control plan to move from one STRONG checkpoint toward
+  product-level differentiation evidence
+- product-level differentiation is not established by one checkpoint alone
+- defensible product-level evidence requires:
+  - an internal artifact that preserves exact commands, artifacts, selected
+    context, baseline outputs, timing, budget, and caveats for the accepted
+    STRONG checkpoint
+  - a small portfolio of additional real repo tasks, predeclared before
+    running, that represent more than one utility mode
+  - the same meaningful-differentiation standard applied consistently:
+    materially better task context with truthful uncertainty under budget
+    where baselines fail or overinclude
+  - clear failure criteria that stop or trigger a research pause if the
+    advantage does not repeat
+- current product-level claim boundary:
+  - it is now fair internally to say `context_ir` has one strong real-repo
+    differentiation checkpoint
+  - it is not yet fair to claim general superiority over modern coding
+    harnesses, IDE repo assistants, or public benchmark baselines
+  - public claims remain held until repeated evidence and a reviewable artifact
+    are accepted
+- next route:
+  - issue a read-only product-differentiation proof-plan lane
+  - that lane should define the smallest internal artifact and a 2-4 task
+    follow-up portfolio with budgets, baselines, pass/fail rubric, and artifact
+    capture requirements
+  - no implementation, docs/public-claim updates, demo polishing, MCP/API
+    changes, or benchmark claims are authorized by this planning route
+
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the
 accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,

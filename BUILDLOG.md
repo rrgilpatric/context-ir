@@ -2,6 +2,39 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Product-Level Differentiation Proof Plan Authorized
+
+- Ryan agreed with the control plan to move from one STRONG checkpoint toward
+  product-level differentiation evidence.
+- Decision:
+  - one strong checkpoint is meaningful but not enough for product-level
+    differentiation
+  - the next phase should preserve the accepted checkpoint in an internal
+    artifact and then repeat the test across a small predeclared real-task
+    portfolio
+- Product-level proof standard:
+  - materially better task context with truthful uncertainty under budget
+    where baselines fail or overinclude
+  - evidence must be reproducible enough to inspect: exact commands, artifacts,
+    selected context, baseline outputs, timing, budget, and caveats
+  - repeated tasks must represent more than one utility mode, not only the
+    current eval-evidence repair scenario
+  - failure or only marginal advantage should trigger a research pause rather
+    than a demo/public-claim push
+- Claim boundary:
+  - internally fair: `context_ir` has one strong real-repo differentiation
+    checkpoint
+  - not yet fair: generalized public/product claim that `context_ir` is
+    broadly better than modern coding harnesses or repo assistants
+- Next route:
+  - issue a read-only product-differentiation proof-plan lane
+  - expected output: smallest internal artifact design plus a 2-4 task
+    follow-up portfolio, budgets, baselines, pass/fail rubric, and capture
+    requirements
+  - no implementation, public-claim updates, demo polishing, MCP/API changes,
+    or benchmark claims are authorized by this planning step
+- Acceptance status: planning direction authorized
+
 ## 2026-05-17 -- Strong Evidence-Path Checkpoint Accepted
 
 - Reviewed the post-push evidence-path baseline comparison checkpoint after
