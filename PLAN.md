@@ -96,12 +96,34 @@ Task 1 portfolio checkpoint returned FAIL and now controls routing:
 - next route:
   - Ryan explicitly agreed that the Task 1 failure must be investigated before
     further north-star advancement
-  - issue a read-only targeting diagnosis to determine why the semantic
-    provider routed the query toward runtime-probe helper infrastructure
-    instead of `eval_evidence.py`, `semantic_renderer.py`, `semantic_types.py`,
-    and package-root export-boundary evidence
-  - no implementation slice is authorized until that diagnosis identifies the
-    smallest principled correction or recommends a strategy pause
+  - the read-only targeting diagnosis has now returned DONE
+  - diagnosis result is accepted as the active route:
+    - primary root cause is scorer/optimizer ranking failure
+    - target evidence path exists, is discovered, renderable, and scored
+    - optimizer selection is dominated by saturated `p_support` from
+      runtime-probe/test helper dependency hubs
+    - secondary issue is query/rubric ambiguity around `runtime`,
+      `probe`, `oracle_signal_hasattr_probe`, `attribute_present`, and
+      `public API` terms
+    - not primarily renderer, compiler/evidence discovery, or budget pressure
+      alone
+  - expected path evidence from the diagnosis:
+    - `discover_semantic_eval_runtime_evidence` exists in `eval_evidence.py`
+    - compact eval evidence renders `primary=unsupported/opaque`,
+      `runtime=additive`, and `payload=attribute_present=true`
+    - `SemanticEvalRuntimeEvidence` exists as an internal semantic contract
+    - package-root `context_ir.__all__` does not export those internal types
+  - hold Tasks 2-3 and any demo/report/public-claim advancement
+  - next recommended move is a focused implementation correction, but it
+    requires explicit Ryan authorization before issuing:
+    - make direct edit/contract anchors beat saturated helper support when the
+      query names exact implementation or contract surfaces
+    - keep the correction general to support-saturation behavior, not a
+      one-off Task 1 overfit
+    - likely scope: `semantic_scorer.py`, `semantic_optimizer.py`, focused
+      scorer/optimizer tests, and a Task 1 regression check
+  - if a focused correction cannot make Task 1 pass under the declared budgets,
+    pause strategy rather than continuing the portfolio
 
 Pushed semantic eval-evidence integration release:
 `fc2ddc6 Integrate compact eval evidence into semantic context`. This commit

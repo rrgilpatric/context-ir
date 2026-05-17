@@ -2,6 +2,49 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 1 Failure Diagnosis Accepted
+
+- Reviewed the read-only Task 1 failure diagnosis.
+- Result: accepted with no control findings.
+- Root cause classification:
+  - primary: scorer/optimizer ranking failure
+  - target evidence path exists, is discovered, renderable, and scored
+  - optimizer selection is dominated by saturated `p_support` from
+    runtime-probe/test helper dependency hubs
+  - secondary: query/rubric ambiguity around `runtime`, `probe`,
+    `oracle_signal_hasattr_probe`, `attribute_present`, and `public API`
+    terms
+  - not primarily renderer, compiler/evidence discovery, or budget pressure
+    alone
+- Evidence accepted from the diagnosis:
+  - `eval_evidence.py` defines `discover_semantic_eval_runtime_evidence`
+  - compact `oracle_signal_hasattr_probe` eval evidence exists and renders
+    `primary=unsupported/opaque`, `runtime=additive`, and
+    `payload=attribute_present=true`
+  - `semantic_types.py` defines internal semantic eval evidence contract types
+  - `semantic_renderer.py` renders the compact eval evidence surface
+  - package-root `context_ir.__all__` remains clean of internal eval evidence
+    types
+  - Task 1 scratch artifacts show `context_ir` selected runtime-probe/test
+    helper units at both budgets while missing the intended evidence path
+- Control decision:
+  - do not run Tasks 2-3
+  - do not update demo/report/public claims
+  - do not treat Task 1 as product evidence
+  - this is not yet a strategy-pause case because the expected path exists and
+    the failure is localized to ranking/selection behavior plus missing
+    relationship strength
+- Recommended next route:
+  - ask Ryan to authorize one focused correction slice
+  - correction should make direct edit/contract anchors beat saturated helper
+    support when the query names exact implementation or contract surfaces
+  - likely implementation scope: `semantic_scorer.py`,
+    `semantic_optimizer.py`, focused scorer/optimizer tests, and a Task 1
+    regression check
+  - correction must avoid Task 1-specific overfit and avoid making internal
+    eval evidence package-root public API
+- Acceptance status: diagnosis accepted; correction not yet authorized
+
 ## 2026-05-17 -- Task 1 Failure Diagnosis Authorized
 
 - Ryan agreed that the failed Task 1 checkpoint must not be bypassed.
