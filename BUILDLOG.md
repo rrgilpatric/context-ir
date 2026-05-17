@@ -2,6 +2,49 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Exact-Identifier Edit Anchor Push
+
+- Ryan explicitly authorized push for the exact identifier edit-anchor release.
+- Pushed commits:
+  - `2a8cf10 Add exact identifier edit anchor`
+  - `edf8e55 Sync identifier anchor local release routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `edf8e55 Sync identifier anchor local release routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+- Release evidence:
+  - scorer applies a bounded exact identifier edit floor for code-like
+    identifier mentions only
+  - exact floor is limited to resolved function, async-function, class, and
+    method candidates
+  - leading-underscore names such as `_selected_unit_metadata`, qualified
+    names, digit-bearing names, and multi-part Camel/Pascal names can anchor
+  - single Titlecase command/prose words such as `Fix` remain unanchored
+  - unqualified non-leading snake_case names such as `probe_directory` and
+    `probe_namespace` remain unanchored in this pilot
+  - exact real-repo budget-`220` smoke selected:
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+  - no eval fixture, run-spec, task, optimizer, compiler, provider, runtime,
+    public docs/claims, MCP/API/schema/config, package export, or demo artifact
+    widening was included
+- Release state:
+  - accepted in workspace: yes, after 2 corrections
+  - release-unit audit cleared: yes, first-pass after second correction
+  - full-regression cleared: yes, first-pass after second correction with
+    `1693 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes
+  - pushed: yes, with explicit Ryan authorization
+- Next route:
+  - run the next post-push real-repo value checkpoint on the pushed scorer
+    targeting release before any demo/report artifact or public claim work
+  - broad fixture-by-fixture expansion remains paused unless Ryan reauthorizes
+    it
+- Acceptance status: pushed
+
 ## 2026-05-17 -- Exact-Identifier Edit Anchor Second Correction Accepted
 
 - Reviewed the second correction for the exact-identifier edit-anchor
@@ -42,8 +85,9 @@ Most recent supersession entries override older architectural decisions when the
   - commit-gating passed first-pass after the final routing correction
   - source/test commit created locally:
     `2a8cf10 Add exact identifier edit anchor`
-  - after this local continuity sync commit, wait for Ryan push authorization
-  - push remains Ryan-gated
+  - local release routing commit created and pushed:
+    `edf8e55 Sync identifier anchor local release routing`
+  - pushed with explicit Ryan authorization
 - Acceptance status: 2 corrections
 
 ## 2026-05-16 -- Exact-Identifier Edit Anchor Full Regression Held

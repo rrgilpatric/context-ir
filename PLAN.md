@@ -41,11 +41,52 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`77424ca Sync optimizer render push routing`. The latest pushed
+`edf8e55 Sync identifier anchor local release routing`. The latest pushed
 source/contract authority is
-`204173a Optimize semantic compile candidate selection`. Live git refs and
+`2a8cf10 Add exact identifier edit anchor`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Pushed exact identifier edit-anchor release:
+`2a8cf10 Add exact identifier edit anchor`. This commit contains the accepted,
+audit-cleared, full-regression-cleared, commit-gating-cleared, locally
+committed, and pushed scorer targeting release unit. It was pushed with
+explicit Ryan authorization through
+`edf8e55 Sync identifier anchor local release routing`. Do not route `2a8cf10`
+or `edf8e55` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
+
+Pushed exact identifier edit-anchor release evidence:
+
+- scorer now applies a bounded exact identifier edit floor for code-like
+  identifier mentions only
+- exact floor remains limited to resolved function, async-function, class, and
+  method candidates
+- leading-underscore names such as `_selected_unit_metadata` can anchor
+- qualified names, digit-bearing names, and multi-part Camel/Pascal names can
+  anchor
+- bare single Titlecase command/prose words such as `Fix` do not anchor
+- unqualified non-leading snake_case names such as `probe_directory` and
+  `probe_namespace` do not receive the exact edit floor in this pilot
+- exact real-repo budget-`220` smoke selected:
+  `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+- no eval fixtures, run specs, tasks, optimizer, compiler, provider, runtime,
+  public docs/claims, MCP/API/schema/config, package export, or benchmark/demo
+  artifacts were widened
+- release state:
+  - accepted in workspace: yes, after 2 corrections
+  - release-unit audit cleared: yes, first-pass after second correction
+  - full-regression cleared: yes, first-pass after second correction with
+    `1693 passed`
+  - commit-gating cleared: yes, first-pass
+  - source/test locally committed: yes, `2a8cf10`
+  - local release routing committed: yes, `edf8e55`
+  - pushed: yes, with explicit Ryan authorization
+- next route:
+  - run the next post-push real-repo value checkpoint on the pushed scorer
+    targeting release before any demo/report artifact or public claim work
+  - broad fixture-by-fixture expansion remains paused unless Ryan reauthorizes
+    it
 
 Pushed optimizer/render latency release:
 `204173a Optimize semantic compile candidate selection`. This commit contains
@@ -84,8 +125,7 @@ Pushed optimizer/render latency release evidence:
   - locally committed: yes, `204173a`
   - pushed: yes, with explicit Ryan authorization
 - next route:
-  - wait for Ryan push authorization for the exact identifier edit-anchor
-    release commits
+  - superseded by the pushed exact identifier edit-anchor release route above
   - do not proceed to demo/report artifact or public claim work yet
 
 Accepted targeting/budget research spike after optimizer/render release:
@@ -296,11 +336,13 @@ Workspace-only exact-identifier edit-anchor second correction acceptance:
     `1693 passed`
   - commit-gating cleared: yes, first-pass after final routing correction
   - source/test locally committed: yes, `2a8cf10 Add exact identifier edit anchor`
-  - local continuity sync: this continuity commit
-  - pushed: no
+  - local release routing committed: yes,
+    `edf8e55 Sync identifier anchor local release routing`
+  - pushed: yes, with explicit Ryan authorization
 - next route:
-  - wait for Ryan push authorization
-  - push remains Ryan-gated
+  - post-push continuity sync records this release as pushed
+  - next substantive route is the pushed exact identifier edit-anchor release
+    route in the canonical active release-state block
 
 Pushed source-discovery hygiene release:
 `7261d02 Add eligible Python source discovery`. This commit contains the
