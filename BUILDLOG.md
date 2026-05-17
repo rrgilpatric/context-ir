@@ -2,6 +2,26 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Selected-Unit Runtime Accounting Local Commit Created
+
+- Created the local release commit for the selected-unit runtime accounting
+  slice after release-unit audit, full regression, and commit-gating cleared.
+- Local release commit:
+  - `8efec26 Add selected-unit runtime accounting`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass with `1697 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes
+  - pushed: no
+- Push remains Ryan-gated.
+- Next route:
+  - wait for explicit Ryan push authorization before pushing
+  - do not issue the `eval_evidence.py` catalog implementation slice until this
+    release is pushed or Ryan explicitly changes release sequencing
+- Acceptance status: locally committed; push pending Ryan authorization
+
 ## 2026-05-17 -- Selected-Unit Runtime Accounting Audit Cleared
 
 - Reviewed the read-only release-unit audit result for the selected-unit runtime

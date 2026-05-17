@@ -268,7 +268,7 @@ Workspace-accepted selected-unit runtime accounting release unit:
   - release-unit audit cleared: yes, first-pass
   - full-regression cleared: yes, first-pass with `1697 passed`
   - commit-gating cleared: yes, first-pass
-  - locally committed: no
+  - locally committed: yes, `8efec26 Add selected-unit runtime accounting`
   - pushed: no
 - audit evidence:
   - read-only release-unit audit returned PASS with no findings
@@ -282,8 +282,9 @@ Workspace-accepted selected-unit runtime accounting release unit:
   - actual `oracle_signal_hasattr_probe` summary join was verified as
     `('unsupported:call:main.py:2:11', 'attribute_present', 'true', 2)`
 - next required action:
-  - local commit creation for the exact four-file release unit
-  - push remains Ryan-gated even after any local commit
+  - wait for explicit Ryan push authorization
+  - do not issue the `eval_evidence.py` catalog implementation slice until this
+    release is pushed or Ryan explicitly changes release sequencing
 
 Pushed optimizer/render latency release:
 `204173a Optimize semantic compile candidate selection`. This commit contains
