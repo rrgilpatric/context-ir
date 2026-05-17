@@ -41,11 +41,20 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`0145ef6 Sync semantic eval evidence push routing`. The latest pushed
-source/contract authority is
+`36227e9 Sync task 0 evidence bundle local routing`. The latest pushed
+source/contract authority remains
 `fc2ddc6 Integrate compact eval evidence into semantic context`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Pushed Task 0 product-differentiation evidence bundle release:
+`9407d63 Add task 0 differentiation evidence bundle`. This commit contains
+the accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed internal evidence bundle for Task 0 of the
+product-differentiation portfolio. It was pushed with explicit Ryan
+authorization through `36227e9 Sync task 0 evidence bundle local routing`. Do
+not route `9407d63` or `36227e9` back to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
 Pushed semantic eval-evidence integration release:
 `fc2ddc6 Integrate compact eval evidence into semantic context`. This commit
@@ -256,7 +265,7 @@ Ryan-approved Task 0 evidence bundle slice:
   - only after acceptance decide whether to run Task 1 as the next sequential
     portfolio slice
 
-Workspace-accepted Task 0 evidence bundle release unit:
+Pushed Task 0 evidence bundle release unit:
 
 - release unit files:
   - `PLAN.md`
@@ -312,7 +321,16 @@ Workspace-accepted Task 0 evidence bundle release unit:
   - full-regression cleared: yes, first-pass with `1714 passed`
   - commit-gating cleared: yes, first-pass
   - locally committed: yes, `9407d63 Add task 0 differentiation evidence bundle`
-  - pushed: no
+  - local release routing committed: yes,
+    `36227e9 Sync task 0 evidence bundle local routing`
+  - pushed: yes, with explicit Ryan authorization
+- push evidence:
+  - before push, branch `main` was ahead of `origin/main` by six local commits
+  - Ryan explicitly authorized push
+  - `git push origin main` succeeded, advancing remote `main` from `0145ef6`
+    to `36227e9`
+  - after push, local `HEAD` and `origin/main` both resolved to `36227e9`
+  - worktree, index, and untracked files were clean
 - local commit evidence:
   - staged exactly the six-file evidence bundle release unit
   - verified staged file set, no unstaged files, no untracked files, and
@@ -364,9 +382,11 @@ Workspace-accepted Task 0 evidence bundle release unit:
       no-broad-superiority wording checks
     - artifact trailing-whitespace/final-newline hygiene
 - next route:
-  - commit this local routing sync
-  - wait for explicit Ryan authorization before pushing local commits
-  - do not run Tasks 1-3 or update public/demo claims until push state is clear
+  - Task 0 bundle is pushed and should not be reopened absent new findings
+  - next authorized portfolio move is Task 1 only: compact eval evidence
+    discovery/rendering checkpoint at primary budget `260`, ceiling `360`
+  - do not run Tasks 2-3 or update public/demo claims before Task 1 is run,
+    reviewed, and accepted
 
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the

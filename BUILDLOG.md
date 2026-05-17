@@ -2,6 +2,38 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 0 Evidence Bundle Push Completed
+
+- Ryan explicitly authorized push for the Task 0 product-differentiation
+  evidence bundle release.
+- Pushed commits:
+  - `d560936 Record strong evidence checkpoint`
+  - `e014400 Route product differentiation proof plan`
+  - `35192bd Accept product differentiation proof plan`
+  - `64203e5 Approve task 0 evidence bundle slice`
+  - `9407d63 Add task 0 differentiation evidence bundle`
+  - `36227e9 Sync task 0 evidence bundle local routing`
+- Push evidence:
+  - before push, branch `main` was ahead of `origin/main` by six local commits
+  - `git push origin main` succeeded and advanced remote `main` from
+    `0145ef6` to `36227e9`
+  - after push, local `HEAD` and `origin/main` both resolved to `36227e9`
+  - worktree, index, and untracked files were clean
+- Release state:
+  - Task 0 evidence bundle accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass with `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - source/continuity locally committed: yes, through `36227e9`
+  - pushed: yes, with explicit Ryan authorization
+- Next route:
+  - Task 0 bundle is pushed and should not be reopened absent new findings
+  - next authorized portfolio move is Task 1 only: compact eval evidence
+    discovery/rendering checkpoint at primary budget `260`, ceiling `360`
+  - do not run Tasks 2-3 or update public/demo claims before Task 1 is run,
+    reviewed, and accepted
+- Acceptance status: pushed
+
 ## 2026-05-17 -- Task 0 Evidence Bundle Local Commit Created
 
 - Created the local Task 0 evidence bundle release commit after audit, full
