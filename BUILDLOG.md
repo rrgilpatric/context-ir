@@ -2,6 +2,103 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Eval Evidence Catalog Discovery Audit Cleared
+
+- Reviewed the read-only release-unit audit result for the eval evidence catalog
+  discovery slice.
+- Result: audit-cleared.
+- Audit result: PASS.
+- Findings: none.
+- Release-unit files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_evidence.py`
+  - `tests/test_eval_evidence.py`
+- Audit evidence:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to `46b4d19`
+  - no staged files
+  - dirty/untracked set remained limited to the four release-unit files
+  - no integration into compiler, renderer, scorer, optimizer,
+    provider/runtime paths, package root, public claims, fixtures, tasks, or run
+    specs was present
+  - validation rerun passed:
+    - `git diff --check`
+    - `ruff check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `ruff format --check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `mypy --strict src/`
+    - `pytest tests/test_eval_evidence.py tests/test_eval_oracles.py tests/test_eval_runs.py -v`
+  - scratch catalog check confirmed `26` records,
+    `attribute_present=true` for `oracle_signal_hasattr_probe`, and
+    `evaluation_outcome=returned_value` for `oracle_signal_eval_probe`
+- Next route:
+  - full regression cleared after audit:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1708 passed`
+  - commit-gating cleared first-pass:
+    - dirty/untracked set was exactly the four release-unit files
+    - no staged files
+    - `git diff --check` passed
+  - do not push without explicit Ryan authorization
+- Acceptance status: release-unit audit, full regression, and commit-gating
+  cleared
+
+## 2026-05-17 -- Eval Evidence Catalog Discovery Slice Accepted
+
+- Reviewed the implementation slice that adds static eval runtime evidence
+  catalog discovery.
+- Result: accepted in workspace.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_evidence.py`
+  - `tests/test_eval_evidence.py`
+- Behavior accepted:
+  - `discover_eval_runtime_evidence(...)` builds a deterministic internal
+    catalog from existing eval task, fixture runtime-observation, and run-spec
+    assets
+  - current repo assets produce `26` compact runtime evidence records
+  - runtime family names derive from observation-list keys without the
+    `_runtime_observations` suffix
+  - each observation joins to exactly one task by `fixture_id`
+  - each observation joins to exactly one unsupported selector by file path and
+    construct/source snippet
+  - each task joins to run specs referencing its task path
+  - unsupported/opaque remains primary truth and runtime evidence is rendered as
+    additive
+  - `oracle_signal_hasattr_probe` evidence includes `attribute_present=true`
+  - `oracle_signal_eval_probe` evidence includes `evaluation_outcome=returned_value`
+  - malformed joins, duplicate evidence IDs, and duplicate or malformed
+    normalized payload fields fail closed with `EvalEvidenceError`
+- Control review evidence:
+  - live git state during review: branch `main`, local `HEAD` and `origin/main`
+    both resolved to `46b4d19`
+  - no staged files
+  - dirty set before this continuity update was exactly the two untracked
+    implementation files
+  - focused validation rerun passed:
+    - `ruff check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `ruff format --check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `mypy --strict src/`
+    - `pytest tests/test_eval_evidence.py tests/test_eval_oracles.py tests/test_eval_runs.py -v`
+    - `git diff --check`
+  - scratch catalog check confirmed `26` records and compact render output for
+    `hasattr`, `eval`, and `metaclass_behavior`
+- Boundary:
+  - no eval fixture, task, run-spec, provider, runtime/probe worker, compiler,
+    semantic type, renderer, scorer, optimizer, summary/report, public
+    docs/claims, MCP/API/schema/config, package-root export, or demo/report
+    artifact changes are included
+  - this slice does not make eval evidence selectable by the compiler yet
+  - this slice does not prove the budget-`220` evidence-path checkpoint yet
+- Next route:
+  - run a read-only release-unit audit over the exact four-file unit
+  - do not stage, commit, push, or issue the semantic integration slice until
+    this unit clears the release gate
+- Acceptance status: first-pass workspace acceptance
+
 ## 2026-05-17 -- Selected-Unit Runtime Accounting Push
 
 - Ryan explicitly authorized push for the selected-unit runtime accounting

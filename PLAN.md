@@ -239,10 +239,64 @@ Accepted compact eval-evidence design spike:
 - next route:
   - selected-unit runtime attachment accounting is pushed as the first
     implementation slice
-  - continue to the `eval_evidence.py` catalog discovery implementation slice
-    as the next compact eval-evidence path prerequisite
+  - `eval_evidence.py` catalog discovery is accepted in workspace as the second
+    implementation slice
+  - run a read-only release-unit audit over the exact accepted four-file catalog
+    discovery unit before full regression, commit-gating, staging, local commit
+    creation, or push
   - do not proceed to north-star demo/report/public-claim work until the full
     evidence-path checkpoint passes
+
+Workspace-accepted eval evidence catalog discovery release unit:
+
+- release unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_evidence.py`
+  - `tests/test_eval_evidence.py`
+- accepted behavior:
+  - `discover_eval_runtime_evidence(...)` builds deterministic compact runtime
+    evidence records from existing eval task, fixture runtime-observation, and
+    run-spec assets
+  - current repo assets produce `26` catalog records
+  - `oracle_signal_hasattr_probe` compact evidence includes
+    `attribute_present=true`
+  - `oracle_signal_eval_probe` compact evidence includes
+    `evaluation_outcome=returned_value`
+  - unsupported/opaque remains primary truth and runtime evidence remains
+    additive
+  - missing or ambiguous joins and malformed payloads fail closed
+- review evidence:
+  - focused validation rerun passed:
+    - `ruff check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `ruff format --check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `mypy --strict src/`
+    - `pytest tests/test_eval_evidence.py tests/test_eval_oracles.py tests/test_eval_runs.py -v`
+    - `git diff --check`
+  - scratch catalog check confirmed `26` records and compact render output for
+    `hasattr`, `eval`, and `metaclass_behavior`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full-regression cleared: yes, first-pass with `1708 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: no
+  - pushed: no
+- audit evidence:
+  - read-only release-unit audit returned PASS with no findings
+  - dirty/untracked set remained limited to the four release-unit files
+  - validation rerun passed:
+    - `git diff --check`
+    - `ruff check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `ruff format --check src/context_ir/eval_evidence.py tests/test_eval_evidence.py`
+    - `mypy --strict src/`
+    - `pytest tests/test_eval_evidence.py tests/test_eval_oracles.py tests/test_eval_runs.py -v`
+  - scratch catalog check confirmed `26` records,
+    `attribute_present=true` for `oracle_signal_hasattr_probe`, and
+    `evaluation_outcome=returned_value` for `oracle_signal_eval_probe`
+- next required action:
+  - local commit creation for the exact four-file release unit
+  - push remains Ryan-gated even after any local commit
 
 Pushed selected-unit runtime accounting release unit:
 
