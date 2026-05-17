@@ -311,8 +311,16 @@ Workspace-accepted Task 0 evidence bundle release unit:
   - release-unit audit cleared: yes, first-pass
   - full-regression cleared: yes, first-pass with `1714 passed`
   - commit-gating cleared: yes, first-pass
-  - locally committed: no
+  - locally committed: yes, `9407d63 Add task 0 differentiation evidence bundle`
   - pushed: no
+- local commit evidence:
+  - staged exactly the six-file evidence bundle release unit
+  - verified staged file set, no unstaged files, no untracked files, and
+    `git diff --cached --check` before commit
+  - created local artifact release commit
+    `9407d63 Add task 0 differentiation evidence bundle`
+  - after commit, local `HEAD` resolved to `9407d63`, `origin/main` remained
+    `0145ef6`, and the branch was ahead by five local commits
 - commit-gating evidence:
   - live state during commit-gating remained branch `main`, local `HEAD`
     `64203e5`, and `origin/main` `0145ef6`
@@ -356,10 +364,9 @@ Workspace-accepted Task 0 evidence bundle release unit:
       no-broad-superiority wording checks
     - artifact trailing-whitespace/final-newline hygiene
 - next route:
-  - stage exactly the six-file evidence bundle release unit and create the
-    local artifact release commit
-  - do not push, run Tasks 1-3, or update public/demo claims until local commit
-    state is clear and Ryan authorizes push
+  - commit this local routing sync
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Tasks 1-3 or update public/demo claims until push state is clear
 
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the

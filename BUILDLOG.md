@@ -2,6 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 0 Evidence Bundle Local Commit Created
+
+- Created the local Task 0 evidence bundle release commit after audit, full
+  regression, and commit-gating cleared.
+- Commit:
+  - `9407d63 Add task 0 differentiation evidence bundle`
+- Pre-commit evidence:
+  - staged exactly the six-file evidence bundle release unit
+  - no unstaged files
+  - no untracked files
+  - `git diff --cached --check` was clean
+- Post-commit evidence:
+  - local `HEAD` resolved to `9407d63`
+  - `origin/main` remained `0145ef6`
+  - branch `main` was ahead of `origin/main` by five local commits
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass with `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `9407d63`
+  - pushed: no
+- Next route:
+  - commit this local routing sync
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Tasks 1-3 or update public/demo claims until push state is clear
+- Acceptance status: locally committed
+
 ## 2026-05-17 -- Task 0 Evidence Bundle Commit-Gating Cleared
 
 - Performed commit-gating review for the audit-cleared and
