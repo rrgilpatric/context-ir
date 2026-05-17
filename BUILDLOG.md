@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 1 Ranking Correction Authorized
+
+- Ryan authorized the focused correction slice recommended by the accepted
+  Task 1 failure diagnosis.
+- Scope authority:
+  - one implementation slice only
+  - target the scorer/optimizer support-saturation failure
+  - preserve the Task 1 proof standard and declared budgets
+- Required correction shape:
+  - make direct edit/contract anchors beat saturated helper support when the
+    query names exact implementation or contract surfaces
+  - keep the behavior general to support-saturation and direct contract/edit
+    anchors, not a one-off Task 1 overfit
+  - preserve internal eval evidence boundaries and do not make internal eval
+    evidence package-root public API
+- Expected implementation scope:
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - focused scorer/optimizer tests
+  - a Task 1 regression check
+- Explicit holds:
+  - do not run Tasks 2-3
+  - do not update `evals/product_differentiation/portfolio_001/`
+  - do not update demo/report/public claims
+  - do not modify providers, runtime support, compiler contracts, eval assets,
+    package-root exports, MCP/API/schema/config, or benchmark claims
+- Stop condition:
+  - if the focused correction cannot make Task 1 pass under the declared
+    budgets, pause strategy rather than continuing the portfolio
+- Acceptance status: correction authorized
+
 ## 2026-05-17 -- Task 1 Failure Diagnosis Accepted
 
 - Reviewed the read-only Task 1 failure diagnosis.

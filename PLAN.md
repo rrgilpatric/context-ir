@@ -114,14 +114,16 @@ Task 1 portfolio checkpoint returned FAIL and now controls routing:
     - `SemanticEvalRuntimeEvidence` exists as an internal semantic contract
     - package-root `context_ir.__all__` does not export those internal types
   - hold Tasks 2-3 and any demo/report/public-claim advancement
-  - next recommended move is a focused implementation correction, but it
-    requires explicit Ryan authorization before issuing:
+  - Ryan authorized one focused implementation correction:
     - make direct edit/contract anchors beat saturated helper support when the
       query names exact implementation or contract surfaces
     - keep the correction general to support-saturation behavior, not a
       one-off Task 1 overfit
     - likely scope: `semantic_scorer.py`, `semantic_optimizer.py`, focused
       scorer/optimizer tests, and a Task 1 regression check
+    - do not update product-differentiation artifacts, public/demo claims,
+      providers, runtime support, compiler contracts, package-root exports, or
+      eval assets in this slice
   - if a focused correction cannot make Task 1 pass under the declared budgets,
     pause strategy rather than continuing the portfolio
 
