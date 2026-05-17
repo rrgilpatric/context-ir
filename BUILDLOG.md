@@ -2,6 +2,26 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Eval Evidence Catalog Discovery Local Commit Created
+
+- Created the local release commit for the eval evidence catalog discovery slice
+  after release-unit audit, full regression, and commit-gating cleared.
+- Local release commit:
+  - `241f7ea Add eval evidence catalog discovery`
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass with `1708 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes
+  - pushed: no
+- Push remains Ryan-gated.
+- Next route:
+  - wait for explicit Ryan push authorization before pushing
+  - do not issue the semantic eval-evidence integration slice until this
+    release is pushed or Ryan explicitly changes release sequencing
+- Acceptance status: locally committed; push pending Ryan authorization
+
 ## 2026-05-17 -- Eval Evidence Catalog Discovery Audit Cleared
 
 - Reviewed the read-only release-unit audit result for the eval evidence catalog

@@ -280,7 +280,7 @@ Workspace-accepted eval evidence catalog discovery release unit:
   - release-unit audit cleared: yes, first-pass
   - full-regression cleared: yes, first-pass with `1708 passed`
   - commit-gating cleared: yes, first-pass
-  - locally committed: no
+  - locally committed: yes, `241f7ea Add eval evidence catalog discovery`
   - pushed: no
 - audit evidence:
   - read-only release-unit audit returned PASS with no findings
@@ -295,8 +295,9 @@ Workspace-accepted eval evidence catalog discovery release unit:
     `attribute_present=true` for `oracle_signal_hasattr_probe`, and
     `evaluation_outcome=returned_value` for `oracle_signal_eval_probe`
 - next required action:
-  - local commit creation for the exact four-file release unit
-  - push remains Ryan-gated even after any local commit
+  - wait for explicit Ryan push authorization
+  - do not issue the semantic eval-evidence integration slice until this
+    release is pushed or Ryan explicitly changes release sequencing
 
 Pushed selected-unit runtime accounting release unit:
 
