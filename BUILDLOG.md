@@ -2,6 +2,212 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Exact-Identifier Edit Anchor Second Correction Accepted
+
+- Reviewed the second correction for the exact-identifier edit-anchor
+  full-regression hold.
+- Result: accepted in workspace after 2 corrections.
+- Accepted release-unit files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Corrected behavior:
+  - leading-underscore exact anchors such as `_selected_unit_metadata` remain
+    supported
+  - qualified-name anchors such as `main.probe_directory` remain supported
+  - digit-bearing anchors remain supported
+  - multi-part Camel/Pascal anchors such as `EvalSelectedUnit` remain supported
+  - bare single Titlecase command/prose words such as `Fix` remain unanchored
+  - unqualified non-leading snake_case names such as `probe_directory` and
+    `probe_namespace` no longer receive the exact edit floor in this pilot
+- Control validation:
+  - live repo state verified: branch `main`, local `HEAD` and `origin/main`
+    both `77424ca`, no staged files, no untracked files
+  - `git diff --check` passed
+  - ruff check passed over touched scorer/test, semantic optimizer, eval
+    provider, dir-zero eval-signal, and vars-TypeError eval-signal tests
+  - ruff format check passed over the same paths
+  - strict mypy passed over `src/`
+  - focused pytest passed with `70 passed`, including the three previously
+    failing eval-signal tests
+  - exact real-repo budget-`220` smoke passed in `110.879s`, with total tokens
+    `218 / 220`, selected count `10`, and target selected:
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+- Release-state recommendation:
+  - release-unit audit passed first-pass after the second correction
+  - full regression passed first-pass after the second correction:
+    `ruff check src/ tests/`, `ruff format --check src/ tests/`,
+    `mypy --strict src/`, and `pytest tests/ -v` with `1693 passed`
+  - commit-gating passed first-pass after the final routing correction
+  - source/test commit created locally:
+    `2a8cf10 Add exact identifier edit anchor`
+  - after this local continuity sync commit, wait for Ryan push authorization
+  - push remains Ryan-gated
+- Acceptance status: 2 corrections
+
+## 2026-05-16 -- Exact-Identifier Edit Anchor Full Regression Held
+
+- Ran full regression after the exact-identifier edit-anchor release-unit audit
+  passed.
+- Passed gates before full pytest:
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+- Full pytest result:
+  - `1687 passed`
+  - `3 failed`
+- Failing tests:
+  - `tests/test_eval_signal_dir_zero_probe.py::test_dir_zero_probe_run_executes_with_additive_runtime_provenance`
+  - `tests/test_eval_signal_vars_type_error_probe.py::test_vars_type_error_probe_run_preserves_additive_runtime_fields`
+  - `tests/test_eval_signal_vars_type_error_probe.py::test_vars_type_error_probe_summary_keeps_runtime_additive`
+- Finding:
+  - the exact identifier anchor remains too broad for the intended release unit
+  - unqualified snake_case names in existing eval run-spec queries, including
+    `probe_directory` and `probe_namespace`, now receive exact edit-anchor
+    treatment
+  - that changes existing context-ir selected-unit ordering/composition in the
+    dir-zero and vars-TypeError eval probes
+  - accepting those new outputs would widen existing eval behavior/evidence
+    beyond the intended `_selected_unit_metadata` targeting pilot
+- Recommended next action:
+  - issue one narrow scorer correction that preserves the real-repo
+    `_selected_unit_metadata` smoke pass while avoiding unqualified snake_case
+    anchor effects on existing oracle eval fixture queries
+  - do not update eval expectations to match the broader behavior without an
+    explicit Ryan-approved scope expansion
+  - rerun focused validation and then full regression from the top
+- Acceptance status: held
+
+## 2026-05-16 -- Exact-Identifier Edit Anchor Correction Accepted
+
+- Reviewed the returned correction for the exact-identifier edit-anchor false
+  positive.
+- Result: accepted in workspace after 1 correction.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Corrected behavior:
+  - exact identifier anchors still qualify through `_`, `.`, digits, or
+    multi-part Camel/Pascal shape
+  - bare single Titlecase command/prose words such as `Fix` no longer qualify
+    solely because they are capitalized
+  - exact anchors remain limited to function/class/method symbol names or
+    qualified names
+  - imported names, locals, attributes, arbitrary prose, and substrings remain
+    unanchored
+- Control validation:
+  - live repo state verified: branch `main`, local `HEAD` and `origin/main`
+    both `77424ca`, no staged files, no untracked files
+  - corrected false-positive repro: query
+    `Fix _selected_unit_metadata EvalSelectedUnit` gave `main.Fix`
+    `p_edit=0.046667`, `main._selected_unit_metadata` `p_edit=1.0`, and
+    `main.EvalSelectedUnit` `p_edit=1.0`
+  - ruff check passed over touched scorer/test plus semantic optimizer and eval
+    provider tests
+  - ruff format check passed over the same paths
+  - strict mypy passed over `src/`
+  - focused pytest passed with `50 passed`
+  - exact real-repo budget-`220` smoke passed in `132.343s`, with
+    total tokens `218 / 220`, selected count `10`, and target selected:
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+  - `git diff --check` passed
+- Release-state recommendation:
+  - release-unit audit passed first-pass with no findings
+  - proceed to full regression, then commit-gating
+  - do not stage, commit, or push before those gates clear
+  - push remains Ryan-gated
+- Acceptance status: 1 correction
+
+## 2026-05-16 -- Exact-Identifier Edit Anchor Implementation Held
+
+- Reviewed the returned exact-identifier edit-anchor implementation slice for
+  `src/context_ir/semantic_scorer.py` and `tests/test_semantic_scorer.py`.
+- Reported implementation result:
+  - exact raw identifier mentions can apply a `p_edit=1.0` floor to exact
+    function/class/method symbol names or qualified names
+  - imported names, locals, attributes, substrings, and plain lowercase prose
+    were intended to remain unboosted
+  - exact real-repo budget-`220` smoke selected
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+    with total tokens `218 / 220`
+- Control review finding:
+  - `src/context_ir/semantic_scorer.py` treats any uppercase token as a
+    code-like identifier mention
+  - sentence-start prose such as `Fix` can therefore become an exact identifier
+    anchor
+  - temporary repro with `def Fix()` and `def _selected_unit_metadata()` showed
+    query `Fix _selected_unit_metadata` assigning `p_edit=1.0` to both symbols
+  - that violates the slice boundary that the anchor must not apply to
+    arbitrary words
+- Ryan agreed with the finding.
+- Recommended next action:
+  - issue one narrow correction preserving the intended snake_case target
+    behavior while preventing single Titlecase prose tokens such as `Fix` or
+    `Update` from triggering the exact-identifier edit floor
+  - add focused regression coverage for the false-anchor case
+  - rerun focused validation, `git diff --check`, and the exact real-repo
+    budget-`220` smoke requiring `_selected_unit_metadata` selected
+- Acceptance status: held
+
+## 2026-05-16 -- Targeting/Budget Research Spike After Optimizer Release
+
+- Reviewed the read-only targeting/budget research spike after the pushed
+  optimizer/render latency release.
+- Result: accepted as routing evidence.
+- Findings:
+  - the real-repo miss is a targeting/ranking issue, not a
+    metadata/report-serialization defect
+  - exact real-repo budget-`220` compile completes but still omits the target
+    function
+- Repo truth:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `77424ca Sync optimizer render push routing`
+  - worktree was clean before this control-state update
+- Exact real-repo compile evidence:
+  - query:
+    `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+  - budget: `220`
+  - elapsed: about `135.552s`
+  - total tokens: `218 / 220`
+  - selected units: `6`
+  - target selected: no
+  - target omitted: yes
+- Target evidence:
+  - target:
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+  - score: `p_edit=0.305577`, `p_support=0.114591`
+  - ranks: final strongest-score `186`, edit-rank `23`, direct-edit-rank
+    `20`, support-rank `3040`
+  - render costs: identity `70`, summary `32`, source `287`
+  - target has no incoming dependency support and points outward only to
+    `EvalSelectedUnit`
+- Root cause classification:
+  - primarily scorer/optimizer interaction
+  - dependency-propagated `p_support` saturates helper/test units
+  - no-focus optimizer ordering ranks by `max(p_edit, p_support)` before edit
+    intent, allowing support-heavy helper noise into the pack
+  - scorer does not strongly anchor raw exact identifiers such as
+    `_selected_unit_metadata` even when the identifier appears literally in the
+    query
+  - not caused by compiler binary search, selected-unit metadata serialization,
+    eval ledger serialization, or report accounting
+- Recommended next slice pending Ryan authorization:
+  - add a narrow exact-identifier edit anchor for raw symbol names in queries,
+    especially snake_case names such as `_selected_unit_metadata`
+  - likely files: `src/context_ir/semantic_scorer.py`,
+    `tests/test_semantic_scorer.py`, and possibly
+    `tests/test_semantic_optimizer.py`
+  - require the exact real-repo budget-`220` smoke to select the target within
+    budget
+  - keep eval assets, providers, runtime support, MCP/API/schema/config,
+    public docs/claims, package exports, benchmark/demo artifacts, and broad
+    ranking rewrites out of scope
+- Acceptance status: first-pass spike acceptance
+
 ## 2026-05-16 -- Optimizer/Render Push
 
 - Pushed the audit-cleared, full-regression-cleared, commit-gating-cleared,
