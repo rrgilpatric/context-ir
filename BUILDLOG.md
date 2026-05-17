@@ -2,6 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Eval Evidence Catalog Discovery Push
+
+- Ryan explicitly authorized push for the eval evidence catalog discovery
+  release.
+- Pushed commits:
+  - `241f7ea Add eval evidence catalog discovery`
+  - `4ff58c7 Sync eval evidence catalog local routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `4ff58c7 Sync eval evidence catalog local routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass with `1708 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes
+  - pushed: yes, with explicit Ryan authorization
+- Next route:
+  - continue to the semantic eval-evidence integration slice as the next
+    compact eval-evidence path prerequisite
+  - keep north-star demo/report/public-claim work held until the final
+    budget-`220` evidence-path checkpoint passes
+- Acceptance status: pushed
+
 ## 2026-05-17 -- Eval Evidence Catalog Discovery Local Commit Created
 
 - Created the local release commit for the eval evidence catalog discovery slice

@@ -41,11 +41,20 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`7f7476c Sync selected-unit accounting local routing`. The latest pushed
+`4ff58c7 Sync eval evidence catalog local routing`. The latest pushed
 source/contract authority is
-`8efec26 Add selected-unit runtime accounting`. Live git refs and
+`241f7ea Add eval evidence catalog discovery`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Pushed eval evidence catalog discovery release:
+`241f7ea Add eval evidence catalog discovery`. This commit contains the
+accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed catalog-discovery prerequisite for the compact
+eval-evidence path. It was pushed with explicit Ryan authorization through
+`4ff58c7 Sync eval evidence catalog local routing`. Do not route `241f7ea`
+or `4ff58c7` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
 
 Pushed selected-unit runtime accounting release:
 `8efec26 Add selected-unit runtime accounting`. This commit contains the
@@ -247,7 +256,7 @@ Accepted compact eval-evidence design spike:
   - do not proceed to north-star demo/report/public-claim work until the full
     evidence-path checkpoint passes
 
-Workspace-accepted eval evidence catalog discovery release unit:
+Pushed eval evidence catalog discovery release unit:
 
 - release unit files:
   - `PLAN.md`
@@ -281,7 +290,8 @@ Workspace-accepted eval evidence catalog discovery release unit:
   - full-regression cleared: yes, first-pass with `1708 passed`
   - commit-gating cleared: yes, first-pass
   - locally committed: yes, `241f7ea Add eval evidence catalog discovery`
-  - pushed: no
+  - pushed: yes, with explicit Ryan authorization through
+    `4ff58c7 Sync eval evidence catalog local routing`
 - audit evidence:
   - read-only release-unit audit returned PASS with no findings
   - dirty/untracked set remained limited to the four release-unit files
@@ -295,9 +305,10 @@ Workspace-accepted eval evidence catalog discovery release unit:
     `attribute_present=true` for `oracle_signal_hasattr_probe`, and
     `evaluation_outcome=returned_value` for `oracle_signal_eval_probe`
 - next required action:
-  - wait for explicit Ryan push authorization
-  - do not issue the semantic eval-evidence integration slice until this
-    release is pushed or Ryan explicitly changes release sequencing
+  - continue to the semantic eval-evidence integration slice as the next
+    compact eval-evidence path prerequisite
+  - keep north-star demo/report/public-claim work held until the final
+    budget-`220` evidence-path checkpoint passes
 
 Pushed selected-unit runtime accounting release unit:
 
