@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Semantic Eval Evidence Integration Push Completed
+
+- Ryan explicitly authorized push for the semantic eval-evidence integration
+  release.
+- Pushed commits:
+  - `fc2ddc6 Integrate compact eval evidence into semantic context`
+  - `b6be7e5 Sync semantic eval evidence local routing`
+- Push evidence:
+  - before push, branch `main` was ahead of `origin/main` by two commits
+  - `git push origin main` succeeded and advanced remote `main` from
+    `989c8f0` to `b6be7e5`
+  - after push, local `HEAD` and `origin/main` both resolved to `b6be7e5`
+  - worktree, index, and untracked files were clean
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full regression cleared: yes, first-pass after corrected audit with
+    `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - source/continuity locally committed: yes, `fc2ddc6` and `b6be7e5`
+  - pushed: yes, with explicit Ryan authorization
+- Next route:
+  - run the post-push evidence-path baseline comparison checkpoint for the
+    exact budget-`220` query
+  - verify whether `context_ir` now proves materially better task context with
+    truthful uncertainty under budget while lexical/import baselines fail or
+    overinclude
+  - keep demo/report/public-claim work held until that checkpoint is reviewed
+    and accepted
+- Acceptance status: pushed
+
 ## 2026-05-17 -- Semantic Eval Evidence Integration Local Commit Created
 
 - Created the local semantic eval-evidence integration release commit after

@@ -41,11 +41,21 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`4ff58c7 Sync eval evidence catalog local routing`. The latest pushed
+`b6be7e5 Sync semantic eval evidence local routing`. The latest pushed
 source/contract authority is
-`241f7ea Add eval evidence catalog discovery`. Live git refs and
+`fc2ddc6 Integrate compact eval evidence into semantic context`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Pushed semantic eval-evidence integration release:
+`fc2ddc6 Integrate compact eval evidence into semantic context`. This commit
+contains the accepted, audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed semantic integration of
+compact eval runtime evidence into context compilation. It was pushed with
+explicit Ryan authorization through
+`b6be7e5 Sync semantic eval evidence local routing`. Do not route `fc2ddc6`
+or `b6be7e5` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
 
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the
@@ -310,7 +320,7 @@ Pushed eval evidence catalog discovery release unit:
   - keep north-star demo/report/public-claim work held until the final
     budget-`220` evidence-path checkpoint passes
 
-Workspace-accepted semantic eval-evidence integration release unit:
+Pushed semantic eval-evidence integration release unit:
 
 - release unit files:
   - `PLAN.md`
@@ -412,7 +422,17 @@ Workspace-accepted semantic eval-evidence integration release unit:
     `1714 passed`
   - commit-gating cleared: yes, first-pass
   - locally committed: yes, `fc2ddc6 Integrate compact eval evidence into semantic context`
-  - pushed: no
+  - local release routing committed: yes,
+    `b6be7e5 Sync semantic eval evidence local routing`
+  - pushed: yes, with explicit Ryan authorization
+- push evidence:
+  - before push, branch `main` was ahead of `origin/main` by two commits:
+    `fc2ddc6` and `b6be7e5`
+  - Ryan explicitly authorized push
+  - `git push origin main` succeeded, advancing remote `main` from `989c8f0`
+    to `b6be7e5`
+  - after push, local `HEAD` and `origin/main` both resolved to `b6be7e5`
+  - worktree, index, and untracked files were clean
 - local commit evidence:
   - staged exactly the corrected 14-file release unit
   - verified staged file set, no unstaged files, no untracked files, and
@@ -486,9 +506,13 @@ Workspace-accepted semantic eval-evidence integration release unit:
   - exact budget-`220` smoke passed with `219 / 220` tokens and selected the
     required full evidence path including `attribute_present=true`
 - next required action:
-  - commit this local routing sync
-  - wait for explicit Ryan authorization before pushing local commits
-  - do not issue the baseline comparison checkpoint until push state is clear
+  - run the post-push evidence-path baseline comparison checkpoint for the
+    exact budget-`220` query
+  - confirm whether `context_ir` now gives materially better task context with
+    truthful uncertainty under budget while lexical/import baselines fail or
+    overinclude
+  - keep demo/report/public-claim work held until that post-push checkpoint is
+    reviewed and accepted
   - keep north-star demo/report/public-claim work held until the final
     evidence-path checkpoint with baselines passes
 
