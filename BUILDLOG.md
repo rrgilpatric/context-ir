@@ -2,6 +2,35 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Semantic Eval Evidence Integration Local Commit Created
+
+- Created the local semantic eval-evidence integration release commit after
+  audit, full regression, and commit-gating cleared.
+- Commit:
+  - `fc2ddc6 Integrate compact eval evidence into semantic context`
+- Pre-commit evidence:
+  - staged exactly the corrected 14-file release unit
+  - no unstaged files
+  - no untracked files
+  - `git diff --cached --check` was clean
+- Post-commit evidence:
+  - local `HEAD` resolved to `fc2ddc6`
+  - `origin/main` remained `989c8f0`
+  - branch `main` was ahead of `origin/main` by one commit
+- Release state:
+  - accepted in workspace: yes, after 1 correction
+  - release-unit audit cleared: yes, first-pass after correction
+  - full regression cleared: yes, first-pass after corrected audit with
+    `1714 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes, `fc2ddc6`
+  - pushed: no
+- Next route:
+  - commit this local routing sync
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not issue the baseline comparison checkpoint until push state is clear
+- Acceptance status: locally committed
+
 ## 2026-05-17 -- Semantic Eval Evidence Integration Commit-Gating Cleared
 
 - Performed commit-gating review for the corrected, audit-cleared, and

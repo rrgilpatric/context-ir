@@ -411,8 +411,16 @@ Workspace-accepted semantic eval-evidence integration release unit:
   - full-regression cleared: yes, first-pass after corrected audit with
     `1714 passed`
   - commit-gating cleared: yes, first-pass
-  - locally committed: no
+  - locally committed: yes, `fc2ddc6 Integrate compact eval evidence into semantic context`
   - pushed: no
+- local commit evidence:
+  - staged exactly the corrected 14-file release unit
+  - verified staged file set, no unstaged files, no untracked files, and
+    `git diff --cached --check` before commit
+  - created local release commit
+    `fc2ddc6 Integrate compact eval evidence into semantic context`
+  - after commit, local `HEAD` resolved to `fc2ddc6`, `origin/main` remained
+    `989c8f0`, and the branch was ahead by one commit
 - commit-gating evidence:
   - live state during commit-gating remained branch `main` with local `HEAD`
     and `origin/main` at `989c8f0`
@@ -478,10 +486,9 @@ Workspace-accepted semantic eval-evidence integration release unit:
   - exact budget-`220` smoke passed with `219 / 220` tokens and selected the
     required full evidence path including `attribute_present=true`
 - next required action:
-  - stage exactly the corrected 14-file release unit and create the local
-    source/continuity release commit
-  - do not push or issue the baseline comparison checkpoint until local commit
-    state is clear and Ryan authorizes push
+  - commit this local routing sync
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not issue the baseline comparison checkpoint until push state is clear
   - keep north-star demo/report/public-claim work held until the final
     evidence-path checkpoint with baselines passes
 
