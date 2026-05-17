@@ -40,14 +40,23 @@ def _resolved_selector_record(
 
 def _selected_unit_record(
     *,
+    unit_id: str | None = None,
     primary_capability_tier: str | None = "statically_proved",
     has_attached_runtime_provenance: bool | None = False,
+    attached_runtime_provenance_record_ids: list[str] | None = None,
 ) -> dict[str, object]:
     """Return one minimal selected-unit payload for summary loading tests."""
-    return {
+    record: dict[str, object] = {
         "primary_capability_tier": primary_capability_tier,
         "has_attached_runtime_provenance": has_attached_runtime_provenance,
     }
+    if unit_id is not None:
+        record["unit_id"] = unit_id
+    if attached_runtime_provenance_record_ids is not None:
+        record["attached_runtime_provenance_record_ids"] = (
+            attached_runtime_provenance_record_ids
+        )
+    return record
 
 
 def _runtime_provenance_record(
@@ -379,6 +388,7 @@ def test_legacy_scalar_only_ledger_loads_and_renders_empty_accounting(
     assert summary.selector_tier_expectation_aggregates == ()
     assert summary.selector_runtime_expectation_aggregates == ()
     assert summary.selected_unit_tier_aggregates == ()
+    assert summary.selected_unit_runtime_outcome_aggregates == ()
     assert summary.runtime_outcome_aggregates == ()
     assert tuple(
         (
@@ -396,8 +406,10 @@ def test_legacy_scalar_only_ledger_loads_and_renders_empty_accounting(
     assert "### Selected Units by Provider" in rendered
     assert "### Selected Units by Provider and Actual Primary Tier" in rendered
     assert "## Runtime Outcome Accounting" in rendered
+    assert "### Selected-Unit Runtime Outcomes" in rendered
+    assert "### Runtime Provenance Outcomes" in rendered
     assert "| provider_alpha | 0 | 0 |" in rendered
-    assert rendered.count("- None") == 5
+    assert rendered.count("- None") == 6
 
 
 def test_task_budget_rows_are_sorted_and_preserve_provider_comparisons(
@@ -742,6 +754,224 @@ def test_runtime_outcome_accounting_uses_normalized_payload_fields(
     assert "| lookup_outcome | returned_value | 1 |" in rendered
 
 
+def test_selected_unit_runtime_outcome_accounting_joins_attached_records(
+    tmp_path: Path,
+) -> None:
+    """Selected-unit runtime outcomes join attached IDs to row runtime records."""
+    ledger_path = _write_ledger_records(
+        tmp_path / "selected_unit_runtime_outcomes.jsonl",
+        [
+            _ledger_record(
+                run_id="run-alpha",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:default-alpha",
+                        lookup_outcome="returned_default_value",
+                    ),
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:error-alpha",
+                        lookup_outcome="raised_attribute_error",
+                    ),
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        unit_id="unit:alpha",
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                        attached_runtime_provenance_record_ids=[
+                            "prov:runtime:default-alpha",
+                            "prov:runtime:error-alpha",
+                        ],
+                    ),
+                    _selected_unit_record(
+                        unit_id="unit:beta",
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                        attached_runtime_provenance_record_ids=[
+                            "prov:runtime:default-alpha"
+                        ],
+                    ),
+                    _selected_unit_record(
+                        unit_id="unit:legacy",
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                    ),
+                ],
+            ),
+            _ledger_record(
+                run_id="run-beta",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:default-beta",
+                        lookup_outcome="returned_default_value",
+                    )
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        unit_id="unit:alpha",
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                        attached_runtime_provenance_record_ids=[
+                            "prov:runtime:default-beta"
+                        ],
+                    )
+                ],
+            ),
+        ],
+    )
+
+    ledger = eval_summary.load_eval_ledger(ledger_path)
+    summary = eval_summary.build_eval_ledger_summary(ledger)
+    rendered = eval_summary.render_eval_ledger_summary(summary)
+
+    first_unit = ledger.records[0].selected_units[0]
+    assert first_unit.unit_id == "unit:alpha"
+    assert first_unit.attached_runtime_provenance_record_ids == (
+        "prov:runtime:default-alpha",
+        "prov:runtime:error-alpha",
+    )
+    assert tuple(
+        (
+            aggregate.selected_unit_id,
+            aggregate.payload_key,
+            aggregate.payload_value,
+            aggregate.runtime_provenance_count,
+        )
+        for aggregate in summary.selected_unit_runtime_outcome_aggregates
+    ) == (
+        ("unit:alpha", "lookup_outcome", "raised_attribute_error", 1),
+        ("unit:alpha", "lookup_outcome", "returned_default_value", 2),
+        ("unit:beta", "lookup_outcome", "returned_default_value", 1),
+    )
+    assert tuple(
+        (
+            aggregate.payload_key,
+            aggregate.payload_value,
+            aggregate.runtime_provenance_count,
+        )
+        for aggregate in summary.runtime_outcome_aggregates
+    ) == (
+        ("lookup_outcome", "raised_attribute_error", 1),
+        ("lookup_outcome", "returned_default_value", 2),
+    )
+    assert tuple(
+        (
+            aggregate.primary_capability_tier,
+            aggregate.selected_unit_count,
+            aggregate.attached_runtime_provenance_count,
+        )
+        for aggregate in summary.selected_unit_tier_aggregates
+    ) == (("unsupported/opaque", 4, 4),)
+    assert "### Selected-Unit Runtime Outcomes" in rendered
+    assert (
+        "| Selected Unit | Payload Key | Payload Value | Runtime Provenance Records |"
+    ) in rendered
+    assert "| unit:alpha | lookup_outcome | returned_default_value | 2 |" in rendered
+    assert "| unit:beta | lookup_outcome | returned_default_value | 1 |" in rendered
+
+
+def test_selected_unit_runtime_ids_without_unit_id_fail_loudly(
+    tmp_path: Path,
+) -> None:
+    """Attached selected-unit runtime IDs require a retained selected-unit ID."""
+    ledger_path = _write_ledger_records(
+        tmp_path / "missing_selected_unit_id.jsonl",
+        [
+            _ledger_record(
+                run_id="run-invalid",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:default",
+                        lookup_outcome="returned_default_value",
+                    )
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                        attached_runtime_provenance_record_ids=["prov:runtime:default"],
+                    )
+                ],
+            )
+        ],
+    )
+
+    with pytest.raises(
+        eval_summary.EvalLedgerError,
+        match=r"selected_units\[0\]\.unit_id",
+    ):
+        eval_summary.load_eval_ledger(ledger_path)
+
+
+def test_selected_unit_runtime_ids_must_join_row_runtime_records(
+    tmp_path: Path,
+) -> None:
+    """Attached selected-unit runtime IDs fail when no row record exists."""
+    ledger_path = _write_ledger_records(
+        tmp_path / "dangling_selected_unit_runtime_id.jsonl",
+        [
+            _ledger_record(
+                run_id="run-invalid",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:default",
+                        lookup_outcome="returned_default_value",
+                    )
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        unit_id="unit:alpha",
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                        attached_runtime_provenance_record_ids=["prov:runtime:missing"],
+                    )
+                ],
+            )
+        ],
+    )
+
+    with pytest.raises(
+        eval_summary.EvalLedgerError,
+        match=r"not present in runtime_provenance_records",
+    ):
+        eval_summary.load_eval_ledger(ledger_path)
+
+
+def test_selected_unit_runtime_id_lists_fail_closed(tmp_path: Path) -> None:
+    """Attached selected-unit runtime ID lists reject duplicate identifiers."""
+    ledger_path = _write_ledger_records(
+        tmp_path / "duplicate_selected_unit_runtime_ids.jsonl",
+        [
+            _ledger_record(
+                run_id="run-invalid",
+                runtime_provenance_records=[
+                    _runtime_provenance_record(
+                        record_id="prov:runtime:default",
+                        lookup_outcome="returned_default_value",
+                    )
+                ],
+                selected_units=[
+                    _selected_unit_record(
+                        unit_id="unit:alpha",
+                        primary_capability_tier="unsupported/opaque",
+                        has_attached_runtime_provenance=True,
+                        attached_runtime_provenance_record_ids=[
+                            "prov:runtime:default",
+                            "prov:runtime:default",
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+
+    with pytest.raises(
+        eval_summary.EvalLedgerError,
+        match=r"must contain unique strings",
+    ):
+        eval_summary.load_eval_ledger(ledger_path)
+
+
 def test_exact_ties_are_preserved_in_summary_and_rendering(tmp_path: Path) -> None:
     """Exact aggregate-score ties are rendered explicitly as ties."""
     ledger_path = _write_ledger_records(
@@ -806,6 +1036,8 @@ def test_markdown_includes_internal_accounting_and_task_budget_sections(
     assert "### Selected Units by Provider" in rendered
     assert "### Selected Units by Provider and Actual Primary Tier" in rendered
     assert "## Runtime Outcome Accounting" in rendered
+    assert "### Selected-Unit Runtime Outcomes" in rendered
+    assert "### Runtime Provenance Outcomes" in rendered
     assert "## Task Budget Results" in rendered
     assert "| Provider | Records | Budget Compliance |" in rendered
     assert rendered.count("- None") >= 1

@@ -50,8 +50,10 @@ class EvalLedgerResolvedSelector:
 class EvalLedgerSelectedUnit:
     """Typed selected-unit capability fields retained for internal accounting."""
 
+    unit_id: str | None
     primary_capability_tier: str | None
     has_attached_runtime_provenance: bool | None
+    attached_runtime_provenance_record_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -164,6 +166,16 @@ class EvalRuntimeOutcomeAggregate:
 
 
 @dataclass(frozen=True)
+class EvalSelectedUnitRuntimeOutcomeAggregate:
+    """Deterministic selected-unit runtime payload outcome counts."""
+
+    selected_unit_id: str
+    payload_key: str
+    payload_value: str
+    runtime_provenance_count: int
+
+
+@dataclass(frozen=True)
 class EvalTaskBudgetProviderResult:
     """Provider comparison metrics for one task and budget slot."""
 
@@ -207,6 +219,9 @@ class EvalLedgerSummary:
     provider_selected_unit_aggregates: tuple[EvalProviderSelectedUnitAggregate, ...]
     provider_selected_unit_tier_aggregates: tuple[
         EvalProviderSelectedUnitTierAggregate, ...
+    ]
+    selected_unit_runtime_outcome_aggregates: tuple[
+        EvalSelectedUnitRuntimeOutcomeAggregate, ...
     ]
     runtime_outcome_aggregates: tuple[EvalRuntimeOutcomeAggregate, ...]
     task_budget_results: tuple[EvalTaskBudgetResult, ...]
@@ -272,6 +287,7 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
     provider_selected_unit_runtime_counts: dict[str, int] = {}
     provider_selected_unit_tier_counts: dict[tuple[str, str], int] = {}
     provider_selected_unit_tier_runtime_counts: dict[tuple[str, str], int] = {}
+    selected_unit_runtime_outcome_counts: dict[tuple[str, str, str], int] = {}
     runtime_outcome_counts: dict[tuple[str, str], int] = {}
 
     for record in ledger.records:
@@ -312,10 +328,55 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
                     runtime_outcome_counts.get(outcome_key, 0) + 1
                 )
 
+        runtime_provenance_records_by_id: (
+            dict[str, EvalLedgerRuntimeProvenanceRecord] | None
+        ) = None
         for selected_unit in record.selected_units:
             provider_selected_unit_counts[record.provider_name] += 1
             if selected_unit.has_attached_runtime_provenance:
                 provider_selected_unit_runtime_counts[record.provider_name] += 1
+            attached_runtime_record_ids = (
+                selected_unit.attached_runtime_provenance_record_ids
+            )
+            if attached_runtime_record_ids:
+                selected_unit_id = selected_unit.unit_id
+                if selected_unit_id is None:
+                    raise EvalLedgerError(
+                        "selected unit with attached runtime provenance must retain "
+                        f"unit_id in run_id '{record.run_id}'"
+                    )
+                if runtime_provenance_records_by_id is None:
+                    runtime_provenance_records_by_id = (
+                        _build_runtime_provenance_record_lookup(record)
+                    )
+                for provenance_record_id in attached_runtime_record_ids:
+                    matched_runtime_provenance_record = (
+                        runtime_provenance_records_by_id.get(provenance_record_id)
+                    )
+                    if matched_runtime_provenance_record is None:
+                        raise EvalLedgerError(
+                            "selected unit runtime provenance record_id "
+                            f"'{provenance_record_id}' does not exist in run_id "
+                            f"'{record.run_id}'"
+                        )
+                    payload_fields = (
+                        matched_runtime_provenance_record.normalized_payload
+                    )
+                    for payload_field in payload_fields:
+                        selected_unit_runtime_key = (
+                            selected_unit_id,
+                            payload_field.key,
+                            payload_field.value,
+                        )
+                        selected_unit_runtime_outcome_counts[
+                            selected_unit_runtime_key
+                        ] = (
+                            selected_unit_runtime_outcome_counts.get(
+                                selected_unit_runtime_key,
+                                0,
+                            )
+                            + 1
+                        )
             primary_tier = selected_unit.primary_capability_tier
             if (
                 primary_tier is None
@@ -405,6 +466,21 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
             key=_provider_capability_tier_sort_key,
         )
     )
+    selected_unit_runtime_outcome_aggregates = tuple(
+        EvalSelectedUnitRuntimeOutcomeAggregate(
+            selected_unit_id=selected_unit_id,
+            payload_key=payload_key,
+            payload_value=payload_value,
+            runtime_provenance_count=selected_unit_runtime_outcome_counts[
+                selected_unit_id,
+                payload_key,
+                payload_value,
+            ],
+        )
+        for selected_unit_id, payload_key, payload_value in sorted(
+            selected_unit_runtime_outcome_counts
+        )
+    )
     runtime_outcome_aggregates = tuple(
         EvalRuntimeOutcomeAggregate(
             payload_key=payload_key,
@@ -443,6 +519,9 @@ def build_eval_ledger_summary(ledger: EvalLedger) -> EvalLedgerSummary:
         selected_unit_tier_aggregates=selected_unit_tier_aggregates,
         provider_selected_unit_aggregates=provider_selected_unit_aggregates,
         provider_selected_unit_tier_aggregates=(provider_selected_unit_tier_aggregates),
+        selected_unit_runtime_outcome_aggregates=(
+            selected_unit_runtime_outcome_aggregates
+        ),
         runtime_outcome_aggregates=runtime_outcome_aggregates,
         task_budget_results=task_budget_results,
         budget_violation_run_ids=budget_violation_run_ids,
@@ -583,6 +662,28 @@ def render_eval_ledger_summary(summary: EvalLedgerSummary) -> str:
         )
     )
     lines.extend(("", "## Runtime Outcome Accounting", ""))
+    lines.extend(("", "### Selected-Unit Runtime Outcomes", ""))
+    lines.extend(
+        _render_optional_markdown_table(
+            (
+                "Selected Unit",
+                "Payload Key",
+                "Payload Value",
+                "Runtime Provenance Records",
+            ),
+            tuple(
+                (
+                    aggregate.selected_unit_id,
+                    aggregate.payload_key,
+                    aggregate.payload_value,
+                    str(aggregate.runtime_provenance_count),
+                )
+                for aggregate in summary.selected_unit_runtime_outcome_aggregates
+            ),
+            numeric_columns=frozenset({3}),
+        )
+    )
+    lines.extend(("", "### Runtime Provenance Outcomes", ""))
     lines.extend(
         _render_optional_markdown_table(
             (
@@ -650,6 +751,28 @@ def _parse_ledger_record(
     else:
         provider_metadata_record = None
 
+    resolved_selectors = _parse_resolved_selectors(
+        record,
+        ledger_path=ledger_path,
+        line_number=line_number,
+    )
+    selected_units = _parse_selected_units(
+        provider_metadata_record,
+        ledger_path=ledger_path,
+        line_number=line_number,
+    )
+    runtime_provenance_records = _parse_runtime_provenance_records(
+        record,
+        ledger_path=ledger_path,
+        line_number=line_number,
+    )
+    _validate_selected_unit_runtime_provenance_links(
+        selected_units,
+        runtime_provenance_records,
+        ledger_path=ledger_path,
+        line_number=line_number,
+    )
+
     return EvalLedgerRecord(
         run_id=_require_string(
             record,
@@ -682,21 +805,9 @@ def _parse_ledger_record(
             line_number=line_number,
             prefix="metrics",
         ),
-        resolved_selectors=_parse_resolved_selectors(
-            record,
-            ledger_path=ledger_path,
-            line_number=line_number,
-        ),
-        selected_units=_parse_selected_units(
-            provider_metadata_record,
-            ledger_path=ledger_path,
-            line_number=line_number,
-        ),
-        runtime_provenance_records=_parse_runtime_provenance_records(
-            record,
-            ledger_path=ledger_path,
-            line_number=line_number,
-        ),
+        resolved_selectors=resolved_selectors,
+        selected_units=selected_units,
+        runtime_provenance_records=runtime_provenance_records,
         metrics=EvalLedgerMetrics(
             aggregate_score=_require_float(
                 metrics_record,
@@ -871,6 +982,13 @@ def _parse_selected_unit(
         field_path=field_path,
     )
     return EvalLedgerSelectedUnit(
+        unit_id=_require_optional_string(
+            unit_record,
+            "unit_id",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=field_path,
+        ),
         primary_capability_tier=_require_optional_capability_tier(
             unit_record,
             "primary_capability_tier",
@@ -881,6 +999,13 @@ def _parse_selected_unit(
         has_attached_runtime_provenance=_require_optional_bool(
             unit_record,
             "has_attached_runtime_provenance",
+            ledger_path=ledger_path,
+            line_number=line_number,
+            prefix=field_path,
+        ),
+        attached_runtime_provenance_record_ids=_require_optional_string_tuple(
+            unit_record,
+            "attached_runtime_provenance_record_ids",
             ledger_path=ledger_path,
             line_number=line_number,
             prefix=field_path,
@@ -969,6 +1094,68 @@ def _parse_normalized_payload(
             )
         fields.append(EvalLedgerRuntimePayloadField(key=key, value=value))
     return tuple(fields)
+
+
+def _validate_selected_unit_runtime_provenance_links(
+    selected_units: tuple[EvalLedgerSelectedUnit, ...],
+    runtime_provenance_records: tuple[EvalLedgerRuntimeProvenanceRecord, ...],
+    *,
+    ledger_path: Path,
+    line_number: int,
+) -> None:
+    """Reject selected-unit runtime links that cannot be joined deterministically."""
+    if not any(unit.attached_runtime_provenance_record_ids for unit in selected_units):
+        return
+
+    runtime_record_ids: set[str] = set()
+    for runtime_record in runtime_provenance_records:
+        if runtime_record.record_id in runtime_record_ids:
+            raise EvalLedgerError(
+                "runtime_provenance_records must have unique record_id values at "
+                f"{ledger_path}:{line_number}"
+            )
+        runtime_record_ids.add(runtime_record.record_id)
+
+    for index, selected_unit in enumerate(selected_units):
+        if not selected_unit.attached_runtime_provenance_record_ids:
+            continue
+        field_path = f"provider_metadata.selected_units[{index}]"
+        if selected_unit.unit_id is None:
+            raise EvalLedgerError(
+                "required field "
+                f"'{field_path}.unit_id' must be present when "
+                "attached_runtime_provenance_record_ids are provided at "
+                f"{ledger_path}:{line_number}"
+            )
+        if selected_unit.has_attached_runtime_provenance is not True:
+            raise EvalLedgerError(
+                "required field "
+                f"'{field_path}.has_attached_runtime_provenance' must be true when "
+                "attached_runtime_provenance_record_ids are provided at "
+                f"{ledger_path}:{line_number}"
+            )
+        for record_id in selected_unit.attached_runtime_provenance_record_ids:
+            if record_id not in runtime_record_ids:
+                raise EvalLedgerError(
+                    "selected unit runtime provenance record_id "
+                    f"'{record_id}' is not present in runtime_provenance_records at "
+                    f"{ledger_path}:{line_number}"
+                )
+
+
+def _build_runtime_provenance_record_lookup(
+    record: EvalLedgerRecord,
+) -> dict[str, EvalLedgerRuntimeProvenanceRecord]:
+    """Return runtime provenance records keyed by ID for selected-unit joins."""
+    records_by_id: dict[str, EvalLedgerRuntimeProvenanceRecord] = {}
+    for runtime_record in record.runtime_provenance_records:
+        if runtime_record.record_id in records_by_id:
+            raise EvalLedgerError(
+                "runtime_provenance_records must have unique record_id values in "
+                f"run_id '{record.run_id}'"
+            )
+        records_by_id[runtime_record.record_id] = runtime_record
+    return records_by_id
 
 
 def _build_provider_aggregate(
@@ -1195,6 +1382,63 @@ def _require_string(
             f"missing required field '{field_path}' at {ledger_path}:{line_number}"
         )
     return value
+
+
+def _require_optional_string(
+    record: dict[str, object],
+    key: str,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    prefix: str | None = None,
+) -> str | None:
+    """Return one optional non-empty string field from a ledger object."""
+    if key not in record:
+        return None
+    field_path = _field_path(key, prefix=prefix)
+    value = record.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or value == "":
+        raise EvalLedgerError(
+            f"required field '{field_path}' must be a non-empty string at "
+            f"{ledger_path}:{line_number}"
+        )
+    return value
+
+
+def _require_optional_string_tuple(
+    record: dict[str, object],
+    key: str,
+    *,
+    ledger_path: Path,
+    line_number: int,
+    prefix: str | None = None,
+) -> tuple[str, ...]:
+    """Return one optional list of unique non-empty string fields."""
+    if key not in record:
+        return ()
+    field_path = _field_path(key, prefix=prefix)
+    values = _require_list(
+        record.get(key),
+        ledger_path=ledger_path,
+        line_number=line_number,
+        field_path=field_path,
+    )
+    parsed_values: list[str] = []
+    for index, value in enumerate(values):
+        if not isinstance(value, str) or value == "":
+            raise EvalLedgerError(
+                f"required field '{field_path}[{index}]' must be a "
+                f"non-empty string at {ledger_path}:{line_number}"
+            )
+        parsed_values.append(value)
+    if len(parsed_values) != len(set(parsed_values)):
+        raise EvalLedgerError(
+            f"required field '{field_path}' must contain unique strings at "
+            f"{ledger_path}:{line_number}"
+        )
+    return tuple(parsed_values)
 
 
 def _require_int(

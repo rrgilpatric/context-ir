@@ -2,6 +2,254 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Selected-Unit Runtime Accounting Audit Cleared
+
+- Reviewed the read-only release-unit audit result for the selected-unit runtime
+  accounting slice.
+- Result: audit-cleared.
+- Audit result: PASS.
+- Findings: none.
+- Release-unit files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_summary.py`
+  - `tests/test_eval_summary.py`
+- Audit evidence:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to `e7bcc9c`
+  - no staged files
+  - no untracked files
+  - dirty set remained exactly the four release-unit files
+  - no fixture, task, run-spec, provider, compiler, scorer, renderer,
+    optimizer, public docs/claims, MCP/API/schema/config, export, or demo/report
+    artifact changes were present
+  - validation rerun passed:
+    - `git diff --check`
+    - `ruff check`
+    - `ruff format --check`
+    - `mypy --strict src/`
+    - `pytest tests/test_eval_summary.py tests/test_eval_signal_hasattr_probe.py -v`
+  - actual `oracle_signal_hasattr_probe` summary join was verified as
+    `('unsupported:call:main.py:2:11', 'attribute_present', 'true', 2)`
+- Next route:
+  - full regression cleared after audit:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1697 passed`
+  - commit-gating cleared first-pass:
+    - dirty set was exactly the four release-unit files
+    - no staged files
+    - no untracked files
+    - `git diff --check` passed
+  - do not push without explicit Ryan authorization
+- Acceptance status: release-unit audit, full regression, and commit-gating
+  cleared
+
+## 2026-05-17 -- Selected-Unit Runtime Accounting Slice Accepted
+
+- Reviewed the first implementation slice from the compact eval-evidence design.
+- Result: accepted in workspace.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_summary.py`
+  - `tests/test_eval_summary.py`
+- Behavior accepted:
+  - `EvalLedgerSelectedUnit` now retains `unit_id`
+  - `EvalLedgerSelectedUnit` now retains
+    `attached_runtime_provenance_record_ids`
+  - selected-unit runtime provenance links fail closed when attached IDs are
+    present without a selected-unit ID
+  - selected-unit runtime provenance links fail closed when attached IDs do not
+    join to the row's `runtime_provenance_records`
+  - selected-unit runtime provenance ID lists reject duplicate IDs
+  - selected-unit runtime payload outcomes are rendered in a deterministic
+    `Selected-Unit Runtime Outcomes` table
+  - existing boolean tier/provider runtime aggregate accounting remains
+    compatible with older ledgers that lack selected-unit runtime IDs
+- Control review evidence:
+  - live git state during review: branch `main`, local `HEAD` and `origin/main`
+    both resolved to `e7bcc9c`
+  - no staged files
+  - no untracked files
+  - dirty file set was exactly the four accepted release-unit files
+  - focused validation rerun passed:
+    - `ruff check`
+    - `ruff format --check`
+    - `mypy --strict src/`
+    - `pytest tests/test_eval_summary.py tests/test_eval_signal_hasattr_probe.py -v`
+    - `git diff --check`
+  - scratch review confirmed the actual `oracle_signal_hasattr_probe` report
+    now joins the selected unsupported unit to `attribute_present=true`
+- Boundary:
+  - no fixture, task, run-spec, provider, runtime, compiler, scoring, semantic
+    renderer, public docs/claims, MCP/API/schema/config, package export, or
+    demo/report artifact changes are included
+  - this slice does not prove full differentiation by itself; it only closes
+    the report-accounting join prerequisite
+- Next route:
+  - run a read-only release-unit audit over the exact four-file unit
+  - do not stage, commit, push, or issue the `eval_evidence.py` catalog
+    implementation slice until this unit clears the release gate
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-17 -- Compact Eval-Evidence Design Spike Accepted
+
+- Reviewed the read-only design spike for the meaningful-differentiation hold.
+- Result: accepted as routing evidence.
+- Verdict: BOUNDED DESIGN FOUND.
+- Clarification:
+  - this does not contradict the prior NO SMALL FIX result
+  - there is no small tweak to `_selected_unit_metadata` or `eval_summary.py`
+    that proves full differentiation
+  - the bounded path requires a compact, principled evidence surface that the
+    compiler can select under budget
+- Confirmed blockers:
+  - budget-`220` repo-root smoke still selects only `_selected_unit_metadata`,
+    `EvalSelectedUnit`, and local `eval_providers.py` frontier/attribute
+    uncertainty
+  - it selects no `eval_summary.py` report-accounting path
+  - it selects no concrete `hasattr` runtime evidence
+  - runtime records in that pack are `0`
+  - analyzer discovery is Python-only
+  - renderable semantic units are currently only proven symbols, unresolved
+    frontier, and unsupported constructs
+  - concrete `hasattr` evidence exists in fixture JSON and tests but is not
+    selectable in a repo-root compile
+  - `EvalLedgerSelectedUnit` currently drops `unit_id` and
+    `attached_runtime_provenance_record_ids`, so summary/report accounting can
+    count runtime payloads globally but cannot join payloads back to
+    selected-unit attachments
+- Accepted design direction:
+  - add compact eval-evidence units derived from existing eval assets
+  - add selected-unit runtime attachment accounting in `eval_summary.py`
+  - integrate compact eval-evidence and report-accounting support into semantic
+    rendering/scoring/optimization so the exact budget-`220` checkpoint can
+    select the full evidence path by replacing low-value local frontier
+    spillover
+- Principled boundary:
+  - mechanism should work across existing `*_runtime_observations` families by
+    joining task selectors, fixture observations, normalized payloads, and run
+    specs
+  - preserve unsupported/opaque as primary truth and runtime evidence as
+    additive
+  - do not edit fixtures, tasks, run specs, runtime provider support, public
+    claims, or demo/report artifacts
+- Implementation sequence:
+  - first slice: selected-unit runtime attachment accounting in
+    `eval_summary.py`
+  - second slice: `eval_evidence.py` catalog discovery for existing eval
+    task/fixture/run-spec artifacts
+  - later slice: integrate compact eval-evidence units into semantic rendering,
+    scoring, and optimization
+  - final checkpoint/regression slice: prove the exact budget-`220` evidence
+    path while lexical/import baselines still fail
+- Recommended next action:
+  - authorize implementation slice 1 only
+  - do not skip directly to catalog/semantic integration
+  - do not proceed to north-star demo/report/public-claim work until the full
+    evidence-path checkpoint passes
+- Acceptance status: first-pass design acceptance
+
+## 2026-05-17 -- No-Small-Fix Unlock Diagnosis Accepted
+
+- Reviewed the read-only unlock diagnosis after the partial post-push
+  identifier-anchor value checkpoint.
+- Result: accepted as routing evidence.
+- Verdict: NO SMALL FIX.
+- Root cause:
+  - `_selected_unit_metadata`, `EvalSelectedUnit`, and eval summary/report
+    accounting already implement the needed metadata and rollups
+  - the partial checkpoint is caused by selection and representation behavior
+    under budget `220`, not broken selected-unit metadata or report accounting
+  - concrete unsupported `hasattr` runtime payload evidence exists in eval
+    fixture JSON and tests
+  - the compiler currently models eligible Python source files, so concrete
+    non-Python evidence artifacts are outside the compact semantic unit
+    universe today
+- Meaningful differentiation definition for this checkpoint:
+  - the win condition is materially better task context with truthful
+    uncertainty, under budget, where baselines fail or overinclude
+  - context-ir must provide the compact evidence path a coding agent would need
+    to make or verify the fix, while lexical/import baselines do not
+  - selected context must include `_selected_unit_metadata`
+  - selected context must include the relevant `EvalSelectedUnit`
+    runtime-provenance data contract
+  - selected context must include the report-accounting path in
+    `eval_summary.py`
+  - selected context must include one concrete unsupported `hasattr`
+    runtime-provenance evidence surface or an accepted compact equivalent
+  - runtime evidence must remain additive while unsupported/opaque remains the
+    primary truth
+  - the evidence path must fit under budget `220` unless Ryan explicitly
+    accepts a revised budget as the product-relevant threshold
+  - lexical and import baselines must still fail to provide the same actionable
+    evidence path
+- Control decision:
+  - no further north-star advancement, demo/report artifact work, public-claim
+    work, or broad fixture expansion is authorized on the current partial
+    signal
+  - next authorized lane is a bounded design spike for compact eval-evidence
+    units or cross-artifact evidence relationships
+  - if the design spike cannot identify a principled bounded implementation
+    path to full differentiation, pause and reassess strategy before further
+    implementation
+- Acceptance status: first-pass diagnosis acceptance
+
+## 2026-05-17 -- Post-Push Identifier Anchor Value Checkpoint
+
+- Reviewed the read-only post-push real-repo value checkpoint after the exact
+  identifier edit-anchor release.
+- Result: accepted as routing evidence.
+- Verdict: PARTIAL differentiated signal.
+- Repo truth:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `e7bcc9c Sync identifier anchor push routing`
+  - worktree was clean
+- Exact query:
+  `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+- Budget-`220` comparison:
+  - `context_ir`: elapsed about `118.335s`, used `218` tokens, selected the
+    exact target, and emitted `budget_pressure x2` plus
+    `omitted_uncertainty x6`
+  - lexical baseline: elapsed about `0.262s`, used `76` tokens, selected no
+    useful file/unit
+  - import-neighborhood baseline: elapsed about `0.267s`, used `81` tokens,
+    selected no useful file/unit, and emitted `import_not_resolved`
+  - lexical and import baselines at budgets `600` and `1000` still selected no
+    useful file/unit
+- Positive signal:
+  - context-ir selected:
+    `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+  - baselines did not select `src/context_ir/eval_providers.py` or any useful
+    unit
+  - selected-unit metadata was visible, including tier/origin/replay and
+    runtime-provenance fields
+- Why this is not strong enough:
+  - the selected context did not also surface `eval_summary.py` report
+    accounting context
+  - it did not surface concrete unsupported `hasattr` runtime-provenance
+    evidence
+  - the exact target and `EvalSelectedUnit` were selected only as summaries
+    under severe budget pressure
+- Ryan and control decision:
+  - hold north-star advancement until full, meaningful differentiated evidence
+    is visible
+  - do not proceed to demo/report artifact work, public claims, or broad
+    fixture expansion on this partial signal
+  - next authorized work should be a narrow planning/research slice to identify
+    the smallest change needed for the checkpoint to surface the end-to-end
+    path, including report accounting context and concrete unsupported
+    `hasattr` runtime provenance evidence
+  - Ryan confirmed that "smallest change" means the least amount of principled
+    work that unlocks full differentiation on this exact checkpoint, not
+    process-driven incrementalism
+  - if no small principled fix can produce full differentiation, stop and
+    reassess strategy rather than proceeding toward the north star
+- Acceptance status: first-pass checkpoint acceptance
+
 ## 2026-05-17 -- Exact-Identifier Edit Anchor Push
 
 - Ryan explicitly authorized push for the exact identifier edit-anchor release.
