@@ -2,6 +2,59 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Strong Evidence-Path Checkpoint Accepted
+
+- Reviewed the post-push evidence-path baseline comparison checkpoint after
+  compact eval-evidence integration.
+- Result: accepted as STRONG differentiated signal.
+- Repo-backed truth:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `0145ef6 Sync semantic eval evidence push routing`
+  - worktree, index, and untracked files clean
+  - `git diff --check` clean
+- Exact query:
+  `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+- Primary budget: `220` tokens.
+- Provider comparison:
+  - `context_ir`: about `113.023s`, `219` tokens, 6 selected units, warnings
+    `budget_pressure` and `omitted_uncertainty`
+  - `lexical_top_k_files`: about `0.256s`, `74` tokens, selected zero files
+    and zero units
+  - `import_neighborhood_files`: about `0.260s`, `79` tokens, selected zero
+    files and zero units with `import_not_resolved`
+- Required evidence path:
+  - selected `_selected_unit_metadata`
+  - selected `EvalSelectedUnit`
+  - selected eval-summary report accounting via
+    `_build_runtime_provenance_record_lookup`
+  - selected compact `oracle_signal_hasattr_probe` eval evidence
+  - rendered `attribute_present=true`
+  - preserved `unsupported/opaque` as primary truth and runtime evidence as
+    additive
+  - stayed within budget at `219 / 220` tokens
+- Baseline analysis:
+  - both baselines failed the exact evidence path at budget `220`
+  - lexical top candidates were large whole test files, including
+    `tests/test_eval_signal_hasattr_probe.py` at about `6903` estimated tokens
+    and `tests/test_eval_signal_getattr_probe.py` at about `2656`, so reaching
+    the evidence through those candidates would overinclude materially
+    irrelevant context and blow the budget
+- Control decision:
+  - accept this as the first meaningful differentiation proof for the agreed
+    north-star checkpoint
+  - do not treat it as proof that the full product is complete,
+    public-claim-ready, or latency-solved
+  - caveat: `context_ir` used summaries under budget pressure, and the compact
+    eval evidence unit is an internal evidence surface rather than a selected
+    unsupported runtime-attached source unit
+- Next route:
+  - define the smallest tangible internal artifact that presents this STRONG
+    checkpoint honestly, with caveats and no public-claim widening
+  - keep broad public claims and generalized benchmark/demo positioning out of
+    scope until separately authorized
+- Acceptance status: checkpoint accepted
+
 ## 2026-05-17 -- Semantic Eval Evidence Integration Push Completed
 
 - Ryan explicitly authorized push for the semantic eval-evidence integration

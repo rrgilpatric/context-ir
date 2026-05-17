@@ -41,7 +41,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`b6be7e5 Sync semantic eval evidence local routing`. The latest pushed
+`0145ef6 Sync semantic eval evidence push routing`. The latest pushed
 source/contract authority is
 `fc2ddc6 Integrate compact eval evidence into semantic context`. Live git refs and
 worktree state must still be verified from git during control intake; do not
@@ -53,9 +53,72 @@ contains the accepted, audit-cleared, full-regression-cleared,
 commit-gating-cleared, locally committed, and pushed semantic integration of
 compact eval runtime evidence into context compilation. It was pushed with
 explicit Ryan authorization through
-`b6be7e5 Sync semantic eval evidence local routing`. Do not route `fc2ddc6`
-or `b6be7e5` back to release-unit audit, full regression, commit-gating,
-staging, local commit creation, or push absent new findings.
+`0145ef6 Sync semantic eval evidence push routing`. Do not route `fc2ddc6`,
+`b6be7e5`, or `0145ef6` back to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
+
+Accepted post-push evidence-path baseline comparison checkpoint:
+
+- read-only checkpoint returned DONE and is accepted as routing evidence
+- verdict: STRONG differentiated signal
+- repo truth reported by the checkpoint and verified by control:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `0145ef6 Sync semantic eval evidence push routing`
+  - worktree, index, and untracked files clean
+  - `git diff --check` clean
+- exact query:
+  `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
+- primary budget: `220` tokens
+- provider comparison:
+  - `context_ir`: about `113.023s`, `219` tokens, 6 selected units, warnings
+    `budget_pressure` and `omitted_uncertainty`
+  - `lexical_top_k_files`: about `0.256s`, `74` tokens, selected zero files
+    and zero units
+  - `import_neighborhood_files`: about `0.260s`, `79` tokens, selected zero
+    files and zero units with `import_not_resolved`
+- required `context_ir` evidence path passed under budget:
+  - selected `_selected_unit_metadata`
+  - selected `EvalSelectedUnit`
+  - selected eval-summary report accounting via
+    `_build_runtime_provenance_record_lookup`
+  - selected compact `oracle_signal_hasattr_probe` eval evidence
+  - rendered `attribute_present=true`
+  - preserved `unsupported/opaque` as primary truth and runtime evidence as
+    additive
+  - total tokens `219 / 220`
+- selected `context_ir` units included:
+  - `_selected_unit_metadata`
+  - `EvalSelectedUnit`
+  - `EvalProviderMetadata`
+  - `EvalProviderResult`
+  - `eval_summary._build_runtime_provenance_record_lookup`
+  - `eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11`
+- baseline result:
+  - both baselines failed the exact evidence path at budget `220`
+  - lexical top candidates were whole test files such as
+    `tests/test_eval_signal_hasattr_probe.py` at about `6903` estimated tokens
+    and `tests/test_eval_signal_getattr_probe.py` at about `2656`, so reaching
+    the evidence through those candidates would massively exceed the budget and
+    overinclude irrelevant context
+- control decision:
+  - this is the first accepted STRONG, meaningful differentiation evidence for
+    the north-star checkpoint
+  - it proves the narrow product thesis for this checkpoint: materially better
+    task context with truthful uncertainty under budget where baselines fail or
+    overinclude
+  - it does not prove the full product is complete, public-claim-ready, or
+    latency-solved
+  - caveat remains: `context_ir` used summaries under budget pressure, and the
+    compact eval evidence unit is an internal evidence surface rather than a
+    selected unsupported runtime-attached source unit
+- next route:
+  - demo/report/public-claim work is no longer blocked by lack of meaningful
+    differentiation proof
+  - next authorized planning move should define the smallest tangible internal
+    artifact that presents this STRONG checkpoint honestly, with caveats and no
+    public-claim widening
+  - do not broaden claims beyond this checkpoint without additional evidence
 
 Pushed eval evidence catalog discovery release:
 `241f7ea Add eval evidence catalog discovery`. This commit contains the
