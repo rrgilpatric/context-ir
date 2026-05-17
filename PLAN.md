@@ -94,12 +94,12 @@ Task 1 portfolio checkpoint returned FAIL and now controls routing:
     until an explicit artifact-update slice is authorized
   - do not treat the Task 0 STRONG result as repeated product-level proof
 - next route:
-  - Ryan go/no-go is required before advancement because Task 1 produced a
-    finding
-  - recommended next lane is a read-only targeting diagnosis to determine why
-    the semantic provider routed the query toward runtime-probe helper
-    infrastructure instead of `eval_evidence.py`, `semantic_renderer.py`,
-    `semantic_types.py`, and package-root export-boundary evidence
+  - Ryan explicitly agreed that the Task 1 failure must be investigated before
+    further north-star advancement
+  - issue a read-only targeting diagnosis to determine why the semantic
+    provider routed the query toward runtime-probe helper infrastructure
+    instead of `eval_evidence.py`, `semantic_renderer.py`, `semantic_types.py`,
+    and package-root export-boundary evidence
   - no implementation slice is authorized until that diagnosis identifies the
     smallest principled correction or recommends a strategy pause
 

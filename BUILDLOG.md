@@ -2,6 +2,25 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Task 1 Failure Diagnosis Authorized
+
+- Ryan agreed that the failed Task 1 checkpoint must not be bypassed.
+- Decision:
+  - run a read-only targeting diagnosis before any further north-star
+    advancement
+  - do not run Tasks 2-3
+  - do not start implementation
+  - do not update demo/report/public claims
+- Diagnosis question:
+  - determine why the semantic provider routed the Task 1 query toward
+    runtime-probe/test helper units instead of the expected eval-evidence,
+    semantic-rendering, semantic-type, and package-root export-boundary path
+- Expected result:
+  - classify the root cause from repo/artifact evidence
+  - recommend the smallest principled correction slice, or recommend a
+    strategy pause if the Task 1 proof design is flawed
+- Acceptance status: diagnosis authorized
+
 ## 2026-05-17 -- Task 1 Portfolio Checkpoint Failed
 
 - Reviewed the returned read-only Task 1 portfolio checkpoint.
