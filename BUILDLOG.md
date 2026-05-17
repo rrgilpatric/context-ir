@@ -2,6 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-17 -- Selected-Unit Runtime Accounting Push
+
+- Ryan explicitly authorized push for the selected-unit runtime accounting
+  release.
+- Pushed commits:
+  - `8efec26 Add selected-unit runtime accounting`
+  - `7f7476c Sync selected-unit accounting local routing`
+- Live repo/workspace state after push:
+  - branch `main`
+  - local `HEAD` and `origin/main` both resolved to
+    `7f7476c Sync selected-unit accounting local routing`
+  - no source/test/control diff remained before this post-push continuity sync
+  - no staged files
+  - no untracked files
+- Release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass with `1697 passed`
+  - commit-gating cleared: yes, first-pass
+  - locally committed: yes
+  - pushed: yes, with explicit Ryan authorization
+- Next route:
+  - continue to the `eval_evidence.py` catalog discovery implementation slice
+    as the next compact eval-evidence path prerequisite
+  - keep north-star demo/report/public-claim work held until the final
+    budget-`220` evidence-path checkpoint passes
+- Acceptance status: pushed
+
 ## 2026-05-17 -- Selected-Unit Runtime Accounting Local Commit Created
 
 - Created the local release commit for the selected-unit runtime accounting

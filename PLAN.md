@@ -41,11 +41,20 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is
-`edf8e55 Sync identifier anchor local release routing`. The latest pushed
+`7f7476c Sync selected-unit accounting local routing`. The latest pushed
 source/contract authority is
-`2a8cf10 Add exact identifier edit anchor`. Live git refs and
+`8efec26 Add selected-unit runtime accounting`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
+
+Pushed selected-unit runtime accounting release:
+`8efec26 Add selected-unit runtime accounting`. This commit contains the
+accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed report-accounting prerequisite for the compact
+eval-evidence path. It was pushed with explicit Ryan authorization through
+`7f7476c Sync selected-unit accounting local routing`. Do not route `8efec26`
+or `7f7476c` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings.
 
 Pushed exact identifier edit-anchor release:
 `2a8cf10 Add exact identifier edit anchor`. This commit contains the accepted,
@@ -228,17 +237,14 @@ Accepted compact eval-evidence design spike:
   - final checkpoint/regression slice: prove the exact budget-`220` evidence
     path while lexical/import baselines still fail
 - next route:
-  - selected-unit runtime attachment accounting is now accepted in workspace
-    as the first implementation slice
-  - release-unit audit over the exact accepted four-file unit is cleared
-  - proceed to full regression before commit-gating, staging, local commit
-    creation, or push
-  - do not issue the `eval_evidence.py` catalog implementation slice until this
-    accounting release unit clears the release gate
+  - selected-unit runtime attachment accounting is pushed as the first
+    implementation slice
+  - continue to the `eval_evidence.py` catalog discovery implementation slice
+    as the next compact eval-evidence path prerequisite
   - do not proceed to north-star demo/report/public-claim work until the full
     evidence-path checkpoint passes
 
-Workspace-accepted selected-unit runtime accounting release unit:
+Pushed selected-unit runtime accounting release unit:
 
 - release unit files:
   - `PLAN.md`
@@ -269,7 +275,7 @@ Workspace-accepted selected-unit runtime accounting release unit:
   - full-regression cleared: yes, first-pass with `1697 passed`
   - commit-gating cleared: yes, first-pass
   - locally committed: yes, `8efec26 Add selected-unit runtime accounting`
-  - pushed: no
+  - pushed: yes, with explicit Ryan authorization through `7f7476c`
 - audit evidence:
   - read-only release-unit audit returned PASS with no findings
   - dirty set remained exactly the four release-unit files
@@ -282,9 +288,10 @@ Workspace-accepted selected-unit runtime accounting release unit:
   - actual `oracle_signal_hasattr_probe` summary join was verified as
     `('unsupported:call:main.py:2:11', 'attribute_present', 'true', 2)`
 - next required action:
-  - wait for explicit Ryan push authorization
-  - do not issue the `eval_evidence.py` catalog implementation slice until this
-    release is pushed or Ryan explicitly changes release sequencing
+  - continue to the `eval_evidence.py` catalog discovery implementation slice
+    as the next compact eval-evidence path prerequisite
+  - keep north-star demo/report/public-claim work held until the final
+    budget-`220` evidence-path checkpoint passes
 
 Pushed optimizer/render latency release:
 `204173a Optimize semantic compile candidate selection`. This commit contains
