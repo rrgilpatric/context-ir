@@ -127,6 +127,288 @@ Task 1 portfolio checkpoint returned FAIL and now controls routing:
   - if a focused correction cannot make Task 1 pass under the declared budgets,
     pause strategy rather than continuing the portfolio
 
+Task 1 ranking correction is workspace-only accepted:
+
+- implementation lane returned DONE and was reviewed by control
+- accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- accepted behavior:
+  - direct implementation, contract, renderer-output, and package-root API
+    boundary anchors now outrank saturated helper support
+  - correction remains general to direct anchors versus support saturation and
+    is not accepted as a hardcoded Task 1 special case
+  - internal eval evidence remains internal and is not exported from
+    package-root `context_ir`
+  - compact eval evidence still preserves `primary=unsupported/opaque` and
+    runtime evidence as additive
+- control validation rerun:
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest over scorer, optimizer, compiler: `55 passed` in about
+    `116.12s`
+  - exact Task 1 real-repo smoke at budget `260`: passed with `247 / 260`
+    tokens
+- exact Task 1 selected units after correction:
+  - `def:src/context_ir/eval_evidence.py:src.context_ir.eval_evidence.discover_semantic_eval_runtime_evidence`
+  - `def:src/context_ir/semantic_renderer.py:src.context_ir.semantic_renderer._render_eval_runtime_evidence`
+  - `def:src/context_ir/semantic_types.py:src.context_ir.semantic_types.SemanticEvalRuntimeEvidence`
+  - `def:src/context_ir/__init__.py:src.context_ir`
+  - `eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11`
+- Task 1 smoke waypoint result:
+  - `discover_semantic_eval_runtime_evidence`: pass
+  - compact `oracle_signal_hasattr_probe` evidence: pass
+  - `SemanticEvalRuntimeEvidence` contract surface: pass
+  - semantic renderer `runtime=additive`: pass
+  - package-root export-boundary evidence: pass
+  - `attribute_present=true`: pass
+  - package-root export remains absent: pass
+- known release risk:
+  - the new real-repo Task 1 regression adds about two minutes to the focused
+    semantic test path; keep this visible during audit and full regression
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run a read-only release-unit audit over the seven-file release unit
+  - do not run Tasks 2-3, update product-differentiation artifacts, stage,
+    commit, push, or update public/demo claims until this correction release
+    clears the normal gates
+
+Task 1 ranking correction release-unit audit is cleared:
+
+- dedicated read-only release-unit audit returned PASS with no findings
+- audit scope confirmed exactly the seven-file release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- audit confirmed no excluded-surface diffs in `README.md`, `EVAL.md`,
+  `PUBLIC_CLAIMS.md`, `ARCHITECTURE.md`, eval assets, package-root exports,
+  MCP/API/schema/config, providers, runtime support, or compiler source
+  contracts
+- audit reran or inspected:
+  - `git diff --check`: clean
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest: `55 passed` in about `126.50s`
+  - exact Task 1 smoke: passed in about `2:07`, selected the five expected
+    units, used `247 / 260` tokens, and rendered
+    `primary=unsupported/opaque`, `runtime=additive`, and
+    `attribute_present=true`
+- audit accepted the two-minute real-repo regression cost as notable but not a
+  finding because it directly guards the accepted failure mode
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run full regression from the top
+  - if full regression passes, proceed to commit-gating over the exact
+    seven-file release unit
+  - do not stage, commit, push, run Tasks 2-3, or update public/demo claims
+    until the normal gates clear
+
+Task 1 ranking correction full regression failed:
+
+- full regression static gates passed:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+- full pytest failed:
+  - `.venv/bin/python -m pytest tests/ -v`: `3 failed, 1718 passed`
+- failing tests:
+  - `tests/test_eval_signal_smoke_d.py::test_signal_quad_bundle_preserves_provider_lead_and_smoke_b_budget_pressure`
+  - `tests/test_eval_signal_vars_type_error_probe.py::test_vars_type_error_probe_run_preserves_additive_runtime_fields`
+  - `tests/test_eval_signal_vars_type_error_probe.py::test_vars_type_error_probe_summary_keeps_runtime_additive`
+- findings:
+  - smoke_d budget `240` regressed by selecting
+    `def:pkg/service.py:pkg.service.EnvelopeCompiler` instead of the expected
+    support method `def:pkg/base.py:pkg.base.LayoutBase.format_digest`
+  - vars type-error probe regressed by selecting
+    `unsupported:call:main.py:2:11` as a selected unit and reordering
+    selected symbols; prior contract expected only the two statically proved
+    symbols `render_probe_digest` and `probe_namespace`
+  - selected-unit tier accounting then exposed an `unsupported/opaque`
+    selected-unit aggregate, violating the prior additive-runtime selected-unit
+    boundary for that probe
+- control decision:
+  - release is held
+  - release-unit audit clearance remains historical, but full-regression
+    clearance is failed and must be rerun after correction
+  - do not run commit-gating, stage, commit, push, run Tasks 2-3, or update
+    product/public/demo artifacts
+- recommended correction:
+  - narrow the direct-anchor/support-saturation correction so Task 1 still
+    selects its five required waypoints under budget `260`
+  - preserve prior eval contracts that support methods outrank irrelevant
+    class containers when support is required
+  - preserve prior vars type-error behavior where runtime evidence remains
+    selector-additive and unsupported units are not selected by the
+    context-ir provider for that fixture
+  - rerun the three failing tests, focused semantic tests, exact Task 1 smoke,
+    and full regression from the top
+
+Task 1 ranking correction full-regression correction is workspace-only accepted:
+
+- correction lane returned DONE and was reviewed by control with no findings
+- corrected behavior:
+  - weak literal snake-case direct boosts are limited to more specific names
+  - redundant enclosing class containers are suppressed after a method focus is
+    already selected when the class lacks enough support
+  - Task 1 budget-`260` success is preserved
+  - smoke_d budget-`240` support selection is restored to
+    `LayoutBase.format_digest`
+  - vars type-error provider selection is restored to the two statically
+    proved symbols, keeping runtime evidence selector-additive and preventing
+    unsupported selected-unit tier accounting
+- validation rerun:
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - targeted full-regression failures: `3 passed`
+  - focused semantic scorer/optimizer/compiler suite: `57 passed` in about
+    `131.41s`
+  - exact Task 1 regression test: passed in about `129.75s`
+  - `git diff --check`: clean before correction acceptance
+- release state:
+  - accepted in workspace: yes, after one full-regression correction
+  - prior release-unit audit clearance predates the correction and must be
+    rerun
+  - full regression cleared: no, rerun required from the top after corrected
+    audit
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - rerun a dedicated read-only release-unit audit over the corrected
+    seven-file release unit
+  - if corrected audit passes, rerun full regression from the top
+  - do not run commit-gating, stage, commit, push, run Tasks 2-3, or update
+    product/public/demo artifacts before corrected gates clear
+
+Corrected Task 1 ranking release-unit audit is cleared:
+
+- corrected dedicated read-only release-unit audit returned PASS with no
+  findings
+- audit confirmed corrected production changes remain general:
+  - literal surface matching
+  - output surface matching
+  - contract-name matching
+  - package-root boundary matching
+  - direct-anchor ordering
+  - redundant enclosing-class suppression
+- audit found no Task 1 fixture/function hardcoding in production code
+- audit scope confirmed exactly the seven-file release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- package-root exports and public/API surfaces remain unchanged
+- audit validation:
+  - git state checks matched expected dirty set
+  - `git diff --check`: clean
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - targeted prior failures: `3 passed`
+  - focused scorer/optimizer/compiler tests: `57 passed` in about `125.44s`
+  - exact Task 1 budget-`260` smoke: `247 / 260`, selected the five expected
+    units, and rendered `primary=unsupported/opaque`, `runtime=additive`, and
+    `payload=attribute_present=true`
+  - additional inspection confirmed smoke_d budget `240` includes
+    `LayoutBase.format_digest` with support coverage `1.0`
+  - additional inspection confirmed vars type-error budgets `220` and `100`
+    select only `render_probe_digest` and `probe_namespace`, do not select the
+    unsupported unit, and keep unsupported selector runtime evidence additive
+- risk:
+  - the roughly two-minute Task 1 regression cost remains visible and accepted
+    as non-blocking for this release because it guards the exact failure mode
+- release state:
+  - accepted in workspace: yes, after one full-regression correction
+  - release-unit audit cleared: yes, corrected audit first-pass
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run full regression from the top
+  - if full regression passes, proceed to commit-gating over the exact
+    seven-file release unit
+  - do not stage, commit, push, run Tasks 2-3, or update product/public/demo
+    artifacts before gates clear
+
+Corrected Task 1 ranking full regression is cleared:
+
+- full regression passed after corrected release-unit audit clearance
+- validation:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed, no issues in 39 source
+    files
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1723 passed` in about
+    `137.54s`
+- release state:
+  - accepted in workspace: yes, after one full-regression correction
+  - release-unit audit cleared: yes, corrected audit first-pass
+  - full regression cleared: yes, first-pass after corrected audit
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run commit-gating over the exact seven-file release unit
+  - if commit-gating passes, stage exactly the seven-file release unit and
+    create the local release commit
+  - do not push without explicit Ryan authorization
+  - do not run Tasks 2-3 or update product/public/demo artifacts before local
+    release state is clear
+
+Corrected Task 1 ranking commit-gating is cleared:
+
+- commit-gating passed after corrected audit and full regression clearance
+- checks:
+  - dirty set exactly matched the seven-file release unit
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check`: clean
+  - excluded public/API/runtime/provider surfaces remained unchanged
+  - package-root `context_ir` does not export
+    `discover_semantic_eval_runtime_evidence`
+  - production scorer/optimizer code contains no Task 1 fixture/function
+    hardcoding; only generic eval evidence field references were present
+- release state:
+  - accepted in workspace: yes, after one full-regression correction
+  - release-unit audit cleared: yes, corrected audit first-pass
+  - full regression cleared: yes, first-pass after corrected audit
+  - commit-gating cleared: yes, first-pass after corrected full regression
+  - local commit not created
+  - pushed: no
+- next route:
+  - stage exactly the seven-file release unit and create the local release
+    commit
+  - do not push without explicit Ryan authorization
+  - do not run Tasks 2-3 or update product/public/demo artifacts before local
+    commit state is clear
+
 Pushed semantic eval-evidence integration release:
 `fc2ddc6 Integrate compact eval evidence into semantic context`. This commit
 contains the accepted, audit-cleared, full-regression-cleared,

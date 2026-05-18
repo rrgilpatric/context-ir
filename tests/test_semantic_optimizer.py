@@ -333,19 +333,25 @@ def test_optimize_semantic_units_bounds_sorting_when_focus_state_is_unchanged(
         candidate: semantic_optimizer._SemanticCandidate,
         *,
         current_focus_id: str | None = None,
+        current_focus_file_path: str | None = None,
         current_focus_file_scope_id: str | None = None,
         current_focus_has_support: bool = False,
         current_focus_has_uncertainty_surface: bool = False,
-    ) -> tuple[float, float, float, float, int, str, int, int, str]:
+        current_focus_has_eval_evidence_surface: bool = False,
+    ) -> tuple[float, float, float, float, float, int, str, int, int, str]:
         nonlocal sort_key_calls
         sort_key_calls += 1
         return original_candidate_sort_key(
             candidate,
             current_focus_id=current_focus_id,
+            current_focus_file_path=current_focus_file_path,
             current_focus_file_scope_id=current_focus_file_scope_id,
             current_focus_has_support=current_focus_has_support,
             current_focus_has_uncertainty_surface=(
                 current_focus_has_uncertainty_surface
+            ),
+            current_focus_has_eval_evidence_surface=(
+                current_focus_has_eval_evidence_surface
             ),
         )
 
@@ -651,6 +657,190 @@ def test_optimize_semantic_units_prefers_eval_evidence_over_frontier_spillover(
     assert summary_id in selections
     assert evidence.unit_id in selections
     assert frontier_id not in selections
+    assert result.total_tokens <= budget
+
+
+def test_optimize_semantic_units_keeps_direct_anchor_before_saturated_helper_support(
+    tmp_path: Path,
+) -> None:
+    """Saturated helper support does not outrank a directly named edit surface."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def direct_contract_anchor() -> str:
+                return "contract"
+
+            def helper_support_hub() -> str:
+                return "helper"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    anchor_id = _definition_id_for(program, "main.direct_contract_anchor")
+    helper_id = _definition_id_for(program, "main.helper_support_hub")
+    anchor_source_tokens = render_semantic_unit(
+        program,
+        anchor_id,
+        RenderDetail.SOURCE,
+    ).token_count
+    scoring = SemanticScoringResult(
+        query="Fix direct_contract_anchor without widening helper support",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=0.42 if unit_id == anchor_id else 0.06,
+                p_support=1.0 if unit_id == helper_id else 0.0,
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=anchor_source_tokens)
+    selections = _selection_by_unit_id(result)
+
+    assert anchor_id in selections
+    assert helper_id not in selections
+    assert result.total_tokens <= anchor_source_tokens
+
+
+def test_optimize_semantic_units_keeps_focused_contract_anchor_before_support_pack(
+    tmp_path: Path,
+) -> None:
+    """Focused support packing still yields to a direct contract anchor."""
+    package_dir = tmp_path / "src" / "context_ir"
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text(
+        textwrap.dedent(
+            """
+            \"\"\"Public package surface.
+
+            This package root documents the public API export boundary for callers.
+            The longer source span keeps the compact summary as the budget target.
+            \"\"\"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (package_dir / "core.py").write_text(
+        textwrap.dedent(
+            """
+            def direct_contract_anchor() -> str:
+                return "contract"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (package_dir / "types.py").write_text(
+        textwrap.dedent(
+            """
+            class SaturatedSupportContract:
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    focus_id = _definition_id_for(
+        program,
+        "src.context_ir.core.direct_contract_anchor",
+    )
+    boundary_id = _definition_id_for(program, "src.context_ir")
+    support_id = _definition_id_for(
+        program,
+        "src.context_ir.types.SaturatedSupportContract",
+    )
+    budget = (
+        render_semantic_unit(program, focus_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, boundary_id, RenderDetail.SUMMARY).token_count
+    )
+    scoring = SemanticScoringResult(
+        query="Fix direct_contract_anchor without becoming public API",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    0.64
+                    if unit_id == focus_id
+                    else 0.36
+                    if unit_id == boundary_id
+                    else 0.21
+                ),
+                p_support=1.0 if unit_id == support_id else 0.0,
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=budget)
+    selections = _selection_by_unit_id(result)
+
+    assert focus_id in selections
+    assert boundary_id in selections
+    assert support_id not in selections
+    assert result.total_tokens <= budget
+
+
+def test_optimize_semantic_units_suppresses_redundant_enclosing_class_container(
+    tmp_path: Path,
+) -> None:
+    """A selected method focus does not spend tight budget on its class container."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class SupportFormatter:
+                def format_digest(self) -> str:
+                    return "digest"
+
+            class EnvelopeCompiler:
+                def compile_digest(self) -> str:
+                    return "compiled digest"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    focus_id = _definition_id_for(program, "main.EnvelopeCompiler.compile_digest")
+    enclosing_class_id = _definition_id_for(program, "main.EnvelopeCompiler")
+    support_id = _definition_id_for(program, "main.SupportFormatter.format_digest")
+    budget = render_semantic_unit(
+        program,
+        focus_id,
+        RenderDetail.SOURCE,
+    ).token_count + max(
+        render_semantic_unit(
+            program,
+            enclosing_class_id,
+            RenderDetail.SUMMARY,
+        ).token_count,
+        render_semantic_unit(program, support_id, RenderDetail.SUMMARY).token_count,
+    )
+    scoring = SemanticScoringResult(
+        query="Fix compile digest while keeping formatter support visible",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    0.50
+                    if unit_id == focus_id
+                    else 0.38
+                    if unit_id == enclosing_class_id
+                    else 0.22
+                    if unit_id == support_id
+                    else 0.0
+                ),
+                p_support=0.10 if unit_id == enclosing_class_id else 0.0,
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=budget)
+    selections = _selection_by_unit_id(result)
+
+    assert focus_id in selections
+    assert support_id in selections
+    assert enclosing_class_id not in selections
     assert result.total_tokens <= budget
 
 

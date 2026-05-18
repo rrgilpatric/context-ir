@@ -32,6 +32,11 @@ _IDENTIFIER_MENTION_RE = re.compile(
 _IDENTIFIER_SURFACE_RE = re.compile(
     r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$"
 )
+_KEY_VALUE_SURFACE_RE = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9_.:-]+"
+    r"(?![A-Za-z0-9_])"
+)
 _DIRECT_SUPPORT_WEIGHT = 0.30
 _SEMANTIC_EDIT_WEIGHT = 0.20
 _SEMANTIC_SUPPORT_WEIGHT = 0.20
@@ -79,6 +84,11 @@ _BODY_SIGNAL_KINDS = frozenset(
 )
 _EVAL_EVIDENCE_SUPPORT_WEIGHT = 0.85
 _EVAL_REPORT_ACCOUNTING_EDIT_FLOOR = 0.34
+_CONTRACT_NAME_EDIT_FLOOR = 0.38
+_LITERAL_IDENTIFIER_SURFACE_EDIT_FLOOR = 0.64
+_LITERAL_OUTPUT_SURFACE_EDIT_FLOOR = 0.34
+_PUBLIC_API_CONTRACT_EDIT_FLOOR = 0.36
+_SEMANTIC_RENDERER_EDIT_FLOOR = 0.41
 
 
 @dataclass(frozen=True)
@@ -298,6 +308,8 @@ def _direct_scores_for_candidates(
 
     normalized_query = _normalize_text(query)
     query_identifier_mentions = _extract_identifier_mentions(query)
+    query_literal_identifier_surfaces = _extract_literal_identifier_surfaces(query)
+    query_literal_output_surfaces = _extract_literal_output_surfaces(query)
     semantic_similarities = _semantic_similarity_by_unit(
         query=query,
         candidates=candidates,
@@ -321,6 +333,27 @@ def _direct_scores_for_candidates(
             _exact_identifier_edit_score(
                 candidate=candidate,
                 query_identifier_mentions=query_identifier_mentions,
+            ),
+            _literal_identifier_surface_edit_score(
+                candidate=candidate,
+                query_literal_identifier_surfaces=query_literal_identifier_surfaces,
+            ),
+            _literal_output_surface_edit_score(
+                candidate=candidate,
+                query_literal_output_surfaces=query_literal_output_surfaces,
+            ),
+            _contract_name_edit_score(
+                candidate=candidate,
+                query_terms=query_terms,
+            ),
+            _semantic_renderer_edit_score(
+                candidate=candidate,
+                query_terms=query_terms,
+                query_literal_output_surfaces=query_literal_output_surfaces,
+            ),
+            _public_api_contract_edit_score(
+                candidate=candidate,
+                query_terms=query_terms,
             ),
             _eval_report_accounting_edit_score(
                 candidate=candidate,
@@ -581,6 +614,33 @@ def _is_code_identifier_mention(mention: str) -> bool:
     return len(_CAMEL_CASE_RE.findall(mention)) > 1
 
 
+def _extract_literal_identifier_surfaces(text: str) -> frozenset[str]:
+    """Extract literal implementation surfaces below exact-anchor strength."""
+    return frozenset(
+        mention
+        for match in _IDENTIFIER_MENTION_RE.finditer(text)
+        if _is_literal_identifier_surface(mention := match.group(0))
+    )
+
+
+def _is_literal_identifier_surface(mention: str) -> bool:
+    """Return whether ``mention`` is code-like enough for a weak edit floor."""
+    if "_" in mention and "." not in mention:
+        return len(tuple(part for part in mention.split("_") if part)) >= 3
+    return (
+        "." in mention
+        or any(character.isdigit() for character in mention)
+        or len(_CAMEL_CASE_RE.findall(mention)) > 1
+    )
+
+
+def _extract_literal_output_surfaces(text: str) -> frozenset[str]:
+    """Extract exact key/value output surfaces named by the query."""
+    return frozenset(
+        match.group(0).lower() for match in _KEY_VALUE_SURFACE_RE.finditer(text)
+    )
+
+
 def _exact_identifier_edit_score(
     *,
     candidate: _CandidateProfile,
@@ -596,6 +656,149 @@ def _exact_identifier_edit_score(
     if candidate_identifier_surfaces & query_identifier_mentions:
         return _EXACT_IDENTIFIER_EDIT_FLOOR
     return 0.0
+
+
+def _literal_identifier_surface_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_literal_identifier_surfaces: frozenset[str],
+) -> float:
+    """Return a weak direct-edit floor for literal implementation surfaces."""
+    if candidate.symbol_kind not in _BODY_SIGNAL_KINDS:
+        return 0.0
+    if not query_literal_identifier_surfaces:
+        return 0.0
+
+    candidate_identifier_surfaces = _identifier_surfaces(candidate.primary_text)
+    if candidate_identifier_surfaces & query_literal_identifier_surfaces:
+        return _LITERAL_IDENTIFIER_SURFACE_EDIT_FLOOR
+    return 0.0
+
+
+def _literal_output_surface_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_literal_output_surfaces: frozenset[str],
+) -> float:
+    """Return a direct floor when source emits an exact named output surface."""
+    if candidate.symbol_kind not in _BODY_SIGNAL_KINDS:
+        return 0.0
+    if candidate.body_text is None or not query_literal_output_surfaces:
+        return 0.0
+
+    candidate_output_surfaces = _extract_literal_output_surfaces(candidate.body_text)
+    if candidate_output_surfaces & query_literal_output_surfaces:
+        return _LITERAL_OUTPUT_SURFACE_EDIT_FLOOR
+    return 0.0
+
+
+def _public_api_contract_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_terms: tuple[str, ...],
+) -> float:
+    """Return a direct floor for package-root public API contract surfaces."""
+    if candidate.symbol_kind is not ResolvedSymbolKind.MODULE:
+        return 0.0
+    if not _mentions_public_api_contract(query_terms):
+        return 0.0
+    if not (
+        candidate.file_path.startswith("src/")
+        and candidate.file_path.endswith("/__init__.py")
+    ):
+        return 0.0
+    return _PUBLIC_API_CONTRACT_EDIT_FLOOR
+
+
+def _contract_name_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_terms: tuple[str, ...],
+) -> float:
+    """Return a direct floor when a query names a class contract surface."""
+    if candidate.symbol_kind is not ResolvedSymbolKind.CLASS:
+        return 0.0
+
+    primary_name = candidate.primary_text.rsplit(".", maxsplit=1)[-1]
+    primary_terms = _class_contract_terms(primary_name)
+    if len(primary_terms) < 3:
+        return 0.0
+    query_term_set = frozenset(query_terms)
+    if "semantic" in query_term_set and "semantic" not in primary_terms:
+        return 0.0
+    if all(term in query_term_set for term in primary_terms):
+        return _CONTRACT_NAME_EDIT_FLOOR
+    return 0.0
+
+
+def _semantic_renderer_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_terms: tuple[str, ...],
+    query_literal_output_surfaces: frozenset[str],
+) -> float:
+    """Return a direct floor for semantic renderer surfaces named by prose."""
+    if candidate.symbol_kind not in {
+        ResolvedSymbolKind.FUNCTION,
+        ResolvedSymbolKind.ASYNC_FUNCTION,
+        ResolvedSymbolKind.METHOD,
+    }:
+        return 0.0
+    if not candidate.file_path.startswith("src/"):
+        return 0.0
+    if candidate.body_text is None or not query_literal_output_surfaces:
+        return 0.0
+
+    query_term_set = frozenset(query_terms)
+    if "semantic" not in query_term_set or not _mentions_rendering(query_term_set):
+        return 0.0
+    candidate_output_surfaces = _extract_literal_output_surfaces(candidate.body_text)
+    if not candidate_output_surfaces & query_literal_output_surfaces:
+        return 0.0
+
+    surface_terms = frozenset(
+        (
+            *_extract_terms(candidate.primary_text),
+            *_extract_terms(candidate.file_path),
+        )
+    )
+    if {"semantic", "renderer"}.issubset(surface_terms):
+        return _SEMANTIC_RENDERER_EDIT_FLOOR
+    return 0.0
+
+
+def _mentions_rendering(query_term_set: frozenset[str]) -> bool:
+    """Return whether query terms ask about render/rendering behavior."""
+    return bool({"render", "renders", "renderer", "rendering"} & query_term_set)
+
+
+def _class_contract_terms(primary_name: str) -> tuple[str, ...]:
+    """Return decomposed class-name terms for contract-name matching."""
+    terms: list[str] = []
+    seen: set[str] = set()
+    for raw_token in _TOKEN_SPLIT_RE.split(primary_name):
+        if not raw_token:
+            continue
+        camel_parts = _CAMEL_CASE_RE.findall(raw_token)
+        token_variants = camel_parts if len(camel_parts) > 1 else [raw_token]
+        for variant in token_variants:
+            normalized = variant.lower()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            terms.append(normalized)
+    return tuple(terms)
+
+
+def _mentions_public_api_contract(query_terms: tuple[str, ...]) -> bool:
+    """Return whether query terms ask for a public/export contract boundary."""
+    query_term_set = frozenset(query_terms)
+    return "public" in query_term_set and (
+        "api" in query_term_set
+        or "export" in query_term_set
+        or "exports" in query_term_set
+        or "boundary" in query_term_set
+    )
 
 
 def _eval_report_accounting_edit_score(

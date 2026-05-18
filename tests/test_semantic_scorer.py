@@ -252,6 +252,177 @@ def test_score_semantic_units_does_not_exact_anchor_unqualified_probe_names(
     assert namespace_result.scores[namespace_id].p_edit < 0.85
 
 
+def test_score_semantic_units_boosts_literal_implementation_surface_mentions(
+    tmp_path: Path,
+) -> None:
+    """Literal snake-case implementation names get a direct but sub-exact floor."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def discover_runtime_contract() -> str:
+                return "contract"
+
+            def saturated_helper_support() -> str:
+                return "helper"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    target_id = _definition_id_for(program, "main.discover_runtime_contract")
+    helper_id = _definition_id_for(program, "main.saturated_helper_support")
+
+    result = score_semantic_units(
+        program,
+        "Fix discover_runtime_contract without changing helper support",
+    )
+
+    assert result.scores[target_id].p_edit >= 0.30
+    assert result.scores[target_id].p_edit < 0.85
+    assert result.scores[target_id].p_edit > result.scores[helper_id].p_edit
+
+
+def test_score_semantic_units_keeps_short_snake_mentions_below_output_flow(
+    tmp_path: Path,
+) -> None:
+    """Short snake-case mentions do not swamp the broader output-flow target."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_namespace(obj: object) -> dict[str, object]:
+                return vars(obj)
+
+            def render_probe_digest() -> str:
+                try:
+                    probe_namespace(1)
+                except TypeError:
+                    status = "raised_type_error"
+                else:
+                    status = "returned_namespace"
+                return f"probe_digest:{status}"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    probe_id = _definition_id_for(program, "main.probe_namespace")
+    renderer_id = _definition_id_for(program, "main.render_probe_digest")
+    unsupported_id = _unsupported_id_for(program, "vars(obj)")
+
+    result = score_semantic_units(
+        program,
+        "Fix probe_namespace unsupported vars(obj) raised TypeError "
+        "and keep digest output aligned",
+    )
+
+    assert result.scores[renderer_id].p_edit > result.scores[probe_id].p_edit
+    assert result.scores[unsupported_id].p_support < 0.24
+
+
+def test_score_semantic_units_boosts_exact_output_surface_emitters(
+    tmp_path: Path,
+) -> None:
+    """Functions emitting exact key/value surfaces become direct edit anchors."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def render_contract_surface() -> str:
+                return "runtime=additive"
+
+            class RuntimeEvidenceField:
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    renderer_id = _definition_id_for(program, "main.render_contract_surface")
+    field_id = _definition_id_for(program, "main.RuntimeEvidenceField")
+
+    result = score_semantic_units(
+        program,
+        "Fix renderer so evidence renders runtime=additive",
+    )
+
+    assert result.scores[renderer_id].p_edit >= 0.30
+    assert result.scores[renderer_id].p_edit > result.scores[field_id].p_edit
+
+
+def test_score_semantic_units_prefers_semantic_renderer_surface_when_named(
+    tmp_path: Path,
+) -> None:
+    """Semantic renderer prose lifts renderer surfaces over sibling emitters."""
+    package_dir = tmp_path / "src" / "context_ir"
+    package_dir.mkdir(parents=True)
+    (package_dir / "semantic_renderer.py").write_text(
+        textwrap.dedent(
+            """
+            def _render_contract_surface() -> str:
+                return "runtime=additive"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (package_dir / "eval_evidence.py").write_text(
+        textwrap.dedent(
+            """
+            def render_contract_surface() -> str:
+                return "runtime=additive"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    renderer_id = _definition_id_for(
+        program,
+        "src.context_ir.semantic_renderer._render_contract_surface",
+    )
+    sibling_id = _definition_id_for(
+        program,
+        "src.context_ir.eval_evidence.render_contract_surface",
+    )
+
+    result = score_semantic_units(
+        program,
+        "Fix semantic renderer so evidence renders runtime=additive",
+    )
+
+    assert result.scores[renderer_id].p_edit >= 0.40
+    assert result.scores[renderer_id].p_edit > result.scores[sibling_id].p_edit
+
+
+def test_score_semantic_units_boosts_fully_named_class_contract_surfaces(
+    tmp_path: Path,
+) -> None:
+    """A class whose contract-name terms are all queried gets a direct floor."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class SemanticEvalRuntimeEvidence:
+                pass
+
+            class SemanticEvalRuntimeEvidenceField:
+                pass
+
+            class EvalRuntimeEvidence:
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    contract_id = _definition_id_for(program, "main.SemanticEvalRuntimeEvidence")
+    non_semantic_id = _definition_id_for(program, "main.EvalRuntimeEvidence")
+
+    result = score_semantic_units(
+        program,
+        "Fix semantic eval runtime evidence contract",
+    )
+
+    assert result.scores[contract_id].p_edit >= 0.30
+    assert result.scores[contract_id].p_edit > result.scores[non_semantic_id].p_edit
+
+
 def test_score_semantic_units_preserves_qualified_exact_identifier_anchors(
     tmp_path: Path,
 ) -> None:

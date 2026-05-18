@@ -598,7 +598,7 @@ def _candidate_sort_state(
 def _candidate_sort_key_for_state(
     candidate: _SemanticCandidate,
     sort_state: _CandidateSortState,
-) -> tuple[float, float, float, float, int, str, int, int, str]:
+) -> tuple[float, float, float, float, float, int, str, int, int, str]:
     """Return ``candidate``'s key for a materialized dynamic sort state."""
     return _candidate_sort_key(
         candidate,
@@ -624,10 +624,10 @@ def _candidate_sort_key(
     current_focus_has_support: bool = False,
     current_focus_has_uncertainty_surface: bool = False,
     current_focus_has_eval_evidence_surface: bool = False,
-) -> tuple[float, float, float, float, int, str, int, int, str]:
+) -> tuple[float, float, float, float, float, int, str, int, int, str]:
     """Sort by strongest relevance first, then stable source order."""
     if current_focus_id is not None:
-        pack_score = _support_pack_score(candidate)
+        pack_score = _focused_pack_priority_score(candidate)
         scope_priority = _scope_priority(
             candidate,
             current_focus_id=current_focus_id,
@@ -652,6 +652,7 @@ def _candidate_sort_key(
             ),
             -pack_score,
             -candidate.score.p_edit,
+            0.0,
             proven_priority,
             candidate.provenance.file_path,
             span.start_line,
@@ -663,6 +664,7 @@ def _candidate_sort_key(
     proven_priority = 0 if candidate.kind is RenderedUnitKind.PROVEN_SYMBOL else 1
     span = candidate.provenance.span
     return (
+        _initial_direct_anchor_priority(candidate),
         -strongest_relevance,
         -candidate.score.p_edit,
         -candidate.score.p_support,
@@ -673,6 +675,16 @@ def _candidate_sort_key(
         span.start_column,
         candidate.unit_id,
     )
+
+
+def _initial_direct_anchor_priority(candidate: _SemanticCandidate) -> float:
+    """Prefer proven direct edit anchors before saturated support-only hubs."""
+    if (
+        candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
+        and candidate.score.p_edit >= _DIRECT_SOURCE_THRESHOLD
+    ):
+        return 0.0
+    return 1.0
 
 
 def _scope_priority(
@@ -782,6 +794,16 @@ def _support_pack_score(candidate: _SemanticCandidate) -> float:
 
     preferred_tokens = candidate.renders[preferred_detail].token_count
     return candidate.score.p_support / max(1, preferred_tokens)
+
+
+def _focused_pack_priority_score(candidate: _SemanticCandidate) -> float:
+    """Keep direct edit anchors ahead of support packing within a focus band."""
+    if (
+        candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
+        and candidate.score.p_edit >= _DIRECT_SOURCE_THRESHOLD
+    ):
+        return 1.0 + candidate.score.p_edit
+    return _support_pack_score(candidate)
 
 
 def _focus_relevance_score(
@@ -1018,8 +1040,26 @@ def _is_policy_suppressed_standalone_proven_candidate(
         return False
     if _is_support_for_focus(candidate, focus_unit_id=current_focus_id):
         return False
+    if _is_redundant_enclosing_class_candidate(
+        candidate,
+        current_focus_id=current_focus_id,
+    ):
+        return True
     return max(candidate.score.p_edit, candidate.score.p_support) < (
         _DIRECT_SUMMARY_THRESHOLD
+    )
+
+
+def _is_redundant_enclosing_class_candidate(
+    candidate: _SemanticCandidate,
+    *,
+    current_focus_id: str,
+) -> bool:
+    """Return whether a class container duplicates the selected method focus."""
+    return (
+        candidate.symbol_kind is ResolvedSymbolKind.CLASS
+        and current_focus_id.startswith(f"{candidate.unit_id}.")
+        and candidate.score.p_support < _SUPPORT_SUMMARY_THRESHOLD
     )
 
 

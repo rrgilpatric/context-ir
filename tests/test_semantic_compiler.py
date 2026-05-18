@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import context_ir
 import context_ir.semantic_compiler as semantic_compiler
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
@@ -39,6 +40,13 @@ from context_ir.semantic_types import (
     SemanticUnitTraceSummary,
     SourceSite,
     SyntaxProgram,
+)
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+TASK_1_QUERY = (
+    "Fix discover_semantic_eval_runtime_evidence so compact "
+    "oracle_signal_hasattr_probe evidence renders additive runtime=additive "
+    "attribute_present=true without becoming public API"
 )
 
 
@@ -534,6 +542,44 @@ def test_compile_semantic_context_discovers_compact_eval_evidence(
     assert "runtime=additive" in result.document
     assert "payload=attribute_present=true" in result.document
     assert result.total_tokens <= 160
+
+
+def test_compile_semantic_context_task_1_selects_direct_contract_waypoints() -> None:
+    """Task 1 keeps direct implementation and contract anchors above helper hubs."""
+    program = context_ir.analyze_repository(REPO_ROOT)
+
+    result = compile_semantic_context(program, TASK_1_QUERY, budget=260)
+
+    selected_unit_ids = tuple(
+        selection.unit_id for selection in result.optimization.selections
+    )
+    required_unit_ids = {
+        (
+            "def:src/context_ir/eval_evidence.py:"
+            "src.context_ir.eval_evidence.discover_semantic_eval_runtime_evidence"
+        ),
+        (
+            "def:src/context_ir/semantic_types.py:"
+            "src.context_ir.semantic_types.SemanticEvalRuntimeEvidence"
+        ),
+        (
+            "def:src/context_ir/semantic_renderer.py:"
+            "src.context_ir.semantic_renderer._render_eval_runtime_evidence"
+        ),
+        "eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11",
+    }
+
+    assert required_unit_ids <= set(selected_unit_ids)
+    assert any(
+        unit_id.startswith("def:src/context_ir/__init__.py:")
+        for unit_id in selected_unit_ids
+    )
+    assert "primary=unsupported/opaque" in result.document
+    assert "runtime=additive" in result.document
+    assert "payload=attribute_present=true" in result.document
+    assert "discover_semantic_eval_runtime_evidence" not in context_ir.__all__
+    assert not hasattr(context_ir, "discover_semantic_eval_runtime_evidence")
+    assert result.total_tokens <= 260
 
 
 def test_compile_semantic_context_accounts_for_document_assembly_overhead(
