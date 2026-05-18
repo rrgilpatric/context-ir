@@ -121,9 +121,10 @@ Active next route:
 - release-unit audit is cleared
 - full regression is cleared
 - commit-gating is cleared
+- local commit is created:
+  `63aabca Record task 2 differentiation evidence`
 - hold Task 3 and any public/demo claim advancement
-- next route is local commit creation for the exact six-file artifact/control
-  release unit
+- next route is explicit Ryan push authorization
 - do not advance Task 3 or public/demo claims until the artifact update is
   reviewed and routed
 
@@ -361,6 +362,29 @@ Task 2 STRONG portfolio artifact update commit-gating is cleared:
 - next route:
   - stage and commit exactly the six-file artifact/control release unit
   - do not push until Ryan explicitly authorizes push after local commit
+
+Task 2 STRONG portfolio artifact update is locally committed:
+
+- local commit created after audit, full regression, and commit-gating cleared:
+  - `63aabca Record task 2 differentiation evidence`
+- committed files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `63aabca`
+  - pushed: no
+- next route:
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Task 3, update public/demo claims, or treat the portfolio
+    artifact update as pushed until remote state is resolved
 
 Task 2 product-differentiation rerun returned PARTIAL after the pushed
 source/test calibration correction:

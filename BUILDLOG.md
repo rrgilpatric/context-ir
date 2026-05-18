@@ -2,6 +2,30 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Task 2 STRONG Portfolio Artifact Locally Committed
+
+- Local commit created after audit, full regression, and commit-gating cleared:
+  - `63aabca Record task 2 differentiation evidence`
+- Committed files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes, `63aabca`
+  - pushed: no
+- Next route:
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Task 3, update public/demo claims, or treat the portfolio
+    artifact update as pushed until remote state is resolved
+- Acceptance status: locally committed, push-gated
+
 ## 2026-05-18 -- Task 2 STRONG Portfolio Artifact Commit-Gating Cleared
 
 - Commit-gating passed after audit and full regression clearance.
