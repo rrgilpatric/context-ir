@@ -62,11 +62,17 @@ creation, or push absent new findings.
 
 Active next route:
 
-- the Task 1 portfolio artifact update is pushed
-- Task 0 and Task 1 are recorded as STRONG internal portfolio evidence
-- next route is a read-only Task 2 product-differentiation checkpoint lane
-- do not update public/demo claims or claim broader product-level
-  differentiation before more portfolio evidence is collected and reviewed
+- the Task 2 product-differentiation checkpoint returned FAIL
+- the Task 2 failure diagnosis is accepted as routing evidence
+- the Task 2 implementation-intent source/test calibration correction is
+  workspace-only accepted after one audit correction
+- corrected release-unit audit is cleared
+- full regression is cleared
+- commit-gating is cleared
+- hold Task 3 and any public/demo claim advancement
+- next route is local commit creation for the exact five-file release unit
+- do not update `evals/product_differentiation/portfolio_001/` with Task 2
+  evidence unless Ryan explicitly authorizes recording failed evidence later
 
 Pushed Task 1 product-differentiation artifact release:
 `4d8a309 Record task 1 differentiation evidence`. This commit contains the
@@ -78,6 +84,354 @@ authorization through `1b44aa4 Sync task 1 evidence local routing`; this
 continuity entry records the post-push state. Do not route `4d8a309` or
 `1b44aa4` back to release-unit audit, full regression, commit-gating, staging,
 local commit creation, or push absent new findings.
+
+Task 2 product-differentiation checkpoint returned FAIL and controls routing:
+
+- Task 2 query:
+  `Fix default local Python subprocess recompile so exec(source) runtime probe results attach additive provenance to unsupported EXEC_OR_EVAL units without promoting primary truth`
+- budgets checked:
+  - primary: `320`
+  - ceiling: `480`
+- providers checked:
+  - `context_ir`
+  - `lexical_top_k_files`
+  - `import_neighborhood_files`
+- returned result:
+  - `context_ir` beat baselines only in the weak sense that it selected
+    semantic units while baselines selected zero files
+  - `context_ir` missed the required Task 2 implementation path at primary
+    budget `320`
+  - ceiling budget `480` added compact `oracle_signal_exec_probe` evidence and
+    preserved `primary=unsupported/opaque` with additive runtime evidence, but
+    still missed most expected implementation waypoints
+- primary `320` `context_ir` selected:
+  - `def:tests/test_runtime_observation_recompile.py:tests.test_runtime_observation_recompile._assert_default_local_python_subprocess_recompile_observes_exact_source`
+  - `def:tests/test_runtime_observation_recompile.py:tests.test_runtime_observation_recompile.test_default_local_python_subprocess_recompile_helper_observes_exact_exec`
+  - `assign:src/context_ir/runtime_probe_execution.py:697:4`
+  - `frontier:call:tests/test_runtime_observation_recompile.py:1594:11`
+- ceiling `480` added:
+  - `def:tests/test_runtime_observation_recompile.py:tests.test_runtime_observation_recompile.test_default_local_python_subprocess_recompile_helper_observes_exact_eval`
+  - `def:tests/test_runtime_observation_recompile.py:tests.test_runtime_observation_recompile._runtime_fields_from_probe_fields`
+  - `def:tests/test_runtime_observation_recompile.py:tests.test_runtime_observation_recompile._snapshot_basis`
+  - `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+- expected waypoint result:
+  - `runtime_observation_recompile.py`: missed as implementation waypoint;
+    selected tests only
+  - `runtime_observation_admission.py`: missed
+  - `runtime_probe_execution.py`: partial; one config assignment only
+  - `runtime_probe_results.py`: missed
+  - `tool_facade.py`: missed
+  - concrete exec/source runtime evidence: missed at `320`; present only at
+    `480`
+  - unsupported/additive truth: demonstrated only by `480` compact eval
+    evidence
+  - baselines failed or overincluded, but `context_ir` also failed the
+    required path
+- scratch artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task2_primary320_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task2_primary320_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task2_primary320_documents/`
+  - `/private/tmp/context_ir_portfolio_001_task2_ceiling480_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task2_ceiling480_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task2_ceiling480_documents/`
+- caveats:
+  - requested provider set did not include
+    `context_ir_default_local_python_subprocess`; this remains a
+    product-differentiation checkpoint over the requested providers only
+  - `context_ir` latency remains materially higher than baselines
+- control decision:
+  - accept this as a failed checkpoint result, not as product-level evidence
+  - hold Task 3 and any public/demo claim advancement
+  - do not update `evals/product_differentiation/portfolio_001/` with Task 2
+    evidence unless Ryan explicitly authorizes recording failed evidence later
+- next route:
+  - run a read-only Task 2 failure diagnosis lane focused on ranking the
+    implementation waypoints for default local-Python subprocess recompile
+    queries, especially `runtime_observation_recompile.py`,
+    `runtime_observation_admission.py`, `runtime_probe_results.py`,
+    `tool_facade.py`, and reducing test-helper dominance
+  - do not run Task 3 before the failure is diagnosed and Ryan authorizes the
+    next correction or strategy decision
+
+Task 2 failure diagnosis is accepted:
+
+- read-only diagnosis returned DONE and is accepted with no control findings
+- root cause classification:
+  - primary: scoring/optimizer policy issue
+  - behavior-descriptive tests become direct edit anchors, then optimizer
+    focus packing spends the small budget around those test helpers
+  - secondary: source/test path policy is weak, support propagation is
+    one-hop and does not recover the workflow chain, and compact exec evidence
+    is discovered but too weak
+- selected budget-`320` units were test-heavy:
+  - `tests/test_runtime_observation_recompile.py::_assert_default_local_python_subprocess_recompile_observes_exact_source`
+  - `tests/test_runtime_observation_recompile.py::test_default_local_python_subprocess_recompile_helper_observes_exact_exec`
+  - one `runtime_probe_execution.py` config assignment
+  - one test frontier call
+- implementation waypoints exist and are renderable but scored below selected
+  tests:
+  - `runtime_observation_recompile.py`:
+    `apply_default_local_python_subprocess_for_diagnostic_and_recompile`
+  - `tool_facade.py`:
+    `recompile_repository_context_with_default_local_python_subprocess`
+  - `runtime_probe_execution.py`: default local-Python runner and observed
+    replay validation
+  - `runtime_observation_admission.py`: probe-result admission
+  - `runtime_probe_results.py`: observed result contract
+- diagnosis conclusion:
+  - this appears locally correctable
+  - no broad strategy pause is required yet
+  - the correction should target general implementation-intent source/test
+    calibration, not a Task 2 hardcode
+- recommended correction:
+  - for implementation queries such as `fix/change/update` that do not
+    explicitly ask for tests, prevent `tests/` units from becoming the first
+    direct edit anchors while preserving them as support
+  - add focused regression coverage using the Task 2 query proving budget
+    `320` includes at least one real source implementation waypoint
+  - guard legitimate test-edit queries from regression
+- release/artifact state:
+  - Task 2 failed checkpoint accepted as routing evidence: yes
+  - portfolio artifact updated with Task 2: no
+  - source/test correction authorized: no, awaiting explicit Ryan go/no-go
+- next route:
+  - ask Ryan whether to authorize the focused correction slice
+  - do not run Task 3 or update public/demo claims before Ryan authorizes the
+    next correction or strategy decision
+
+Task 2 implementation-intent source/test calibration correction is
+workspace-only accepted:
+
+- implementation lane returned DONE and was reviewed by control with no
+  findings
+- accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- accepted behavior:
+  - scorer-level implementation-intent calibration now caps `tests/` edit
+    scores for implementation queries such as `fix/change/update/implement`
+    when the query does not explicitly ask for tests
+  - tests remain eligible as support context
+  - explicit test-edit queries still allow tests to rank as edit anchors
+  - source functions with non-generic implementation surface overlap can get a
+    direct edit floor
+  - production code does not hardcode Task 2 unit IDs or fixture names
+- exact Task 2 correction smoke:
+  - query: `Fix default local Python subprocess recompile so exec(source) runtime probe results attach additive provenance to unsupported EXEC_OR_EVAL units without promoting primary truth`
+  - budget: `320`
+  - total tokens: `318`
+  - first selected unit is source code, not tests:
+    `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+  - compact exec evidence is selected:
+    `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+- selected Task 2 units reported by the implementation lane:
+  - `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+  - `def:src/context_ir/runtime_acquisition.py:src.context_ir.runtime_acquisition.attach_eval_runtime_provenance`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._runtime_provenance_records`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._runtime_provenance_to_json`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._runtime_provenance_record`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._require_runtime_provenance_record`
+  - `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse`
+  - `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+- validation rerun by control:
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest including Task 1, Task 2, smoke_d, and vars type-error
+    regressions: `73 passed` in about `280.74s`
+  - `git diff --check`: clean
+- important boundary:
+  - this acceptance means the correction meets its implementation target
+  - it does not yet mean Task 2 is STRONG product-differentiation evidence
+  - the formal Task 2 checkpoint must be rerun after this correction is
+    accepted and released before Task 3 or portfolio artifact updates
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run a read-only release-unit audit over the exact five-file release unit
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push until the correction clears the normal gates
+
+Task 2 source/test calibration release-unit audit failed:
+
+- dedicated read-only release-unit audit returned FAIL
+- finding:
+  - `src/context_ir/semantic_scorer.py`: implementation-intent `tests/` edit
+    cap is not final
+  - `tests/` candidates are capped at `0.19`, but
+    `_apply_orchestration_edit_signal` later boosts `p_edit` without
+    reapplying the cap
+  - an audit validation fixture showed a `tests/` function reaching
+    `p_edit=0.240` for an implementation query without explicit test intent
+  - this violates the accepted behavior that implementation queries cap test
+    edit scores while preserving tests as support
+- audit scope:
+  - live repo state matched branch `main`, `HEAD=4af19a1`, and
+    `origin/main=4af19a1`
+  - no staged files and no untracked files
+  - dirty set exactly matched the five-file correction release unit
+  - no `semantic_optimizer.py` diff
+  - no changed source/test files outside the listed correction files
+  - no diffs in runtime/provider/compiler contracts, eval assets, portfolio
+    artifacts, public docs/claims, package exports, API/MCP/schema/config
+    surfaces
+- audit validation:
+  - `git diff --check`: passed
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest: `73 passed` in about `281.71s`
+- release state:
+  - accepted in workspace: yes, first-pass before audit
+  - release-unit audit cleared: no, failed
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - issue a narrow correction so implementation-intent test edit caps survive
+    post-processing, or make orchestration skip `tests/` edit boosts for
+    non-explicit test queries
+  - after correction, rerun focused validation and then rerun the release-unit
+    audit from the top
+  - do not run Task 3, update portfolio artifacts, stage, commit, push, or
+    update public/demo claims before the corrected gates clear
+
+Task 2 source/test calibration audit correction is workspace-only accepted:
+
+- correction lane returned DONE and was reviewed by control with no findings
+- corrected behavior:
+  - implementation-intent `tests/` edit cap is reapplied after orchestration,
+    dependency support, and scope support post-processing
+  - `p_support` is preserved
+  - explicit test-edit queries remain preserved
+  - Task 1 budget-`260` behavior remains passing
+  - Task 2 budget-`320` behavior remains passing
+- files changed by this correction:
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- release-unit files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- control validation:
+  - live repo state matched branch `main`, `HEAD=4af19a1`, and
+    `origin/main=4af19a1`
+  - dirty set exactly matched the five-file release unit
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py tests/test_semantic_compiler.py -v`:
+    `40 passed` in about `333.09s`
+  - real-repo Task 2 scorer cap proof: `tests_above_cap=0`,
+    `max_tests_p_edit=0.190000`, and high test `p_support` remained present
+- exact Task 2 behavior reported by the correction lane:
+  - total tokens: `318`
+  - first selected unit:
+    `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+  - compact exec evidence selected:
+    `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: no, rerun required
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - rerun the dedicated read-only release-unit audit over the exact five-file
+    release unit from the top
+  - do not run Task 3, update portfolio artifacts, stage, commit, push, or
+    update public/demo claims before corrected gates clear
+
+Corrected Task 2 source/test calibration release-unit audit is cleared:
+
+- dedicated read-only release-unit audit returned PASS with no findings
+- audit scope confirmed:
+  - live repo state matched branch `main`, `HEAD=4af19a1`, and
+    `origin/main=4af19a1`
+  - no staged files and no untracked files
+  - dirty set exactly matched the five-file release unit
+  - no `semantic_optimizer.py` diff
+  - no changed source/test files outside `src/context_ir/semantic_scorer.py`,
+    `tests/test_semantic_scorer.py`, and `tests/test_semantic_compiler.py`
+  - no runtime/provider/compiler contracts, eval assets, portfolio artifacts,
+    public docs/claims, package exports, API/MCP/schema/config surfaces changed
+- behavior audited:
+  - implementation-intent test edit cap is reapplied after scorer
+    post-processing
+  - `p_support` is preserved for capped tests
+  - explicit test-edit queries remain allowed
+  - production scorer logic is general and does not hardcode Task 2 unit IDs
+    or fixture names
+  - explicit cap proof: `implementation_tests_above_cap=0`,
+    `implementation_max_tests_p_edit=0.190000`, and
+    `implementation_max_tests_p_support=1.000000`
+  - explicit test query proof: `explicit_test_max_tests_p_edit=0.640915`
+  - Task 1 budget `260` preserved expected required units at `247` tokens
+  - Task 2 budget `320` selects source first:
+    `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+  - Task 2 compact exec evidence remains selected:
+    `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+- audit validation:
+  - `git diff --check`: passed
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest for semantic scorer/compiler/optimizer plus smoke_d and
+    vars type-error regressions: `74 passed` in about `486.95s`
+  - exact Task 1 compiler test rerun separately: passed
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes, corrected audit first-pass
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit not created
+  - pushed: no
+- full regression:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1726 passed` in about
+    `285.04s`
+- next route:
+  - create a local commit for the exact five-file release unit
+  - after local commit creation, push remains Ryan-gated
+  - do not run Task 3, update portfolio artifacts, stage, commit, push, or
+    update public/demo claims outside the cleared release sequence
+
+Corrected Task 2 source/test calibration commit-gating is cleared:
+
+- commit-gating verified:
+  - branch is `main`
+  - `HEAD=4af19a1` and `origin/main=4af19a1`
+  - dirty set exactly matched the five-file release unit
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+  - excluded public docs, eval assets, portfolio artifacts,
+    runtime/provider/compiler contract surfaces, package exports, and
+    `semantic_optimizer.py` had no diff
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit not created
+  - pushed: no
+- next route:
+  - stage and locally commit only the exact five-file release unit
+  - do not push until Ryan explicitly authorizes push after local commit
 
 Pushed Task 0 product-differentiation evidence bundle release:
 `9407d63 Add task 0 differentiation evidence bundle`. This commit contains

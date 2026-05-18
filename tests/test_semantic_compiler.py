@@ -48,6 +48,11 @@ TASK_1_QUERY = (
     "oracle_signal_hasattr_probe evidence renders additive runtime=additive "
     "attribute_present=true without becoming public API"
 )
+TASK_2_QUERY = (
+    "Fix default local Python subprocess recompile so exec(source) runtime probe "
+    "results attach additive provenance to unsupported EXEC_OR_EVAL units without "
+    "promoting primary truth"
+)
 
 
 def _semantic_program(tmp_path: Path) -> SemanticProgram:
@@ -580,6 +585,47 @@ def test_compile_semantic_context_task_1_selects_direct_contract_waypoints() -> 
     assert "discover_semantic_eval_runtime_evidence" not in context_ir.__all__
     assert not hasattr(context_ir, "discover_semantic_eval_runtime_evidence")
     assert result.total_tokens <= 260
+
+
+def test_compile_semantic_context_task_2_prefers_source_waypoint_over_tests() -> None:
+    """Task 2 implementation intent keeps tests out of the first edit-anchor slot."""
+    program = context_ir.analyze_repository(REPO_ROOT)
+
+    result = compile_semantic_context(program, TASK_2_QUERY, budget=320)
+
+    selected_unit_ids = tuple(
+        selection.unit_id for selection in result.optimization.selections
+    )
+    implementation_waypoint_ids = {
+        (
+            "def:src/context_ir/runtime_observation_recompile.py:"
+            "src.context_ir.runtime_observation_recompile."
+            "apply_default_local_python_subprocess_for_diagnostic_and_recompile"
+        ),
+        (
+            "def:src/context_ir/tool_facade.py:"
+            "src.context_ir.tool_facade."
+            "recompile_repository_context_with_default_local_python_subprocess"
+        ),
+        (
+            "def:src/context_ir/runtime_probe_execution.py:"
+            "src.context_ir.runtime_probe_execution."
+            "make_runtime_probe_default_local_python_subprocess_runner"
+        ),
+        (
+            "def:src/context_ir/runtime_observation_admission.py:"
+            "src.context_ir.runtime_observation_admission."
+            "_runtime_observation_from_probe_observed_result"
+        ),
+        (
+            "def:src/context_ir/runtime_probe_results.py:"
+            "src.context_ir.runtime_probe_results.RuntimeProbeObservedResult"
+        ),
+    }
+
+    assert selected_unit_ids[0].startswith("def:src/context_ir/")
+    assert implementation_waypoint_ids & set(selected_unit_ids)
+    assert result.total_tokens <= 320
 
 
 def test_compile_semantic_context_accounts_for_document_assembly_overhead(

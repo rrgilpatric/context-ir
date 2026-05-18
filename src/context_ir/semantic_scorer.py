@@ -89,6 +89,42 @@ _LITERAL_IDENTIFIER_SURFACE_EDIT_FLOOR = 0.64
 _LITERAL_OUTPUT_SURFACE_EDIT_FLOOR = 0.34
 _PUBLIC_API_CONTRACT_EDIT_FLOOR = 0.36
 _SEMANTIC_RENDERER_EDIT_FLOOR = 0.41
+_IMPLEMENTATION_INTENT_TERMS = frozenset(
+    {
+        "change",
+        "fix",
+        "implement",
+        "modify",
+        "repair",
+        "update",
+    }
+)
+_EXPLICIT_TEST_QUERY_TERMS = frozenset(
+    {
+        "coverage",
+        "pytest",
+        "regression",
+        "test",
+        "testing",
+        "tests",
+    }
+)
+_IMPLEMENTATION_INTENT_TEST_EDIT_CAP = 0.19
+_IMPLEMENTATION_SOURCE_SURFACE_EDIT_FLOOR = 0.34
+_IMPLEMENTATION_SOURCE_SURFACE_OVERLAP_THRESHOLD = 0.20
+_IMPLEMENTATION_SOURCE_SURFACE_GENERIC_TERMS = frozenset(
+    {
+        "default",
+        "eval",
+        "exec",
+        "local",
+        "probe",
+        "python",
+        "runtime",
+        "source",
+        "subprocess",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -149,6 +185,11 @@ def score_semantic_units(
 ) -> SemanticScoringResult:
     """Score every renderable semantic unit without mutating ``program``."""
     candidates = _build_candidate_profiles(program)
+    query_terms = _extract_terms(query)
+    prefer_source_edit_anchors = bool(query_terms) and _prefers_source_edit_anchors(
+        query=query,
+        query_terms=query_terms,
+    )
     direct_scores = _direct_scores_for_candidates(
         query=query,
         candidates=candidates,
@@ -169,6 +210,11 @@ def score_semantic_units(
         direct_scores=direct_scores,
         candidates=candidates,
     )
+    if prefer_source_edit_anchors:
+        final_scores = _apply_implementation_intent_test_edit_cap(
+            scores=final_scores,
+            candidates=candidates,
+        )
     return SemanticScoringResult(query=query, scores=final_scores)
 
 
@@ -310,6 +356,10 @@ def _direct_scores_for_candidates(
     query_identifier_mentions = _extract_identifier_mentions(query)
     query_literal_identifier_surfaces = _extract_literal_identifier_surfaces(query)
     query_literal_output_surfaces = _extract_literal_output_surfaces(query)
+    prefer_source_edit_anchors = _prefers_source_edit_anchors(
+        query=query,
+        query_terms=query_terms,
+    )
     semantic_similarities = _semantic_similarity_by_unit(
         query=query,
         candidates=candidates,
@@ -360,6 +410,12 @@ def _direct_scores_for_candidates(
                 query_terms=query_terms,
             ),
         )
+        if prefer_source_edit_anchors:
+            p_edit = _implementation_intent_edit_score(
+                candidate=candidate,
+                p_edit=p_edit,
+                query_terms=query_terms,
+            )
         p_support = _clamp_probability(
             lexical_score * _DIRECT_SUPPORT_WEIGHT
             + semantic_score * _SEMANTIC_SUPPORT_WEIGHT
@@ -376,6 +432,90 @@ def _direct_scores_for_candidates(
         )
 
     return scores
+
+
+def _prefers_source_edit_anchors(
+    *,
+    query: str,
+    query_terms: tuple[str, ...],
+) -> bool:
+    """Return whether implementation intent should favor source edit anchors."""
+    query_term_set = frozenset(query_terms)
+    if not (_IMPLEMENTATION_INTENT_TERMS & query_term_set):
+        return False
+    if _EXPLICIT_TEST_QUERY_TERMS & query_term_set:
+        return False
+    if _mentions_public_api_contract(query_terms):
+        return False
+    normalized_query = query.lower()
+    return "tests/" not in normalized_query
+
+
+def _implementation_intent_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    p_edit: float,
+    query_terms: tuple[str, ...],
+) -> float:
+    """Keep behavior-descriptive tests from becoming source edit anchors."""
+    if _is_test_file_path(candidate.file_path):
+        return min(p_edit, _IMPLEMENTATION_INTENT_TEST_EDIT_CAP)
+    return max(
+        p_edit,
+        _implementation_source_surface_edit_score(
+            candidate=candidate,
+            query_terms=query_terms,
+        ),
+    )
+
+
+def _implementation_source_surface_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_terms: tuple[str, ...],
+) -> float:
+    """Return a direct floor for source functions matching implementation prose."""
+    if not candidate.file_path.startswith("src/"):
+        return 0.0
+    if candidate.symbol_kind not in {
+        ResolvedSymbolKind.FUNCTION,
+        ResolvedSymbolKind.ASYNC_FUNCTION,
+        ResolvedSymbolKind.METHOD,
+    }:
+        return 0.0
+
+    focus_terms = _focus_terms(query_terms)
+    surface_terms = (
+        *_extract_terms(candidate.primary_text),
+        *_extract_terms(candidate.file_path),
+    )
+    if not surface_terms:
+        return 0.0
+    surface_term_set = frozenset(surface_terms)
+    if (
+        _term_overlap(focus_terms, surface_term_set)
+        < _IMPLEMENTATION_SOURCE_SURFACE_OVERLAP_THRESHOLD
+    ):
+        return 0.0
+    if not _has_salient_surface_overlap(
+        query_terms=focus_terms,
+        candidate_terms=surface_term_set,
+    ):
+        return 0.0
+    return _IMPLEMENTATION_SOURCE_SURFACE_EDIT_FLOOR
+
+
+def _has_salient_surface_overlap(
+    *,
+    query_terms: tuple[str, ...],
+    candidate_terms: frozenset[str],
+) -> bool:
+    """Return whether shared surface terms are more specific than infrastructure."""
+    return any(
+        term not in _IMPLEMENTATION_SOURCE_SURFACE_GENERIC_TERMS
+        for term in query_terms
+        if term in candidate_terms
+    )
 
 
 def _semantic_similarity_by_unit(
@@ -539,6 +679,26 @@ def _apply_scope_support(
             unit_id=target_score.unit_id,
             p_edit=target_score.p_edit,
             p_support=_merge_support(target_score.p_support, boost),
+        )
+    return updated_scores
+
+
+def _apply_implementation_intent_test_edit_cap(
+    *,
+    scores: dict[str, SemanticUnitScore],
+    candidates: list[_CandidateProfile],
+) -> dict[str, SemanticUnitScore]:
+    """Reapply the implementation-intent test cap after edit post-processing."""
+    updated_scores = dict(scores)
+    candidates_by_id = {candidate.unit_id: candidate for candidate in candidates}
+    for unit_id, score in scores.items():
+        candidate = candidates_by_id.get(unit_id)
+        if candidate is None or not _is_test_file_path(candidate.file_path):
+            continue
+        updated_scores[unit_id] = SemanticUnitScore(
+            unit_id=score.unit_id,
+            p_edit=min(score.p_edit, _IMPLEMENTATION_INTENT_TEST_EDIT_CAP),
+            p_support=score.p_support,
         )
     return updated_scores
 
@@ -876,6 +1036,11 @@ def _body_text_for_symbol(
     if symbol.kind not in _BODY_SIGNAL_KINDS:
         return None
     return render_semantic_unit(program, unit_id, RenderDetail.SOURCE).content
+
+
+def _is_test_file_path(file_path: str) -> bool:
+    """Return whether ``file_path`` belongs to the repository test tree."""
+    return file_path == "tests" or file_path.startswith("tests/")
 
 
 def _join_searchable_text(*parts: str | None) -> str:

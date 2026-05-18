@@ -2,6 +2,347 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Corrected Task 2 Source/Test Calibration Commit-Gating Cleared
+
+- Commit-gating passed after full regression clearance.
+- Release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- Commit-gating verified:
+  - branch is `main`
+  - `HEAD=4af19a1` and `origin/main=4af19a1`
+  - dirty set exactly matched the five-file release unit
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+  - excluded public docs, eval assets, portfolio artifacts,
+    runtime/provider/compiler contract surfaces, package exports, and
+    `semantic_optimizer.py` had no diff
+- Release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - stage and locally commit only the exact five-file release unit
+  - do not push until Ryan explicitly authorizes push after local commit
+- Acceptance status: commit-gating-cleared
+
+## 2026-05-18 -- Corrected Task 2 Source/Test Calibration Full Regression Cleared
+
+- Full regression passed after corrected release-unit audit clearance.
+- Release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- Full regression results:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1726 passed` in about
+    `285.04s`
+- Release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - run commit-gating over the exact five-file release unit
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push before commit-gating clears
+- Acceptance status: full-regression-cleared
+
+## 2026-05-18 -- Corrected Task 2 Source/Test Calibration Audit Cleared
+
+- Dedicated read-only release-unit audit returned PASS with no findings.
+- Audited release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- Audit confirmed:
+  - live repo state matched branch `main`, `HEAD=4af19a1`, and
+    `origin/main=4af19a1`
+  - no staged files and no untracked files
+  - dirty set exactly matched the five-file release unit
+  - no `semantic_optimizer.py` diff
+  - no changed source/test files outside the listed correction files
+  - no runtime/provider/compiler contracts, eval assets, portfolio artifacts,
+    public docs/claims, package exports, API/MCP/schema/config surfaces changed
+- Behavior audited:
+  - implementation-intent test edit cap survives scorer post-processing
+  - `p_support` remains preserved for capped tests
+  - explicit test-edit queries remain allowed
+  - production scorer logic is general and does not hardcode Task 2 unit IDs
+    or fixture names
+  - Task 1 budget `260` remains preserved
+  - Task 2 budget `320` selects source first and still selects compact exec
+    evidence
+- Validation rerun by audit:
+  - `git diff --check`: passed
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest for semantic scorer/compiler/optimizer plus smoke_d and
+    vars type-error regressions: `74 passed` in about `486.95s`
+  - exact Task 1 compiler test rerun separately: passed
+- Release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - run full regression from the top
+  - if full regression passes, run commit-gating over the exact five-file
+    release unit
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push before the normal gates clear
+- Acceptance status: corrected audit-cleared first-pass
+
+## 2026-05-18 -- Task 2 Source/Test Calibration Audit Correction Accepted
+
+- Reviewed the narrow correction for the failed source/test calibration audit
+  finding.
+- Findings: none.
+- Corrected behavior:
+  - implementation-intent `tests/` edit cap is reapplied after orchestration,
+    dependency support, and scope support post-processing
+  - `p_support` is preserved
+  - explicit test-edit queries remain preserved
+  - Task 1 and Task 2 real-repo regressions remain passing
+- Files changed by this correction:
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Release-unit files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- Control validation:
+  - live repo state matched branch `main`, `HEAD=4af19a1`, and
+    `origin/main=4af19a1`
+  - dirty set exactly matched the five-file release unit
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py tests/test_semantic_compiler.py -v`:
+    `40 passed` in about `333.09s`
+  - real-repo Task 2 scorer cap proof showed `tests_above_cap=0` and
+    `max_tests_p_edit=0.190000` while test support remained high
+- Boundary:
+  - accepted as a correction slice only
+  - formal Task 2 product-differentiation checkpoint still must be rerun after
+    this correction is released before Task 3 or portfolio artifact updates
+- Release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: no, rerun required
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - rerun the read-only release-unit audit from the top over the exact
+    five-file release unit
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push before corrected gates clear
+- Acceptance status: accepted after one audit correction
+
+## 2026-05-18 -- Task 2 Source/Test Calibration Audit Failed
+
+- Dedicated read-only release-unit audit returned FAIL.
+- Finding:
+  - `src/context_ir/semantic_scorer.py`: implementation-intent `tests/` edit
+    cap is not final
+  - `_apply_orchestration_edit_signal` can boost `tests/` `p_edit` after the
+    cap is applied
+  - audit reproduced a `tests/` function reaching `p_edit=0.240` for an
+    implementation query without explicit test intent
+  - this violates the accepted source/test calibration behavior
+- Scope boundary:
+  - live repo state matched branch `main`, `HEAD=4af19a1`, and
+    `origin/main=4af19a1`
+  - no staged files and no untracked files
+  - dirty set exactly matched the five-file correction release unit
+  - no `semantic_optimizer.py` diff
+  - no changed source/test files outside the listed correction files
+  - no diffs in runtime/provider/compiler contracts, eval assets, portfolio
+    artifacts, public docs/claims, package exports, API/MCP/schema/config
+    surfaces
+- Validation rerun by audit:
+  - `git diff --check`: passed
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest: `73 passed` in about `281.71s`
+- Release state:
+  - accepted in workspace: yes, before audit
+  - release-unit audit cleared: no, failed
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - issue a narrow correction so implementation-intent test edit caps survive
+    post-processing, or make orchestration skip `tests/` edit boosts for
+    non-explicit test queries
+  - rerun audit from the top after correction
+- Acceptance status: audit failed
+
+## 2026-05-18 -- Task 2 Source/Test Calibration Correction Accepted
+
+- Reviewed the focused implementation-intent source/test calibration
+  correction.
+- Findings: none.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- Accepted behavior:
+  - implementation-intent queries such as `fix/change/update/implement` no
+    longer let `tests/` units become first edit anchors unless the query
+    explicitly asks for tests
+  - tests remain available as support context
+  - explicit test-edit queries remain preserved
+  - source functions with non-generic implementation surface overlap can get a
+    direct edit floor
+  - production code does not hardcode Task 2 unit IDs or fixture names
+- Exact Task 2 correction smoke:
+  - budget `320`
+  - total tokens `318`
+  - first selected unit is
+    `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+  - compact `oracle_signal_exec_probe` evidence is selected
+- Control validation:
+  - live repo state matched branch `main`, `HEAD=4af19a1`, and
+    `origin/main=4af19a1`
+  - dirty set exactly matched `PLAN.md`, `BUILDLOG.md`, and the three
+    correction files
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest including Task 1, Task 2, smoke_d, and vars type-error
+    regressions: `73 passed` in about `280.74s`
+- Boundary:
+  - accepted as a correction slice only
+  - formal Task 2 product-differentiation checkpoint still must be rerun after
+    release before Task 3 or portfolio artifact updates
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - run a read-only release-unit audit over the exact five-file release unit
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push until the correction clears the normal gates
+- Acceptance status: first-pass
+
+## 2026-05-18 -- Task 2 Failure Diagnosis Accepted
+
+- Reviewed the read-only Task 2 failure diagnosis.
+- Findings: no control findings with the diagnosis itself.
+- Diagnosis conclusion:
+  - the Task 2 failure is primarily a scoring/optimizer policy issue
+  - behavior-descriptive tests become direct edit anchors, then optimizer
+    focus packing spends the small budget around those tests
+  - expected implementation units exist and are renderable, but score below
+    selected test helpers
+  - compact exec evidence is discovered but too weak at budget `320`
+  - unsupported/opaque primary truth is not being promoted incorrectly;
+    runtime evidence remains additive
+- Important evidence:
+  - selected budget-`320` context was test-heavy, plus one
+    `runtime_probe_execution.py` config assignment
+  - implementation waypoints exist in `runtime_observation_recompile.py`,
+    `tool_facade.py`, `runtime_probe_execution.py`,
+    `runtime_observation_admission.py`, and `runtime_probe_results.py`
+  - source/test path policy is weak; current path overlap is lightly weighted
+    in `semantic_scorer.py`
+- Control decision:
+  - accept diagnosis as routing evidence
+  - hold Task 3 and public/demo claim advancement
+  - hold implementation until Ryan explicitly authorizes a focused correction
+    slice
+- Recommended correction:
+  - add implementation-intent source/test calibration for `fix/change/update`
+    queries that do not explicitly ask for tests
+  - prevent `tests/` units from becoming the first direct edit anchors while
+    preserving tests as support
+  - add focused regression coverage using the Task 2 query and guard
+    legitimate test-edit queries
+- Next route:
+  - ask Ryan whether to authorize the focused correction slice
+  - do not run Task 3 or update public/demo claims before that decision
+- Acceptance status: diagnosis accepted
+
+## 2026-05-18 -- Task 2 Portfolio Checkpoint Failed
+
+- Reviewed the read-only Task 2 product-differentiation checkpoint.
+- Verdict: FAIL.
+- Repo truth:
+  - branch `main`
+  - `HEAD` and `origin/main` both resolved to
+    `4af19a1 Sync task 1 evidence push routing`
+  - worktree, index, and untracked files were clean
+  - `git diff --check`: clean
+- Task 2 query:
+  `Fix default local Python subprocess recompile so exec(source) runtime probe results attach additive provenance to unsupported EXEC_OR_EVAL units without promoting primary truth`
+- Evidence:
+  - at primary budget `320`, `context_ir` used `320` tokens in about
+    `120.115s` and selected four units, mostly test-helper context
+  - at ceiling budget `480`, `context_ir` used `475` tokens in about
+    `132.519s`, added compact `oracle_signal_exec_probe` evidence, and
+    preserved unsupported/additive truth, but still missed most implementation
+    waypoints
+  - lexical and import baselines selected zero files/units and overincluded
+    large whole-file candidates, but `context_ir` failure means this is not
+    STRONG or PARTIAL
+- Missed or partial waypoints:
+  - `runtime_observation_recompile.py`: missed as implementation waypoint;
+    selected tests only
+  - `runtime_observation_admission.py`: missed
+  - `runtime_probe_execution.py`: partial, one config assignment only
+  - `runtime_probe_results.py`: missed
+  - `tool_facade.py`: missed
+  - concrete exec/source evidence: missed at `320`, present only at `480`
+- Scratch artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task2_primary320_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task2_primary320_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task2_primary320_documents/`
+  - `/private/tmp/context_ir_portfolio_001_task2_ceiling480_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task2_ceiling480_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task2_ceiling480_documents/`
+- Control decision:
+  - accept this as a failed checkpoint result
+  - hold Task 3 and public/demo claim advancement
+  - do not update `evals/product_differentiation/portfolio_001/` with Task 2
+    evidence unless Ryan explicitly authorizes recording failed evidence later
+- Next route:
+  - run a read-only Task 2 failure diagnosis lane focused on why
+    implementation waypoints are missed and test-helper dominance persists
+  - do not run Task 3 before the failure is diagnosed and Ryan authorizes the
+    next correction or strategy decision
+- Acceptance status: failed checkpoint accepted as routing evidence
+
 ## 2026-05-18 -- Task 1 Portfolio Artifact Push Completed
 
 - Ryan explicitly authorized pushing the Task 1 portfolio artifact update.

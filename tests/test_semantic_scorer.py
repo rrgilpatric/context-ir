@@ -760,6 +760,184 @@ def test_score_semantic_units_uses_scope_body_signal_for_behavioral_queries(
     assert result.scores[planner_id].p_edit > result.scores[presenter_id].p_edit
 
 
+def test_score_semantic_units_calibrates_tests_for_implementation_intent(
+    tmp_path: Path,
+) -> None:
+    """Implementation queries keep behavior tests as support, not first edit anchors."""
+    source_dir = tmp_path / "src" / "context_ir"
+    source_dir.mkdir(parents=True)
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    (source_dir / "runtime_observation_recompile.py").write_text(
+        textwrap.dedent(
+            """
+            def apply_default_local_python_subprocess_for_diagnostic_and_recompile(
+                source: str,
+            ) -> str:
+                probe_result = "runtime probe results attach additive provenance"
+                boundary = "unsupported EXEC_OR_EVAL units"
+                exec(source)
+                return f"{probe_result} to {boundary} without promoting primary truth"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (tests_dir / "test_runtime_observation_recompile.py").write_text(
+        textwrap.dedent(
+            """
+            def test_default_local_python_subprocess_recompile_observes_exec() -> None:
+                observed = (
+                    "default local Python subprocess recompile runtime probe results "
+                    "attach additive provenance unsupported EXEC_OR_EVAL primary truth"
+                )
+                assert "exec" in observed
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    source_id = _definition_id_for(
+        program,
+        (
+            "src.context_ir.runtime_observation_recompile."
+            "apply_default_local_python_subprocess_for_diagnostic_and_recompile"
+        ),
+    )
+    test_id = _definition_id_for(
+        program,
+        (
+            "tests.test_runtime_observation_recompile."
+            "test_default_local_python_subprocess_recompile_observes_exec"
+        ),
+    )
+
+    implementation_result = score_semantic_units(
+        program,
+        (
+            "Fix default local Python subprocess recompile so exec(source) runtime "
+            "probe results attach additive provenance to unsupported EXEC_OR_EVAL "
+            "units without promoting primary truth"
+        ),
+    )
+    explicit_test_result = score_semantic_units(
+        program,
+        (
+            "Update tests/test_runtime_observation_recompile.py coverage for default "
+            "local Python subprocess recompile"
+        ),
+    )
+
+    assert implementation_result.scores[source_id].p_edit > (
+        implementation_result.scores[test_id].p_edit
+    )
+    assert implementation_result.scores[test_id].p_edit <= 0.19
+    assert implementation_result.scores[test_id].p_support > 0.0
+    assert explicit_test_result.scores[test_id].p_edit > (
+        implementation_result.scores[test_id].p_edit
+    )
+    assert explicit_test_result.scores[test_id].p_edit >= 0.30
+
+
+def test_score_semantic_units_reapplies_test_cap_after_orchestration_signal(
+    tmp_path: Path,
+) -> None:
+    """Implementation test candidates stay capped after orchestration edit boosts."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "collector.py").write_text(
+        textwrap.dedent(
+            """
+            def collect_signal_rows(query: str) -> list[str]:
+                cleaned_query = query.strip() or "signal digest"
+                return [
+                    f"assignment signal for {cleaned_query}",
+                    "priority labels stay deterministic",
+                    "digest note stays visible",
+                ]
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (pkg / "digest.py").write_text(
+        textwrap.dedent(
+            """
+            def render_assignment_digest(rows: list[str], labels: list[str]) -> str:
+                row_text = " / ".join(rows)
+                label_text = ", ".join(labels)
+                return f"assignment digest: {row_text} [{label_text}]"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (pkg / "labels.py").write_text(
+        textwrap.dedent(
+            """
+            def build_priority_labels(rows: list[str]) -> list[str]:
+                return [f"priority:{index + 1}" for index, _ in enumerate(rows)]
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "test_signal_smoke.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.collector import collect_signal_rows
+            from pkg.digest import render_assignment_digest
+            from pkg.labels import build_priority_labels
+
+            def test_run_signal_smoke() -> None:
+                rows = collect_signal_rows("assignment")
+                labels = build_priority_labels(rows)
+                digest = render_assignment_digest(rows, labels)
+                assert "assignment" in digest
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    test_id = _definition_id_for(
+        program,
+        "tests.test_signal_smoke.test_run_signal_smoke",
+    )
+    dependency_target_ids = {
+        _definition_id_for(program, "pkg.collector.collect_signal_rows"),
+        _definition_id_for(program, "pkg.digest.render_assignment_digest"),
+        _definition_id_for(program, "pkg.labels.build_priority_labels"),
+    }
+    direct_targets = {
+        dependency.target_symbol_id
+        for dependency in program.proven_dependencies
+        if dependency.source_symbol_id == test_id
+    }
+
+    result = score_semantic_units(
+        program,
+        (
+            "Fix missing assignment note while keeping signal digest and priority "
+            "labels aligned"
+        ),
+    )
+    relevant_dependency_targets = {
+        target_id
+        for target_id in dependency_target_ids
+        if max(
+            result.scores[target_id].p_edit,
+            result.scores[target_id].p_support,
+        )
+        >= 0.15
+    }
+
+    assert dependency_target_ids <= direct_targets
+    assert len(relevant_dependency_targets) >= 2
+    assert result.scores[test_id].p_edit == 0.19
+    assert result.scores[test_id].p_support > 0.0
+
+
 def test_score_semantic_units_boosts_orchestrating_symbol_across_relevant_dependencies(
     tmp_path: Path,
 ) -> None:
