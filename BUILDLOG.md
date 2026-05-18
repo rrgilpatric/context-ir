@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Task 1 Portfolio Artifact Local Commit Created
+
+- Created the local release commit for the Task 1 portfolio artifact update
+  after release-unit audit, full regression, and commit-gating cleared.
+- Commit:
+  - `4d8a309 Record task 1 differentiation evidence`
+- Committed files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Pre-commit release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass after audit
+  - commit-gating cleared: yes, first-pass after full regression
+- Post-commit evidence:
+  - local `HEAD` resolved to `4d8a309`
+  - `origin/main` remained `f99a12f`
+  - branch `main` was ahead of `origin/main` by one local commit
+  - worktree, index, and untracked files were clean
+- Release state:
+  - locally committed: yes, `4d8a309`
+  - pushed: no
+- Next route:
+  - wait for explicit Ryan authorization before pushing the local commit
+  - do not run Tasks 2-3 or update public/demo claims until push state is clear
+- Acceptance status: locally committed
+
 ## 2026-05-18 -- Task 1 Portfolio Artifact Commit-Gating Cleared
 
 - Performed commit-gating after release-unit audit and full regression

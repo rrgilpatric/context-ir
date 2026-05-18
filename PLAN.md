@@ -67,7 +67,8 @@ Active next route:
   release unit
 - full regression is cleared
 - commit-gating is cleared
-- stage exactly the six-file release unit and create the local release commit
+- local release commit is created:
+  `4d8a309 Record task 1 differentiation evidence`
 - do not push without explicit Ryan authorization
 - do not run Tasks 2-3 or update public/demo claims before local release state
   is clear
@@ -352,6 +353,38 @@ Task 1 portfolio artifact update commit-gating is cleared:
   - do not push without explicit Ryan authorization
   - do not run Tasks 2-3 or update public/demo claims before local release
     state is clear
+
+Task 1 portfolio artifact local release commit is created:
+
+- local release commit:
+  `4d8a309 Record task 1 differentiation evidence`
+- commit contents:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- pre-commit gates:
+  - workspace acceptance: yes, first-pass
+  - release-unit audit: passed first-pass
+  - full regression: passed first-pass after audit
+  - commit-gating: passed first-pass after full regression
+- post-commit state verified by git:
+  - local `HEAD` resolved to `4d8a309`
+  - `origin/main` remained `f99a12f`
+  - branch `main` was ahead of `origin/main` by one local commit
+  - worktree, index, and untracked files were clean
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes, `4d8a309`
+  - pushed: no
+- next route:
+  - wait for explicit Ryan authorization before pushing the local commit
+  - do not run Tasks 2-3 or update public/demo claims until push state is clear
 
 Task 1 ranking correction is workspace-only accepted:
 
