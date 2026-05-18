@@ -187,6 +187,188 @@ def test_derive_dependency_frontier_emits_import_dependencies_by_owning_scope(
     }
 
 
+def test_derive_dependency_frontier_closes_source_root_imported_call_dependencies(
+    tmp_path: Path,
+) -> None:
+    """Source-root imports can still prove repository helper call dependencies."""
+    package_dir = tmp_path / "src" / "context_ir"
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "helpers.py").write_text(
+        "def helper() -> str:\n    return 'ok'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from context_ir.helpers import helper
+
+            def run_facade() -> str:
+                return helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    facade_id = _definition_id_for(
+        derived_program,
+        "src.context_ir.facade.run_facade",
+    )
+    helper_id = _definition_id_for(
+        derived_program,
+        "src.context_ir.helpers.helper",
+    )
+
+    assert any(
+        dependency.kind is SemanticDependencyKind.CALL
+        and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
+        and dependency.source_symbol_id == facade_id
+        and dependency.target_symbol_id == helper_id
+        for dependency in derived_program.proven_dependencies
+    )
+    assert all(
+        access.access_text != "helper" for access in derived_program.unresolved_frontier
+    )
+    assert all(
+        construct.construct_text != "helper"
+        for construct in derived_program.unsupported_constructs
+    )
+
+
+def test_derive_dependency_frontier_skips_module_scope_imported_calls(
+    tmp_path: Path,
+) -> None:
+    """Imported-call closure stays inside public function-like source scopes."""
+    package_dir = tmp_path / "src" / "context_ir"
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "helpers.py").write_text(
+        "def helper() -> str:\n    return 'ok'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from context_ir.helpers import helper
+
+            VALUE = helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    facade_module_id = _definition_id_for(derived_program, "src.context_ir.facade")
+    helper_id = _definition_id_for(
+        derived_program,
+        "src.context_ir.helpers.helper",
+    )
+
+    assert not any(
+        dependency.kind is SemanticDependencyKind.CALL
+        and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
+        and dependency.source_symbol_id == facade_module_id
+        and dependency.target_symbol_id == helper_id
+        for dependency in derived_program.proven_dependencies
+    )
+    assert any(
+        access.access_text == "helper" and access.enclosing_scope_id == facade_module_id
+        for access in derived_program.unresolved_frontier
+    )
+
+
+def test_derive_dependency_frontier_skips_private_imported_call_wrappers(
+    tmp_path: Path,
+) -> None:
+    """Private wrapper functions and methods do not close imported-call targets."""
+    package_dir = tmp_path / "src" / "context_ir"
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "helpers.py").write_text(
+        "def helper() -> str:\n    return 'ok'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from context_ir.helpers import helper
+
+            def _run_facade() -> str:
+                return helper()
+
+            class Facade:
+                def _method(self) -> str:
+                    return helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    private_source_ids = {
+        _definition_id_for(derived_program, "src.context_ir.facade._run_facade"),
+        _definition_id_for(derived_program, "src.context_ir.facade.Facade._method"),
+    }
+    helper_id = _definition_id_for(
+        derived_program,
+        "src.context_ir.helpers.helper",
+    )
+
+    assert not any(
+        dependency.kind is SemanticDependencyKind.CALL
+        and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
+        and dependency.source_symbol_id in private_source_ids
+        and dependency.target_symbol_id == helper_id
+        for dependency in derived_program.proven_dependencies
+    )
+    assert {
+        access.enclosing_scope_id
+        for access in derived_program.unresolved_frontier
+        if access.access_text == "helper"
+    } >= private_source_ids
+
+
+def test_derive_dependency_frontier_skips_external_import_suffix_collisions(
+    tmp_path: Path,
+) -> None:
+    """Unresolved external imports do not prove calls through source suffixes."""
+    package_dir = tmp_path / "src" / "app"
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "requests.py").write_text(
+        "def get() -> str:\n    return 'local'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from requests import get
+
+            def run() -> str:
+                return get()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    facade_id = _definition_id_for(derived_program, "src.app.facade.run")
+    local_get_id = _definition_id_for(derived_program, "src.app.requests.get")
+
+    assert not any(
+        dependency.kind is SemanticDependencyKind.CALL
+        and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
+        and dependency.source_symbol_id == facade_id
+        and dependency.target_symbol_id == local_get_id
+        for dependency in derived_program.proven_dependencies
+    )
+    assert any(
+        access.access_text == "get" and access.enclosing_scope_id == facade_id
+        for access in derived_program.unresolved_frontier
+    )
+
+
 def test_derive_dependency_frontier_emits_call_base_and_decorator_dependencies(
     tmp_path: Path,
 ) -> None:

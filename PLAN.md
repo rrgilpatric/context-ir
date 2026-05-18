@@ -74,21 +74,371 @@ creation, or push absent new findings.
 
 Active next route:
 
-- the Task 2 product-differentiation checkpoint returned FAIL
+- the original Task 2 product-differentiation checkpoint returned FAIL
 - the Task 2 failure diagnosis is accepted as routing evidence
 - the Task 2 implementation-intent source/test calibration correction is
-  workspace-only accepted after one audit correction
+  pushed after one audit correction
 - corrected release-unit audit is cleared
 - full regression is cleared
 - commit-gating is cleared
 - local commit is created:
   `448e582 Calibrate source and test edit anchors`
 - pushed with Ryan authorization
+- the Task 2 product-differentiation rerun against the pushed correction
+  returned PARTIAL
+- the focused read-only diagnosis of the remaining Task 2 runtime-surface miss
+  is accepted
+- Ryan authorized the bounded implementation correction for imported-call
+  dependency closure and runtime-probe admission/result scoring
+- the bounded implementation correction is workspace-only accepted
+- release-unit audit failed on two dependency-frontier bridge boundary findings
+- the narrow audit correction is workspace-only accepted
+- corrected release-unit audit is cleared
+- full regression is cleared
+- commit-gating is cleared
 - hold Task 3 and any public/demo claim advancement
-- next route is rerun the Task 2 product-differentiation checkpoint against
-  the pushed correction before Task 3
+- next route is local commit creation for the exact seven-file release unit
 - do not update `evals/product_differentiation/portfolio_001/` with Task 2
   evidence unless Ryan explicitly authorizes recording failed evidence later
+
+Task 2 product-differentiation rerun returned PARTIAL after the pushed
+source/test calibration correction:
+
+- repo truth verified by the read-only checkpoint:
+  - branch `main`
+  - `HEAD=4077a76`
+  - `origin/main=4077a76`
+  - worktree clean
+  - `git diff --check`: clean
+- artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task2_rerun_primary320_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task2_rerun_primary320_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task2_rerun_primary320_documents/`
+  - `/private/tmp/context_ir_portfolio_001_task2_rerun_ceiling480_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task2_rerun_ceiling480_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task2_rerun_ceiling480_documents/`
+- primary budget `320` result:
+  - `context_ir`: `318` tokens, about `143.041s`, `8` units selected
+  - `lexical_top_k_files`: `80` tokens, about `0.282s`, selected `0` files
+  - `import_neighborhood_files`: `85` tokens, about `0.281s`, selected `0`
+    files
+- ceiling budget `480` result:
+  - `context_ir`: `469` tokens, about `147.514s`, `8` units selected
+  - both baselines selected `0` files
+- primary `context_ir` selected units:
+  - `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+  - `def:src/context_ir/runtime_acquisition.py:src.context_ir.runtime_acquisition.attach_eval_runtime_provenance`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._runtime_provenance_records`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._runtime_provenance_to_json`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._runtime_provenance_record`
+  - `def:src/context_ir/eval_results.py:src.context_ir.eval_results._require_runtime_provenance_record`
+  - `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse`
+  - `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+- evidence path result:
+  - default local-Python subprocess recompile surface: PARTIAL; facade
+    selected, core recompile function omitted
+  - report/provenance attachment surface: PASS
+  - runtime/probe result contract surface: PARTIAL; facade response selected,
+    `runtime_probe_results.py` omitted
+  - compact `oracle_signal_exec_probe` evidence: PASS
+  - primary truth remains `unsupported/opaque`: PASS
+  - runtime evidence remains additive: PASS
+  - baselines failed under budget or required materially larger whole-file
+    context: PASS
+- control decision:
+  - accept this as materially improved but still PARTIAL Task 2 evidence
+  - do not treat it as STRONG product-level differentiation
+  - do not advance Task 3 or public/demo claims
+- next route:
+  - run a focused read-only diagnosis of why
+    `runtime_observation_recompile.py`,
+    `runtime_observation_admission.py`, and `runtime_probe_results.py` remain
+    omitted at budgets `320` and `480`
+  - if the diagnosis finds a bounded, general correction, ask Ryan before
+    issuing implementation
+
+Task 2 remaining runtime-surface miss diagnosis is accepted:
+
+- diagnosis completion state: DONE
+- findings: no control findings with the diagnosis itself
+- diagnosis conclusion:
+  - Task 2 remains PARTIAL because the rerun selects a plausible
+    facade/accounting/eval-evidence surface, but not the deeper runtime
+    execution path required for STRONG
+  - this supports the existing rubric: STRONG requires every predeclared
+    evidence waypoint at useful detail; PARTIAL allows missing support under
+    budget pressure
+- root cause classification:
+  - `runtime_observation_recompile.py` omission: mostly optimizer/dependency
+    behavior, not scoring; the core helper ranks high but is not pulled as
+    support
+  - `runtime_observation_admission.py` omission: scoring weakness plus missing
+    dependency lift
+  - `runtime_probe_results.py` omission: scoring weakness
+  - budget/render cost is causal because the optimizer packs cheaper summaries
+    and upgrades selected `eval_results` units at ceiling budget
+  - dependency graph is causal because the facade call to the core helper is
+    not represented as a proven dependency
+  - renderer is not primary; compact exec evidence renders correctly
+  - query/rubric mismatch is not the cause, though future rubrics should name
+    semantic roles rather than exact files
+- key evidence:
+  - selected facade entrypoint ranked `1` with score about `.340/.095`
+  - core recompile helper ranked `2` with score about `.340/.092`, but was
+    omitted
+  - admission bridge ranked about `1987`
+  - `RuntimeProbeObservedResult` ranked about `1555`
+  - compact exec evidence ranked low but was selected by compact
+    eval-evidence policy
+- recommended correction, not yet authorized:
+  - add general imported-call dependency closure so facade calls pull imported
+    helper targets as repository-backed support
+  - add a general runtime-probe result/admission scoring signal for queries
+    naming runtime probe results and exec/eval proof flow
+  - likely files:
+    `src/context_ir/dependency_frontier.py`,
+    `src/context_ir/semantic_scorer.py`,
+    `tests/test_dependency_frontier.py`,
+    `tests/test_semantic_scorer.py`, and
+    `tests/test_semantic_compiler.py`
+  - explicit non-goals: optimizer rewrite, rubric relaxation, Task 3, eval
+    assets, portfolio docs, public claims, MCP/API/schema/provider changes
+- next route:
+  - issue the bounded implementation correction prompt
+  - do not run Task 3, update portfolio artifacts, or update public/demo
+    claims before the correction is reviewed, released, and Task 2 is rerun
+
+Ryan authorized the Task 2 remaining runtime-surface correction:
+
+- authorization:
+  - Ryan agreed to proceed with the bounded correction recommended by the
+    diagnosis
+- authorized implementation objective:
+  - add general imported-call dependency closure so facade calls can pull
+    imported helper targets as repository-backed support
+  - add a general runtime-probe result/admission scoring signal for queries
+    naming runtime probe results and exec/eval proof flow
+- release state:
+  - implementation not started in this control lane
+  - no source/test changes from this authorization record
+  - Task 3 remains held
+  - portfolio artifacts remain unchanged
+  - public/demo claims remain held
+- next route:
+  - issue one bounded implementation prompt to an external lane
+
+Task 2 remaining runtime-surface correction is workspace-only accepted:
+
+- implementation lane returned DONE and control review found no issues
+- accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/dependency_frontier.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- accepted behavior:
+  - conservative imported-call dependency bridge adds repository-backed
+    support when a source-root public function/method calls a uniquely
+    resolved imported repository helper
+  - runtime-probe result-flow scoring lifts admission/result contract surfaces
+    for runtime-probe exec/eval proof-flow queries
+  - Task 1 budget `260` behavior remains passing
+  - Task 2 budget `320` now selects the facade, the core recompile helper, a
+    runtime admission surface, and compact `oracle_signal_exec_probe` evidence
+    within budget
+  - rendered Task 2 context preserves `primary=unsupported/opaque`,
+    `runtime=additive`, and `execution_outcome=completed`
+- control validation:
+  - live repo state matched branch `main`, `HEAD=4077a76`, and
+    `origin/main=4077a76`
+  - dirty set exactly matched `PLAN.md`, `BUILDLOG.md`, and the five
+    implementation/test files
+  - no staged files and no untracked files
+  - excluded public docs, eval assets, portfolio artifacts, provider/runtime
+    surfaces, package exports, MCP/API/schema/config, and unrelated source
+    files had no diff
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest for dependency frontier, semantic scorer, and semantic
+    compiler: `91 passed` in about `278.16s`
+  - exact Task 2 smoke: `317/320` tokens and selected:
+    `tool_facade.recompile_repository_context_with_default_local_python_subprocess`,
+    `runtime_observation_recompile.apply_default_local_python_subprocess_for_diagnostic_and_recompile`,
+    `runtime_observation_admission.admit_runtime_probe_result_batch_for_plan`,
+    and `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+  - `git diff --check`: clean
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run a read-only release-unit audit over the exact seven-file release unit
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push until normal gates clear
+
+Task 2 runtime-surface correction release-unit audit failed:
+
+- dedicated read-only release-unit audit returned FAIL
+- findings:
+  - `src/context_ir/dependency_frontier.py`: imported-call dependency closure
+    allows module-scope calls, because `_is_public_function_like_source` uses
+    `_CALL_SOURCE_KINDS`, which includes modules; a top-level
+    `VALUE = helper()` in `src/` produced a proven imported-call dependency
+  - `src/context_ir/dependency_frontier.py`: unresolved external-name imports
+    can become fabricated repository proof through suffix matching; a
+    `from requests import get` probe inside `src/app/facade.py` bridged to
+    `src.app.requests.get` even though the import was not resolver-proven as
+    repository-backed
+- audit scope:
+  - live repo state matched branch `main`, `HEAD=4077a76`, and
+    `origin/main=4077a76`
+  - dirty set exactly matched the seven-file release unit
+  - no staged files and no untracked files
+  - no excluded public docs, eval assets, provider/runtime surfaces, portfolio
+    artifacts, MCP/API/schema/config/package-export changes
+- audit validation:
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest: `91 passed` in about `282.27s`
+  - `git diff --check`: clean
+  - Task 1 budget `260`: preserved at `247/260`
+  - Task 2 budget `320`: preserved at `317/320` with the expected selected
+    evidence path and rendered unsupported/additive markers
+- release state:
+  - accepted in workspace: yes, before audit
+  - release-unit audit cleared: no, failed
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - issue a narrow correction to:
+    - limit imported-call bridge sources to public functions/methods only, not
+      module scopes
+    - prevent unresolved external-name suffix collisions from becoming proven
+      dependencies
+  - rerun the release-unit audit from the top after correction
+
+Task 2 runtime-surface audit correction is workspace-only accepted:
+
+- correction lane returned DONE and control review found no issues
+- files changed by correction:
+  - `src/context_ir/dependency_frontier.py`
+  - `tests/test_dependency_frontier.py`
+- corrected behavior:
+  - imported-call dependency closure now only uses public function/method
+    scopes, not module scopes
+  - private wrappers remain excluded
+  - unresolved external-name suffix collisions no longer become proven
+    dependencies
+  - accepted Task 2 budget-`320` behavior remains passing
+- control validation:
+  - live repo state matched branch `main`, `HEAD=4077a76`, and
+    `origin/main=4077a76`
+  - dirty set exactly matched the seven-file release unit
+  - no staged files and no untracked files
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest for dependency frontier and semantic compiler:
+    `68 passed` in about `284.44s`
+  - exact Task 2 smoke: `317/320` tokens and selected:
+    `tool_facade.recompile_repository_context_with_default_local_python_subprocess`,
+    `runtime_observation_recompile.apply_default_local_python_subprocess_for_diagnostic_and_recompile`,
+    `runtime_observation_admission.admit_runtime_probe_result_batch_for_plan`,
+    and `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+  - rendered Task 2 context contains `primary=unsupported/opaque`,
+    `runtime=additive`, and `execution_outcome=completed`
+  - `git diff --check`: clean
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: no, rerun required
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - rerun the read-only release-unit audit from the top over the exact
+    seven-file release unit
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push until normal gates clear
+
+Corrected Task 2 runtime-surface release-unit audit is cleared:
+
+- dedicated read-only release-unit audit returned PASS with no findings
+- audited release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/dependency_frontier.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- audit confirmed:
+  - scope boundary clean
+  - no staged files and no untracked files
+  - no excluded public docs, eval fixtures, provider/runtime-worker surfaces,
+    MCP/API/schema/config, package exports, or portfolio artifacts changed
+  - prior module-scope imported-call finding is corrected
+  - prior unresolved external-name suffix-collision finding is corrected
+  - imported-call bridge is limited to source-root public function/method
+    scopes
+  - runtime-probe scoring is general term/surface based with no Task 2 unit-ID
+    hardcoding
+- audit validation:
+  - focused ruff check and format: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - focused pytest: `94 passed` in about `280.54s`
+  - `git diff --check`: clean
+  - Task 1 budget `260`: `247/260` and required evidence path preserved
+  - Task 2 budget `320`: `317/320` and required evidence path preserved
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit not created
+  - pushed: no
+- full regression:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1731 passed` in about
+    `280.45s`
+- next route:
+  - create a local commit for the exact seven-file release unit
+  - after local commit creation, push remains Ryan-gated
+  - do not run Task 3, update portfolio artifacts, update public/demo claims,
+    or push outside the cleared release sequence
+
+Corrected Task 2 runtime-surface commit-gating is cleared:
+
+- commit-gating verified:
+  - branch is `main`
+  - `HEAD=4077a76` and `origin/main=4077a76`
+  - dirty set exactly matched the seven-file release unit
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+  - excluded public docs, eval assets, portfolio artifacts, provider/runtime
+    surfaces, MCP/API/schema/config/package-export files, and unrelated
+    source files had no diff
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit not created
+  - pushed: no
+- next route:
+  - stage and locally commit only the exact seven-file release unit
+  - do not push until Ryan explicitly authorizes push after local commit
 
 Pushed Task 1 product-differentiation artifact release:
 `4d8a309 Record task 1 differentiation evidence`. This commit contains the

@@ -839,6 +839,72 @@ def test_score_semantic_units_calibrates_tests_for_implementation_intent(
     assert explicit_test_result.scores[test_id].p_edit >= 0.30
 
 
+def test_score_semantic_units_boosts_runtime_probe_result_flow_surfaces(
+    tmp_path: Path,
+) -> None:
+    """Exec/eval runtime-proof queries lift admission bridges and result contracts."""
+    source_dir = tmp_path / "src" / "context_ir"
+    source_dir.mkdir(parents=True)
+    (source_dir / "runtime_observation_admission.py").write_text(
+        textwrap.dedent(
+            """
+            def _runtime_observation_from_probe_observed_result(result: object) -> str:
+                return "attach additive runtime provenance"
+
+            def _unrelated_admission_helper(value: object) -> object:
+                return value
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (source_dir / "runtime_probe_results.py").write_text(
+        textwrap.dedent(
+            """
+            class RuntimeProbeObservedResult:
+                pass
+
+            class RuntimeProbeTimeout:
+                pass
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    admission_id = _definition_id_for(
+        program,
+        (
+            "src.context_ir.runtime_observation_admission."
+            "_runtime_observation_from_probe_observed_result"
+        ),
+    )
+    unrelated_id = _definition_id_for(
+        program,
+        "src.context_ir.runtime_observation_admission._unrelated_admission_helper",
+    )
+    result_contract_id = _definition_id_for(
+        program,
+        "src.context_ir.runtime_probe_results.RuntimeProbeObservedResult",
+    )
+    timeout_id = _definition_id_for(
+        program,
+        "src.context_ir.runtime_probe_results.RuntimeProbeTimeout",
+    )
+
+    result = score_semantic_units(
+        program,
+        (
+            "Fix exec/eval runtime probe results so admission converts observed "
+            "results into additive provenance while keeping unsupported primary truth"
+        ),
+    )
+
+    assert result.scores[admission_id].p_edit >= 0.36
+    assert result.scores[result_contract_id].p_edit >= 0.34
+    assert result.scores[admission_id].p_edit > result.scores[unrelated_id].p_edit
+    assert result.scores[result_contract_id].p_edit > result.scores[timeout_id].p_edit
+
+
 def test_score_semantic_units_reapplies_test_cap_after_orchestration_signal(
     tmp_path: Path,
 ) -> None:

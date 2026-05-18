@@ -596,21 +596,22 @@ def test_compile_semantic_context_task_2_prefers_source_waypoint_over_tests() ->
     selected_unit_ids = tuple(
         selection.unit_id for selection in result.optimization.selections
     )
-    implementation_waypoint_ids = {
+    facade_id = (
+        "def:src/context_ir/tool_facade.py:"
+        "src.context_ir.tool_facade."
+        "recompile_repository_context_with_default_local_python_subprocess"
+    )
+    recompile_helper_id = (
+        "def:src/context_ir/runtime_observation_recompile.py:"
+        "src.context_ir.runtime_observation_recompile."
+        "apply_default_local_python_subprocess_for_diagnostic_and_recompile"
+    )
+    compact_exec_evidence_id = "eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4"
+    runtime_flow_surface_ids = {
         (
-            "def:src/context_ir/runtime_observation_recompile.py:"
-            "src.context_ir.runtime_observation_recompile."
-            "apply_default_local_python_subprocess_for_diagnostic_and_recompile"
-        ),
-        (
-            "def:src/context_ir/tool_facade.py:"
-            "src.context_ir.tool_facade."
-            "recompile_repository_context_with_default_local_python_subprocess"
-        ),
-        (
-            "def:src/context_ir/runtime_probe_execution.py:"
-            "src.context_ir.runtime_probe_execution."
-            "make_runtime_probe_default_local_python_subprocess_runner"
+            "def:src/context_ir/runtime_observation_admission.py:"
+            "src.context_ir.runtime_observation_admission."
+            "admit_runtime_probe_result_batch_for_plan"
         ),
         (
             "def:src/context_ir/runtime_observation_admission.py:"
@@ -624,7 +625,13 @@ def test_compile_semantic_context_task_2_prefers_source_waypoint_over_tests() ->
     }
 
     assert selected_unit_ids[0].startswith("def:src/context_ir/")
-    assert implementation_waypoint_ids & set(selected_unit_ids)
+    assert facade_id in selected_unit_ids
+    assert recompile_helper_id in selected_unit_ids
+    assert compact_exec_evidence_id in selected_unit_ids
+    assert runtime_flow_surface_ids & set(selected_unit_ids)
+    assert "primary=unsupported/opaque" in result.document
+    assert "runtime=additive" in result.document
+    assert "execution_outcome=completed" in result.document
     assert result.total_tokens <= 320
 
 

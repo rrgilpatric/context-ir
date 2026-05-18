@@ -67,6 +67,20 @@ _DECORATOR_TARGET_KINDS = frozenset(
         ResolvedSymbolKind.METHOD,
     }
 )
+_IMPORTED_CALL_TARGET_KINDS = frozenset(
+    {
+        ResolvedSymbolKind.FUNCTION,
+        ResolvedSymbolKind.ASYNC_FUNCTION,
+        ResolvedSymbolKind.METHOD,
+    }
+)
+_IMPORTED_CALL_SOURCE_KINDS = frozenset(
+    {
+        ResolvedSymbolKind.FUNCTION,
+        ResolvedSymbolKind.ASYNC_FUNCTION,
+        ResolvedSymbolKind.METHOD,
+    }
+)
 _CLASS_ONLY_KINDS = frozenset({ResolvedSymbolKind.CLASS})
 _FUNCTION_LIKE_KINDS = frozenset(
     {
@@ -412,6 +426,24 @@ def _derive_proven_dependencies(
             dependencies=dependencies,
         )
 
+    for call_site in program.syntax.call_sites:
+        if (
+            call_site.site.file_path in index.blocked_file_paths
+            or f"reference:{call_site.call_site_id}" in index.resolved_references_by_id
+        ):
+            continue
+        imported_call_dependency = _dependency_for_imported_call_site(
+            call_site=call_site,
+            index=index,
+        )
+        if imported_call_dependency is None:
+            continue
+        _append_unique_dependency(
+            dependency=imported_call_dependency,
+            seen_dependency_ids=seen_dependency_ids,
+            dependencies=dependencies,
+        )
+
     return dependencies
 
 
@@ -524,6 +556,50 @@ def _dependency_for_resolved_reference(
     return None
 
 
+def _dependency_for_imported_call_site(
+    *,
+    call_site: CallSiteFact,
+    index: _ProgramIndex,
+) -> SemanticDependency | None:
+    """Return a conservative dependency for an imported repository call target."""
+    if not call_site.site.file_path.startswith("src/"):
+        return None
+    if not _is_public_function_like_source(
+        symbol_id=call_site.enclosing_scope_id,
+        index=index,
+    ):
+        return None
+    target_symbol_id = _imported_call_target_symbol_id(
+        expression_text=call_site.callee_text,
+        scope_id=call_site.enclosing_scope_id,
+        site=call_site.site,
+        index=index,
+    )
+    if target_symbol_id is None:
+        return None
+    return SemanticDependency(
+        dependency_id=f"dependency:imported-call:{call_site.call_site_id}",
+        source_symbol_id=call_site.enclosing_scope_id,
+        target_symbol_id=target_symbol_id,
+        kind=SemanticDependencyKind.CALL,
+        proof_kind=DependencyProofKind.CALL_RESOLUTION,
+        evidence_site_id=call_site.site.site_id,
+    )
+
+
+def _is_public_function_like_source(
+    *,
+    symbol_id: str,
+    index: _ProgramIndex,
+) -> bool:
+    """Return whether an unresolved imported-call bridge may use ``symbol_id``."""
+    symbol = index.resolved_symbols.get(symbol_id)
+    if symbol is None or symbol.kind not in _IMPORTED_CALL_SOURCE_KINDS:
+        return False
+    symbol_name = symbol.qualified_name.rsplit(".", maxsplit=1)[-1]
+    return not symbol_name.startswith("_")
+
+
 def _append_unique_dependency(
     *,
     dependency: SemanticDependency,
@@ -632,6 +708,22 @@ def _derive_frontier_records(
         if call_site.site.file_path in index.blocked_file_paths:
             continue
         if f"reference:{call_site.call_site_id}" in index.resolved_references_by_id:
+            continue
+        if call_site.site.file_path.startswith("src/") and (
+            _is_public_function_like_source(
+                symbol_id=call_site.enclosing_scope_id,
+                index=index,
+            )
+            and (
+                _imported_call_target_symbol_id(
+                    expression_text=call_site.callee_text,
+                    scope_id=call_site.enclosing_scope_id,
+                    site=call_site.site,
+                    index=index,
+                )
+                is not None
+            )
+        ):
             continue
         dynamic_construct = _unsupported_dynamic_construct_for_call_site(
             call_site=call_site,
@@ -1308,6 +1400,253 @@ def _is_import_backed_reference(
         attribute_names=expression.attribute_names,
         index=index,
     )
+
+
+def _imported_call_target_symbol_id(
+    *,
+    expression_text: str,
+    scope_id: str,
+    site: SourceSite,
+    index: _ProgramIndex,
+) -> str | None:
+    """Return a unique repository-backed target for an imported call expression."""
+    expression = _parse_supported_expression(expression_text)
+    if expression is None:
+        return None
+
+    if isinstance(expression, _SimpleNameExpression):
+        binding = _lookup_visible_binding(
+            name=expression.name,
+            scope_id=scope_id,
+            site=site,
+            index=index,
+        )
+        if binding is None or binding.binding_kind is not BindingKind.IMPORT:
+            return None
+        return _repository_import_call_target_symbol_id(
+            binding=binding,
+            root_name=expression.name,
+            attribute_names=(),
+            index=index,
+        )
+
+    binding = _lookup_visible_binding(
+        name=expression.root_name,
+        scope_id=scope_id,
+        site=site,
+        index=index,
+    )
+    if binding is None or binding.binding_kind is not BindingKind.IMPORT:
+        return None
+    return _repository_import_call_target_symbol_id(
+        binding=binding,
+        root_name=expression.root_name,
+        attribute_names=expression.attribute_names,
+        index=index,
+    )
+
+
+def _repository_import_call_target_symbol_id(
+    *,
+    binding: BindingFact,
+    root_name: str,
+    attribute_names: tuple[str, ...],
+    index: _ProgramIndex,
+) -> str | None:
+    """Return the unique callable definition targeted by an import-backed call."""
+    resolved_import = index.resolved_imports_by_binding_symbol_id.get(binding.symbol_id)
+    if resolved_import is not None:
+        return _resolved_import_call_target_symbol_id(
+            resolved_import=resolved_import,
+            attribute_names=attribute_names,
+            index=index,
+        )
+
+    import_fact = index.import_facts_by_binding_symbol_id.get(binding.symbol_id)
+    if import_fact is None or import_fact.is_relative:
+        return None
+
+    candidate_qualified_names = _import_fact_call_target_qualified_names(
+        import_fact=import_fact,
+        root_name=root_name,
+        attribute_names=attribute_names,
+    )
+    matching_definition_ids = {
+        definition.definition_id
+        for candidate_qualified_name in candidate_qualified_names
+        for definition in _unique_definitions_for_fallback_import_qualified_name(
+            target_qualified_name=candidate_qualified_name,
+            import_fact=import_fact,
+            index=index,
+        )
+        if definition.kind is not DefinitionKind.MODULE
+    }
+    if len(matching_definition_ids) != 1:
+        return None
+    target_symbol_id = next(iter(matching_definition_ids))
+    if not _symbol_kind_matches(
+        target_symbol_id,
+        index,
+        allowed_kinds=_IMPORTED_CALL_TARGET_KINDS,
+    ):
+        return None
+    return target_symbol_id
+
+
+def _resolved_import_call_target_symbol_id(
+    *,
+    resolved_import: ResolvedImport,
+    attribute_names: tuple[str, ...],
+    index: _ProgramIndex,
+) -> str | None:
+    """Return a callable target from an already resolved import binding."""
+    if resolved_import.target_kind is ImportTargetKind.EXTERNAL:
+        return None
+    if resolved_import.target_kind is ImportTargetKind.DEFINITION:
+        if attribute_names:
+            return None
+        target_symbol_id = resolved_import.target_symbol_id
+        if target_symbol_id is None:
+            return None
+        if not _symbol_kind_matches(
+            target_symbol_id,
+            index,
+            allowed_kinds=_IMPORTED_CALL_TARGET_KINDS,
+        ):
+            return None
+        return target_symbol_id
+
+    if resolved_import.target_kind is not ImportTargetKind.MODULE:
+        return None
+    if not attribute_names:
+        return None
+    target_qualified_name = ".".join(
+        (resolved_import.target_qualified_name, *attribute_names)
+    )
+    return _unique_callable_definition_symbol_id(
+        target_qualified_name=target_qualified_name,
+        index=index,
+    )
+
+
+def _import_fact_call_target_qualified_names(
+    *,
+    import_fact: ImportFact,
+    root_name: str,
+    attribute_names: tuple[str, ...],
+) -> frozenset[str]:
+    """Return import-qualified target names worth checking for a call."""
+    candidate_qualified_names: set[str] = set()
+    if import_fact.kind is ImportKind.FROM_IMPORT:
+        if import_fact.imported_name is None or import_fact.imported_name == "*":
+            return frozenset()
+        candidate_qualified_names.add(
+            ".".join(
+                (
+                    import_fact.module_name,
+                    import_fact.imported_name,
+                    *attribute_names,
+                )
+            )
+        )
+        return frozenset(candidate_qualified_names)
+
+    if import_fact.kind is not ImportKind.IMPORT:
+        return frozenset()
+    if import_fact.alias is not None:
+        candidate_qualified_names.add(
+            ".".join((import_fact.module_name, *attribute_names))
+        )
+    elif attribute_names:
+        candidate_qualified_names.add(".".join((root_name, *attribute_names)))
+    return frozenset(candidate_qualified_names)
+
+
+def _unique_definitions_for_fallback_import_qualified_name(
+    *,
+    target_qualified_name: str,
+    import_fact: ImportFact,
+    index: _ProgramIndex,
+) -> tuple[RawDefinitionFact, ...]:
+    """Return exact or source-root internal matches for unresolved import fallback."""
+    exact_definition = index.unique_definitions_by_qualified_name.get(
+        target_qualified_name
+    )
+    if exact_definition is not None:
+        return (exact_definition,)
+
+    source_root_qualified_name = _source_root_import_target_qualified_name(
+        target_qualified_name=target_qualified_name,
+        import_fact=import_fact,
+    )
+    if source_root_qualified_name is None:
+        return ()
+    source_root_definition = index.unique_definitions_by_qualified_name.get(
+        source_root_qualified_name
+    )
+    if source_root_definition is None:
+        return ()
+    return (source_root_definition,)
+
+
+def _source_root_import_target_qualified_name(
+    *,
+    target_qualified_name: str,
+    import_fact: ImportFact,
+) -> str | None:
+    """Return a clear ``src``-rooted internal import target, if applicable."""
+    if not import_fact.site.file_path.startswith("src/"):
+        return None
+    return f"src.{target_qualified_name}"
+
+
+def _unique_definitions_for_import_qualified_name(
+    target_qualified_name: str,
+    index: _ProgramIndex,
+) -> tuple[RawDefinitionFact, ...]:
+    """Return exact or unique source-root-prefixed matches for an import target."""
+    exact_definition = index.unique_definitions_by_qualified_name.get(
+        target_qualified_name
+    )
+    if exact_definition is not None:
+        return (exact_definition,)
+
+    suffix = f".{target_qualified_name}"
+    unique_definitions = index.unique_definitions_by_qualified_name
+    suffix_matches = tuple(
+        definition
+        for qualified_name, definition in unique_definitions.items()
+        if qualified_name.endswith(suffix)
+    )
+    if len(suffix_matches) == 1:
+        return suffix_matches
+    return ()
+
+
+def _unique_callable_definition_symbol_id(
+    *,
+    target_qualified_name: str,
+    index: _ProgramIndex,
+) -> str | None:
+    """Return the callable symbol for one uniquely matched import target."""
+    definitions = tuple(
+        definition
+        for definition in _unique_definitions_for_import_qualified_name(
+            target_qualified_name,
+            index,
+        )
+        if definition.kind is not DefinitionKind.MODULE
+    )
+    if len(definitions) != 1:
+        return None
+    target_symbol_id = definitions[0].definition_id
+    if not _symbol_kind_matches(
+        target_symbol_id,
+        index,
+        allowed_kinds=_IMPORTED_CALL_TARGET_KINDS,
+    ):
+        return None
+    return target_symbol_id
 
 
 def _import_rooted_chain_is_provable(

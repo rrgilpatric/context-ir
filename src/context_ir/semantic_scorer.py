@@ -89,6 +89,24 @@ _LITERAL_IDENTIFIER_SURFACE_EDIT_FLOOR = 0.64
 _LITERAL_OUTPUT_SURFACE_EDIT_FLOOR = 0.34
 _PUBLIC_API_CONTRACT_EDIT_FLOOR = 0.36
 _SEMANTIC_RENDERER_EDIT_FLOOR = 0.41
+_RUNTIME_PROBE_ADMISSION_EDIT_FLOOR = 0.36
+_RUNTIME_PROBE_RESULT_CONTRACT_EDIT_FLOOR = 0.34
+_RUNTIME_PROBE_PROOF_FLOW_TERMS = frozenset(
+    {
+        "additive",
+        "attach",
+        "attached",
+        "evidence",
+        "eval",
+        "exec",
+        "opaque",
+        "primary",
+        "proof",
+        "provenance",
+        "truth",
+        "unsupported",
+    }
+)
 _IMPLEMENTATION_INTENT_TERMS = frozenset(
     {
         "change",
@@ -406,6 +424,10 @@ def _direct_scores_for_candidates(
                 query_terms=query_terms,
             ),
             _eval_report_accounting_edit_score(
+                candidate=candidate,
+                query_terms=query_terms,
+            ),
+            _runtime_probe_result_flow_edit_score(
                 candidate=candidate,
                 query_terms=query_terms,
             ),
@@ -983,6 +1005,87 @@ def _eval_report_accounting_edit_score(
     if {"ledger", "summary"}.issubset(primary_terms):
         return _EVAL_REPORT_ACCOUNTING_EDIT_FLOOR
     return 0.0
+
+
+def _runtime_probe_result_flow_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_terms: tuple[str, ...],
+) -> float:
+    """Return a direct floor for runtime-probe result admission/contract surfaces."""
+    if candidate.symbol_kind not in _BODY_SIGNAL_KINDS:
+        return 0.0
+    if not candidate.file_path.startswith("src/"):
+        return 0.0
+    if not _mentions_runtime_probe_result_flow(query_terms):
+        return 0.0
+
+    surface_terms = frozenset(
+        (
+            *_extract_terms(candidate.primary_text),
+            *_extract_terms(candidate.file_path),
+        )
+    )
+    if not {"runtime", "probe"}.issubset(surface_terms):
+        return 0.0
+    if not _has_any_term(surface_terms, ("result", "results")):
+        return 0.0
+
+    if _is_runtime_probe_admission_surface(candidate, surface_terms):
+        return _RUNTIME_PROBE_ADMISSION_EDIT_FLOOR
+    if _is_runtime_probe_result_contract_surface(candidate, surface_terms):
+        return _RUNTIME_PROBE_RESULT_CONTRACT_EDIT_FLOOR
+    return 0.0
+
+
+def _mentions_runtime_probe_result_flow(query_terms: tuple[str, ...]) -> bool:
+    """Return whether a query names runtime-probe results and proof-flow semantics."""
+    query_term_set = frozenset(query_terms)
+    return (
+        {"runtime", "probe"}.issubset(query_term_set)
+        and _has_any_term(query_term_set, ("result", "results"))
+        and bool(query_term_set & _RUNTIME_PROBE_PROOF_FLOW_TERMS)
+    )
+
+
+def _is_runtime_probe_admission_surface(
+    candidate: _CandidateProfile,
+    surface_terms: frozenset[str],
+) -> bool:
+    """Return whether ``candidate`` converts observed probe results into evidence."""
+    if candidate.symbol_kind not in {
+        ResolvedSymbolKind.FUNCTION,
+        ResolvedSymbolKind.ASYNC_FUNCTION,
+        ResolvedSymbolKind.METHOD,
+    }:
+        return False
+    if "runtime_observation_admission.py" not in candidate.file_path:
+        return False
+    return (
+        "observation" in surface_terms
+        and _has_any_term(surface_terms, ("admission", "admit", "attach"))
+        or {"observation", "observed"}.issubset(surface_terms)
+    )
+
+
+def _is_runtime_probe_result_contract_surface(
+    candidate: _CandidateProfile,
+    surface_terms: frozenset[str],
+) -> bool:
+    """Return whether ``candidate`` is a runtime-probe result contract surface."""
+    if candidate.symbol_kind is not ResolvedSymbolKind.CLASS:
+        return False
+    if "runtime_probe_results.py" not in candidate.file_path:
+        return False
+    return {"observed", "result"}.issubset(surface_terms)
+
+
+def _has_any_term(
+    term_set: frozenset[str],
+    terms: tuple[str, ...],
+) -> bool:
+    """Return whether any term from ``terms`` is present in ``term_set``."""
+    return any(term in term_set for term in terms)
 
 
 def _identifier_surfaces(text: str) -> frozenset[str]:
