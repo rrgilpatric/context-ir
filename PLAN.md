@@ -113,11 +113,254 @@ Active next route:
 - local commit is created:
   `600a08f Surface task 2 runtime evidence path`
 - pushed with Ryan authorization
+- the Task 2 product-differentiation checkpoint against the pushed
+  runtime-surface correction returned STRONG
+- Ryan authorized the internal portfolio artifact update for Task 2 STRONG
+  evidence
+- the Task 2 STRONG portfolio artifact update is workspace-only accepted
+- release-unit audit is cleared
+- full regression is cleared
+- commit-gating is cleared
 - hold Task 3 and any public/demo claim advancement
-- next route is rerun the Task 2 product-differentiation checkpoint against
-  the pushed runtime-surface correction before Task 3
-- do not update `evals/product_differentiation/portfolio_001/` with Task 2
-  evidence unless Ryan explicitly authorizes recording failed evidence later
+- next route is local commit creation for the exact six-file artifact/control
+  release unit
+- do not advance Task 3 or public/demo claims until the artifact update is
+  reviewed and routed
+
+Task 2 product-differentiation checkpoint returned STRONG after the pushed
+runtime-surface correction:
+
+- repo truth verified by the read-only checkpoint:
+  - branch `main`
+  - `HEAD=de9e382`
+  - `origin/main=de9e382`
+  - worktree clean
+  - `git diff --check`: clean
+- budget:
+  - primary `320` reached STRONG
+  - ceiling `480` was not run
+- provider results:
+  - `context_ir`: `317` tokens, about `129.702s`, selected `7` units
+  - `lexical_top_k_files`: `80` tokens, about `0.272s`, selected `0` files
+  - `import_neighborhood_files`: `85` tokens, about `0.278s`, selected `0`
+    files and emitted `import_not_resolved`
+- selected `context_ir` units:
+  - `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+  - `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_dynamic_import_local_python_subprocess`
+  - `def:src/context_ir/runtime_observation_admission.py:src.context_ir.runtime_observation_admission.admit_runtime_probe_result_batch_for_plan`
+  - `def:src/context_ir/runtime_observation_recompile.py:src.context_ir.runtime_observation_recompile.apply_default_local_python_subprocess_for_diagnostic_and_recompile`
+  - `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.build_context_ir_default_local_python_subprocess_pack`
+  - `assign:src/context_ir/tool_facade.py:364:4`
+  - `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+- waypoint result:
+  - facade entrypoint: PASS
+  - core default subprocess recompile helper: PASS
+  - admission/conversion or result-contract runtime surface: PASS via
+    `admit_runtime_probe_result_batch_for_plan`
+  - compact `oracle_signal_exec_probe` evidence: PASS
+  - rendered `primary=unsupported/opaque`: PASS
+  - rendered `runtime=additive`: PASS
+  - rendered `execution_outcome=completed`: PASS
+  - baselines fail under the same budget or require materially larger
+    whole-file context: PASS
+  - warnings explainable and non-contradictory: PASS
+- baseline notes:
+  - lexical omitted oversized candidates including
+    `tests/test_semantic_scorer.py` at about `9911` tokens,
+    `tests/test_semantic_compiler.py` at about `8548`,
+    `tests/test_eval_signal_exec_probe.py` at about `6127`, and
+    `src/context_ir/eval_providers.py` at about `13190`
+  - import-neighborhood omitted only broad test candidates and warned
+    `import_not_resolved`
+- caveats:
+  - `context_ir` latency remains much slower than baselines
+  - several selected units are summaries due to budget pressure
+  - omitted-uncertainty warnings are concentrated around omitted
+    `tool_facade` attribute accesses and do not contradict the selected
+    runtime evidence path
+- control decision:
+  - accept Task 2 as STRONG meaningful internal product-differentiation
+    evidence
+  - do not advance public/demo claims yet
+  - portfolio artifact update is a separate writable slice requiring Ryan
+    authorization
+- next route:
+  - issue a bounded internal artifact-update prompt recording Task 2 STRONG
+    evidence
+  - hold Task 3 until the Task 2 artifact update is reviewed and routed
+
+Task 2 STRONG portfolio artifact update is authorized:
+
+- Ryan authorized continuing after the STRONG Task 2 checkpoint
+- authorized objective:
+  - update the internal-only product-differentiation portfolio artifact to
+    record Task 2 as STRONG while preserving existing Task 0 and Task 1
+    evidence
+- scope boundary:
+  - internal artifact update only
+  - no public docs or public claims
+  - no source/test/runtime/provider/scoring/compiler changes
+  - no Task 3 execution
+- next route:
+  - issue a bounded implementation prompt for
+    `evals/product_differentiation/portfolio_001/`
+
+Task 2 STRONG portfolio artifact update is workspace-only accepted:
+
+- artifact update lane returned DONE and control review found no issues
+- accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- accepted behavior:
+  - Task 0 and Task 1 evidence preserved
+  - Task 2 recorded as STRONG at primary budget `320`
+  - `runs.jsonl` now has `9` rows: one row per Task 0/1/2 provider
+  - Task 3 remains not run
+  - public claims remain held
+  - no broad product/public superiority claim introduced
+- control validation:
+  - live repo state matched branch `main`, `HEAD=de9e382`, and
+    `origin/main=de9e382`
+  - dirty set matched `PLAN.md`, `BUILDLOG.md`, and the four portfolio files
+  - no staged files and no untracked files
+  - no out-of-scope public docs, source, tests, eval fixtures/tasks/run specs,
+    provider/runtime/scoring/compiler, package export, MCP/API/schema/config
+    diffs
+  - `manifest.json` parsed successfully
+  - every `runs.jsonl` row parsed successfully
+  - `runs.jsonl` row counts verified as exactly one row per Task 0/1/2
+    provider
+  - manifest `runs.jsonl` SHA matched the actual artifact
+  - Task 2 selected units, token counts, warnings, rendered evidence markers,
+    baseline selected-zero behavior, and STRONG classification verified
+  - `README.md` and `evidence.md` preserve internal-only,
+    public-claims-held, and Task 3 not-run caveats
+  - `git diff --check`: clean
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run a read-only release-unit audit over the six-file artifact/control
+    release unit
+  - do not run Task 3, update public/demo claims, stage, commit, or push
+    until normal gates clear
+
+Task 2 STRONG portfolio artifact update release-unit audit is cleared:
+
+- dedicated read-only release-unit audit returned PASS with no findings
+- audited release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- audit confirmed:
+  - branch `main`
+  - `HEAD=de9e382` and `origin/main=de9e382`
+  - dirty set exactly matched the six-file release unit
+  - no staged files and no untracked files
+  - no diffs in `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`,
+    `ARCHITECTURE.md`, source, tests, runtime/provider/scoring/compiler,
+    exports, API/schema/config, or eval fixture/task/run-spec surfaces
+  - `git diff --check`: clean
+- structured artifact validation:
+  - `manifest.json` parsed successfully
+  - every `runs.jsonl` row parsed successfully
+  - `runs.jsonl` has exactly `9` rows: Task 0/1/2 times three providers
+  - Task 0 and Task 1 JSONL rows are byte-for-byte preserved from `HEAD`
+  - Task 2 adds exactly three provider rows
+  - manifest provider records align with JSONL records
+  - manifest `runs.jsonl` SHA matches actual bytes:
+    `d44bf20b81cb6ef1299c881bb23e901d6bbb31fb26dcc7af898f91b6cb760452`
+  - Task 2 STRONG classification, budget `320`, ceiling not-run status,
+    selected IDs, rendered evidence, baseline selected-zero behavior, and
+    `import_not_resolved` warning verified
+- claim boundary:
+  - `README.md` and `evidence.md` preserve internal-only scope
+  - public claims remain held
+  - Task 3 remains not run
+  - latency and budget-pressure caveats are retained
+  - no broad product, public superiority, production-readiness, or polished
+    public demo claim was introduced
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run full regression from the top
+  - do not run Task 3, update public/demo claims, stage, commit, or push until
+    normal gates clear
+
+Task 2 STRONG portfolio artifact update full regression is cleared:
+
+- full regression passed after release-unit audit clearance
+- commands:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: passed,
+    `1731 passed in 287.24s`
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes, first-pass after audit
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run commit-gating over the exact six-file artifact/control release unit
+  - do not run Task 3, update public/demo claims, stage, commit, or push until
+    commit-gating clears
+
+Task 2 STRONG portfolio artifact update commit-gating is cleared:
+
+- commit-gating passed after audit and full regression clearance
+- verified:
+  - branch `main`
+  - `HEAD=de9e382` and `origin/main=de9e382`
+  - dirty set exactly matched the six-file artifact/control release unit
+  - no staged files and no untracked files
+  - no diffs in `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`,
+    `ARCHITECTURE.md`, source, tests, eval fixtures/tasks/run specs,
+    provider/runtime/scoring/compiler, package export, MCP/API/schema/config,
+    or `pyproject.toml`
+  - `git diff --check`: clean
+  - `manifest.json` and all `runs.jsonl` rows parsed successfully
+  - `runs.jsonl` has exactly `9` rows: Task 0/1/2 times three providers
+  - manifest `runs.jsonl` SHA matches actual bytes:
+    `d44bf20b81cb6ef1299c881bb23e901d6bbb31fb26dcc7af898f91b6cb760452`
+  - Task 2 `context_ir` row is budget-compliant at `317` tokens and selects
+    the accepted STRONG evidence path
+  - Task 2 rendered evidence contains `primary=unsupported/opaque`,
+    `runtime=additive`, `execution_outcome=completed`, and
+    `statement_kind=pass`
+  - Task 2 lexical and import baselines select zero files and zero units
+  - `README.md` and `evidence.md` preserve internal-only scope, public claims
+    held, and Task 3 not-run caveats
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes, first-pass after full regression
+  - local commit not created
+  - pushed: no
+- next route:
+  - stage and commit exactly the six-file artifact/control release unit
+  - do not push until Ryan explicitly authorizes push after local commit
 
 Task 2 product-differentiation rerun returned PARTIAL after the pushed
 source/test calibration correction:

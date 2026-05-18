@@ -6,9 +6,11 @@ Task 0: `STRONG`
 
 Task 1: `STRONG`
 
+Task 2: `STRONG`
+
 This is internal-only product-differentiation evidence. Public claims remain held.
 
-Tasks 2-3 were not run.
+Task 3 was not run.
 
 ## Task 0 Query And Budget
 
@@ -125,13 +127,77 @@ It selected neither file under budget and emitted `import_not_resolved`.
 
 Under this budget, the baselines fail the evidence path. Reaching similar evidence through their candidates would require materially larger and less focused whole-file context.
 
+## Task 2 Query And Budget
+
+Query:
+
+`Fix default local Python subprocess recompile so exec(source) runtime probe results attach additive provenance to unsupported EXEC_OR_EVAL units without promoting primary truth`
+
+Primary budget: `320`
+
+Ceiling budget: not run because primary reached `STRONG`
+
+Repo HEAD: `de9e382`
+
+Providers:
+
+- `context_ir`
+- `lexical_top_k_files`
+- `import_neighborhood_files`
+
+## Task 2 Provider Comparison
+
+| Provider | Tokens | Elapsed | Selected files | Selected units | Result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `context_ir` | `317` | `129.702s` | `0` | `7` | Passed required evidence path |
+| `lexical_top_k_files` | `80` | `0.272s` | `0` | `0` | Failed under budget |
+| `import_neighborhood_files` | `85` | `0.278s` | `0` | `0` | Failed under budget; `import_not_resolved` |
+
+## Task 2 Selected Context_IR Units
+
+`context_ir` selected the required evidence path:
+
+- `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess`
+- `def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_dynamic_import_local_python_subprocess`
+- `def:src/context_ir/runtime_observation_admission.py:src.context_ir.runtime_observation_admission.admit_runtime_probe_result_batch_for_plan`
+- `def:src/context_ir/runtime_observation_recompile.py:src.context_ir.runtime_observation_recompile.apply_default_local_python_subprocess_for_diagnostic_and_recompile`
+- `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.build_context_ir_default_local_python_subprocess_pack`
+- `assign:src/context_ir/tool_facade.py:364:4`
+- `eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4`
+
+The rendered context included:
+
+`eval_evidence: oracle_signal_exec_probe; primary=unsupported/opaque; runtime=additive; execution_outcome=completed; statement_kind=pass`
+
+This preserves the main truth boundary: `unsupported/opaque` remains primary, and the exec-probe runtime result remains additive evidence.
+
+## Task 2 Baseline Failure And Overinclude Analysis
+
+Both baselines selected zero files at budget `320`, so neither surfaced the default local Python subprocess recompile path, the runtime observation admission and recompile support path, the eval-provider pack, or the compact `oracle_signal_exec_probe` evidence.
+
+The lexical baseline omitted oversized candidates, including:
+
+- `tests/test_semantic_scorer.py`: about `9911` estimated tokens
+- `tests/test_semantic_compiler.py`: about `8548` estimated tokens
+- `tests/test_eval_signal_exec_probe.py`: about `6127` estimated tokens
+- `src/context_ir/eval_providers.py`: about `13190` estimated tokens
+
+The import-neighborhood baseline considered and omitted:
+
+- `tests/test_semantic_scorer.py`: about `9911` estimated tokens
+- `tests/test_semantic_compiler.py`: about `8548` estimated tokens
+
+It selected neither file under budget and emitted `import_not_resolved`.
+
+Under this budget, the baselines fail the evidence path. The omitted-uncertainty warnings on the selected `context_ir` path do not contradict the selected runtime evidence path.
+
 ## Caveats
 
-- Latency is a real caveat: `context_ir` took `108.846s` for Task 0 and `118.783s` for Task 1, while the baselines took about `0.25s` to `0.27s`.
+- Latency is a real caveat: `context_ir` took `108.846s` for Task 0, `118.783s` for Task 1, and about `129.702s` for Task 2, while the baselines took about `0.25s` to `0.28s`.
 - Selected support units include summaries under budget pressure, not always full source.
 - The compact eval evidence unit is an internal evidence surface, not a selected unsupported runtime-attached source unit.
 - `context_ir` emitted `budget_pressure` and `omitted_uncertainty` warnings.
-- This supports only Task 0 at budget `220` and Task 1 at primary budget `260`; it is not evidence for Tasks 2-3 or broad product claims.
+- This supports only Task 0 at budget `220`, Task 1 at primary budget `260`, and Task 2 at primary budget `320`; it is not evidence for Task 3 or broad product claims.
 - Public claims remain held.
 
 ## Evidence Location

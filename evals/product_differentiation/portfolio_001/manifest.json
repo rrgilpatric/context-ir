@@ -2,7 +2,7 @@
   "schema_version": "portfolio-product-differentiation-manifest.v1",
   "classification": {
     "value": "STRONG",
-    "claim_boundary": "Internal-only evidence for Task 0 under budget 220 and Task 1 under primary budget 260; public claims remain held.",
+    "claim_boundary": "Internal-only evidence for Task 0 under budget 220, Task 1 under primary budget 260, and Task 2 under primary budget 320; public claims remain held.",
     "task_classifications": [
       {
         "task_id": "portfolio_001_task_0",
@@ -19,17 +19,24 @@
         "ceiling_budget": 360,
         "ceiling_budget_status": "not_run_primary_reached_strong",
         "rationale": "context_ir selected the required Task 1 evidence path in 247 tokens while both file-level baselines selected zero files under the same budget and would require materially larger whole-file context."
+      },
+      {
+        "task_id": "portfolio_001_task_2",
+        "task_label": "Task 2",
+        "value": "STRONG",
+        "budget": 320,
+        "ceiling_budget_status": "not_run_primary_reached_strong",
+        "rationale": "context_ir selected the required Task 2 evidence path in 317 tokens while both file-level baselines selected zero files under the same budget and would require materially larger whole-file context."
       }
     ],
     "not_run": [
-      "Task 2",
       "Task 3"
     ]
   },
   "repo": {
     "branch": "main",
-    "head": "f99a12f9f628895d78f143fac59c8e420a725edf",
-    "origin_main": "f99a12f9f628895d78f143fac59c8e420a725edf",
+    "head": "de9e382b4e8ef75a010d0755bd95ccda26e6a3e6",
+    "origin_main": "de9e382b4e8ef75a010d0755bd95ccda26e6a3e6",
     "status_before_artifact_update": "## main...origin/main; M BUILDLOG.md; M PLAN.md",
     "dirty_state_note": "PLAN.md and BUILDLOG.md were pre-existing dirty control-state files; this slice only edits evals/product_differentiation/portfolio_001 artifact files."
   },
@@ -42,10 +49,10 @@
     "portfolio_id": "portfolio_001",
     "recorded_tasks": [
       "Task 0",
-      "Task 1"
+      "Task 1",
+      "Task 2"
     ],
     "not_run": [
-      "Task 2",
       "Task 3"
     ],
     "providers": [
@@ -81,6 +88,26 @@
         "lexical_top_k_files",
         "import_neighborhood_files"
       ]
+    },
+    {
+      "task_id": "portfolio_001_task_2",
+      "task_label": "Task 2",
+      "query": "Fix default local Python subprocess recompile so exec(source) runtime probe results attach additive provenance to unsupported EXEC_OR_EVAL units without promoting primary truth",
+      "repo_head": "de9e382",
+      "budget": 320,
+      "ceiling_budget_status": "not_run_primary_reached_strong",
+      "classification": "STRONG",
+      "rendered_evidence": {
+        "primary": "unsupported/opaque",
+        "runtime": "additive",
+        "execution_outcome": "completed",
+        "statement_kind": "pass"
+      },
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
     }
   ],
   "commands_used": [
@@ -101,20 +128,24 @@
       "command": "preserve /private/tmp/context_ir_portfolio_001_task1_postpush_primary260_summary.json and /private/tmp/context_ir_portfolio_001_task1_postpush_primary260_runs.jsonl"
     },
     {
+      "purpose": "Task 2 accepted checkpoint artifact update",
+      "command": "record control-provided Task 2 checkpoint values for context_ir, lexical_top_k_files, and import_neighborhood_files at budget 320"
+    },
+    {
       "purpose": "JSON validation",
-      "command": "jq . evals/product_differentiation/portfolio_001/manifest.json"
+      "command": ".venv/bin/python - <<'PY' ... json.load(open('evals/product_differentiation/portfolio_001/manifest.json')) ... PY"
     },
     {
       "purpose": "JSONL validation",
-      "command": "while IFS= read -r line; do printf '%s\\n' \"$line\" | jq -e . >/dev/null; done < evals/product_differentiation/portfolio_001/runs.jsonl"
+      "command": ".venv/bin/python - <<'PY' ... parse every evals/product_differentiation/portfolio_001/runs.jsonl row as JSON ... PY"
     },
     {
       "purpose": "Task row validation",
-      "command": "jq -s '...' evals/product_differentiation/portfolio_001/runs.jsonl"
+      "command": ".venv/bin/python - <<'PY' ... verify row counts and Task 2 evidence fields ... PY"
     },
     {
       "purpose": "required validation",
-      "command": "rg -n \"internal-only|Public claims remain held|public claims remain held|Tasks 2-3 were not run|Task 1|STRONG\" evals/product_differentiation/portfolio_001/README.md evals/product_differentiation/portfolio_001/evidence.md"
+      "command": "rg -n \"internal-only|Public claims remain held|public claims remain held|Task 2|Task 3 was not run|STRONG\" evals/product_differentiation/portfolio_001/README.md evals/product_differentiation/portfolio_001/evidence.md"
     },
     {
       "purpose": "required validation",
@@ -140,12 +171,12 @@
     {
       "path": "evals/product_differentiation/portfolio_001/runs.jsonl",
       "role": "one reproduced raw provider result record per task, provider, and budget",
-      "line_count": 6,
-      "sha256": "8f8d3e7a78c69263caebf00fafc2204dadd0bfb5beed0544951769e7adc90505"
+      "line_count": 9,
+      "sha256": "d44bf20b81cb6ef1299c881bb23e901d6bbb31fb26dcc7af898f91b6cb760452"
     },
     {
       "path": "evals/product_differentiation/portfolio_001/evidence.md",
-      "role": "human-readable Task 0 and Task 1 summaries and provider comparisons"
+      "role": "human-readable Task 0, Task 1, and Task 2 summaries and provider comparisons"
     }
   ],
   "provider_results": [
@@ -278,6 +309,78 @@
       "omitted_candidate_files": [
         "tests/test_semantic_compiler.py",
         "tests/test_semantic_scorer.py"
+      ],
+      "warnings": [
+        "import_not_resolved"
+      ],
+      "classification": "STRONG",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_2",
+      "task_label": "Task 2",
+      "provider_name": "context_ir",
+      "budget": 320,
+      "repo_head": "de9e382",
+      "total_tokens": 317,
+      "elapsed_seconds": 129.702,
+      "selected_file_count": 0,
+      "selected_unit_count": 7,
+      "selected_unit_ids": [
+        "def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_default_local_python_subprocess",
+        "def:src/context_ir/tool_facade.py:src.context_ir.tool_facade.recompile_repository_context_with_dynamic_import_local_python_subprocess",
+        "def:src/context_ir/runtime_observation_admission.py:src.context_ir.runtime_observation_admission.admit_runtime_probe_result_batch_for_plan",
+        "def:src/context_ir/runtime_observation_recompile.py:src.context_ir.runtime_observation_recompile.apply_default_local_python_subprocess_for_diagnostic_and_recompile",
+        "def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.build_context_ir_default_local_python_subprocess_pack",
+        "assign:src/context_ir/tool_facade.py:364:4",
+        "eval_evidence:oracle_signal_exec_probe:exec:main.py:3:4"
+      ],
+      "rendered_evidence": {
+        "primary": "unsupported/opaque",
+        "runtime": "additive",
+        "execution_outcome": "completed",
+        "statement_kind": "pass"
+      },
+      "warnings": [
+        "budget_pressure",
+        "omitted_uncertainty"
+      ],
+      "classification": "STRONG",
+      "required_evidence_path": "passed"
+    },
+    {
+      "task_id": "portfolio_001_task_2",
+      "task_label": "Task 2",
+      "provider_name": "lexical_top_k_files",
+      "budget": 320,
+      "repo_head": "de9e382",
+      "total_tokens": 80,
+      "elapsed_seconds": 0.272,
+      "selected_file_count": 0,
+      "selected_unit_count": 0,
+      "omitted_candidate_files": [
+        "tests/test_semantic_scorer.py",
+        "tests/test_semantic_compiler.py",
+        "tests/test_eval_signal_exec_probe.py",
+        "src/context_ir/eval_providers.py"
+      ],
+      "warnings": [],
+      "classification": "STRONG",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_2",
+      "task_label": "Task 2",
+      "provider_name": "import_neighborhood_files",
+      "budget": 320,
+      "repo_head": "de9e382",
+      "total_tokens": 85,
+      "elapsed_seconds": 0.278,
+      "selected_file_count": 0,
+      "selected_unit_count": 0,
+      "omitted_candidate_files": [
+        "tests/test_semantic_scorer.py",
+        "tests/test_semantic_compiler.py"
       ],
       "warnings": [
         "import_not_resolved"
