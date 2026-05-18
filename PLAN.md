@@ -40,12 +40,33 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is
-`cb34fa9 Sync task 0 evidence bundle push routing`. The latest pushed
-source/contract authority remains
-`fc2ddc6 Integrate compact eval evidence into semantic context`. Live git refs and
-worktree state must still be verified from git during control intake; do not
-infer them from committed prose.
+Current pushed release authority is the latest
+`Sync task 1 ranking push routing` continuity commit. The latest pushed
+source/contract authority is
+`ba1b468 Tune semantic ranking for direct anchors`. Live git refs and worktree
+state must still be verified from git during control intake; do not infer them
+from committed prose.
+
+Pushed corrected Task 1 ranking release:
+`ba1b468 Tune semantic ranking for direct anchors`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed scorer/optimizer ranking
+correction that made Task 1 select the required evidence path at budget `260`
+without making eval evidence package-root public API. Ryan explicitly
+authorized the push, and `git push origin main` advanced remote `main` from
+`cb34fa9` through `efda06b Sync task 1 ranking local routing`; this continuity
+entry records the post-push state. Do not route `56bc336`, `5b64cbf`,
+`8662074`, `4f0ee80`, `92a285a`, `ba1b468`, or `efda06b` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
+
+Active next route:
+
+- rerun and review the formal Task 1 product-differentiation portfolio
+  checkpoint/artifact decision against the pushed corrected ranking release
+- do not run Tasks 2-3, update product-differentiation artifacts, update
+  public/demo claims, or claim broader product-level differentiation until the
+  Task 1 post-push checkpoint is formally rerun and reviewed
 
 Pushed Task 0 product-differentiation evidence bundle release:
 `9407d63 Add task 0 differentiation evidence bundle`. This commit contains
@@ -57,7 +78,8 @@ not route `9407d63`, `36227e9`, or `cb34fa9` back to release-unit audit, full
 regression, commit-gating, staging, local commit creation, or push absent new
 findings.
 
-Task 1 portfolio checkpoint returned FAIL and now controls routing:
+Historical Task 1 portfolio checkpoint returned FAIL and controlled the
+correction route:
 
 - Task 1 query:
   `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`

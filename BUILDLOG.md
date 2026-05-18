@@ -2,6 +2,36 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Corrected Task 1 Ranking Push Completed
+
+- Ryan explicitly authorized pushing the corrected Task 1 ranking release.
+- `git push origin main` succeeded and advanced remote `main` from `cb34fa9`
+  through `efda06b Sync task 1 ranking local routing`.
+- Pushed commits in this tranche:
+  - `56bc336 Authorize task 1 portfolio checkpoint`
+  - `5b64cbf Record task 1 portfolio failure`
+  - `8662074 Authorize task 1 failure diagnosis`
+  - `4f0ee80 Accept task 1 failure diagnosis`
+  - `92a285a Authorize task 1 ranking correction`
+  - `ba1b468 Tune semantic ranking for direct anchors`
+  - `efda06b Sync task 1 ranking local routing`
+- Post-push git verification:
+  - local `HEAD` resolved to `efda06b`
+  - `origin/main` resolved to `efda06b`
+  - worktree, index, and untracked files were clean
+- Release state:
+  - corrected Task 1 ranking release pushed: yes
+  - latest pushed source/contract authority:
+    `ba1b468 Tune semantic ranking for direct anchors`
+  - this docs-only entry is the post-push continuity sync for that release
+- Next route:
+  - rerun and review the formal Task 1 product-differentiation portfolio
+    checkpoint/artifact decision against the pushed corrected ranking release
+  - do not run Tasks 2-3, update product-differentiation artifacts, update
+    public/demo claims, or claim broader product-level differentiation before
+    the Task 1 post-push checkpoint is formally rerun and reviewed
+- Acceptance status: pushed with explicit Ryan authorization
+
 ## 2026-05-18 -- Corrected Task 1 Ranking Local Commit Created
 
 - Created the local release commit for the corrected Task 1 ranking release
