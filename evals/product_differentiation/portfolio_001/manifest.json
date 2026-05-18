@@ -2,15 +2,36 @@
   "schema_version": "portfolio-product-differentiation-manifest.v1",
   "classification": {
     "value": "STRONG",
-    "claim_boundary": "Internal-only evidence for Task 0 under budget 220; public claims remain held.",
-    "rationale": "context_ir selected the required Task 0 evidence path in 219 tokens while both file-level baselines selected zero files under the same budget and would require materially larger whole-file context."
+    "claim_boundary": "Internal-only evidence for Task 0 under budget 220 and Task 1 under primary budget 260; public claims remain held.",
+    "task_classifications": [
+      {
+        "task_id": "portfolio_001_task_0",
+        "task_label": "Task 0",
+        "value": "STRONG",
+        "budget": 220,
+        "rationale": "context_ir selected the required Task 0 evidence path in 219 tokens while both file-level baselines selected zero files under the same budget and would require materially larger whole-file context."
+      },
+      {
+        "task_id": "portfolio_001_task_1",
+        "task_label": "Task 1",
+        "value": "STRONG",
+        "budget": 260,
+        "ceiling_budget": 360,
+        "ceiling_budget_status": "not_run_primary_reached_strong",
+        "rationale": "context_ir selected the required Task 1 evidence path in 247 tokens while both file-level baselines selected zero files under the same budget and would require materially larger whole-file context."
+      }
+    ],
+    "not_run": [
+      "Task 2",
+      "Task 3"
+    ]
   },
   "repo": {
     "branch": "main",
-    "head": "64203e5ebce0436ec1b9294b3a1a67b5b985a2d2",
-    "origin_main": "0145ef619c0d798f4d14cb874762d36b7611827b",
-    "status_before_artifact_creation": "## main...origin/main [ahead 4]",
-    "dirty_state_note": "Worktree was clean before artifact creation; expected final dirty state for this slice is only the new evals/product_differentiation/portfolio_001 artifact files."
+    "head": "f99a12f9f628895d78f143fac59c8e420a725edf",
+    "origin_main": "f99a12f9f628895d78f143fac59c8e420a725edf",
+    "status_before_artifact_update": "## main...origin/main; M BUILDLOG.md; M PLAN.md",
+    "dirty_state_note": "PLAN.md and BUILDLOG.md were pre-existing dirty control-state files; this slice only edits evals/product_differentiation/portfolio_001 artifact files."
   },
   "runtime": {
     "python_version": "3.14.3",
@@ -18,61 +39,82 @@
     "module_path": "PYTHONPATH=src"
   },
   "task": {
-    "task_id": "portfolio_001_task_0",
-    "task_label": "Task 0",
-    "query": "Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata",
-    "budget": 220,
+    "portfolio_id": "portfolio_001",
+    "recorded_tasks": [
+      "Task 0",
+      "Task 1"
+    ],
+    "not_run": [
+      "Task 2",
+      "Task 3"
+    ],
     "providers": [
       "context_ir",
       "lexical_top_k_files",
       "import_neighborhood_files"
-    ],
-    "not_run": [
-      "Task 1",
-      "Task 2",
-      "Task 3"
     ]
   },
+  "tasks": [
+    {
+      "task_id": "portfolio_001_task_0",
+      "task_label": "Task 0",
+      "query": "Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata",
+      "budget": 220,
+      "classification": "STRONG",
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    },
+    {
+      "task_id": "portfolio_001_task_1",
+      "task_label": "Task 1",
+      "query": "Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API",
+      "budget": 260,
+      "ceiling_budget": 360,
+      "ceiling_budget_status": "not_run_primary_reached_strong",
+      "classification": "STRONG",
+      "package_root_export_check": "context_ir does not export discover_semantic_eval_runtime_evidence",
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ],
   "commands_used": [
     {
       "purpose": "repo intake",
-      "command": "git status --short --branch -uall"
+      "command": "git status --short --branch"
     },
     {
       "purpose": "repo identity",
-      "command": "git rev-parse HEAD"
+      "command": "git rev-parse HEAD origin/main"
     },
     {
-      "purpose": "origin identity",
-      "command": "git rev-parse origin/main"
-    },
-    {
-      "purpose": "provider reproduction",
+      "purpose": "Task 0 provider reproduction",
       "command": "PYTHONPATH=src .venv/bin/python - <<'PY' ... build EvalProviderRequest(repo_root=Path.cwd(), task_id='portfolio_001_task_0', query=<Task 0 query>, budget=220) for context_ir, lexical_top_k_files, and import_neighborhood_files ... PY"
     },
     {
-      "purpose": "compact raw JSONL",
-      "command": ".venv/bin/python - <<'PY' ... compact /private/tmp/context_ir_portfolio_001_task0_runs.jsonl to /private/tmp/context_ir_portfolio_001_task0_runs_compact.jsonl ... PY"
+      "purpose": "Task 1 accepted post-push checkpoint import",
+      "command": "preserve /private/tmp/context_ir_portfolio_001_task1_postpush_primary260_summary.json and /private/tmp/context_ir_portfolio_001_task1_postpush_primary260_runs.jsonl"
     },
     {
-      "purpose": "JSONL line-count check",
-      "command": "wc -l evals/product_differentiation/portfolio_001/runs.jsonl"
+      "purpose": "JSON validation",
+      "command": "jq . evals/product_differentiation/portfolio_001/manifest.json"
     },
     {
-      "purpose": "JSONL checksum",
-      "command": "shasum -a 256 evals/product_differentiation/portfolio_001/runs.jsonl"
+      "purpose": "JSONL validation",
+      "command": "while IFS= read -r line; do printf '%s\\n' \"$line\" | jq -e . >/dev/null; done < evals/product_differentiation/portfolio_001/runs.jsonl"
     },
     {
-      "purpose": "required validation",
-      "command": "git status --short --branch -uall"
-    },
-    {
-      "purpose": "required validation",
-      "command": ".venv/bin/python - <<'PY' ... validate manifest.json and runs.jsonl JSON ... PY"
+      "purpose": "Task row validation",
+      "command": "jq -s '...' evals/product_differentiation/portfolio_001/runs.jsonl"
     },
     {
       "purpose": "required validation",
-      "command": "rg -n \"internal-only|public claims remain held|STRONG|PARTIAL|FAIL|caveat|Caveats\" evals/product_differentiation/portfolio_001/README.md evals/product_differentiation/portfolio_001/evidence.md"
+      "command": "rg -n \"internal-only|Public claims remain held|public claims remain held|Tasks 2-3 were not run|Task 1|STRONG\" evals/product_differentiation/portfolio_001/README.md evals/product_differentiation/portfolio_001/evidence.md"
     },
     {
       "purpose": "required validation",
@@ -81,7 +123,10 @@
   ],
   "scratch_artifacts": [
     "/private/tmp/context_ir_portfolio_001_task0_runs.jsonl",
-    "/private/tmp/context_ir_portfolio_001_task0_runs_compact.jsonl"
+    "/private/tmp/context_ir_portfolio_001_task0_runs_compact.jsonl",
+    "/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_summary.json",
+    "/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_runs.jsonl",
+    "/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_documents/"
   ],
   "artifacts": [
     {
@@ -94,47 +139,157 @@
     },
     {
       "path": "evals/product_differentiation/portfolio_001/runs.jsonl",
-      "role": "one reproduced raw provider result record per provider",
-      "line_count": 3,
-      "sha256": "1506580321a61e9a717129db012c2de22bf4d6e29cd707fbd20bdf7ad83cef80"
+      "role": "one reproduced raw provider result record per task, provider, and budget",
+      "line_count": 6,
+      "sha256": "8f8d3e7a78c69263caebf00fafc2204dadd0bfb5beed0544951769e7adc90505"
     },
     {
       "path": "evals/product_differentiation/portfolio_001/evidence.md",
-      "role": "human-readable Task 0 summary and provider comparison"
+      "role": "human-readable Task 0 and Task 1 summaries and provider comparisons"
     }
   ],
   "provider_results": [
     {
+      "task_id": "portfolio_001_task_0",
+      "task_label": "Task 0",
       "provider_name": "context_ir",
+      "budget": 220,
       "total_tokens": 219,
       "elapsed_seconds": 108.846,
       "selected_file_count": 0,
       "selected_unit_count": 6,
+      "selected_unit_ids": [
+        "def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata",
+        "def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalSelectedUnit",
+        "def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalProviderMetadata",
+        "def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalProviderResult",
+        "def:src/context_ir/eval_summary.py:src.context_ir.eval_summary._build_runtime_provenance_record_lookup",
+        "eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11"
+      ],
       "warnings": [
         "budget_pressure",
         "omitted_uncertainty"
       ],
+      "classification": "STRONG",
       "required_evidence_path": "passed"
     },
     {
+      "task_id": "portfolio_001_task_0",
+      "task_label": "Task 0",
       "provider_name": "lexical_top_k_files",
+      "budget": 220,
       "total_tokens": 71,
       "elapsed_seconds": 0.252,
       "selected_file_count": 0,
       "selected_unit_count": 0,
+      "omitted_candidate_files": [
+        "tests/test_eval_signal_hasattr_probe.py",
+        "tests/test_eval_signal_getattr_probe.py",
+        "tests/test_eval_signal_vars_probe.py",
+        "tests/test_eval_signal_getattr_default_probe.py",
+        "tests/test_eval_signal_getattr_default_value_probe.py",
+        "tests/test_eval_signal_getattr_attribute_error_probe.py",
+        "tests/test_eval_signal_vars_type_error_probe.py",
+        "tests/test_eval_signal_dynamic_import_probe.py"
+      ],
       "warnings": [],
+      "classification": "STRONG",
       "required_evidence_path": "failed"
     },
     {
+      "task_id": "portfolio_001_task_0",
+      "task_label": "Task 0",
       "provider_name": "import_neighborhood_files",
+      "budget": 220,
       "total_tokens": 75,
       "elapsed_seconds": 0.256,
       "selected_file_count": 0,
       "selected_unit_count": 0,
+      "omitted_candidate_files": [
+        "tests/test_eval_signal_hasattr_probe.py",
+        "tests/test_eval_signal_getattr_probe.py"
+      ],
       "warnings": [
         "import_not_resolved"
       ],
+      "classification": "STRONG",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_1",
+      "task_label": "Task 1",
+      "provider_name": "context_ir",
+      "budget": 260,
+      "total_tokens": 247,
+      "elapsed_seconds": 118.783,
+      "selected_file_count": 0,
+      "selected_unit_count": 5,
+      "selected_unit_ids": [
+        "def:src/context_ir/eval_evidence.py:src.context_ir.eval_evidence.discover_semantic_eval_runtime_evidence",
+        "def:src/context_ir/semantic_renderer.py:src.context_ir.semantic_renderer._render_eval_runtime_evidence",
+        "def:src/context_ir/semantic_types.py:src.context_ir.semantic_types.SemanticEvalRuntimeEvidence",
+        "def:src/context_ir/__init__.py:src.context_ir",
+        "eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11"
+      ],
+      "warnings": [
+        "budget_pressure",
+        "budget_pressure",
+        "budget_pressure",
+        "budget_pressure",
+        "omitted_uncertainty",
+        "omitted_uncertainty",
+        "omitted_uncertainty"
+      ],
+      "classification": "STRONG",
+      "required_evidence_path": "passed"
+    },
+    {
+      "task_id": "portfolio_001_task_1",
+      "task_label": "Task 1",
+      "provider_name": "lexical_top_k_files",
+      "budget": 260,
+      "total_tokens": 80,
+      "elapsed_seconds": 0.267,
+      "selected_file_count": 0,
+      "selected_unit_count": 0,
+      "omitted_candidate_files": [
+        "tests/test_semantic_compiler.py",
+        "tests/test_semantic_scorer.py",
+        "tests/test_semantic_optimizer.py",
+        "tests/test_eval_signal_hasattr_probe.py",
+        "tests/test_eval_signal_getattr_attribute_error_probe.py",
+        "tests/test_eval_signal_setattr_probe.py",
+        "tests/test_eval_signal_delattr_probe.py",
+        "tests/test_eval_signal_vars_type_error_probe.py"
+      ],
+      "warnings": [],
+      "classification": "STRONG",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_1",
+      "task_label": "Task 1",
+      "provider_name": "import_neighborhood_files",
+      "budget": 260,
+      "total_tokens": 85,
+      "elapsed_seconds": 0.265,
+      "selected_file_count": 0,
+      "selected_unit_count": 0,
+      "omitted_candidate_files": [
+        "tests/test_semantic_compiler.py",
+        "tests/test_semantic_scorer.py"
+      ],
+      "warnings": [
+        "import_not_resolved"
+      ],
+      "classification": "STRONG",
       "required_evidence_path": "failed"
     }
+  ],
+  "caveats": [
+    "context_ir remains materially slower than the baselines.",
+    "Selected support units include summaries under budget pressure.",
+    "This is internal portfolio evidence, not broad product-level proof.",
+    "Public claims remain held."
   ]
 }

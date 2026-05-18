@@ -2,6 +2,194 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Task 1 Portfolio Artifact Commit-Gating Cleared
+
+- Performed commit-gating after release-unit audit and full regression
+  clearance.
+- Result: commit-gating cleared.
+- Checks:
+  - dirty set exactly matched the six-file release unit
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check`: clean
+  - excluded source, tests, public docs/claims, package exports, eval
+    fixtures/tasks/run specs, runtime/provider/compiler/scorer/optimizer
+    code, and unrelated eval assets remained unchanged
+  - structured artifact check confirmed `runs.jsonl` has exactly six rows,
+    Task 0 and Task 1 provider/budget rows are present, Tasks 2-3 remain not
+    run, and manifest artifact line count remains six
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - stage exactly the six-file release unit and create the local release commit
+  - do not push without explicit Ryan authorization
+  - do not run Tasks 2-3 or update public/demo claims before local release
+    state is clear
+- Acceptance status: commit-gating-cleared first-pass after full regression
+
+## 2026-05-18 -- Task 1 Portfolio Artifact Full Regression Cleared
+
+- Ran full regression after release-unit audit clearance.
+- Result: passed.
+- Validation:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed, no issues in 39 source
+    files
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1723 passed` in about
+    `141.11s`
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - run commit-gating over the exact six-file release unit
+  - if commit-gating passes, stage exactly the six-file release unit and
+    create the local release commit
+  - do not push without explicit Ryan authorization
+  - do not run Tasks 2-3 or update public/demo claims before local release
+    state is clear
+- Acceptance status: full-regression-cleared first-pass after audit
+
+## 2026-05-18 -- Task 1 Portfolio Artifact Audit Cleared
+
+- Dedicated read-only release-unit audit returned PASS with no findings.
+- Audited release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Audit confirmed:
+  - live repo state matched branch `main`, `HEAD=f99a12f`, and
+    `origin/main=f99a12f`
+  - no staged files and no untracked files
+  - dirty set exactly matched the six-file release unit
+  - no source, tests, runtime/provider/compiler/scorer/optimizer, public
+    docs/claims, package exports, eval fixtures/tasks/run specs, or unrelated
+    eval assets changed
+  - `git diff --check`: clean
+  - `manifest.json` and every `runs.jsonl` row parse as JSON
+  - `runs.jsonl` has exactly six rows: three Task 0 rows and three Task 1 rows
+  - Task 1 preserves the accepted STRONG checkpoint at budget `260`
+  - README/evidence preserve internal-only/public-claims-held caveats and
+    state Tasks 2-3 were not run
+  - no broad product/public/demo claim was introduced
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - run full regression from the top
+  - if full regression passes, run commit-gating over the exact six-file
+    release unit
+  - do not stage, commit, push, run Tasks 2-3, or update public/demo claims
+    before the normal gates clear
+- Acceptance status: audit-cleared first-pass
+
+## 2026-05-18 -- Task 1 Portfolio Artifact Update Accepted
+
+- Reviewed the artifact-only implementation slice that records the accepted
+  STRONG Task 1 post-push checkpoint in
+  `evals/product_differentiation/portfolio_001/`.
+- Findings: none.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Accepted behavior:
+  - Task 0 evidence remains present
+  - Task 1 is recorded as STRONG internal evidence at primary budget `260`
+  - Task 1 ceiling budget `360` is recorded as not run because primary reached
+    STRONG
+  - `runs.jsonl` has six rows total: three Task 0 rows and exactly three Task
+    1 rows
+  - Tasks 2-3 remain not run
+  - public claims remain held
+- Control validation:
+  - repo state verified: branch `main`, `HEAD=f99a12f`, `origin/main=f99a12f`
+  - dirty set exactly matched the six-file release unit
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - `manifest.json` and all `runs.jsonl` rows parse as JSON
+  - Task 1 JSONL rows match the accepted scratch checkpoint on provider
+    names, budget, token counts, selected units, baseline omissions, warnings,
+    and rendered additive evidence
+  - `runs.jsonl` checksum matches the value recorded in `manifest.json`
+  - README/evidence wording preserves internal-only scope, public-claims-held
+    status, caveats, and Tasks 2-3 not-run state
+  - no excluded source, test, public-doc, package-export, eval-asset,
+    runtime/provider/compiler/scorer/optimizer, or claim surfaces changed
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - locally committed: no
+  - pushed: no
+- Next route:
+  - run a read-only release-unit audit over the exact six-file release unit
+  - do not stage, commit, push, run Tasks 2-3, or update public/demo claims
+    before the normal gates clear
+- Acceptance status: first-pass
+
+## 2026-05-18 -- Task 1 Post-Push Differentiation Checkpoint Accepted
+
+- Reviewed the read-only Task 1 post-push product-differentiation checkpoint
+  after the corrected ranking release reached `origin/main`.
+- Findings: none.
+- Repo truth:
+  - branch `main`
+  - `HEAD` and `origin/main` both resolved to
+    `f99a12f Sync task 1 ranking push routing`
+  - worktree, index, and untracked files were clean
+  - `git diff --check`: clean
+- Checkpoint verdict: STRONG.
+- Evidence:
+  - `context_ir` selected every required Task 1 waypoint within the primary
+    `260` budget, using `247` tokens in about `118.783s`
+  - selected units included:
+    - `discover_semantic_eval_runtime_evidence`
+    - `_render_eval_runtime_evidence`
+    - `SemanticEvalRuntimeEvidence`
+    - package-root `src/context_ir/__init__.py`
+    - compact `eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11`
+  - rendered context includes
+    `primary=unsupported/opaque; runtime=additive; payload=attribute_present=true`
+  - package-root `context_ir` does not expose
+    `discover_semantic_eval_runtime_evidence`
+  - lexical and import baselines selected zero files/units under the same
+    budget and their top candidates were over-budget whole test files
+- Scratch artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_documents/`
+- Caveat:
+  - `context_ir` remains materially slower than the baselines
+  - some selected support units are summaries under budget pressure
+- Next route:
+  - decide whether Ryan authorizes a separate artifact-update slice for
+    `evals/product_differentiation/portfolio_001/`
+  - do not run Tasks 2-3 or update public/demo claims before that artifact
+    decision is made
+- Acceptance status: checkpoint accepted first-pass
+
 ## 2026-05-18 -- Corrected Task 1 Ranking Push Completed
 
 - Ryan explicitly authorized pushing the corrected Task 1 ranking release.

@@ -62,11 +62,15 @@ creation, or push absent new findings.
 
 Active next route:
 
-- rerun and review the formal Task 1 product-differentiation portfolio
-  checkpoint/artifact decision against the pushed corrected ranking release
-- do not run Tasks 2-3, update product-differentiation artifacts, update
-  public/demo claims, or claim broader product-level differentiation until the
-  Task 1 post-push checkpoint is formally rerun and reviewed
+- the Task 1 portfolio artifact-update slice is workspace-only accepted
+- release-unit audit is cleared for the exact six-file artifact/control
+  release unit
+- full regression is cleared
+- commit-gating is cleared
+- stage exactly the six-file release unit and create the local release commit
+- do not push without explicit Ryan authorization
+- do not run Tasks 2-3 or update public/demo claims before local release state
+  is clear
 
 Pushed Task 0 product-differentiation evidence bundle release:
 `9407d63 Add task 0 differentiation evidence bundle`. This commit contains
@@ -148,6 +152,206 @@ correction route:
       eval assets in this slice
   - if a focused correction cannot make Task 1 pass under the declared budgets,
     pause strategy rather than continuing the portfolio
+
+Accepted Task 1 post-push product-differentiation checkpoint:
+
+- checkpoint returned DONE and is accepted with no control findings
+- repo truth:
+  - branch `main`
+  - `HEAD` and `origin/main` both resolved to
+    `f99a12f Sync task 1 ranking push routing`
+  - worktree, index, and untracked files were clean
+  - `git diff --check`: clean
+- Task 1 query:
+  `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
+- budget:
+  - primary `260`; ceiling `360` was not run because primary reached STRONG
+- verdict:
+  - STRONG
+- `context_ir` result:
+  - `247 / 260` tokens
+  - about `118.783s`
+  - selected five semantic units:
+    - `def:src/context_ir/eval_evidence.py:src.context_ir.eval_evidence.discover_semantic_eval_runtime_evidence`
+    - `def:src/context_ir/semantic_renderer.py:src.context_ir.semantic_renderer._render_eval_runtime_evidence`
+    - `def:src/context_ir/semantic_types.py:src.context_ir.semantic_types.SemanticEvalRuntimeEvidence`
+    - `def:src/context_ir/__init__.py:src.context_ir`
+    - `eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11`
+  - rendered context includes
+    `primary=unsupported/opaque; runtime=additive; payload=attribute_present=true`
+  - package-root `context_ir` does not expose
+    `discover_semantic_eval_runtime_evidence`
+- baseline result:
+  - `lexical_top_k_files`: selected zero files/units at budget `260`
+  - `import_neighborhood_files`: selected zero files/units at budget `260`
+    and emitted `import_not_resolved`
+  - top omitted baseline candidates were whole test files ranging from
+    thousands to more than thirteen thousand tokens, so they materially
+    overincluded under the checkpoint budget
+- scratch artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_documents/`
+- caveat:
+  - `context_ir` remains much slower than baselines
+  - several support units are summaries under budget pressure, though the
+    discovery function is selected as source and all required waypoints are
+    present
+- release/artifact state:
+  - checkpoint accepted in control state: yes
+  - portfolio artifact updated: no
+  - public/demo claims updated: no
+- next route:
+  - ask Ryan whether to authorize a separate artifact-update slice for
+    `evals/product_differentiation/portfolio_001/`
+  - do not run Tasks 2-3 or update public/demo claims before that artifact
+    decision is made
+
+Task 1 portfolio artifact update is workspace-only accepted:
+
+- implementation lane returned DONE and was reviewed by control with no
+  findings
+- accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- accepted behavior:
+  - preserves Task 0 evidence
+  - adds the accepted STRONG Task 1 post-push checkpoint
+  - records exactly three Task 1 provider rows at budget `260`
+  - keeps Tasks 2-3 marked not run
+  - keeps public claims held and frames the bundle as internal-only portfolio
+    evidence, not broad product proof
+- control validation:
+  - live repo state verified as branch `main`, `HEAD` and `origin/main` both
+    at `f99a12f`
+  - dirty set exactly matched the six-file release unit
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - `manifest.json` parsed as JSON
+  - every `runs.jsonl` line parsed as JSON
+  - `runs.jsonl` contains six rows total: three Task 0 rows and exactly three
+    Task 1 rows
+  - Task 1 rows preserve provider names, budget `260`, token counts, selected
+    unit IDs, baseline omissions, warnings, rendered additive evidence, and
+    STRONG classification
+  - recorded `runs.jsonl` checksum matches the current file
+  - `README.md` and `evidence.md` preserve internal-only, public-claims-held,
+    and Tasks 2-3 not-run statements
+  - no diffs found in source, tests, public docs/claims, package exports, eval
+    assets outside the portfolio bundle, or runtime/provider/compiler/scorer
+    behavior
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run a read-only release-unit audit over the exact six-file release unit
+  - do not stage, commit, push, run Tasks 2-3, or update public/demo claims
+    before the normal gates clear
+
+Task 1 portfolio artifact update release-unit audit is cleared:
+
+- dedicated read-only release-unit audit returned PASS with no findings
+- audit scope confirmed exactly the six-file release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- audit confirmed no changes in source, tests, runtime/provider/compiler/
+  scorer/optimizer code, public docs/claims, package exports, eval
+  fixtures/tasks/run specs, or unrelated eval assets
+- audit validation:
+  - live repo state matched expected branch `main`, `HEAD=f99a12f`, and
+    `origin/main=f99a12f`
+  - no staged files and no untracked files
+  - dirty set exactly matched the six-file release unit
+  - `git diff --check`: clean
+  - `manifest.json`: valid JSON
+  - `runs.jsonl`: six valid JSON rows, exactly three Task 0 rows and three
+    Task 1 rows
+  - Task 1 preserved the accepted STRONG checkpoint: budget `260`,
+    `context_ir` at `247` tokens, exact five required selected units,
+    rendered `primary=unsupported/opaque; runtime=additive; payload=attribute_present=true`,
+    zero selected files/units for both baselines, and `import_not_resolved`
+    on the import baseline
+  - `README.md` and `evidence.md` preserve internal-only/public-claims-held
+    caveats and state Tasks 2-3 were not run
+  - no broad product/public/demo claim was introduced
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run full regression from the top
+  - if full regression passes, proceed to commit-gating over the exact
+    six-file release unit
+  - do not stage, commit, push, run Tasks 2-3, or update public/demo claims
+    before the normal gates clear
+
+Task 1 portfolio artifact update full regression is cleared:
+
+- full regression passed after release-unit audit clearance
+- validation:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed, no issues in 39 source
+    files
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1723 passed` in about
+    `141.11s`
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass after audit
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - run commit-gating over the exact six-file release unit
+  - if commit-gating passes, stage exactly the six-file release unit and
+    create the local release commit
+  - do not push without explicit Ryan authorization
+  - do not run Tasks 2-3 or update public/demo claims before local release
+    state is clear
+
+Task 1 portfolio artifact update commit-gating is cleared:
+
+- commit-gating passed after audit and full regression clearance
+- checks:
+  - dirty set exactly matched the six-file release unit
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check`: clean
+  - excluded source, tests, public docs/claims, package exports, eval
+    fixtures/tasks/run specs, runtime/provider/compiler/scorer/optimizer
+    code, and unrelated eval assets remained unchanged
+  - structured artifact check confirmed `runs.jsonl` has exactly six rows,
+    Task 0 and Task 1 provider/budget rows are present, Tasks 2-3 remain not
+    run, and manifest artifact line count remains six
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: yes, first-pass
+  - full regression cleared: yes, first-pass after audit
+  - commit-gating cleared: yes, first-pass after full regression
+  - local commit not created
+  - pushed: no
+- next route:
+  - stage exactly the six-file release unit and create the local release commit
+  - do not push without explicit Ryan authorization
+  - do not run Tasks 2-3 or update public/demo claims before local release
+    state is clear
 
 Task 1 ranking correction is workspace-only accepted:
 

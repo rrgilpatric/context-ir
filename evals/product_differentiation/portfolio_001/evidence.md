@@ -1,12 +1,16 @@
-# Task 0 Evidence
+# Portfolio 001 Evidence
 
 ## Classification
 
-`STRONG`
+Task 0: `STRONG`
+
+Task 1: `STRONG`
 
 This is internal-only product-differentiation evidence. Public claims remain held.
 
-## Query And Budget
+Tasks 2-3 were not run.
+
+## Task 0 Query And Budget
 
 Query:
 
@@ -20,9 +24,7 @@ Providers:
 - `lexical_top_k_files`
 - `import_neighborhood_files`
 
-Tasks 1-3 were not run.
-
-## Provider Comparison
+## Task 0 Provider Comparison
 
 | Provider | Tokens | Elapsed | Selected files | Selected units | Result |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -30,7 +32,7 @@ Tasks 1-3 were not run.
 | `lexical_top_k_files` | `71` | `0.252s` | `0` | `0` | Failed under budget |
 | `import_neighborhood_files` | `75` | `0.256s` | `0` | `0` | Failed under budget; `import_not_resolved` |
 
-## Selected Context_IR Units
+## Task 0 Selected Context_IR Units
 
 `context_ir` selected the required evidence path:
 
@@ -47,7 +49,7 @@ The rendered context included:
 
 This preserves the main truth boundary: `unsupported/opaque` remains primary, and runtime evidence remains additive.
 
-## Baseline Failure And Overinclude Analysis
+## Task 0 Baseline Failure And Overinclude Analysis
 
 Both baselines selected zero files at budget `220`, so neither surfaced `_selected_unit_metadata`, `EvalSelectedUnit`, eval-summary accounting, or the compact `oracle_signal_hasattr_probe` evidence.
 
@@ -62,13 +64,74 @@ The import-neighborhood baseline seeded from `tests/test_eval_signal_hasattr_pro
 
 Under this budget, the baselines fail the evidence path. Reaching similar evidence through their candidates would require materially larger and less focused whole-file context.
 
+## Task 1 Query And Budget
+
+Query:
+
+`Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
+
+Primary budget: `260`
+
+Ceiling budget: `360` not run because primary reached `STRONG`
+
+Providers:
+
+- `context_ir`
+- `lexical_top_k_files`
+- `import_neighborhood_files`
+
+## Task 1 Provider Comparison
+
+| Provider | Tokens | Elapsed | Selected files | Selected units | Result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `context_ir` | `247` | `118.783s` | `0` | `5` | Passed required evidence path |
+| `lexical_top_k_files` | `80` | `0.267s` | `0` | `0` | Failed under budget |
+| `import_neighborhood_files` | `85` | `0.265s` | `0` | `0` | Failed under budget; `import_not_resolved` |
+
+## Task 1 Selected Context_IR Units
+
+`context_ir` selected the required evidence path:
+
+- `def:src/context_ir/eval_evidence.py:src.context_ir.eval_evidence.discover_semantic_eval_runtime_evidence`
+- `def:src/context_ir/semantic_renderer.py:src.context_ir.semantic_renderer._render_eval_runtime_evidence`
+- `def:src/context_ir/semantic_types.py:src.context_ir.semantic_types.SemanticEvalRuntimeEvidence`
+- `def:src/context_ir/__init__.py:src.context_ir`
+- `eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11`
+
+The rendered context included:
+
+`eval_evidence: oracle_signal_hasattr_probe; primary=unsupported/opaque; runtime=additive; payload=attribute_present=true`
+
+The package-root `context_ir` unit was included to verify that `discover_semantic_eval_runtime_evidence` did not become a package-root export. This remains internal portfolio evidence, not a public API or demo claim.
+
+## Task 1 Baseline Failure And Overinclude Analysis
+
+Both baselines selected zero files at budget `260`, so neither surfaced `discover_semantic_eval_runtime_evidence`, renderer support, the semantic evidence type, the package-root export boundary, or the compact `oracle_signal_hasattr_probe` evidence.
+
+The lexical baseline identified related whole-file candidates, but the top candidates were too large for the budget:
+
+- `tests/test_semantic_compiler.py`: `7991` estimated tokens
+- `tests/test_semantic_scorer.py`: `7802` estimated tokens
+- `tests/test_semantic_optimizer.py`: `13651` estimated tokens
+- `tests/test_eval_signal_hasattr_probe.py`: `6903` estimated tokens
+- `tests/test_eval_evidence.py`: `2852` estimated tokens
+
+The import-neighborhood baseline considered:
+
+- `tests/test_semantic_compiler.py`: `7991` estimated tokens
+- `tests/test_semantic_scorer.py`: `7802` estimated tokens
+
+It selected neither file under budget and emitted `import_not_resolved`.
+
+Under this budget, the baselines fail the evidence path. Reaching similar evidence through their candidates would require materially larger and less focused whole-file context.
+
 ## Caveats
 
-- Latency is a real caveat: `context_ir` took `108.846s`, while the baselines took about `0.25s`.
-- The selected repository code units were rendered as summaries under budget pressure, not full source.
+- Latency is a real caveat: `context_ir` took `108.846s` for Task 0 and `118.783s` for Task 1, while the baselines took about `0.25s` to `0.27s`.
+- Selected support units include summaries under budget pressure, not always full source.
 - The compact eval evidence unit is an internal evidence surface, not a selected unsupported runtime-attached source unit.
 - `context_ir` emitted `budget_pressure` and `omitted_uncertainty` warnings.
-- This supports only Task 0 at budget `220`; it is not evidence for Tasks 1-3 or broad product claims.
+- This supports only Task 0 at budget `220` and Task 1 at primary budget `260`; it is not evidence for Tasks 2-3 or broad product claims.
 - Public claims remain held.
 
 ## Evidence Location
