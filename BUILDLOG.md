@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Corrected Task 2 Runtime-Surface Locally Committed
+
+- Created local release commit:
+  `600a08f Surface task 2 runtime evidence path`
+- Committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/dependency_frontier.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- Release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes
+  - pushed: no
+- Next route:
+  - wait for explicit Ryan push authorization
+  - do not run Task 3, update portfolio artifacts, or update public/demo
+    claims before push/routing state is resolved
+- Acceptance status: locally committed, push-gated
+
 ## 2026-05-18 -- Corrected Task 2 Runtime-Surface Commit-Gating Cleared
 
 - Commit-gating passed after full regression clearance.

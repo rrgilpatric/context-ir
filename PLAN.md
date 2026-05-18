@@ -96,8 +96,10 @@ Active next route:
 - corrected release-unit audit is cleared
 - full regression is cleared
 - commit-gating is cleared
+- local commit is created:
+  `600a08f Surface task 2 runtime evidence path`
 - hold Task 3 and any public/demo claim advancement
-- next route is local commit creation for the exact seven-file release unit
+- next route is explicit Ryan push authorization
 - do not update `evals/product_differentiation/portfolio_001/` with Task 2
   evidence unless Ryan explicitly authorizes recording failed evidence later
 
@@ -439,6 +441,30 @@ Corrected Task 2 runtime-surface commit-gating is cleared:
 - next route:
   - stage and locally commit only the exact seven-file release unit
   - do not push until Ryan explicitly authorizes push after local commit
+
+Corrected Task 2 runtime-surface release is locally committed:
+
+- local commit created:
+  `600a08f Surface task 2 runtime evidence path`
+- committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/dependency_frontier.py`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes
+  - pushed: no
+- next route:
+  - wait for explicit Ryan push authorization
+  - do not run Task 3, update portfolio artifacts, or update public/demo
+    claims before push/routing state is resolved
 
 Pushed Task 1 product-differentiation artifact release:
 `4d8a309 Record task 1 differentiation evidence`. This commit contains the
