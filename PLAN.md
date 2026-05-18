@@ -41,8 +41,8 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority is the latest
-`Sync task 1 ranking push routing` continuity commit. The latest pushed
-source/contract authority is
+`Sync task 1 evidence push routing` continuity commit. The latest pushed
+source/contract authority remains
 `ba1b468 Tune semantic ranking for direct anchors`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
@@ -62,16 +62,22 @@ creation, or push absent new findings.
 
 Active next route:
 
-- the Task 1 portfolio artifact-update slice is workspace-only accepted
-- release-unit audit is cleared for the exact six-file artifact/control
-  release unit
-- full regression is cleared
-- commit-gating is cleared
-- local release commit is created:
-  `4d8a309 Record task 1 differentiation evidence`
-- do not push without explicit Ryan authorization
-- do not run Tasks 2-3 or update public/demo claims before local release state
-  is clear
+- the Task 1 portfolio artifact update is pushed
+- Task 0 and Task 1 are recorded as STRONG internal portfolio evidence
+- next route is a read-only Task 2 product-differentiation checkpoint lane
+- do not update public/demo claims or claim broader product-level
+  differentiation before more portfolio evidence is collected and reviewed
+
+Pushed Task 1 product-differentiation artifact release:
+`4d8a309 Record task 1 differentiation evidence`. This commit contains the
+accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed internal portfolio artifact update that records
+Task 1 as STRONG while preserving Task 0 evidence, Tasks 2-3 not-run status,
+and public-claims-held boundaries. It was pushed with explicit Ryan
+authorization through `1b44aa4 Sync task 1 evidence local routing`; this
+continuity entry records the post-push state. Do not route `4d8a309` or
+`1b44aa4` back to release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push absent new findings.
 
 Pushed Task 0 product-differentiation evidence bundle release:
 `9407d63 Add task 0 differentiation evidence bundle`. This commit contains
@@ -385,6 +391,30 @@ Task 1 portfolio artifact local release commit is created:
 - next route:
   - wait for explicit Ryan authorization before pushing the local commit
   - do not run Tasks 2-3 or update public/demo claims until push state is clear
+
+Task 1 portfolio artifact release is pushed:
+
+- Ryan explicitly authorized pushing the Task 1 portfolio artifact update
+- `git push origin main` succeeded and advanced remote `main` from
+  `f99a12f` through `1b44aa4 Sync task 1 evidence local routing`
+- pushed commits:
+  - `4d8a309 Record task 1 differentiation evidence`
+  - `1b44aa4 Sync task 1 evidence local routing`
+- post-push state verified by git:
+  - local `HEAD` resolved to `1b44aa4`
+  - `origin/main` resolved to `1b44aa4`
+  - worktree, index, and untracked files were clean
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes, `4d8a309`
+  - pushed: yes, through `1b44aa4`
+- next route:
+  - run a read-only Task 2 product-differentiation checkpoint lane
+  - do not update public/demo claims or claim broader product-level
+    differentiation before more portfolio evidence is collected and reviewed
 
 Task 1 ranking correction is workspace-only accepted:
 

@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Task 1 Portfolio Artifact Push Completed
+
+- Ryan explicitly authorized pushing the Task 1 portfolio artifact update.
+- `git push origin main` succeeded and advanced remote `main` from `f99a12f`
+  through `1b44aa4 Sync task 1 evidence local routing`.
+- Pushed commits:
+  - `4d8a309 Record task 1 differentiation evidence`
+  - `1b44aa4 Sync task 1 evidence local routing`
+- Post-push git verification:
+  - local `HEAD` resolved to `1b44aa4`
+  - `origin/main` resolved to `1b44aa4`
+  - worktree, index, and untracked files were clean
+- Release state:
+  - Task 1 portfolio artifact update pushed: yes
+  - latest pushed portfolio artifact authority:
+    `4d8a309 Record task 1 differentiation evidence`
+  - latest pushed source/contract authority remains:
+    `ba1b468 Tune semantic ranking for direct anchors`
+  - this docs-only entry is the post-push continuity sync for that release
+- Next route:
+  - run a read-only Task 2 product-differentiation checkpoint lane
+  - do not update public/demo claims or claim broader product-level
+    differentiation before more portfolio evidence is collected and reviewed
+- Acceptance status: pushed with explicit Ryan authorization
+
 ## 2026-05-18 -- Task 1 Portfolio Artifact Local Commit Created
 
 - Created the local release commit for the Task 1 portfolio artifact update
