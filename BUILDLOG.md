@@ -2,6 +2,38 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Corrected Task 2 Source/Test Calibration Pushed
+
+- Ryan explicitly authorized push.
+- `git push origin main` advanced remote `main` from `4af19a1` through:
+  - `448e582 Calibrate source and test edit anchors`
+  - `6ad2f45 Sync task 2 calibration local routing`
+- Pushed source/contract release:
+  `448e582 Calibrate source and test edit anchors`
+- Pushed release behavior:
+  - implementation-intent queries cap `tests/` edit scores after scorer
+    post-processing unless the query explicitly asks for tests
+  - tests remain eligible as support
+  - source implementation waypoints can outrank behavior-descriptive tests for
+    Task 2-style implementation queries
+  - Task 1 budget `260` behavior remains preserved
+  - Task 2 budget `320` selects a source waypoint first and selects compact
+    `oracle_signal_exec_probe` evidence
+- Release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes
+  - pushed: yes
+- Next route:
+  - rerun the Task 2 product-differentiation checkpoint against the pushed
+    correction before Task 3
+  - do not update `evals/product_differentiation/portfolio_001/` with Task 2
+    evidence unless Ryan explicitly authorizes recording failed evidence later
+  - do not advance public/demo claims yet
+- Acceptance status: pushed
+
 ## 2026-05-18 -- Corrected Task 2 Source/Test Calibration Locally Committed
 
 - Created local release commit:

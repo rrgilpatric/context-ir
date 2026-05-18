@@ -40,18 +40,24 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the latest
-`Sync task 1 evidence push routing` continuity commit. The latest pushed
-source/contract authority remains
-`ba1b468 Tune semantic ranking for direct anchors`. Live git refs and worktree
+Current pushed release authority is the Task 2 calibration post-push routing
+continuity state. The latest pushed source/contract authority is
+`448e582 Calibrate source and test edit anchors`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
-Current local, unpushed release authority includes
+Pushed Task 2 implementation-intent source/test calibration release:
 `448e582 Calibrate source and test edit anchors`. This commit contains the
-corrected, audit-cleared, full-regression-cleared, commit-gating-cleared, and
-locally committed Task 2 implementation-intent source/test calibration
-correction. It is not pushed. Push remains Ryan-gated.
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed scorer calibration that
+prevents implementation-intent queries from selecting `tests/` units as edit
+anchors while preserving tests as support and preserving explicit test-edit
+queries. Ryan explicitly authorized the push, and `git push origin main`
+advanced remote `main` from `4af19a1` through
+`6ad2f45 Sync task 2 calibration local routing`; this continuity entry records
+the post-push state. Do not route `448e582` or `6ad2f45` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 Pushed corrected Task 1 ranking release:
 `ba1b468 Tune semantic ranking for direct anchors`. This commit contains the
@@ -77,8 +83,10 @@ Active next route:
 - commit-gating is cleared
 - local commit is created:
   `448e582 Calibrate source and test edit anchors`
+- pushed with Ryan authorization
 - hold Task 3 and any public/demo claim advancement
-- next route is explicit Ryan push authorization
+- next route is rerun the Task 2 product-differentiation checkpoint against
+  the pushed correction before Task 3
 - do not update `evals/product_differentiation/portfolio_001/` with Task 2
   evidence unless Ryan explicitly authorizes recording failed evidence later
 
