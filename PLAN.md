@@ -409,6 +409,40 @@ Corrected Task 1 ranking commit-gating is cleared:
   - do not run Tasks 2-3 or update product/public/demo artifacts before local
     commit state is clear
 
+Corrected Task 1 ranking local release commit is created:
+
+- local release commit:
+  `ba1b468 Tune semantic ranking for direct anchors`
+- commit contents:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- pre-commit gates:
+  - workspace acceptance: yes, after one full-regression correction
+  - corrected release-unit audit: passed first-pass
+  - corrected full regression: passed first-pass after corrected audit
+  - commit-gating: passed first-pass after corrected full regression
+- post-commit state verified by git:
+  - local `HEAD` resolved to `ba1b468`
+  - `origin/main` remained `cb34fa9`
+  - branch `main` was ahead of `origin/main` by six local commits
+  - worktree, index, and untracked files were clean
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes, `ba1b468`
+  - pushed: no
+- next route:
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Tasks 2-3 or update product/public/demo artifacts until push
+    state is clear
+
 Pushed semantic eval-evidence integration release:
 `fc2ddc6 Integrate compact eval evidence into semantic context`. This commit
 contains the accepted, audit-cleared, full-regression-cleared,

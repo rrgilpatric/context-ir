@@ -2,6 +2,40 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Corrected Task 1 Ranking Local Commit Created
+
+- Created the local release commit for the corrected Task 1 ranking release
+  after corrected release-unit audit, full regression, and commit-gating
+  cleared.
+- Commit:
+  - `ba1b468 Tune semantic ranking for direct anchors`
+- Committed files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- Pre-commit release state:
+  - accepted in workspace: yes, after one full-regression correction
+  - corrected release-unit audit cleared: yes, first-pass
+  - corrected full regression cleared: yes, first-pass after corrected audit
+  - commit-gating cleared: yes, first-pass after corrected full regression
+- Post-commit evidence:
+  - local `HEAD` resolved to `ba1b468`
+  - `origin/main` remained `cb34fa9`
+  - branch `main` was ahead of `origin/main` by six local commits
+  - worktree, index, and untracked files were clean
+- Release state:
+  - locally committed: yes, `ba1b468`
+  - pushed: no
+- Next route:
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Tasks 2-3 or update product/public/demo artifacts until push
+    state is clear
+- Acceptance status: locally committed
+
 ## 2026-05-18 -- Corrected Task 1 Ranking Commit-Gating Cleared
 
 - Performed commit-gating after corrected release-unit audit and full
