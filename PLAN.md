@@ -47,6 +47,12 @@ source/contract authority remains
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
+Current local, unpushed release authority includes
+`448e582 Calibrate source and test edit anchors`. This commit contains the
+corrected, audit-cleared, full-regression-cleared, commit-gating-cleared, and
+locally committed Task 2 implementation-intent source/test calibration
+correction. It is not pushed. Push remains Ryan-gated.
+
 Pushed corrected Task 1 ranking release:
 `ba1b468 Tune semantic ranking for direct anchors`. This commit contains the
 accepted, corrected-audit-cleared, full-regression-cleared,
@@ -69,8 +75,10 @@ Active next route:
 - corrected release-unit audit is cleared
 - full regression is cleared
 - commit-gating is cleared
+- local commit is created:
+  `448e582 Calibrate source and test edit anchors`
 - hold Task 3 and any public/demo claim advancement
-- next route is local commit creation for the exact five-file release unit
+- next route is explicit Ryan push authorization
 - do not update `evals/product_differentiation/portfolio_001/` with Task 2
   evidence unless Ryan explicitly authorizes recording failed evidence later
 
@@ -432,6 +440,28 @@ Corrected Task 2 source/test calibration commit-gating is cleared:
 - next route:
   - stage and locally commit only the exact five-file release unit
   - do not push until Ryan explicitly authorizes push after local commit
+
+Corrected Task 2 source/test calibration is locally committed:
+
+- local commit created:
+  `448e582 Calibrate source and test edit anchors`
+- committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+- release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes
+  - pushed: no
+- next route:
+  - wait for explicit Ryan push authorization
+  - do not run Task 3, update portfolio artifacts, or update public/demo
+    claims before push/routing state is resolved
 
 Pushed Task 0 product-differentiation evidence bundle release:
 `9407d63 Add task 0 differentiation evidence bundle`. This commit contains
