@@ -2,6 +2,40 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Corrected Task 2 Runtime-Surface Release Pushed
+
+- Ryan explicitly authorized push.
+- `git push origin main` advanced remote `main` from `4077a76` through:
+  - `600a08f Surface task 2 runtime evidence path`
+  - `4a4681f Sync task 2 runtime evidence local routing`
+- Pushed source/contract release:
+  `600a08f Surface task 2 runtime evidence path`
+- Pushed release behavior:
+  - conservative imported-call dependency closure adds repository-backed
+    support for source-root public function/method calls to uniquely resolved
+    imported repository helpers
+  - module-scope calls, private wrappers, and unresolved external-name suffix
+    collisions do not become proven dependencies
+  - runtime-probe result-flow scoring lifts admission/result contract surfaces
+    for runtime-probe exec/eval proof-flow queries
+  - Task 2 budget `320` selects the facade, core recompile helper, admission
+    surface, and compact exec evidence while preserving unsupported/opaque
+    primary truth and additive runtime evidence
+- Release state:
+  - accepted in workspace: yes, after one audit correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes
+  - pushed: yes
+- Next route:
+  - rerun the Task 2 product-differentiation checkpoint against the pushed
+    runtime-surface correction before Task 3
+  - do not update `evals/product_differentiation/portfolio_001/` with Task 2
+    evidence unless Ryan explicitly authorizes recording evidence later
+  - do not advance public/demo claims yet
+- Acceptance status: pushed
+
 ## 2026-05-18 -- Corrected Task 2 Runtime-Surface Locally Committed
 
 - Created local release commit:
