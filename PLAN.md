@@ -40,11 +40,26 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the Task 2 runtime evidence post-push
-routing continuity state. The latest pushed source/contract authority is
-`600a08f Surface task 2 runtime evidence path`. Live git refs and worktree
-state must still be verified from git during control intake; do not infer them
-from committed prose.
+Current pushed release authority is the Task 2 STRONG portfolio artifact
+post-push routing continuity state. The latest pushed source/contract
+authority remains `600a08f Surface task 2 runtime evidence path`; the latest
+pushed artifact/control authority is
+`63aabca Record task 2 differentiation evidence`, with post-push continuity
+through `cf8fc3a Sync task 2 evidence local routing`. Live git refs and
+worktree state must still be verified from git during control intake; do not
+infer them from committed prose.
+
+Pushed Task 2 STRONG portfolio artifact release:
+`63aabca Record task 2 differentiation evidence`. This commit contains the
+accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed internal-only portfolio artifact update that
+records Task 2 as STRONG while preserving Task 0 and Task 1 evidence, keeping
+Task 3 not run, and keeping public claims held. Ryan explicitly authorized the
+push, and `git push origin main` advanced remote `main` from `de9e382`
+through `cf8fc3a Sync task 2 evidence local routing`; this continuity entry
+records the post-push state. Do not route `63aabca` or `cf8fc3a` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 Pushed Task 2 runtime-surface evidence release:
 `600a08f Surface task 2 runtime evidence path`. This commit contains the
@@ -123,8 +138,10 @@ Active next route:
 - commit-gating is cleared
 - local commit is created:
   `63aabca Record task 2 differentiation evidence`
+- pushed with Ryan authorization
 - hold Task 3 and any public/demo claim advancement
-- next route is explicit Ryan push authorization
+- next route is decide whether to run the Task 3 product-differentiation
+  checkpoint; public/demo claims remain held
 - do not advance Task 3 or public/demo claims until the artifact update is
   reviewed and routed
 
@@ -385,6 +402,30 @@ Task 2 STRONG portfolio artifact update is locally committed:
   - wait for explicit Ryan authorization before pushing local commits
   - do not run Task 3, update public/demo claims, or treat the portfolio
     artifact update as pushed until remote state is resolved
+
+Task 2 STRONG portfolio artifact release is pushed:
+
+- Ryan explicitly authorized push
+- `git push origin main` succeeded and advanced remote `main` from `de9e382`
+  through `cf8fc3a`
+- pushed commits:
+  - `63aabca Record task 2 differentiation evidence`
+  - `cf8fc3a Sync task 2 evidence local routing`
+- post-push state verified by git:
+  - branch `main`
+  - `HEAD=cf8fc3a`
+  - `origin/main=cf8fc3a`
+  - worktree clean before this post-push continuity sync
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `63aabca`
+  - pushed: yes, through `cf8fc3a`
+- next route:
+  - decide whether to run the Task 3 product-differentiation checkpoint
+  - public/demo claims remain held
 
 Task 2 product-differentiation rerun returned PARTIAL after the pushed
 source/test calibration correction:

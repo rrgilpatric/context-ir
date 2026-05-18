@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-18 -- Task 2 STRONG Portfolio Artifact Release Pushed
+
+- Ryan explicitly authorized push.
+- `git push origin main` succeeded and advanced remote `main` from `de9e382`
+  through `cf8fc3a`.
+- Pushed commits:
+  - `63aabca Record task 2 differentiation evidence`
+  - `cf8fc3a Sync task 2 evidence local routing`
+- Post-push state verified by git:
+  - branch `main`
+  - `HEAD=cf8fc3a`
+  - `origin/main=cf8fc3a`
+  - worktree clean before this post-push continuity sync
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes, `63aabca`
+  - pushed: yes, through `cf8fc3a`
+- Next route:
+  - decide whether to run the Task 3 product-differentiation checkpoint
+  - public/demo claims remain held
+- Acceptance status: pushed with explicit Ryan authorization
+
 ## 2026-05-18 -- Task 2 STRONG Portfolio Artifact Locally Committed
 
 - Local commit created after audit, full regression, and commit-gating cleared:
