@@ -40,14 +40,28 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the Task 2 STRONG portfolio artifact
-post-push routing continuity state. The latest pushed source/contract
-authority remains `600a08f Surface task 2 runtime evidence path`; the latest
-pushed artifact/control authority is
-`63aabca Record task 2 differentiation evidence`, with post-push continuity
-through `b06324c Sync task 2 evidence push routing`. Live git refs and
-worktree state must still be verified from git during control intake; do not
-infer them from committed prose.
+Current pushed release authority is the Task 3 focused semantic packing
+correction state. The latest pushed source/contract authority is
+`cdc1a87 Fix method-focused semantic packing`; the latest pushed
+artifact/control authority remains
+`63aabca Record task 2 differentiation evidence`, with Task 3 post-push
+continuity recorded below. Live git refs and worktree state must still be
+verified from git during control intake; do not infer them from committed
+prose.
+
+Pushed Task 3 focused semantic packing correction release:
+`cdc1a87 Fix method-focused semantic packing`. This commit contains the
+accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed optimizer/test correction that prevents parent
+class source from crowding out a strongly named child method edit anchor under
+tight budgets. It makes the fixture-root Task 3 query at budget `280` select
+the method source, required support, and alias-chain frontier in `223` tokens
+with no warnings. Ryan explicitly authorized the push, and
+`git push origin main` advanced remote `main` from `b06324c` through
+`dd24a05 Sync task 3 correction local routing`; this continuity entry records
+the post-push state. Do not route `cdc1a87` or `dd24a05` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 Pushed Task 2 STRONG portfolio artifact release:
 `63aabca Record task 2 differentiation evidence`. This commit contains the
@@ -166,11 +180,12 @@ Active next route:
 - commit-gating is cleared
 - local commit is created:
   `cdc1a87 Fix method-focused semantic packing`
+- pushed with Ryan authorization
 - public/demo claim advancement remains held
-- next route is wait for explicit Ryan authorization before pushing local
-  commits
+- next route is a read-only Task 3 product-differentiation checkpoint rerun
+  against the pushed correction
 - hold Task 4, portfolio artifact updates, public/demo claim work, staging,
-  additional commits outside routing sync, and pushes without authorization
+  commits, and pushes while waiting for Task 3 checkpoint rerun results
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -563,9 +578,42 @@ Task 3 focused semantic packing correction is locally committed:
   - local commit created: yes, `cdc1a87`
   - pushed: no
 - next route:
-  - wait for explicit Ryan authorization before pushing local commits
-  - do not run Task 4, update portfolio artifacts, or update public/demo claims
-    until push state is resolved
+  - superseded by pushed release state
+
+Task 3 focused semantic packing correction release is pushed:
+
+- Ryan explicitly authorized push
+- `git push origin main` succeeded and advanced remote `main` from `b06324c`
+  through:
+  - `cdc1a87 Fix method-focused semantic packing`
+  - `dd24a05 Sync task 3 correction local routing`
+- pushed source/contract release:
+  `cdc1a87 Fix method-focused semantic packing`
+- pushed release behavior:
+  - parent class containers with strong directly edited child methods no
+    longer outrank the child method as initial focus
+  - selected child methods can take focus from selected parent classes when the
+    child is the actual edit anchor
+  - the fixture-root Task 3 query at budget `280` selects the method source,
+    required support, and alias-chain frontier in `223` tokens with no
+    warnings
+- post-push state verified by git:
+  - branch `main`
+  - `HEAD=dd24a05`
+  - `origin/main=dd24a05`
+  - worktree clean before this post-push continuity sync
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `cdc1a87`
+  - pushed: yes, through `dd24a05`
+- next route:
+  - rerun the Task 3 product-differentiation checkpoint against the pushed
+    correction before Task 4
+  - do not update portfolio artifacts or public/demo claims unless Ryan
+    explicitly authorizes recording evidence later
 
 Task 2 product-differentiation checkpoint returned STRONG after the pushed
 runtime-surface correction:

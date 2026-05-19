@@ -2,6 +2,42 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-19 -- Task 3 Focused Semantic Packing Correction Release Pushed
+
+- Ryan explicitly authorized push.
+- `git push origin main` succeeded and advanced remote `main` from `b06324c`
+  through:
+  - `cdc1a87 Fix method-focused semantic packing`
+  - `dd24a05 Sync task 3 correction local routing`
+- Pushed source/contract release:
+  `cdc1a87 Fix method-focused semantic packing`
+- Pushed release behavior:
+  - parent class containers with strong directly edited child methods no
+    longer outrank the child method as initial focus
+  - selected child methods can take focus from selected parent classes when the
+    child is the actual edit anchor
+  - the fixture-root Task 3 query at budget `280` selects the method source,
+    required support, and alias-chain frontier in `223` tokens with no
+    warnings
+- Post-push state verified by git:
+  - branch `main`
+  - `HEAD=dd24a05`
+  - `origin/main=dd24a05`
+  - worktree clean before this post-push continuity sync
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `cdc1a87`
+  - pushed: yes, through `dd24a05`
+- Next route:
+  - rerun the Task 3 product-differentiation checkpoint against the pushed
+    correction before Task 4
+  - do not update portfolio artifacts or public/demo claims unless Ryan
+    explicitly authorizes recording evidence later
+- Acceptance status: pushed with explicit Ryan authorization
+
 ## 2026-05-19 -- Task 3 Focused Semantic Packing Correction Locally Committed
 
 - Created local release commit after audit, full regression, and commit-gating
