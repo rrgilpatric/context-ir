@@ -164,10 +164,13 @@ Active next route:
 - release-unit audit is cleared
 - full regression is cleared
 - commit-gating is cleared
+- local commit is created:
+  `cdc1a87 Fix method-focused semantic packing`
 - public/demo claim advancement remains held
-- next route is local commit creation for the exact five-file release unit
+- next route is wait for explicit Ryan authorization before pushing local
+  commits
 - hold Task 4, portfolio artifact updates, public/demo claim work, staging,
-  commits, and pushes outside the cleared release sequence
+  additional commits outside routing sync, and pushes without authorization
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -531,8 +534,38 @@ Task 3 focused semantic packing correction commit-gating is cleared:
   - local commit not created
   - pushed: no
 - next route:
-  - stage and commit exactly the five-file release unit
-  - do not push until Ryan explicitly authorizes push after local commit
+  - superseded by local release commit creation
+
+Task 3 focused semantic packing correction is locally committed:
+
+- local release commit created after audit, full regression, and commit-gating
+  cleared:
+  - `cdc1a87 Fix method-focused semantic packing`
+- committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- release behavior:
+  - parent class containers with strong directly edited child methods no
+    longer outrank the child method as initial focus
+  - selected child methods can take focus from selected parent classes when the
+    child is the actual edit anchor
+  - the fixture-root Task 3 query at budget `280` selects the method source,
+    required support, and alias-chain frontier in `223` tokens with no
+    warnings
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `cdc1a87`
+  - pushed: no
+- next route:
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Task 4, update portfolio artifacts, or update public/demo claims
+    until push state is resolved
 
 Task 2 product-differentiation checkpoint returned STRONG after the pushed
 runtime-surface correction:

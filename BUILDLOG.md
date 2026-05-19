@@ -2,6 +2,38 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-19 -- Task 3 Focused Semantic Packing Correction Locally Committed
+
+- Created local release commit after audit, full regression, and commit-gating
+  cleared:
+  - `cdc1a87 Fix method-focused semantic packing`
+- Committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release behavior:
+  - parent class containers with strong directly edited child methods no
+    longer outrank the child method as initial focus
+  - selected child methods can take focus from selected parent classes when the
+    child is the actual edit anchor
+  - the fixture-root Task 3 query at budget `280` selects the method source,
+    required support, and alias-chain frontier in `223` tokens with no
+    warnings
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `cdc1a87`
+  - pushed: no
+- Next route:
+  - wait for explicit Ryan authorization before pushing local commits
+  - do not run Task 4, update portfolio artifacts, or update public/demo claims
+    until push state is resolved
+- Acceptance status: locally committed, push-gated
+
 ## 2026-05-19 -- Task 3 Focused Semantic Packing Correction Commit-Gating Cleared
 
 - Ran commit-gating over the exact five-file Task 3 focused semantic packing
