@@ -73,6 +73,7 @@ class _SemanticCandidate:
     outgoing_dependency_targets: tuple[str, ...]
     enclosing_scope_id: str | None
     trace_summary: SemanticUnitTraceSummary
+    has_direct_child_edit_anchor: bool
 
 
 @dataclass(frozen=True)
@@ -295,6 +296,19 @@ def optimize_semantic_units(
                 current_focus_inherited_uncertainty_surface = False
                 pending_focus_id = None
                 continue
+            if _is_child_edit_anchor_of_focus(
+                candidate,
+                focus_unit_id=current_focus_id,
+            ):
+                current_focus_id = candidate.unit_id
+                focus_unit_ids.add(current_focus_id)
+                current_focus_support_count = 0
+                current_focus_has_uncertainty_surface = False
+                current_focus_has_eval_evidence_surface = False
+                current_focus_has_eval_summary_surface = False
+                current_focus_inherited_uncertainty_surface = False
+                pending_focus_id = None
+                continue
         if current_focus_id is not None and _is_uncertainty_for_focus(
             candidate,
             focus_unit_id=current_focus_id,
@@ -373,6 +387,10 @@ def _build_candidates(
     enclosing_scope_ids = _enclosing_scope_ids(program)
     file_scope_ids = _file_scope_ids(program)
     trace_summaries = _trace_summaries_by_subject(program)
+    direct_child_edit_anchor_container_ids = _direct_child_edit_anchor_container_ids(
+        program,
+        scoring,
+    )
     render_session = _SemanticRenderSession(program)
     candidates: list[_SemanticCandidate] = []
 
@@ -403,6 +421,9 @@ def _build_candidates(
                 ),
                 enclosing_scope_id=enclosing_scope_ids.get(unit_id),
                 trace_summary=trace_summaries[(subject_kind, unit_id)],
+                has_direct_child_edit_anchor=(
+                    unit_id in direct_child_edit_anchor_container_ids
+                ),
             )
         )
 
@@ -564,6 +585,35 @@ def _outgoing_dependency_targets(
     }
 
 
+def _direct_child_edit_anchor_container_ids(
+    program: SemanticProgram,
+    scoring: SemanticScoringResult,
+) -> frozenset[str]:
+    """Return class containers with a strongly named child edit anchor."""
+    class_unit_ids = tuple(
+        unit_id
+        for unit_id, symbol in program.resolved_symbols.items()
+        if symbol.kind is ResolvedSymbolKind.CLASS
+    )
+    container_ids: set[str] = set()
+    for unit_id, symbol in program.resolved_symbols.items():
+        if symbol.kind not in {
+            ResolvedSymbolKind.FUNCTION,
+            ResolvedSymbolKind.ASYNC_FUNCTION,
+            ResolvedSymbolKind.METHOD,
+        }:
+            continue
+        score = scoring.scores.get(unit_id)
+        if score is None:
+            continue
+        if score.p_edit < _DIRECT_SOURCE_THRESHOLD or score.p_edit < score.p_support:
+            continue
+        for class_unit_id in class_unit_ids:
+            if unit_id.startswith(f"{class_unit_id}."):
+                container_ids.add(class_unit_id)
+    return frozenset(container_ids)
+
+
 def _candidate_sort_state(
     *,
     current_focus_id: str | None,
@@ -683,6 +733,11 @@ def _initial_direct_anchor_priority(candidate: _SemanticCandidate) -> float:
         candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
         and candidate.score.p_edit >= _DIRECT_SOURCE_THRESHOLD
     ):
+        if (
+            candidate.symbol_kind is ResolvedSymbolKind.CLASS
+            and candidate.has_direct_child_edit_anchor
+        ):
+            return 0.5
         return 0.0
     return 1.0
 
@@ -846,6 +901,26 @@ def _is_direct_caller_of_focus(
         candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
         and focus_unit_id in candidate.outgoing_dependency_targets
         and candidate.score.p_edit >= _DIRECT_SUMMARY_THRESHOLD
+    )
+
+
+def _is_child_edit_anchor_of_focus(
+    candidate: _SemanticCandidate,
+    *,
+    focus_unit_id: str,
+) -> bool:
+    """Return whether a selected child should take focus from its parent class."""
+    return (
+        candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
+        and candidate.symbol_kind
+        in {
+            ResolvedSymbolKind.FUNCTION,
+            ResolvedSymbolKind.ASYNC_FUNCTION,
+            ResolvedSymbolKind.METHOD,
+        }
+        and candidate.unit_id.startswith(f"{focus_unit_id}.")
+        and candidate.score.p_edit >= _DIRECT_SOURCE_THRESHOLD
+        and candidate.score.p_edit >= candidate.score.p_support
     )
 
 

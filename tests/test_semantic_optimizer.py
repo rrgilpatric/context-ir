@@ -844,6 +844,114 @@ def test_optimize_semantic_units_suppresses_redundant_enclosing_class_container(
     assert result.total_tokens <= budget
 
 
+def test_optimize_semantic_units_focuses_named_child_method_before_parent_class(
+    tmp_path: Path,
+) -> None:
+    """A direct child method anchor keeps its support and frontier under budget."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "labels.py").write_text(
+        textwrap.dedent(
+            """
+            def build_member_label(owner_alias: str) -> str:
+                return f"member:{owner_alias}"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (pkg / "service.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.labels import build_member_label
+
+            class MemberSignalCompiler:
+                def compile_member_digest(self, query: str) -> str:
+                    owner_alias = self.resolve_owner_alias(query)
+                    alias_chain_tracker(owner_alias)
+                    return build_member_label(owner_alias)
+
+                def resolve_owner_alias(self, query: str) -> str:
+                    if "owner" in query:
+                        return "owner"
+                    return "member"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    parent_class_id = _definition_id_for(program, "pkg.service.MemberSignalCompiler")
+    method_id = _definition_id_for(
+        program,
+        "pkg.service.MemberSignalCompiler.compile_member_digest",
+    )
+    label_id = _definition_id_for(program, "pkg.labels.build_member_label")
+    alias_id = _definition_id_for(
+        program,
+        "pkg.service.MemberSignalCompiler.resolve_owner_alias",
+    )
+    frontier_id = next(
+        access.access_id
+        for access in program.unresolved_frontier
+        if access.enclosing_scope_id == method_id
+        and access.access_id.startswith("frontier:call:")
+    )
+    budget = (
+        render_semantic_unit(program, method_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, label_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, alias_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, frontier_id, RenderDetail.IDENTITY).token_count
+    )
+    scoring = SemanticScoringResult(
+        query=(
+            "Fix MemberSignalCompiler.compile_member_digest while preserving "
+            "alias_chain frontier"
+        ),
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    0.38
+                    if unit_id == parent_class_id
+                    else 0.31
+                    if unit_id == method_id
+                    else 0.17
+                    if unit_id == label_id
+                    else 0.16
+                    if unit_id == alias_id
+                    else 0.08
+                    if unit_id == frontier_id
+                    else 0.0
+                ),
+                p_support=(
+                    0.10
+                    if unit_id == parent_class_id
+                    else 0.11
+                    if unit_id == method_id
+                    else 0.21
+                    if unit_id in {label_id, alias_id}
+                    else 0.15
+                    if unit_id == frontier_id
+                    else 0.0
+                ),
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=budget)
+    selections = _selection_by_unit_id(result)
+
+    assert selections[method_id].detail == RenderDetail.SOURCE.value
+    assert selections[label_id].detail == RenderDetail.SOURCE.value
+    assert selections[alias_id].detail == RenderDetail.SOURCE.value
+    assert selections[frontier_id].detail == RenderDetail.IDENTITY.value
+    assert parent_class_id not in selections
+    assert result.warnings == ()
+    assert result.total_tokens <= budget
+
+
 def test_optimize_semantic_units_uses_compact_summary_and_cheaper_source_when_available(
     tmp_path: Path,
 ) -> None:

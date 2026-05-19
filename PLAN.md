@@ -45,7 +45,7 @@ post-push routing continuity state. The latest pushed source/contract
 authority remains `600a08f Surface task 2 runtime evidence path`; the latest
 pushed artifact/control authority is
 `63aabca Record task 2 differentiation evidence`, with post-push continuity
-through `cf8fc3a Sync task 2 evidence local routing`. Live git refs and
+through `b06324c Sync task 2 evidence push routing`. Live git refs and
 worktree state must still be verified from git during control intake; do not
 infer them from committed prose.
 
@@ -139,11 +139,400 @@ Active next route:
 - local commit is created:
   `63aabca Record task 2 differentiation evidence`
 - pushed with Ryan authorization
-- hold Task 3 and any public/demo claim advancement
-- next route is decide whether to run the Task 3 product-differentiation
-  checkpoint; public/demo claims remain held
-- do not advance Task 3 or public/demo claims until the artifact update is
-  reviewed and routed
+- Ryan authorized proceeding to the Task 3 product-differentiation checkpoint
+- the Task 3 product-differentiation checkpoint returned FAIL
+- Ryan authorized a read-only Task 3 failure diagnosis
+- the read-only Task 3 failure diagnosis returned DONE and is
+  workspace-only accepted as routing evidence
+- diagnosis found a combined root cause:
+  - class-contract scoring selects the parent `MemberSignalCompiler` class
+    ahead of the named child method
+  - optimizer focus stays on the selected parent class and suppresses the
+    method-scoped `alias_chain` frontier
+  - render/detail policy can promote support to source under tight budgets
+  - full-repo and fixture-root runs are not directly comparable for the
+    fixture static path and baselines
+- Ryan authorized the recommended narrow correction slice for focused semantic
+  packing in parent/child method cases
+- the focused semantic packing correction returned DONE and is workspace-only
+  accepted first-pass
+- control review verified the fixture-root Task 3 query at budget `280` now
+  selects `compile_member_digest` source, `pkg.labels.build_member_label`
+  source, `resolve_owner_alias` source, and
+  `frontier:call:pkg/service.py:10:8` identity in `223` tokens with no
+  warnings
+- release-unit audit is cleared
+- full regression is cleared
+- commit-gating is cleared
+- public/demo claim advancement remains held
+- next route is local commit creation for the exact five-file release unit
+- hold Task 4, portfolio artifact updates, public/demo claim work, staging,
+  commits, and pushes outside the cleared release sequence
+
+Task 3 product-differentiation checkpoint is authorized:
+
+- Ryan authorized proceeding after the pushed Task 2 STRONG portfolio artifact
+  release
+- checkpoint type:
+  - read-only product-differentiation checkpoint
+  - no source/test/artifact/doc edits
+  - no staging, commits, or pushes
+- accepted Task 3 portfolio query:
+  `Fix transitive sole-provider self-call resolution for MemberSignalCompiler.compile_member_digest while preserving alias_chain frontier on pkg_alias.labels.build_member_label`
+- budgets:
+  - primary `280`
+  - ceiling `400` only if primary is not STRONG
+- providers:
+  - `context_ir`
+  - `lexical_top_k_files`
+  - `import_neighborhood_files`
+- required evidence path:
+  - static semantic dependency/frontier path for `oracle_signal_smoke_e`
+  - `MemberSignalCompiler.compile_member_digest` primary edit target
+  - `MemberSignalCompiler.resolve_owner_alias` same-class support
+  - `pkg.labels.build_member_label` import-rooted support
+  - `pkg_alias.labels.build_member_label` preserved as an honest
+    `alias_chain` frontier, not fabricated proof
+  - implementation/contract context around transitive sole-provider self-call
+    proof and alias-chain boundary preservation if the full-repo query routes
+    to source implementation rather than fixture-only context
+- classification:
+  - STRONG requires primary-budget success, all required evidence waypoints at
+    useful detail, truthful frontier/uncertainty handling, and baselines failing
+    under the same budget or requiring materially larger/irrelevant whole-file
+    context
+  - PARTIAL requires most waypoints but ceiling-budget reliance or a bounded
+    noncritical omission with honest warnings
+  - FAIL covers missed primary target, fabricated alias-chain proof, lost
+    uncertainty truth, budget failure, or comparable baseline context
+- next route:
+  - wait for Task 3 checkpoint results
+  - if STRONG, review before authorizing any artifact update
+  - if PARTIAL or FAIL, diagnose before any Task 4, artifact update, or public
+    claim work
+
+Task 3 product-differentiation checkpoint returned FAIL:
+
+- read-only checkpoint lane returned DONE with verdict FAIL
+- repo truth verified by the lane and control review:
+  - branch `main`
+  - `HEAD=b06324c`
+  - `origin/main=b06324c`
+  - only `PLAN.md` and `BUILDLOG.md` dirty from control-state updates
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+- artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/checkpoint_report.md`
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/checkpoint_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/primary_280_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/ceiling_400_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/oracle_signal_smoke_e_static_path.md`
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/fixture_primary_280_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/fixture_ceiling_400_runs.jsonl`
+- confirmed static semantic path:
+  - `compile_member_digest` exists as
+    `def:pkg/service.py:pkg.service.MemberSignalCompiler.compile_member_digest`
+  - `resolve_owner_alias` exists and is resolved from
+    `compile_member_digest`
+  - `pkg.labels.build_member_label` exists and is resolved from
+    `compile_member_digest`
+  - `pkg_alias.labels.build_member_label` exists as
+    `frontier:call:pkg/service.py:10:8` with reason `alias_chain`
+- full-repo primary budget `280`:
+  - `context_ir`: `277` tokens, about `130.933s`, selected `4` units
+  - selected fixture class source and resolver summary, but did not select
+    `pkg.labels.build_member_label` or the `alias_chain` frontier
+  - lexical and import baselines selected zero files under budget
+- full-repo ceiling budget `400`:
+  - `context_ir`: `385` tokens, about `139.386s`, selected `7` units
+  - still omitted `pkg.labels.build_member_label` and the `alias_chain`
+    frontier
+- fixture-root primary budget `280`:
+  - `context_ir` selected only class/method units and scored below both
+    baselines under oracle metrics
+  - lexical and import baselines fit `pkg/service.py` plus package init under
+    budget and provided comparable or better context for this small fixture
+- fixture-root ceiling budget `400`:
+  - `context_ir` recovered `build_member_label` and `resolve_owner_alias`
+  - still omitted `frontier:call:pkg/service.py:10:8`
+  - lexical baseline fit all fixture files at `337` tokens
+- control decision:
+  - accept the Task 3 checkpoint as failed evidence
+  - underlying semantic facts exist, so this is not an absence-of-semantics
+    defect
+  - failure is provider selection/ranking/optimization for the checkpoint query
+    plus weak baseline differentiation on the fixture-root view
+- release/routing state:
+  - Task 0: STRONG and recorded
+  - Task 1: STRONG and recorded
+  - Task 2: STRONG and recorded
+  - Task 3: FAIL, not recorded into portfolio artifacts
+  - public/demo claims remain held
+- next route:
+  - hold Task 4, portfolio artifact updates, and public/demo claims
+  - request Ryan authorization for a read-only Task 3 failure diagnosis before
+    any correction slice
+
+Task 3 failure diagnosis is authorized:
+
+- Ryan agreed with the recommendation to diagnose the Task 3 failure before any
+  correction or onward portfolio work
+- diagnosis type:
+  - read-only
+  - no source/test/artifact/doc edits
+  - no staging, commits, or pushes
+- question to answer:
+  - why did `context_ir` miss `pkg.labels.build_member_label` and the
+    `pkg_alias.labels.build_member_label` `alias_chain` frontier under the
+    Task 3 budgets even though the static semantic path exists?
+  - is the root cause scorer weighting, optimizer frontier retention,
+    render/detail cost, dependency/support closure, fixture/rubric design, or
+    a combination?
+  - is Task 3 still a fair product-differentiation checkpoint after accounting
+    for fixture-root baselines being competitive on the tiny fixture?
+- explicit non-goals:
+  - do not implement a correction
+  - do not rerun Task 4
+  - do not update portfolio artifacts or public/demo claims
+  - do not relax the rubric without a control decision
+- expected output:
+  - findings-first diagnosis
+  - evidence from scores, optimizer ordering, selected/omitted units, render
+    costs, and baseline behavior
+  - recommended next control action: correction slice, rubric adjustment,
+    strategy pause, or abandon/replace Task 3
+
+Task 3 failure diagnosis is workspace-only accepted:
+
+- external read-only diagnosis lane returned DONE
+- control review found no defects in the diagnosis result
+- live repo state re-verified during control review:
+  - branch `main`
+  - `HEAD=b06324c`
+  - `origin/main=b06324c`
+  - only `PLAN.md` and `BUILDLOG.md` dirty from control-state updates
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+- evidence checked during control review:
+  - `/private/tmp/context_ir_portfolio_001_task3_checkpoint/oracle_signal_smoke_e_static_path.json`
+    confirms the fixture-root static path exists:
+    `compile_member_digest` resolves to `resolve_owner_alias` and
+    `pkg.labels.build_member_label`, while
+    `frontier:call:pkg/service.py:10:8` remains an `alias_chain` frontier
+  - fixture-root primary budget `280` selected only
+    `MemberSignalCompiler` source and `compile_member_digest` source, leaving
+    both support selectors unselected and the alias-chain frontier omitted
+  - fixture-root ceiling budget `400` selected `build_member_label` and
+    `resolve_owner_alias`, but still omitted
+    `frontier:call:pkg/service.py:10:8`
+  - full-repo primary and ceiling runs selected the fixture class, resolver
+    implementation surface, and compact test helper summaries, but not the
+    fixture-root label support unit or alias-chain frontier as selected units
+  - `semantic_optimizer.py` focus handling and uncertainty suppression sites
+    cited by the diagnosis are present
+  - `semantic_scorer.py` class-contract scoring site cited by the diagnosis is
+    present
+  - `eval_metrics.py` semantic selected-unit vs whole-file baseline matching
+    boundary cited by the diagnosis is present
+- accepted root-cause classification:
+  - combination of scorer weighting, optimizer frontier retention,
+    render/detail cost, dependency/support closure, and fixture/rubric design
+- control decision:
+  - accept the diagnosis as routing evidence first-pass in workspace-only state
+  - do not abandon Task 3 yet
+  - do not relax the rubric without a later control decision
+  - recommended next move is a bounded correction slice for focused semantic
+    packing in parent/child method cases
+- smallest recommended correction scope:
+  - avoid duplicate parent-class source when the named child method is the
+    actual edit anchor
+  - let selected child methods take focus from selected parent classes when
+    needed for method-scoped support and frontier retention
+  - preserve or warn on the expected method-scoped `alias_chain` frontier
+- recommended acceptance criteria for that correction:
+  - fixture-root Task 3 query selects `compile_member_digest` source,
+    `pkg.labels.build_member_label` source, `resolve_owner_alias` at adequate
+    detail, and `frontier:call:pkg/service.py:10:8` identity within budget
+  - duplicate parent-class source is avoided when it blocks required method
+    support under the primary budget
+  - if the expected method-scoped frontier is omitted, a warning explains the
+    omission
+- next route:
+  - superseded by Ryan's authorization of the narrow focused semantic packing
+    correction slice
+
+Task 3 focused semantic packing correction is authorized:
+
+- Ryan authorized the control recommendation to proceed with the narrow
+  correction slice after reviewing the accepted Task 3 failure diagnosis
+- correction type:
+  - bounded implementation slice
+  - source/test changes only within the focused semantic packing surface
+  - no portfolio artifact updates
+  - no public/demo claim changes
+  - no Task 4 execution
+  - no staging, commits, pushes, resets, restores, or discarded control docs
+- objective:
+  - make selected child methods take focus from a selected parent class when
+    that child method is the actual edit anchor, so method-scoped support and
+    frontier units can survive under budget
+  - avoid duplicate parent-class source when it blocks required child-method
+    support under the Task 3 budget
+  - preserve or explicitly warn on the expected method-scoped
+    `alias_chain` frontier
+- next route:
+  - superseded by the accepted workspace-only implementation result
+
+Task 3 focused semantic packing correction is workspace-only accepted:
+
+- implementation lane returned DONE
+- changed files:
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- pre-existing dirty control files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- accepted behavior:
+  - class containers with strong directly edited child methods no longer
+    outrank the child method as initial focus
+  - selected child methods can take focus from selected parent classes when the
+    child is the actual edit anchor
+  - duplicate parent-class source is avoided for the Task 3 fixture-root
+    correction path
+  - method-scoped alias-chain frontier retention is preserved
+- control-review validation:
+  - live repo state: branch `main`, `HEAD=b06324c`,
+    `origin/main=b06324c`
+  - dirty files exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_optimizer.py tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py`:
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_optimizer.py tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py`:
+    passed, `3 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed, `39 source files`
+  - `.venv/bin/python -m pytest tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py -v`:
+    passed, `28 passed`
+  - direct fixture-root Task 3 query check at budget `280`: selected
+    `compile_member_digest` source, `pkg.labels.build_member_label` source,
+    `resolve_owner_alias` source, `frontier:call:pkg/service.py:10:8`
+    identity, and `frontier:attribute:pkg/service.py:10:8:10:24` identity in
+    `223` tokens with no warnings
+- findings:
+  - none
+- release state:
+  - accepted in workspace: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- release-unit files for the next audit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- next route:
+  - superseded by release-unit audit clearance
+
+Task 3 focused semantic packing correction release-unit audit is cleared:
+
+- dedicated read-only release-unit audit returned DONE with verdict PASS and
+  no findings
+- audited release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- audit confirmed:
+  - branch `main`
+  - `HEAD=b06324c`
+  - `origin/main=b06324c`
+  - dirty set exactly matched the five-file release unit
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - no changes to public/demo claims, portfolio artifacts, Task 4,
+    API/MCP/schema/package exports, eval metrics, resolver, dependency
+    frontier, compiler, scorer, `README.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, or `ARCHITECTURE.md`
+- audit validation review:
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed, `39 source files`
+  - focused pytest: passed, `28 passed`
+  - direct fixture-root Task 3 check: `223` tokens, required units selected,
+    no warnings
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes, first-pass after workspace acceptance
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - superseded by full regression clearance
+
+Task 3 focused semantic packing correction full regression is cleared:
+
+- full regression passed after release-unit audit clearance
+- commands:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: passed,
+    `1733 passed in 278.71s`
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes, first-pass after audit
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - superseded by commit-gating clearance
+
+Task 3 focused semantic packing correction commit-gating is cleared:
+
+- commit-gating passed after audit and full regression clearance
+- verified:
+  - branch `main`
+  - `HEAD=b06324c`
+  - `origin/main=b06324c`
+  - dirty set exactly matched the five-file release unit
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - no diffs in `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`,
+    `ARCHITECTURE.md`, portfolio artifacts, eval fixtures/tasks/run specs,
+    resolver, dependency frontier, scorer, compiler, MCP/API/schema/config,
+    package exports, or `pyproject.toml`
+  - release-unit source/test diff remains scoped to
+    `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - continuity diff records Task 3 diagnosis, correction authorization,
+    workspace acceptance, release-unit audit clearance, full regression
+    clearance, and commit-gating clearance
+  - full regression already passed:
+    `ruff check`, `ruff format --check`, `mypy --strict`, and
+    `pytest tests/ -v`
+- release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes, first-pass after full regression
+  - local commit not created
+  - pushed: no
+- next route:
+  - stage and commit exactly the five-file release unit
+  - do not push until Ryan explicitly authorizes push after local commit
 
 Task 2 product-differentiation checkpoint returned STRONG after the pushed
 runtime-surface correction:

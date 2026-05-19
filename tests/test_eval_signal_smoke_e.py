@@ -26,6 +26,11 @@ FIXTURE_ROOT = REPO_ROOT / "evals" / "fixtures" / "oracle_signal_smoke_e"
 TASK_PATH = REPO_ROOT / "evals" / "tasks" / "oracle_signal_smoke_e.json"
 RUN_SPEC_PATH = REPO_ROOT / "evals" / "run_specs" / "oracle_signal_smoke_e_matrix.json"
 QUERY = "Fix missing member note while keeping owner label and report aligned"
+TASK3_QUERY = (
+    "Fix transitive sole-provider self-call resolution for "
+    "MemberSignalCompiler.compile_member_digest while preserving alias_chain "
+    "frontier on pkg_alias.labels.build_member_label"
+)
 TIGHT_BUDGET = 200
 RELEVANT_SYMBOL_FILES = (
     "pkg/service.py",
@@ -180,6 +185,40 @@ def test_tight_budget_breaks_trivial_whole_file_saturation_for_signal_smoke_e() 
         assert metrics.selected_matched_selector_ids == (
             "def:pkg/labels.py:pkg.labels.build_member_label",
         )
+
+
+def test_signal_smoke_e_task3_query_keeps_child_method_support_pack() -> None:
+    """The fixture-root Task 3 query keeps method support and frontier at 280."""
+    result = eval_providers.build_context_ir_provider_pack(
+        EvalProviderRequest(
+            repo_root=FIXTURE_ROOT,
+            task_id="oracle_signal_smoke_e_task3_regression",
+            query=TASK3_QUERY,
+            budget=280,
+        )
+    )
+    selected_units = {unit.unit_id: unit for unit in result.metadata.selected_units}
+
+    assert result.total_tokens <= 280
+    assert (
+        selected_units[
+            "def:pkg/service.py:pkg.service.MemberSignalCompiler.compile_member_digest"
+        ].detail
+        == "source"
+    )
+    assert (
+        selected_units["def:pkg/labels.py:pkg.labels.build_member_label"].detail
+        == "source"
+    )
+    assert selected_units[
+        "def:pkg/service.py:pkg.service.MemberSignalCompiler.resolve_owner_alias"
+    ].detail in {"summary", "source"}
+    assert selected_units["frontier:call:pkg/service.py:10:8"].detail == "identity"
+    parent_class = selected_units.get(
+        "def:pkg/service.py:pkg.service.MemberSignalCompiler"
+    )
+    assert parent_class is None or parent_class.detail != "source"
+    assert result.warnings == ()
 
 
 def test_signal_smoke_e_assets_stay_internal_and_leave_package_root_unchanged() -> None:
