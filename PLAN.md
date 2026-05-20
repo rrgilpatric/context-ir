@@ -40,13 +40,25 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the Task 3 full-repo exact-unit
-correction state. The latest pushed source/contract authority is
+Current pushed release authority is the Task 3 STRONG portfolio artifact
+release. The latest pushed source/contract authority is
 `d53ec33 Tune semantic selection for named method anchors`; the latest pushed
-internal product-differentiation artifact authority remains
-`63aabca Record task 2 differentiation evidence`. Live git refs and worktree
+internal product-differentiation artifact authority is
+`b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed Task 3 STRONG portfolio artifact release:
+`b34fb0e Record task 3 differentiation evidence`. This commit contains the
+accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed internal-only portfolio artifact update that
+records Task 3 as STRONG while preserving Task 0, Task 1, and Task 2 STRONG
+evidence, keeping public claims held, and keeping Task 4 not run. Ryan
+explicitly authorized the push, and `git push origin main` advanced remote
+`main` from `a201568` through `2dab31d Sync task 3 evidence local routing`;
+this continuity entry records the post-push state. Do not route `b34fb0e` or
+`2dab31d` back to release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push absent new findings.
 
 Pushed Task 3 full-repo exact-unit correction release:
 `d53ec33 Tune semantic selection for named method anchors`. This commit
@@ -359,8 +371,12 @@ Active next route:
 - commit-gating is cleared over the exact six-file release unit
 - local release commit is created:
   `b34fb0e Record task 3 differentiation evidence`
-- next route is requesting Ryan authorization before pushing local `main` to
-  `origin/main`
+- Ryan authorized push, and the release was pushed to `origin/main`
+- public/demo claims remain held
+- Task 4 remains not run
+- next route is a control decision on whether to run the optional Task 4
+  product-differentiation checkpoint or move to public-claim/readiness
+  planning; neither is authorized by this push
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -624,6 +640,43 @@ Task 3 STRONG portfolio artifact update is locally committed:
   - request Ryan authorization before pushing local `main` to `origin/main`
   - do not run Task 4 or update public/demo claims before the local release
     state is pushed or explicitly held
+
+Task 3 STRONG portfolio artifact release is pushed:
+
+- Ryan explicitly authorized pushing the local Task 3 STRONG portfolio artifact
+  release
+- pushed release sequence:
+  - `b34fb0e Record task 3 differentiation evidence`
+  - `2dab31d Sync task 3 evidence local routing`
+- push result:
+  - `git push origin main` advanced remote `main` from `a201568` to
+    `2dab31d`
+- repo-backed release behavior:
+  - internal portfolio artifact records Task 3 as STRONG evidence for the exact
+    query and primary budget `280`
+  - Task 0, Task 1, and Task 2 STRONG evidence is preserved
+  - public/demo claims remain held
+  - Task 4 remains not run
+- release evidence already cleared before push:
+  - release-unit audit: PASS with no findings
+  - full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v` passed
+  - commit-gating cleared over the exact six-file release unit
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `b34fb0e`
+  - pushed: yes, through `2dab31d`
+- next route:
+  - decide whether to run optional Task 4 product-differentiation evidence or
+    move to public-claim/readiness planning
+  - public/demo claims still require explicit Ryan authorization
+  - do not run Task 4 or update public/demo claims from this push-routing sync
 
 Task 3 product-differentiation rerun after focused packing returned PARTIAL:
 

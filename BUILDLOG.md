@@ -2,6 +2,44 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Release Pushed
+
+- Ryan explicitly authorized pushing the local Task 3 STRONG portfolio artifact
+  release.
+- Pushed release sequence:
+  - `b34fb0e Record task 3 differentiation evidence`
+  - `2dab31d Sync task 3 evidence local routing`
+- Push result:
+  - `git push origin main` advanced remote `main` from `a201568` to
+    `2dab31d`
+- Repo-backed release behavior:
+  - internal portfolio artifact records Task 3 as STRONG evidence for the exact
+    query and primary budget `280`
+  - Task 0, Task 1, and Task 2 STRONG evidence is preserved
+  - public/demo claims remain held
+  - Task 4 remains not run
+- Release evidence already cleared before push:
+  - release-unit audit: PASS with no findings
+  - full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v` passed
+  - commit-gating cleared over the exact six-file release unit
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `b34fb0e`
+  - pushed: yes, through `2dab31d`
+- Next route:
+  - decide whether to run optional Task 4 product-differentiation evidence or
+    move to public-claim/readiness planning
+  - public/demo claims still require explicit Ryan authorization
+  - do not run Task 4 or update public/demo claims from this push-routing sync
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Local Release Commit Created
 
 - Created local release commit after release-unit audit, full regression, and
