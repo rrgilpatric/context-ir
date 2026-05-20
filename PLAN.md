@@ -462,6 +462,17 @@ Active next route:
   - `git diff --check`: clean
 - next route is local commit creation for the three-file release unit; push
   remains Ryan-gated
+- local release commit is created:
+  `1df6f41 Add portfolio reviewer readiness memo`
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- next route is Ryan push authorization for the local reviewer readiness memo
+  release; do not run Task 4 or update public/demo claims from this release
 
 Task 3 product-differentiation checkpoint is authorized:
 
