@@ -357,8 +357,10 @@ Active next route:
   - `.venv/bin/python -m mypy --strict src/`: passed
   - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 542.33s`
 - commit-gating is cleared over the exact six-file release unit
-- next route is local commit creation for the Task 3 STRONG portfolio artifact
-  release unit; push remains Ryan-gated
+- local release commit is created:
+  `b34fb0e Record task 3 differentiation evidence`
+- next route is requesting Ryan authorization before pushing local `main` to
+  `origin/main`
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -584,6 +586,44 @@ Task 3 STRONG portfolio artifact update commit-gating is cleared:
   - push remains Ryan-gated
   - do not run Task 4 or update public/demo claims before the local release
     state is either pushed or explicitly held
+
+Task 3 STRONG portfolio artifact update is locally committed:
+
+- created local release commit after release-unit audit, full regression, and
+  commit-gating cleared:
+  - `b34fb0e Record task 3 differentiation evidence`
+- committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- release behavior:
+  - internal portfolio artifact records Task 3 as STRONG evidence for the exact
+    query and primary budget `280`
+  - Task 0, Task 1, and Task 2 STRONG evidence is preserved
+  - public/demo claims remain held
+  - Task 4 remains not run
+- validation basis:
+  - release-unit audit: PASS with no findings
+  - full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v` passed
+  - commit-gating cleared over the exact six-file release unit
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `b34fb0e`
+  - pushed: no
+- next route:
+  - request Ryan authorization before pushing local `main` to `origin/main`
+  - do not run Task 4 or update public/demo claims before the local release
+    state is pushed or explicitly held
 
 Task 3 product-differentiation rerun after focused packing returned PARTIAL:
 

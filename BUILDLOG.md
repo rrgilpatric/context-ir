@@ -2,6 +2,45 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Local Release Commit Created
+
+- Created local release commit after release-unit audit, full regression, and
+  commit-gating cleared:
+  - `b34fb0e Record task 3 differentiation evidence`
+- Committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Release behavior:
+  - internal portfolio artifact records Task 3 as STRONG evidence for the exact
+    query and primary budget `280`
+  - Task 0, Task 1, and Task 2 STRONG evidence is preserved
+  - public/demo claims remain held
+  - Task 4 remains not run
+- Validation basis:
+  - release-unit audit: PASS with no findings
+  - full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v` passed
+  - commit-gating cleared over the exact six-file release unit
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `b34fb0e`
+  - pushed: no
+- Next route:
+  - request Ryan authorization before pushing local `main` to `origin/main`
+  - do not run Task 4 or update public/demo claims before the local release
+    state is pushed or explicitly held
+- Acceptance status: local release commit created
+
 ## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Commit-Gating Cleared
 
 - Performed commit-gating review after release-unit audit and full regression
