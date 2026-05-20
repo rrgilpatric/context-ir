@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-20 -- Task 3 Full-Repo Exact-Unit Correction Local Release Commit Created
+
+- Created local release commit after corrected audit, full regression, and
+  commit-gating cleared:
+  - `d53ec33 Tune semantic selection for named method anchors`
+- Committed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release behavior:
+  - full-repo Task 3 budget `280` selects exact `compile_member_digest`,
+    `build_member_label`, `resolve_owner_alias`, and honest alias-chain
+    unsupported uncertainty while excluding unrelated resolver noise
+  - full-repo Task 3 budget `400` remains clean
+  - fixture-root Task 3 budget `280` remains strong
+  - dynamic-import tight-budget behavior is restored and higher-budget
+    runtime-provenance behavior is preserved
+  - explicitly named `src`/`tests` anchors survive after non-`src` focus
+- Validation basis:
+  - corrected release-unit audit: PASS with no findings
+  - full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v` passed
+- Release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `d53ec33`
+  - pushed: no
+- Next route:
+  - request Ryan authorization before pushing local `main` to `origin/main`
+  - do not run Task 4, update portfolio artifacts, or update public/demo claims
+    before the local release state is either pushed or explicitly held
+- Acceptance status: local release commit created
+
 ## 2026-05-20 -- Task 3 Full-Repo Exact-Unit Correction Commit-Gating Cleared
 
 - Performed commit-gating review after corrected audit and full regression

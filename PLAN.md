@@ -49,6 +49,15 @@ continuity recorded below. Live git refs and worktree state must still be
 verified from git during control intake; do not infer them from committed
 prose.
 
+Local unpushed Task 3 full-repo exact-unit correction release candidate:
+`d53ec33 Tune semantic selection for named method anchors`. This local commit
+contains the accepted, corrected-audit-cleared, full-regression-cleared, and
+commit-gating-cleared scorer/optimizer/test/continuity release unit that makes
+full-repo Task 3 select the exact method, label support, same-class resolver,
+and honest alias-chain uncertainty under the primary budget while restoring
+dynamic-import tight-budget behavior. It is not pushed. Push remains
+Ryan-gated.
+
 Pushed Task 3 focused semantic packing correction release:
 `cdc1a87 Fix method-focused semantic packing`. This commit contains the
 accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
@@ -286,10 +295,12 @@ Active next route:
   - `src/context_ir/semantic_optimizer.py`
   - `tests/test_semantic_optimizer.py`
   - `tests/test_eval_signal_smoke_e.py`
+- local release commit created:
+  `d53ec33 Tune semantic selection for named method anchors`
 - do not relax the Task 3 rubric, update portfolio artifacts, update
-  public/demo claims, run Task 4, or push while release gates remain unresolved
-- next route is local commit creation for exactly the six-file release unit;
-  push remains Ryan-gated
+  public/demo claims, run Task 4, or push while the local release candidate is
+  unpushed
+- next route is Ryan go/no-go on pushing local `main` to `origin/main`
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -727,13 +738,13 @@ Task 3 full-repo exact-unit correction full regression failed:
   - corrected release-unit audit cleared: yes
   - full regression cleared: yes
   - commit-gating cleared: yes
-  - local commit not created
+  - local commit created: yes, `d53ec33`
   - pushed: no
 - next route:
-  - stage and locally commit exactly the six-file release unit
+  - request Ryan authorization before pushing local `main` to `origin/main`
   - push remains Ryan-gated
   - do not run Task 4, update portfolio artifacts, or update public/demo claims
-    until the local release commit is created and reviewed
+    before the local release state is either pushed or explicitly held
 
 Task 3 product-differentiation checkpoint returned FAIL:
 
