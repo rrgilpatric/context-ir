@@ -377,6 +377,91 @@ Active next route:
 - next route is a control decision on whether to run the optional Task 4
   product-differentiation checkpoint or move to public-claim/readiness
   planning; neither is authorized by this push
+- Ryan authorized proceeding with read-only claim/readiness synthesis before
+  Task 4
+- next route is a read-only claim/readiness synthesis lane; do not update
+  public/demo claims or run Task 4 before that result returns and is reviewed
+- the read-only claim/readiness synthesis returned DONE and is workspace-only
+  accepted first-pass
+- accepted synthesis:
+  - Tasks 0-3 are STRONG internal product-differentiation evidence for four
+    exact, predeclared queries at fixed budgets
+  - Tasks 0-3 do not justify direct public claim updates, external benchmark
+    leadership, production-readiness claims, broad Python dynamic-semantics
+    support, latency advantage, token-savings claims, generalized resolver
+    quality, or public API/MCP expansion
+  - public/demo claims remain held
+  - Task 4 is optional, not necessary before claim/readiness planning, and
+    should be skipped unless readiness planning finds the artifact is still too
+    concentrated around eval/runtime internals or specifically needs
+    eval-bundle/pipeline/report reproducibility evidence
+- next route is a bounded demo/readiness planning lane with claims held; output
+  must be a plan/spec only
+- the read-only demo/readiness planning lane returned DONE and is
+  workspace-only accepted first-pass
+- accepted planning result:
+  - create a small internal-only reviewer readiness memo at
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - audience is a trusted internal reviewer or control lane
+  - purpose is to explain what `portfolio_001` proves, what it does not prove,
+    how to cite the evidence, and what language remains disallowed
+  - every proposed statement must map to repo evidence and be classified as
+    public-safe, internal-only, or disallowed/held
+  - required caveats must preserve unsupported/opaque primary truth, additive
+    runtime provenance only, latency disadvantage, summary-level support under
+    budget pressure, and exact-query internal evidence boundaries
+  - Task 4 is not needed before creating this artifact
+- next route is a bounded implementation slice to create only that new
+  internal memo; keep public/demo claims held and do not update existing
+  tracked files other than the pre-existing dirty control docs
+- the internal memo implementation returned DONE but is held with one finding:
+  the Task 4 readiness statement in the memo maps to `portfolio_001` evidence
+  rather than the control docs that actually authorize skipping Task 4 before
+  this artifact
+- recommendation is a narrow correction before acceptance; wait for Ryan
+  go/no-go before issuing the correction
+- the narrow correction returned DONE and is workspace-only accepted
+  first-pass
+- accepted correction:
+  - the Task 4 statement row now cites `PLAN.md` and `BUILDLOG.md`
+  - reviewer note says this is a current control-routing decision, not
+    portfolio evidence
+  - required memo caveats remain present
+  - public/demo claims remain held
+- accepted release unit is:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+- next route is a read-only release-unit audit over the three-file internal
+  memo release unit
+- read-only release-unit audit returned DONE with verdict PASS and no findings
+- release-unit audit is cleared for the three-file internal memo release unit
+- next route is full regression:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+- full regression is cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 564.03s`
+- next route is commit-gating over the exact three-file internal memo release
+  unit
+- commit-gating is cleared over the exact three-file internal memo release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - branch and refs verified: `main`, `HEAD=origin/main=959c41a`
+  - no staged files before staging
+  - no dirty files outside the release unit
+  - no public claim, source, test, eval logic, API/MCP, schema/config, package
+    export, `README.md`, `EVAL.md`, `ARCHITECTURE.md`, or `portfolio_001`
+    artifact diffs
+  - required memo terms and caveats are present
+  - `git diff --check`: clean
+- next route is local commit creation for the three-file release unit; push
+  remains Ryan-gated
 
 Task 3 product-differentiation checkpoint is authorized:
 

@@ -2,6 +2,249 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-20 -- Reviewer Readiness Memo Commit-Gating Cleared
+
+- Ran commit-gating after audit and full regression clearance for the
+  three-file internal reviewer readiness memo release unit.
+- Commit-gating verified:
+  - branch and refs: `main`, `HEAD=origin/main=959c41a`
+  - dirty tracked files are `PLAN.md` and `BUILDLOG.md`
+  - untracked file is
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - no staged files before staging
+  - no dirty files outside the release unit
+  - no public claim, source, test, eval logic, API/MCP, schema/config, package
+    export, root `README.md`, `EVAL.md`, `ARCHITECTURE.md`, or
+    `portfolio_001` artifact diffs
+  - required memo terms and caveats are present:
+    `internal-only`, `Public claims remain held`, `unsupported/opaque`,
+    additive runtime provenance, latency caveat, `not broad product proof`,
+    `PLAN.md`, and `BUILDLOG.md`
+  - memo has no trailing whitespace and ends with a newline
+  - `git diff --check`: clean
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - create the local release commit for the exact three-file release unit
+  - push remains Ryan-gated
+- Acceptance status: commit-gating cleared first-pass after full regression
+
+## 2026-05-20 -- Reviewer Readiness Memo Full Regression Cleared
+
+- Ran full regression after release-unit audit clearance for the three-file
+  internal reviewer readiness memo release unit.
+- Full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 564.03s`
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run commit-gating over the exact three-file internal memo release unit:
+    `PLAN.md`, `BUILDLOG.md`, and
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    commit-gating clears
+- Acceptance status: full regression cleared first-pass after audit
+
+## 2026-05-20 -- Reviewer Readiness Memo Release-Unit Audit Cleared
+
+- Reviewed the read-only release-unit audit result for the three-file internal
+  reviewer readiness memo release unit.
+- Audit verdict: PASS.
+- Findings: none.
+- Audit confirmed:
+  - release unit stayed within `PLAN.md`, `BUILDLOG.md`, and
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - memo is clearly internal-only and non-public
+  - public claims remain held
+  - required caveats are present: `unsupported/opaque` primary truth, additive
+    runtime provenance, latency disadvantage, summary-level support, and
+    exact-query-only boundary
+  - Task 4 statement is supported by `PLAN.md` and `BUILDLOG.md`, not
+    portfolio evidence
+  - no tracked files outside `PLAN.md` and `BUILDLOG.md` changed
+  - no source, tests, eval logic, API/MCP, schema/config, package exports,
+    public claim files, root `README.md`, `EVAL.md`, or `portfolio_001`
+    artifacts changed
+  - `git diff --check`: clean
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v`
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    full regression and commit-gating clear
+- Acceptance status: release-unit audit cleared first-pass
+
+## 2026-05-20 -- Reviewer Readiness Memo Accepted After Citation Correction
+
+- Reviewed the narrow correction to the internal reviewer readiness memo.
+- Findings: none after correction.
+- Correction accepted:
+  - the Task 4 statement row now cites `PLAN.md` and `BUILDLOG.md`
+  - reviewer note says this is a current control-routing decision, not
+    portfolio evidence
+  - required memo terms and caveats remain present:
+    `internal-only`, `Public claims remain held`, `unsupported/opaque`,
+    additive runtime provenance, latency caveat, and not broad product proof
+- Control verification:
+  - repo-backed truth remains `main`, `HEAD=origin/main=959c41a`
+  - dirty tracked files are `PLAN.md` and `BUILDLOG.md`
+  - untracked memo is
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - no staged files
+  - `git diff --check`: clean
+- Accepted release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+- Next route:
+  - run a read-only release-unit audit over the three-file internal memo release
+    unit
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    that audit returns and is reviewed
+- Acceptance status: accepted after one correction
+
+## 2026-05-20 -- Reviewer Readiness Memo Held For Citation Correction
+
+- Reviewed the returned internal reviewer readiness memo implementation.
+- Finding:
+  - `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+    states that Task 4 is not needed before this artifact, but the statement
+    classification row maps that control-routing conclusion to `portfolio_001`
+    evidence instead of the control docs that actually authorize skipping Task
+    4 before this artifact.
+- Affected memo lines:
+  - statement: line 36
+  - evidence mapping row: line 105
+- Scope review:
+  - new memo path is correct
+  - public/demo claims remain held
+  - no existing tracked files were changed by the implementation lane
+  - current dirty set is `PLAN.md`, `BUILDLOG.md`, and the untracked memo
+  - no staged files
+  - `git diff --check`: clean
+- Recommendation:
+  - run a narrow correction that updates only the memo's Task 4 evidence mapping
+    to cite `PLAN.md` and `BUILDLOG.md`, or removes the row if the worker cannot
+    cite control docs cleanly
+  - do not accept, audit, stage, commit, push, run Task 4, or update public/demo
+    claims until the correction returns and is reviewed
+- Acceptance status: held with one citation finding, pending Ryan go/no-go
+
+## 2026-05-20 -- Demo/Readiness Planning Accepted
+
+- Reviewed the read-only demo/readiness planning result.
+- Findings: none.
+- Control verification:
+  - repo-backed truth remains `main`, `HEAD=origin/main=959c41a`
+  - dirty files are only `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+  - proposed memo path does not already exist:
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - cited public-safe and internal-only boundaries are supported by
+    `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`, and the
+    `portfolio_001` artifact
+- Accepted plan:
+  - create a small internal-only reviewer readiness memo at
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - audience is a trusted internal reviewer or control lane
+  - purpose is to explain what `portfolio_001` proves, what it does not prove,
+    how to cite the evidence, and what language remains disallowed
+  - every proposed statement must map to repo evidence and be classified as
+    public-safe, internal-only, or disallowed/held
+  - required caveats must preserve unsupported/opaque primary truth, additive
+    runtime provenance only, latency disadvantage, summary-level support under
+    budget pressure, and exact-query internal evidence boundaries
+  - Task 4 is not needed before creating this artifact
+- Control decision:
+  - route to a bounded implementation slice that creates only the new internal
+    memo
+  - keep public/demo claims held
+  - do not update existing tracked files in the implementation slice other than
+    the pre-existing dirty control docs being left untouched
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-20 -- Claim/Readiness Synthesis Accepted
+
+- Reviewed the read-only claim/readiness synthesis result.
+- Findings: none.
+- Control verification:
+  - repo-backed truth remains `main`, `HEAD=origin/main=959c41a`
+  - dirty files are only `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+  - portfolio artifact records Tasks 0-3 as STRONG internal-only evidence
+  - portfolio claim boundary keeps public claims held and rejects broad
+    product-level, production-readiness, and public-demo proof
+  - `PUBLIC_CLAIMS.md`, root `README.md`, and `EVAL.md` still bind public
+    comparative wording to the existing quad matrix rather than
+    `portfolio_001`
+- Accepted synthesis:
+  - Tasks 0-3 prove strong internal differentiation for four exact,
+    predeclared queries at fixed budgets
+  - they do not prove external benchmark leadership, production readiness,
+    broad Python dynamic-semantics support, performance or latency advantage,
+    token-savings claims, generalized resolver quality, or public API/MCP
+    expansion
+  - Task 4 is optional, not necessary before claim/readiness planning, and
+    should be skipped unless readiness planning finds the artifact is still too
+    concentrated around eval/runtime internals or specifically needs
+    eval-bundle/pipeline/report reproducibility evidence
+- Control decision:
+  - keep public/demo claims held
+  - do not run Task 4 now
+  - route to a bounded demo/readiness planning lane that outputs a plan/spec
+    only
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-20 -- Claim/Readiness Synthesis Authorized
+
+- After the pushed Task 3 STRONG portfolio artifact release, Ryan agreed to
+  proceed with a read-only claim/readiness synthesis before Task 4.
+- Repo-backed truth verified by control before routing:
+  - branch `main`
+  - `HEAD=959c41a`
+  - `origin/main=959c41a`
+  - clean worktree
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+- Route:
+  - read-only synthesis of what Tasks 0-3 STRONG internal evidence authorizes,
+    what remains held, and whether Task 4 is necessary before any public/demo
+    move
+- Non-goals:
+  - do not edit files
+  - do not update `PUBLIC_CLAIMS.md`, `README.md`, portfolio artifacts, or
+    public/demo content
+  - do not run Task 4
+  - do not stage, commit, or push
+- Acceptance status: authorized route, pending external read-only result
+
 ## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Release Pushed
 
 - Ryan explicitly authorized pushing the local Task 3 STRONG portfolio artifact
