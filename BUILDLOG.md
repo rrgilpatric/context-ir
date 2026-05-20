@@ -2,6 +2,26 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-20 -- Reviewer Readiness Memo Pushed
+
+- Ryan authorized push for the reviewer readiness memo release.
+- Pushed `main` to `origin/main`:
+  - `1df6f41 Add portfolio reviewer readiness memo`
+  - `7a1c757 Sync reviewer readiness local routing`
+- Public/demo claims remain held.
+- Task 4 remains not run.
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- Next route:
+  - make a control decision on the next reviewer-readiness move
+  - do not run Task 4 or update public/demo claims from this release
+- Acceptance status: pushed after Ryan authorization
+
 ## 2026-05-20 -- Reviewer Readiness Memo Local Release Commit Created
 
 - Created the local release commit after workspace acceptance, release-unit
