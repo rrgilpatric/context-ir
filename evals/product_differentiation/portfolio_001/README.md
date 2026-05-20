@@ -2,11 +2,12 @@
 
 ## Scope
 
-This bundle is internal-only evidence for three accepted checkpoints:
+This bundle is internal-only evidence for four accepted checkpoints:
 
 - Task 0: `Fix _selected_unit_metadata and eval report accounting so unsupported hasattr runtime provenance remains visible in selected unit metadata`
 - Task 1: `Fix discover_semantic_eval_runtime_evidence so compact oracle_signal_hasattr_probe evidence renders additive runtime=additive attribute_present=true without becoming public API`
 - Task 2: `Fix default local Python subprocess recompile so exec(source) runtime probe results attach additive provenance to unsupported EXEC_OR_EVAL units without promoting primary truth`
+- Task 3: `Fix transitive sole-provider self-call resolution for MemberSignalCompiler.compile_member_digest while preserving alias_chain frontier on pkg_alias.labels.build_member_label`
 
 It preserves reproduced provider comparisons for:
 
@@ -14,11 +15,11 @@ It preserves reproduced provider comparisons for:
 - `lexical_top_k_files`
 - `import_neighborhood_files`
 
-Task 3 was not run or recorded in this bundle. Task 1's ceiling budget `360` and Task 2's ceiling budget were not run because their primary budgets reached `STRONG`.
+Task 1's ceiling budget `360`, Task 2's ceiling budget, and Task 3's ceiling budget were not run because their primary budgets reached `STRONG`.
 
 ## Claim Boundary
 
-This bundle supports only narrow internal claims for the recorded Task 0, Task 1, and Task 2 queries at their recorded budgets. It is internal portfolio evidence, not broad product-level proof, not production-readiness evidence, and not a polished public demo.
+This bundle supports only narrow internal claims for the recorded Task 0, Task 1, Task 2, and Task 3 queries at their recorded budgets. It is internal portfolio evidence, not broad product-level proof, not production-readiness evidence, and not a polished public demo.
 
 Public claims remain held pending separate approval and broader evidence.
 
@@ -32,11 +33,12 @@ Public claims remain held pending separate approval and broader evidence.
 
 ## Caveats
 
-- `context_ir` remains materially slower than the baselines: Task 0 took `108.846s` versus about `0.25s`, Task 1 took `118.783s` versus about `0.27s`, and Task 2 took about `129.702s` versus about `0.27s`.
+- `context_ir` remains materially slower than the baselines on full-repo runs: Task 0 took `108.846s` versus about `0.25s`, Task 1 took `118.783s` versus about `0.27s`, Task 2 took about `129.702s` versus about `0.27s`, and Task 3 full-repo took `122.718s` versus about `0.27s`.
 - Selected support units include summaries under budget pressure, not always full source.
 - The compact `oracle_signal_hasattr_probe` evidence is an internal eval evidence surface. It is not a selected unsupported runtime-attached source unit.
 - The evidence keeps `unsupported/opaque` as primary truth and treats `attribute_present=true` as additive runtime evidence.
 - The compact `oracle_signal_exec_probe` evidence is internal-only evidence that keeps `unsupported/opaque` as primary truth and treats `execution_outcome=completed` and `statement_kind=pass` as additive runtime evidence.
+- Task 3 verifies the exact alias-chain uncertainty waypoint as internal evidence; it does not authorize broader resolver, dependency-frontier, public API, or public demo claims.
 - Task 1 verifies that package-root `context_ir` does not export `discover_semantic_eval_runtime_evidence`; this is not a public API claim.
 - Public claims remain held.
 
@@ -44,4 +46,4 @@ Public claims remain held pending separate approval and broader evidence.
 
 - `manifest.json`: run metadata, repo state, commands, artifact inventory, and classification.
 - `runs.jsonl`: one reproduced provider result record per task, provider, and budget run.
-- `evidence.md`: human-readable Task 0, Task 1, and Task 2 comparisons and classifications.
+- `evidence.md`: human-readable Task 0, Task 1, Task 2, and Task 3 comparisons and classifications.

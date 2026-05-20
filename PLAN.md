@@ -56,10 +56,11 @@ full-repo Task 3 select the exact method, label support, same-class resolver,
 and honest alias-chain uncertainty under the primary budget while restoring
 dynamic-import tight-budget behavior. Ryan explicitly authorized the push, and
 `git push origin main` advanced remote `main` from `f82a3a7` through
-`87cb8a5 Sync task 3 exact-unit local routing`. This continuity entry records
-the post-push state. Do not route `d53ec33` or `87cb8a5` back to release-unit
-audit, full regression, commit-gating, staging, local commit creation, or push
-absent new findings.
+`a201568 Sync task 3 exact-unit push routing`. `87cb8a5 Sync task 3 exact-unit
+local routing` records the local release route before push. This continuity
+entry records the post-push state. Do not route `d53ec33`, `87cb8a5`, or
+`a201568` back to release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push absent new findings.
 
 Pushed Task 3 focused semantic packing correction release:
 `cdc1a87 Fix method-focused semantic packing`. This commit contains the
@@ -304,8 +305,60 @@ Active next route:
   public/demo claims, or run Task 4 before the pushed release is verified by a
   Task 3 product-differentiation rerun
 - Ryan authorized push, and the release was pushed to `origin/main`
-- next route is a read-only Task 3 product-differentiation checkpoint rerun
-  against the pushed full-repo exact-unit correction
+- the read-only Task 3 product-differentiation checkpoint rerun against the
+  pushed full-repo exact-unit correction returned DONE with verdict STRONG
+- control review accepted the rerun as workspace-only routing evidence:
+  - live repo verification matched the result: branch `main`,
+    `HEAD=origin/main=a201568`, clean worktree, no staged or untracked files,
+    and `git diff --check` clean
+  - artifacts are under
+    `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/`
+  - full-repo primary budget `280`: `context_ir` used `274` tokens and
+    selected exact `compile_member_digest` source,
+    `pkg.labels.build_member_label` source, `resolve_owner_alias` source, and
+    honest unsupported/opaque alias-chain uncertainty for
+    `pkg_alias.labels.build_member_label`
+  - full-repo primary warnings were `omitted_uncertainty x3`; these are
+    accepted as non-blocking surplus uncertainty omissions because the required
+    alias-chain uncertainty waypoint is selected honestly
+  - fixture-root primary budget `280`: `context_ir` used `223` tokens with
+    edit/support/uncertainty all `1.0`
+  - full-repo baselines selected no files; fixture-root baselines selected
+    `pkg/service.py` and `pkg/__init__.py` but missed `pkg/labels.py` and
+    had uncertainty honesty `0.0`
+- Task 3 is accepted as STRONG internal product-differentiation evidence for
+  this exact query
+- portfolio artifacts have not yet been updated for Task 3
+- public/demo claim advancement remains held
+- Task 4 remains held until the Task 3 portfolio artifact update is reviewed
+  and routed
+- the bounded internal-only portfolio artifact update for Task 3 STRONG
+  evidence returned DONE and is workspace-only accepted first-pass
+- accepted artifact update:
+  - records Task 3 as STRONG internal evidence while preserving Task 0, Task 1,
+    and Task 2 STRONG evidence
+  - updates only the scoped portfolio artifact files:
+    `evals/product_differentiation/portfolio_001/README.md`,
+    `evals/product_differentiation/portfolio_001/manifest.json`,
+    `evals/product_differentiation/portfolio_001/runs.jsonl`, and
+    `evals/product_differentiation/portfolio_001/evidence.md`
+  - keeps public/demo claims held
+  - keeps Task 4 not run
+  - records the Task 3 ceiling budget as not run because primary-budget
+    evidence reached STRONG
+- next route is a read-only release-unit audit over the six-file workspace
+  unit: `PLAN.md`, `BUILDLOG.md`, and the four scoped portfolio artifact files
+- the read-only release-unit audit returned DONE with verdict PASS and no
+  findings
+- release-unit audit is cleared for the exact six-file workspace unit
+- full regression is cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 542.33s`
+- commit-gating is cleared over the exact six-file release unit
+- next route is local commit creation for the Task 3 STRONG portfolio artifact
+  release unit; push remains Ryan-gated
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -348,6 +401,189 @@ Task 3 product-differentiation checkpoint is authorized:
   - if STRONG, review before authorizing any artifact update
   - if PARTIAL or FAIL, diagnose before any Task 4, artifact update, or public
     claim work
+
+Task 3 product-differentiation rerun after exact-unit correction is
+workspace-only accepted:
+
+- read-only checkpoint lane returned DONE with verdict STRONG
+- repo truth verified by the lane and control review:
+  - branch `main`
+  - `HEAD=a201568`
+  - `origin/main=a201568`
+  - worktree clean before this workspace-only continuity update
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+- artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/checkpoint_report.md`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/checkpoint_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/primary_280_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/fixture_primary_280_runs.jsonl`
+- accepted evidence:
+  - full-repo primary `280`: `context_ir` selected exact
+    `compile_member_digest` source, `pkg.labels.build_member_label` source,
+    `resolve_owner_alias` source, and honest unsupported/opaque alias-chain
+    uncertainty in `274` tokens
+  - full-repo primary warnings were `omitted_uncertainty x3`, accepted as
+    non-blocking surplus uncertainty omissions because the required
+    alias-chain uncertainty waypoint is selected honestly
+  - fixture-root primary `280`: `context_ir` selected the expected method,
+    label, resolver, and frontier/uncertainty waypoints in `223` tokens with
+    edit/support/uncertainty all `1.0`
+  - full-repo baselines selected no comparable files under budget `280`
+  - fixture-root baselines selected `pkg/service.py` and `pkg/__init__.py`,
+    omitted `pkg/labels.py`, and had uncertainty honesty `0.0`
+  - the checkpoint did not run the ceiling budget because primary-budget
+    evidence was STRONG
+- control decision:
+  - accept Task 3 as STRONG internal product-differentiation evidence for this
+    exact query
+  - do not treat the internal portfolio evidence as public/demo claim
+    authorization
+  - do not run Task 4 before Task 3 portfolio artifact state is updated and
+    reviewed
+- next route:
+  - run a bounded internal-only portfolio artifact update for Task 3 STRONG
+    evidence
+  - keep public/demo claims held
+  - do not stage, commit, or push the workspace-only continuity update until a
+    release/continuity unit is declared and gates clear
+
+Task 3 STRONG portfolio artifact update is workspace-only accepted:
+
+- bounded artifact update lane returned DONE
+- control review found no findings
+- live repo/workspace state:
+  - branch `main`
+  - `HEAD=a201568`
+  - `origin/main=a201568`
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+- dirty set:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- accepted behavior:
+  - internal portfolio artifact now records Task 3 as STRONG evidence for the
+    exact query and primary budget `280`
+  - Task 0, Task 1, and Task 2 STRONG evidence is preserved
+  - full-repo and fixture-root Task 3 provider results match the accepted
+    checkpoint artifacts under
+    `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/`
+  - JSON manifest validates
+  - `runs.jsonl` parses as JSONL with `15` records
+  - embedded `runs.jsonl` SHA-256 matches the actual file
+  - public/demo claims remain held
+  - Task 4 remains not run
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: no
+  - full regression cleared for this artifact update: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- next route:
+  - run a read-only release-unit audit over exactly the six dirty files
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    that audit returns and is reviewed
+
+Task 3 STRONG portfolio artifact update release-unit audit is cleared:
+
+- read-only release-unit audit lane returned DONE
+- audit verdict: PASS
+- findings: none
+- control review verified live repo/workspace state still matches the audit:
+  - branch `main`
+  - `HEAD=a201568`
+  - `origin/main=a201568`
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+- audit confirmed:
+  - Task 3 is recorded as STRONG internal-only evidence and matches the
+    checkpoint artifacts under
+    `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/`
+  - Task 0, Task 1, and Task 2 STRONG evidence is preserved
+  - the first nine `runs.jsonl` rows are byte-for-byte preserved from HEAD
+  - dirty files are exactly the six-file release unit:
+    `PLAN.md`, `BUILDLOG.md`,
+    `evals/product_differentiation/portfolio_001/README.md`,
+    `evals/product_differentiation/portfolio_001/manifest.json`,
+    `evals/product_differentiation/portfolio_001/runs.jsonl`, and
+    `evals/product_differentiation/portfolio_001/evidence.md`
+  - no source, tests, eval logic, API, MCP, schema, config, package-export, or
+    `PUBLIC_CLAIMS.md` files changed
+  - public/demo claims remain held
+  - Task 4 remains not run
+  - JSON and JSONL validation passed
+  - embedded `runs.jsonl` SHA-256 matches the actual file
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared for this artifact update: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- next route:
+  - run full regression over the complete suite
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    full regression and commit-gating clear
+
+Task 3 STRONG portfolio artifact update full regression is cleared:
+
+- full regression passed after release-unit audit clearance:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed, `39` source files
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 542.33s`
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- next route:
+  - commit-gating over the exact six-file release unit
+  - do not run Task 4, update public/demo claims, stage, commit, or push until
+    commit-gating clears
+
+Task 3 STRONG portfolio artifact update commit-gating is cleared:
+
+- commit-gating review passed after release-unit audit and full regression
+  clearance
+- verified release boundary:
+  - dirty files exactly match the six-file release unit:
+    `PLAN.md`, `BUILDLOG.md`,
+    `evals/product_differentiation/portfolio_001/README.md`,
+    `evals/product_differentiation/portfolio_001/manifest.json`,
+    `evals/product_differentiation/portfolio_001/runs.jsonl`, and
+    `evals/product_differentiation/portfolio_001/evidence.md`
+  - no staged files before commit preparation
+  - no untracked files
+  - `git diff --check`: clean
+  - JSON manifest validates
+  - `runs.jsonl` parses as JSONL with `15` records
+  - manifest task classifications: `4`
+  - manifest provider results: `15`
+  - embedded `runs.jsonl` SHA-256 matches the actual file
+  - no public/demo claim, source, test, eval logic, API/MCP, schema/config, or
+    package-export changes are in the release unit
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: no
+  - pushed: no
+- next route:
+  - stage and locally commit exactly the six-file release unit
+  - push remains Ryan-gated
+  - do not run Task 4 or update public/demo claims before the local release
+    state is either pushed or explicitly held
 
 Task 3 product-differentiation rerun after focused packing returned PARTIAL:
 

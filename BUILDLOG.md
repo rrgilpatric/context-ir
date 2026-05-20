@@ -2,6 +2,202 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Commit-Gating Cleared
+
+- Performed commit-gating review after release-unit audit and full regression
+  clearance for the six-file Task 3 STRONG portfolio artifact update.
+- Verified release boundary:
+  - dirty files exactly matched the six-file release unit:
+    `PLAN.md`, `BUILDLOG.md`,
+    `evals/product_differentiation/portfolio_001/README.md`,
+    `evals/product_differentiation/portfolio_001/manifest.json`,
+    `evals/product_differentiation/portfolio_001/runs.jsonl`, and
+    `evals/product_differentiation/portfolio_001/evidence.md`
+  - no staged files before commit preparation
+  - no untracked files
+  - `git diff --check`: clean
+  - JSON manifest validates
+  - `runs.jsonl` parses as JSONL with `15` records
+  - manifest task classifications: `4`
+  - manifest provider results: `15`
+  - embedded `runs.jsonl` SHA-256 matches the actual file
+  - no public/demo claim, source, test, eval logic, API/MCP, schema/config, or
+    package-export changes are in the release unit
+- Validation basis:
+  - release-unit audit: PASS with no findings
+  - full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v` passed
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - stage and locally commit exactly the six-file release unit
+  - push remains Ryan-gated
+  - do not run Task 4 or update public/demo claims before the local release
+    state is either pushed or explicitly held
+- Acceptance status: commit-gating-cleared first-pass after full regression
+
+## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Full Regression Cleared
+
+- Ran full regression after release-unit audit clearance for the six-file Task
+  3 STRONG portfolio artifact update.
+- Validation:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed, `39` source files
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 542.33s`
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - commit-gating over the exact six-file release unit
+  - do not run Task 4, update public/demo claims, stage, commit, or push until
+    commit-gating clears
+- Acceptance status: full-regression-cleared first-pass
+
+## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Release-Unit Audit Cleared
+
+- Reviewed the read-only release-unit audit result for the six-file Task 3
+  STRONG portfolio artifact update.
+- Audit verdict: PASS.
+- Findings: none.
+- Live repo/workspace verification matched the audit:
+  - branch `main`
+  - `HEAD=a201568`
+  - `origin/main=a201568`
+  - dirty files exactly match the six-file release unit
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+- Audit confirmed:
+  - Task 3 is recorded as STRONG internal-only evidence
+  - recorded Task 3 facts match the checkpoint artifacts under
+    `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/`
+  - Task 0, Task 1, and Task 2 STRONG evidence is preserved
+  - the first nine `runs.jsonl` rows are byte-for-byte preserved from HEAD
+  - no source, tests, eval logic, API, MCP, schema, config, package-export, or
+    `PUBLIC_CLAIMS.md` files changed
+  - public/demo claims remain held
+  - Task 4 remains not run
+  - JSON and JSONL validation passed
+  - embedded `runs.jsonl` SHA-256 matches the actual file
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared for this artifact update: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v`
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    full regression and commit-gating clear
+- Acceptance status: release-unit audit cleared first-pass
+
+## 2026-05-20 -- Task 3 STRONG Portfolio Artifact Update Accepted
+
+- Reviewed the bounded internal-only portfolio artifact update for Task 3
+  STRONG evidence.
+- Findings: none.
+- Dirty set matched the expected six-file workspace unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+- Accepted artifact behavior:
+  - records Task 3 as STRONG internal product-differentiation evidence for the
+    exact query and primary budget `280`
+  - preserves Task 0, Task 1, and Task 2 STRONG evidence
+  - records full-repo Task 3 `context_ir` primary-budget result: `274` tokens,
+    exact method source, exact label source, resolver source, and honest
+    unsupported/opaque alias-chain uncertainty
+  - records fixture-root Task 3 `context_ir` primary-budget result: `223`
+    tokens with edit/support/uncertainty all `1.0`
+  - records full-repo baseline failure, fixture-root baseline limitations, and
+    Task 3 ceiling-budget-not-run status
+  - keeps public/demo claims held and keeps Task 4 not run
+- Validation reviewed and rerun by control:
+  - `jq empty evals/product_differentiation/portfolio_001/manifest.json`:
+    passed
+  - `jq -c . evals/product_differentiation/portfolio_001/runs.jsonl`:
+    passed
+  - manifest task classifications: `4`
+  - manifest provider results: `15`
+  - `runs.jsonl` parsed line count: `15`
+  - embedded `runs.jsonl` SHA-256 matches the actual file
+  - referenced Task 3 temporary document artifacts exist
+  - `git diff --check`: clean
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: no
+  - full regression cleared for this artifact update: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run a read-only release-unit audit over exactly the six dirty files
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    that audit returns and is reviewed
+- Acceptance status: first-pass workspace acceptance
+
+## 2026-05-20 -- Task 3 Product-Differentiation Rerun Accepted STRONG
+
+- Reviewed the read-only Task 3 checkpoint rerun after the pushed full-repo
+  exact-unit correction.
+- Repo-backed truth verified by control:
+  - branch `main`
+  - `HEAD=a201568`
+  - `origin/main=a201568`
+  - worktree clean before this workspace-only continuity update
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+- Artifacts reviewed:
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/checkpoint_report.md`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/checkpoint_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/primary_280_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/fixture_primary_280_runs.jsonl`
+- Accepted evidence:
+  - full-repo primary budget `280`: `context_ir` selected exact
+    `compile_member_digest` source, `pkg.labels.build_member_label` source,
+    `resolve_owner_alias` source, and honest unsupported/opaque alias-chain
+    uncertainty in `274` tokens
+  - full-repo primary warnings were `omitted_uncertainty x3`, accepted as
+    non-blocking surplus uncertainty omissions because the required
+    alias-chain uncertainty waypoint is selected honestly
+  - fixture-root primary budget `280`: `context_ir` selected the expected
+    method, label, resolver, and frontier/uncertainty waypoints in `223`
+    tokens with edit/support/uncertainty all `1.0`
+  - full-repo lexical and import baselines selected no files under budget
+    `280`
+  - fixture-root baselines selected `pkg/service.py` and `pkg/__init__.py`,
+    omitted `pkg/labels.py`, and had uncertainty honesty `0.0`
+- Control decision:
+  - accept Task 3 as STRONG internal product-differentiation evidence for this
+    exact query
+  - keep public/demo claims held
+  - keep Task 4 held until the Task 3 portfolio artifact update is reviewed
+    and routed
+  - next route is a bounded internal-only portfolio artifact update for Task 3
+    STRONG evidence
+- Acceptance status: first-pass STRONG checkpoint accepted
+
 ## 2026-05-20 -- Task 3 Full-Repo Exact-Unit Correction Release Pushed
 
 - Ryan explicitly authorized pushing the local Task 3 full-repo exact-unit
@@ -9,9 +205,10 @@ Most recent supersession entries override older architectural decisions when the
 - Pushed release sequence:
   - `d53ec33 Tune semantic selection for named method anchors`
   - `87cb8a5 Sync task 3 exact-unit local routing`
+  - `a201568 Sync task 3 exact-unit push routing`
 - Push result:
   - `git push origin main` advanced remote `main` from `f82a3a7` to
-    `87cb8a5`
+    `a201568`
 - Repo-backed release behavior:
   - full-repo Task 3 budget `280` selects exact `compile_member_digest`,
     `build_member_label`, `resolve_owner_alias`, and honest alias-chain
@@ -34,7 +231,7 @@ Most recent supersession entries override older architectural decisions when the
   - full regression cleared: yes
   - commit-gating cleared: yes
   - local commit created: yes, `d53ec33`
-  - pushed: yes, through `87cb8a5`
+  - pushed: yes, through `a201568`
 - Next route:
   - run a read-only Task 3 product-differentiation checkpoint rerun against the
     pushed correction

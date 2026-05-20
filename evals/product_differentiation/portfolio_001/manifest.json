@@ -2,7 +2,7 @@
   "schema_version": "portfolio-product-differentiation-manifest.v1",
   "classification": {
     "value": "STRONG",
-    "claim_boundary": "Internal-only evidence for Task 0 under budget 220, Task 1 under primary budget 260, and Task 2 under primary budget 320; public claims remain held.",
+    "claim_boundary": "Internal-only evidence for Task 0 under budget 220, Task 1 under primary budget 260, Task 2 under primary budget 320, and Task 3 under primary budget 280; public claims remain held.",
     "task_classifications": [
       {
         "task_id": "portfolio_001_task_0",
@@ -27,16 +27,24 @@
         "budget": 320,
         "ceiling_budget_status": "not_run_primary_reached_strong",
         "rationale": "context_ir selected the required Task 2 evidence path in 317 tokens while both file-level baselines selected zero files under the same budget and would require materially larger whole-file context."
+      },
+      {
+        "task_id": "portfolio_001_task_3",
+        "task_label": "Task 3",
+        "value": "STRONG",
+        "budget": 280,
+        "ceiling_budget": 400,
+        "ceiling_budget_status": "not_run_primary_reached_strong",
+        "completion_state": "DONE",
+        "rationale": "context_ir selected the exact compile_member_digest source, labels build_member_label source, resolve_owner_alias support, and honest alias-chain uncertainty under the primary budget while baselines failed the complete evidence path."
       }
     ],
-    "not_run": [
-      "Task 3"
-    ]
+    "not_run": []
   },
   "repo": {
     "branch": "main",
-    "head": "de9e382b4e8ef75a010d0755bd95ccda26e6a3e6",
-    "origin_main": "de9e382b4e8ef75a010d0755bd95ccda26e6a3e6",
+    "head": "a2015681071ba3961360e6235568c458adcd1fda",
+    "origin_main": "a2015681071ba3961360e6235568c458adcd1fda",
     "status_before_artifact_update": "## main...origin/main; M BUILDLOG.md; M PLAN.md",
     "dirty_state_note": "PLAN.md and BUILDLOG.md were pre-existing dirty control-state files; this slice only edits evals/product_differentiation/portfolio_001 artifact files."
   },
@@ -50,11 +58,10 @@
     "recorded_tasks": [
       "Task 0",
       "Task 1",
-      "Task 2"
-    ],
-    "not_run": [
+      "Task 2",
       "Task 3"
     ],
+    "not_run": [],
     "providers": [
       "context_ir",
       "lexical_top_k_files",
@@ -108,6 +115,26 @@
         "lexical_top_k_files",
         "import_neighborhood_files"
       ]
+    },
+    {
+      "task_id": "portfolio_001_task_3",
+      "task_label": "Task 3",
+      "query": "Fix transitive sole-provider self-call resolution for MemberSignalCompiler.compile_member_digest while preserving alias_chain frontier on pkg_alias.labels.build_member_label",
+      "repo_head": "a201568",
+      "budget": 280,
+      "ceiling_budget": 400,
+      "ceiling_budget_status": "not_run_primary_reached_strong",
+      "completion_state": "DONE",
+      "classification": "STRONG",
+      "scopes": [
+        "full_repo_primary_280",
+        "fixture_root_primary_280"
+      ],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
     }
   ],
   "commands_used": [
@@ -132,20 +159,24 @@
       "command": "record control-provided Task 2 checkpoint values for context_ir, lexical_top_k_files, and import_neighborhood_files at budget 320"
     },
     {
+      "purpose": "Task 3 accepted checkpoint artifact update",
+      "command": "record /private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/ primary-budget evidence for full-repo and fixture-root scopes at budget 280"
+    },
+    {
       "purpose": "JSON validation",
-      "command": ".venv/bin/python - <<'PY' ... json.load(open('evals/product_differentiation/portfolio_001/manifest.json')) ... PY"
+      "command": "jq empty evals/product_differentiation/portfolio_001/manifest.json"
     },
     {
       "purpose": "JSONL validation",
-      "command": ".venv/bin/python - <<'PY' ... parse every evals/product_differentiation/portfolio_001/runs.jsonl row as JSON ... PY"
+      "command": "jq -c . evals/product_differentiation/portfolio_001/runs.jsonl"
     },
     {
       "purpose": "Task row validation",
-      "command": ".venv/bin/python - <<'PY' ... verify row counts and Task 2 evidence fields ... PY"
+      "command": "jq '.classification.task_classifications | length' evals/product_differentiation/portfolio_001/manifest.json; jq '.provider_results | length' evals/product_differentiation/portfolio_001/manifest.json; jq -s 'length' evals/product_differentiation/portfolio_001/runs.jsonl"
     },
     {
       "purpose": "required validation",
-      "command": "rg -n \"internal-only|Public claims remain held|public claims remain held|Task 2|Task 3 was not run|STRONG\" evals/product_differentiation/portfolio_001/README.md evals/product_differentiation/portfolio_001/evidence.md"
+      "command": "rg -n \"internal-only|Public claims remain held|public claims remain held|Task 2|Task 3|STRONG\" evals/product_differentiation/portfolio_001/README.md evals/product_differentiation/portfolio_001/evidence.md"
     },
     {
       "purpose": "required validation",
@@ -157,7 +188,8 @@
     "/private/tmp/context_ir_portfolio_001_task0_runs_compact.jsonl",
     "/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_summary.json",
     "/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_runs.jsonl",
-    "/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_documents/"
+    "/private/tmp/context_ir_portfolio_001_task1_postpush_primary260_documents/",
+    "/private/tmp/context_ir_portfolio_001_task3_rerun_after_exact_unit_correction/"
   ],
   "artifacts": [
     {
@@ -170,13 +202,13 @@
     },
     {
       "path": "evals/product_differentiation/portfolio_001/runs.jsonl",
-      "role": "one reproduced raw provider result record per task, provider, and budget",
-      "line_count": 9,
-      "sha256": "d44bf20b81cb6ef1299c881bb23e901d6bbb31fb26dcc7af898f91b6cb760452"
+      "role": "one reproduced provider result record per task, provider, budget, and Task 3 scope",
+      "line_count": 15,
+      "sha256": "d464563534724afcfdfbbbf4e6daccd8d9a32678cd06a8cb7e10e2c551aab0bd"
     },
     {
       "path": "evals/product_differentiation/portfolio_001/evidence.md",
-      "role": "human-readable Task 0, Task 1, and Task 2 summaries and provider comparisons"
+      "role": "human-readable Task 0, Task 1, Task 2, and Task 3 summaries and provider comparisons"
     }
   ],
   "provider_results": [
@@ -386,6 +418,149 @@
         "import_not_resolved"
       ],
       "classification": "STRONG",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_3",
+      "task_label": "Task 3",
+      "scope": "full_repo_primary_280",
+      "provider_name": "context_ir",
+      "budget": 280,
+      "repo_head": "a201568",
+      "total_tokens": 274,
+      "elapsed_seconds": 122.718,
+      "selected_file_count": 0,
+      "selected_unit_count": 4,
+      "selected_unit_ids": [
+        "def:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:evals.fixtures.oracle_signal_smoke_e.pkg.service.MemberSignalCompiler.compile_member_digest",
+        "def:evals/fixtures/oracle_signal_smoke_e/pkg/labels.py:evals.fixtures.oracle_signal_smoke_e.pkg.labels.build_member_label",
+        "def:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:evals.fixtures.oracle_signal_smoke_e.pkg.service.MemberSignalCompiler.resolve_owner_alias",
+        "unsupported:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8"
+      ],
+      "warnings": [
+        "omitted_uncertainty",
+        "omitted_uncertainty",
+        "omitted_uncertainty"
+      ],
+      "warning_assessment": "non-blocking because the required alias-chain uncertainty waypoint was selected honestly",
+      "classification": "STRONG",
+      "completion_state": "DONE",
+      "required_evidence_path": "passed"
+    },
+    {
+      "task_id": "portfolio_001_task_3",
+      "task_label": "Task 3",
+      "scope": "full_repo_primary_280",
+      "provider_name": "lexical_top_k_files",
+      "budget": 280,
+      "repo_head": "a201568",
+      "total_tokens": 82,
+      "elapsed_seconds": 0.274,
+      "selected_file_count": 0,
+      "selected_unit_count": 0,
+      "warnings": [],
+      "classification": "STRONG",
+      "completion_state": "DONE",
+      "baseline_comparability": "not_comparable",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_3",
+      "task_label": "Task 3",
+      "scope": "full_repo_primary_280",
+      "provider_name": "import_neighborhood_files",
+      "budget": 280,
+      "repo_head": "a201568",
+      "total_tokens": 86,
+      "elapsed_seconds": 0.275,
+      "selected_file_count": 0,
+      "selected_unit_count": 0,
+      "warnings": [
+        "import_not_resolved"
+      ],
+      "classification": "STRONG",
+      "completion_state": "DONE",
+      "baseline_comparability": "not_comparable",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_3",
+      "task_label": "Task 3",
+      "scope": "fixture_root_primary_280",
+      "provider_name": "context_ir",
+      "budget": 280,
+      "repo_head": "a201568",
+      "total_tokens": 223,
+      "elapsed_seconds": 0.012,
+      "selected_file_count": 0,
+      "selected_unit_count": 5,
+      "selected_unit_ids": [
+        "def:pkg/service.py:pkg.service.MemberSignalCompiler.compile_member_digest",
+        "def:pkg/labels.py:pkg.labels.build_member_label",
+        "frontier:call:pkg/service.py:10:8",
+        "def:pkg/service.py:pkg.service.MemberSignalCompiler.resolve_owner_alias",
+        "frontier:attribute:pkg/service.py:10:8:10:24"
+      ],
+      "metrics": {
+        "edit_coverage": 1.0,
+        "support_coverage": 1.0,
+        "uncertainty_honesty": 1.0
+      },
+      "warnings": [],
+      "classification": "STRONG",
+      "completion_state": "DONE",
+      "required_evidence_path": "passed"
+    },
+    {
+      "task_id": "portfolio_001_task_3",
+      "task_label": "Task 3",
+      "scope": "fixture_root_primary_280",
+      "provider_name": "lexical_top_k_files",
+      "budget": 280,
+      "repo_head": "a201568",
+      "total_tokens": 241,
+      "elapsed_seconds": 0.0,
+      "selected_file_count": 2,
+      "selected_files": [
+        "pkg/service.py",
+        "pkg/__init__.py"
+      ],
+      "selected_unit_count": 0,
+      "metrics": {
+        "edit_coverage": 1.0,
+        "support_coverage": 0.5,
+        "uncertainty_honesty": 0.0
+      },
+      "warnings": [],
+      "classification": "STRONG",
+      "completion_state": "DONE",
+      "baseline_comparability": "not_comparable",
+      "required_evidence_path": "failed"
+    },
+    {
+      "task_id": "portfolio_001_task_3",
+      "task_label": "Task 3",
+      "scope": "fixture_root_primary_280",
+      "provider_name": "import_neighborhood_files",
+      "budget": 280,
+      "repo_head": "a201568",
+      "total_tokens": 243,
+      "elapsed_seconds": 0.001,
+      "selected_file_count": 2,
+      "selected_files": [
+        "pkg/service.py",
+        "pkg/__init__.py"
+      ],
+      "selected_unit_count": 0,
+      "metrics": {
+        "edit_coverage": 1.0,
+        "support_coverage": 0.5,
+        "uncertainty_honesty": 0.0
+      },
+      "warnings": [],
+      "classification": "STRONG",
+      "completion_state": "DONE",
+      "baseline_comparability": "not_comparable",
       "required_evidence_path": "failed"
     }
   ],
