@@ -40,23 +40,26 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the Task 3 focused semantic packing
+Current pushed release authority is the Task 3 full-repo exact-unit
 correction state. The latest pushed source/contract authority is
-`cdc1a87 Fix method-focused semantic packing`; the latest pushed
-artifact/control authority remains
-`63aabca Record task 2 differentiation evidence`, with Task 3 post-push
-continuity recorded below. Live git refs and worktree state must still be
-verified from git during control intake; do not infer them from committed
-prose.
+`d53ec33 Tune semantic selection for named method anchors`; the latest pushed
+internal product-differentiation artifact authority remains
+`63aabca Record task 2 differentiation evidence`. Live git refs and worktree
+state must still be verified from git during control intake; do not infer them
+from committed prose.
 
-Local unpushed Task 3 full-repo exact-unit correction release candidate:
-`d53ec33 Tune semantic selection for named method anchors`. This local commit
+Pushed Task 3 full-repo exact-unit correction release:
+`d53ec33 Tune semantic selection for named method anchors`. This commit
 contains the accepted, corrected-audit-cleared, full-regression-cleared, and
 commit-gating-cleared scorer/optimizer/test/continuity release unit that makes
 full-repo Task 3 select the exact method, label support, same-class resolver,
 and honest alias-chain uncertainty under the primary budget while restoring
-dynamic-import tight-budget behavior. It is not pushed. Push remains
-Ryan-gated.
+dynamic-import tight-budget behavior. Ryan explicitly authorized the push, and
+`git push origin main` advanced remote `main` from `f82a3a7` through
+`87cb8a5 Sync task 3 exact-unit local routing`. This continuity entry records
+the post-push state. Do not route `d53ec33` or `87cb8a5` back to release-unit
+audit, full regression, commit-gating, staging, local commit creation, or push
+absent new findings.
 
 Pushed Task 3 focused semantic packing correction release:
 `cdc1a87 Fix method-focused semantic packing`. This commit contains the
@@ -298,9 +301,11 @@ Active next route:
 - local release commit created:
   `d53ec33 Tune semantic selection for named method anchors`
 - do not relax the Task 3 rubric, update portfolio artifacts, update
-  public/demo claims, run Task 4, or push while the local release candidate is
-  unpushed
-- next route is Ryan go/no-go on pushing local `main` to `origin/main`
+  public/demo claims, or run Task 4 before the pushed release is verified by a
+  Task 3 product-differentiation rerun
+- Ryan authorized push, and the release was pushed to `origin/main`
+- next route is a read-only Task 3 product-differentiation checkpoint rerun
+  against the pushed full-repo exact-unit correction
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -739,12 +744,12 @@ Task 3 full-repo exact-unit correction full regression failed:
   - full regression cleared: yes
   - commit-gating cleared: yes
   - local commit created: yes, `d53ec33`
-  - pushed: no
+  - pushed: yes, through `87cb8a5`
 - next route:
-  - request Ryan authorization before pushing local `main` to `origin/main`
-  - push remains Ryan-gated
+  - run a read-only Task 3 product-differentiation checkpoint rerun against the
+    pushed correction
   - do not run Task 4, update portfolio artifacts, or update public/demo claims
-    before the local release state is either pushed or explicitly held
+    until the rerun result is reviewed and accepted
 
 Task 3 product-differentiation checkpoint returned FAIL:
 

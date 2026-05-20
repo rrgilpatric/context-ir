@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-20 -- Task 3 Full-Repo Exact-Unit Correction Release Pushed
+
+- Ryan explicitly authorized pushing the local Task 3 full-repo exact-unit
+  correction release.
+- Pushed release sequence:
+  - `d53ec33 Tune semantic selection for named method anchors`
+  - `87cb8a5 Sync task 3 exact-unit local routing`
+- Push result:
+  - `git push origin main` advanced remote `main` from `f82a3a7` to
+    `87cb8a5`
+- Repo-backed release behavior:
+  - full-repo Task 3 budget `280` selects exact `compile_member_digest`,
+    `build_member_label`, `resolve_owner_alias`, and honest alias-chain
+    unsupported uncertainty while excluding unrelated resolver noise
+  - full-repo Task 3 budget `400` remains clean
+  - fixture-root Task 3 budget `280` remains strong
+  - dynamic-import tight-budget behavior is restored and higher-budget
+    runtime-provenance behavior is preserved
+  - explicitly named `src`/`tests` anchors survive after non-`src` focus
+- Release evidence already cleared before push:
+  - corrected release-unit audit: PASS with no findings
+  - full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v` passed
+- Release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: yes, `d53ec33`
+  - pushed: yes, through `87cb8a5`
+- Next route:
+  - run a read-only Task 3 product-differentiation checkpoint rerun against the
+    pushed correction
+  - do not run Task 4, update portfolio artifacts, or update public/demo claims
+    until the rerun result is reviewed and accepted
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-20 -- Task 3 Full-Repo Exact-Unit Correction Local Release Commit Created
 
 - Created local release commit after corrected audit, full regression, and
