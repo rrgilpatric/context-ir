@@ -41,6 +41,8 @@ _DIRECT_SUPPORT_WEIGHT = 0.30
 _SEMANTIC_EDIT_WEIGHT = 0.20
 _SEMANTIC_SUPPORT_WEIGHT = 0.20
 _EXACT_IDENTIFIER_EDIT_FLOOR = 1.0
+_QUALIFIED_IDENTIFIER_SUFFIX_EDIT_FLOOR = 0.34
+_EXACT_UNCERTAINTY_ACCESS_SUPPORT_FLOOR = 1.0
 _MIN_RELEVANCE = 0.05
 _DEPENDENCY_SUPPORT_WEIGHT = 0.50
 _UNCERTAINTY_SCOPE_SUPPORT_WEIGHT = 0.40
@@ -372,6 +374,9 @@ def _direct_scores_for_candidates(
 
     normalized_query = _normalize_text(query)
     query_identifier_mentions = _extract_identifier_mentions(query)
+    query_identifier_suffix_surfaces = _identifier_suffix_surfaces(
+        query_identifier_mentions
+    )
     query_literal_identifier_surfaces = _extract_literal_identifier_surfaces(query)
     query_literal_output_surfaces = _extract_literal_output_surfaces(query)
     prefer_source_edit_anchors = _prefers_source_edit_anchors(
@@ -401,6 +406,10 @@ def _direct_scores_for_candidates(
             _exact_identifier_edit_score(
                 candidate=candidate,
                 query_identifier_mentions=query_identifier_mentions,
+            ),
+            _qualified_identifier_suffix_edit_score(
+                candidate=candidate,
+                query_identifier_suffix_surfaces=query_identifier_suffix_surfaces,
             ),
             _literal_identifier_surface_edit_score(
                 candidate=candidate,
@@ -441,6 +450,13 @@ def _direct_scores_for_candidates(
         p_support = _clamp_probability(
             lexical_score * _DIRECT_SUPPORT_WEIGHT
             + semantic_score * _SEMANTIC_SUPPORT_WEIGHT
+        )
+        p_support = max(
+            p_support,
+            _uncertainty_identifier_support_score(
+                candidate=candidate,
+                query_identifier_mentions=query_identifier_mentions,
+            ),
         )
         if candidate.kind is RenderedUnitKind.EVAL_RUNTIME_EVIDENCE:
             p_support = max(
@@ -857,6 +873,43 @@ def _literal_identifier_surface_edit_score(
     return 0.0
 
 
+def _qualified_identifier_suffix_edit_score(
+    *,
+    candidate: _CandidateProfile,
+    query_identifier_suffix_surfaces: frozenset[str],
+) -> float:
+    """Return a source floor for symbols named by a qualified query suffix."""
+    if candidate.symbol_kind not in _BODY_SIGNAL_KINDS:
+        return 0.0
+    if not query_identifier_suffix_surfaces:
+        return 0.0
+
+    candidate_identifier_surfaces = _identifier_surfaces(candidate.primary_text)
+    if candidate_identifier_surfaces & query_identifier_suffix_surfaces:
+        return _QUALIFIED_IDENTIFIER_SUFFIX_EDIT_FLOOR
+    return 0.0
+
+
+def _uncertainty_identifier_support_score(
+    *,
+    candidate: _CandidateProfile,
+    query_identifier_mentions: frozenset[str],
+) -> float:
+    """Return support when the query names an uncertainty surface exactly."""
+    if candidate.kind not in {
+        RenderedUnitKind.UNRESOLVED_FRONTIER,
+        RenderedUnitKind.UNSUPPORTED_CONSTRUCT,
+    }:
+        return 0.0
+    candidate_identifier_mentions = _extract_identifier_mentions(candidate.primary_text)
+    if (
+        candidate.primary_text in query_identifier_mentions
+        or candidate_identifier_mentions & query_identifier_mentions
+    ):
+        return _EXACT_UNCERTAINTY_ACCESS_SUPPORT_FLOOR
+    return 0.0
+
+
 def _literal_output_surface_edit_score(
     *,
     candidate: _CandidateProfile,
@@ -1092,8 +1145,23 @@ def _identifier_surfaces(text: str) -> frozenset[str]:
     """Return exact matchable surfaces for a symbol name or qualified name."""
     if _IDENTIFIER_SURFACE_RE.fullmatch(text) is None:
         return frozenset()
-    primary_name = text.rsplit(".", maxsplit=1)[-1]
-    return frozenset({text, primary_name})
+    parts = tuple(part for part in text.split(".") if part)
+    if not parts:
+        return frozenset()
+    return frozenset(".".join(parts[index:]) for index in range(len(parts)))
+
+
+def _identifier_suffix_surfaces(identifier_mentions: frozenset[str]) -> frozenset[str]:
+    """Return non-exact suffixes from qualified identifier query mentions."""
+    suffixes: set[str] = set()
+    for mention in identifier_mentions:
+        if _IDENTIFIER_SURFACE_RE.fullmatch(mention) is None:
+            continue
+        parts = tuple(part for part in mention.split(".") if part)
+        if len(parts) < 2:
+            continue
+        suffixes.update(".".join(parts[index:]) for index in range(1, len(parts)))
+    return frozenset(suffixes)
 
 
 def _focus_terms(query_terms: tuple[str, ...]) -> tuple[str, ...]:

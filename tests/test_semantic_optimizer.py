@@ -568,6 +568,99 @@ def test_optimize_semantic_units_keeps_importlib_dynamic_import_primary_unsuppor
     assert trace.has_attached_runtime_provenance is True
 
 
+def test_optimize_semantic_units_omits_exact_dynamic_import_under_tight_budget(
+    tmp_path: Path,
+) -> None:
+    """Tight budgets keep weak direct anchors ahead of exact uncertainty support."""
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
+    (plugins_dir / "__init__.py").write_text("", encoding="utf-8")
+    (plugins_dir / "weather.py").write_text(
+        textwrap.dedent(
+            """
+            def render_card() -> str:
+                return "forecast"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from importlib import import_module
+
+            def load_weather_plugin() -> object:
+                plugin = import_module("plugins.weather")
+                return plugin.render_card()
+
+            def render_probe_digest() -> str:
+                return "probe digest output aligned"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    base_program = _semantic_program(tmp_path)
+    load_id = _definition_id_for(base_program, "main.load_weather_plugin")
+    digest_id = _definition_id_for(base_program, "main.render_probe_digest")
+    frontier_id = next(
+        access.access_id
+        for access in base_program.unresolved_frontier
+        if access.enclosing_scope_id == load_id
+    )
+    construct = next(
+        candidate
+        for candidate in base_program.unsupported_constructs
+        if candidate.construct_text == 'import_module("plugins.weather")'
+    )
+    program = runtime_acquisition.attach_dynamic_import_runtime_provenance(
+        base_program,
+        [_dynamic_import_runtime_observation(construct.site)],
+    )
+    scoring = SemanticScoringResult(
+        query='Fix unsupported dynamic import import_module("plugins.weather") '
+        "while keeping probe digest output aligned",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    0.19
+                    if unit_id == load_id
+                    else 0.18
+                    if unit_id == digest_id
+                    else 0.09
+                    if unit_id == construct.construct_id
+                    else 0.02
+                ),
+                p_support=(
+                    1.0
+                    if unit_id == construct.construct_id
+                    else 0.08
+                    if unit_id == frontier_id
+                    else 0.0
+                ),
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+    budget = (
+        render_semantic_unit(program, load_id, RenderDetail.IDENTITY).token_count
+        + render_semantic_unit(program, digest_id, RenderDetail.IDENTITY).token_count
+        + render_semantic_unit(program, frontier_id, RenderDetail.IDENTITY).token_count
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=budget)
+    selections = _selection_by_unit_id(result)
+
+    assert scoring.scores[construct.construct_id].p_support >= 0.90
+    assert selections[load_id].detail == RenderDetail.IDENTITY.value
+    assert selections[digest_id].detail == RenderDetail.IDENTITY.value
+    assert selections[frontier_id].detail == RenderDetail.IDENTITY.value
+    assert construct.construct_id not in selections
+    assert construct.construct_id in result.omitted_unit_ids
+    assert result.total_tokens <= budget
+
+
 def test_optimize_semantic_units_prefers_eval_evidence_over_frontier_spillover(
     tmp_path: Path,
 ) -> None:
@@ -949,6 +1042,191 @@ def test_optimize_semantic_units_focuses_named_child_method_before_parent_class(
     assert selections[frontier_id].detail == RenderDetail.IDENTITY.value
     assert parent_class_id not in selections
     assert result.warnings == ()
+    assert result.total_tokens <= budget
+
+
+def test_optimize_semantic_units_keeps_full_repo_task3_exact_units(
+    tmp_path: Path,
+) -> None:
+    """Repo-root qualified fixture names still focus the exact child method."""
+    pkg = tmp_path / "evals" / "fixtures" / "oracle_signal_smoke_e" / "pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "labels.py").write_text(
+        textwrap.dedent(
+            """
+            def build_member_label(owner_alias: str) -> str:
+                if owner_alias == "member-review":
+                    return "member owner: member review"
+                return "member owner: digest review"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (pkg / "service.py").write_text(
+        textwrap.dedent(
+            """
+            import pkg
+
+            class MemberSignalCompiler:
+                def compile_member_digest(self, query: str) -> str:
+                    member_note = query or "missing member note"
+                    owner_alias = self.resolve_owner_alias(member_note)
+                    owner_label = pkg.labels.build_member_label(owner_alias)
+                    pkg_alias = pkg
+                    pkg_alias.labels.build_member_label(owner_alias)
+                    return f"{owner_label} | keep member report aligned | {member_note}"
+
+                def resolve_owner_alias(self, query: str) -> str:
+                    if "owner" in query or "member" in query:
+                        return "member-review"
+                    return "digest-review"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    parent_class_id = _definition_id_for(
+        program,
+        ("evals.fixtures.oracle_signal_smoke_e.pkg.service.MemberSignalCompiler"),
+    )
+    method_id = _definition_id_for(
+        program,
+        (
+            "evals.fixtures.oracle_signal_smoke_e.pkg.service."
+            "MemberSignalCompiler.compile_member_digest"
+        ),
+    )
+    label_id = _definition_id_for(
+        program,
+        "evals.fixtures.oracle_signal_smoke_e.pkg.labels.build_member_label",
+    )
+    alias_id = _definition_id_for(
+        program,
+        (
+            "evals.fixtures.oracle_signal_smoke_e.pkg.service."
+            "MemberSignalCompiler.resolve_owner_alias"
+        ),
+    )
+    alias_uncertainty_id = next(
+        construct.construct_id
+        for construct in program.unsupported_constructs
+        if construct.construct_text.startswith("pkg_alias.labels.build_member_label")
+    )
+    scoring = score_semantic_units(
+        program,
+        (
+            "Fix transitive sole-provider self-call resolution for "
+            "MemberSignalCompiler.compile_member_digest while preserving "
+            "alias_chain frontier on pkg_alias.labels.build_member_label"
+        ),
+    )
+    budget = (
+        render_semantic_unit(program, method_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, label_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, alias_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(
+            program,
+            alias_uncertainty_id,
+            RenderDetail.IDENTITY,
+        ).token_count
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=budget)
+    selections = _selection_by_unit_id(result)
+
+    assert scoring.scores[method_id].p_edit >= 0.85
+    assert scoring.scores[label_id].p_edit >= 0.30
+    assert scoring.scores[label_id].p_edit < 0.85
+    assert selections[method_id].detail == RenderDetail.SOURCE.value
+    assert selections[label_id].detail == RenderDetail.SOURCE.value
+    assert selections[alias_id].detail == RenderDetail.SOURCE.value
+    assert selections[alias_uncertainty_id].detail == RenderDetail.IDENTITY.value
+    assert parent_class_id not in selections
+    assert result.total_tokens <= budget
+
+
+@pytest.mark.parametrize(
+    ("target_file", "target_qualified_name", "target_source"),
+    (
+        (
+            "src/context_ir/named_anchor.py",
+            "src.context_ir.named_anchor.keep_named_src_anchor",
+            (
+                "def keep_named_src_anchor() -> str:\n"
+                '    return "src anchor stays available"\n'
+            ),
+        ),
+        (
+            "tests/test_named_anchor.py",
+            "tests.test_named_anchor.test_named_anchor_survives",
+            (
+                "def test_named_anchor_survives() -> None:\n"
+                '    assert "named tests anchor"\n'
+            ),
+        ),
+    ),
+)
+def test_optimize_semantic_units_keeps_named_repo_units_after_external_focus(
+    tmp_path: Path,
+    target_file: str,
+    target_qualified_name: str,
+    target_source: str,
+) -> None:
+    """Explicit repo-root anchors survive after a non-src focus is selected."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "driver.py").write_text(
+        textwrap.dedent(
+            """
+            def build_external_focus() -> str:
+                return "external focus selected first"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    target_path = tmp_path / target_file
+    target_path.parent.mkdir(parents=True)
+    (target_path.parent / "__init__.py").write_text("", encoding="utf-8")
+    target_path.write_text(target_source, encoding="utf-8")
+
+    program = _semantic_program(tmp_path)
+    focus_id = _definition_id_for(program, "pkg.driver.build_external_focus")
+    target_id = _definition_id_for(program, target_qualified_name)
+    scoring = SemanticScoringResult(
+        query=f"Fix pkg.driver.build_external_focus and {target_qualified_name}",
+        scores={
+            unit_id: SemanticUnitScore(
+                unit_id=unit_id,
+                p_edit=(
+                    1.0
+                    if unit_id == focus_id
+                    else 0.34
+                    if unit_id == target_id
+                    else 0.0
+                ),
+                p_support=0.0,
+            )
+            for unit_id in _renderable_unit_ids(program)
+        },
+    )
+    budget = (
+        render_semantic_unit(program, focus_id, RenderDetail.SOURCE).token_count
+        + render_semantic_unit(program, target_id, RenderDetail.SOURCE).token_count
+    )
+
+    result = optimize_semantic_units(program, scoring, budget=budget)
+    selections = _selection_by_unit_id(result)
+
+    assert tuple(selection.unit_id for selection in result.selections[:2]) == (
+        focus_id,
+        target_id,
+    )
+    assert scoring.scores[target_id].p_edit < 0.50
+    assert selections[focus_id].detail == RenderDetail.SOURCE.value
+    assert selections[target_id].detail == RenderDetail.SOURCE.value
     assert result.total_tokens <= budget
 
 

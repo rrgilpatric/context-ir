@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from context_ir.semantic_renderer import (
@@ -54,8 +55,17 @@ _SUPPORT_SUMMARY_THRESHOLD = 0.24
 _SOURCE_PROMOTION_SLACK = 8
 _SUPPORT_DETAIL_PROMOTION_SLACK = 2
 _FOCUS_SOURCE_SUPPORT_THRESHOLD = 0.26
+_EXACT_UNCERTAINTY_PRIORITY_THRESHOLD = 0.90
+_EXTERNAL_FOCUS_NOISE_TOP_LEVELS = frozenset({"src", "tests"})
+_EXTERNAL_FOCUS_STRONG_DIRECT_THRESHOLD = 0.50
 _STRONG_DIRECT_WARNING_THRESHOLD = 0.50
 _UNCERTAINTY_WARNING_THRESHOLD = 0.30
+_IDENTIFIER_MENTION_RE = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*"
+    r"(?![A-Za-z0-9_])"
+)
+_CAMEL_CASE_RE = re.compile(r"[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z]?[a-z]+|[0-9]+")
 
 
 @dataclass(frozen=True)
@@ -74,6 +84,7 @@ class _SemanticCandidate:
     enclosing_scope_id: str | None
     trace_summary: SemanticUnitTraceSummary
     has_direct_child_edit_anchor: bool
+    query_named: bool
 
 
 @dataclass(frozen=True)
@@ -220,6 +231,7 @@ def optimize_semantic_units(
             candidate,
             remaining_budget,
             current_focus_id=current_focus_id,
+            current_focus_file_path=sort_state.current_focus_file_path,
             current_focus_file_scope_id=current_focus_file_scope_id,
             current_focus_inherited_uncertainty_surface=(
                 current_focus_inherited_uncertainty_surface
@@ -391,10 +403,12 @@ def _build_candidates(
         program,
         scoring,
     )
+    query_named_surfaces = _query_named_surfaces(scoring.query)
     render_session = _SemanticRenderSession(program)
     candidates: list[_SemanticCandidate] = []
 
     for unit_id in renderable_unit_ids:
+        symbol = program.resolved_symbols.get(unit_id)
         identity = render_session.render(unit_id, RenderDetail.IDENTITY)
         summary = render_session.render(unit_id, RenderDetail.SUMMARY)
         source = render_session.render(unit_id, RenderDetail.SOURCE)
@@ -423,6 +437,10 @@ def _build_candidates(
                 trace_summary=trace_summaries[(subject_kind, unit_id)],
                 has_direct_child_edit_anchor=(
                     unit_id in direct_child_edit_anchor_container_ids
+                ),
+                query_named=_query_names_symbol(
+                    symbol.qualified_name if symbol is not None else None,
+                    query_named_surfaces,
                 ),
             )
         )
@@ -710,7 +728,7 @@ def _candidate_sort_key(
             candidate.unit_id,
         )
 
-    strongest_relevance = max(candidate.score.p_edit, candidate.score.p_support)
+    strongest_relevance = _initial_relevance_score(candidate)
     proven_priority = 0 if candidate.kind is RenderedUnitKind.PROVEN_SYMBOL else 1
     span = candidate.provenance.span
     return (
@@ -742,6 +760,17 @@ def _initial_direct_anchor_priority(candidate: _SemanticCandidate) -> float:
     return 1.0
 
 
+def _initial_relevance_score(candidate: _SemanticCandidate) -> float:
+    """Return relevance for the initial anchor search before focus is known."""
+    if candidate.kind in {
+        RenderedUnitKind.PROVEN_SYMBOL,
+        RenderedUnitKind.UNRESOLVED_FRONTIER,
+        RenderedUnitKind.EVAL_RUNTIME_EVIDENCE,
+    }:
+        return max(candidate.score.p_edit, candidate.score.p_support)
+    return candidate.score.p_edit
+
+
 def _scope_priority(
     candidate: _SemanticCandidate,
     *,
@@ -766,6 +795,14 @@ def _scope_priority(
         current_focus_file_path=current_focus_file_path,
     ):
         return 2
+    if (
+        current_focus_has_uncertainty_surface
+        and _is_same_top_level_direct_source_candidate(
+            candidate,
+            current_focus_file_path=current_focus_file_path,
+        )
+    ):
+        return 4
     if _is_uncertainty_for_focus(
         candidate,
         focus_unit_id=current_focus_id,
@@ -773,6 +810,11 @@ def _scope_priority(
     ):
         if current_focus_has_uncertainty_surface:
             return 5
+        if (
+            max(candidate.score.p_edit, candidate.score.p_support)
+            >= _EXACT_UNCERTAINTY_PRIORITY_THRESHOLD
+        ):
+            return 2
         return 3
     if _is_support_for_focus(candidate, focus_unit_id=current_focus_id):
         if current_focus_has_uncertainty_surface:
@@ -839,6 +881,64 @@ def _is_same_source_group_direct_candidate(
 def _top_level_path_part(file_path: str) -> str:
     """Return the top-level repository path segment for coarse source grouping."""
     return file_path.split("/", maxsplit=1)[0]
+
+
+def _query_named_surfaces(query: str) -> frozenset[str]:
+    """Return explicit identifier-like symbol mentions from ``query``."""
+    return frozenset(
+        mention.lower()
+        for match in _IDENTIFIER_MENTION_RE.finditer(query)
+        if _is_explicit_identifier_surface(mention := match.group(0))
+    )
+
+
+def _query_names_symbol(
+    qualified_name: str | None,
+    query_named_surfaces: frozenset[str],
+) -> bool:
+    """Return whether ``query`` explicitly names a symbol surface."""
+    if qualified_name is None or not query_named_surfaces:
+        return False
+
+    for surface in _qualified_name_surfaces(qualified_name):
+        if not _is_explicit_identifier_surface(surface):
+            continue
+        if surface.lower() in query_named_surfaces:
+            return True
+    return False
+
+
+def _qualified_name_surfaces(qualified_name: str) -> tuple[str, ...]:
+    """Return exact and suffix surfaces for one qualified symbol name."""
+    parts = tuple(part for part in qualified_name.split(".") if part)
+    return tuple(".".join(parts[index:]) for index in range(len(parts)))
+
+
+def _is_explicit_identifier_surface(surface: str) -> bool:
+    """Return whether ``surface`` is specific enough to count as a query name."""
+    return (
+        "." in surface
+        or "_" in surface
+        or any(character.isdigit() for character in surface)
+        or len(_CAMEL_CASE_RE.findall(surface)) > 1
+    )
+
+
+def _is_same_top_level_direct_source_candidate(
+    candidate: _SemanticCandidate,
+    *,
+    current_focus_file_path: str | None,
+) -> bool:
+    """Return whether a direct source unit shares the active focus top level."""
+    if current_focus_file_path is None:
+        return False
+    if candidate.kind is not RenderedUnitKind.PROVEN_SYMBOL:
+        return False
+    if candidate.score.p_edit < _DIRECT_SOURCE_THRESHOLD:
+        return False
+    return _top_level_path_part(candidate.provenance.file_path) == (
+        _top_level_path_part(current_focus_file_path)
+    )
 
 
 def _support_pack_score(candidate: _SemanticCandidate) -> float:
@@ -984,6 +1084,7 @@ def _choose_detail(
     remaining_budget: int,
     *,
     current_focus_id: str | None = None,
+    current_focus_file_path: str | None = None,
     current_focus_file_scope_id: str | None = None,
     current_focus_inherited_uncertainty_surface: bool = False,
 ) -> RenderDetail | None:
@@ -998,6 +1099,7 @@ def _choose_detail(
     ) or _is_policy_suppressed_standalone_proven_candidate(
         candidate,
         current_focus_id=current_focus_id,
+        current_focus_file_path=current_focus_file_path,
     ):
         return None
 
@@ -1107,6 +1209,7 @@ def _is_policy_suppressed_standalone_proven_candidate(
     candidate: _SemanticCandidate,
     *,
     current_focus_id: str | None,
+    current_focus_file_path: str | None,
 ) -> bool:
     """Return whether a weak non-support symbol is leftover focus-exterior noise."""
     if current_focus_id is None or candidate.kind is not RenderedUnitKind.PROVEN_SYMBOL:
@@ -1120,8 +1223,33 @@ def _is_policy_suppressed_standalone_proven_candidate(
         current_focus_id=current_focus_id,
     ):
         return True
+    if _is_external_focus_noise_candidate(
+        candidate,
+        current_focus_file_path=current_focus_file_path,
+    ):
+        return True
     return max(candidate.score.p_edit, candidate.score.p_support) < (
         _DIRECT_SUMMARY_THRESHOLD
+    )
+
+
+def _is_external_focus_noise_candidate(
+    candidate: _SemanticCandidate,
+    *,
+    current_focus_file_path: str | None,
+) -> bool:
+    """Return whether a standalone source/test unit is outside fixture focus."""
+    if current_focus_file_path is None:
+        return False
+    focus_top_level = _top_level_path_part(current_focus_file_path)
+    if focus_top_level == "src":
+        return False
+    candidate_top_level = _top_level_path_part(candidate.provenance.file_path)
+    if candidate_top_level not in _EXTERNAL_FOCUS_NOISE_TOP_LEVELS:
+        return False
+    return not (
+        candidate.query_named
+        or candidate.score.p_edit >= _EXTERNAL_FOCUS_STRONG_DIRECT_THRESHOLD
     )
 
 
@@ -1497,7 +1625,7 @@ def _build_warnings(
             continue
 
         if candidate.kind is not RenderedUnitKind.PROVEN_SYMBOL and (
-            max(candidate.score.p_edit, candidate.score.p_support)
+            _uncertainty_warning_relevance_score(candidate)
             >= _UNCERTAINTY_WARNING_THRESHOLD
             or candidate.enclosing_scope_id in focus_unit_ids
         ):
@@ -1514,6 +1642,13 @@ def _build_warnings(
             )
 
     return warnings
+
+
+def _uncertainty_warning_relevance_score(candidate: _SemanticCandidate) -> float:
+    """Return direct relevance for warning on omitted uncertainty surfaces."""
+    if candidate.kind is RenderedUnitKind.UNSUPPORTED_CONSTRUCT:
+        return candidate.score.p_edit
+    return max(candidate.score.p_edit, candidate.score.p_support)
 
 
 def _dependency_targets_for(

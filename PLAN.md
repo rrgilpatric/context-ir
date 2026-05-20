@@ -181,11 +181,115 @@ Active next route:
 - local commit is created:
   `cdc1a87 Fix method-focused semantic packing`
 - pushed with Ryan authorization
+- the read-only Task 3 product-differentiation checkpoint rerun against the
+  pushed correction returned DONE with verdict PARTIAL
+- control review accepted the rerun as workspace-only routing evidence:
+  - fixture-root primary budget `280` is now strong: `context_ir` selected
+    `compile_member_digest`, `pkg.labels.build_member_label`,
+    `resolve_owner_alias`, and `frontier:call:pkg/service.py:10:8` in
+    `223` tokens with no warnings and aggregate score `0.9901`
+  - full-repo primary budget `280` is still not STRONG: `context_ir` selected
+    the fixture class container plus implementation/test support, all strict
+    full-repo waypoints were false, and `build_member_label` source was not
+    selected
+  - full-repo lexical/import baselines selected no comparable files; fixture
+    root primary baselines missed `pkg/labels.py` and uncertainty honesty, and
+    fixture-root lexical only became comparable at the ceiling budget
+- Task 3 remains PARTIAL, not STRONG, and is not portfolio-ready
 - public/demo claim advancement remains held
-- next route is a read-only Task 3 product-differentiation checkpoint rerun
-  against the pushed correction
-- hold Task 4, portfolio artifact updates, public/demo claim work, staging,
-  commits, and pushes while waiting for Task 3 checkpoint rerun results
+- Ryan confirmed STRONG remains table stakes for Task 3 and authorized the
+  read-only full-repo exact-unit diagnosis route
+- the read-only full-repo exact-unit diagnosis returned DONE and is
+  workspace-only accepted as routing evidence
+- accepted diagnosis:
+  - full-repo exact-unit miss is real, even though fixture-root `280` is now
+    strong
+  - primary root cause is optimizer focus transfer plus scorer thresholds:
+    the exact child method scores just below `_DIRECT_SOURCE_THRESHOLD`, so the
+    parent class remains the initial source focus and method-scoped support and
+    uncertainty do not get the active focus lane
+  - contributing causes are full-repo query routing toward product
+    resolver/tests, missing full-repo proven dependency from
+    `compile_member_digest` to `pkg.labels.build_member_label`, and a full-repo
+    frontier representation mismatch where the fixture-root `frontier:call`
+    expectation appears as other uncertainty/unsupported surfaces
+  - render/detail costs are secondary, not the primary cause
+- Ryan confirmed STRONG is table stakes and authorized the correction route if
+  the diagnosis led there
+- the bounded implementation correction returned DONE and is workspace-only
+  accepted first-pass
+- accepted correction behavior:
+  - full-repo primary budget `280` selects exact `compile_member_digest`,
+    `build_member_label`, `resolve_owner_alias`, and honest
+    `unsupported:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8`
+    uncertainty in `274` tokens
+  - full-repo ceiling budget `400` selects the strict units plus related honest
+    uncertainty surfaces in `342` tokens with no warnings
+  - fixture-root primary budget `280` remains strong in `223` tokens with no
+    warnings
+  - no production code hardcodes Task 3 fixture names; control review also ran
+    an unrelated-name synthetic probe that selected the analogous method,
+    support, resolver, and uncertainty units
+- release-unit audit returned DONE with verdict FAIL on one P2 finding:
+  external-focus noise suppression can drop an explicitly named `src` or
+  `tests` target after a non-`src` focus
+- audit finding is accepted as valid by control review
+- Ryan authorized the narrow audit correction
+- the bounded audit correction returned DONE and is workspace-only accepted
+  first-pass
+- accepted audit-correction behavior:
+  - external-focus suppression now preserves `src`/`tests` candidates when they
+    are query-named or have strong direct edit signal
+  - regression coverage proves named `src` and `tests` anchors survive after a
+    non-`src` focus even with `p_edit < 0.50`
+  - Task 3 full-repo and fixture-root behavior remains preserved
+- corrected release-unit audit returned DONE with verdict PASS and no findings
+- full regression failed after corrected audit clearance:
+  `.venv/bin/python -m pytest tests/ -v` returned `7 failed, 1730 passed in
+  535.02s`
+- failed tests are the dynamic-import eval probes, where budget-`100`
+  context_ir selections now include unsupported dynamic-import uncertainty units
+  that the accepted eval expectations expected to remain omitted
+- Ryan authorized the bounded dynamic-import tight-budget regression correction
+  route
+- the bounded correction returned DONE and is workspace-only accepted
+  first-pass
+- accepted correction behavior:
+  - support-only `UNSUPPORTED_CONSTRUCT` scores no longer act as initial
+    optimizer anchors
+  - unresolved frontiers remain support-aware during initial ordering
+  - omitted unsupported constructs no longer produce tight-budget uncertainty
+    warnings solely from support score
+  - dynamic-import budget `100` behavior is restored while higher-budget
+    unsupported/runtime-provenance behavior remains preserved
+  - Task 3 full-repo `280`/`400`, fixture-root `280`, and prior external-focus
+    P2 behavior remain preserved
+- control reran the focused validation bundle and it passed:
+  `69 passed in 256.10s`
+- prior corrected release-unit audit clearance is stale because source/test
+  files changed after that audit
+- corrected read-only release-unit audit returned DONE with verdict PASS and no
+  findings
+- audit verified scope cleanliness, no new production hardcoding, preserved
+  Task 3 and dynamic-import behavior, and no drift in public/demo claims,
+  portfolio artifacts, API/MCP/schema/config/package exports, resolver,
+  compiler, dependency frontier, eval specs/fixtures, or eval metrics
+- full regression cleared after corrected audit:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 511.29s`
+- commit-gating cleared over the exact six-file release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- do not relax the Task 3 rubric, update portfolio artifacts, update
+  public/demo claims, run Task 4, or push while release gates remain unresolved
+- next route is local commit creation for exactly the six-file release unit;
+  push remains Ryan-gated
 
 Task 3 product-differentiation checkpoint is authorized:
 
@@ -228,6 +332,408 @@ Task 3 product-differentiation checkpoint is authorized:
   - if STRONG, review before authorizing any artifact update
   - if PARTIAL or FAIL, diagnose before any Task 4, artifact update, or public
     claim work
+
+Task 3 product-differentiation rerun after focused packing returned PARTIAL:
+
+- read-only checkpoint lane returned DONE with verdict PARTIAL
+- repo truth verified by the lane and control review:
+  - branch `main`
+  - `HEAD=f82a3a7`
+  - `origin/main=f82a3a7`
+  - worktree clean before this workspace-only continuity update
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+- artifacts:
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_focused_packing/checkpoint_report.md`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_focused_packing/checkpoint_summary.json`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_focused_packing/primary_280_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_focused_packing/ceiling_400_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_focused_packing/fixture_primary_280_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_focused_packing/fixture_ceiling_400_runs.jsonl`
+  - `/private/tmp/context_ir_portfolio_001_task3_rerun_after_focused_packing/oracle_signal_smoke_e_static_path.json`
+- accepted evidence:
+  - static path still exists:
+    `compile_member_digest -> resolve_owner_alias`,
+    `compile_member_digest -> pkg.labels.build_member_label`, and
+    `frontier:call:pkg/service.py:10:8` as heuristic/frontier alias-chain
+    evidence
+  - fixture-root primary `280`: `context_ir` selected all required semantic
+    waypoints in `223` tokens with no warnings and aggregate score `0.9901`
+  - full-repo primary `280`: `context_ir` used `277` tokens with
+    `budget_pressure`, selected the fixture class container plus
+    implementation/test support, and did not select the exact method, label, or
+    alias-chain frontier units
+  - full-repo ceiling `400`: `context_ir` still did not satisfy strict
+    full-repo waypoints
+  - full-repo baselines selected no comparable files at `280` or `400`
+  - fixture-root primary baselines fit service-level context but missed
+    `pkg/labels.py` and uncertainty honesty; fixture-root lexical became
+    comparable only at the ceiling budget
+- control decision:
+  - accept the rerun as workspace-only routing evidence
+  - do not record Task 3 as STRONG portfolio evidence
+  - do not update public/demo claims
+  - do not proceed to Task 4 before Ryan resolves the PARTIAL result
+- next route:
+  - superseded by Ryan authorization for a read-only diagnosis of the remaining
+    full-repo exact-unit miss
+
+Task 3 full-repo exact-unit diagnosis is authorized:
+
+- Ryan confirmed Task 3 should demand STRONG before portfolio/public
+  advancement
+- diagnosis type:
+  - read-only
+  - no source/test/artifact/doc edits
+  - no staging, commits, pushes, resets, restores, or discarded workspace docs
+- question to answer:
+  - why does the full-repo Task 3 rerun still select the fixture class
+    container plus implementation/test support instead of exact
+    `compile_member_digest`, `pkg.labels.build_member_label`, and
+    `alias_chain` frontier units, even though the fixture-root run now selects
+    those waypoints at budget `280`?
+- explicit non-goals:
+  - do not implement a correction
+  - do not relax the Task 3 rubric
+  - do not run Task 4
+  - do not update portfolio artifacts or public/demo claims
+- expected output:
+  - findings-first diagnosis of the remaining full-repo exact-unit miss
+  - evidence from selected/omitted units, scorer features, optimizer ordering,
+    support closure, render costs, and full-repo query routing
+  - recommendation for the smallest correction slice if a principled STRONG
+    path exists
+
+Task 3 full-repo exact-unit diagnosis is workspace-only accepted:
+
+- external read-only diagnosis lane returned DONE
+- control review found the diagnosis supported by live repo state, rerun
+  artifacts, and the cited source surfaces:
+  - full-repo strict waypoints are false at primary `280` and ceiling `400`
+  - full-repo primary `280` selects the fixture class container plus
+    resolver/test support, not exact method/label/frontier units
+  - fixture-root primary `280` remains strong after the focused semantic
+    packing correction
+  - `_DIRECT_SOURCE_THRESHOLD = 0.30`, direct-child edit anchor detection, and
+    child-focus transfer all currently depend on the child method meeting that
+    threshold
+  - scorer exact-identifier matching currently compares exact surfaces from
+    `primary_text`, which does not treat the query suffix
+    `MemberSignalCompiler.compile_member_digest` as an exact full-repo method
+    identifier surface
+- accepted root-cause classification:
+  - primary: optimizer focus transfer plus scorer threshold/surface mismatch
+  - contributing: support/dependency closure, full-repo query routing toward
+    product implementation/tests, and full-repo frontier expectation mismatch
+  - secondary: render/detail cost
+- control decision:
+  - accept the diagnosis first-pass as workspace-only routing evidence
+  - demand STRONG for Task 3
+  - do not record Task 3 as portfolio evidence
+  - issue a bounded implementation correction prompt
+- correction scope:
+  - adjust scoring and/or optimizer focus so explicitly query-named child
+    methods can demote their parent class before class-source selection in the
+    full-repo case
+  - preserve fixture-root Task 3 behavior
+  - clarify or correct full-repo alias-chain uncertainty expectation without
+    fabricating proof
+- acceptance criteria:
+  - full-repo primary `280` selects exact `compile_member_digest`,
+    `resolve_owner_alias`, `build_member_label`, and an honest alias-chain or
+    uncertainty unit at required detail
+  - full-repo ceiling `400` passes strict waypoints
+  - fixture-root primary `280` remains strong
+  - regression coverage covers full-repo Task 3, not only fixture-root
+- next route:
+  - run the bounded implementation correction lane
+  - no Task 4, portfolio artifact update, public/demo claim work, staging,
+    commit, or push until the correction returns and is reviewed
+
+Task 3 full-repo exact-unit correction is workspace-only accepted:
+
+- implementation lane returned DONE
+- changed files:
+  - `src/context_ir/semantic_scorer.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- pre-existing dirty control files remain:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- accepted behavior:
+  - dotted qualified suffixes can exact-anchor repo-root-prefixed child method
+    symbols such as `ClassName.method_name`
+  - named support symbols receive weaker suffix scoring without treating
+    alias-chain calls as proved dependencies
+  - query-named unresolved/unsupported access surfaces can be selected as
+    honest uncertainty support
+  - optimizer packing preserves exact uncertainty surfaces and same-top-level
+    direct support after fixture focus while suppressing unrelated `src`/`tests`
+    noise
+- control-review validation:
+  - live repo state: branch `main`, `HEAD=f82a3a7`,
+    `origin/main=f82a3a7`
+  - dirty files exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`,
+    `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py src/context_ir/semantic_optimizer.py tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py tests/test_semantic_scorer.py`:
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_scorer.py src/context_ir/semantic_optimizer.py tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py tests/test_semantic_scorer.py`:
+    passed, `5 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `39 source files`
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py -v`:
+    passed, `56 passed in 262.66s`
+- direct Task 3 checks:
+  - full-repo `280`: `274` tokens, selected exact method source, label source,
+    resolver source, and
+    `unsupported:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8`
+    identity; warnings were surplus omitted-uncertainty warnings only
+  - full-repo `400`: `342` tokens, no warnings, selected the exact required
+    units and related honest uncertainty surfaces
+  - fixture-root `280`: `223` tokens, no warnings, selected exact method source,
+    label source, resolver source, `frontier:call:pkg/service.py:10:8`
+    identity, and related attribute frontier
+- form-fitting review:
+  - no production code hardcodes `MemberSignalCompiler`,
+    `compile_member_digest`, `build_member_label`, `oracle_signal_smoke_e`,
+    Task 3 IDs, or fixture paths
+  - control ran an unrelated-name synthetic probe, which selected analogous
+    query-named child method, support symbol, resolver, and uncertainty units
+    under an exact budget
+- control decision:
+  - accept the implementation first-pass in workspace-only state
+  - route to release-unit audit because scorer/optimizer changes are shared
+    selection behavior and not a low-risk batching candidate
+- next route:
+  - run a read-only release-unit audit over the exact six-file workspace unit
+  - do not run Task 4, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push until release gates clear
+
+Task 3 full-repo exact-unit correction release-unit audit failed:
+
+- read-only release-unit audit lane returned DONE with audit verdict FAIL
+- audit finding:
+  - P2: `src/context_ir/semantic_optimizer.py` external-focus suppression can
+    suppress standalone `src`/`tests` candidates after any non-`src` focus
+    without checking whether the candidate is strongly or explicitly named
+  - the predicate at `_is_external_focus_noise_candidate` treats top-level
+    `src`/`tests` candidates as noise when the active focus is outside `src`
+  - current coverage proves the Task 3 resolver-noise case, but does not prove
+    explicitly named source/test targets survive after non-`src` focus
+- control review:
+  - live repo state still matches the audit lane:
+    branch `main`, `HEAD=f82a3a7`, `origin/main=f82a3a7`
+  - dirty files remain exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`,
+    `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - the cited suppression path is present and lacks a strong/direct/query-named
+    escape hatch before returning `True`
+- control decision:
+  - accept the audit finding as valid
+  - fail the release-unit audit
+  - hold full regression, commit-gating, staging, commit, push, Task 4,
+    portfolio artifact updates, and public/demo claim work
+  - recommend a narrow correction that limits external-focus suppression to
+    weak/non-direct candidates or adds a strong/query-named escape hatch, plus
+    regression coverage for an explicitly named `src` or `tests` unit surviving
+    after non-`src` focus
+- next route:
+  - superseded by Ryan authorization for the narrow audit-correction lane
+
+Task 3 external-focus suppression audit correction is authorized:
+
+- Ryan authorized the narrow correction for the accepted P2 audit finding
+- correction type:
+  - bounded implementation correction
+  - no portfolio artifact updates
+  - no public/demo claim changes
+  - no Task 4 execution
+  - no staging, commits, pushes, resets, restores, or discarded control docs
+- objective:
+  - preserve the Task 3 resolver-noise suppression while ensuring explicitly
+    named or strong direct `src`/`tests` candidates are not suppressed merely
+    because a non-`src` focus was selected first
+- acceptance criteria:
+  - external-focus suppression applies only to weak/non-direct standalone
+    candidates, or includes an explicit strong/query-named escape hatch
+  - a regression proves a named `src` or `tests` unit survives after non-`src`
+    focus
+  - existing Task 3 full-repo `280` and `400` behavior remains strong
+  - fixture-root `280` remains strong
+- next route:
+  - issue the bounded audit-correction prompt and wait for the result
+
+Task 3 external-focus suppression audit correction is workspace-only accepted:
+
+- implementation lane returned DONE
+- changed file within the existing release unit:
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+- unchanged but still dirty release-unit files:
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- accepted behavior:
+  - `_is_external_focus_noise_candidate` now keeps `src`/`tests` candidates when
+    `candidate.query_named` is true or `p_edit >= 0.50`
+  - query-name tracking is computed from explicit identifier-like query
+    surfaces and candidate qualified-name suffixes
+  - Task 3 resolver-noise suppression remains covered
+  - a new regression proves named `src` and `tests` units survive after a
+    non-`src` focus with `p_edit < 0.50`
+- control-review validation:
+  - live repo state: branch `main`, `HEAD=f82a3a7`,
+    `origin/main=f82a3a7`
+  - dirty files exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`,
+    `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_optimizer.py src/context_ir/semantic_scorer.py tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py`:
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_optimizer.py src/context_ir/semantic_scorer.py tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py`:
+    passed, `4 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `39 source files`
+  - `.venv/bin/python -m pytest tests/test_semantic_optimizer.py tests/test_eval_signal_smoke_e.py -v`:
+    passed, `32 passed in 255.82s`
+- direct Task 3 checks:
+  - full-repo `280`: `274` tokens, selected exact method source, label source,
+    resolver source, and
+    `unsupported:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8`
+    identity; warnings were surplus omitted-uncertainty warnings only
+  - full-repo `400`: `342` tokens, no warnings, selected exact required units
+    and related honest uncertainty surfaces
+  - fixture-root `280`: `223` tokens, no warnings, selected exact method source,
+    label source, resolver source, `frontier:call:pkg/service.py:10:8`
+    identity, and related attribute frontier
+- control decision:
+  - accept the audit correction first-pass in workspace-only state
+  - route back to corrected release-unit audit before full regression,
+    commit-gating, staging, commit, or push
+- next route:
+  - run a corrected read-only release-unit audit over the exact six-file
+    workspace unit
+  - do not run Task 4, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push until release gates clear
+
+Task 3 full-repo exact-unit correction corrected release-unit audit is cleared:
+
+- corrected read-only release-unit audit lane returned DONE
+- audit verdict: PASS
+- findings: none
+- audit verified:
+  - prior P2 external-focus suppression finding is fixed
+  - query-named proven symbols are computed from explicit query identifier
+    surfaces and qualified-name suffixes
+  - external-focus suppression preserves `src`/`tests` candidates when
+    query-named or when `p_edit >= 0.50`
+  - regression coverage proves named `src` and `tests` anchors survive after a
+    non-`src` focus with `p_edit < 0.50`
+  - alias-chain uncertainty remains honest and no proof is fabricated
+  - production code has no Task 3 fixture-name or ID hardcoding
+  - there is no drift in public/demo claims, portfolio artifacts, API/MCP,
+    schema/config/package exports, resolver, compiler, dependency frontier, eval
+    specs/fixtures, or eval metrics
+- release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: no, failed after this gate
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- next route:
+  - superseded by the full-regression failure below
+  - do not stage, commit, push, run Task 4, update portfolio artifacts, or
+    update public/demo claims until full regression and commit-gating clear
+
+Task 3 full-repo exact-unit correction full regression failed:
+
+- static validation passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+- full pytest failed:
+  - `.venv/bin/python -m pytest tests/ -v`: `7 failed, 1730 passed in 535.02s`
+- failing tests:
+  - `tests/test_eval_signal_dynamic_import_builtin_probe.py::test_dynamic_import_builtin_probe_run_executes_with_additive_runtime_provenance`
+  - `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py::test_dynamic_import_builtins_alias_probe_run_preserves_runtime_provenance`
+  - `tests/test_eval_signal_dynamic_import_builtins_attr_probe.py::test_dynamic_import_builtins_attr_probe_run_preserves_runtime_provenance`
+  - `tests/test_eval_signal_dynamic_import_probe.py::test_dynamic_import_probe_run_executes_with_runtime_backed_raw_fields`
+  - `tests/test_eval_signal_dynamic_import_probe.py::test_dynamic_import_probe_summary_surfaces_internal_capability_accounting`
+  - `tests/test_eval_signal_dynamic_import_root_alias_probe.py::test_dynamic_import_root_alias_probe_run_executes_with_runtime_provenance`
+  - `tests/test_eval_signal_dynamic_import_root_probe.py::test_dynamic_import_root_probe_run_executes_with_additive_runtime_provenance`
+- finding:
+  - the Task 3 exact-unit correction changed tight-budget dynamic-import eval
+    selection behavior; at budget `100`, context_ir now selects unsupported
+    dynamic-import uncertainty units that those evals expected to remain
+    omitted, shifting selected-unit capability-tier accounting
+- release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: no, failed
+  - commit-gating cleared: no
+  - local commit not created
+  - pushed: no
+- control decision:
+  - hold commit-gating, staging, commit, push, Task 4, portfolio artifact
+    updates, and public/demo claim work
+  - require Ryan go/no-go before advancing past the full-regression finding
+- Ryan authorized the bounded dynamic-import tight-budget regression correction
+  route
+- the bounded correction returned DONE and is workspace-only accepted
+  first-pass
+- changed files within the existing release unit:
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+- accepted behavior:
+  - support-only `UNSUPPORTED_CONSTRUCT` scores no longer act as initial
+    optimizer anchors
+  - unresolved frontiers remain support-aware during initial ordering
+  - omitted unsupported constructs no longer produce tight-budget uncertainty
+    warnings solely from support score
+  - dynamic-import budget `100` behavior is restored
+  - dynamic-import higher-budget unsupported/runtime-provenance behavior is
+    preserved
+  - Task 3 full-repo `280`/`400`, fixture-root `280`, and external-focus P2
+    behavior remain preserved
+- control-review validation:
+  - live repo state: branch `main`, `HEAD=f82a3a7`,
+    `origin/main=f82a3a7`
+  - dirty files exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`,
+    `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - no staged files and no untracked files
+  - `git diff --check`: clean
+  - focused pytest bundle passed:
+    `69 passed in 256.10s`
+- release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit not created
+  - pushed: no
+- next route:
+  - stage and locally commit exactly the six-file release unit
+  - push remains Ryan-gated
+  - do not run Task 4, update portfolio artifacts, or update public/demo claims
+    until the local release commit is created and reviewed
 
 Task 3 product-differentiation checkpoint returned FAIL:
 

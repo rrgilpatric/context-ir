@@ -37,6 +37,34 @@ RELEVANT_SYMBOL_FILES = (
     "pkg/service.py",
     "pkg/labels.py",
 )
+FULL_REPO_TASK3_COMPILE_ID = (
+    "def:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:"
+    "evals.fixtures.oracle_signal_smoke_e.pkg.service.MemberSignalCompiler."
+    "compile_member_digest"
+)
+FULL_REPO_TASK3_RESOLVER_ID = (
+    "def:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:"
+    "evals.fixtures.oracle_signal_smoke_e.pkg.service.MemberSignalCompiler."
+    "resolve_owner_alias"
+)
+FULL_REPO_TASK3_LABEL_ID = (
+    "def:evals/fixtures/oracle_signal_smoke_e/pkg/labels.py:"
+    "evals.fixtures.oracle_signal_smoke_e.pkg.labels.build_member_label"
+)
+FULL_REPO_TASK3_PARENT_ID = (
+    "def:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:"
+    "evals.fixtures.oracle_signal_smoke_e.pkg.service.MemberSignalCompiler"
+)
+FULL_REPO_TASK3_ALIAS_UNCERTAINTY_ID = (
+    "unsupported:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8"
+)
+FULL_REPO_TASK3_FRONTIER_CALL_ID = (
+    "frontier:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8"
+)
+FULL_REPO_TASK3_RESOLVER_NOISE_ID = (
+    "def:src/context_ir/resolver.py:"
+    "src.context_ir.resolver._resolve_transitive_sole_provider_self_call_symbol_id"
+)
 
 
 def _execute_signal_smoke_e_bundle(bundle_dir: Path) -> eval_bundle.EvalBundleArtifact:
@@ -219,6 +247,38 @@ def test_signal_smoke_e_task3_query_keeps_child_method_support_pack() -> None:
     )
     assert parent_class is None or parent_class.detail != "source"
     assert result.warnings == ()
+
+
+def test_signal_smoke_e_task3_query_selects_full_repo_exact_units() -> None:
+    """The full-repo Task 3 query keeps exact fixture units over repo noise."""
+    for budget in (280, 400):
+        result = eval_providers.build_context_ir_provider_pack(
+            EvalProviderRequest(
+                repo_root=REPO_ROOT,
+                task_id="oracle_signal_smoke_e_task3_full_repo_regression",
+                query=TASK3_QUERY,
+                budget=budget,
+            )
+        )
+        selected_units = {unit.unit_id: unit for unit in result.metadata.selected_units}
+
+        assert result.total_tokens <= budget
+        assert selected_units[FULL_REPO_TASK3_COMPILE_ID].detail == "source"
+        assert selected_units[FULL_REPO_TASK3_LABEL_ID].detail == "source"
+        assert selected_units[FULL_REPO_TASK3_RESOLVER_ID].detail in {
+            "summary",
+            "source",
+        }
+        assert selected_units[FULL_REPO_TASK3_ALIAS_UNCERTAINTY_ID].detail == "identity"
+        assert FULL_REPO_TASK3_ALIAS_UNCERTAINTY_ID in (
+            result.metadata.unsupported_unit_ids
+        )
+        assert FULL_REPO_TASK3_FRONTIER_CALL_ID not in (
+            result.metadata.unresolved_unit_ids
+        )
+        assert FULL_REPO_TASK3_RESOLVER_NOISE_ID not in selected_units
+        parent_class = selected_units.get(FULL_REPO_TASK3_PARENT_ID)
+        assert parent_class is None or parent_class.detail != "source"
 
 
 def test_signal_smoke_e_assets_stay_internal_and_leave_package_root_unchanged() -> None:
