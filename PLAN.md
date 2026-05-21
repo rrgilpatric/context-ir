@@ -641,16 +641,18 @@ Active next route:
   remains Ryan-gated
 - local release commit is created:
   `4bf1b3c Add public-safe wording crosswalk`
+- local routing sync commit is created:
+  `59113e1 Sync public-safe crosswalk local routing`
+- Ryan authorized push, and the release was pushed to `origin/main`
 - release state:
   - workspace-only accepted: yes
   - release-unit audit cleared: yes
   - full regression cleared: yes
   - commit-gating cleared: yes
   - local release commit created: yes
-  - pushed: no
-- next route is Ryan push authorization for the local public-safe wording
-  crosswalk release; do not run Task 4 or update public/demo claims from this
-  release
+  - pushed: yes
+- next route is a control decision on the next claim-readiness move; do not run
+  Task 4 or update public/demo claims from this release
 
 Task 3 product-differentiation checkpoint is authorized:
 
