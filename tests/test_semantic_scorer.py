@@ -5,6 +5,9 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
+import pytest
+
+import context_ir.semantic_renderer as semantic_renderer
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
@@ -18,6 +21,7 @@ from context_ir.semantic_types import (
     SourceSite,
     SourceSpan,
     SyntaxProgram,
+    UnresolvedAccess,
     UnresolvedReasonCode,
 )
 
@@ -758,6 +762,98 @@ def test_score_semantic_units_uses_scope_body_signal_for_behavioral_queries(
     assert result.scores[run_id].p_edit > 0.40
     assert result.scores[run_id].p_edit > result.scores[planner_id].p_edit
     assert result.scores[planner_id].p_edit > result.scores[presenter_id].p_edit
+
+
+def test_score_semantic_units_reuses_render_session_for_candidate_profiles(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Scoring builds renderer lookup indexes once while profiling candidates."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "helpers.py").write_text(
+        "def helper() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.helpers import *
+
+            def run() -> None:
+                helper()
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    run_id = _definition_id_for(program, "main.run")
+    unresolved_id = _unresolved_id_for(program, "missing_call")
+    unsupported_id = _unsupported_id_for(program, "from pkg.helpers import *")
+    original_build_context = semantic_renderer._build_render_context
+    original_unresolved_by_id = semantic_renderer._unresolved_by_id
+    original_render_with_context = semantic_renderer._render_semantic_unit_with_context
+    build_context_calls = 0
+    unresolved_index_builds = 0
+    render_calls: dict[tuple[str, semantic_renderer.RenderDetail], int] = {}
+
+    def counting_build_context(
+        program_arg: SemanticProgram,
+    ) -> semantic_renderer._SemanticRenderContext:
+        nonlocal build_context_calls
+        build_context_calls += 1
+        return original_build_context(program_arg)
+
+    def counting_unresolved_by_id(
+        program_arg: SemanticProgram,
+    ) -> dict[str, UnresolvedAccess]:
+        nonlocal unresolved_index_builds
+        unresolved_index_builds += 1
+        return original_unresolved_by_id(program_arg)
+
+    def counting_render_with_context(
+        *,
+        program: SemanticProgram,
+        unit_id: str,
+        detail: semantic_renderer.RenderDetail,
+        context: semantic_renderer._SemanticRenderContext,
+    ) -> semantic_renderer.RenderedUnit:
+        cache_key = (unit_id, detail)
+        render_calls[cache_key] = render_calls.get(cache_key, 0) + 1
+        return original_render_with_context(
+            program=program,
+            unit_id=unit_id,
+            detail=detail,
+            context=context,
+        )
+
+    monkeypatch.setattr(
+        semantic_renderer,
+        "_build_render_context",
+        counting_build_context,
+    )
+    monkeypatch.setattr(
+        semantic_renderer,
+        "_unresolved_by_id",
+        counting_unresolved_by_id,
+    )
+    monkeypatch.setattr(
+        semantic_renderer,
+        "_render_semantic_unit_with_context",
+        counting_render_with_context,
+    )
+
+    score_semantic_units(program, "fix missing call while keeping helper")
+
+    assert build_context_calls == 1
+    assert unresolved_index_builds == 1
+    assert render_calls[(run_id, semantic_renderer.RenderDetail.SUMMARY)] == 1
+    assert render_calls[(run_id, semantic_renderer.RenderDetail.SOURCE)] == 1
+    assert render_calls[(unresolved_id, semantic_renderer.RenderDetail.SUMMARY)] == 1
+    assert render_calls[(unsupported_id, semantic_renderer.RenderDetail.SUMMARY)] == 1
 
 
 def test_score_semantic_units_calibrates_tests_for_implementation_intent(

@@ -653,6 +653,136 @@ Active next route:
   - pushed: yes
 - next route is a control decision on the next claim-readiness move; do not run
   Task 4 or update public/demo claims from this release
+- Ryan agreed with the control recommendation to pivot back from
+  claim-readiness to the technical north-star path
+- next route is a read-only north-star next-tranche selection lane:
+  - choose the highest-leverage next technical/evidence tranche
+  - likely candidates include broader hybrid static + runtime coverage,
+    capability-tier eval semantics/raw evidence accounting, repo-scale latency,
+    benchmark-methodology preparation only if internal tiered evidence is ready,
+    or production/MCP readiness only if that becomes the chosen track
+  - output one bounded next slice recommendation with rationale and acceptance
+    criteria
+  - do not edit files
+  - do not run Task 4
+  - do not update public/demo claims
+  - do not stage, commit, or push
+- the read-only north-star next-tranche selection lane returned DONE and is
+  accepted as workspace-only routing evidence
+- selected next tranche:
+  - repo-scale latency measurement and bottleneck isolation
+  - rationale: full-repo `context_ir` portfolio runs are about `109s`-`130s`
+    while file-level baselines are about `0.25s`-`0.28s`; this is the clearest
+    blocker between exact-query evidence and broad Python repo usefulness
+  - broadened hybrid static + runtime coverage, capability-tier/raw-ledger
+    hardening, benchmark methodology, production/MCP readiness, and Task 4 are
+    not next
+- next proposed slice is a read-only latency profiling spike:
+  - profile the accepted Task 3 full-repo `context_ir` provider path with a
+    fixture-root comparison
+  - use `build_context_ir_provider_pack`, `EvalProviderRequest`,
+    cProfile/wall-clock timing, and scratch artifacts under
+    `/private/tmp/context_ir_latency_profile_*`
+  - output elapsed time, selected units/tokens, top cumulative-time functions,
+    full-repo vs fixture-root comparison, and exactly one first optimization
+    recommendation or a finding that one more measurement slice is needed
+  - no file edits, no Task 4, no public/demo claim updates, no eval schema
+    changes, no optimization implementation, no staging, no commit, no push
+- Ryan explicitly authorized issuing the read-only latency profiling spike
+- next route is to issue that profiling prompt and wait for the returned
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before any optimization,
+  benchmark, production/MCP, Task 4, public/demo, staging, commit, or push
+  route
+- the read-only latency profiling spike returned DONE and is accepted as
+  workspace-only routing evidence
+- latency diagnosis:
+  - the full-repo latency gap is primarily an avoidable implementation
+    bottleneck, not currently proven to be an unavoidable semantic-analysis
+    cost
+  - raw full-repo phase timing was `130.304s`; cProfile timing was `150.319s`
+  - fixture-root timing was `0.013s` raw and `0.027s` under cProfile
+  - `analyze_repository` was about `15.497s`; scoring and budget optimization
+    dominated the remaining runtime
+  - top bottlenecks were repeated renderer/index/source materialization:
+    `render_semantic_unit` called `74,102` times, `_unresolved_by_id` called
+    `44,543` times, and `_read_source_span` called `207,086` times
+- selected first optimization candidate:
+  - use `_SemanticRenderSession` inside `semantic_scorer._build_candidate_profiles`
+    instead of direct repeated `render_semantic_unit` calls
+  - preserve scoring policy, selected-unit semantics, warning semantics, eval
+    schema, and public-claim boundaries
+  - Task 3 full-repo budget `280` must still select the same accepted units and
+    stay within budget
+  - Task 3 fixture-root budget `280` must still select the same accepted units
+    and stay within budget
+  - focused latency evidence must show `_unresolved_by_id` no longer rebuilds
+    tens of thousands of times during scoring
+- hold before issuing the optimization implementation prompt until Ryan gives
+  explicit go/no-go
+- Ryan explicitly authorized proceeding with the bounded scorer render-session
+  optimization implementation slice
+- next route is to issue that implementation prompt and wait for the returned
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before audit, full regression,
+  commit-gating, staging, commit, push, Task 4, benchmark methodology,
+  production/MCP readiness, or public/demo route
+- the bounded scorer render-session optimization implementation returned DONE
+  and is workspace-only accepted first-pass
+- accepted implementation:
+  - `semantic_scorer._build_candidate_profiles` now creates one
+    `_SemanticRenderSession` and uses it for candidate summaries plus
+    source-backed body text
+  - focused regression coverage in `tests/test_semantic_scorer.py` proves
+    candidate profiling builds the render context and unresolved index once
+  - source/test diffs are limited to:
+    `src/context_ir/semantic_scorer.py` and `tests/test_semantic_scorer.py`
+- validation rerun by control:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`:
+    passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_scorer.py tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`:
+    passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py -v`:
+    `35 passed in 141.78s`
+- next route is a read-only release-unit audit over the exact four-file
+  release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- do not run full regression, commit-gating, stage, commit, push, run Task 4,
+  update public/demo claims, or route benchmark/production/MCP work until the
+  release-unit audit returns and is reviewed
+- release-unit audit returned PASS with no findings and is accepted
+- next route is full regression for the exact four-file scorer render-session
+  optimization release unit:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+- do not run commit-gating, stage, commit, push, run Task 4, update public/demo
+  claims, or route benchmark/production/MCP work until full regression returns
+  and is reviewed
+- full regression is cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1739 passed in 308.82s`
+- next route is commit-gating over the exact four-file release unit
+- do not stage, commit, push, run Task 4, update public/demo claims, or route
+  benchmark/production/MCP work until commit-gating clears
+- commit-gating is cleared over the exact four-file scorer render-session
+  optimization release unit:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files before staging
+  - no untracked files
+  - no dirty files outside the release unit
+  - no `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `ARCHITECTURE.md`,
+    `portfolio_001`, reviewer-readiness, API/MCP, package-export, schema,
+    config, eval artifact, or public/demo claim diffs
+  - `git diff --check`: clean
+- next route is local commit creation for the four-file release unit; push
+  remains Ryan-gated
 
 Task 3 product-differentiation checkpoint is authorized:
 

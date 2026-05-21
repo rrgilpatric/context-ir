@@ -11,7 +11,7 @@ from typing import TypeAlias
 from context_ir.semantic_renderer import (
     RenderDetail,
     RenderedUnitKind,
-    render_semantic_unit,
+    _SemanticRenderSession,
 )
 from context_ir.semantic_types import (
     ResolvedSymbol,
@@ -240,11 +240,12 @@ def score_semantic_units(
 
 def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfile]:
     """Build stable semantic-first text profiles for every renderable unit."""
+    render_session = _SemanticRenderSession(program)
     candidates: list[_CandidateProfile] = []
 
     for unit_id, symbol in sorted(program.resolved_symbols.items()):
-        summary = render_semantic_unit(program, unit_id, RenderDetail.SUMMARY)
-        body_text = _body_text_for_symbol(program, unit_id, symbol)
+        summary = render_session.render(unit_id, RenderDetail.SUMMARY)
+        body_text = _body_text_for_symbol(render_session, unit_id, symbol)
         candidates.append(
             _CandidateProfile(
                 unit_id=unit_id,
@@ -263,7 +264,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
         )
 
     for access in sorted(program.unresolved_frontier, key=lambda item: item.access_id):
-        summary = render_semantic_unit(program, access.access_id, RenderDetail.SUMMARY)
+        summary = render_session.render(access.access_id, RenderDetail.SUMMARY)
         candidates.append(
             _CandidateProfile(
                 unit_id=access.access_id,
@@ -288,8 +289,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
         program.unsupported_constructs,
         key=lambda item: item.construct_id,
     ):
-        summary = render_semantic_unit(
-            program,
+        summary = render_session.render(
             construct.construct_id,
             RenderDetail.SUMMARY,
         )
@@ -316,8 +316,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
         program.eval_runtime_evidence,
         key=lambda item: item.unit_id,
     ):
-        summary = render_semantic_unit(
-            program,
+        summary = render_session.render(
             evidence.unit_id,
             RenderDetail.SUMMARY,
         )
@@ -1199,14 +1198,14 @@ def _ngram_overlap(
 
 
 def _body_text_for_symbol(
-    program: SemanticProgram,
+    render_session: _SemanticRenderSession,
     unit_id: str,
     symbol: ResolvedSymbol,
 ) -> str | None:
     """Return source-backed body text for scope-defining symbols only."""
     if symbol.kind not in _BODY_SIGNAL_KINDS:
         return None
-    return render_semantic_unit(program, unit_id, RenderDetail.SOURCE).content
+    return render_session.render(unit_id, RenderDetail.SOURCE).content
 
 
 def _is_test_file_path(file_path: str) -> bool:
