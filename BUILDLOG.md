@@ -2,6 +2,26 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-21 -- Scorer Render-Session Optimization Pushed
+
+- Ryan authorized push for the scorer render-session optimization release.
+- Pushed `main` to `origin/main`:
+  - `770278c Cache scorer render profiles`
+  - `90b63f5 Sync scorer render cache routing`
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- Next route:
+  - select the next bounded north-star lane from the pushed scorer
+    render-session optimization release
+  - do not run Task 4, update public/demo claims, or route benchmark,
+    production/MCP work from this release
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-21 -- Scorer Render-Session Optimization Local Release Commit Created
 
 - Created the local release commit after workspace acceptance, release-unit

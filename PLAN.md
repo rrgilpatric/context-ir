@@ -785,8 +785,19 @@ Active next route:
   remains Ryan-gated
 - local release commit is created:
   `770278c Cache scorer render profiles`
-- next route is push authorization for the local scorer render-session
-  optimization release; do not push without explicit Ryan authorization
+- local routing sync commit is created:
+  `90b63f5 Sync scorer render cache routing`
+- Ryan authorized push, and the release was pushed to `origin/main`
+- release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- next route is control selection of the next bounded north-star lane from the
+  pushed scorer render-session optimization release; do not run Task 4, update
+  public/demo claims, or route benchmark/production/MCP work from this release
 
 Task 3 product-differentiation checkpoint is authorized:
 
