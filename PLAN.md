@@ -783,6 +783,10 @@ Active next route:
   - `git diff --check`: clean
 - next route is local commit creation for the four-file release unit; push
   remains Ryan-gated
+- local release commit is created:
+  `770278c Cache scorer render profiles`
+- next route is push authorization for the local scorer render-session
+  optimization release; do not push without explicit Ryan authorization
 
 Task 3 product-differentiation checkpoint is authorized:
 
