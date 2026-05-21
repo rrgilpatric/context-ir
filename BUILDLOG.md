@@ -2,6 +2,26 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-21 -- Public-Safe Wording Crosswalk Local Release Commit Created
+
+- Created the local release commit after workspace acceptance, release-unit
+  audit, full regression, and commit-gating cleared:
+  `4bf1b3c Add public-safe wording crosswalk`.
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- Public/demo claims remain held.
+- Task 4 remains not run.
+- Next route:
+  - wait for Ryan push authorization for the local public-safe wording
+    crosswalk release
+  - do not run Task 4 or update public/demo claims from this release
+- Acceptance status: local release commit created after gates cleared
+
 ## 2026-05-21 -- Public-Safe Wording Crosswalk Commit-Gating Cleared
 
 - Ran commit-gating after audit and full regression clearance for the
