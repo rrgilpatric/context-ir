@@ -476,6 +476,169 @@ Active next route:
   - pushed: yes
 - next route is a control decision on the next reviewer-readiness move; do not
   run Task 4 or update public/demo claims from this release
+- Ryan agreed with the control recommendation to run a read-only internal
+  reviewer dry-run / objection audit next
+- next route is a read-only internal reviewer dry-run / objection audit:
+  - do not edit files
+  - do not run Task 4
+  - do not update public/demo claims
+  - do not stage, commit, or push
+  - stress-test whether the pushed reviewer readiness memo and
+    `portfolio_001` evidence are understandable, bounded, and persuasive to a
+    skeptical internal reviewer without overclaiming
+- the read-only internal reviewer dry-run / objection audit returned DONE
+- audit recommendation:
+  - memo is ready for internal reviewer use
+  - no narrow memo correction is needed
+  - Task 4 is not needed before the next reviewer-readiness move
+  - public/demo planning remains premature
+- findings to carry forward before advancement:
+  - P3: raw evidence is dense and partly non-uniform across historical/imported
+    rows; `manifest.json` and the memo's human-readable citation order mitigate
+    this, so no memo correction is recommended
+  - P3: baseline comparison can be misread as a benchmark or broad performance
+    claim; the memo and bundle constrain it to exact-query, fixed-budget,
+    internal evidence with latency caveats, so no memo correction is
+    recommended
+- control recommendation:
+  - accept the audit result
+  - use the memo as-is for internal reviewer circulation
+  - carry the two P3 risks as reviewer talking points
+  - keep Task 4 held
+  - keep public/demo claims held
+- next route is Ryan explicit go/no-go on using the memo as-is for internal
+  reviewer circulation; do not advance before that decision
+- Ryan approved proceeding with the control recommendation:
+  - use the memo as-is for internal reviewer circulation
+  - carry the two P3 risks as reviewer talking points
+  - keep Task 4 held
+  - keep public/demo claims held
+- next route is a read-only public/demo claim-readiness planning lane:
+  - decide what, if anything, can be safely planned for public/demo wording from
+    existing evidence
+  - decide whether Task 4 is needed before any public/demo drafting slice
+  - output a plan/spec and statement classification only
+  - do not edit files
+  - do not update public/demo claims
+  - do not run Task 4
+  - do not stage, commit, or push
+- the read-only public/demo claim-readiness planning lane returned DONE
+- planning findings:
+  - `portfolio_001` is not public claim authorization; it remains
+    internal-only exact-query evidence
+  - existing public-safe wording can be planned only from `PUBLIC_CLAIMS.md`,
+    `README.md`, and `EVAL.md`, not from `portfolio_001` as public proof
+  - the two carried-forward P3 risks remain active:
+    - raw `runs.jsonl` evidence is dense/non-uniform, so reviewers should start
+      from the memo and `evidence.md`
+    - baseline comparisons must not be framed as broad benchmark or
+      performance claims
+  - latency evidence is unfavorable for public performance language
+- planning recommendation:
+  - proceed to a narrow internal, non-public public-safe wording draft/crosswalk
+    constrained to the current allowed public claim envelope only
+  - keep public/demo claims held
+  - do not run Task 4 first
+  - do not use `portfolio_001` as public proof
+- proposed acceptance criteria for the next slice:
+  - every proposed public-facing sentence maps to `PUBLIC_CLAIMS.md`,
+    `README.md`, or `EVAL.md`
+  - `portfolio_001` appears only as internal-only/held context
+  - the two P3 risks are preserved
+  - no benchmark, production-readiness, latency, token-savings, generalized
+    runtime, or demo-readiness wording appears
+  - Task 4 remains held
+- control recommendation:
+  - accept the planning result
+  - authorize a narrow internal public-safe wording draft/crosswalk slice
+  - keep Task 4 and public/demo claim updates held
+- next route is Ryan explicit go/no-go on the narrow internal public-safe
+  wording draft/crosswalk slice; do not advance before that decision
+- Ryan approved the recommended approach:
+  - accept the public/demo claim-readiness planning result
+  - proceed to a narrow internal, non-public public-safe wording
+    draft/crosswalk slice
+  - keep Task 4 held
+  - keep public/demo claim updates held
+- next route is a bounded implementation slice to create only the internal
+  public-safe wording draft/crosswalk artifact; public/demo claim files remain
+  unchanged
+- the bounded implementation slice returned DONE and is workspace-only accepted
+  first-pass
+- accepted crosswalk artifact:
+  `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+- acceptance review:
+  - findings: none
+  - new artifact is internal-only / non-public
+  - public-safe candidate rows map to `PUBLIC_CLAIMS.md`, `README.md`, and
+    `EVAL.md`
+  - `portfolio_001` appears only as internal-only / held context and is not
+    used as public proof
+  - both P3 risks are preserved
+  - benchmark, production-readiness, latency, token-savings, generalized
+    runtime, broad product superiority, and demo-readiness wording is
+    disallowed or needs more evidence
+  - Task 4 remains held
+  - public/demo claim files, `portfolio_001`, reviewer memo, source, tests,
+    API/MCP, schema/config, package exports, eval logic, fixtures, tasks, and
+    run specs are unchanged
+  - `git diff --check`: clean
+- accepted release unit is:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+- next route is a read-only release-unit audit over the exact three-file
+  internal crosswalk release unit
+- the read-only release-unit audit returned DONE with verdict PASS and no
+  findings
+- release-unit audit is cleared for the exact three-file internal crosswalk
+  release unit
+- audit confirmed:
+  - release unit is exactly `PLAN.md`, `BUILDLOG.md`, and
+    `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+  - crosswalk is internal-only / non-public
+  - public-safe candidates map only to `PUBLIC_CLAIMS.md`, `README.md`, and
+    `EVAL.md`
+  - `portfolio_001` remains internal-only / held context and is not used as
+    public proof
+  - both P3 risks are preserved
+  - benchmark, production-readiness, latency, token-savings, generalized
+    runtime, broad product superiority, and demo-readiness language is
+    disallowed/held or needs more evidence
+  - Task 4 remains held unless eval-bundle/report/pipeline reproducibility
+    claims become the target
+  - public/demo claim files, `portfolio_001`, reviewer memo, source, tests,
+    API/MCP, schema/config, package exports, eval logic, fixtures, tasks, and
+    run specs are unchanged
+  - `git diff --check`: clean
+- next route is full regression:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+- full regression is cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 514.97s`
+- next route is commit-gating over the exact three-file internal crosswalk
+  release unit
+- commit-gating is cleared over the exact three-file internal crosswalk
+  release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+  - branch and refs verified: `main`, `HEAD=origin/main=f5c5a5a`
+  - no staged files before staging
+  - no dirty files outside the release unit
+  - no public claim, source, test, eval logic, API/MCP, schema/config, package
+    export, `README.md`, `EVAL.md`, `ARCHITECTURE.md`, `portfolio_001`, or
+    reviewer memo diffs
+  - required crosswalk terms and caveats are present
+  - crosswalk has no trailing whitespace and ends with a newline
+  - `git diff --check`: clean
+- next route is local commit creation for the three-file release unit; push
+  remains Ryan-gated
 
 Task 3 product-differentiation checkpoint is authorized:
 

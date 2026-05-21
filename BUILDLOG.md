@@ -2,6 +2,280 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-21 -- Public-Safe Wording Crosswalk Commit-Gating Cleared
+
+- Ran commit-gating after audit and full regression clearance for the
+  three-file internal public-safe wording crosswalk release unit.
+- Commit-gating verified:
+  - branch and refs: `main`, `HEAD=origin/main=f5c5a5a`
+  - dirty tracked files are `PLAN.md` and `BUILDLOG.md`
+  - untracked file is
+    `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+  - no staged files before staging
+  - no dirty files outside the release unit
+  - no public claim, source, test, eval logic, API/MCP, schema/config, package
+    export, root `README.md`, `EVAL.md`, `ARCHITECTURE.md`, `portfolio_001`,
+    or reviewer memo diffs
+  - required crosswalk terms and caveats are present:
+    `internal-only`, `non-public`, `PUBLIC_CLAIMS.md`, `README.md`, `EVAL.md`,
+    `portfolio_001`, `not public proof`, `Task 4`, benchmark,
+    production-readiness, latency, token-savings, demo-readiness,
+    `public-safe candidate`, `internal-only context`, `disallowed/held`, and
+    `needs-more-evidence`
+  - crosswalk has no trailing whitespace and ends with a newline
+  - `git diff --check`: clean
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - create the local release commit for the exact three-file release unit
+  - push remains Ryan-gated
+- Acceptance status: commit-gating cleared first-pass after full regression
+
+## 2026-05-21 -- Public-Safe Wording Crosswalk Full Regression Cleared
+
+- Ran full regression after release-unit audit clearance for the three-file
+  internal public-safe wording crosswalk release unit.
+- Full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1738 passed in 514.97s`
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run commit-gating over the exact three-file internal crosswalk release unit:
+    `PLAN.md`, `BUILDLOG.md`, and
+    `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    commit-gating clears
+- Acceptance status: full regression cleared first-pass after audit
+
+## 2026-05-21 -- Public-Safe Wording Crosswalk Release-Unit Audit Cleared
+
+- Reviewed the read-only release-unit audit result for the three-file internal
+  public-safe wording crosswalk release unit.
+- Audit verdict: PASS.
+- Findings: none.
+- Audit confirmed:
+  - release unit is exactly `PLAN.md`, `BUILDLOG.md`, and
+    `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+  - crosswalk is internal-only / non-public
+  - public-safe candidates map only to `PUBLIC_CLAIMS.md`, `README.md`, and
+    `EVAL.md`
+  - `portfolio_001` remains internal-only / held context and is not used as
+    public proof
+  - both P3 risks are preserved
+  - benchmark, production-readiness, latency, token-savings, generalized
+    runtime, broad product superiority, and demo-readiness language is
+    disallowed/held or needs more evidence
+  - Task 4 remains held unless eval-bundle/report/pipeline reproducibility
+    claims become the target
+  - public/demo claim files, `portfolio_001`, reviewer memo, source, tests,
+    API/MCP, schema/config, package exports, eval logic, fixtures, tasks, and
+    run specs are unchanged
+  - no staged files
+  - `git diff --check`: clean
+- Release state:
+  - workspace-only accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run full regression:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v`
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    full regression and commit-gating clear
+- Acceptance status: release-unit audit cleared first-pass
+
+## 2026-05-21 -- Public-Safe Wording Crosswalk Accepted
+
+- Reviewed the returned bounded implementation slice for the internal
+  public-safe wording draft/crosswalk.
+- Completion state: DONE.
+- Findings: none.
+- Accepted artifact:
+  `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`.
+- Acceptance review:
+  - new artifact is internal-only / non-public
+  - public-safe candidate rows map to `PUBLIC_CLAIMS.md`, `README.md`, and
+    `EVAL.md`
+  - `portfolio_001` appears only as internal-only / held context and is not
+    used as public proof
+  - both P3 risks are preserved:
+    raw `runs.jsonl` evidence is dense/non-uniform, and baseline comparisons
+    must not be framed as broad benchmark or performance claims
+  - benchmark, production-readiness, latency, token-savings, generalized
+    runtime, broad product superiority, and demo-readiness wording is
+    disallowed or needs more evidence
+  - Task 4 remains held
+  - public/demo claim files, `portfolio_001`, reviewer memo, source, tests,
+    API/MCP, schema/config, package exports, eval logic, fixtures, tasks, and
+    run specs are unchanged
+  - no staged files
+  - `git diff --check`: clean
+- Accepted release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+- Next route:
+  - run a read-only release-unit audit over the exact three-file internal
+    crosswalk release unit
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    that audit returns and is reviewed
+- Acceptance status: accepted first-pass
+
+## 2026-05-21 -- Public-Safe Wording Crosswalk Authorized
+
+- Ryan approved the recommended approach after the public/demo
+  claim-readiness planning result.
+- Accepted control decision:
+  - accept the planning result
+  - proceed to a narrow internal, non-public public-safe wording
+    draft/crosswalk slice
+  - keep Task 4 held
+  - keep public/demo claim updates held
+- Next route:
+  - issue a bounded implementation prompt to create only the internal
+    public-safe wording draft/crosswalk artifact
+  - do not update `PUBLIC_CLAIMS.md`, `README.md`, `EVAL.md`,
+    `portfolio_001`, the reviewer readiness memo, source, tests, API/MCP,
+    schema/config, package exports, or eval logic
+  - do not run Task 4
+  - do not stage, commit, or push
+- Acceptance status: planning/control decision accepted after Ryan go
+
+## 2026-05-21 -- Public/Demo Claim-Readiness Planning Returned
+
+- Reviewed the returned read-only public/demo claim-readiness planning result.
+- Completion state: DONE.
+- Findings:
+  - `portfolio_001` is not public claim authorization; it remains
+    internal-only exact-query evidence
+  - existing public-safe wording can be planned only from `PUBLIC_CLAIMS.md`,
+    `README.md`, and `EVAL.md`, not from `portfolio_001` as public proof
+  - carried-forward P3 risks remain active:
+    - raw `runs.jsonl` evidence is dense/non-uniform, so reviewers should start
+      from the memo and `evidence.md`
+    - baseline comparisons must not be framed as broad benchmark or
+      performance claims
+  - latency evidence is unfavorable for public performance language
+- Planning recommendation:
+  - proceed to a narrow internal, non-public public-safe wording draft/crosswalk
+    constrained to the current allowed public claim envelope only
+  - keep public/demo claims held
+  - do not run Task 4 first
+  - do not use `portfolio_001` as public proof
+- Proposed acceptance criteria for the next slice:
+  - every proposed public-facing sentence maps to `PUBLIC_CLAIMS.md`,
+    `README.md`, or `EVAL.md`
+  - `portfolio_001` appears only as internal-only/held context
+  - the two P3 risks are preserved
+  - no benchmark, production-readiness, latency, token-savings, generalized
+    runtime, or demo-readiness wording appears
+  - Task 4 remains held
+- Control verification:
+  - repo-backed truth remains `main`, `HEAD=origin/main=f5c5a5a`
+  - only workspace-local control docs are dirty: `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+- Control recommendation:
+  - accept the planning result
+  - authorize a narrow internal public-safe wording draft/crosswalk slice
+  - keep Task 4 and public/demo claim updates held
+- Next route:
+  - wait for Ryan explicit go/no-go on the narrow internal public-safe wording
+    draft/crosswalk slice
+  - do not advance before that decision
+- Acceptance status: held for Ryan go/no-go due claim-boundary findings
+
+## 2026-05-20 -- Public/Demo Claim-Readiness Planning Authorized
+
+- Ryan approved proceeding with the control recommendation after the internal
+  reviewer dry-run audit:
+  - use the memo as-is for internal reviewer circulation
+  - carry the two P3 risks as reviewer talking points
+  - keep Task 4 held
+  - keep public/demo claims held
+- Next route:
+  - issue a read-only public/demo claim-readiness planning prompt
+  - the lane should decide what, if anything, can be safely planned for
+    public/demo wording from existing evidence, whether Task 4 is needed before
+    any public/demo drafting slice, and what the smallest next safe route is
+  - output a plan/spec and statement classification only
+  - do not edit files
+  - do not update public/demo claims
+  - do not run Task 4
+  - do not stage, commit, or push
+- Acceptance status: planning/control decision accepted after Ryan go
+
+## 2026-05-20 -- Internal Reviewer Dry-Run Audit Returned
+
+- Reviewed the returned read-only internal reviewer dry-run / objection audit.
+- Completion state: DONE.
+- Audit recommendation:
+  - memo is ready for internal reviewer use
+  - no narrow memo correction is needed
+  - Task 4 is not needed before the next reviewer-readiness move
+  - public/demo planning remains premature
+- Findings to carry forward before advancement:
+  - P3: raw evidence is dense and partly non-uniform across
+    historical/imported rows; `manifest.json` and the memo's human-readable
+    citation order mitigate this, so no memo correction is recommended
+  - P3: baseline comparison can be misread as a benchmark or broad performance
+    claim; the memo and bundle constrain it to exact-query, fixed-budget,
+    internal evidence with latency caveats, so no memo correction is
+    recommended
+- Control verification:
+  - repo-backed truth remains `main`, `HEAD=origin/main=f5c5a5a`
+  - only workspace-local control docs are dirty: `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check`: clean
+- Control recommendation:
+  - accept the audit result
+  - use the memo as-is for internal reviewer circulation
+  - carry the two P3 risks as reviewer talking points
+  - keep Task 4 held
+  - keep public/demo claims held
+- Next route:
+  - wait for Ryan explicit go/no-go on using the memo as-is for internal
+    reviewer circulation
+  - do not advance before that decision
+- Acceptance status: held for Ryan go/no-go due P3 reviewer-friction findings
+
+## 2026-05-20 -- Internal Reviewer Dry-Run Audit Authorized
+
+- Ryan agreed with the control recommendation to run a read-only internal
+  reviewer dry-run / objection audit after the pushed reviewer readiness memo
+  release.
+- Scope:
+  - stress-test whether the pushed reviewer readiness memo and `portfolio_001`
+    evidence are understandable, bounded, and persuasive to a skeptical
+    internal reviewer without overclaiming
+  - do not edit files
+  - do not run Task 4
+  - do not update public/demo claims
+  - do not stage, commit, or push
+- Next route:
+  - issue the read-only internal reviewer dry-run / objection audit prompt
+- Acceptance status: planning/control decision accepted first-pass
+
 ## 2026-05-20 -- Reviewer Readiness Memo Pushed
 
 - Ryan authorized push for the reviewer readiness memo release.
