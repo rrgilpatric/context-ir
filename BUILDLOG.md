@@ -2,6 +2,290 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Summary-Content Lexical Fast Path Commit-Gating Cleared
+
+- Commit-gating is cleared for the exact four-file release unit.
+- Checks:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check` clean
+  - no diffs in README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, AGENTS, pyproject,
+    package-root exports, MCP, compiler, optimizer, renderer, parser, resolver,
+    or dependency frontier
+  - no API/MCP/schema/config/package-export, eval schema, portfolio artifact,
+    Task 4, or public/demo claim drift was found
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Next route:
+  - create the local release commit for the exact four-file release unit
+  - push remains Ryan-gated
+  - do not run Task 4, portfolio updates, public/demo claim work, or next
+    optimization measurement before the local release commit is created and
+    reviewed
+- Acceptance status: commit-gating-cleared
+
+## 2026-05-22 -- Summary-Content Lexical Fast Path Full Regression Cleared
+
+- Full regression is cleared for the exact four-file release unit.
+- Validation:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1748 passed in 52.15s`
+- Release unit remains:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Next route:
+  - commit-gating over the exact four-file release unit
+  - verify exact dirty/staged/untracked boundaries, `git diff --check`, and no
+    forbidden claim/API/MCP/schema/package-export/eval/Task 4 drift
+  - do not stage, commit, push, Task 4, portfolio updates, or public/demo claim
+    work until commit-gating clears and is reviewed
+- Acceptance status: full-regression-cleared
+
+## 2026-05-22 -- Summary-Content Lexical Fast Path Audit Cleared
+
+- The read-only release-unit audit returned DONE with verdict PASS and no
+  findings.
+- Release-unit audit is cleared for the exact four-file workspace unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Accepted audit result:
+  - scope stayed clean with no README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE,
+    AGENTS, pyproject, package-export, MCP, compiler, optimizer, renderer,
+    parser, resolver, dependency-frontier, eval schema, Task 4, portfolio, or
+    public/demo claim drift
+  - `candidate.searchable_text` remains the joined `searchable_parts` surface
+    for embedding callers
+  - summary content is split with the same token delimiter used by
+    `_extract_terms`, then terms are recomposed with the same ordered
+    de-duplication
+  - no Task 3 fixture/query hardcoding was found
+  - reported validation and Task 3 preservation evidence are credible
+- Live repo truth verified during control review:
+  - branch `main`
+  - `HEAD=origin/main=39dfda4`
+  - dirty tracked files are exactly the four audit-scope files
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Next route:
+  - full regression over the complete suite:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v`
+  - do not run commit-gating, stage, commit, push, Task 4, portfolio updates,
+    or public/demo claim work until full regression returns and is reviewed
+- Acceptance status: release-unit-audit-cleared
+
+## 2026-05-22 -- Summary-Content Lexical Fast Path Workspace Acceptance
+
+- The bounded summary-content lexical fast-path implementation lane returned
+  DONE and is workspace-only accepted first-pass.
+- Accepted scope:
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - pre-existing dirty control docs remain `PLAN.md` and `BUILDLOG.md`
+- Accepted implementation:
+  - adds private `_SearchablePart` metadata parallel to `searchable_parts`
+  - preserves `candidate.searchable_text` as the exact same joined
+    `searchable_parts` surface for embedding callers
+  - makes lexical scoring use summary-content token fragments before term
+    extraction, avoiding raw joined-summary `_extract_terms` work while
+    preserving joined searchable extraction semantics
+  - preserves scoring weights, thresholds, selected-unit order, warning
+    semantics, eval schema, API/MCP/package-export boundaries, Task 4 hold, and
+    public/demo claim holds
+- Reported validation:
+  - scoped ruff check: passed
+  - scoped format check: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py -v`:
+    `38 passed`
+  - `git diff --check`: clean
+- Control review validation rerun:
+  - summary extraction equivalence spot checks: passed
+  - `.venv/bin/python -m pytest
+    tests/test_semantic_scorer.py::test_lexical_relevance_fast_paths_summary_content_without_semantic_drift
+    tests/test_semantic_scorer.py::test_lexical_relevance_composes_searchable_parts_without_joined_extraction
+    tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units
+    tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_keeps_child_method_support_pack
+    -v`: `4 passed`
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py
+    tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_scorer.py
+    tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py
+    tests/test_eval_signal_smoke_e.py -v`: `38 passed`
+- Accepted behavior evidence:
+  - fixture-root Task 3 budget `280`: expected 5 units, `223` tokens, no
+    warnings
+  - full-repo Task 3 budget `280`: accepted exact four units, `274` tokens,
+    `omitted_uncertainty x3`
+- Accepted instrumentation evidence:
+  - before edit: `_extract_terms` unique misses `106,918`; raw
+    summary-content misses `70,421`
+  - after edit: `_extract_terms` unique misses `52,446`; raw summary-content
+    misses `0`
+- Next route:
+  - read-only release-unit audit over exact four-file workspace unit:
+    `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_scorer.py`, and
+    `tests/test_semantic_scorer.py`
+  - do not run full regression, commit-gating, stage, commit, push, Task 4,
+    portfolio updates, or public/demo claim work until the audit returns and is
+    reviewed
+- Acceptance status: first-pass
+
+## 2026-05-22 -- Scorer Searchable-Parts Attribution Measurement Accepted
+
+- The read-only scorer searchable-parts attribution measurement lane returned
+  DONE and is accepted as workspace-only routing evidence.
+- Artifact directory:
+  - `/private/tmp/context_ir_searchable_parts_attribution_dpq0kdag/`
+- Live repo truth verified during control review:
+  - branch `main`
+  - `HEAD=origin/main=39dfda4`
+  - dirty tracked files are limited to `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Accepted behavior evidence:
+  - full-repo Task 3 budget `280` still selects the accepted exact four units
+    in order
+  - full-repo Task 3 remains `274` tokens with `omitted_uncertainty x3`
+  - fixture-root Task 3 remains the expected 5 units in `223` tokens with no
+    warnings
+- Accepted attribution:
+  - total `_extract_terms` misses: `106,918`
+  - total measured extractor time: about `1.480s`
+  - `terms_for_parts` calls/misses: `140,860 / 70,430`
+  - `term_set_for_parts` calls/misses: `70,430 / 70,430`
+  - `summary_content`: `70,430` calls, `70,421` misses, about `1.133s`
+  - `primary_text`: `136,568` calls, `32,228` misses, about `0.157s`; these
+    misses occur before searchable-part composition, so searchable-part lookups
+    hit the text cache for this role
+  - `body_text`: `8,196` calls, `3,964` misses, about `0.189s`; this role is
+    outside `searchable_parts`
+  - `file_path`: `72,321` calls, `209` misses, about `0.001s`
+  - `eval_metadata_payload`: `104` calls, `62` misses, negligible time
+  - `reason_detail_payload`: `83,564` calls, `33` misses, negligible time
+  - `query`: `3` calls, `1` miss
+- Accepted diagnosis:
+  - `summary_content` is the dominant remaining searchable-parts lexical miss
+    source and the safest next optimization target
+  - `file_path`, `reason_detail_payload`, and eval metadata are not meaningful
+    optimization targets by time
+  - `body_text` is meaningful but outside the current searchable-parts path
+- Next route:
+  - run one bounded implementation slice for a behavior-preserving
+    summary-content lexical fast path in `src/context_ir/semantic_scorer.py`
+    with focused tests
+  - preserve `candidate.searchable_text`, scoring weights, selected-unit order,
+    warnings, Task 3 full-repo and fixture-root results, API/MCP/package-export
+    boundaries, eval schema, Task 4 hold, and public/demo claim holds
+  - do not stage, commit, push, update portfolio artifacts, run Task 4, or
+    update public/demo claims from that implementation lane
+- Acceptance status: measurement accepted first-pass
+
+## 2026-05-22 -- Scorer Searchable-Parts Post-Push Latency Verification Accepted
+
+- The read-only post-push latency verification lane for the pushed scorer
+  searchable-parts release returned DONE and is accepted as workspace-only
+  routing evidence.
+- Artifact directory:
+  - `/private/tmp/context_ir_latency_profile_after_searchable_parts_8d3UYbJt/`
+- Live repo truth verified during control review:
+  - branch `main`
+  - `HEAD=origin/main=39dfda4`
+  - dirty tracked files are limited to `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Accepted behavior evidence:
+  - full-repo Task 3 budget `280` still selects the accepted exact four units
+    in order
+  - full-repo Task 3 remains `274` tokens with `omitted_uncertainty x3`
+  - fixture-root Task 3 remains the expected 5 units in `223` tokens with no
+    warnings
+- Accepted timing:
+  - full-repo raw latency: `8.553715s`
+  - full-repo cProfile latency: `20.891246s`
+  - fixture-root raw latency: `0.004188s`
+- Accepted searchable-parts evidence:
+  - `_lexical_relevance` calls: `70,430`
+  - joined searchable-text direct calls inside `_lexical_relevance`: `0`
+  - joined searchable-text `_extract_terms` calls inside `_lexical_relevance`:
+    `0`
+  - known joined searchable-text term calls total: `0`
+  - `term_set_for_parts` calls/misses: `70,430 / 70,430`
+  - `terms_for_parts` calls/misses: `140,860 / 70,430`
+  - total `_extract_terms` calls: `106,918`
+- Accepted diagnosis:
+  - the pushed release preserved behavior and eliminated the joined
+    `candidate.searchable_text` extraction path
+  - the remaining scorer lexical cost is now searchable-parts term
+    composition/extraction under `_lexical_relevance`
+  - optimizer sorting/cache lookup remains close behind, but the next safe
+    move needs more scorer attribution before implementation
+- Next route:
+  - run one bounded read-only scorer searchable-parts attribution measurement
+    lane
+  - break the remaining `terms_for_parts` / `_extract_terms` misses down by
+    part role, such as `primary_text`, `file_path`, summary content,
+    reason/detail payload, and body text
+  - do not implement an optimization, run Task 4, update public/demo claims,
+    update portfolio artifacts, stage, commit, or push from that measurement
+    lane
+- Acceptance status: post-push verification accepted first-pass
+
+## 2026-05-22 -- Scorer Searchable-Text Decomposition Pushed
+
+- Ryan explicitly authorized pushing the local scorer searchable-parts release.
+- Pushed release:
+  - `39dfda4 Cache scorer searchable parts`
+  - remote `main` advanced from `c6b1fac` to `39dfda4`
+- Release state:
+  - workspace accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed to remote: yes
+- Final pushed scope:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=39dfda4`
+  - no staged files
+  - no untracked files
+  - no working-tree diff
+  - `git diff --check` clean
+- Next route:
+  - run one bounded read-only post-push latency verification lane on the pushed
+    scorer searchable-parts release
+  - verify Task 3 full-repo and fixture-root behavior remains unchanged
+  - measure whether joined searchable-text extraction remains eliminated in the
+    full provider path and identify the next dominant bottleneck
+  - do not run Task 4, update public/demo claims, update portfolio artifacts,
+    stage, commit, or push from that verification lane
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-22 -- Scorer Searchable-Text Decomposition Commit-Gating Cleared
 
 - Commit-gating is cleared for the exact four-file release unit.

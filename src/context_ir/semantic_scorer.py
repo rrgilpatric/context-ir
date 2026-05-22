@@ -184,6 +184,14 @@ class SemanticScoringResult:
 
 
 @dataclass(frozen=True)
+class _SearchablePart:
+    """One searchable surface with optional lexical extraction fragments."""
+
+    text: str
+    term_fragments: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class _CandidateProfile:
     """Semantic-first text profile for one renderable unit."""
 
@@ -195,10 +203,23 @@ class _CandidateProfile:
     symbol_kind: ResolvedSymbolKind | None
     searchable_parts: tuple[str, ...]
     body_text: str | None
+    lexical_searchable_parts: tuple[_SearchablePart, ...] = ()
     searchable_text: str = field(init=False)
 
     def __post_init__(self) -> None:
         """Preserve the joined searchable surface for embedding callers."""
+        lexical_searchable_parts = self.lexical_searchable_parts
+        if not lexical_searchable_parts:
+            lexical_searchable_parts = tuple(
+                _SearchablePart(part) for part in self.searchable_parts
+            )
+            object.__setattr__(
+                self,
+                "lexical_searchable_parts",
+                lexical_searchable_parts,
+            )
+        if _searchable_part_texts(lexical_searchable_parts) != self.searchable_parts:
+            raise ValueError("lexical searchable parts must match searchable_parts")
         object.__setattr__(
             self,
             "searchable_text",
@@ -220,6 +241,18 @@ class _LexicalCache:
     _term_sets_by_parts: dict[tuple[str, ...], frozenset[str]] = field(
         default_factory=dict
     )
+    _terms_by_searchable_parts: dict[
+        tuple[_SearchablePart, ...],
+        tuple[str, ...],
+    ] = field(default_factory=dict)
+    _normalized_by_searchable_parts: dict[
+        tuple[_SearchablePart, ...],
+        str,
+    ] = field(default_factory=dict)
+    _term_sets_by_searchable_parts: dict[
+        tuple[_SearchablePart, ...],
+        frozenset[str],
+    ] = field(default_factory=dict)
 
     def terms(self, text: str) -> tuple[str, ...]:
         """Return extracted terms for ``text``, cached within this request."""
@@ -249,15 +282,9 @@ class _LexicalCache:
         """Return terms for joined ``parts`` using cached per-part extraction."""
         terms = self._terms_by_parts.get(parts)
         if terms is None:
-            seen: set[str] = set()
-            composed_terms: list[str] = []
-            for part in parts:
-                for term in self.terms(part):
-                    if term in seen:
-                        continue
-                    seen.add(term)
-                    composed_terms.append(term)
-            terms = tuple(composed_terms)
+            terms = self.terms_for_searchable_parts(
+                tuple(_SearchablePart(part) for part in parts)
+            )
             self._terms_by_parts[parts] = terms
         return terms
 
@@ -276,6 +303,62 @@ class _LexicalCache:
             term_set = frozenset(self.terms_for_parts(parts))
             self._term_sets_by_parts[parts] = term_set
         return term_set
+
+    def terms_for_searchable_parts(
+        self,
+        parts: tuple[_SearchablePart, ...],
+    ) -> tuple[str, ...]:
+        """Return terms for joined searchable ``parts`` using lexical fragments."""
+        terms = self._terms_by_searchable_parts.get(parts)
+        if terms is None:
+            seen: set[str] = set()
+            composed_terms: list[str] = []
+            for part in parts:
+                for term in self._terms_for_searchable_part(part):
+                    if term in seen:
+                        continue
+                    seen.add(term)
+                    composed_terms.append(term)
+            terms = tuple(composed_terms)
+            self._terms_by_searchable_parts[parts] = terms
+        return terms
+
+    def normalized_searchable_parts(
+        self,
+        parts: tuple[_SearchablePart, ...],
+    ) -> str:
+        """Return the normalized lexical surface for joined searchable ``parts``."""
+        normalized = self._normalized_by_searchable_parts.get(parts)
+        if normalized is None:
+            normalized = " ".join(self.terms_for_searchable_parts(parts))
+            self._normalized_by_searchable_parts[parts] = normalized
+        return normalized
+
+    def term_set_for_searchable_parts(
+        self,
+        parts: tuple[_SearchablePart, ...],
+    ) -> frozenset[str]:
+        """Return searchable-part terms as an immutable set."""
+        term_set = self._term_sets_by_searchable_parts.get(parts)
+        if term_set is None:
+            term_set = frozenset(self.terms_for_searchable_parts(parts))
+            self._term_sets_by_searchable_parts[parts] = term_set
+        return term_set
+
+    def _terms_for_searchable_part(self, part: _SearchablePart) -> tuple[str, ...]:
+        """Return terms for one searchable part, honoring lexical fragments."""
+        if not part.term_fragments:
+            return self.terms(part.text)
+
+        seen: set[str] = set()
+        composed_terms: list[str] = []
+        for fragment in part.term_fragments:
+            for term in self.terms(fragment):
+                if term in seen:
+                    continue
+                seen.add(term)
+                composed_terms.append(term)
+        return tuple(composed_terms)
 
 
 def score_semantic_units(
@@ -329,6 +412,11 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
     for unit_id, symbol in sorted(program.resolved_symbols.items()):
         summary = render_session.render(unit_id, RenderDetail.SUMMARY)
         body_text = _body_text_for_symbol(render_session, unit_id, symbol)
+        lexical_searchable_parts = _searchable_lexical_parts(
+            _searchable_part(symbol.qualified_name),
+            _searchable_part(symbol.definition_site.file_path),
+            _summary_searchable_part(summary.content),
+        )
         candidates.append(
             _CandidateProfile(
                 unit_id=unit_id,
@@ -337,17 +425,22 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=symbol.definition_site.file_path,
                 scope_id=None,
                 symbol_kind=symbol.kind,
-                searchable_parts=_searchable_parts(
-                    symbol.qualified_name,
-                    symbol.definition_site.file_path,
-                    summary.content,
-                ),
+                searchable_parts=_searchable_part_texts(lexical_searchable_parts),
                 body_text=body_text,
+                lexical_searchable_parts=lexical_searchable_parts,
             )
         )
 
     for access in sorted(program.unresolved_frontier, key=lambda item: item.access_id):
         summary = render_session.render(access.access_id, RenderDetail.SUMMARY)
+        lexical_searchable_parts = _searchable_lexical_parts(
+            _searchable_part(access.access_text),
+            _searchable_part(access.site.file_path),
+            _searchable_part(access.reason_code.value),
+            _searchable_part(access.context.value),
+            _searchable_part(access.detail),
+            _summary_searchable_part(summary.content),
+        )
         candidates.append(
             _CandidateProfile(
                 unit_id=access.access_id,
@@ -356,15 +449,9 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=access.site.file_path,
                 scope_id=access.enclosing_scope_id,
                 symbol_kind=None,
-                searchable_parts=_searchable_parts(
-                    access.access_text,
-                    access.site.file_path,
-                    access.reason_code.value,
-                    access.context.value,
-                    access.detail,
-                    summary.content,
-                ),
+                searchable_parts=_searchable_part_texts(lexical_searchable_parts),
                 body_text=None,
+                lexical_searchable_parts=lexical_searchable_parts,
             )
         )
 
@@ -376,6 +463,13 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
             construct.construct_id,
             RenderDetail.SUMMARY,
         )
+        lexical_searchable_parts = _searchable_lexical_parts(
+            _searchable_part(construct.construct_text),
+            _searchable_part(construct.site.file_path),
+            _searchable_part(construct.reason_code.value),
+            _searchable_part(construct.detail),
+            _summary_searchable_part(summary.content),
+        )
         candidates.append(
             _CandidateProfile(
                 unit_id=construct.construct_id,
@@ -384,14 +478,9 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=construct.site.file_path,
                 scope_id=construct.enclosing_scope_id,
                 symbol_kind=None,
-                searchable_parts=_searchable_parts(
-                    construct.construct_text,
-                    construct.site.file_path,
-                    construct.reason_code.value,
-                    construct.detail,
-                    summary.content,
-                ),
+                searchable_parts=_searchable_part_texts(lexical_searchable_parts),
                 body_text=None,
+                lexical_searchable_parts=lexical_searchable_parts,
             )
         )
 
@@ -402,6 +491,19 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
         summary = render_session.render(
             evidence.unit_id,
             RenderDetail.SUMMARY,
+        )
+        lexical_searchable_parts = _searchable_lexical_parts(
+            _searchable_part(evidence.fixture_id),
+            _searchable_part(" ".join(evidence.task_ids)),
+            _searchable_part(" ".join(evidence.run_spec_ids)),
+            _searchable_part(evidence.artifact_path),
+            _searchable_part(evidence.runtime_family),
+            _searchable_part(evidence.construct_text),
+            _searchable_part(evidence.reason_code.value),
+            _searchable_part(evidence.primary_capability_tier.value),
+            _searchable_part("unsupported opaque runtime provenance additive evidence"),
+            _searchable_part(_payload_text(evidence.normalized_payload_mapping())),
+            _summary_searchable_part(summary.content),
         )
         candidates.append(
             _CandidateProfile(
@@ -416,20 +518,9 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=evidence.artifact_path,
                 scope_id=None,
                 symbol_kind=None,
-                searchable_parts=_searchable_parts(
-                    evidence.fixture_id,
-                    " ".join(evidence.task_ids),
-                    " ".join(evidence.run_spec_ids),
-                    evidence.artifact_path,
-                    evidence.runtime_family,
-                    evidence.construct_text,
-                    evidence.reason_code.value,
-                    evidence.primary_capability_tier.value,
-                    "unsupported opaque runtime provenance additive evidence",
-                    _payload_text(evidence.normalized_payload_mapping()),
-                    summary.content,
-                ),
+                searchable_parts=_searchable_part_texts(lexical_searchable_parts),
                 body_text=None,
+                lexical_searchable_parts=lexical_searchable_parts,
             )
         )
 
@@ -680,11 +771,15 @@ def _lexical_relevance(
 ) -> float:
     """Return direct lexical relevance from semantic-first text surfaces."""
     primary_terms = lexical_cache.term_set(candidate.primary_text)
-    searchable_terms = lexical_cache.term_set_for_parts(candidate.searchable_parts)
+    searchable_terms = lexical_cache.term_set_for_searchable_parts(
+        candidate.lexical_searchable_parts
+    )
     path_terms = lexical_cache.term_set(candidate.file_path)
     focus_terms = _focus_terms(query_terms)
     normalized_primary = lexical_cache.normalized(candidate.primary_text)
-    normalized_searchable = lexical_cache.normalized_parts(candidate.searchable_parts)
+    normalized_searchable = lexical_cache.normalized_searchable_parts(
+        candidate.lexical_searchable_parts
+    )
 
     primary_phrase = _phrase_match(
         normalized_query=normalized_query,
@@ -1307,6 +1402,42 @@ def _is_test_file_path(file_path: str) -> bool:
 def _join_searchable_text(*parts: str | None) -> str:
     """Join optional profile parts without introducing placeholder text."""
     return "\n".join(_searchable_parts(*parts))
+
+
+def _searchable_part(text: str | None) -> _SearchablePart | None:
+    """Return a plain searchable part, omitting empty optional text."""
+    if not text:
+        return None
+    return _SearchablePart(text)
+
+
+def _summary_searchable_part(summary_content: str) -> _SearchablePart | None:
+    """Return a summary part that extracts lexical terms from reusable tokens."""
+    if not summary_content:
+        return None
+    return _SearchablePart(
+        text=summary_content,
+        term_fragments=_summary_content_term_fragments(summary_content),
+    )
+
+
+def _searchable_lexical_parts(
+    *parts: _SearchablePart | None,
+) -> tuple[_SearchablePart, ...]:
+    """Return concrete searchable lexical parts."""
+    return tuple(part for part in parts if part is not None)
+
+
+def _searchable_part_texts(parts: tuple[_SearchablePart, ...]) -> tuple[str, ...]:
+    """Return the embedding-visible text for searchable lexical parts."""
+    return tuple(part.text for part in parts)
+
+
+def _summary_content_term_fragments(summary_content: str) -> tuple[str, ...]:
+    """Split summary content into token fragments that preserve term semantics."""
+    return tuple(
+        raw_token for raw_token in _TOKEN_SPLIT_RE.split(summary_content) if raw_token
+    )
 
 
 def _searchable_parts(*parts: str | None) -> tuple[str, ...]:

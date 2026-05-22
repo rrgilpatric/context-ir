@@ -40,13 +40,181 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the optimizer sort-key cache release.
+Current pushed release authority is the scorer searchable-parts release.
 The latest pushed source/contract/routing authority is
-`5dc230e Cache optimizer sort keys`; the latest pushed internal
+`39dfda4 Cache scorer searchable parts`; the latest pushed internal
 product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed scorer searchable-parts release:
+`39dfda4 Cache scorer searchable parts`. This commit contains the accepted,
+audit-cleared, full-regression-cleared, commit-gating-cleared, locally
+committed, and pushed scorer/test/continuity release unit that decomposes
+candidate `searchable_text` into reusable private `searchable_parts` while
+preserving the joined `candidate.searchable_text` embedding surface. It makes
+`_lexical_relevance` compose terms and normalization from request-scoped cached
+parts instead of extracting from the full joined searchable surface, while
+preserving scoring policy, selected-unit order, warning semantics, API/MCP and
+package-export boundaries, eval schema, Task 3 exact behavior, Task 4 hold, and
+public/demo claim holds. Ryan explicitly authorized the push, and
+`git push origin main` advanced remote `main` from `c6b1fac` to `39dfda4`.
+This continuity entry records the post-push state. Do not route `39dfda4` back
+to release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
+
+The read-only post-push scorer searchable-parts latency verification lane
+returned DONE and is accepted as workspace-only routing evidence. Artifacts are
+under
+`/private/tmp/context_ir_latency_profile_after_searchable_parts_8d3UYbJt/`.
+Accepted verification result:
+
+- no Task 3 behavior drift:
+  - full-repo budget `280` still selects the accepted exact four units in
+    `274` tokens with `omitted_uncertainty x3`
+  - fixture-root control still selects the expected 5 units in `223` tokens
+    with no warnings
+- current timing:
+  - full-repo raw latency is `8.553715s`
+  - full-repo cProfile latency is `20.891246s`
+  - fixture-root raw latency is `0.004188s`
+- searchable-parts evidence:
+  - `_lexical_relevance` calls: `70,430`
+  - joined searchable-text direct calls inside `_lexical_relevance`: `0`
+  - joined searchable-text `_extract_terms` calls inside `_lexical_relevance`:
+    `0`
+  - known joined searchable-text term calls total: `0`
+  - `term_set_for_parts` calls/misses: `70,430 / 70,430`
+  - `terms_for_parts` calls/misses: `140,860 / 70,430`
+  - total `_extract_terms` calls: `106,918`
+- accepted diagnosis:
+  - the pushed release preserved behavior and eliminated the joined
+    `candidate.searchable_text` extraction path
+  - the broader lexical scoring cost remains because every candidate still
+    composes searchable part terms, and all `70,430` searchable part tuples are
+    unique in this run
+  - the next dominant bottleneck is scorer-side lexical work in searchable
+    part composition/extraction under `_lexical_relevance`, with optimizer
+    sorting/cache lookup close behind
+
+The read-only scorer searchable-parts attribution measurement lane returned
+DONE and is accepted as workspace-only routing evidence. Artifacts are under
+`/private/tmp/context_ir_searchable_parts_attribution_dpq0kdag/`. Accepted
+measurement result:
+
+- Task 3 behavior is preserved:
+  - full-repo budget `280` still selects the accepted exact four units in
+    `274` tokens with `omitted_uncertainty x3`
+  - fixture-root control still selects the expected 5 units in `223` tokens
+    with no warnings
+- total `_extract_terms` misses: `106,918`
+- total measured extractor time: about `1.480s`
+- `terms_for_parts` calls/misses: `140,860 / 70,430`
+- `term_set_for_parts` calls/misses: `70,430 / 70,430`
+- accepted attribution:
+  - `summary_content`: `70,430` calls, `70,421` misses, about `1.133s`
+  - `primary_text`: `136,568` calls, `32,228` misses, about `0.157s`; these
+    misses occur before searchable-part composition, so searchable-part lookups
+    hit the text cache for this role
+  - `body_text`: `8,196` calls, `3,964` misses, about `0.189s`; this role is
+    outside `searchable_parts`
+  - `file_path`: `72,321` calls, `209` misses, about `0.001s`
+  - `eval_metadata_payload`: `104` calls, `62` misses, negligible time
+  - `reason_detail_payload`: `83,564` calls, `33` misses, negligible time
+  - `query`: `3` calls, `1` miss
+- accepted diagnosis:
+  - `summary_content` is the dominant remaining searchable-parts lexical miss
+    source and the safest next optimization target
+  - `file_path`, `reason_detail_payload`, and eval metadata are not meaningful
+    optimization targets by time
+  - `body_text` is meaningful but outside the current searchable-parts path
+
+The bounded summary-content lexical fast-path implementation lane returned
+DONE and is workspace-only accepted first-pass. Accepted implementation result:
+
+- changed only `src/context_ir/semantic_scorer.py` and
+  `tests/test_semantic_scorer.py` beyond the pre-existing dirty control docs
+- adds private `_SearchablePart` metadata parallel to `searchable_parts`
+- preserves `candidate.searchable_text` as the exact same joined
+  `searchable_parts` surface for embedding callers
+- makes lexical scoring use summary-content token fragments before term
+  extraction, avoiding raw joined-summary `_extract_terms` work while
+  preserving joined searchable extraction semantics
+- preserves scoring weights, thresholds, selected-unit order, warning
+  semantics, eval schema, API/MCP/package-export boundaries, Task 4 hold, and
+  public/demo claim holds
+- accepted validation:
+  - reported scoped ruff, format check, strict mypy, focused pytest, and
+    `git diff --check` passed
+  - control review reran:
+    - summary extraction equivalence spot checks: passed
+    - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+    - `.venv/bin/python -m ruff format --check src/context_ir/semantic_scorer.py tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+    - `.venv/bin/python -m mypy --strict src/`: passed
+    - `.venv/bin/python -m pytest tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py -v`: `38 passed`
+- accepted behavior evidence:
+  - fixture-root Task 3 budget `280`: expected 5 units, `223` tokens, no
+    warnings
+  - full-repo Task 3 budget `280`: accepted exact four units, `274` tokens,
+    `omitted_uncertainty x3`
+- accepted instrumentation evidence:
+  - before edit: `_extract_terms` unique misses `106,918`; raw
+    summary-content misses `70,421`
+  - after edit: `_extract_terms` unique misses `52,446`; raw summary-content
+    misses `0`
+
+The read-only release-unit audit returned DONE with verdict PASS and no
+findings. Release-unit audit is cleared for the exact four-file workspace unit:
+`PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_scorer.py`, and
+`tests/test_semantic_scorer.py`. Accepted audit result:
+
+- scope stayed clean with no README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE,
+  AGENTS, pyproject, package-export, MCP, compiler, optimizer, renderer,
+  parser, resolver, dependency-frontier, eval schema, Task 4, portfolio, or
+  public/demo claim drift
+- `candidate.searchable_text` remains the joined `searchable_parts` surface
+  for embedding callers
+- summary content is split with the same token delimiter used by
+  `_extract_terms`, then terms are recomposed with the same ordered
+  de-duplication
+- no Task 3 fixture/query hardcoding was found
+- reported validation and Task 3 preservation evidence are credible
+
+Full regression is cleared for the exact four-file release unit:
+
+- `.venv/bin/python -m ruff check src/ tests/`: passed
+- `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+  `114 files already formatted`
+- `.venv/bin/python -m mypy --strict src/`: passed,
+  `Success: no issues found in 39 source files`
+- `.venv/bin/python -m pytest tests/ -v`: `1748 passed in 52.15s`
+
+Commit-gating is cleared for the exact four-file release unit. Accepted
+commit-gating checks:
+
+- dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+- no staged files before staging
+- no untracked files
+- `git diff --check` clean
+- no diffs in README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, AGENTS, pyproject,
+  package-root exports, MCP, compiler, optimizer, renderer, parser, resolver,
+  or dependency frontier
+- no API/MCP/schema/config/package-export, eval schema, portfolio artifact,
+  Task 4, or public/demo claim drift was found
+
+Current next route:
+- create the local release commit for the exact four-file release unit
+- push remains Ryan-gated
+- do not run Task 4, portfolio updates, public/demo claim work, or next
+  optimization measurement before the local release commit is created and
+  reviewed
+
+Historical release and routing notes below remain accepted evidence and
+non-reopen constraints. Any older "Active next route" wording below is
+superseded by this canonical active release-state block unless a later entry
+explicitly overrides it.
 
 Pushed optimizer sort-key cache release:
 `5dc230e Cache optimizer sort keys`. This commit contains the accepted,

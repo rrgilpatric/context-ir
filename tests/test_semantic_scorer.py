@@ -967,6 +967,82 @@ def test_lexical_relevance_composes_searchable_parts_without_joined_extraction(
     }
 
 
+def test_lexical_relevance_fast_paths_summary_content_without_semantic_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Summary content is fragmented while preserving joined-searchable terms."""
+    summary_content = (
+        "proven summary: function main.run @ main.py:1:0-2:0\n"
+        "fields: ownerAlias: str = owner_alias\n"
+        "decorators: cached_property"
+    )
+    searchable_parts = ("main.run", "main.py", summary_content)
+    lexical_searchable_parts = (
+        semantic_scorer._SearchablePart("main.run"),
+        semantic_scorer._SearchablePart("main.py"),
+        semantic_scorer._SearchablePart(
+            text=summary_content,
+            term_fragments=semantic_scorer._summary_content_term_fragments(
+                summary_content
+            ),
+        ),
+    )
+    candidate = semantic_scorer._CandidateProfile(
+        unit_id="def:main.py:main.run",
+        kind=semantic_renderer.RenderedUnitKind.PROVEN_SYMBOL,
+        primary_text="main.run",
+        file_path="main.py",
+        scope_id=None,
+        symbol_kind=None,
+        searchable_parts=searchable_parts,
+        body_text=None,
+        lexical_searchable_parts=lexical_searchable_parts,
+    )
+    original_extract_terms = semantic_scorer._extract_terms
+    expected_searchable_terms = original_extract_terms(candidate.searchable_text)
+    expected_summary_terms = original_extract_terms(summary_content)
+    extract_calls_by_text: dict[str, int] = {}
+
+    def counting_extract_terms(text: str) -> tuple[str, ...]:
+        extract_calls_by_text[text] = extract_calls_by_text.get(text, 0) + 1
+        return original_extract_terms(text)
+
+    monkeypatch.setattr(
+        semantic_scorer,
+        "_extract_terms",
+        counting_extract_terms,
+    )
+
+    lexical_cache = semantic_scorer._LexicalCache()
+    query = "fix owner alias on main.run cached property"
+    query_terms = lexical_cache.terms(query)
+    normalized_query = lexical_cache.normalized(query)
+    extract_calls_by_text.clear()
+
+    lexical_score = semantic_scorer._lexical_relevance(
+        candidate=candidate,
+        query_terms=query_terms,
+        normalized_query=normalized_query,
+        lexical_cache=lexical_cache,
+    )
+
+    assert lexical_score > 0.0
+    assert candidate.searchable_text == "\n".join(searchable_parts)
+    assert summary_content not in extract_calls_by_text
+    assert candidate.searchable_text not in extract_calls_by_text
+    assert (
+        lexical_cache.terms_for_searchable_parts(candidate.lexical_searchable_parts)
+        == expected_searchable_terms
+    )
+    assert (
+        lexical_cache.terms_for_searchable_parts((lexical_searchable_parts[-1],))
+        == expected_summary_terms
+    )
+    assert lexical_cache.normalized_searchable_parts(
+        candidate.lexical_searchable_parts
+    ) == " ".join(expected_searchable_terms)
+
+
 def test_score_semantic_units_calibrates_tests_for_implementation_intent(
     tmp_path: Path,
 ) -> None:
