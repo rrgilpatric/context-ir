@@ -40,14 +40,28 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the parser splitlines-cache release.
+Current pushed release authority is the renderer source materialization-cache
+release.
 The latest pushed source/contract authority is
-`8e7b4a5 Cache parser source lines`; the latest pushed routing authority is
-`c37f5b1 Sync parser cache push routing`; the latest pushed internal
-product-differentiation artifact authority is
+`88b6b3a Cache renderer source materialization`; the latest pushed routing
+authority is `e0e15ec Sync renderer source cache routing`; the latest pushed
+internal product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed renderer source materialization-cache release:
+`88b6b3a Cache renderer source materialization`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed renderer/test/continuity
+release unit that adds request-scoped source materialization caching inside
+`_SemanticRenderSession` while preserving standalone `render_semantic_unit(...)`
+per-call disk-read behavior and Task 3 exact-unit behavior. Ryan explicitly
+authorized the push, and `git push origin main` advanced remote `main` from
+`c37f5b1` through `e0e15ec Sync renderer source cache routing`; this
+continuity entry records the post-push state. Do not route `88b6b3a` or
+`e0e15ec` back to release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push absent new findings.
 
 Pushed parser splitlines-cache release:
 `8e7b4a5 Cache parser source lines`. This commit contains the accepted,
@@ -1371,11 +1385,25 @@ Active next route:
   - full regression cleared: yes
   - commit-gating cleared: yes
   - local release commit created: yes
-  - pushed: no
-- next route is to wait for Ryan push authorization for the local renderer
-  source materialization-cache release
-- do not run Task 4, update public/demo claims, or start another optimization
-  route until push authorization is resolved
+  - pushed: yes
+- Ryan authorized push, and the release was pushed to `origin/main`
+- pushed release commits:
+  - `88b6b3a Cache renderer source materialization`
+  - `e0e15ec Sync renderer source cache routing`
+- next route is a read-only post-push latency verification lane on the pushed
+  renderer source materialization-cache release:
+  - re-profile the accepted Task 3 full-repo `context_ir` provider path
+  - compare against the parser-cache verification baseline of about
+    `17.8s` to `17.9s` raw and `36.707s` cProfile
+  - verify renderer file reads and splitline materializations stay materially
+    below the previous `29,675` source-span path
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - identify the next dominant bottleneck and recommend exactly one next
+    bounded optimization slice, or state that one more measurement slice is
+    needed
+  - do not edit files, run Task 4, update public/demo claims, change eval
+    schema, implement optimization, stage, commit, or push
 
 Task 3 product-differentiation checkpoint is authorized:
 

@@ -2,6 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Renderer Source-Line Cache Release Pushed
+
+- Ryan authorized pushing the local renderer source materialization-cache
+  release.
+- Pushed `main` to `origin/main`:
+  - `88b6b3a Cache renderer source materialization`
+  - `e0e15ec Sync renderer source cache routing`
+- Release state:
+  - workspace-only accepted: yes, first-pass with one narrow test correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- Next route:
+  - run a read-only post-push latency verification lane on the pushed renderer
+    source materialization-cache release
+  - compare against the parser-cache verification baseline of about `17.8s` to
+    `17.9s` raw and `36.707s` cProfile
+  - verify renderer file reads and splitline materializations stay materially
+    below the previous `29,675` source-span path
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - keep Task 4, public/demo claims, benchmark methodology, production/MCP,
+    staging, commit, and push held until that verification returns and is
+    reviewed
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-22 -- Renderer Source-Line Cache Local Release Commit Created
 
 - Created the local release commit after workspace acceptance, five-file
