@@ -6,12 +6,8 @@ from collections.abc import Callable
 from dataclasses import replace
 
 from context_ir.eval_evidence import discover_semantic_eval_runtime_evidence
-from context_ir.semantic_optimizer import optimize_semantic_units
-from context_ir.semantic_renderer import (
-    RenderDetail,
-    RenderedUnit,
-    render_semantic_unit,
-)
+from context_ir.semantic_optimizer import _SemanticOptimizerSession
+from context_ir.semantic_renderer import RenderedUnit
 from context_ir.semantic_scorer import SemanticScoringResult, score_semantic_units
 from context_ir.semantic_types import (
     SemanticCompileContext,
@@ -93,14 +89,15 @@ def _compile_budget_honest_artifact(
     best_fit: tuple[SemanticOptimizationResult, dict[str, RenderedUnit], str] | None = (
         None
     )
+    optimizer_session = _SemanticOptimizerSession.build(program, scoring)
     low = 0
     high = max_unit_budget
 
     while low <= high:
         unit_budget = (low + high) // 2
-        raw_optimization = optimize_semantic_units(program, scoring, unit_budget)
+        raw_optimization = optimizer_session.optimize(unit_budget)
         optimization = _with_compile_budget(raw_optimization, budget)
-        rendered_units = _render_selected_units(program, optimization)
+        rendered_units = optimizer_session.render_selected_units(optimization)
         document = _assemble_document(
             query=query,
             optimization=optimization,
@@ -171,21 +168,6 @@ def _copy_warnings(
         )
         for warning in warnings
     )
-
-
-def _render_selected_units(
-    program: SemanticProgram,
-    optimization: SemanticOptimizationResult,
-) -> dict[str, RenderedUnit]:
-    """Render every selected unit at its chosen detail."""
-    rendered_units: dict[str, RenderedUnit] = {}
-    for selection in optimization.selections:
-        rendered_units[selection.unit_id] = render_semantic_unit(
-            program,
-            selection.unit_id,
-            RenderDetail(selection.detail),
-        )
-    return rendered_units
 
 
 def _assemble_document(

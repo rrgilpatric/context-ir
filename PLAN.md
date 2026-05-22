@@ -798,6 +798,147 @@ Active next route:
 - next route is control selection of the next bounded north-star lane from the
   pushed scorer render-session optimization release; do not run Task 4, update
   public/demo claims, or route benchmark/production/MCP work from this release
+- Ryan agreed with the control recommendation to run a read-only
+  post-optimization latency verification lane
+- next route is that read-only verification lane:
+  - re-profile the accepted Task 3 full-repo `context_ir` provider path on the
+    pushed scorer render-session optimization release
+  - compare against the pre-optimization baseline of about `130.304s` raw
+    full-repo timing and about `150.319s` under cProfile
+  - verify whether scoring stays near the implementation-lane evidence of
+    `score_seconds=5.492` and whether `_unresolved_by_id` stays at one scoring
+    index build
+  - identify the new dominant bottleneck and recommend exactly one next
+    optimization slice, or state that one more measurement slice is needed
+  - do not edit files, run Task 4, update public/demo claims, change eval
+    schema, implement optimization, stage, commit, or push
+- the read-only post-optimization latency verification lane returned DONE and
+  is accepted as workspace-only routing evidence
+- verification result:
+  - full-repo raw elapsed improved from about `130.304s` to `69.954s`
+  - full-repo cProfile elapsed improved from about `150.319s` to `98.788s`
+  - scoring raw improved from about `63.687s` to `5.442s`
+  - optimizer raw remained essentially unchanged at about `50.246s`
+  - `_unresolved_by_id` fell from `44,543` calls to `19` total full-path calls
+  - selected Task 3 full-repo units, token count `274`, and
+    `omitted_uncertainty` warnings are preserved
+  - fixture-root control remained fast at about `0.014s`, with 5 units and
+    223 tokens
+- new dominant bottleneck:
+  - optimizer candidate/source materialization across the budget search
+  - 8 optimizer calls rebuild candidates
+  - `_SemanticRenderSession.render` was called about `1,752,815` times
+  - `_read_source_span` was called about `207,330` times
+- selected next optimization candidate:
+  - add a compile-scoped optimizer candidate/render materialization cache so
+    repeated budget-search calls reuse candidate render costs for the same
+    `(program, scoring)` instead of rebuilding every renderable unit for each
+    budget probe
+- hold before issuing the optimizer materialization-cache implementation prompt
+  until Ryan gives explicit go/no-go
+- Ryan explicitly authorized proceeding with the bounded optimizer
+  materialization-cache implementation slice
+- next route is to issue that implementation prompt and wait for the returned
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before audit, full regression,
+  commit-gating, staging, commit, push, Task 4, benchmark methodology,
+  production/MCP readiness, or public/demo route
+- the optimizer materialization-cache implementation returned DONE but is held
+  with one correction finding
+- finding:
+  - `optimize_semantic_units(...)` now builds `_SemanticOptimizerSession` before
+    checking `budget < 0`
+  - this changes standalone optimizer error ordering and can materialize
+    candidates before rejecting an invalid negative budget
+  - with malformed scoring and `budget=-1`, the function now raises
+    `scoring.scores must cover exactly the renderable unit IDs` instead of the
+    expected `budget must be >= 0`
+- recommended correction:
+  - restore negative-budget validation before session build in the standalone
+    `optimize_semantic_units(...)` wrapper
+  - add a regression proving negative budget fails before candidate
+    materialization/scoring coverage checks
+  - rerun the focused validation bundle and preserve reported Task 3
+    latency/selection evidence
+- do not accept, audit, run full regression, commit-gate, stage, commit, push,
+  run Task 4, or update public/demo claims until the correction returns and is
+  reviewed
+- the narrow correction returned DONE and is workspace-only accepted
+- accepted correction:
+  - `optimize_semantic_units(...)` now rejects negative budgets before
+    `_SemanticOptimizerSession.build(...)`
+  - the regression in `tests/test_semantic_optimizer.py` proves a malformed
+    scoring result with `budget=-1` raises `ValueError("budget must be >= 0")`
+    before candidate materialization or scoring-coverage validation
+  - compiler-scoped optimizer materialization reuse remains intact
+  - Task 3 full-repo budget `280` remains preserved at `274` tokens with the
+    accepted exact method, label, resolver, and unsupported alias-chain units
+    selected and `omitted_uncertainty x3` warnings preserved
+  - focused validation passed:
+    - `ruff check` over the five changed source/test files
+    - `ruff format --check` over the same files
+    - `mypy --strict src/`
+    - `pytest tests/test_semantic_optimizer.py tests/test_semantic_compiler.py tests/test_eval_signal_smoke_e.py -v`
+- accepted release unit is:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_semantic_optimizer.py`
+- next route is a read-only release-unit audit over the exact seven-file
+  optimizer materialization-cache release unit
+- do not run full regression, commit-gate, stage, commit, push, run Task 4,
+  update public/demo claims, or start the next north-star optimization lane
+  until the audit returns and is reviewed
+- the read-only release-unit audit returned PASS with no findings and is
+  accepted
+- audit-cleared release unit remains exactly:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_semantic_optimizer.py`
+- accepted audit findings:
+  - standalone negative-budget behavior is restored before optimizer session
+    materialization
+  - compiler budget probing reuses one optimizer session without leaking
+    per-probe optimizer state
+  - Task 3 fixture-root and full-repo exact-unit behavior remains covered
+  - no public/demo claim, Task 4, API/MCP/schema/config/package-export,
+    portfolio, README, EVAL, PUBLIC_CLAIMS, or ARCHITECTURE drift was found
+- next route is full regression for the exact seven-file optimizer
+  materialization-cache release unit
+- do not commit-gate, stage, commit, push, run Task 4, update public/demo
+  claims, or start the next north-star optimization lane until full regression
+  returns and is reviewed
+- full regression is cleared for the exact seven-file optimizer
+  materialization-cache release unit
+- full regression commands passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v` (`1741 passed`)
+- next route is commit-gating over the exact seven-file release unit
+- do not stage, commit, push, run Task 4, update public/demo claims, or start
+  the next north-star optimization lane until commit-gating clears
+- commit-gating is cleared over the exact seven-file optimizer
+  materialization-cache release unit
+- commit-gating verified:
+  - branch and refs: `main`, `HEAD=origin/main=347b564`
+  - dirty files exactly match the seven-file release unit
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check` clean
+  - no README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, API/MCP/schema/config,
+    package-export, portfolio, Task 4, or public/demo claim drift
+  - source/test diff is scoped to compiler-scoped optimizer materialization
+    reuse, restored standalone negative-budget validation, and preservation
+    regressions
+- next route is to stage and locally commit exactly the seven-file release unit
+- push remains held until Ryan explicitly authorizes it
 
 Task 3 product-differentiation checkpoint is authorized:
 

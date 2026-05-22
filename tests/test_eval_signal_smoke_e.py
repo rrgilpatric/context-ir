@@ -61,6 +61,11 @@ FULL_REPO_TASK3_ALIAS_UNCERTAINTY_ID = (
 FULL_REPO_TASK3_FRONTIER_CALL_ID = (
     "frontier:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8"
 )
+FULL_REPO_TASK3_OMITTED_WARNING_IDS = (
+    "frontier:call:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:8:22",
+    "frontier:attribute:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:10:8:10:24",
+    "frontier:attribute:evals/fixtures/oracle_signal_smoke_e/pkg/service.py:8:22:8:32",
+)
 FULL_REPO_TASK3_RESOLVER_NOISE_ID = (
     "def:src/context_ir/resolver.py:"
     "src.context_ir.resolver._resolve_transitive_sole_provider_self_call_symbol_id"
@@ -226,8 +231,16 @@ def test_signal_smoke_e_task3_query_keeps_child_method_support_pack() -> None:
         )
     )
     selected_units = {unit.unit_id: unit for unit in result.metadata.selected_units}
+    expected_unit_ids = {
+        "def:pkg/service.py:pkg.service.MemberSignalCompiler.compile_member_digest",
+        "def:pkg/labels.py:pkg.labels.build_member_label",
+        "frontier:call:pkg/service.py:10:8",
+        "def:pkg/service.py:pkg.service.MemberSignalCompiler.resolve_owner_alias",
+        "frontier:attribute:pkg/service.py:10:8:10:24",
+    }
 
     assert result.total_tokens <= 280
+    assert set(selected_units) == expected_unit_ids
     assert (
         selected_units[
             "def:pkg/service.py:pkg.service.MemberSignalCompiler.compile_member_digest"
@@ -277,6 +290,20 @@ def test_signal_smoke_e_task3_query_selects_full_repo_exact_units() -> None:
             result.metadata.unresolved_unit_ids
         )
         assert FULL_REPO_TASK3_RESOLVER_NOISE_ID not in selected_units
+        if budget == 280:
+            assert result.total_tokens == 274
+            assert result.warnings == ("omitted_uncertainty",) * 3
+            assert (
+                tuple(warning.unit_id for warning in result.metadata.warning_details)
+                == FULL_REPO_TASK3_OMITTED_WARNING_IDS
+            )
+            assert tuple(unit.unit_id for unit in result.metadata.selected_units) == (
+                FULL_REPO_TASK3_COMPILE_ID,
+                FULL_REPO_TASK3_LABEL_ID,
+                FULL_REPO_TASK3_RESOLVER_ID,
+                FULL_REPO_TASK3_ALIAS_UNCERTAINTY_ID,
+            )
+            assert selected_units[FULL_REPO_TASK3_RESOLVER_ID].detail == "source"
         parent_class = selected_units.get(FULL_REPO_TASK3_PARENT_ID)
         assert parent_class is None or parent_class.detail != "source"
 

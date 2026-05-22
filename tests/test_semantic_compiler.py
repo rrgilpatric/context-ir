@@ -11,12 +11,13 @@ import pytest
 
 import context_ir
 import context_ir.semantic_compiler as semantic_compiler
+import context_ir.semantic_optimizer as semantic_optimizer
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
 from context_ir.semantic_compiler import compile_semantic_context
-from context_ir.semantic_renderer import RenderDetail
+from context_ir.semantic_renderer import RenderDetail, RenderedUnit
 from context_ir.semantic_scorer import (
     SemanticScoringResult,
     SemanticUnitScore,
@@ -70,6 +71,16 @@ def _definition_id_for(program: SemanticProgram, qualified_name: str) -> str:
         for definition in program.syntax.definitions
         if definition.qualified_name == qualified_name
     )
+
+
+def _renderable_unit_ids(program: SemanticProgram) -> set[str]:
+    """Return every renderable semantic unit ID."""
+    return {
+        *program.resolved_symbols.keys(),
+        *(access.access_id for access in program.unresolved_frontier),
+        *(construct.construct_id for construct in program.unsupported_constructs),
+        *(evidence.unit_id for evidence in program.eval_runtime_evidence),
+    }
 
 
 def _estimate_tokens(text: str) -> int:
@@ -799,6 +810,110 @@ def test_compile_semantic_context_finds_largest_fitting_selection_under_budget(
         run_id,
         planner_id,
     ]
+
+
+def test_compile_semantic_context_reuses_optimizer_materialization_across_budget_probes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Budget probing reuses one optimizer candidate materialization pass."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "helpers.py").write_text(
+        "def helper() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.helpers import *
+            from pkg.helpers import helper
+
+            def run() -> None:
+                helper()
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    scoring = score_semantic_units(program, "run missing_call helper")
+    original_build_candidates = semantic_optimizer._build_candidates
+    original_optimize = semantic_optimizer._SemanticOptimizerSession.optimize
+    original_session = semantic_optimizer._SemanticRenderSession
+    build_candidate_calls = 0
+    probe_budgets: list[int] = []
+    session_count = 0
+    render_calls: dict[tuple[str, RenderDetail], int] = {}
+
+    class CountingRenderSession:
+        """Counting proxy for compiler-scoped optimizer materialization."""
+
+        def __init__(self, program_arg: SemanticProgram) -> None:
+            nonlocal session_count
+            session_count += 1
+            self._delegate = original_session(program_arg)
+
+        def render(self, unit_id: str, detail: RenderDetail) -> RenderedUnit:
+            cache_key = (unit_id, detail)
+            render_calls[cache_key] = render_calls.get(cache_key, 0) + 1
+            return self._delegate.render(unit_id, detail)
+
+    def counting_build_candidates(
+        program_arg: SemanticProgram,
+        scoring_arg: SemanticScoringResult,
+    ) -> list[semantic_optimizer._SemanticCandidate]:
+        nonlocal build_candidate_calls
+        build_candidate_calls += 1
+        return original_build_candidates(program_arg, scoring_arg)
+
+    def counting_optimize(
+        self: semantic_optimizer._SemanticOptimizerSession,
+        budget: int,
+    ) -> SemanticOptimizationResult:
+        probe_budgets.append(budget)
+        return original_optimize(self, budget)
+
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_SemanticRenderSession",
+        CountingRenderSession,
+    )
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_build_candidates",
+        counting_build_candidates,
+    )
+    monkeypatch.setattr(
+        semantic_optimizer._SemanticOptimizerSession,
+        "optimize",
+        counting_optimize,
+    )
+
+    result = compile_semantic_context(
+        program,
+        "run missing_call helper",
+        budget=200,
+        scoring=scoring,
+    )
+
+    expected_render_calls = {
+        (unit_id, detail)
+        for unit_id in _renderable_unit_ids(program)
+        for detail in (
+            RenderDetail.IDENTITY,
+            RenderDetail.SUMMARY,
+            RenderDetail.SOURCE,
+        )
+    }
+    assert result.total_tokens <= 200
+    assert len(probe_budgets) > 1
+    assert build_candidate_calls == 1
+    assert session_count == 1
+    assert set(render_calls) == expected_render_calls
+    assert all(count == 1 for count in render_calls.values())
 
 
 def test_compile_semantic_context_keeps_smoke_support_units_under_budget(

@@ -99,6 +99,56 @@ class _CandidateSortState:
     current_focus_has_eval_evidence_surface: bool
 
 
+@dataclass(frozen=True)
+class _SemanticOptimizerSession:
+    """Compile-scoped optimizer state with reusable rendered candidates."""
+
+    program: SemanticProgram
+    scoring: SemanticScoringResult
+    ordered_candidates: tuple[_SemanticCandidate, ...]
+    candidate_by_id: dict[str, _SemanticCandidate]
+
+    @classmethod
+    def build(
+        cls,
+        program: SemanticProgram,
+        scoring: SemanticScoringResult,
+    ) -> _SemanticOptimizerSession:
+        """Materialize renderable optimizer candidates once for repeated probes."""
+        candidates = _build_candidates(program, scoring)
+        ordered_candidates = tuple(sorted(candidates, key=_candidate_sort_key))
+        return cls(
+            program=program,
+            scoring=scoring,
+            ordered_candidates=ordered_candidates,
+            candidate_by_id={
+                candidate.unit_id: candidate for candidate in ordered_candidates
+            },
+        )
+
+    def optimize(self, budget: int) -> SemanticOptimizationResult:
+        """Select budget-feasible semantic units from prebuilt candidates."""
+        return _optimize_prepared_semantic_units(
+            program=self.program,
+            scoring=self.scoring,
+            ordered_candidates=self.ordered_candidates,
+            candidate_by_id=self.candidate_by_id,
+            budget=budget,
+        )
+
+    def render_selected_units(
+        self,
+        optimization: SemanticOptimizationResult,
+    ) -> dict[str, RenderedUnit]:
+        """Return already materialized renders for selected optimization records."""
+        return {
+            selection.unit_id: self.candidate_by_id[selection.unit_id].renders[
+                RenderDetail(selection.detail)
+            ]
+            for selection in optimization.selections
+        }
+
+
 _PRIMARY_TRACE_DEFAULTS: dict[
     SemanticSubjectKind, tuple[CapabilityTier, EvidenceOriginKind, ReplayStatus]
 ] = {
@@ -145,8 +195,23 @@ def optimize_semantic_units(
     if budget < 0:
         raise ValueError("budget must be >= 0")
 
-    candidates = _build_candidates(program, scoring)
-    if not candidates:
+    optimizer_session = _SemanticOptimizerSession.build(program, scoring)
+    return optimizer_session.optimize(budget)
+
+
+def _optimize_prepared_semantic_units(
+    *,
+    program: SemanticProgram,
+    scoring: SemanticScoringResult,
+    ordered_candidates: tuple[_SemanticCandidate, ...],
+    candidate_by_id: dict[str, _SemanticCandidate],
+    budget: int,
+) -> SemanticOptimizationResult:
+    """Select semantic units from compile-scoped materialized candidates."""
+    if budget < 0:
+        raise ValueError("budget must be >= 0")
+
+    if not ordered_candidates:
         return SemanticOptimizationResult(
             selections=(),
             omitted_unit_ids=(),
@@ -156,8 +221,6 @@ def optimize_semantic_units(
             confidence=1.0,
         )
 
-    ordered_candidates = sorted(candidates, key=_candidate_sort_key)
-    candidate_by_id = {candidate.unit_id: candidate for candidate in ordered_candidates}
     selections: list[SemanticSelectionRecord] = []
     omitted_unit_ids: list[str] = []
     remaining_budget = budget

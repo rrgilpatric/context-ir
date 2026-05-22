@@ -300,6 +300,40 @@ def test_optimize_semantic_units_reuses_one_render_session_per_run(
     assert all(count == 1 for count in render_calls.values())
 
 
+def test_optimize_semantic_units_rejects_negative_budget_before_candidates(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Negative budgets fail before scoring coverage or candidate materialization."""
+    (tmp_path / "main.py").write_text(
+        "def run() -> None:\n    return None\n",
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    malformed_scoring = SemanticScoringResult(query="run", scores={})
+    original_build_candidates = semantic_optimizer._build_candidates
+    build_candidates_called = False
+
+    def tracking_build_candidates(
+        program_arg: SemanticProgram,
+        scoring_arg: SemanticScoringResult,
+    ) -> list[semantic_optimizer._SemanticCandidate]:
+        nonlocal build_candidates_called
+        build_candidates_called = True
+        return original_build_candidates(program_arg, scoring_arg)
+
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_build_candidates",
+        tracking_build_candidates,
+    )
+
+    with pytest.raises(ValueError, match="^budget must be >= 0$"):
+        optimize_semantic_units(program, malformed_scoring, budget=-1)
+
+    assert build_candidates_called is False
+
+
 def test_optimize_semantic_units_bounds_sorting_when_focus_state_is_unchanged(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
