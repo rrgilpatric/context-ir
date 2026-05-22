@@ -939,6 +939,19 @@ Active next route:
     regressions
 - next route is to stage and locally commit exactly the seven-file release unit
 - push remains held until Ryan explicitly authorizes it
+- local release commit created:
+  - `449599a Cache optimizer materialization probes`
+- release state:
+  - workspace-only accepted: yes, after 1 correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- next route is to wait for Ryan push authorization for the local optimizer
+  materialization-cache release
+- do not run Task 4, update public/demo claims, or start the next north-star
+  optimization lane until push authorization is resolved
 
 Task 3 product-differentiation checkpoint is authorized:
 
