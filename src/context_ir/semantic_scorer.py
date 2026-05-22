@@ -193,8 +193,17 @@ class _CandidateProfile:
     file_path: str
     scope_id: str | None
     symbol_kind: ResolvedSymbolKind | None
-    searchable_text: str
+    searchable_parts: tuple[str, ...]
     body_text: str | None
+    searchable_text: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        """Preserve the joined searchable surface for embedding callers."""
+        object.__setattr__(
+            self,
+            "searchable_text",
+            _join_searchable_text(*self.searchable_parts),
+        )
 
 
 @dataclass
@@ -204,6 +213,13 @@ class _LexicalCache:
     _terms_by_text: dict[str, tuple[str, ...]] = field(default_factory=dict)
     _normalized_by_text: dict[str, str] = field(default_factory=dict)
     _term_sets_by_text: dict[str, frozenset[str]] = field(default_factory=dict)
+    _terms_by_parts: dict[tuple[str, ...], tuple[str, ...]] = field(
+        default_factory=dict
+    )
+    _normalized_by_parts: dict[tuple[str, ...], str] = field(default_factory=dict)
+    _term_sets_by_parts: dict[tuple[str, ...], frozenset[str]] = field(
+        default_factory=dict
+    )
 
     def terms(self, text: str) -> tuple[str, ...]:
         """Return extracted terms for ``text``, cached within this request."""
@@ -227,6 +243,38 @@ class _LexicalCache:
         if term_set is None:
             term_set = frozenset(self.terms(text))
             self._term_sets_by_text[text] = term_set
+        return term_set
+
+    def terms_for_parts(self, parts: tuple[str, ...]) -> tuple[str, ...]:
+        """Return terms for joined ``parts`` using cached per-part extraction."""
+        terms = self._terms_by_parts.get(parts)
+        if terms is None:
+            seen: set[str] = set()
+            composed_terms: list[str] = []
+            for part in parts:
+                for term in self.terms(part):
+                    if term in seen:
+                        continue
+                    seen.add(term)
+                    composed_terms.append(term)
+            terms = tuple(composed_terms)
+            self._terms_by_parts[parts] = terms
+        return terms
+
+    def normalized_parts(self, parts: tuple[str, ...]) -> str:
+        """Return the normalized lexical surface for joined ``parts``."""
+        normalized = self._normalized_by_parts.get(parts)
+        if normalized is None:
+            normalized = " ".join(self.terms_for_parts(parts))
+            self._normalized_by_parts[parts] = normalized
+        return normalized
+
+    def term_set_for_parts(self, parts: tuple[str, ...]) -> frozenset[str]:
+        """Return extracted terms for joined ``parts`` as an immutable set."""
+        term_set = self._term_sets_by_parts.get(parts)
+        if term_set is None:
+            term_set = frozenset(self.terms_for_parts(parts))
+            self._term_sets_by_parts[parts] = term_set
         return term_set
 
 
@@ -289,7 +337,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=symbol.definition_site.file_path,
                 scope_id=None,
                 symbol_kind=symbol.kind,
-                searchable_text=_join_searchable_text(
+                searchable_parts=_searchable_parts(
                     symbol.qualified_name,
                     symbol.definition_site.file_path,
                     summary.content,
@@ -308,7 +356,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=access.site.file_path,
                 scope_id=access.enclosing_scope_id,
                 symbol_kind=None,
-                searchable_text=_join_searchable_text(
+                searchable_parts=_searchable_parts(
                     access.access_text,
                     access.site.file_path,
                     access.reason_code.value,
@@ -336,7 +384,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=construct.site.file_path,
                 scope_id=construct.enclosing_scope_id,
                 symbol_kind=None,
-                searchable_text=_join_searchable_text(
+                searchable_parts=_searchable_parts(
                     construct.construct_text,
                     construct.site.file_path,
                     construct.reason_code.value,
@@ -368,7 +416,7 @@ def _build_candidate_profiles(program: SemanticProgram) -> list[_CandidateProfil
                 file_path=evidence.artifact_path,
                 scope_id=None,
                 symbol_kind=None,
-                searchable_text=_join_searchable_text(
+                searchable_parts=_searchable_parts(
                     evidence.fixture_id,
                     " ".join(evidence.task_ids),
                     " ".join(evidence.run_spec_ids),
@@ -632,11 +680,11 @@ def _lexical_relevance(
 ) -> float:
     """Return direct lexical relevance from semantic-first text surfaces."""
     primary_terms = lexical_cache.term_set(candidate.primary_text)
-    searchable_terms = lexical_cache.term_set(candidate.searchable_text)
+    searchable_terms = lexical_cache.term_set_for_parts(candidate.searchable_parts)
     path_terms = lexical_cache.term_set(candidate.file_path)
     focus_terms = _focus_terms(query_terms)
     normalized_primary = lexical_cache.normalized(candidate.primary_text)
-    normalized_searchable = lexical_cache.normalized(candidate.searchable_text)
+    normalized_searchable = lexical_cache.normalized_parts(candidate.searchable_parts)
 
     primary_phrase = _phrase_match(
         normalized_query=normalized_query,
@@ -1258,7 +1306,12 @@ def _is_test_file_path(file_path: str) -> bool:
 
 def _join_searchable_text(*parts: str | None) -> str:
     """Join optional profile parts without introducing placeholder text."""
-    return "\n".join(part for part in parts if part)
+    return "\n".join(_searchable_parts(*parts))
+
+
+def _searchable_parts(*parts: str | None) -> tuple[str, ...]:
+    """Return profile parts without introducing placeholder text."""
+    return tuple(part for part in parts if part)
 
 
 def _payload_text(payload: Mapping[str, str]) -> str:

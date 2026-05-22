@@ -908,6 +908,65 @@ def test_score_semantic_units_reuses_lexical_cache_within_request(
     assert extract_calls_by_text["main.py"] == 2
 
 
+def test_lexical_relevance_composes_searchable_parts_without_joined_extraction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Lexical scoring reuses part terms without extracting the joined surface."""
+    searchable_parts = (
+        "main.run",
+        "main.py",
+        "summary MissingCallSupport repeated main.run",
+    )
+    candidate = semantic_scorer._CandidateProfile(
+        unit_id="def:main.py:main.run",
+        kind=semantic_renderer.RenderedUnitKind.PROVEN_SYMBOL,
+        primary_text="main.run",
+        file_path="main.py",
+        scope_id=None,
+        symbol_kind=None,
+        searchable_parts=searchable_parts,
+        body_text=None,
+    )
+    original_extract_terms = semantic_scorer._extract_terms
+    expected_searchable_terms = original_extract_terms(candidate.searchable_text)
+    extract_calls_by_text: dict[str, int] = {}
+
+    def counting_extract_terms(text: str) -> tuple[str, ...]:
+        extract_calls_by_text[text] = extract_calls_by_text.get(text, 0) + 1
+        return original_extract_terms(text)
+
+    monkeypatch.setattr(
+        semantic_scorer,
+        "_extract_terms",
+        counting_extract_terms,
+    )
+
+    lexical_cache = semantic_scorer._LexicalCache()
+    query = "fix missing call support in main.run"
+    query_terms = lexical_cache.terms(query)
+    normalized_query = lexical_cache.normalized(query)
+    extract_calls_by_text.clear()
+
+    lexical_score = semantic_scorer._lexical_relevance(
+        candidate=candidate,
+        query_terms=query_terms,
+        normalized_query=normalized_query,
+        lexical_cache=lexical_cache,
+    )
+
+    assert lexical_score > 0.0
+    assert candidate.searchable_text not in extract_calls_by_text
+    assert lexical_cache.terms_for_parts(searchable_parts) == expected_searchable_terms
+    assert lexical_cache.normalized_parts(searchable_parts) == " ".join(
+        expected_searchable_terms
+    )
+    assert extract_calls_by_text == {
+        "main.run": 1,
+        "main.py": 1,
+        "summary MissingCallSupport repeated main.run": 1,
+    }
+
+
 def test_score_semantic_units_calibrates_tests_for_implementation_intent(
     tmp_path: Path,
 ) -> None:

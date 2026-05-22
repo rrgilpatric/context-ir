@@ -2,6 +2,256 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Scorer Searchable-Text Decomposition Commit-Gating Cleared
+
+- Commit-gating is cleared for the exact four-file release unit.
+- Checks:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check` clean
+  - no diffs in README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, AGENTS,
+    `pyproject.toml`, package-root exports, compiler, optimizer, renderer,
+    parser, resolver, or dependency frontier
+  - no API/MCP/schema/config/package-export, eval schema, portfolio artifact,
+    Task 4, or public/demo claim drift was found
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Next route:
+  - create the local release commit for the exact four-file release unit
+  - push remains Ryan-gated
+- Acceptance status: commit-gating-cleared
+
+## 2026-05-22 -- Scorer Searchable-Text Decomposition Full Regression Cleared
+
+- Full regression is cleared for the exact four-file release unit.
+- Validation:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1747 passed in 49.99s`
+- Release unit remains:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Next route:
+  - commit-gating over the exact four-file release unit
+  - do not stage, commit, push, run Task 4, or update public/demo claims until
+    commit-gating clears
+- Acceptance status: full-regression-cleared
+
+## 2026-05-22 -- Scorer Searchable-Text Decomposition Audit Cleared
+
+- The read-only release-unit audit returned DONE with verdict PASS and no
+  findings.
+- Release-unit audit is cleared for the exact four-file workspace unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- Accepted audit result:
+  - scope stayed clean with no API/MCP/schema/config/package-export, compiler,
+    optimizer, renderer, parser, resolver, eval schema, portfolio,
+    README/EVAL/PUBLIC_CLAIMS/ARCHITECTURE, Task 4, or public/demo claim drift
+  - `_CandidateProfile` stores private `searchable_parts` while rebuilding
+    `candidate.searchable_text` with the same join helper for embedding callers
+  - `_lexical_relevance` uses part-composed terms/normalization while scoring
+    weights remain unchanged
+  - composition preserves old lexical semantics because `_extract_terms()`
+    tokenizes on non-alphanumeric delimiters, so newline-joined extraction and
+    per-part extraction produce the same ordered deduped term stream for these
+    surfaces
+  - `_LexicalCache` remains request-scoped with no global/shared cache
+  - focused regression meaningfully proves no joined searchable extraction in
+    `_lexical_relevance`, and Task 3 preservation remains covered
+- Verified live repo state during control review:
+  - branch `main`
+  - `HEAD=origin/main=c6b1fac`
+  - dirty files are exactly the four audit-scope files
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Next route:
+  - full regression over the complete suite:
+    `.venv/bin/python -m ruff check src/ tests/`,
+    `.venv/bin/python -m ruff format --check src/ tests/`,
+    `.venv/bin/python -m mypy --strict src/`, and
+    `.venv/bin/python -m pytest tests/ -v`
+  - do not run commit-gating, stage, commit, push, Task 4, or public/demo claim
+    work until full regression returns and is reviewed
+- Acceptance status: release-unit-audit-cleared
+
+## 2026-05-22 -- Scorer Searchable-Text Decomposition Workspace Acceptance
+
+- The bounded scorer searchable-text decomposition implementation lane returned
+  DONE and is workspace-only accepted first-pass.
+- Accepted scope:
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - pre-existing dirty control docs remain `PLAN.md` and `BUILDLOG.md`
+- Accepted implementation:
+  - adds private `searchable_parts` to `_CandidateProfile`
+  - preserves `candidate.searchable_text` for embedding support
+  - adds request-scoped lexical cache composition helpers for part terms,
+    normalized parts, and part term sets
+  - updates `_lexical_relevance` to compose searchable terms from cached parts
+    instead of extracting from the full joined `candidate.searchable_text`
+  - preserves scoring weights, thresholds, selected-unit semantics, warning
+    semantics, eval schema, API/MCP/package exports, Task 4 hold, and
+    public/demo claim boundaries
+- Reported validation:
+  - scoped ruff check: passed
+  - scoped format check: passed
+  - `mypy --strict src/`: passed, 39 source files
+  - `pytest tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py -v`:
+    `37 passed`
+  - `git diff --check`: clean
+- Control review validation rerun:
+  - `.venv/bin/python -m pytest
+    tests/test_semantic_scorer.py::test_lexical_relevance_composes_searchable_parts_without_joined_extraction
+    tests/test_semantic_scorer.py::test_score_semantic_units_reuses_lexical_cache_within_request
+    tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units
+    tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_keeps_child_method_support_pack
+    -v`: `4 passed`
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py
+    tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_scorer.py
+    tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py
+    tests/test_eval_signal_smoke_e.py -v`: `37 passed`
+- Accepted behavior evidence:
+  - full-repo Task 3 budget `280` still selects, in order, compile source,
+    label source, resolver source, and alias-chain unsupported identity
+  - full-repo Task 3 remains `274` tokens with `omitted_uncertainty x3`
+  - fixture-root Task 3 remains `223` tokens, expected 5 units, and no warnings
+  - focused regression proves `_lexical_relevance` composes searchable parts
+    without extracting terms from the joined searchable surface
+  - reported full-repo instrumentation shows `0` joined searchable-text misses
+    inside `_lexical_relevance` and `0` known candidate searchable-text misses
+    total
+- Next route:
+  - read-only release-unit audit over exact four-file workspace unit:
+    `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_scorer.py`, and
+    `tests/test_semantic_scorer.py`
+  - do not run full regression, commit-gating, stage, commit, push, Task 4, or
+    public/demo claim work until the audit returns and is reviewed
+- Acceptance status: first-pass
+
+## 2026-05-22 -- Scorer Searchable-Text Decomposition Authorized
+
+- Ryan explicitly authorized proceeding with the bounded scorer
+  searchable-text decomposition implementation slice after accepting the
+  lexical miss-attribution measurement.
+- Verified live repo state before routing:
+  - branch `main`
+  - `HEAD=origin/main=c6b1fac`
+  - dirty tracked files are limited to `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Authorized implementation objective:
+  - decompose `searchable_text` into reusable searchable parts and have
+    `_lexical_relevance` compose searchable terms/normalization from already
+    cached part terms instead of extracting from the full joined
+    `searchable_text` per candidate
+  - preserve scoring semantics and Task 3 exact-unit behavior
+- Guardrails:
+  - no Task 4
+  - no public/demo claim updates
+  - no eval schema changes
+  - no staging, commit, or push from the implementation lane
+- Next route:
+  - issue the scoped implementation prompt and wait for
+    DONE/BLOCKED/ESCALATE/NEEDS-CONTROL before review, release-unit audit, full
+    regression, commit-gating, staging, commit, push, Task 4, or public/demo
+    claim work
+- Acceptance status: planning/control decision accepted after Ryan go
+
+## 2026-05-22 -- Scorer Lexical Miss Attribution Accepted
+
+- The read-only scorer lexical miss-attribution measurement lane returned DONE
+  and is accepted as workspace-only routing evidence.
+- Artifacts:
+  - `/private/tmp/context_ir_scorer_lexical_attribution_lPwsaj/`
+- Accepted behavior evidence:
+  - full-repo Task 3 selected units remain the accepted exact four units in
+    accepted order
+  - full-repo Task 3 total tokens remain `274`
+  - full-repo Task 3 warnings remain `omitted_uncertainty x3`
+  - fixture-root control remains `223` tokens with the expected five units and
+    no warnings
+- Accepted attribution evidence:
+  - `searchable_text`: `140,712` calls, `70,356` misses, about `1.498s`
+    measured miss time
+  - `primary_text`: `140,712` calls, `32,177` misses, about `0.158s`
+  - `body_text`: `8,450` calls, `3,958` misses, about `0.190s`
+  - `file_path`: `70,356` calls, `209` misses, about `0.001s`
+  - `query`: `3` calls, `1` miss
+  - secondary edit-score helpers made `1,677` calls each for `file_path` and
+    `primary_text` with `0` misses
+- Accepted diagnosis:
+  - `searchable_text` is the next real hotspot
+  - it accounts for `70,356 / 106,701` misses, about `65.9%` of misses and
+    about `81.1%` of measured extraction time
+  - secondary edit-score helpers are not the cause
+- Selected next route:
+  - hold for Ryan explicit go/no-go before issuing a bounded implementation
+    prompt
+  - candidate implementation is to decompose `searchable_text` into reusable
+    searchable parts and have `_lexical_relevance` compose searchable
+    terms/normalization from already cached part terms instead of extracting
+    from the full joined `searchable_text` per candidate
+  - require unchanged scoring semantics and full-repo Task 3 budget `280`
+    exact-unit/token/warning preservation
+  - keep Task 4, public/demo claims, eval schema changes, staging, commit,
+    push, and optimization implementation held until Ryan authorizes the
+    implementation route
+- Acceptance status: workspace-only accepted
+
+## 2026-05-22 -- Optimizer Sort-Key Cache Latency Verification Accepted
+
+- The read-only post-push optimizer sort-key cache latency verification lane
+  returned DONE and is accepted as workspace-only routing evidence.
+- Artifacts:
+  - `/private/tmp/context_ir_latency_profile_after_optimizer_sort_key_cache_K9XMK54e/`
+- Accepted behavior evidence:
+  - full-repo Task 3 budget `280` still selects the accepted exact four units
+    in `274` tokens with `omitted_uncertainty x3`
+  - fixture-root Task 3 still selects 5 units in `223` tokens with no warnings
+- Accepted timing evidence:
+  - full-repo raw: `8.358s`
+  - prior post-scorer-lexical-cache raw baseline: `9.736s`
+  - implementation evidence raw: `8.708s`
+  - full-repo cProfile: `19.556s`
+  - prior post-scorer-lexical-cache cProfile baseline: `24.545s`
+- Accepted sort-key evidence:
+  - `_candidate_sort_key`: `844,239` calls, down from `2,248,050`
+  - `_candidate_sort_key_for_state`: `211,035` calls, down from `1,615,773`
+  - `_cached_candidate_sort_key_for_state`: `1,618,142` calls /
+    `1.808s` cumulative
+- Accepted diagnosis:
+  - optimizer sort-key churn is partially resolved
+  - old uncached dynamic sort-key recomputation is no longer dominant
+  - scorer lexical extraction is the clearest next aggregate hotspot:
+    `_extract_terms` remains `106,701` calls / `4.350s`
+- Selected next route:
+  - run one bounded read-only scorer lexical miss-attribution measurement slice
+  - attribute remaining `_extract_terms` misses to `primary_text`,
+    `searchable_text`, `file_path`, `body_text`, or secondary edit-score
+    helpers before any scorer lexical optimization
+  - keep Task 4, public/demo claims, eval schema changes, staging, commit,
+    push, and optimization implementation held until that measurement result
+    returns and is reviewed
+- Acceptance status: workspace-only accepted
+
 ## 2026-05-22 -- Optimizer Sort-Key Cache Push Routing Synced
 
 - Ryan explicitly authorized pushing the optimizer sort-key cache release.

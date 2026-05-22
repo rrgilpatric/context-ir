@@ -62,20 +62,171 @@ post-push state. Do not route `5dc230e` back to release-unit audit, full
 regression, commit-gating, staging, local commit creation, or push absent new
 findings.
 
+The read-only post-push optimizer sort-key cache latency verification lane
+returned DONE and is accepted as workspace-only routing evidence. Artifacts are
+under
+`/private/tmp/context_ir_latency_profile_after_optimizer_sort_key_cache_K9XMK54e/`.
+Accepted verification result:
+
+- no Task 3 behavior drift:
+  - full-repo budget `280` still selects the accepted exact four units in
+    `274` tokens with `omitted_uncertainty x3`
+  - fixture-root control still selects 5 units in `223` tokens with no warnings
+- full-repo raw latency is `8.358s`, down from the prior
+  post-scorer-lexical-cache baseline `9.736s` and within the implementation
+  evidence range around `8.708s`
+- full-repo cProfile latency is `19.556s`, down from the prior baseline
+  `24.545s`
+- optimizer sort-key churn is partially resolved:
+  - `_candidate_sort_key`: `844,239` calls, down from `2,248,050`
+  - `_candidate_sort_key_for_state`: `211,035` calls, down from `1,615,773`
+  - `_cached_candidate_sort_key_for_state`: `1,618,142` calls /
+    `1.808s` cumulative
+- current profile is split between scorer lexical work and optimizer work:
+  - `score_semantic_units`: `6.865s`
+  - `semantic_optimizer.optimize`: `6.276s`
+  - `_lexical_relevance`: `5.205s`
+  - `_extract_terms`: `106,701` calls / `4.350s`
+  - `list.sort`: `3.185s`
+  - `_build_candidates`: `2.009s`
+- accepted diagnosis:
+  - the old uncached dynamic sort-key recomputation is no longer the dominant
+    bottleneck
+  - optimizer sorting/cache lookup still matters, but scorer lexical extraction
+    is the clearest next aggregate hotspot
+- selected next measurement:
+  - run one bounded read-only scorer lexical miss-attribution measurement slice
+    to identify which scorer text surface drives the remaining `_extract_terms`
+    misses: `primary_text`, `searchable_text`, `file_path`, `body_text`, or
+    secondary edit-score helpers
+  - this measurement is required before a safe optimization because changing
+    lexical extraction without surface attribution could alter scoring policy
+    or Task 3 selection
+
+The read-only scorer lexical miss-attribution measurement lane returned DONE
+and is accepted as workspace-only routing evidence. Artifacts are under
+`/private/tmp/context_ir_scorer_lexical_attribution_lPwsaj/`. Accepted
+measurement result:
+
+- full-repo Task 3 behavior is preserved:
+  - selected units remain the accepted exact four units in accepted order
+  - total tokens remain `274`
+  - warnings remain `omitted_uncertainty x3`
+- fixture-root control is preserved:
+  - selected units remain the expected five units
+  - total tokens remain `223`
+  - warnings remain empty
+- full-repo `_extract_terms` misses are mostly from `_lexical_relevance` over
+  `searchable_text`:
+  - `searchable_text`: `140,712` calls, `70,356` misses, about `1.498s`
+    measured miss time
+  - `primary_text`: `140,712` calls, `32,177` misses, about `0.158s`
+  - `body_text`: `8,450` calls, `3,958` misses, about `0.190s`
+  - `file_path`: `70,356` calls, `209` misses, about `0.001s`
+  - `query`: `3` calls, `1` miss
+  - secondary edit-score helpers: `1,677` calls each for `file_path` and
+    `primary_text`, `0` misses
+- accepted diagnosis:
+  - `searchable_text` is the next real hotspot
+  - it accounts for `70,356 / 106,701` misses, about `65.9%` of misses and
+    about `81.1%` of measured extraction time
+  - secondary edit-score helpers are not causing the remaining misses
+- selected implementation candidate:
+  - decompose `searchable_text` into reusable searchable parts and have
+    `_lexical_relevance` compose searchable terms/normalization from already
+    cached part terms instead of extracting from the full joined
+    `searchable_text` per candidate
+  - keep scoring semantics unchanged
+  - gate with full-repo Task 3 budget `280` exact-unit/token/warning
+    preservation
+
 Active next route:
-- run a read-only post-push latency verification lane on the pushed optimizer
-  sort-key cache release
-- verify full-repo and fixture-root Task 3 behavior remains unchanged
-- measure raw and cProfile latency against the prior post-scorer-lexical-cache
-  baseline: full-repo raw `9.736s`, cProfile `24.545s`, and implementation
-  evidence raw `8.708s`
-- inspect whether optimizer sort-key churn is resolved and identify exactly
-  one next bottleneck-backed recommendation, or explain why more measurement
-  is needed
-- after this continuity sync is committed and, if Ryan authorizes it, pushed,
-  do not edit files, run Task 4, update public/demo claims, change eval schema,
-  stage, commit, push, or start another optimization route until the
-  verification result returns and is reviewed
+- Ryan explicitly authorized proceeding with the bounded scorer searchable-text
+  decomposition implementation slice
+- the bounded scorer searchable-text decomposition implementation lane returned
+  DONE and is workspace-only accepted first-pass
+- accepted implementation result:
+  - changed only `src/context_ir/semantic_scorer.py` and
+    `tests/test_semantic_scorer.py` beyond the pre-existing dirty control docs
+  - adds private `searchable_parts` to `_CandidateProfile` while preserving
+    `candidate.searchable_text` for embedding support
+  - adds request-scoped lexical cache composition helpers for part terms,
+    normalized parts, and part term sets
+  - updates `_lexical_relevance` to compose searchable terms from cached parts
+    instead of extracting from the full joined `candidate.searchable_text`
+  - preserves scoring weights, thresholds, selected-unit semantics, warning
+    semantics, eval schema, API/MCP/package exports, Task 4 hold, and
+    public/demo claim boundaries
+- accepted validation:
+  - reported scoped ruff, format check, strict mypy, focused pytest, and
+    `git diff --check` passed
+  - control review reran:
+    - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+    - `.venv/bin/python -m ruff format --check src/context_ir/semantic_scorer.py tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+    - `.venv/bin/python -m mypy --strict src/`: passed
+    - `.venv/bin/python -m pytest tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py -v`: `37 passed`
+- accepted behavior evidence:
+  - full-repo Task 3 budget `280` still selects, in order, compile source,
+    label source, resolver source, and alias-chain unsupported identity
+  - full-repo Task 3 remains `274` tokens with `omitted_uncertainty x3`
+  - fixture-root Task 3 remains `223` tokens, expected 5 units, and no warnings
+  - focused regression proves `_lexical_relevance` composes searchable parts
+    without extracting terms from the joined searchable surface
+  - reported full-repo instrumentation shows `0` joined searchable-text misses
+    inside `_lexical_relevance` and `0` known candidate searchable-text misses
+    total
+- next route is a read-only release-unit audit over the exact four-file
+  workspace unit: `PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+- the read-only release-unit audit returned DONE with verdict PASS and no
+  findings
+- release-unit audit is cleared for the exact four-file workspace unit:
+  `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_scorer.py`, and
+  `tests/test_semantic_scorer.py`
+- accepted audit result:
+  - scope stayed clean with no API/MCP/schema/config/package-export, compiler,
+    optimizer, renderer, parser, resolver, eval schema, portfolio,
+    README/EVAL/PUBLIC_CLAIMS/ARCHITECTURE, Task 4, or public/demo claim drift
+  - `_CandidateProfile` preserves `candidate.searchable_text` through the same
+    join helper for embedding callers
+  - `_lexical_relevance` uses part-composed terms/normalization while scoring
+    weights remain unchanged
+  - composition preserves old lexical semantics because `_extract_terms()`
+    tokenizes on non-alphanumeric delimiters, so newline-joined extraction and
+    per-part extraction produce the same ordered deduped term stream for these
+    surfaces
+  - `_LexicalCache` remains request-scoped with no global/shared cache
+  - focused regression meaningfully proves no joined searchable extraction in
+    `_lexical_relevance`, and Task 3 preservation remains covered
+- next route is full regression over the complete suite:
+  `.venv/bin/python -m ruff check src/ tests/`,
+  `.venv/bin/python -m ruff format --check src/ tests/`,
+  `.venv/bin/python -m mypy --strict src/`, and
+  `.venv/bin/python -m pytest tests/ -v`
+- full regression is cleared for the exact four-file release unit:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1747 passed in 49.99s`
+- next route is commit-gating over the exact four-file release unit:
+  `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_scorer.py`, and
+  `tests/test_semantic_scorer.py`
+- commit-gating is cleared for the exact four-file release unit
+- accepted commit-gating checks:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+  - no diffs in README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, AGENTS,
+    `pyproject.toml`, package-root exports, compiler, optimizer, renderer,
+    parser, resolver, or dependency frontier
+  - no API/MCP/schema/config/package-export, eval schema, portfolio artifact,
+    Task 4, or public/demo claim drift was found
+- next route is local release commit creation for the exact four-file release
+  unit; push remains Ryan-gated
 
 Pushed renderer source materialization-cache release:
 `88b6b3a Cache renderer source materialization`. This commit contains the
