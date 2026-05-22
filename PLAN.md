@@ -40,14 +40,26 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the optimizer materialization-cache release.
+Current pushed release authority is the parser splitlines-cache release.
 The latest pushed source/contract authority is
-`449599a Cache optimizer materialization probes`; the latest pushed routing
-authority is `893c758 Sync optimizer materialization push routing`; the latest
-pushed internal product-differentiation artifact authority is
+`8e7b4a5 Cache parser source lines`; the latest pushed routing authority is
+`ac5496b Sync parser cache routing`; the latest pushed internal
+product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed parser splitlines-cache release:
+`8e7b4a5 Cache parser source lines`. This commit contains the accepted,
+audit-cleared, full-regression-cleared, commit-gating-cleared, locally
+committed, and pushed parser/test/continuity release unit that reuses per-file
+split lines during syntax extraction while preserving parser facts,
+diagnostics, public parser entry points, and Task 3 exact-unit behavior. Ryan
+explicitly authorized the push, and `git push origin main` advanced remote
+`main` from `893c758` through `ac5496b Sync parser cache routing`; this
+continuity entry records the post-push state. Do not route `8e7b4a5` or
+`ac5496b` back to release-unit audit, full regression, commit-gating, staging,
+local commit creation, or push absent new findings.
 
 Pushed optimizer materialization-cache release:
 `449599a Cache optimizer materialization probes`. This commit contains the
@@ -1130,6 +1142,31 @@ Active next route:
   splitlines-cache release
 - do not run Task 4, update public/demo claims, or start another optimization
   route until push authorization is resolved
+- Ryan explicitly authorized pushing the local parser splitlines-cache release
+- pushed parser splitlines-cache release:
+  - `8e7b4a5 Cache parser source lines`
+  - `ac5496b Sync parser cache routing`
+- release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- next route is a read-only post-optimization latency verification lane on the
+  pushed parser splitlines-cache release:
+  - re-profile the accepted Task 3 full-repo `context_ir` provider path
+  - compare against the optimizer-cache verification baseline of `29.709s`
+    raw and `48.692s` cProfile
+  - verify parser source-site/snippet `splitlines` calls are no longer the
+    dominant `extract_syntax` hotspot
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - identify the next dominant bottleneck and recommend exactly one next
+    bounded optimization slice, or state that one more measurement slice is
+    needed
+  - do not edit files, run Task 4, update public/demo claims, change eval
+    schema, implement optimization, stage, commit, or push
 
 Task 3 product-differentiation checkpoint is authorized:
 

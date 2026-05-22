@@ -2,6 +2,33 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Parser Splitlines Cache Release Pushed
+
+- Ryan authorized pushing the local parser splitlines-cache release.
+- Pushed `main` to `origin/main`:
+  - `8e7b4a5 Cache parser source lines`
+  - `ac5496b Sync parser cache routing`
+- Release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- Next route:
+  - run a read-only post-optimization latency verification lane on the pushed
+    parser splitlines-cache release
+  - compare against the optimizer-cache verification baseline of `29.709s` raw
+    and `48.692s` cProfile
+  - verify parser source-site/snippet `splitlines` calls are no longer the
+    dominant `extract_syntax` hotspot
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - keep Task 4, public/demo claims, benchmark methodology, production/MCP,
+    staging, commit, and push held until that verification returns and is
+    reviewed
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-22 -- Parser Splitlines Cache Local Release Commit Created
 
 - Created the local release commit after workspace acceptance, release-unit
