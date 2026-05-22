@@ -843,8 +843,13 @@ def test_compile_semantic_context_reuses_optimizer_materialization_across_budget
     original_build_candidates = semantic_optimizer._build_candidates
     original_optimize = semantic_optimizer._SemanticOptimizerSession.optimize
     original_session = semantic_optimizer._SemanticRenderSession
+    original_candidate_sort_key_for_state = (
+        semantic_optimizer._candidate_sort_key_for_state
+    )
     build_candidate_calls = 0
     probe_budgets: list[int] = []
+    sort_key_pairs: list[tuple[semantic_optimizer._CandidateSortState, str]] = []
+    sort_key_cache_sizes: list[int] = []
     session_count = 0
     render_calls: dict[tuple[str, RenderDetail], int] = {}
 
@@ -874,7 +879,16 @@ def test_compile_semantic_context_reuses_optimizer_materialization_across_budget
         budget: int,
     ) -> SemanticOptimizationResult:
         probe_budgets.append(budget)
-        return original_optimize(self, budget)
+        result = original_optimize(self, budget)
+        sort_key_cache_sizes.append(len(self.sort_key_cache))
+        return result
+
+    def counting_candidate_sort_key_for_state(
+        candidate: semantic_optimizer._SemanticCandidate,
+        sort_state: semantic_optimizer._CandidateSortState,
+    ) -> semantic_optimizer._CandidateSortKey:
+        sort_key_pairs.append((sort_state, candidate.unit_id))
+        return original_candidate_sort_key_for_state(candidate, sort_state)
 
     monkeypatch.setattr(
         semantic_optimizer,
@@ -890,6 +904,11 @@ def test_compile_semantic_context_reuses_optimizer_materialization_across_budget
         semantic_optimizer._SemanticOptimizerSession,
         "optimize",
         counting_optimize,
+    )
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_candidate_sort_key_for_state",
+        counting_candidate_sort_key_for_state,
     )
 
     result = compile_semantic_context(
@@ -911,6 +930,9 @@ def test_compile_semantic_context_reuses_optimizer_materialization_across_budget
     assert result.total_tokens <= 200
     assert len(probe_budgets) > 1
     assert build_candidate_calls == 1
+    assert sort_key_pairs
+    assert len(sort_key_pairs) == len(set(sort_key_pairs))
+    assert sort_key_cache_sizes[-1] == len(set(sort_key_pairs))
     assert session_count == 1
     assert set(render_calls) == expected_render_calls
     assert all(count == 1 for count in render_calls.values())

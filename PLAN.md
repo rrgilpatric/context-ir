@@ -61,6 +61,166 @@ This continuity entry records the post-push state. Do not route `a2ec601` back
 to release-unit audit, full regression, commit-gating, staging, local commit
 creation, or push absent new findings.
 
+Ryan authorized the read-only post-push latency verification lane on the pushed
+scorer lexical term-cache release. Live verification at authorization time:
+branch `main`, `HEAD=origin/main=f504ea7`, clean worktree, no staged files, no
+untracked files, and `git diff --check` clean. Next route is to issue that
+read-only profiling prompt and wait for DONE/BLOCKED/ESCALATE/NEEDS-CONTROL
+before any implementation route, Task 4, public/demo claim update, release
+gate, staging, commit, or push.
+
+The read-only post-scorer-lexical-cache latency verification lane returned DONE
+and is accepted as workspace-only routing evidence. Artifacts are under
+`/private/tmp/context_ir_latency_profile_after_scorer_lexical_cache_IQ0Ee3/`.
+Accepted verification result:
+
+- no Task 3 behavior drift: full-repo budget `280` still selects the accepted
+  exact four units in `274` tokens with `omitted_uncertainty x3`
+- fixture-root control remains stable at about `0.00448s` raw and `0.01318s`
+  cProfile, with 5 selected units, 223 tokens, and no warnings
+- full-repo raw latency is `9.736s`; instrumented raw latency is `9.763s`;
+  cProfile latency is `24.545s`
+- scorer lexical work is materially reduced:
+  - `_extract_terms`: `106,532` calls / `4.533s` cumulative, down from the
+    pre-cache `358,554` calls / `9.417s`
+  - `_normalize_text`: absent / `0` calls, down from `140,397`
+  - `_LexicalCache.terms`: `216,473` requests, `109,941` hits, `106,532`
+    misses
+  - `_LexicalCache.term_set`: `214,977` requests, `108,446` hits, `106,531`
+    misses
+  - `_LexicalCache.normalized`: `140,507` requests, `38,137` hits, `102,370`
+    misses
+- current dominant bottleneck is optimizer repeated sorting/key computation:
+  `_optimize_prepared_semantic_units` `10.656s`, `list.sort` `7.479s`,
+  `_candidate_sort_key` `2,248,050` calls / `6.422s`, and
+  `_candidate_sort_key_for_state` `1,615,773` calls / `5.886s`
+- selected next optimization candidate:
+  - add a compile-scoped optimizer sort-key cache for
+    `_CandidateSortState`/candidate pairs and reuse it across repeated
+    `_SemanticOptimizerSession.optimize(...)` budget probes, preserving
+    selected-unit order and exact Task 3 behavior
+- hold before issuing the optimizer sort-key cache implementation prompt until
+  Ryan gives explicit go/no-go
+- do not run Task 4, update public/demo claims, change eval schema, stage,
+  commit, push, or start implementation before that go/no-go
+- Ryan explicitly authorized proceeding with the bounded optimizer sort-key
+  cache implementation slice
+- next route is to issue the scoped implementation prompt and wait for
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL before review, release-unit audit, full
+  regression, commit-gating, staging, commit, push, Task 4, or public/demo
+  claim work
+- the bounded optimizer sort-key cache implementation lane returned DONE and
+  is workspace-only accepted first-pass
+- accepted implementation result:
+  - changed only `src/context_ir/semantic_optimizer.py`,
+    `tests/test_semantic_optimizer.py`, and `tests/test_semantic_compiler.py`
+    beyond the pre-existing dirty control docs
+  - adds a `_SemanticOptimizerSession`-local dynamic sort-key cache keyed by
+    full `_CandidateSortState` plus candidate `unit_id`
+  - preserves standalone `optimize_semantic_units(...)` per-call isolation by
+    building a fresh session per standalone call
+  - preserves compiler budget-probe reuse through the compile-scoped optimizer
+    session
+  - preserves selected-unit order, warning semantics, and exact Task 3 behavior
+  - full-repo Task 3 budget `280` remains `274` tokens with the accepted exact
+    selected units and `omitted_uncertainty x3`
+  - fixture-root Task 3 remains unchanged
+  - instrumentation reports `_candidate_sort_key` down to `844,239` calls from
+    `2,248,050`, `_candidate_sort_key_for_state` down to `211,035` calls from
+    `1,615,773`, and elapsed time at `8.708s`
+- control review reran:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_optimizer.py
+    tests/test_semantic_optimizer.py tests/test_semantic_compiler.py
+    tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m pytest
+    tests/test_semantic_optimizer.py::test_optimizer_session_reuses_sort_keys_across_budget_probes
+    tests/test_semantic_optimizer.py::test_optimize_semantic_units_keeps_sort_key_cache_per_call
+    tests/test_semantic_compiler.py::test_compile_semantic_context_reuses_optimizer_materialization_across_budget_probes
+    tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units
+    -v`: `4 passed`
+- next route is a read-only release-unit audit over the exact five-file
+  workspace unit: `PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/semantic_optimizer.py`, `tests/test_semantic_optimizer.py`,
+  and `tests/test_semantic_compiler.py`
+- do not run full regression, commit-gating, stage, commit, push, Task 4, or
+  public/demo claim work until the release-unit audit returns and is reviewed
+- Ryan explicitly authorized proceeding with the read-only release-unit audit
+  for this exact five-file workspace unit
+- next route is to issue that audit prompt and wait for
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL before any full regression,
+  commit-gating, staging, commit, push, Task 4, or public/demo claim work
+- the read-only release-unit audit returned DONE with verdict PASS and no
+  findings
+- release-unit audit is cleared for the exact five-file workspace unit:
+  `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_optimizer.py`,
+  `tests/test_semantic_optimizer.py`, and `tests/test_semantic_compiler.py`
+- accepted audit result:
+  - cache is `_SemanticOptimizerSession`-local and keyed by full
+    `_CandidateSortState` plus candidate `unit_id`
+  - standalone `optimize_semantic_units(...)` still builds a fresh session per
+    call
+  - compiler budget probes reuse one session cache without moving optimizer
+    selection state out of local per-call variables
+  - negative-budget validation remains before candidate materialization
+  - no API/MCP/schema/config/package export, scorer, renderer, parser, eval
+    schema, README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, portfolio, Task 4, or
+    public/demo claim drift was found
+- next route is full regression over the complete suite:
+  `.venv/bin/python -m ruff check src/ tests/`,
+  `.venv/bin/python -m ruff format --check src/ tests/`,
+  `.venv/bin/python -m mypy --strict src/`, and
+  `.venv/bin/python -m pytest tests/ -v`
+- do not run commit-gating, stage, commit, push, Task 4, or public/demo claim
+  work until full regression returns and is reviewed
+- Ryan explicitly authorized running the full regression gate
+- live state before starting full regression:
+  - branch `main`
+  - `HEAD=origin/main=f504ea7`
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_optimizer.py`, `tests/test_semantic_optimizer.py`,
+    and `tests/test_semantic_compiler.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- full regression is cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1746 passed in 51.87s`
+- next route is commit-gating over the exact five-file release unit:
+  `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_optimizer.py`,
+  `tests/test_semantic_optimizer.py`, and `tests/test_semantic_compiler.py`
+- do not stage, commit, push, run Task 4, or update public/demo claims until
+  commit-gating clears
+- Ryan explicitly authorized running commit-gating over the exact five-file
+  release unit
+- live state before commit-gating:
+  - branch `main`
+  - `HEAD=origin/main=f504ea7`
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_optimizer.py`, `tests/test_semantic_optimizer.py`,
+    and `tests/test_semantic_compiler.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- commit-gating is cleared for the exact five-file release unit
+- accepted commit-gating checks:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_optimizer.py`, `tests/test_semantic_optimizer.py`,
+    and `tests/test_semantic_compiler.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+  - no diffs in README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, AGENTS,
+    `pyproject.toml`, package-root exports, scorer, compiler, renderer, or
+    parser
+  - no API/MCP/schema/config/package-export, eval schema, portfolio artifact,
+    Task 4, or public/demo claim drift was found
+- next route is local release commit creation for the exact five-file release
+  unit; push remains Ryan-gated
+
 Pushed renderer source materialization-cache release:
 `88b6b3a Cache renderer source materialization`. This commit contains the
 accepted, corrected-audit-cleared, full-regression-cleared,

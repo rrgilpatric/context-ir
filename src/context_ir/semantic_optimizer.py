@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from context_ir.semantic_renderer import (
     RenderDetail,
@@ -66,6 +66,7 @@ _IDENTIFIER_MENTION_RE = re.compile(
     r"(?![A-Za-z0-9_])"
 )
 _CAMEL_CASE_RE = re.compile(r"[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z]?[a-z]+|[0-9]+")
+_CandidateSortKey = tuple[float, float, float, float, float, int, str, int, int, str]
 
 
 @dataclass(frozen=True)
@@ -99,6 +100,9 @@ class _CandidateSortState:
     current_focus_has_eval_evidence_surface: bool
 
 
+_CandidateSortKeyCache = dict[tuple[_CandidateSortState, str], _CandidateSortKey]
+
+
 @dataclass(frozen=True)
 class _SemanticOptimizerSession:
     """Compile-scoped optimizer state with reusable rendered candidates."""
@@ -107,6 +111,11 @@ class _SemanticOptimizerSession:
     scoring: SemanticScoringResult
     ordered_candidates: tuple[_SemanticCandidate, ...]
     candidate_by_id: dict[str, _SemanticCandidate]
+    sort_key_cache: _CandidateSortKeyCache = field(
+        default_factory=dict,
+        compare=False,
+        repr=False,
+    )
 
     @classmethod
     def build(
@@ -133,6 +142,7 @@ class _SemanticOptimizerSession:
             scoring=self.scoring,
             ordered_candidates=self.ordered_candidates,
             candidate_by_id=self.candidate_by_id,
+            sort_key_cache=self.sort_key_cache,
             budget=budget,
         )
 
@@ -205,6 +215,7 @@ def _optimize_prepared_semantic_units(
     scoring: SemanticScoringResult,
     ordered_candidates: tuple[_SemanticCandidate, ...],
     candidate_by_id: dict[str, _SemanticCandidate],
+    sort_key_cache: _CandidateSortKeyCache,
     budget: int,
 ) -> SemanticOptimizationResult:
     """Select semantic units from compile-scoped materialized candidates."""
@@ -259,11 +270,12 @@ def _optimize_prepared_semantic_units(
         if sort_state != active_sort_state:
             if pending_start_index > 0:
                 pending_candidates = pending_candidates[pending_start_index:]
-                pending_start_index = 0
+            pending_start_index = 0
             pending_candidates.sort(
-                key=lambda candidate: _candidate_sort_key_for_state(
+                key=lambda candidate: _cached_candidate_sort_key_for_state(
                     candidate,
                     sort_state,
+                    sort_key_cache,
                 )
             )
             active_sort_state = sort_state
@@ -726,10 +738,25 @@ def _candidate_sort_state(
     )
 
 
+def _cached_candidate_sort_key_for_state(
+    candidate: _SemanticCandidate,
+    sort_state: _CandidateSortState,
+    sort_key_cache: _CandidateSortKeyCache,
+) -> _CandidateSortKey:
+    """Return a compile-scoped cached dynamic sort key for ``candidate``."""
+    cache_key = (sort_state, candidate.unit_id)
+    cached_sort_key = sort_key_cache.get(cache_key)
+    if cached_sort_key is not None:
+        return cached_sort_key
+    computed_sort_key = _candidate_sort_key_for_state(candidate, sort_state)
+    sort_key_cache[cache_key] = computed_sort_key
+    return computed_sort_key
+
+
 def _candidate_sort_key_for_state(
     candidate: _SemanticCandidate,
     sort_state: _CandidateSortState,
-) -> tuple[float, float, float, float, float, int, str, int, int, str]:
+) -> _CandidateSortKey:
     """Return ``candidate``'s key for a materialized dynamic sort state."""
     return _candidate_sort_key(
         candidate,
@@ -755,7 +782,7 @@ def _candidate_sort_key(
     current_focus_has_support: bool = False,
     current_focus_has_uncertainty_surface: bool = False,
     current_focus_has_eval_evidence_surface: bool = False,
-) -> tuple[float, float, float, float, float, int, str, int, int, str]:
+) -> _CandidateSortKey:
     """Sort by strongest relevance first, then stable source order."""
     if current_focus_id is not None:
         pack_score = _focused_pack_priority_score(candidate)

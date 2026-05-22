@@ -80,6 +80,59 @@ def _selection_by_unit_id(
     return {selection.unit_id: selection for selection in result.selections}
 
 
+def _sort_cache_program(
+    tmp_path: Path,
+) -> tuple[SemanticProgram, SemanticScoringResult]:
+    """Create a compact program that exercises focused dynamic sorting."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def helper(value: int) -> int:
+                return value + 1
+
+            def side_support(value: int) -> int:
+                return value * 2
+
+            def run(value: int) -> int:
+                return helper(value) + side_support(value)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    run_id = _definition_id_for(program, "main.run")
+    helper_id = _definition_id_for(program, "main.helper")
+    side_support_id = _definition_id_for(program, "main.side_support")
+    scores = {
+        unit_id: SemanticUnitScore(
+            unit_id=unit_id,
+            p_edit=0.06,
+            p_support=0.0,
+        )
+        for unit_id in _renderable_unit_ids(program)
+    }
+    scores[run_id] = SemanticUnitScore(
+        unit_id=run_id,
+        p_edit=1.0,
+        p_support=0.0,
+    )
+    scores[helper_id] = SemanticUnitScore(
+        unit_id=helper_id,
+        p_edit=0.10,
+        p_support=0.35,
+    )
+    scores[side_support_id] = SemanticUnitScore(
+        unit_id=side_support_id,
+        p_edit=0.10,
+        p_support=0.30,
+    )
+    return program, SemanticScoringResult(
+        query="run helper side support",
+        scores=scores,
+    )
+
+
 def _runtime_backed_record(
     *,
     record_id: str,
@@ -401,6 +454,81 @@ def test_optimize_semantic_units_bounds_sorting_when_focus_state_is_unchanged(
     assert result.selections == ()
     assert set(result.omitted_unit_ids) == renderable_unit_ids
     assert sort_key_calls <= len(renderable_unit_ids) * 3
+
+
+def test_optimizer_session_reuses_sort_keys_across_budget_probes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Repeated probes on one session reuse dynamic sort keys."""
+    program, scoring = _sort_cache_program(tmp_path)
+    optimizer_session = semantic_optimizer._SemanticOptimizerSession.build(
+        program,
+        scoring,
+    )
+    original_candidate_sort_key_for_state = (
+        semantic_optimizer._candidate_sort_key_for_state
+    )
+    sort_key_pairs: list[tuple[semantic_optimizer._CandidateSortState, str]] = []
+
+    def counting_candidate_sort_key_for_state(
+        candidate: semantic_optimizer._SemanticCandidate,
+        sort_state: semantic_optimizer._CandidateSortState,
+    ) -> semantic_optimizer._CandidateSortKey:
+        sort_key_pairs.append((sort_state, candidate.unit_id))
+        return original_candidate_sort_key_for_state(candidate, sort_state)
+
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_candidate_sort_key_for_state",
+        counting_candidate_sort_key_for_state,
+    )
+
+    first_result = optimizer_session.optimize(500)
+    first_call_count = len(sort_key_pairs)
+    second_result = optimizer_session.optimize(500)
+
+    assert second_result == first_result
+    assert first_call_count > 0
+    assert len(sort_key_pairs) == first_call_count
+    assert len(optimizer_session.sort_key_cache) == first_call_count
+
+
+def test_optimize_semantic_units_keeps_sort_key_cache_per_call(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Standalone optimization does not share dynamic sort keys across calls."""
+    program, scoring = _sort_cache_program(tmp_path)
+    original_candidate_sort_key_for_state = (
+        semantic_optimizer._candidate_sort_key_for_state
+    )
+    sort_key_pairs: list[tuple[semantic_optimizer._CandidateSortState, str]] = []
+
+    def counting_candidate_sort_key_for_state(
+        candidate: semantic_optimizer._SemanticCandidate,
+        sort_state: semantic_optimizer._CandidateSortState,
+    ) -> semantic_optimizer._CandidateSortKey:
+        sort_key_pairs.append((sort_state, candidate.unit_id))
+        return original_candidate_sort_key_for_state(candidate, sort_state)
+
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_candidate_sort_key_for_state",
+        counting_candidate_sort_key_for_state,
+    )
+
+    first_result = optimize_semantic_units(program, scoring, budget=500)
+    first_call_count = len(sort_key_pairs)
+    second_result = optimize_semantic_units(program, scoring, budget=500)
+    second_call_count = len(sort_key_pairs) - first_call_count
+
+    assert second_result == first_result
+    assert first_call_count > 0
+    assert second_call_count == first_call_count
+    assert set(sort_key_pairs[:first_call_count]) == set(
+        sort_key_pairs[first_call_count:]
+    )
 
 
 def test_optimize_semantic_units_emits_tier_aware_trace_summaries(
