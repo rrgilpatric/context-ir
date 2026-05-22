@@ -2,6 +2,43 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Optimizer Sort-Key Cache Push Routing Synced
+
+- Ryan explicitly authorized pushing the optimizer sort-key cache release.
+- `git push origin main` advanced remote `main` from `f504ea7` to `5dc230e`.
+- Pushed release:
+  - `5dc230e Cache optimizer sort keys`
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - locally committed: yes
+  - pushed to remote: yes
+- Final pushed scope:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_semantic_optimizer.py`
+  - `tests/test_semantic_compiler.py`
+- Post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=5dc230e`
+  - clean worktree
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Routing decision:
+  - do not route `5dc230e` back to release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or push absent new findings
+  - next route is a read-only post-push latency verification lane on the pushed
+    optimizer sort-key cache release
+  - after this continuity sync is committed and, if Ryan authorizes it, pushed,
+    keep Task 4, public/demo claims, eval schema changes, staging, commit,
+    push, and further optimization routes held until that verification result
+    returns and is reviewed
+- Acceptance status: pushed-routing-synced
+
 ## 2026-05-22 -- Optimizer Sort-Key Cache Commit-Gating Cleared
 
 - Commit-gating is cleared for the exact five-file release unit.
