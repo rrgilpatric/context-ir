@@ -2,6 +2,25 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Renderer Source-Line Cache Local Release Commit Created
+
+- Created the local release commit after workspace acceptance, five-file
+  release-unit audit, full regression, and commit-gating cleared:
+  `88b6b3a Cache renderer source materialization`.
+- Release state:
+  - workspace-only accepted: yes, first-pass with one narrow test correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- Next route:
+  - wait for Ryan push authorization for the local renderer source
+    materialization-cache release
+  - do not run Task 4, update public/demo claims, or start another optimization
+    route until push authorization is resolved
+- Acceptance status: local release commit created after gates cleared
+
 ## 2026-05-22 -- Renderer Source-Line Cache Commit-Gating Cleared
 
 - Commit-gating is cleared over the exact five-file release unit:

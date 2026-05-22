@@ -1363,6 +1363,19 @@ Active next route:
   - `git diff --check`: clean
 - next route is local commit creation for the five-file release unit; push
   remains Ryan-gated
+- local release commit is created:
+  `88b6b3a Cache renderer source materialization`
+- local release state:
+  - workspace-only accepted: yes, first-pass with one narrow test correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- next route is to wait for Ryan push authorization for the local renderer
+  source materialization-cache release
+- do not run Task 4, update public/demo claims, or start another optimization
+  route until push authorization is resolved
 
 Task 3 product-differentiation checkpoint is authorized:
 
