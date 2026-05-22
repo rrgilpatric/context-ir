@@ -2,6 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-21 -- Optimizer Materialization Cache Release Pushed
+
+- Ryan authorized pushing the local optimizer materialization-cache release.
+- Pushed `main` to `origin/main`:
+  - `449599a Cache optimizer materialization probes`
+  - `ca53036 Sync optimizer materialization routing`
+- Release state:
+  - workspace-only accepted: yes, after 1 correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- Next route:
+  - run a read-only post-optimization latency verification lane on the pushed
+    optimizer materialization-cache release
+  - compare against the post-scorer-cache baseline of about `69.954s` raw and
+    the implementation-lane optimizer-cache evidence of about `29.483s` to
+    `30.654s`
+  - verify optimizer materialization remains at one candidate build / render
+    session across budget probes
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - keep Task 4, public/demo claims, benchmark methodology, production/MCP,
+    staging, commit, and push held until that verification returns and is
+    reviewed
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-21 -- Optimizer Materialization Cache Local Release Commit Created
 
 - Created the local release commit after workspace acceptance, release-unit

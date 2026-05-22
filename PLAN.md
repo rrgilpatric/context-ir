@@ -952,6 +952,33 @@ Active next route:
   materialization-cache release
 - do not run Task 4, update public/demo claims, or start the next north-star
   optimization lane until push authorization is resolved
+- Ryan explicitly authorized pushing the local optimizer materialization-cache
+  release
+- pushed optimizer materialization-cache release:
+  - `449599a Cache optimizer materialization probes`
+  - `ca53036 Sync optimizer materialization routing`
+- release state:
+  - workspace-only accepted: yes, after 1 correction
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- next route is a read-only post-optimization latency verification lane on the
+  pushed optimizer materialization-cache release:
+  - re-profile the accepted Task 3 full-repo `context_ir` provider path
+  - compare against the post-scorer-cache baseline of about `69.954s` raw and
+    the implementation-lane optimizer-cache evidence of about `29.483s` to
+    `30.654s`
+  - verify optimizer materialization remains at one candidate build / render
+    session across budget probes
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - identify the next dominant bottleneck and recommend exactly one next
+    bounded optimization slice, or state that one more measurement slice is
+    needed
+  - do not edit files, run Task 4, update public/demo claims, change eval
+    schema, implement optimization, stage, commit, or push
 
 Task 3 product-differentiation checkpoint is authorized:
 
