@@ -40,13 +40,30 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the Task 3 STRONG portfolio artifact
-release. The latest pushed source/contract authority is
-`d53ec33 Tune semantic selection for named method anchors`; the latest pushed
-internal product-differentiation artifact authority is
+Current pushed release authority is the optimizer materialization-cache release.
+The latest pushed source/contract authority is
+`449599a Cache optimizer materialization probes`; the latest pushed routing
+authority is `893c758 Sync optimizer materialization push routing`; the latest
+pushed internal product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed optimizer materialization-cache release:
+`449599a Cache optimizer materialization probes`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed compiler/optimizer/test
+release unit that reuses optimizer candidate renders across compiler budget
+probes while restoring standalone negative-budget validation and preserving
+Task 3 exact-unit behavior. Ryan explicitly authorized the push, and
+`git push origin main` advanced remote `main` from `347b564` through
+`893c758 Sync optimizer materialization push routing`; this continuity entry
+records the post-push state. The accepted post-push verification shows the
+release holds at about `29.709s` full-repo raw latency for the Task 3 provider
+path, down from about `69.954s` after the scorer cache and about `130.304s`
+pre-optimization. Do not route `449599a`, `ca53036`, or `893c758` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 Pushed Task 3 STRONG portfolio artifact release:
 `b34fb0e Record task 3 differentiation evidence`. This commit contains the
@@ -979,6 +996,127 @@ Active next route:
     needed
   - do not edit files, run Task 4, update public/demo claims, change eval
     schema, implement optimization, stage, commit, or push
+- the read-only post-optimization latency verification lane returned DONE and
+  is accepted as workspace-only routing evidence
+- accepted verification result:
+  - no Task 3 behavior drift was found
+  - full-repo raw latency is `29.709s`, matching implementation-lane evidence
+    of about `29.483s` to `30.654s`
+  - full-repo cProfile elapsed was `48.692s`
+  - fixture-root control timing was `0.0056s`, with `223` tokens and no
+    warnings
+  - Task 3 full-repo budget `280` still selects the accepted exact units in
+    `274` tokens with `omitted_uncertainty x3`
+  - optimizer materialization cache held: 8 budget probes, 1 optimizer
+    candidate build, and 1 optimizer render session
+  - total full-repo render calls were `284,535`, with `210,249` in optimizer
+    materialization and `74,286` in scoring
+  - source-span reads are reduced to `29,658`, down from the post-scorer-cache
+    `207,330` profile
+  - artifacts are under
+    `/private/tmp/context_ir_latency_profile_after_optimizer_cache_oy6wj_h9/`
+- accepted bottleneck diagnosis:
+  - the old optimizer rematerialization bottleneck is gone
+  - the next dominant bounded bottleneck is parser source-site/snippet
+    materialization during `extract_syntax`
+  - the hottest primitive is repeated `str.splitlines`, with `112,463` calls
+    and `14.334s` cumulative under cProfile, primarily through
+    `parser._site_for_node` and `parser._snippet_from_span`
+- selected next candidate slice:
+  - cache per-file `splitlines(keepends=True)` during syntax extraction and
+    reuse it for `_file_span`, `_snippet_from_span`, and `_site_for_node`
+    snippet construction
+  - preserve all syntax facts, parser tests, and Task 3 selected-unit behavior
+- hold before issuing the parser splitlines-cache implementation prompt until
+  Ryan gives explicit go/no-go
+- Ryan explicitly authorized proceeding with the bounded parser
+  splitlines-cache implementation slice
+- next route is to issue that implementation prompt and wait for the returned
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before audit, full regression,
+  commit-gating, staging, commit, push, Task 4, benchmark methodology,
+  production/MCP readiness, public/demo claims, or another optimization route
+- the parser splitlines-cache implementation returned DONE and is
+  workspace-only accepted first-pass
+- accepted implementation:
+  - `src/context_ir/parser.py` now computes
+    `source_text.splitlines(keepends=True)` once per file during syntax
+    extraction
+  - cached lines are reused for `_file_span`, `_snippet_from_span`, syntax
+    diagnostics, and `_SyntaxCollector._site_for_node` snippet construction
+  - public parser APIs remain unchanged
+  - no scorer, optimizer, compiler, eval schema, API/MCP/schema/config,
+    package-export, portfolio, public/demo claim, Task 4, PLAN, or BUILDLOG
+    implementation-lane drift occurred
+- accepted test coverage:
+  - `tests/test_parser.py` verifies all snippet calls for a parsed file receive
+    the same cached line sequence and preserve snippet output
+  - `tests/test_eval_signal_smoke_e.py` preservation tests remain green,
+    including Task 3 full-repo budget `280`
+- focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/parser.py tests/test_parser.py tests/test_eval_signal_smoke_e.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/parser.py tests/test_parser.py tests/test_eval_signal_smoke_e.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_parser.py tests/test_eval_signal_smoke_e.py -v` (`39 passed`)
+- implementation-lane instrumentation evidence:
+  - synthetic parser profile with 1 file and 1,502 syntax sites reported
+    `splitlines_calls=1`
+  - Task 3 full-repo budget `280` still selected the accepted exact units in
+    `274` tokens with `omitted_uncertainty x3`
+- accepted release unit is:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/parser.py`
+  - `tests/test_parser.py`
+- next route is a read-only release-unit audit over the exact four-file parser
+  splitlines-cache release unit
+- do not run full regression, commit-gate, stage, commit, push, run Task 4,
+  update public/demo claims, or start another optimization route until the
+  audit returns and is reviewed
+- the read-only release-unit audit returned PASS with no findings and is
+  accepted
+- audit-cleared release unit remains exactly:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/parser.py`
+  - `tests/test_parser.py`
+- accepted audit findings:
+  - cached `source_lines` is produced from the same
+    `source_text.splitlines(keepends=True)` call previously repeated inside
+    span/snippet helpers
+  - source span, snippet, syntax diagnostic, parse-error, and
+    trailing-newline/full-file behavior remain stable
+  - public parser entry points are unchanged
+  - no scorer, optimizer, compiler, eval, API/MCP/schema/config,
+    package-export, portfolio, or public-claim drift was found
+- next route is full regression for the exact four-file parser
+  splitlines-cache release unit
+- do not commit-gate, stage, commit, push, run Task 4, update public/demo
+  claims, or start another optimization route until full regression returns
+  and is reviewed
+- full regression is cleared for the exact four-file parser splitlines-cache
+  release unit
+- full regression commands passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v` (`1742 passed`)
+- next route is commit-gating over the exact four-file release unit
+- do not stage, commit, push, run Task 4, update public/demo claims, or start
+  another optimization route until commit-gating clears
+- commit-gating is cleared over the exact four-file parser splitlines-cache
+  release unit
+- commit-gating verified:
+  - branch and refs: `main`, `HEAD=origin/main=893c758`
+  - dirty files exactly match the four-file release unit
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check` clean
+  - no README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, API/MCP/schema/config,
+    package-export, portfolio, Task 4, or public/demo claim drift
+  - source/test diff is scoped to parser source-line caching and parser
+    regression coverage
+- next route is to stage and locally commit exactly the four-file release unit
+- push remains held until Ryan explicitly authorizes it
 
 Task 3 product-differentiation checkpoint is authorized:
 

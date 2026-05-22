@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import textwrap
+from collections.abc import Sequence
 from pathlib import Path
 
+import pytest
+
+import context_ir.parser as parser_module
 from context_ir.parser import (
     extract_syntax,
     extract_syntax_file,
@@ -465,6 +469,51 @@ def test_extract_syntax_uses_full_file_span_for_trailing_newline(
         end_column=len("print(VALUE)\n"),
     )
     assert module_definition.site.snippet == source_text
+
+
+def test_extract_syntax_reuses_per_file_lines_for_site_snippets(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Syntax extraction reuses one split line cache for all file snippets."""
+    module_file = tmp_path / "sample.py"
+    source_text = textwrap.dedent(
+        """
+        VALUE = 1
+
+        def build(value: int) -> str:
+            return str(value)
+        """
+    ).lstrip()
+    module_file.write_text(source_text, encoding="utf-8")
+
+    source_line_cache_ids: list[int] = []
+    original_snippet_from_span = parser_module._snippet_from_span
+
+    def spying_snippet_from_span(
+        source_lines: Sequence[str], span: SourceSpan
+    ) -> str | None:
+        source_line_cache_ids.append(id(source_lines))
+        return original_snippet_from_span(source_lines, span)
+
+    monkeypatch.setattr(
+        parser_module,
+        "_snippet_from_span",
+        spying_snippet_from_span,
+    )
+
+    syntax = parser_module.extract_syntax_file(module_file, tmp_path)
+    function_definition = next(
+        definition
+        for definition in syntax.definitions
+        if definition.kind is DefinitionKind.FUNCTION
+    )
+
+    assert len(source_line_cache_ids) > 2
+    assert set(source_line_cache_ids) == {source_line_cache_ids[0]}
+    assert function_definition.site.snippet == (
+        "def build(value: int) -> str:\n    return str(value)"
+    )
 
 
 def test_extract_syntax_emits_parameter_facts_for_supported_parameter_kinds(

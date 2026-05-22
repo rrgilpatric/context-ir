@@ -2,6 +2,206 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Parser Splitlines Cache Commit-Gating Cleared
+
+- Ran commit-gating after audit and full regression clearance for the exact
+  four-file parser splitlines-cache release unit.
+- Commit-gating verified:
+  - branch and refs: `main`, `HEAD=origin/main=893c758`
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/parser.py`, and `tests/test_parser.py`
+  - no staged files before staging
+  - no untracked files
+  - `git diff --check` clean
+  - no README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, API/MCP/schema/config,
+    package-export, portfolio, Task 4, or public/demo claim drift
+  - source/test diff is scoped to parser source-line caching and parser
+    regression coverage
+- Release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - stage and locally commit exactly the four-file release unit
+  - push remains held until Ryan explicitly authorizes it
+- Acceptance status: commit-gating-cleared
+
+## 2026-05-22 -- Parser Splitlines Cache Full Regression Cleared
+
+- Ran full regression after release-unit audit clearance for the exact
+  four-file parser splitlines-cache release unit.
+- Validation passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v` (`1742 passed`)
+- Release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run commit-gating over the exact four-file release unit
+  - do not stage, commit, push, run Task 4, update public/demo claims, or start
+    another optimization route until commit-gating clears
+- Acceptance status: full-regression-cleared
+
+## 2026-05-22 -- Parser Splitlines Cache Release-Unit Audit Cleared
+
+- Reviewed the returned read-only release-unit audit for the parser
+  splitlines-cache release unit.
+- Completion state: DONE.
+- Audit verdict: PASS, with no findings.
+- Audit-cleared release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/parser.py`
+  - `tests/test_parser.py`
+- Accepted audit result:
+  - cached `source_lines` is produced from the same
+    `source_text.splitlines(keepends=True)` call previously repeated inside
+    span/snippet helpers
+  - source span, snippet, syntax diagnostic, parse-error, and
+    trailing-newline/full-file behavior remain stable
+  - public parser entry points are unchanged
+  - no scorer, optimizer, compiler, eval, API/MCP/schema/config,
+    package-export, portfolio, or public-claim drift was found
+- Release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: yes
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run full regression over the complete suite
+  - do not commit-gate, stage, commit, push, run Task 4, update public/demo
+    claims, or start another optimization route until full regression returns
+    and is reviewed
+- Acceptance status: audit-cleared
+
+## 2026-05-22 -- Parser Splitlines Cache Implementation Accepted
+
+- Reviewed the returned bounded parser splitlines-cache implementation.
+- Completion state: DONE.
+- Accepted implementation:
+  - `src/context_ir/parser.py` computes
+    `source_text.splitlines(keepends=True)` once per file during syntax
+    extraction
+  - cached lines are reused for `_file_span`, `_snippet_from_span`, syntax
+    diagnostics, and `_SyntaxCollector._site_for_node` snippet construction
+  - public parser APIs remain unchanged
+  - no scorer, optimizer, compiler, eval schema, API/MCP/schema/config,
+    package-export, portfolio, public/demo claim, or Task 4 drift occurred
+- Accepted coverage:
+  - `tests/test_parser.py` verifies all snippet calls for a parsed file receive
+    the same cached line sequence and preserve snippet output
+  - Task 3 full-repo and fixture-root preservation coverage remains green in
+    `tests/test_eval_signal_smoke_e.py`
+- Focused validation passed:
+  - `.venv/bin/python -m ruff check src/context_ir/parser.py tests/test_parser.py tests/test_eval_signal_smoke_e.py`
+  - `.venv/bin/python -m ruff format --check src/context_ir/parser.py tests/test_parser.py tests/test_eval_signal_smoke_e.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_parser.py tests/test_eval_signal_smoke_e.py -v` (`39 passed`)
+- Implementation-lane instrumentation evidence:
+  - synthetic parser profile with 1 file and 1,502 syntax sites reported
+    `splitlines_calls=1`
+  - Task 3 full-repo budget `280` still selected the accepted exact units in
+    `274` tokens with `omitted_uncertainty x3`
+- Accepted release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/parser.py`
+  - `tests/test_parser.py`
+- Release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - local commit created: no
+  - pushed: no
+- Next route:
+  - run a read-only release-unit audit over the exact four-file parser
+    splitlines-cache release unit
+  - do not run full regression, commit-gate, stage, commit, push, run Task 4,
+    update public/demo claims, or start another optimization route until the
+    audit returns and is reviewed
+- Acceptance status: first-pass
+
+## 2026-05-22 -- Parser Splitlines Cache Authorized
+
+- Ryan accepted the recommendation from the optimizer-cache post-push latency
+  verification lane.
+- Authorized implementation scope:
+  - cache per-file `splitlines(keepends=True)` during syntax extraction
+  - reuse the cached lines for `_file_span`, `_snippet_from_span`, and
+    `_site_for_node` snippet construction
+  - preserve all syntax facts, parser tests, and Task 3 selected-unit behavior
+- Guardrails:
+  - no Task 4
+  - no public/demo claim updates
+  - no eval schema changes
+  - no scoring/optimizer/compiler policy changes
+  - no API/MCP/schema/config/package-export changes
+  - no staging, commit, or push from the implementation lane
+- Next route:
+  - issue the bounded parser splitlines-cache implementation prompt
+  - wait for the returned DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before
+    audit, full regression, commit-gating, staging, commit, push, Task 4,
+    benchmark methodology, production/MCP readiness, public/demo claims, or
+    another optimization route
+- Acceptance status: Ryan go accepted; implementation prompt authorized
+
+## 2026-05-22 -- Optimizer Cache Post-Push Latency Verification Returned
+
+- Reviewed the returned read-only post-optimization latency verification lane
+  for the pushed optimizer materialization-cache release.
+- Completion state: DONE.
+- Findings:
+  - no Task 3 behavior drift was found
+  - full-repo Task 3 budget `280` still selects the accepted exact units in
+    order, uses `274` tokens, and emits `omitted_uncertainty x3`
+  - current full-repo raw latency is `29.709s`, matching the implementation
+    evidence range of about `29.483s` to `30.654s`
+  - cProfile elapsed was `48.692s`
+  - fixture-root control timing was `0.0056s`, with `223` tokens and no
+    warnings
+- Accepted materialization evidence:
+  - optimizer materialization cache held across 8 budget probes
+  - optimizer candidate builds: 1
+  - optimizer render sessions: 1
+  - optimizer render calls: `210,249`
+  - scoring render calls: `74,286`
+  - source-span reads: `29,658`, down from the post-scorer-cache profile of
+    about `207,330`
+- Accepted bottleneck diagnosis:
+  - the old optimizer rematerialization bottleneck is gone
+  - the next dominant bounded bottleneck is parser source-site/snippet
+    materialization during `extract_syntax`
+  - repeated `str.splitlines` accounted for `112,463` calls and `14.334s`
+    cumulative under cProfile, primarily through `parser._site_for_node` and
+    `parser._snippet_from_span`
+- Artifacts:
+  `/private/tmp/context_ir_latency_profile_after_optimizer_cache_oy6wj_h9/`.
+- Recommended next candidate slice:
+  - cache per-file `splitlines(keepends=True)` during syntax extraction and
+    reuse it for `_file_span`, `_snippet_from_span`, and `_site_for_node`
+    snippet construction
+  - preserve all syntax facts, parser tests, and Task 3 selected-unit behavior
+- Release/routing state:
+  - pushed optimizer materialization-cache release remains accepted
+  - Task 4, public/demo claims, benchmark methodology, production/MCP, staging,
+    commit, and push remain held
+  - parser splitlines-cache implementation is held until Ryan gives explicit
+    go/no-go
+- Acceptance status: verification result accepted as workspace-only routing
+  evidence; held for Ryan go/no-go before advancement
+
 ## 2026-05-21 -- Optimizer Materialization Cache Release Pushed
 
 - Ryan authorized pushing the local optimizer materialization-cache release.

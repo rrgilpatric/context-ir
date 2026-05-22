@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import ast
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -143,15 +144,16 @@ def _extract_syntax_into_program(
         source_text = file_path.read_text(encoding="utf-8")
     except OSError:
         return
+    source_lines = source_text.splitlines(keepends=True)
 
     module_name_for_ids = module_name or "__module__"
     module_definition_id = f"def:{rel_path}:{module_name_for_ids}"
-    module_span = _file_span(source_text)
+    module_span = _file_span(source_lines)
     module_site = SourceSite(
         site_id=f"site:{module_definition_id}",
         file_path=rel_path,
         span=module_span,
-        snippet=_snippet_from_span(source_text, module_span),
+        snippet=_snippet_from_span(source_lines, module_span),
     )
     program.definitions.append(
         RawDefinitionFact(
@@ -168,7 +170,7 @@ def _extract_syntax_into_program(
         tree = ast.parse(source_text, filename=rel_path)
     except SyntaxError as error:
         diagnostic = _syntax_error_diagnostic(
-            source_text=source_text,
+            source_lines=source_lines,
             rel_path=rel_path,
             file_id=file_id,
             error=error,
@@ -183,6 +185,7 @@ def _extract_syntax_into_program(
         module_name=module_name or file_path.stem,
         module_definition_id=module_definition_id,
         source_text=source_text,
+        source_lines=source_lines,
     )
     collector.collect(tree)
 
@@ -205,10 +208,9 @@ def _module_display_name(module_name: str, file_path: Path) -> str:
     return file_path.stem
 
 
-def _file_span(source_text: str) -> SourceSpan:
+def _file_span(source_lines: Sequence[str]) -> SourceSpan:
     """Return a full-file span for source inventory and module facts."""
-    lines = source_text.splitlines(keepends=True)
-    if not lines:
+    if not source_lines:
         return SourceSpan(
             start_line=1,
             start_column=0,
@@ -218,23 +220,22 @@ def _file_span(source_text: str) -> SourceSpan:
     return SourceSpan(
         start_line=1,
         start_column=0,
-        end_line=len(lines),
-        end_column=len(lines[-1]),
+        end_line=len(source_lines),
+        end_column=len(source_lines[-1]),
     )
 
 
-def _snippet_from_span(source_text: str, span: SourceSpan) -> str | None:
+def _snippet_from_span(source_lines: Sequence[str], span: SourceSpan) -> str | None:
     """Return the exact snippet for ``span`` or ``None`` if it is empty."""
-    lines = source_text.splitlines(keepends=True)
-    if not lines:
+    if not source_lines:
         return None
 
     if span.start_line == span.end_line:
-        line = lines[span.start_line - 1]
+        line = source_lines[span.start_line - 1]
         snippet = line[span.start_column : span.end_column]
         return snippet or None
 
-    segment = lines[span.start_line - 1 : span.end_line]
+    segment = list(source_lines[span.start_line - 1 : span.end_line])
     if not segment:
         return None
 
@@ -246,14 +247,14 @@ def _snippet_from_span(source_text: str, span: SourceSpan) -> str | None:
 
 def _syntax_error_diagnostic(
     *,
-    source_text: str,
+    source_lines: Sequence[str],
     rel_path: str,
     file_id: str,
     error: SyntaxError,
 ) -> SyntaxDiagnostic:
     """Return a syntax-layer diagnostic for a parse failure."""
     diagnostic_id = f"syntax:{rel_path}:parse_error"
-    span = _syntax_error_span(source_text, error)
+    span = _syntax_error_span(source_lines, error)
     return SyntaxDiagnostic(
         diagnostic_id=diagnostic_id,
         file_id=file_id,
@@ -261,17 +262,16 @@ def _syntax_error_diagnostic(
             site_id=f"site:{diagnostic_id}",
             file_path=rel_path,
             span=span,
-            snippet=_snippet_from_span(source_text, span),
+            snippet=_snippet_from_span(source_lines, span),
         ),
         code=SyntaxDiagnosticCode.PARSE_ERROR,
         message=error.msg,
     )
 
 
-def _syntax_error_span(source_text: str, error: SyntaxError) -> SourceSpan:
+def _syntax_error_span(source_lines: Sequence[str], error: SyntaxError) -> SourceSpan:
     """Return a source span that captures the physical line of a parse failure."""
-    lines = source_text.splitlines(keepends=True)
-    if not lines:
+    if not source_lines:
         return SourceSpan(
             start_line=1,
             start_column=0,
@@ -280,10 +280,10 @@ def _syntax_error_span(source_text: str, error: SyntaxError) -> SourceSpan:
         )
 
     line_number = error.lineno if isinstance(error.lineno, int) else 1
-    if line_number < 1 or line_number > len(lines):
-        return _file_span(source_text)
+    if line_number < 1 or line_number > len(source_lines):
+        return _file_span(source_lines)
 
-    line_text = lines[line_number - 1]
+    line_text = source_lines[line_number - 1]
     return SourceSpan(
         start_line=line_number,
         start_column=0,
@@ -354,12 +354,14 @@ class _SyntaxCollector(ast.NodeVisitor):
         module_name: str,
         module_definition_id: str,
         source_text: str,
+        source_lines: Sequence[str],
     ) -> None:
         self._program = program
         self._rel_path = rel_path
         self._file_id = file_id
         self._module_name = module_name
         self._source_text = source_text
+        self._source_lines = source_lines
         self._definition_stack: list[_DefinitionContext] = [
             _DefinitionContext(
                 definition_id=module_definition_id,
@@ -819,7 +821,7 @@ class _SyntaxCollector(ast.NodeVisitor):
             site_id=f"site:{fact_id}",
             file_path=self._rel_path,
             span=span,
-            snippet=_snippet_from_span(self._source_text, span),
+            snippet=_snippet_from_span(self._source_lines, span),
         )
 
     def _fact_id(self, *, prefix: str, node: ast.AST, suffix: str | None = None) -> str:
