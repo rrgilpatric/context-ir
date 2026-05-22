@@ -1117,6 +1117,19 @@ Active next route:
     regression coverage
 - next route is to stage and locally commit exactly the four-file release unit
 - push remains held until Ryan explicitly authorizes it
+- local release commit created:
+  - `8e7b4a5 Cache parser source lines`
+- release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- next route is to wait for Ryan push authorization for the local parser
+  splitlines-cache release
+- do not run Task 4, update public/demo claims, or start another optimization
+  route until push authorization is resolved
 
 Task 3 product-differentiation checkpoint is authorized:
 

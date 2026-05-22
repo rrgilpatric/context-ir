@@ -2,6 +2,25 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Parser Splitlines Cache Local Release Commit Created
+
+- Created the local release commit after workspace acceptance, release-unit
+  audit, full regression, and commit-gating cleared:
+  `8e7b4a5 Cache parser source lines`.
+- Release state:
+  - workspace-only accepted: yes, first-pass
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- Next route:
+  - wait for Ryan push authorization for the local parser splitlines-cache
+    release
+  - do not run Task 4, update public/demo claims, or start another optimization
+    route until push authorization is resolved
+- Acceptance status: local release commit created after gates cleared
+
 ## 2026-05-22 -- Parser Splitlines Cache Commit-Gating Cleared
 
 - Ran commit-gating after audit and full regression clearance for the exact
