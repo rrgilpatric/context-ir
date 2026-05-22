@@ -40,15 +40,26 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the renderer source materialization-cache
-release.
+Current pushed release authority is the scorer lexical term-cache release.
 The latest pushed source/contract authority is
-`88b6b3a Cache renderer source materialization`; the latest pushed routing
-authority is `c737681 Sync renderer source cache push routing`; the latest pushed
-internal product-differentiation artifact authority is
+`a2ec601 Cache scorer lexical terms`; the latest pushed routing authority is
+this post-`a2ec601` scorer lexical push-routing sync; the latest pushed internal
+product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed scorer lexical term-cache release:
+`a2ec601 Cache scorer lexical terms`. This commit contains the accepted,
+corrected-audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed scorer/test/continuity release unit that adds a
+request-scoped `_LexicalCache` for term tuples, normalized text, and term sets
+during one `score_semantic_units` call. It preserves scoring policy, warning
+semantics, and Task 3 exact-unit behavior. Ryan explicitly authorized the push,
+and `git push origin main` advanced remote `main` from `c737681` to `a2ec601`.
+This continuity entry records the post-push state. Do not route `a2ec601` back
+to release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 Pushed renderer source materialization-cache release:
 `88b6b3a Cache renderer source materialization`. This commit contains the
@@ -1602,9 +1613,24 @@ Active next route:
   - full regression cleared: yes
   - commit-gating cleared: yes
   - local release commit created: yes
-  - pushed: no
-- next route is to wait for explicit Ryan push authorization; do not push, run
-  Task 4, or update public/demo claims before that authorization
+  - pushed: yes, with Ryan authorization
+- pushed commit:
+  - `a2ec601 Cache scorer lexical terms`
+- next route is a read-only post-push latency verification lane on the pushed
+  scorer lexical term-cache release:
+  - re-profile the accepted Task 3 full-repo `context_ir` provider path
+  - compare against the renderer-source-cache verification baseline of
+    `11.555s` raw and `29.219s` cProfile
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - verify scorer lexical extraction/normalization work stays materially below
+    the pre-cache baseline of `358,554` `_extract_terms` calls and `140,397`
+    `_normalize_text` calls
+  - identify the next dominant bottleneck and recommend exactly one next
+    bounded optimization slice, or state that one more measurement slice is
+    needed
+  - do not edit files, run Task 4, update public/demo claims, change eval
+    schema, implement optimization, stage, commit, or push
 
 Task 3 product-differentiation checkpoint is authorized:
 

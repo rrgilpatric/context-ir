@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-22 -- Scorer Lexical Release Pushed
+
+- Ryan authorized pushing the local scorer lexical term-cache release.
+- Pushed `main` to `origin/main`:
+  - `a2ec601 Cache scorer lexical terms`
+- Release state:
+  - workspace-only accepted: yes, first-pass after one narrow dead-code
+    correction
+  - release-unit audit cleared: yes, first repeat audit after correction
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: yes
+- Next route:
+  - run a read-only post-push latency verification lane on the pushed scorer
+    lexical term-cache release
+  - compare against the renderer-source-cache verification baseline of
+    `11.555s` raw and `29.219s` cProfile
+  - verify Task 3 full-repo budget `280` still selects the accepted exact units
+    in `274` tokens with `omitted_uncertainty x3`
+  - verify scorer lexical extraction/normalization work stays materially below
+    the pre-cache baseline of `358,554` `_extract_terms` calls and `140,397`
+    `_normalize_text` calls
+  - identify the next dominant bottleneck and recommend exactly one next
+    bounded optimization slice, or state that one more measurement slice is
+    needed
+  - keep Task 4, public/demo claims, benchmark methodology, production/MCP,
+    staging, commit, and push held until that verification returns and is
+    reviewed
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-22 -- Scorer Lexical Local Release Commit Created
 
 - Ryan authorized local release commit creation for the exact four-file release
@@ -18,13 +49,11 @@ Most recent supersession entries override older architectural decisions when the
   - full regression cleared: yes
   - commit-gating cleared: yes
   - local release commit created: yes
-  - pushed: no
+  - pushed: yes, superseded by the newer push entry above
 - Commit subject:
   - `Cache scorer lexical terms`
 - Next route:
-  - wait for explicit Ryan push authorization
-  - do not push, run Task 4, or update public/demo claims before that
-    authorization
+  - superseded by the newer push entry above
 - Acceptance status: local release commit created after gates cleared
 
 ## 2026-05-22 -- Scorer Lexical Commit-Gating Cleared
