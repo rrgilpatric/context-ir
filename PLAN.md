@@ -43,7 +43,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 Current pushed release authority is the parser splitlines-cache release.
 The latest pushed source/contract authority is
 `8e7b4a5 Cache parser source lines`; the latest pushed routing authority is
-`ac5496b Sync parser cache routing`; the latest pushed internal
+`c37f5b1 Sync parser cache push routing`; the latest pushed internal
 product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
@@ -56,10 +56,10 @@ committed, and pushed parser/test/continuity release unit that reuses per-file
 split lines during syntax extraction while preserving parser facts,
 diagnostics, public parser entry points, and Task 3 exact-unit behavior. Ryan
 explicitly authorized the push, and `git push origin main` advanced remote
-`main` from `893c758` through `ac5496b Sync parser cache routing`; this
+`main` from `893c758` through `c37f5b1 Sync parser cache push routing`; this
 continuity entry records the post-push state. Do not route `8e7b4a5` or
-`ac5496b` back to release-unit audit, full regression, commit-gating, staging,
-local commit creation, or push absent new findings.
+`ac5496b`, or `c37f5b1` back to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
 Pushed optimizer materialization-cache release:
 `449599a Cache optimizer materialization probes`. This commit contains the
@@ -1167,6 +1167,202 @@ Active next route:
     needed
   - do not edit files, run Task 4, update public/demo claims, change eval
     schema, implement optimization, stage, commit, or push
+- Ryan agreed with the control recommendation to run the read-only
+  post-optimization latency verification lane on the pushed parser
+  splitlines-cache release
+- next route is to issue that read-only verification prompt and wait for the
+  returned DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before any implementation
+  route, Task 4, public/demo claim update, release gate, staging, commit, or
+  push
+- the read-only post-parser-cache latency verification lane returned DONE and
+  is workspace-only accepted first-pass
+- accepted verification artifacts:
+  `/private/tmp/context_ir_latency_profile_after_parser_cache_G0fBMU/`
+- accepted verification result:
+  - no Task 3 behavior drift: full-repo budget `280` still selects the
+    accepted exact four units in `274` tokens with `omitted_uncertainty x3`
+  - fixture-root control remains fast at about `0.0056s` raw and `0.0133s`
+    cProfile, with 5 units, 223 tokens, and no warnings
+  - full-repo raw latency is about `17.8s` to `17.9s`; cProfile latency is
+    `36.707s`
+  - parser source-site/snippet `splitlines` hotspot is resolved:
+    full cProfile shows `str.splitlines` at `29,858` calls and `3.946s`,
+    with parser extraction accounting for only `183` calls and `0.005s`, and
+    no calls from `parser._site_for_node` or `parser._snippet_from_span`
+  - current dominant bottleneck is now the compile/optimizer path, especially
+    optimizer candidate rendering/source-span materialization plus repeated
+    optimizer sort-key work
+- selected next optimization candidate:
+  - add a per-`_SemanticRenderSession` source text/line cache in
+    `semantic_renderer` so `_read_source_span` and `_slice_source_text` stop
+    rereading and resplitting the same files for source renders
+- hold before issuing the renderer source-line cache implementation prompt
+  until Ryan gives explicit go/no-go
+- do not run Task 4, update public/demo claims, change eval schema, stage,
+  commit, push, or start implementation before that go/no-go
+- Ryan explicitly authorized proceeding with the bounded renderer source-line
+  cache implementation slice
+- next route is to issue that implementation prompt and wait for the returned
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before any review, release-unit
+  audit, full regression, commit-gating, staging, commit, push, Task 4, or
+  public/demo claim work
+- the bounded renderer source-line cache implementation lane returned DONE and
+  is workspace-only accepted first-pass
+- accepted implementation:
+  - adds request-scoped source materialization caching to
+    `_SemanticRenderSession`
+  - preserves standalone `render_semantic_unit(...)` per-call disk-read
+    behavior
+  - caches missing or unreadable files only within the current render session
+  - adds focused regression coverage proving two source spans from one file
+    read/split once within a session and that a fresh session sees updated
+    filesystem content
+- accepted implementation files:
+  - `src/context_ir/semantic_renderer.py`
+  - `tests/test_semantic_renderer.py`
+- control-rerun validation:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_renderer.py tests/test_semantic_renderer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m ruff format --check src/context_ir/semantic_renderer.py tests/test_semantic_renderer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_renderer.py tests/test_eval_signal_smoke_e.py -v`: `16 passed in 24.07s`
+  - `git diff --check`: clean
+- accepted Task 3 preservation evidence from the implementation lane:
+  - full-repo Task 3 budget `280` still uses `274` tokens
+  - selected units remain `compile_member_digest`,
+    `build_member_label`, `resolve_owner_alias`, and the alias unsupported
+    uncertainty unit
+  - warnings remain `omitted_uncertainty x3`
+  - fixture-root Task 3 behavior remains covered by the passing smoke-e test
+- accepted renderer instrumentation evidence from the implementation lane:
+  - `_read_source_span` calls: `29,724`
+  - actual source file reads: `349`
+  - splitline materializations: `349`
+  - unique source files read: `183`
+  - file reads/splitlines are materially below the prior `29,675`
+    source-span hot path
+- next route is a read-only release-unit audit over the exact four-file
+  workspace unit: `PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/semantic_renderer.py`, and
+  `tests/test_semantic_renderer.py`
+- do not run full regression, commit-gating, stage, commit, push, Task 4, or
+  public/demo claim work until that audit returns and is reviewed
+- the read-only release-unit audit returned DONE with verdict PASS and no
+  findings
+- release-unit audit is cleared for the exact four-file workspace unit
+- audit accepted scope boundary:
+  - production change is limited to request-scoped source materialization
+    caching inside `_SemanticRenderSession`
+  - standalone `render_semantic_unit(...)` continues to read from disk per
+    standalone call
+  - no API/MCP/schema/config/package-export/parser/scorer/optimizer/compiler,
+    eval-schema, portfolio, or public-claim drift was found
+  - residual performance tradeoff is bounded request-scope memory retention for
+    source text plus split lines
+- next route is full regression, then commit-gating over the exact four-file
+  release unit if regression passes
+- do not stage, commit, push, run Task 4, or update public/demo claims until
+  full regression and commit-gating clear
+- full regression found a blocking test failure:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: failed with `1 failed,
+    1742 passed`
+- failing test:
+  `tests/test_semantic_scorer.py::test_score_semantic_units_reuses_render_session_for_candidate_profiles`
+- failure reason:
+  - the test monkeypatches private
+    `semantic_renderer._render_semantic_unit_with_context`
+  - the implementation added the required private `source_file_cache` keyword
+    argument
+  - the scorer test spy still has the old private helper signature and raises
+    `TypeError: ... got an unexpected keyword argument 'source_file_cache'`
+- release is held before commit-gating
+- recommended correction:
+  - update the focused scorer render-session regression spy to accept and
+    forward `source_file_cache`
+  - rerun focused validation plus full regression
+- hold for Ryan explicit go/no-go before issuing the correction prompt
+- Ryan explicitly authorized the narrow correction
+- next route is to issue a correction prompt scoped to
+  `tests/test_semantic_scorer.py` only
+- correction must update the scorer render-session regression spy to accept and
+  forward the private `source_file_cache` argument without changing production
+  behavior
+- after the correction returns, review it before rerunning or accepting release
+  gates; do not stage, commit, push, run Task 4, or update public/demo claims
+- the narrow scorer test correction returned DONE and is workspace-only
+  accepted first-pass
+- accepted correction:
+  - changed only `tests/test_semantic_scorer.py`
+  - updated
+    `test_score_semantic_units_reuses_render_session_for_candidate_profiles`
+    so the private render helper spy accepts and forwards
+    `source_file_cache`
+  - preserves the test's existing intent that scoring builds renderer lookup
+    indexes once and reuses the render session for candidate profiles
+- correction validation rerun by control:
+  - `.venv/bin/python -m ruff check tests/test_semantic_scorer.py`: passed
+  - `.venv/bin/python -m ruff format --check tests/test_semantic_scorer.py`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py::test_score_semantic_units_reuses_render_session_for_candidate_profiles -v`: passed
+  - `.venv/bin/python -m pytest tests/test_semantic_scorer.py tests/test_semantic_renderer.py tests/test_eval_signal_smoke_e.py -v`: `43 passed in 23.86s`
+  - `git diff --check`: clean
+- the prior full-regression failure is fixed at the focused-test level, but
+  full regression has not yet been rerun after the correction
+- because the release unit expanded from four files to five files after the
+  audit, the prior four-file release-unit audit is no longer sufficient for
+  commit readiness
+- next route is a read-only release-unit audit over the exact five-file
+  workspace unit: `PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/semantic_renderer.py`,
+  `tests/test_semantic_renderer.py`, and
+  `tests/test_semantic_scorer.py`
+- do not run full regression, commit-gating, stage, commit, push, Task 4, or
+  public/demo claim work until that five-file audit returns and is reviewed
+- the read-only five-file release-unit audit returned DONE with verdict PASS
+  and no findings
+- five-file release-unit audit is cleared for:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_renderer.py`
+  - `tests/test_semantic_renderer.py`
+  - `tests/test_semantic_scorer.py`
+- audit accepted scope boundary:
+  - `semantic_renderer.py` adds only request-scoped source materialization
+    caching inside `_SemanticRenderSession`
+  - standalone `render_semantic_unit(...)` still passes
+    `source_file_cache=None`, preserving per-call disk-read behavior
+  - `tests/test_semantic_scorer.py` only updates the private spy signature to
+    accept and forward `source_file_cache`
+  - no API/MCP/schema/config/package-export/parser/scorer/optimizer/compiler,
+    eval-schema, portfolio, or public-claim drift was found
+- next route is full regression, then commit-gating over the exact five-file
+  release unit if regression passes
+- do not stage, commit, push, run Task 4, or update public/demo claims until
+  full regression and commit-gating clear
+- full regression is cleared for the five-file release unit:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: `1743 passed in 65.59s`
+- next route is commit-gating over the exact five-file release unit
+- do not stage, commit, push, run Task 4, or update public/demo claims until
+  commit-gating clears
+- commit-gating is cleared over the exact five-file release unit:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_renderer.py`,
+    `tests/test_semantic_renderer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files before staging
+  - no untracked files
+  - no dirty files outside the release unit
+  - no `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `ARCHITECTURE.md`,
+    `AGENTS.md`, `pyproject.toml`, package-root export, MCP, eval task,
+    run-spec, fixture, portfolio, API/schema/config, Task 4, or public/demo
+    claim diffs
+  - `git diff --check`: clean
+- next route is local commit creation for the five-file release unit; push
+  remains Ryan-gated
 
 Task 3 product-differentiation checkpoint is authorized:
 

@@ -71,6 +71,14 @@ class _SemanticRenderContext:
     eval_evidence_by_id: dict[str, SemanticEvalRuntimeEvidence]
 
 
+@dataclass(frozen=True)
+class _SourceFileMaterialization:
+    """Request-scoped source text and line materialization for one file."""
+
+    text: str
+    lines: tuple[str, ...]
+
+
 class _SemanticRenderSession:
     """Request-scoped semantic renderer with local materialization caches."""
 
@@ -79,6 +87,7 @@ class _SemanticRenderSession:
         self._program = program
         self._context = _build_render_context(program)
         self._renders: dict[tuple[str, RenderDetail], RenderedUnit] = {}
+        self._source_files: dict[Path, _SourceFileMaterialization | None] = {}
 
     def render(self, unit_id: str, detail: RenderDetail) -> RenderedUnit:
         """Render ``unit_id`` at ``detail`` once per session."""
@@ -92,6 +101,7 @@ class _SemanticRenderSession:
             unit_id=unit_id,
             detail=detail,
             context=self._context,
+            source_file_cache=self._source_files,
         )
         self._renders[cache_key] = rendered
         return rendered
@@ -110,6 +120,7 @@ def render_semantic_unit(
             symbol=symbol,
             detail=detail,
             dataclass_facts=_dataclass_facts_for_symbol(program, symbol.symbol_id),
+            source_file_cache=None,
         )
         return RenderedUnit(
             unit_id=unit_id,
@@ -169,6 +180,7 @@ def _render_semantic_unit_with_context(
     unit_id: str,
     detail: RenderDetail,
     context: _SemanticRenderContext,
+    source_file_cache: dict[Path, _SourceFileMaterialization | None],
 ) -> RenderedUnit:
     """Render one semantic unit using request-scoped lookup indexes."""
     symbol = program.resolved_symbols.get(unit_id)
@@ -181,6 +193,7 @@ def _render_semantic_unit_with_context(
                 symbol.symbol_id,
                 _EMPTY_DATACLASS_FACTS,
             ),
+            source_file_cache=source_file_cache,
         )
         return RenderedUnit(
             unit_id=unit_id,
@@ -240,6 +253,7 @@ def _render_symbol(
     symbol: ResolvedSymbol,
     detail: RenderDetail,
     dataclass_facts: _DataclassFacts,
+    source_file_cache: dict[Path, _SourceFileMaterialization | None] | None,
 ) -> str:
     """Render one proven semantic symbol at ``detail``."""
     if detail is RenderDetail.IDENTITY:
@@ -283,6 +297,7 @@ def _render_symbol(
     source_text = _read_source_span(
         repo_root=program.repo_root,
         site=symbol.definition_site,
+        source_file_cache=source_file_cache,
     )
     if source_text is not None:
         return source_text
@@ -542,22 +557,65 @@ def _join_lines(lines: list[str] | tuple[str, ...]) -> str:
     return "\n".join(lines)
 
 
-def _read_source_span(*, repo_root: Path, site: SourceSite) -> str | None:
+def _read_source_span(
+    *,
+    repo_root: Path,
+    site: SourceSite,
+    source_file_cache: dict[Path, _SourceFileMaterialization | None] | None = None,
+) -> str | None:
     """Return the exact on-disk text for ``site.span`` or ``None``."""
     source_path = repo_root / site.file_path
+    source_file = (
+        _load_source_file(source_path)
+        if source_file_cache is None
+        else _cached_source_file(source_path, source_file_cache)
+    )
+    if source_file is None:
+        return None
+    return _slice_source_lines(source_file.lines, site.span)
+
+
+def _cached_source_file(
+    source_path: Path,
+    source_file_cache: dict[Path, _SourceFileMaterialization | None],
+) -> _SourceFileMaterialization | None:
+    """Return cached source materialization for one render-session file."""
+    cached_file = source_file_cache.get(source_path)
+    if cached_file is not None or source_path in source_file_cache:
+        return cached_file
+
+    cached_file = _load_source_file(source_path)
+    source_file_cache[source_path] = cached_file
+    return cached_file
+
+
+def _load_source_file(source_path: Path) -> _SourceFileMaterialization | None:
+    """Read and split one source file for exact span slicing."""
     try:
         source_text = source_path.read_text(encoding="utf-8")
     except OSError:
         return None
-    return _slice_source_text(source_text, site.span)
+    return _materialize_source_text(source_text)
+
+
+def _materialize_source_text(source_text: str) -> _SourceFileMaterialization:
+    """Return source text and pre-split lines for repeated span slicing."""
+    return _SourceFileMaterialization(
+        text=source_text,
+        lines=tuple(source_text.splitlines(keepends=True)),
+    )
 
 
 def _slice_source_text(source_text: str, span: SourceSpan) -> str | None:
     """Return the exact source text covered by ``span``."""
+    return _slice_source_lines(_materialize_source_text(source_text).lines, span)
+
+
+def _slice_source_lines(lines: tuple[str, ...], span: SourceSpan) -> str | None:
+    """Return the exact source text covered by ``span`` from pre-split lines."""
     if span.start_line < 1 or span.end_line < span.start_line:
         return None
 
-    lines = source_text.splitlines(keepends=True)
     if not lines:
         return None
     if span.end_line > len(lines):
@@ -570,7 +628,7 @@ def _slice_source_text(source_text: str, span: SourceSpan) -> str | None:
         snippet = line[span.start_column : span.end_column]
         return snippet or None
 
-    segment = lines[span.start_line - 1 : span.end_line]
+    segment = list(lines[span.start_line - 1 : span.end_line])
     if not segment:
         return None
     if span.start_column < 0 or span.start_column > len(segment[0]):

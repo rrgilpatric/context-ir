@@ -820,6 +820,9 @@ def test_score_semantic_units_reuses_render_session_for_candidate_profiles(
         unit_id: str,
         detail: semantic_renderer.RenderDetail,
         context: semantic_renderer._SemanticRenderContext,
+        source_file_cache: dict[
+            Path, semantic_renderer._SourceFileMaterialization | None
+        ],
     ) -> semantic_renderer.RenderedUnit:
         cache_key = (unit_id, detail)
         render_calls[cache_key] = render_calls.get(cache_key, 0) + 1
@@ -828,6 +831,7 @@ def test_score_semantic_units_reuses_render_session_for_candidate_profiles(
             unit_id=unit_id,
             detail=detail,
             context=context,
+            source_file_cache=source_file_cache,
         )
 
     monkeypatch.setattr(

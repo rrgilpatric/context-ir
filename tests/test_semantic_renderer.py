@@ -406,6 +406,9 @@ def test_semantic_render_session_reuses_context_and_rendered_units(
         unit_id: str,
         detail: RenderDetail,
         context: semantic_renderer._SemanticRenderContext,
+        source_file_cache: dict[
+            Path, semantic_renderer._SourceFileMaterialization | None
+        ],
     ) -> RenderedUnit:
         cache_key = (unit_id, detail)
         render_calls[cache_key] = render_calls.get(cache_key, 0) + 1
@@ -414,6 +417,7 @@ def test_semantic_render_session_reuses_context_and_rendered_units(
             unit_id=unit_id,
             detail=detail,
             context=context,
+            source_file_cache=source_file_cache,
         )
 
     monkeypatch.setattr(
@@ -443,3 +447,83 @@ def test_semantic_render_session_reuses_context_and_rendered_units(
         (unresolved_id, RenderDetail.SOURCE): 1,
         (unsupported_id, RenderDetail.IDENTITY): 1,
     }
+
+
+def test_semantic_render_session_reuses_source_file_materialization_per_session(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Different source spans in one file share request-scoped materialization."""
+    source_path = tmp_path / "main.py"
+    source_path.write_text(
+        textwrap.dedent(
+            """
+            def first() -> int:
+                return 1
+
+
+            def second() -> int:
+                return 2
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    program = _semantic_program(tmp_path)
+    first_id = _definition_id_for(program, "main.first")
+    second_id = _definition_id_for(program, "main.second")
+    original_read_text = Path.read_text
+    original_materialize = semantic_renderer._materialize_source_text
+    read_paths: list[Path] = []
+    materialize_inputs: list[str] = []
+
+    def counting_read_text(
+        self: Path,
+        encoding: str | None = None,
+        errors: str | None = None,
+    ) -> str:
+        if self == source_path:
+            read_paths.append(self)
+        return original_read_text(self, encoding=encoding, errors=errors)
+
+    def counting_materialize(
+        source_text: str,
+    ) -> semantic_renderer._SourceFileMaterialization:
+        materialize_inputs.append(source_text)
+        return original_materialize(source_text)
+
+    monkeypatch.setattr(Path, "read_text", counting_read_text)
+    monkeypatch.setattr(
+        semantic_renderer,
+        "_materialize_source_text",
+        counting_materialize,
+    )
+
+    session = semantic_renderer._SemanticRenderSession(program)
+    first_source = session.render(first_id, RenderDetail.SOURCE)
+    second_source = session.render(second_id, RenderDetail.SOURCE)
+
+    assert "return 1" in first_source.content
+    assert "return 2" in second_source.content
+    assert read_paths == [source_path]
+    assert len(materialize_inputs) == 1
+
+    source_path.write_text(
+        textwrap.dedent(
+            """
+            def first() -> int:
+                return 9
+
+
+            def second() -> int:
+                return 2
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    fresh_session = semantic_renderer._SemanticRenderSession(program)
+    fresh_first_source = fresh_session.render(first_id, RenderDetail.SOURCE)
+
+    assert "return 9" in fresh_first_source.content
+    assert read_paths == [source_path, source_path]
+    assert len(materialize_inputs) == 2
