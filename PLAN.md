@@ -44,7 +44,7 @@ Current pushed release authority is the renderer source materialization-cache
 release.
 The latest pushed source/contract authority is
 `88b6b3a Cache renderer source materialization`; the latest pushed routing
-authority is `e0e15ec Sync renderer source cache routing`; the latest pushed
+authority is `c737681 Sync renderer source cache push routing`; the latest pushed
 internal product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
@@ -58,10 +58,10 @@ release unit that adds request-scoped source materialization caching inside
 `_SemanticRenderSession` while preserving standalone `render_semantic_unit(...)`
 per-call disk-read behavior and Task 3 exact-unit behavior. Ryan explicitly
 authorized the push, and `git push origin main` advanced remote `main` from
-`c37f5b1` through `e0e15ec Sync renderer source cache routing`; this
+`c37f5b1` through `c737681 Sync renderer source cache push routing`; this
 continuity entry records the post-push state. Do not route `88b6b3a` or
-`e0e15ec` back to release-unit audit, full regression, commit-gating, staging,
-local commit creation, or push absent new findings.
+`e0e15ec`, or `c737681` back to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
 Pushed parser splitlines-cache release:
 `8e7b4a5 Cache parser source lines`. This commit contains the accepted,
@@ -1404,6 +1404,207 @@ Active next route:
     needed
   - do not edit files, run Task 4, update public/demo claims, change eval
     schema, implement optimization, stage, commit, or push
+- Ryan agreed with the control recommendation to run the read-only post-push
+  latency verification lane on the pushed renderer source
+  materialization-cache release
+- next route is to issue that read-only verification prompt and wait for the
+  returned DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before any implementation
+  route, Task 4, public/demo claim update, release gate, staging, commit, or
+  push
+- the read-only post-renderer-cache latency verification lane returned DONE and
+  is workspace-only accepted first-pass
+- accepted verification artifacts:
+  `/private/tmp/context_ir_latency_profile_after_renderer_source_cache_1_eobsja/`
+- accepted verification result:
+  - no Task 3 behavior drift: full-repo budget `280` still selects the
+    accepted exact four units in `274` tokens with `omitted_uncertainty x3`
+  - fixture-root control remains fast at about `0.00512s` raw and `0.01349s`
+    cProfile, with 5 units, 223 tokens, and no warnings
+  - full-repo raw latency is `11.555s`; cProfile latency is `29.219s`
+  - renderer source-span requests still occur, but actual materialization no
+    longer scales with them:
+    - `_read_source_span`: `29,725`
+    - `_cached_source_file`: `29,725`
+    - `_load_source_file` actual reads: `349`
+    - `_materialize_source_text` splitline materializations: `349`
+    - all `str.splitlines` calls: `532`
+  - renderer file reads/splitline materializations are about `98.8%` below the
+    prior `29,675` source-span materialization path
+  - current dominant bottleneck is scorer-side repeated lexical relevance work,
+    especially `_extract_terms` and `_normalize_text`; optimizer sort-key churn
+    remains close behind
+- selected next optimization candidate:
+  - add a request-scoped scorer lexical term cache for
+    `_extract_terms`/normalization during `score_semantic_units`, preserving
+    scoring policy and exact Task 3 selected-unit behavior
+- hold before issuing the scorer lexical term cache implementation prompt until
+  Ryan gives explicit go/no-go
+- do not run Task 4, update public/demo claims, change eval schema, stage,
+  commit, push, or start implementation before that go/no-go
+- Ryan explicitly authorized proceeding with the bounded scorer lexical term
+  cache implementation slice
+- next route is to issue the scoped implementation prompt and wait for the
+  returned DONE/BLOCKED/ESCALATE/NEEDS-CONTROL result before review,
+  release-unit audit, full regression, commit-gating, staging, commit, push,
+  Task 4, or public/demo claim work
+- the bounded scorer lexical term cache implementation lane returned DONE and
+  is workspace-only accepted first-pass
+- accepted implementation result:
+  - changed only `src/context_ir/semantic_scorer.py` and
+    `tests/test_semantic_scorer.py` beyond the pre-existing dirty control docs
+  - adds request-scoped `_LexicalCache` reuse for term tuples, normalized text,
+    and term sets during one `score_semantic_units` call
+  - preserves scoring weights, thresholds, selected-unit semantics, and warning
+    semantics
+  - full-repo Task 3 budget `280` remains `274` tokens with the accepted exact
+    selected units and `omitted_uncertainty x3`
+  - fixture-root Task 3 remains unchanged
+  - instrumentation reports `_extract_terms` calls down to `106,539` from the
+    supplied `358,554` baseline and `_normalize_text` calls down to `0` from
+    the supplied `140,397` baseline
+- control review reran:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py
+    tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m pytest
+    tests/test_semantic_scorer.py::test_score_semantic_units_reuses_lexical_cache_within_request
+    tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units
+    -v`: `2 passed`
+- next route is a read-only release-unit audit over the exact four-file
+  workspace unit: `PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+- do not run full regression, commit-gating, stage, commit, push, Task 4, or
+  public/demo claim work until the release-unit audit returns and is reviewed
+- the read-only release-unit audit returned DONE with verdict FAIL
+- accepted audit finding:
+  - `_normalize_text()` in `src/context_ir/semantic_scorer.py` is now unused;
+    `rg "_normalize_text\\("` finds only its definition
+  - this is not a behavior regression, but it violates the repo no-dead-code
+    convention and leaves two apparent normalization authorities because
+    `_LexicalCache.normalized()` duplicates the normalization path inline
+- release state:
+  - release-unit audit is not cleared
+  - do not run full regression, commit-gating, stage, commit, push, Task 4, or
+    public/demo claim work
+  - next route is held for Ryan explicit go/no-go on a narrow correction lane
+    to remove the dead helper or consolidate the normalization path
+- Ryan explicitly authorized the narrow correction lane for the audit finding
+- next route is to issue a bounded correction prompt to remove the unused
+  `_normalize_text()` helper or otherwise leave a single normalization
+  authority, then wait for DONE/BLOCKED/ESCALATE/NEEDS-CONTROL before repeating
+  the release-unit audit
+- the narrow scorer lexical dead-code correction returned DONE and is
+  workspace-only accepted first-pass
+- accepted correction:
+  - removed the unused `_normalize_text()` helper from
+    `src/context_ir/semantic_scorer.py`
+  - `rg -n "_normalize_text\\(" src/context_ir/semantic_scorer.py` now returns
+    no matches
+  - `_LexicalCache.normalized()` remains the single normalization path for the
+    request-scoped scorer cache
+  - no scoring policy, warning semantics, eval schema, Task 3, Task 4,
+    portfolio, or public/demo claim changes were introduced
+- control review reran:
+  - `.venv/bin/python -m ruff check src/context_ir/semantic_scorer.py
+    tests/test_semantic_scorer.py tests/test_eval_signal_smoke_e.py`: passed
+  - `.venv/bin/python -m pytest
+    tests/test_semantic_scorer.py::test_score_semantic_units_reuses_lexical_cache_within_request
+    tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units
+    -v`: `2 passed`
+- next route is to repeat the read-only release-unit audit over the exact
+  four-file workspace unit: `PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+- do not run full regression, commit-gating, stage, commit, push, Task 4, or
+  public/demo claim work until the repeat audit returns and is reviewed
+- Ryan explicitly authorized proceeding with the repeat read-only release-unit
+  audit
+- next route is to issue that repeat audit prompt and wait for
+  DONE/BLOCKED/ESCALATE/NEEDS-CONTROL before any full regression,
+  commit-gating, staging, commit, push, Task 4, or public/demo claim work
+- the repeat read-only release-unit audit returned DONE with verdict PASS and
+  no findings
+- release-unit audit is cleared for the exact four-file workspace unit:
+  `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_scorer.py`, and
+  `tests/test_semantic_scorer.py`
+- accepted audit result:
+  - prior `_normalize_text()` dead-code finding is resolved; `rg -n
+    "_normalize_text\\(" src/context_ir/semantic_scorer.py` returns no matches
+  - `_LexicalCache` remains request-scoped and instantiated inside
+    `score_semantic_units`
+  - no scoring policy, score semantics, warning semantics, eval schema,
+    portfolio artifact, Task 4, API/MCP/schema/config/package export,
+    parser/renderer/optimizer/compiler, README, EVAL, PUBLIC_CLAIMS,
+    ARCHITECTURE, or public/demo claim drift was found
+- next route is full regression over the complete suite:
+  `.venv/bin/python -m ruff check src/ tests/`,
+  `.venv/bin/python -m ruff format --check src/ tests/`,
+  `.venv/bin/python -m mypy --strict src/`, and
+  `.venv/bin/python -m pytest tests/ -v`
+- do not run commit-gating, stage, commit, push, Task 4, or public/demo claim
+  work until full regression returns and is reviewed
+- Ryan explicitly authorized running the full regression gate
+- live state before starting full regression:
+  - branch `main`
+  - `HEAD=origin/main=c737681`
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- full regression is cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1744 passed in 56.85s`
+- next route is commit-gating over the exact four-file release unit:
+  `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_scorer.py`, and
+  `tests/test_semantic_scorer.py`
+- do not stage, commit, push, run Task 4, or update public/demo claims until
+  commit-gating clears
+- Ryan explicitly authorized running commit-gating over the exact four-file
+  release unit
+- live state before commit-gating:
+  - branch `main`
+  - `HEAD=origin/main=c737681`
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- commit-gating is cleared for the exact four-file release unit
+- accepted commit-gating checks:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_scorer.py`, and `tests/test_semantic_scorer.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+  - `rg -n "_normalize_text\\(" src/context_ir/semantic_scorer.py` returns no
+    matches
+  - no diffs in README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, AGENTS,
+    `pyproject.toml`, or package-root exports
+  - no API/MCP/schema/config/package-export, parser, renderer, optimizer,
+    compiler, eval schema, portfolio artifact, Task 4, or public/demo claim
+    drift was found
+- next route is local release commit creation for the exact four-file release
+  unit; push remains Ryan-gated
+- Ryan authorized local release commit creation for the exact four-file release
+  unit
+- local release commit is created as this control lane stages and commits:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+- release state after local commit creation:
+  - workspace accepted: yes
+  - release-unit audit cleared: yes, first repeat audit after one dead-code
+    correction
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed: no
+- next route is to wait for explicit Ryan push authorization; do not push, run
+  Task 4, or update public/demo claims before that authorization
 
 Task 3 product-differentiation checkpoint is authorized:
 

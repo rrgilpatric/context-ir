@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import re
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TypeAlias
 
 from context_ir.semantic_renderer import (
@@ -197,6 +197,39 @@ class _CandidateProfile:
     body_text: str | None
 
 
+@dataclass
+class _LexicalCache:
+    """Request-scoped lexical cache for one semantic scoring pass."""
+
+    _terms_by_text: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    _normalized_by_text: dict[str, str] = field(default_factory=dict)
+    _term_sets_by_text: dict[str, frozenset[str]] = field(default_factory=dict)
+
+    def terms(self, text: str) -> tuple[str, ...]:
+        """Return extracted terms for ``text``, cached within this request."""
+        terms = self._terms_by_text.get(text)
+        if terms is None:
+            terms = _extract_terms(text)
+            self._terms_by_text[text] = terms
+        return terms
+
+    def normalized(self, text: str) -> str:
+        """Return the normalized lexical surface for ``text``."""
+        normalized = self._normalized_by_text.get(text)
+        if normalized is None:
+            normalized = " ".join(self.terms(text))
+            self._normalized_by_text[text] = normalized
+        return normalized
+
+    def term_set(self, text: str) -> frozenset[str]:
+        """Return extracted terms as a cached immutable set."""
+        term_set = self._term_sets_by_text.get(text)
+        if term_set is None:
+            term_set = frozenset(self.terms(text))
+            self._term_sets_by_text[text] = term_set
+        return term_set
+
+
 def score_semantic_units(
     program: SemanticProgram,
     query: str,
@@ -204,8 +237,9 @@ def score_semantic_units(
     embed_fn: EmbeddingFunction | None = None,
 ) -> SemanticScoringResult:
     """Score every renderable semantic unit without mutating ``program``."""
+    lexical_cache = _LexicalCache()
     candidates = _build_candidate_profiles(program)
-    query_terms = _extract_terms(query)
+    query_terms = lexical_cache.terms(query)
     prefer_source_edit_anchors = bool(query_terms) and _prefers_source_edit_anchors(
         query=query,
         query_terms=query_terms,
@@ -214,6 +248,7 @@ def score_semantic_units(
         query=query,
         candidates=candidates,
         embed_fn=embed_fn,
+        lexical_cache=lexical_cache,
     )
     direct_scores = _apply_orchestration_edit_signal(
         scores=direct_scores,
@@ -358,9 +393,10 @@ def _direct_scores_for_candidates(
     query: str,
     candidates: list[_CandidateProfile],
     embed_fn: EmbeddingFunction | None,
+    lexical_cache: _LexicalCache,
 ) -> dict[str, SemanticUnitScore]:
     """Return deterministic direct-match scores for every candidate."""
-    query_terms = _extract_terms(query)
+    query_terms = lexical_cache.terms(query)
     if not query_terms:
         return {
             candidate.unit_id: SemanticUnitScore(
@@ -371,7 +407,7 @@ def _direct_scores_for_candidates(
             for candidate in candidates
         }
 
-    normalized_query = _normalize_text(query)
+    normalized_query = lexical_cache.normalized(query)
     query_identifier_mentions = _extract_identifier_mentions(query)
     query_identifier_suffix_surfaces = _identifier_suffix_surfaces(
         query_identifier_mentions
@@ -394,6 +430,7 @@ def _direct_scores_for_candidates(
             candidate=candidate,
             query_terms=query_terms,
             normalized_query=normalized_query,
+            lexical_cache=lexical_cache,
         )
         semantic_score = semantic_similarities.get(candidate.unit_id, 0.0)
         p_edit = _clamp_probability(
@@ -426,6 +463,7 @@ def _direct_scores_for_candidates(
                 candidate=candidate,
                 query_terms=query_terms,
                 query_literal_output_surfaces=query_literal_output_surfaces,
+                lexical_cache=lexical_cache,
             ),
             _public_api_contract_edit_score(
                 candidate=candidate,
@@ -434,10 +472,12 @@ def _direct_scores_for_candidates(
             _eval_report_accounting_edit_score(
                 candidate=candidate,
                 query_terms=query_terms,
+                lexical_cache=lexical_cache,
             ),
             _runtime_probe_result_flow_edit_score(
                 candidate=candidate,
                 query_terms=query_terms,
+                lexical_cache=lexical_cache,
             ),
         )
         if prefer_source_edit_anchors:
@@ -445,6 +485,7 @@ def _direct_scores_for_candidates(
                 candidate=candidate,
                 p_edit=p_edit,
                 query_terms=query_terms,
+                lexical_cache=lexical_cache,
             )
         p_support = _clamp_probability(
             lexical_score * _DIRECT_SUPPORT_WEIGHT
@@ -493,6 +534,7 @@ def _implementation_intent_edit_score(
     candidate: _CandidateProfile,
     p_edit: float,
     query_terms: tuple[str, ...],
+    lexical_cache: _LexicalCache,
 ) -> float:
     """Keep behavior-descriptive tests from becoming source edit anchors."""
     if _is_test_file_path(candidate.file_path):
@@ -502,6 +544,7 @@ def _implementation_intent_edit_score(
         _implementation_source_surface_edit_score(
             candidate=candidate,
             query_terms=query_terms,
+            lexical_cache=lexical_cache,
         ),
     )
 
@@ -510,6 +553,7 @@ def _implementation_source_surface_edit_score(
     *,
     candidate: _CandidateProfile,
     query_terms: tuple[str, ...],
+    lexical_cache: _LexicalCache,
 ) -> float:
     """Return a direct floor for source functions matching implementation prose."""
     if not candidate.file_path.startswith("src/"):
@@ -523,8 +567,8 @@ def _implementation_source_surface_edit_score(
 
     focus_terms = _focus_terms(query_terms)
     surface_terms = (
-        *_extract_terms(candidate.primary_text),
-        *_extract_terms(candidate.file_path),
+        *lexical_cache.terms(candidate.primary_text),
+        *lexical_cache.terms(candidate.file_path),
     )
     if not surface_terms:
         return 0.0
@@ -584,14 +628,15 @@ def _lexical_relevance(
     candidate: _CandidateProfile,
     query_terms: tuple[str, ...],
     normalized_query: str,
+    lexical_cache: _LexicalCache,
 ) -> float:
     """Return direct lexical relevance from semantic-first text surfaces."""
-    primary_terms = frozenset(_extract_terms(candidate.primary_text))
-    searchable_terms = frozenset(_extract_terms(candidate.searchable_text))
-    path_terms = frozenset(_extract_terms(candidate.file_path))
+    primary_terms = lexical_cache.term_set(candidate.primary_text)
+    searchable_terms = lexical_cache.term_set(candidate.searchable_text)
+    path_terms = lexical_cache.term_set(candidate.file_path)
     focus_terms = _focus_terms(query_terms)
-    normalized_primary = _normalize_text(candidate.primary_text)
-    normalized_searchable = _normalize_text(candidate.searchable_text)
+    normalized_primary = lexical_cache.normalized(candidate.primary_text)
+    normalized_searchable = lexical_cache.normalized(candidate.searchable_text)
 
     primary_phrase = _phrase_match(
         normalized_query=normalized_query,
@@ -614,13 +659,13 @@ def _lexical_relevance(
     if candidate.body_text is None:
         return lexical_score
 
-    body_terms = _extract_terms(candidate.body_text)
+    body_terms = lexical_cache.terms(candidate.body_text)
     if not body_terms:
         return lexical_score
 
     return _clamp_probability(
         lexical_score
-        + _term_overlap(focus_terms, frozenset(body_terms))
+        + _term_overlap(focus_terms, lexical_cache.term_set(candidate.body_text))
         * _BODY_SIGNAL_OVERLAP_WEIGHT
         + _ngram_overlap(focus_terms, body_terms, n=2) * _BODY_SIGNAL_BIGRAM_WEIGHT
     )
@@ -760,11 +805,6 @@ def _term_overlap(
         return 0.0
     matches = sum(1 for term in query_terms if term in candidate_terms)
     return matches / len(query_terms)
-
-
-def _normalize_text(text: str) -> str:
-    """Normalize ``text`` into a whitespace-joined lexical surface."""
-    return " ".join(_extract_terms(text))
 
 
 def _extract_terms(text: str) -> tuple[str, ...]:
@@ -970,6 +1010,7 @@ def _semantic_renderer_edit_score(
     candidate: _CandidateProfile,
     query_terms: tuple[str, ...],
     query_literal_output_surfaces: frozenset[str],
+    lexical_cache: _LexicalCache,
 ) -> float:
     """Return a direct floor for semantic renderer surfaces named by prose."""
     if candidate.symbol_kind not in {
@@ -992,8 +1033,8 @@ def _semantic_renderer_edit_score(
 
     surface_terms = frozenset(
         (
-            *_extract_terms(candidate.primary_text),
-            *_extract_terms(candidate.file_path),
+            *lexical_cache.terms(candidate.primary_text),
+            *lexical_cache.terms(candidate.file_path),
         )
     )
     if {"semantic", "renderer"}.issubset(surface_terms):
@@ -1039,6 +1080,7 @@ def _eval_report_accounting_edit_score(
     *,
     candidate: _CandidateProfile,
     query_terms: tuple[str, ...],
+    lexical_cache: _LexicalCache,
 ) -> float:
     """Return a direct-edit floor for eval ledger summary/report queries."""
     if candidate.symbol_kind not in {
@@ -1053,7 +1095,7 @@ def _eval_report_accounting_edit_score(
     if not {"report", "accounting"} & query_term_set:
         return 0.0
 
-    primary_terms = frozenset(_extract_terms(candidate.primary_text))
+    primary_terms = lexical_cache.term_set(candidate.primary_text)
     if {"ledger", "summary"}.issubset(primary_terms):
         return _EVAL_REPORT_ACCOUNTING_EDIT_FLOOR
     return 0.0
@@ -1063,6 +1105,7 @@ def _runtime_probe_result_flow_edit_score(
     *,
     candidate: _CandidateProfile,
     query_terms: tuple[str, ...],
+    lexical_cache: _LexicalCache,
 ) -> float:
     """Return a direct floor for runtime-probe result admission/contract surfaces."""
     if candidate.symbol_kind not in _BODY_SIGNAL_KINDS:
@@ -1074,8 +1117,8 @@ def _runtime_probe_result_flow_edit_score(
 
     surface_terms = frozenset(
         (
-            *_extract_terms(candidate.primary_text),
-            *_extract_terms(candidate.file_path),
+            *lexical_cache.terms(candidate.primary_text),
+            *lexical_cache.terms(candidate.file_path),
         )
     )
     if not {"runtime", "probe"}.issubset(surface_terms):

@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 import context_ir.semantic_renderer as semantic_renderer
+import context_ir.semantic_scorer as semantic_scorer
 from context_ir.binder import bind_syntax
 from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
@@ -858,6 +859,53 @@ def test_score_semantic_units_reuses_render_session_for_candidate_profiles(
     assert render_calls[(run_id, semantic_renderer.RenderDetail.SOURCE)] == 1
     assert render_calls[(unresolved_id, semantic_renderer.RenderDetail.SUMMARY)] == 1
     assert render_calls[(unsupported_id, semantic_renderer.RenderDetail.SUMMARY)] == 1
+
+
+def test_score_semantic_units_reuses_lexical_cache_within_request(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Scoring reuses lexical terms but does not retain them across requests."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def helper() -> None:
+                return None
+
+            def run() -> None:
+                helper()
+                missing_call()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    query = "fix main.run while keeping helper"
+    original_extract_terms = semantic_scorer._extract_terms
+    extract_calls_by_text: dict[str, int] = {}
+
+    def counting_extract_terms(text: str) -> tuple[str, ...]:
+        extract_calls_by_text[text] = extract_calls_by_text.get(text, 0) + 1
+        return original_extract_terms(text)
+
+    monkeypatch.setattr(
+        semantic_scorer,
+        "_extract_terms",
+        counting_extract_terms,
+    )
+
+    score_semantic_units(program, query)
+
+    assert extract_calls_by_text[query] == 1
+    assert extract_calls_by_text["main.run"] == 1
+    assert extract_calls_by_text["main.py"] == 1
+
+    score_semantic_units(program, query)
+
+    assert extract_calls_by_text[query] == 2
+    assert extract_calls_by_text["main.run"] == 2
+    assert extract_calls_by_text["main.py"] == 2
 
 
 def test_score_semantic_units_calibrates_tests_for_implementation_intent(
