@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Local Commit Created
+
+- Created the local release commit after corrected release-unit audit, full
+  regression, and commit-gating cleared.
+- Local commit:
+  - `76204f9 Add root literal dynamic import eval pilot`
+- The commit contains the expanded root-module literal dynamic-import release
+  unit:
+  - docs and claim-boundary updates
+  - new internal eval-only root-module literal fixture/task/run-spec/focused test
+  - runtime evidence catalog golden update
+  - Task 3 full-repo confidence golden update for candidate-set drift
+- Post-commit local state:
+  - branch `main`
+  - local `HEAD=76204f9`
+  - `origin/main=6d0724f`
+  - local `main` is ahead of `origin/main` by one commit
+- Push remains Ryan-gated and has not been performed.
+- Next control action:
+  - wait for explicit Ryan push authorization, or hold local-only if Ryan does
+    not authorize push
+- Acceptance status: local commit created first-pass after gates
+
 ## 2026-05-23 -- Root-Module Literal Dynamic-Import Full Regression And Commit-Gating Cleared
 
 - Reviewed the returned read-only full-regression and commit-gating gate for

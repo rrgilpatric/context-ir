@@ -191,9 +191,13 @@ root-literal pilot still internal eval-only, selected-unit-specific baseline
 caveat wording, and Task 3 confidence drift backed by unchanged selected-unit/
 document/token/warning/probe locks.
 
-Next route: create the local release commit for the exact expanded release
-unit. Push remains Ryan-gated and must not happen until Ryan explicitly
-authorizes it.
+The local release commit was created:
+`76204f9 Add root literal dynamic import eval pilot`. Local `main` is ahead of
+`origin/main` by one commit; remote `origin/main` remains `6d0724f`.
+
+Next route: wait for explicit Ryan push authorization, or hold local-only if
+Ryan does not authorize push. Push remains Ryan-gated and must not happen until
+Ryan explicitly authorizes it.
 
 The expanded release unit is:
 
