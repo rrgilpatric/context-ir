@@ -40,13 +40,39 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the Task 0 internal portfolio refresh
-release. The latest pushed internal product-differentiation artifact authority
-is `2f61c1e Refresh task 0 portfolio evidence`. The latest pushed
-source/contract authority remains
-`ea91718 Skip certified optimizer probe intervals`. Live git refs and worktree
-state must still be verified from git during control intake; do not infer them
-from committed prose.
+Current pushed release authority is the direct-literal `getattr` internal
+eval-only release. The latest pushed internal eval capability evidence
+authority is `8afe99f Add direct-literal getattr eval pilot`, with push-routing
+continuity through `9ea679d Sync direct-literal getattr push routing`. The
+latest pushed internal product-differentiation artifact authority remains
+`2f61c1e Refresh task 0 portfolio evidence`. The latest pushed source/contract
+authority remains `ea91718 Skip certified optimizer probe intervals`. Live git
+refs and worktree state must still be verified from git during control intake;
+do not infer them from committed prose.
+
+Pushed direct-literal `getattr` release:
+`8afe99f Add direct-literal getattr eval pilot`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed direct-literal
+`getattr(obj, "bit_length")` internal eval-only release unit. It adds the
+`oracle_signal_getattr_literal_probe_matrix` fixture/task/run-spec/focused test
+and related docs/tests while preserving selected-unit truth as
+`unsupported/opaque`, runtime provenance as additive only, and public/demo
+claims held. The release does not change `src/`, runtime/API/MCP/
+package-export/schema/scoring/compiler/optimizer/winner-selection behavior,
+Task 4, portfolio artifacts, benchmark claims, latency claims, production
+claims, or generalized reflective-builtin claims. Ryan explicitly authorized
+the push, and `git push origin main` advanced remote `main` from `1749ab9` to
+`9ea679d`, publishing both:
+
+- `8afe99f Add direct-literal getattr eval pilot`
+- `9ea679d Sync direct-literal getattr push routing`
+
+No active release gate remains for the direct-literal `getattr` pilot. Do not
+route `8afe99f` or `9ea679d` back to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
+Task 4 remains not run, portfolio artifacts remain unchanged, and public/demo
+claims remain held.
 
 Pushed Task 0 internal portfolio refresh release:
 `2f61c1e Refresh task 0 portfolio evidence`. This commit contains the accepted,
@@ -280,14 +306,12 @@ tests, and `git diff --check`. Commit-gating confirmed the changed file set
 matches the corrected-audit-cleared release unit only, with no release-blocking
 findings.
 
-Local release commit created: `8afe99f Add direct-literal getattr eval pilot`.
-This commit contains the accepted, corrected-audit-cleared,
-full-regression-cleared, and commit-gating-cleared direct-literal `getattr`
-release unit. It is local only: `main` is ahead of `origin/main` by one commit.
-Remote push remains Ryan-gated.
+Local release commit created and pushed: `8afe99f Add direct-literal getattr
+eval pilot`. The push also published `9ea679d Sync direct-literal getattr push
+routing`. No active release gate remains for this release.
 
-Next route: wait for explicit Ryan push authorization, or hold local-only if
-Ryan does not authorize push.
+Next route: select the next north-star move from current repo truth rather
+than reopening the direct-literal `getattr` release.
 
 The direct-literal `getattr` release unit is:
 
@@ -16966,22 +16990,21 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: review the workspace-only
-`oracle_signal_getattr_literal_probe_matrix` direct-literal `getattr` release
-unit through the blocked full-regression correction path. It is accepted in
-workspace, and the narrow Task 3 confidence correction is also accepted
-first-pass. The corrected release-unit audit is cleared first-pass, and full
-regression plus commit-gating are cleared first-pass. The local release commit
-is created at `8afe99f`; it is not yet pushed. At local-commit routing sync,
-git verified `main`, `HEAD=8afe99f`, `origin/main=1749ab9`, clean worktree,
-and local `main` ahead by one commit. Future lanes must continue to verify
-live refs from git rather than committed prose.
+Immediate next route: select the next north-star move from current repo truth.
+The direct-literal `getattr` release is pushed and closed/no-active-gate:
+`8afe99f Add direct-literal getattr eval pilot` plus
+`9ea679d Sync direct-literal getattr push routing` are on remote `main`. Do
+not route that release back to release-unit audit, full regression,
+commit-gating, staging, local commit, or push absent new findings. At
+post-push routing sync, git verified `main`, `HEAD=origin/main=9ea679d`, and a
+clean worktree. Future lanes must continue to verify live refs from git rather
+than committed prose.
 
-Current pushed repo authority at slice intake is
-`1749ab9 Sync root literal pilot post-push state`. The prior root-module
-literal dynamic-import release remains closed/no-active-gate; do not route it
-back to release-unit audit, full regression, commit-gating, staging, local
-commit, or push absent new findings.
+Current pushed repo authority at slice intake for the next move is the pushed
+direct-literal `getattr` release above. The prior root-module literal
+dynamic-import release remains closed/no-active-gate; do not route it back to
+release-unit audit, full regression, commit-gating, staging, local commit, or
+push absent new findings.
 
 The pushed exec/eval provider release is closed/no-active-gate at
 `125c44e Add exec/eval default subprocess eval provider`; do not route it back

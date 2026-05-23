@@ -2,6 +2,32 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Getattr Release Pushed
+
+- Ryan explicitly authorized pushing the direct-literal `getattr` release.
+- Pushed commits:
+  - `8afe99f Add direct-literal getattr eval pilot`
+  - `9ea679d Sync direct-literal getattr push routing`
+- `git push origin main` advanced remote `main` from `1749ab9` to `9ea679d`.
+- Release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - committed locally: yes
+  - pushed to remote: yes
+  - Task 4: not run
+  - portfolio artifacts: unchanged
+  - public/demo claims: held
+- The release remains internal eval-only direct-literal `getattr` evidence for
+  exactly `getattr(obj, "bit_length")`; it does not widen `src/`,
+  runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+  winner-selection behavior or public/demo claims.
+- Do not route `8afe99f` or `9ea679d` back to release-unit audit, full
+  regression, commit-gating, staging, local commit creation, or push absent new
+  findings.
+- Acceptance status: pushed first-pass after correction-gated release flow
+
 ## 2026-05-23 -- Direct-Literal Getattr Local Commit Created
 
 - Created the local release commit after corrected release-unit audit, full
