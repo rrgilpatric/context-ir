@@ -191,13 +191,18 @@ root-literal pilot still internal eval-only, selected-unit-specific baseline
 caveat wording, and Task 3 confidence drift backed by unchanged selected-unit/
 document/token/warning/probe locks.
 
-The local release commit was created:
-`76204f9 Add root literal dynamic import eval pilot`. Local `main` is ahead of
-`origin/main` by one commit; remote `origin/main` remains `6d0724f`.
+The root-module literal dynamic-import release was pushed. Ryan authorized the
+push, and `git push origin main` advanced remote `main` from `6d0724f` to
+`a0b7ffb`, publishing:
 
-Next route: wait for explicit Ryan push authorization, or hold local-only if
-Ryan does not authorize push. Push remains Ryan-gated and must not happen until
-Ryan explicitly authorizes it.
+- `76204f9 Add root literal dynamic import eval pilot`
+- `a0b7ffb Sync root literal pilot push routing`
+
+No active release gate remains for the root-module literal dynamic-import
+pilot. Do not route `76204f9` or `a0b7ffb` back to release-unit audit, full
+regression, commit-gating, staging, local commit creation, or push absent new
+findings. Task 4 remains not run, portfolio artifacts remain unchanged, and
+public/demo claims remain held.
 
 The expanded release unit is:
 

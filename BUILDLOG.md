@@ -2,6 +2,33 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Pushed
+
+- Ryan explicitly authorized pushing the root-module literal dynamic-import
+  release.
+- Pushed commits:
+  - `76204f9 Add root literal dynamic import eval pilot`
+  - `a0b7ffb Sync root literal pilot push routing`
+- `git push origin main` advanced remote `main` from `6d0724f` to `a0b7ffb`.
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes, after one docs correction and rerun
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - committed locally: yes
+  - pushed to remote: yes
+  - Task 4: not run
+  - portfolio artifacts: unchanged
+  - public/demo claims: held
+- The release remains internal eval-only root-module literal dynamic-import
+  evidence for exactly `importlib.import_module("plugins.weather")`; it does
+  not widen source/runtime/API/MCP/package-export/schema/scoring/compiler/
+  optimizer/winner-selection behavior or public/demo claims.
+- Do not route `76204f9` or `a0b7ffb` back to release-unit audit, full
+  regression, commit-gating, staging, local commit creation, or push absent new
+  findings.
+- Acceptance status: pushed first-pass after correction-gated release flow
+
 ## 2026-05-23 -- Root-Module Literal Dynamic-Import Local Commit Created
 
 - Created the local release commit after corrected release-unit audit, full
