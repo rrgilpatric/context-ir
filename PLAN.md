@@ -40,11 +40,11 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the direct-literal `getattr` internal
+Current pushed release authority is the direct-literal `hasattr` internal
 eval-only release. The latest pushed internal eval capability evidence
-authority is `8afe99f Add direct-literal getattr eval pilot`, with push-routing
-continuity through `9ea679d Sync direct-literal getattr push routing` and
-docs-only post-push continuity through
+authority is `b5d1719 Add direct-literal hasattr eval pilot`, with push-routing
+continuity through `a5cfeee Sync direct-literal hasattr push routing`. The
+previous direct-literal `getattr` release remains closed through
 `2295a56 Sync direct-literal getattr post-push state`. The latest pushed
 internal product-differentiation artifact authority remains
 `2f61c1e Refresh task 0 portfolio evidence`. The latest pushed source/contract
@@ -176,14 +176,27 @@ tests, and `git diff --check`. Commit-gating confirmed the changed file set
 matches the corrected-audit-cleared release unit only, with no release-blocking
 findings and no `src/` diff.
 
-Local release commit created: `b5d1719 Add direct-literal hasattr eval pilot`.
-This commit contains the accepted, corrected-audit-cleared,
-full-regression-cleared, and commit-gating-cleared direct-literal `hasattr`
-release unit. It is local only: `main` is ahead of `origin/main` by one commit.
-Remote push remains Ryan-gated.
+Pushed direct-literal `hasattr` release:
+`b5d1719 Add direct-literal hasattr eval pilot`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed direct-literal `hasattr`
+release unit.
+Ryan explicitly authorized the push, and `git push origin main` advanced remote
+`main` from `2295a56` to `a5cfeee`, publishing both:
 
-Next route: wait for explicit Ryan push authorization, or hold local-only if
-Ryan does not authorize push.
+- `b5d1719 Add direct-literal hasattr eval pilot`
+- `a5cfeee Sync direct-literal hasattr push routing`
+
+No active release gate remains for the direct-literal `hasattr` pilot. Do not
+route `b5d1719` or `a5cfeee` back to release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
+
+Next route: run a bounded read-only north-star selection/spec lane from current
+repo truth. The current recommended target is direct-literal runtime mutation,
+likely `setattr(obj, "some_attr", value)`, because direct-literal reflective
+lookup now has both `getattr(obj, "bit_length")` and
+`hasattr(obj, "bit_length")` coverage. Do not implement that slice until the
+selection/spec lane returns and is accepted.
 
 The direct-literal `hasattr` release unit is:
 
@@ -17117,28 +17130,30 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: wait for Ryan push authorization for the local
-direct-literal `hasattr` release commit. The corrected, audit-cleared,
-full-regression-cleared, and commit-gating-cleared internal eval-only
-`REFLECTIVE_BUILTIN` direct-literal `hasattr(obj, "bit_length")` release unit
-is locally committed at `b5d1719 Add direct-literal hasattr eval pilot`; it is
-not yet pushed. At local-commit routing sync, git verified `main`,
-`HEAD=b5d1719`, `origin/main=2295a56`, clean worktree, and local `main` ahead
-by one commit. The direct-literal `getattr` release
-is pushed and closed/no-active-gate: `8afe99f Add direct-literal getattr eval
-pilot`, `9ea679d Sync direct-literal getattr push routing`, and
-`2295a56 Sync direct-literal getattr post-push state` are on remote `main`. Do
+Immediate next route: run a bounded read-only north-star selection/spec lane
+from current repo truth. The direct-literal `hasattr` release is pushed and
+closed/no-active-gate: `b5d1719 Add direct-literal hasattr eval pilot` and
+`a5cfeee Sync direct-literal hasattr push routing` are on remote `main`. Do
 not route that release back to release-unit audit, full regression,
-commit-gating, staging, local commit, or push absent new findings. At route
-selection intake, git verified `main`, `HEAD=origin/main=2295a56`, and a clean
-worktree. Future lanes must continue to verify live refs from git rather than
-committed prose.
+commit-gating, staging, local commit, or push absent new findings. At post-push
+route selection intake, git verified `main`, `HEAD=origin/main=a5cfeee`, and a
+clean worktree. Future lanes must continue to verify live refs from git rather
+than committed prose.
 
-Current pushed repo authority at slice intake for the next move is the pushed
-direct-literal `getattr` release above. The prior root-module literal
-dynamic-import release remains closed/no-active-gate; do not route it back to
-release-unit audit, full regression, commit-gating, staging, local commit, or
-push absent new findings.
+The recommended selection/spec target is direct-literal runtime mutation,
+likely `setattr(obj, "some_attr", value)`. This is not implementation
+authorization yet. The read-only lane should compare runtime mutation against
+remaining dynamic-import siblings, Task 4, public/demo planning, and further
+latency work, then return the smallest safe next slice if the recommendation
+holds.
+
+The direct-literal `getattr` release remains pushed and closed/no-active-gate:
+`8afe99f Add direct-literal getattr eval pilot`,
+`9ea679d Sync direct-literal getattr push routing`, and
+`2295a56 Sync direct-literal getattr post-push state` are on remote `main`.
+The prior root-module literal dynamic-import release remains
+closed/no-active-gate; do not route it back to release-unit audit, full
+regression, commit-gating, staging, local commit, or push absent new findings.
 
 The pushed exec/eval provider release is closed/no-active-gate at
 `125c44e Add exec/eval default subprocess eval provider`; do not route it back

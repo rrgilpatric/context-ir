@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Hasattr Push Completed
+
+- Ryan authorized pushing the direct-literal `hasattr(obj, "bit_length")`
+  release.
+- `git push origin main` advanced remote `main` from `2295a56` to `a5cfeee`.
+- Pushed commits:
+  - `b5d1719 Add direct-literal hasattr eval pilot`
+  - `a5cfeee Sync direct-literal hasattr push routing`
+- Live post-push verification:
+  - branch `main`
+  - `HEAD=a5cfeee`
+  - `origin/main=a5cfeee`
+  - clean worktree
+  - `git diff --check` clean
+- No active release gate remains for the direct-literal `hasattr` pilot.
+- Public/demo claims remain held, Task 4 remains not run, and portfolio
+  artifacts remain unchanged.
+- Next control action:
+  - run a bounded read-only north-star selection/spec lane from current repo
+    truth
+  - current recommended target is direct-literal runtime mutation, likely
+    `setattr(obj, "some_attr", value)`, but no implementation is authorized
+    until that lane returns and is accepted
+- Acceptance status: pushed first-pass after Ryan authorization
+
 ## 2026-05-23 -- Direct-Literal Hasattr Local Commit Created
 
 - Created the local release commit after corrected release-unit audit, full
