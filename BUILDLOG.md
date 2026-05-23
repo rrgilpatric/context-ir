@@ -2,6 +2,32 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Certified Interval Release Pushed
+
+- Ryan explicitly authorized pushing the local certified same-result interval
+  release commit.
+- Pushed commit:
+  - `ea91718 Skip certified optimizer probe intervals`
+- `git push origin main` advanced remote `main` from `6b76b5a` to `ea91718`.
+- Post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=ea91718`
+  - latest log starts `ea91718 Skip certified optimizer probe intervals`,
+    `6b76b5a Defer optimizer probe finalization`, and
+    `6895096 Fast-path summary lexical terms`
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - committed locally: yes
+  - pushed to remote: yes
+  - Task 4: not run
+  - portfolio artifacts: unchanged
+  - public/demo claims: held
+- Acceptance status: pushed first-pass
+
 ## 2026-05-23 -- Certified Interval Commit-Gating Cleared
 
 - Commit-gating over the exact certified same-result interval release unit is

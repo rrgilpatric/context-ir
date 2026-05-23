@@ -40,13 +40,30 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the optimizer budget-probe finalization release.
+Current pushed release authority is the certified optimizer probe interval
+release.
 The latest pushed source/contract/routing authority is
-`6b76b5a Defer optimizer probe finalization`; the latest pushed internal
+`ea91718 Skip certified optimizer probe intervals`; the latest pushed internal
 product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed certified optimizer probe interval release:
+`ea91718 Skip certified optimizer probe intervals`. This commit contains the
+accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,
+locally committed, and pushed compiler/optimizer/test/continuity release unit
+that adds private certified same-result budget intervals so compiler budget
+search may skip only completed probes whose certified interval contains the
+midpoint. It preserves public `optimize_semantic_units(...)` finalization
+behavior, scoring, selected-unit order, warning rules, omitted-unit semantics,
+public result types, API/MCP/package exports, eval schema, Task 3 exact
+behavior, Task 4 hold, portfolio boundaries, and public/demo claim holds. Ryan
+explicitly authorized the push, and `git push origin main` advanced remote
+`main` from `6b76b5a` to `ea91718`. This continuity entry records the
+post-push state. Do not route `ea91718` back to release-unit audit, full
+regression, commit-gating, staging, local commit creation, or push absent new
+findings.
 
 Pushed optimizer budget-probe finalization release:
 `6b76b5a Defer optimizer probe finalization`. This commit contains the
