@@ -93,12 +93,26 @@ def _compile_budget_honest_artifact(
         None
     )
     optimizer_session = _SemanticOptimizerSession.build(program, scoring)
+    certified_probes: list[_SemanticOptimizationProbe] = []
     low = 0
     high = max_unit_budget
 
     while low <= high:
         unit_budget = (low + high) // 2
-        probe = optimizer_session.probe(unit_budget)
+        probe = None
+        for certified_probe in reversed(certified_probes):
+            interval = certified_probe.certified_same_result_interval
+            if interval is None:
+                continue
+            lower_budget, upper_budget, source_budget = interval
+            if source_budget == unit_budget:
+                continue
+            if lower_budget <= unit_budget <= upper_budget:
+                probe = replace(certified_probe, budget=unit_budget)
+                break
+        if probe is None:
+            probe = optimizer_session.probe(unit_budget)
+            certified_probes.append(probe)
         rendered_units = optimizer_session.render_selected_units(probe)
         document = _assemble_document(
             query=query,

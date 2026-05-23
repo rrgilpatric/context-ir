@@ -101,6 +101,7 @@ class _CandidateSortState:
 
 
 _CandidateSortKeyCache = dict[tuple[_CandidateSortState, str], _CandidateSortKey]
+_CertifiedSameResultBudgetInterval = tuple[int, int, int]
 
 
 @dataclass(frozen=True)
@@ -113,6 +114,7 @@ class _SemanticOptimizationProbe:
     budget: int
     focus_unit_ids: frozenset[str]
     suppressed_uncertainty_unit_ids: frozenset[str]
+    certified_same_result_interval: _CertifiedSameResultBudgetInterval | None = None
 
 
 @dataclass(frozen=True)
@@ -261,11 +263,14 @@ def _probe_prepared_semantic_units(
             budget=budget,
             focus_unit_ids=frozenset(),
             suppressed_uncertainty_unit_ids=frozenset(),
+            certified_same_result_interval=(0, budget, budget),
         )
 
     selections: list[SemanticSelectionRecord] = []
     omitted_unit_ids: list[str] = []
     remaining_budget = budget
+    same_result_lower_budget = 0
+    same_result_upper_budget: int | None = None
     current_focus_id: str | None = None
     current_focus_support_count = 0
     current_focus_has_uncertainty_surface = False
@@ -333,6 +338,8 @@ def _probe_prepared_semantic_units(
         ):
             omitted_unit_ids.append(candidate.unit_id)
             continue
+        spent_budget = budget - remaining_budget
+        detail_decision_budget_interval: list[tuple[int, int | None]] = []
         chosen_detail = _choose_detail(
             candidate,
             remaining_budget,
@@ -342,7 +349,23 @@ def _probe_prepared_semantic_units(
             current_focus_inherited_uncertainty_surface=(
                 current_focus_inherited_uncertainty_surface
             ),
+            detail_decision_budget_interval=detail_decision_budget_interval,
         )
+        if detail_decision_budget_interval:
+            lower_remaining_budget, upper_remaining_budget = (
+                detail_decision_budget_interval[0]
+            )
+            same_result_lower_budget = max(
+                same_result_lower_budget,
+                spent_budget + lower_remaining_budget,
+            )
+            if upper_remaining_budget is not None:
+                decision_upper_budget = spent_budget + upper_remaining_budget
+                same_result_upper_budget = (
+                    decision_upper_budget
+                    if same_result_upper_budget is None
+                    else min(same_result_upper_budget, decision_upper_budget)
+                )
         if chosen_detail is None:
             omitted_unit_ids.append(candidate.unit_id)
             if _is_policy_suppressed_uncertainty_candidate(
@@ -472,6 +495,27 @@ def _probe_prepared_semantic_units(
         budget=budget,
         focus_unit_ids=frozenset(focus_unit_ids),
         suppressed_uncertainty_unit_ids=frozenset(suppressed_uncertainty_unit_ids),
+        certified_same_result_interval=(
+            (
+                budget,
+                budget,
+                budget,
+            )
+            if (
+                same_result_lower_budget > budget
+                or (
+                    same_result_upper_budget is not None
+                    and same_result_upper_budget < budget
+                )
+            )
+            else (
+                max(0, same_result_lower_budget),
+                budget
+                if same_result_upper_budget is None
+                else same_result_upper_budget,
+                budget,
+            )
+        ),
     )
 
 
@@ -1226,6 +1270,7 @@ def _choose_detail(
     current_focus_file_path: str | None = None,
     current_focus_file_scope_id: str | None = None,
     current_focus_inherited_uncertainty_surface: bool = False,
+    detail_decision_budget_interval: list[tuple[int, int | None]] | None = None,
 ) -> RenderDetail | None:
     """Pick the richest affordable detail for ``candidate``."""
     if _is_policy_suppressed_uncertainty_candidate(
@@ -1255,9 +1300,23 @@ def _choose_detail(
         current_focus_id=current_focus_id,
     ):
         detail_chain = (RenderDetail.SOURCE, *detail_chain)
+    previous_token_counts: list[int] = []
     for detail in detail_chain:
-        if candidate.renders[detail].token_count <= remaining_budget:
+        token_count = candidate.renders[detail].token_count
+        if token_count <= remaining_budget:
+            if detail_decision_budget_interval is not None:
+                detail_decision_budget_interval.append(
+                    (
+                        token_count,
+                        min(previous_token_counts) - 1
+                        if previous_token_counts
+                        else None,
+                    )
+                )
             return detail
+        previous_token_counts.append(token_count)
+    if detail_decision_budget_interval is not None:
+        detail_decision_budget_interval.append((0, min(previous_token_counts) - 1))
     return None
 
 

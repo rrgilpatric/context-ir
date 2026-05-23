@@ -2,6 +2,303 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Certified Interval Commit-Gating Cleared
+
+- Commit-gating over the exact certified same-result interval release unit is
+  accepted with no findings.
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Commit-gating checks:
+  - `git status --short --branch -uall`: branch `main`, exact five-file dirty
+    set, no staged files, no untracked files
+  - `git diff --name-status`: exactly the five release-unit files
+  - `git diff --cached --name-status`: no staged files
+  - `git ls-files --others --exclude-standard`: no untracked files
+  - `git diff --check`: clean
+  - excluded-surface diff check returned no output for public docs,
+    package/API/MCP surfaces, eval tasks/run specs/fixtures, and
+    product-differentiation artifacts
+- Prior gates for this same release unit are cleared:
+  - release-unit audit: PASS with no findings
+  - full regression: ruff, format, strict mypy, and pytest `1748 passed in
+    45.26s`
+- Next route:
+  - local release commit creation for the exact five-file release unit, if Ryan
+    explicitly authorizes it
+  - push remains separately Ryan-gated after any local commit
+  - do not run Task 4, update portfolio artifacts, or update public/demo claims
+- Acceptance status: commit-gating-cleared first-pass
+
+## 2026-05-23 -- Certified Interval Release Unit Audit And Full Regression Cleared
+
+- The read-only release-unit audit returned PASS with no findings for the
+  certified same-result interval workspace unit.
+- Audit scope:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Audit evidence accepted:
+  - branch `main`, `HEAD=origin/main=6b76b5a`
+  - no staged files
+  - no untracked files
+  - dirty files exactly the five-file release unit
+  - no API/MCP/package export, eval schema, Task 4, portfolio, or public/demo
+    claim drift
+  - the supplied evidence artifact matched the amended contract: full-repo
+    Task 3 hash `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`,
+    `274` tokens, `omitted_uncertainty x3`, unchanged warning IDs,
+    confidence `0.002087041823245554`, five full scans, and certified skips
+    for `264`, `266`, and `267`; fixture-root hash
+    `e576ae0dff78ab31871f38e6cf8e705274516164bb67dd841a7a433a5d34c4ae`,
+    `223` tokens, and empty warnings
+  - targeted equivalence check for skipped budgets `264`, `266`, and `267`
+    matched their certified source probes on selections, omitted IDs, total
+    tokens, focus IDs, and suppressed uncertainty IDs
+  - scoped audit validation passed, including scoped ruff, scoped format,
+    `mypy --strict src/`, focused pytest `52 passed`, and `git diff --check`
+- Full regression cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed, `39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1748 passed in 45.26s`
+- Next route:
+  - commit-gating over the exact five-file release unit
+  - do not stage, commit, push, run Task 4, update portfolio artifacts, or
+    update public/demo claims until commit-gating clears and is reviewed
+- Acceptance status: audit-cleared and full-regression-cleared first-pass
+
+## 2026-05-23 -- Certified Interval Implementation Accepted With Confidence Amendment
+
+- The certified same-result interval implementation lane returned ESCALATE and
+  is workspace-only accepted after Ryan explicitly approved the control
+  recommendation to amend the confidence acceptance value.
+- Live repo truth verified during control review:
+  - branch `main`
+  - `HEAD=origin/main=6b76b5a`
+  - dirty tracked files are `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_compiler.py`,
+    `src/context_ir/semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Accepted finding:
+  - the implementation appears to satisfy the skip, selected-output, warning,
+    and instrumentation goals
+  - full-repo Task 3 confidence is now `0.002087041823245554` instead of the
+    prior requested `0.0020877837965136577`
+  - reported cause is that full-repo scoring includes the touched
+    implementation files themselves, changing the confidence denominator while
+    leaving the selected artifact unchanged
+  - acceptance is amended to lock the deterministic current confidence value
+    `0.002087041823245554`; do not force the old value
+- Preserved evidence:
+  - full-repo Task 3 document hash remains
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+  - full-repo Task 3 selected units/order, `274` tokens,
+    `omitted_uncertainty x3`, and warning IDs remain unchanged
+  - fixture-root Task 3 document hash remains
+    `e576ae0dff78ab31871f38e6cf8e705274516164bb67dd841a7a433a5d34c4ae`
+    with `223` tokens and empty warnings
+  - `_build_warnings` and `_confidence` each run once
+  - full-repo full scan budgets dropped to `[138, 208, 243, 260, 269]`
+  - certified skips were `264` and `266` from interval `246..266`, source
+    budget `260`, and `267` from interval `267..288`, source budget `269`
+  - profile counters decreased versus
+    `/private/tmp/context_ir_latency_profile_after_probe_finalize_jO75Pj/`:
+    `list.sort` `553 -> 538`,
+    `_cached_candidate_sort_key_for_state` `1,625,111 -> 989,590`,
+    `_choose_detail` pending visits `565,272 -> 353,435`, and
+    `_candidate_sort_state` `565,272 -> 353,435`
+- Artifact:
+  - `/private/tmp/context_ir_certified_interval_profile_jCNnhj/summary.json`
+- Reported validation:
+  - scoped ruff check: passed
+  - scoped format check: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_semantic_compiler.py tests/test_eval_signal_smoke_e.py tests/test_semantic_optimizer.py -v`:
+    `52 passed`
+  - `git diff --check`: clean
+- Next route:
+  - read-only release-unit audit over the exact five-file workspace unit:
+    `PLAN.md`, `BUILDLOG.md`, `src/context_ir/semantic_compiler.py`,
+    `src/context_ir/semantic_optimizer.py`, and
+    `tests/test_eval_signal_smoke_e.py`
+  - do not run full regression, commit-gating, staging, commit, push, Task 4,
+    portfolio update, or public/demo claim work until release-unit audit
+    returns and is reviewed
+- Acceptance status: workspace accepted first-pass after Ryan-approved
+  acceptance amendment
+
+## 2026-05-23 -- Optimizer Probe Scan-Reduction Diagnosis Accepted
+
+- The read-only optimizer probe scan-reduction diagnosis lane returned DONE and
+  is accepted as workspace-only routing evidence.
+- Live repo truth verified during control review:
+  - branch `main`
+  - `HEAD=origin/main=6b76b5a`
+  - dirty tracked files are limited to `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Accepted diagnosis:
+  - broad cross-budget scan reuse is unsafe
+  - the prior non-prefix/focus-ordering concern still holds because probe
+    selections change across budgets `138 -> 208 -> 243/260 -> 267`, and
+    budget affects both detail choice and focus state
+  - remaining cost is real scan repetition, not warning/confidence
+    finalization: current full-repo raw instrumentation has `probe_count=8`,
+    `probe_seconds_total=2.1326s`, warnings once, and confidence once, while
+    cProfile shows `_probe_prepared_semantic_units` at `5.153s` and
+    `list.sort` at `3.431s`
+  - a narrow safe reduction exists only for budget probes inside a
+    probe-certified same-result interval; the interval must be proven by the
+    completed scan and must not assume prefix stability
+- Accepted approach assessment:
+  - scan-state reuse is unsafe
+  - generic monotonic lower/upper reuse is unsafe beyond existing binary-search
+    bounds
+  - cached detail feasibility is partially useful but insufficient alone
+  - exact duplicate budget reuse is safe but not useful for the current search
+  - pivot/stopping changes are unsafe by themselves and too task-tuned
+  - probe-certified unchanged intervals are safe if metadata proves no
+    selection/detail/omission/focus outcome can change over the skipped budget
+    range
+- Selected next implementation candidate:
+  - add private probe metadata for a certified same-result unit-budget interval
+  - compiler budget search may skip midpoint probes that fall inside a
+    certified same-result interval
+  - do not reuse scan state across different outcomes
+  - for current full-repo Task 3, the expected useful skip is the `260..266`
+    plateau, avoiding full scans for `264` and `266`; actual full scans should
+    likely be `138, 208, 243, 260, 269, 267`
+- Next route:
+  - issue a bounded implementation slice for certified same-result interval
+    skipping
+  - preserve full-repo Task 3 document hash, selected units/order, `274`
+    tokens, `omitted_uncertainty x3`, warning IDs, and confidence
+    `0.0020877837965136577`
+  - preserve fixture-root Task 3 document hash, `223` tokens, and empty
+    warnings
+  - keep `_build_warnings` and `_confidence` at one call each
+  - instrument full-repo Task 3 to show fewer than 8 full optimizer scans and
+    skipped budgets explicitly attributable to certified same-result intervals
+  - require sort/key/pending-visit counts to decrease versus current artifacts
+  - do not change scoring, selected-unit semantics, warning semantics,
+    confidence semantics, eval schema, API/MCP/package exports, Task 4,
+    portfolio artifacts, or public/demo claims
+- Acceptance status: diagnosis accepted first-pass
+
+## 2026-05-23 -- Optimizer Probe Finalization Post-Push Verification Accepted
+
+- The read-only post-push latency verification lane for the pushed optimizer
+  budget-probe finalization release returned DONE and is accepted as
+  workspace-only routing evidence.
+- Artifact directory:
+  - `/private/tmp/context_ir_latency_profile_after_probe_finalize_jO75Pj/`
+- Live repo truth verified during control review:
+  - branch `main`
+  - `HEAD=origin/main=6b76b5a`
+  - dirty tracked files are limited to `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+- Accepted behavior evidence:
+  - full-repo Task 3 budget `280` still selects the accepted exact four units
+    in order
+  - full-repo Task 3 remains `274` tokens with `omitted_uncertainty x3`
+  - full-repo document SHA-256 remains
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+  - fixture-root Task 3 remains the expected 5 units in `223` tokens with no
+    warnings
+  - fixture-root document SHA-256 remains
+    `e576ae0dff78ab31871f38e6cf8e705274516164bb67dd841a7a433a5d34c4ae`
+- Accepted timing:
+  - full-repo raw latency: `7.680164667s`, down from the summary fast-path
+    baseline `8.094761s`
+  - full-repo cProfile latency: `18.759180083s`, down from the summary
+    fast-path baseline `22.313047s`
+  - fixture-root raw latency: `0.003619500s`
+- Accepted instrumentation:
+  - probe budgets remain `138, 208, 243, 260, 269, 264, 266, 267`
+  - probe count remains `8`
+  - `_build_warnings` runs once
+  - `_confidence` runs once and returns `0.0020877837965136577`
+  - raw phase timing: analyze `1.986800709s`, scoring `2.480849250s`,
+    budget artifact `3.181190667s`, compile total `5.669885584s`
+- Accepted diagnosis:
+  - the pushed release preserved behavior and removed repeated
+    warning/confidence finalization from intermediate probes
+  - latency improved, but modestly because warning/confidence were not the
+    dominant cost
+  - remaining dominant compile-side cost is repeated optimizer probe scanning:
+    `_compile_budget_honest_artifact` is `7.597s`,
+    `_SemanticOptimizerSession.probe` / `_probe_prepared_semantic_units` is
+    `5.159s` across 8 probes, and `list.sort` is `3.431s`
+  - scorer lexical work remains close behind: `score_semantic_units` is
+    `6.666s`, `_direct_scores_for_candidates` is `4.869s`, and
+    `_lexical_relevance` is `3.969s`
+- Next route:
+  - run one bounded read-only optimizer probe scan-reduction diagnosis
+  - determine whether the 8 repeated full candidate scans can be safely reduced
+    despite non-prefix selected sets and focus-dependent ordering
+  - evaluate alternatives such as scan-state reuse, monotonic bounds, cached
+    detail feasibility, lower/upper budget reuse, or stopping/pivot changes
+  - preserve the prior finding that naive candidate scan reuse is unsafe unless
+    a concrete proof or narrower safe condition is found
+  - return exactly one smallest safe implementation recommendation with
+    acceptance criteria, or recommend pausing optimizer-probe work
+  - do not implement, run Task 4, update portfolio artifacts, update
+    public/demo claims, stage, commit, or push from that diagnosis lane
+- Acceptance status: post-push verification accepted first-pass
+
+## 2026-05-23 -- Optimizer Budget-Probe Finalization Pushed
+
+- Ryan explicitly authorized pushing the local optimizer budget-probe
+  finalization release.
+- Pushed release:
+  - `6b76b5a Defer optimizer probe finalization`
+  - remote `main` advanced from `6895096` to `6b76b5a`
+- Release state:
+  - workspace accepted: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - local release commit created: yes
+  - pushed to remote: yes
+- Final pushed scope:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=6b76b5a`
+  - no staged files
+  - no untracked files
+  - no working-tree diff before this post-push continuity update
+  - `git diff --check` clean
+- Next route:
+  - run one bounded read-only post-push latency verification lane on the pushed
+    optimizer budget-probe finalization release
+  - verify Task 3 full-repo and fixture-root behavior remains unchanged
+  - measure full-repo raw/cProfile latency against the summary fast-path
+    baseline of `8.094761s` raw / `22.313047s` cProfile
+  - confirm `_build_warnings` and `_confidence` run once in the compile path
+  - identify the next dominant bottleneck or recommend a pause
+  - do not run Task 4, update portfolio artifacts, update public/demo claims,
+    stage, commit, or push from that verification lane
+- Acceptance status: pushed with Ryan authorization
+
 ## 2026-05-23 -- Optimizer Budget-Probe Finalization Commit-Gating Cleared
 
 - Commit-gating is cleared for the exact six-file release unit:
