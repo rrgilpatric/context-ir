@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Task 0 Portfolio Refresh Pushed
+
+- Ryan explicitly authorized pushing the Task 0 internal portfolio refresh
+  release after local commit creation.
+- Pushed commits:
+  - `de8c0c5 Sync certified interval push routing`
+  - `2f61c1e Refresh task 0 portfolio evidence`
+- `git push origin main` advanced remote `main` from `ea91718` to `2f61c1e`.
+- Post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=2f61c1e`
+  - latest log starts `2f61c1e Refresh task 0 portfolio evidence`,
+    `de8c0c5 Sync certified interval push routing`, and
+    `ea91718 Skip certified optimizer probe intervals`
+  - worktree clean
+  - `git diff --check` clean
+- Release state:
+  - accepted in workspace: yes
+  - release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - committed locally: yes
+  - pushed to remote: yes
+  - Task 4: not run
+  - public/demo claims: held
+- Current authority:
+  - latest pushed internal product-differentiation artifact authority:
+    `2f61c1e Refresh task 0 portfolio evidence`
+  - latest pushed source/contract authority:
+    `ea91718 Skip certified optimizer probe intervals`
+- Do not route `de8c0c5` or `2f61c1e` back to release-unit audit, full
+  regression, commit-gating, staging, local commit creation, or push absent new
+  findings.
+- Acceptance status: pushed first-pass
+
 ## 2026-05-23 -- Task 0 Portfolio Refresh Audit, Regression, And Commit-Gating Cleared
 
 - Release-unit audit over the exact six-file Task 0 internal portfolio refresh
