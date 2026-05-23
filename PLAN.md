@@ -176,8 +176,14 @@ tests, and `git diff --check`. Commit-gating confirmed the changed file set
 matches the corrected-audit-cleared release unit only, with no release-blocking
 findings and no `src/` diff.
 
-Next route: create the local release commit for the exact corrected
-direct-literal `hasattr` release unit. Remote push remains Ryan-gated.
+Local release commit created: `b5d1719 Add direct-literal hasattr eval pilot`.
+This commit contains the accepted, corrected-audit-cleared,
+full-regression-cleared, and commit-gating-cleared direct-literal `hasattr`
+release unit. It is local only: `main` is ahead of `origin/main` by one commit.
+Remote push remains Ryan-gated.
+
+Next route: wait for explicit Ryan push authorization, or hold local-only if
+Ryan does not authorize push.
 
 The direct-literal `hasattr` release unit is:
 
@@ -17111,12 +17117,14 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: create the local release commit for the corrected,
-audit-cleared, full-regression-cleared, and commit-gating-cleared
-workspace-only internal eval-only `REFLECTIVE_BUILTIN` direct-literal
-`hasattr(obj, "bit_length")` candidate through
-`oracle_signal_hasattr_literal_probe_matrix`. This candidate is not yet
-committed or pushed. The direct-literal `getattr` release
+Immediate next route: wait for Ryan push authorization for the local
+direct-literal `hasattr` release commit. The corrected, audit-cleared,
+full-regression-cleared, and commit-gating-cleared internal eval-only
+`REFLECTIVE_BUILTIN` direct-literal `hasattr(obj, "bit_length")` release unit
+is locally committed at `b5d1719 Add direct-literal hasattr eval pilot`; it is
+not yet pushed. At local-commit routing sync, git verified `main`,
+`HEAD=b5d1719`, `origin/main=2295a56`, clean worktree, and local `main` ahead
+by one commit. The direct-literal `getattr` release
 is pushed and closed/no-active-gate: `8afe99f Add direct-literal getattr eval
 pilot`, `9ea679d Sync direct-literal getattr push routing`, and
 `2295a56 Sync direct-literal getattr post-push state` are on remote `main`. Do
