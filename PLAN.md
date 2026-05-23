@@ -280,8 +280,14 @@ tests, and `git diff --check`. Commit-gating confirmed the changed file set
 matches the corrected-audit-cleared release unit only, with no release-blocking
 findings.
 
-Next route: create the local release commit for the exact corrected
-direct-literal `getattr` release unit. Remote push remains Ryan-gated.
+Local release commit created: `8afe99f Add direct-literal getattr eval pilot`.
+This commit contains the accepted, corrected-audit-cleared,
+full-regression-cleared, and commit-gating-cleared direct-literal `getattr`
+release unit. It is local only: `main` is ahead of `origin/main` by one commit.
+Remote push remains Ryan-gated.
+
+Next route: wait for explicit Ryan push authorization, or hold local-only if
+Ryan does not authorize push.
 
 The direct-literal `getattr` release unit is:
 
@@ -16965,11 +16971,11 @@ Immediate next route: review the workspace-only
 unit through the blocked full-regression correction path. It is accepted in
 workspace, and the narrow Task 3 confidence correction is also accepted
 first-pass. The corrected release-unit audit is cleared first-pass, and full
-regression plus commit-gating are cleared first-pass. It is not yet staged,
-committed locally, or pushed. At gate acceptance, git verified `main`,
-`HEAD=origin/main=1749ab9`, no staged files, and only the expected corrected
-direct-literal `getattr` release-unit changes; future lanes must continue to
-verify live refs from git rather than committed prose.
+regression plus commit-gating are cleared first-pass. The local release commit
+is created at `8afe99f`; it is not yet pushed. At local-commit routing sync,
+git verified `main`, `HEAD=8afe99f`, `origin/main=1749ab9`, clean worktree,
+and local `main` ahead by one commit. Future lanes must continue to verify
+live refs from git rather than committed prose.
 
 Current pushed repo authority at slice intake is
 `1749ab9 Sync root literal pilot post-push state`. The prior root-module

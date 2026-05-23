@@ -2,6 +2,30 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Getattr Local Commit Created
+
+- Created the local release commit after corrected release-unit audit, full
+  regression, and commit-gating cleared.
+- Local commit:
+  - `8afe99f Add direct-literal getattr eval pilot`
+- The commit contains the corrected direct-literal `getattr(obj, "bit_length")`
+  release unit:
+  - docs and claim-boundary updates
+  - new internal eval-only direct-literal `getattr` fixture/task/run-spec/
+    focused test
+  - runtime evidence catalog golden update
+  - Task 3 full-repo confidence golden update for candidate-set drift
+- Post-commit local state:
+  - branch `main`
+  - local `HEAD=8afe99f`
+  - `origin/main=1749ab9`
+  - local `main` is ahead of `origin/main` by one commit
+- Push remains Ryan-gated and has not been performed.
+- Next control action:
+  - wait for explicit Ryan push authorization, or hold local-only if Ryan does
+    not authorize push
+- Acceptance status: local commit created first-pass after gates
+
 ## 2026-05-23 -- Direct-Literal Getattr Full Regression And Commit-Gating Cleared
 
 - Reviewed the returned full-regression and commit-gating lane for the
