@@ -68,6 +68,151 @@ claims remain held, Task 4 remains not run, and the next control route should
 be selected from the current north-star path rather than reopening this pushed
 release.
 
+North-star transition route selected:
+the read-only north-star transition lane returned DONE with no blocking
+findings and recommended capability/generalization breadth before another
+latency pass, Task 4, or public/demo planning. The selected next slice is a
+narrow internal eval-only root-module literal dynamic-import pilot for exactly
+`import importlib` plus `importlib.import_module("plugins.weather")`. It should
+preserve unsupported/opaque primary truth, additive-only runtime provenance,
+file-level baselines that may select small fixture files but select no semantic
+units and do not select the unsupported/runtime evidence unit, no static
+dependency edge to `plugins.weather`, no Task 4, no
+source/runtime/API/MCP/package-export/schema/
+scoring/compiler/optimizer/winner-selection changes, and no public/demo,
+latency, benchmark, production, or broad dynamic-import claims. This route is
+workspace-only until the implementation slice returns and is reviewed.
+
+Root-module literal dynamic-import implementation candidate:
+the bounded implementation lane added the internal eval-only
+`oracle_signal_dynamic_import_root_literal_probe_matrix` candidate and returned
+it for control review. After one correction, the candidate is accepted
+workspace-only, and the read-only release-unit audit returned PASS with no
+findings. The candidate is exactly 1 task x 2 budgets x 3
+providers at budgets `[220, 100]` against `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary is
+exactly `import importlib` plus
+`module = importlib.import_module("plugins.weather")`; it excludes the
+name-variable, imported-name, alias, builtin, loader, and generalized
+dynamic-import forms. Runtime payload is
+`imported_module=plugins.weather`; provenance is additive only. File-level
+baselines may select small fixture files, but their selected-unit layer remains
+empty and they do not select the unsupported/runtime evidence unit. Current
+`context_ir` behavior is locked as
+selecting `def:main.py:main.load_weather_plugin`,
+`unsupported:call:main.py:5:13`, and `frontier:call:main.py:6:11` at both
+budgets, with the unsupported boundary retaining `unsupported/opaque` truth and
+attached runtime provenance. No `plugins.weather` dependency edge, selected
+symbol, selected `plugins/weather.py` unit, source/runtime/API/MCP/package-export
+surface, schema/scoring/compiler/optimizer/winner-selection change, Task 4,
+portfolio update, public/demo claim, latency claim, benchmark claim, production
+claim, or broad dynamic-import claim is included. The workspace candidate
+passed the requested JSON, ruff, format-check, strict mypy, focused pytest, and
+`git diff --check` validation.
+
+Control review initially found one issue: docs/tests implied baseline providers
+selected zero files, but direct matrix execution showed file-level baselines
+may select small fixture files while still selecting no semantic units. The
+correction updated the focused test and docs to lock the truthful boundary:
+baselines may select small files, but their selected-unit layer remains empty
+and they do not select the unsupported/runtime evidence unit.
+The corrected direct matrix output is accepted:
+
+- `context_ir` selects no files and selects
+  `def:main.py:main.load_weather_plugin`,
+  `unsupported:call:main.py:5:13`, and
+  `frontier:call:main.py:6:11` at budgets `100` and `220`
+- `lexical_top_k_files` selects `plugins/__init__.py` at budget `100` and
+  `main.py`, `plugins/__init__.py`, and `plugins/weather.py` at budget `220`
+- `import_neighborhood_files` selects no files at budget `100` and `main.py`
+  plus `plugins/__init__.py` at budget `220`
+- both baseline providers still select no semantic units
+
+The read-only release-unit audit confirmed the scope and claim boundary:
+no source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+winner-selection changes, no Task 4, no portfolio update, no public/demo,
+benchmark, latency, production, generalized dynamic-import, or broad product
+claim widening, and no `plugins.weather` dependency edge, selected symbol, or
+selected `plugins/weather.py` semantic unit.
+
+Full regression initially blocked because `tests/test_eval_evidence.py` still
+expected `26` runtime evidence catalog records after the new root-module
+literal fixture raised discovery to `27`, and `tests/test_eval_signal_smoke_e.py`
+still expected the prior full-repo Task 3 confidence golden. Ryan authorized a
+narrow correction. The correction is accepted workspace-only:
+
+- `tests/test_eval_evidence.py` now expects `27` records and asserts the exact
+  new evidence id
+  `oracle_signal_dynamic_import_root_literal_probe:dynamic_import:main.py:5:13`
+- `tests/test_eval_signal_smoke_e.py` now locks full-repo Task 3 confidence at
+  `0.00207294842117878`
+- preservation proof reports unchanged selected units, document hash
+  `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`,
+  total tokens `274`, warnings `omitted_uncertainty` x3, warning IDs, probe
+  budgets `(138, 208, 243, 260, 269)`, and warning build call count `1`
+- focused validation passed, and control reran focused pytest with `26 passed`
+
+Because the correction adds two test files to the release unit, the prior
+release-unit audit is stale. The corrected read-only release-unit audit has
+now returned HOLD / not audit-cleared with one documentation precision finding:
+docs use baseline-level runtime-provenance wording where only selected-unit
+behavior is supported. Direct matrix execution confirms baselines select no
+semantic units, but baseline ledger rows still
+include shared runtime provenance records and their resolved unsupported
+selector has attached runtime provenance. The truthful wording should be
+limited to selected units: baselines may select files, but select no semantic
+units and do not select the unsupported/runtime evidence unit.
+
+Ryan authorized a narrow docs-only correction. The correction is accepted:
+root-literal baseline wording now says baselines may select small files, select
+no semantic units, and do not select the unsupported/runtime evidence unit,
+while separate `context_ir` wording preserves that `context_ir` selects the
+unsupported unit with additive runtime provenance. The imprecise root-literal
+phrase is removed; remaining `runtime evidence path` matches are historical
+Task 2 text in `PLAN.md` and `BUILDLOG.md`.
+
+The rerun corrected read-only release-unit audit returned PASS with no
+findings and is accepted. It confirmed the expanded release unit only, no
+`src/`, runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+winner-selection changes, no Task 4, no portfolio artifact update, no
+public/demo claim widening, selected-unit-specific baseline caveat wording,
+`context_ir` unsupported-unit selection with additive runtime provenance,
+runtime evidence catalog expectation `27`, and Task 3 confidence drift locked
+without selected-unit/document/token/warning/probe drift.
+
+Full regression and commit-gating are cleared for the exact expanded release
+unit. Full regression passed `ruff check src/ tests/`, `ruff format --check
+src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with `1,754`
+passing tests. Commit-gating confirmed the changed file set matches the
+audit-cleared expanded release unit only, with no source/runtime/API/MCP/
+package-export/schema/scoring/compiler/optimizer/winner-selection changes, no
+Task 4, no portfolio artifact update, no public/demo claim widening, the
+root-literal pilot still internal eval-only, selected-unit-specific baseline
+caveat wording, and Task 3 confidence drift backed by unchanged selected-unit/
+document/token/warning/probe locks.
+
+Next route: create the local release commit for the exact expanded release
+unit. Push remains Ryan-gated and must not happen until Ryan explicitly
+authorizes it.
+
+The expanded release unit is:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `ARCHITECTURE.md`
+- `EVAL.md`
+- `README.md`
+- `PUBLIC_CLAIMS.md`
+- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/eval_runtime_observations.json`
+- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/main.py`
+- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/__init__.py`
+- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/weather.py`
+- `evals/tasks/oracle_signal_dynamic_import_root_literal_probe.json`
+- `evals/run_specs/oracle_signal_dynamic_import_root_literal_probe_matrix.json`
+- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- `tests/test_eval_evidence.py`
+- `tests/test_eval_signal_smoke_e.py`
+
 Pushed certified optimizer probe interval release:
 `ea91718 Skip certified optimizer probe intervals`. This commit contains the
 accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,

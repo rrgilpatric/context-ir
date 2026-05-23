@@ -11,7 +11,8 @@ authority for current claims, regression anchors, and reviewer-facing surfaces.
 
 Post-phase-0 internal slices have added capability-tier accounting and narrow
 runtime-backed eval evidence, including the `DYNAMIC_IMPORT` provider/budget
-matrix, the current root-module `importlib.import_module(name)`, builtin
+matrix, the current root-module `importlib.import_module(name)`, root-module
+literal `importlib.import_module("plugins.weather")`, builtin
 `__import__(name)`, builtins-attribute `builtins.__import__(name)`,
 and builtins-alias `loader.__import__(name)`,
 imported-name `import_module(name)`, and imported-alias
@@ -242,6 +243,29 @@ evidence does not cover `__import__(name)`, imported-name
 support, or any
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
+The current internal eval-only `DYNAMIC_IMPORT` / root-module literal
+`importlib.import_module("plugins.weather")` sibling evidence is narrow and
+remains one task only through
+`oracle_signal_dynamic_import_root_literal_probe_matrix`: 1 task x 2 budgets x
+3 providers at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is exactly `import importlib` plus
+`module = importlib.import_module("plugins.weather")`; it does not include
+`name = "plugins.weather"`, `importlib.import_module(name)`,
+`from importlib import import_module`, `import_module("plugins.weather")`,
+`__import__(...)`, `load_module(...)`, or `loader.import_module(...)`. The
+runtime payload is `imported_module=plugins.weather`. File-level baselines
+may select small fixture files, but their selected-unit layer remains empty
+and they do not select the unsupported/runtime evidence unit.
+At both budgets, `context_ir` selects
+`def:main.py:main.load_weather_plugin`, `unsupported:call:main.py:5:13`, and
+`frontier:call:main.py:6:11`, with the unsupported boundary retaining
+`unsupported/opaque` primary truth and additive runtime provenance. No
+`plugins.weather` dependency edge, selected symbol, or selected
+`plugins/weather.py` unit is introduced. This evidence does not cover
+name-variable, imported-name, alias, builtin, loader, generalized dynamic
+import, public/API/MCP/package-export/schema/scoring/optimizer/compiler/
+winner-selection/product/public benchmark, or product-surface widening.
 The current internal eval-only `DYNAMIC_IMPORT` /
 root-module alias `loader.import_module(name)` sibling evidence is narrow and
 remains one task only through
@@ -349,7 +373,7 @@ namespace mutation, generated-code dependency modeling, generalized dynamic
 import support, or any
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
-Across these seven `DYNAMIC_IMPORT` sibling matrices
+Across the seven non-literal `DYNAMIC_IMPORT` sibling matrices
 (`oracle_signal_dynamic_import_root_probe_matrix`,
 `oracle_signal_dynamic_import_builtin_probe_matrix`,
 `oracle_signal_dynamic_import_imported_name_probe_matrix`,
@@ -447,7 +471,9 @@ around rendering density.
   `oracle_signal_dynamic_import_probe_matrix` provider/budget evidence at 1
   task x 3 budgets x 3 providers for budgets `[220, 180, 100]`, plus the
   current root-module
-  `importlib.import_module(name)` sibling pilot and the narrow builtin
+  `importlib.import_module(name)` sibling pilot, the current root-module
+  literal `importlib.import_module("plugins.weather")` sibling pilot, and the
+  narrow builtin
   `__import__(name)` sibling pilot, plus the current imported-name
   `import_module(name)` sibling pilot, plus the current imported-alias
   `load_module(name)` sibling pilot, plus the current root-module alias `loader.import_module(name)` sibling pilot, plus
@@ -641,6 +667,24 @@ around rendering density.
   no `__import__(name)`, imported-name `import_module(name)`, alias or loader
   forms, generalized dynamic import support, or public comparative claim
   widening is included.
+  The current internal `DYNAMIC_IMPORT` / root-module literal
+  `importlib.import_module("plugins.weather")` sibling evidence covers only
+  `oracle_signal_dynamic_import_root_literal_probe_matrix`: 1 task x 2 budgets
+  x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture input is
+  exactly `import importlib` plus
+  `module = importlib.import_module("plugins.weather")`; runtime payload is
+  `imported_module=plugins.weather`. File-level baselines may select small
+  fixture files, but their selected-unit layer remains empty and they do not
+  select the unsupported/runtime evidence unit. At both budgets,
+  `context_ir` selects
+  `def:main.py:main.load_weather_plugin`, `unsupported:call:main.py:5:13`,
+  and `frontier:call:main.py:6:11`; the selected unsupported unit remains
+  `unsupported/opaque` with additive runtime provenance. No
+  `plugins/weather.py` selected unit, `plugins.weather` dependency edge, or
+  selected symbol is introduced, and no name-variable, imported-name, alias,
+  builtin, loader, generalized dynamic import support, or public comparative
+  claim widening is included.
   The current internal `DYNAMIC_IMPORT` / root-module alias
   `loader.import_module(name)` sibling evidence covers only
   `oracle_signal_dynamic_import_root_alias_probe_matrix`: 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
@@ -714,7 +758,7 @@ around rendering density.
   `loader.import_module(name)`, `__import__(name)`, `builtins.__import__`,
   globals/locals/fromlist forms, generalized dynamic import support, or public
   comparative claim widening is included.
-  The seven current `DYNAMIC_IMPORT` sibling budget-pressure matrices,
+  The seven current non-literal `DYNAMIC_IMPORT` sibling budget-pressure matrices,
   including `oracle_signal_dynamic_import_imported_alias_probe_matrix`, share
   the same bounded evidence shape: 1 task x 2 budgets x 3 providers at budgets
   `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and

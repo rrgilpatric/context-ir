@@ -149,11 +149,16 @@ def test_catalog_discovers_current_fixture_runtime_evidence() -> None:
     """The current eval assets produce the expected compact evidence catalog."""
     catalog = discover_eval_runtime_evidence(REPO_ROOT)
 
-    assert len(catalog.records) == 26
+    assert len(catalog.records) == 27
     assert [record.evidence_id for record in catalog.records] == sorted(
         record.evidence_id for record in catalog.records
     )
-    assert len(catalog.by_evidence_id()) == 26
+    evidence_by_id = catalog.by_evidence_id()
+    assert len(evidence_by_id) == 27
+    assert (
+        "oracle_signal_dynamic_import_root_literal_probe:dynamic_import:main.py:5:13"
+        in evidence_by_id
+    )
     assert {record.expected_primary_capability_tier for record in catalog.records} == {
         CapabilityTier.UNSUPPORTED_OPAQUE
     }

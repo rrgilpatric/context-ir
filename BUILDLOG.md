@@ -2,6 +2,418 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Full Regression And Commit-Gating Cleared
+
+- Reviewed the returned read-only full-regression and commit-gating gate for
+  the expanded root-module literal dynamic-import release unit.
+- Findings: none.
+- Full regression passed:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/ -v`
+  - result: `1,754 passed`
+  - `git diff --check` clean
+- Commit-gating verdict: PASS / commit-gating-cleared.
+- Commit-gating confirmed:
+  - changed file set matches the audit-cleared expanded release unit only
+  - no `src/`, runtime/API/MCP/package-export/schema/scoring/compiler/
+    optimizer/winner-selection changes
+  - no Task 4, portfolio artifact update, or public/demo claim widening
+  - root-literal pilot remains internal eval-only
+  - baseline caveat remains selected-unit-specific
+  - Task 3 confidence lock is explained as candidate-set drift and backed by
+    unchanged selected-unit/document/token/warning/probe locks
+- Next control action:
+  - create the local release commit for the exact expanded release unit
+  - do not push until Ryan explicitly authorizes push
+- Acceptance status: full regression and commit-gating accepted first-pass
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Corrected Audit Cleared
+
+- Reviewed the rerun corrected read-only release-unit audit for the expanded
+  root-module literal dynamic-import release unit.
+- Findings: none.
+- Audit verdict: PASS / audit-cleared.
+- Audit-cleared expanded release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/main.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/__init__.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/weather.py`
+  - `evals/tasks/oracle_signal_dynamic_import_root_literal_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_root_literal_probe_matrix.json`
+- Audit-confirmed boundaries:
+  - no `src/`, runtime/API/MCP/package-export/schema/scoring/compiler/
+    optimizer/winner-selection changes
+  - pilot remains internal eval-only and root-module literal only
+  - baseline caveat is selected-unit-specific
+  - docs do not newly claim baselines lack or do not carry all runtime
+    provenance records
+  - `context_ir` still selects `unsupported:call:main.py:5:13` with additive
+    runtime provenance
+  - runtime evidence catalog expectation is `27` and asserts
+    `oracle_signal_dynamic_import_root_literal_probe:dynamic_import:main.py:5:13`
+  - Task 3 confidence update is isolated to candidate-set drift while selected
+    units, document hash, tokens, warnings, warning IDs, and probe behavior are
+    locked by test
+  - no Task 4, portfolio artifact update, or public/demo claim widening
+- Audit-reviewed validation passed:
+  - targeted `rg` check
+  - `jq empty` on new task/run-spec/runtime-observation JSON
+  - focused ruff check and format-check
+  - `.venv/bin/python -m mypy --strict src/`
+  - focused pytest with `26 passed`
+  - `git diff --check`
+- Next control action:
+  - run full regression, then commit-gating over the exact expanded release unit
+  - do not stage, commit, push, run Task 4, update portfolio artifacts, or
+    update public/demo claims before those gates clear
+- Acceptance status: corrected release-unit audit accepted first-pass after
+  docs correction
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Baseline Wording Correction Accepted
+
+- Reviewed the narrow docs-only correction for the corrected audit finding.
+- Findings: none.
+- Accepted wording correction:
+  - root-literal baseline wording now says file-level baselines may select
+    small fixture files, but their selected-unit layer remains empty and they
+    do not select the unsupported/runtime evidence unit
+  - separate `context_ir` wording still says `context_ir` selects the
+    unsupported unit with additive runtime provenance
+  - docs no longer claim baselines lack or do not carry all runtime provenance
+    records
+- Files corrected:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+- Validation:
+  - targeted `rg` check confirmed the imprecise root-literal phrase is removed
+  - remaining `runtime evidence path` matches are historical Task 2 text in
+    `PLAN.md` and `BUILDLOG.md`
+  - `git diff --check` passed
+- Next control action:
+  - rerun the corrected read-only release-unit audit over the expanded release
+    unit before full regression, commit-gating, staging, local commit creation,
+    or push
+- Acceptance status: accepted first-pass after Ryan-authorized docs correction
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Corrected Audit Held
+
+- The corrected read-only release-unit audit returned DONE with one finding.
+- Audit verdict: HOLD / not audit-cleared.
+- Finding:
+  - docs use baseline-level runtime-provenance wording where only selected-unit
+    behavior is supported
+  - direct matrix execution confirms baselines select no semantic units, but
+    baseline ledger rows still include shared runtime provenance records and
+    their resolved unsupported selector has attached runtime provenance
+  - the truthful claim should be limited to selected units, for example:
+    baselines may select files, but select no semantic units and do not select
+    the unsupported/runtime evidence unit
+- Scope assessment from the audit:
+  - no source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+    winner-selection files changed
+  - no Task 4, portfolio artifact update, or public/demo claim widening found
+  - the pilot remains internal eval-only and root-module literal only
+- Validation reviewed by the audit passed:
+  - `git diff --check`
+  - `jq empty` on new task/run-spec/runtime-observation JSON
+  - focused ruff check and format-check
+  - `.venv/bin/python -m mypy --strict src/`
+  - focused pytest with `26 passed`
+- Task 3 preservation was confirmed:
+  - confidence `0.00207294842117878`
+  - selected units unchanged
+  - document hash
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+  - tokens `274`
+  - warnings and warning IDs unchanged
+  - probe budgets `(138, 208, 243, 260, 269)`
+- Current recommendation:
+  - hold advancement
+  - after the narrow docs-only correction, rerun the corrected release-unit audit
+    before full regression or commit-gating
+- Acceptance status: held pending docs-correction review and corrected
+  release-unit audit
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Regression Correction Accepted
+
+- Reviewed the narrow full-regression correction for the root-module literal
+  dynamic-import release unit.
+- Findings: none.
+- Correction scope:
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Accepted changes:
+  - runtime evidence catalog expectation updated from `26` to `27`
+  - test now asserts the exact new evidence id
+    `oracle_signal_dynamic_import_root_literal_probe:dynamic_import:main.py:5:13`
+  - full-repo Task 3 confidence golden updated to
+    `0.00207294842117878`
+- Preservation proof:
+  - Task 3 selected units unchanged
+  - Task 3 document hash unchanged:
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+  - Task 3 total tokens unchanged at `274`
+  - Task 3 warnings unchanged as `omitted_uncertainty` x3
+  - Task 3 warning IDs unchanged
+  - probe budgets remain `(138, 208, 243, 260, 269)`
+  - warning build call count remains `1`
+- Validation:
+  - reported correction validation passed:
+    - ruff check on the three affected/focused tests
+    - ruff format-check on the same tests
+    - `.venv/bin/python -m mypy --strict src/`
+    - focused pytest over `tests/test_eval_evidence.py`,
+      `tests/test_eval_signal_smoke_e.py`, and
+      `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+    - `git diff --check`
+  - control reran the focused pytest command and confirmed `26 passed`
+- Because the release unit now includes two additional test files, the prior
+  release-unit audit is stale.
+- Next control action:
+  - run a corrected read-only release-unit audit over the expanded release unit
+    before full regression, commit-gating, staging, local commit creation, or
+    push
+- Acceptance status: accepted first-pass after Ryan-authorized correction
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Full Regression Blocked
+
+- The full-regression lane for the audit-cleared root-module literal
+  dynamic-import release unit returned BLOCKED.
+- Findings:
+  - `tests/test_eval_evidence.py` still expects `26` runtime evidence catalog
+    records, but the new root-module literal fixture makes discovery return
+    `27`
+  - `tests/test_eval_signal_smoke_e.py` full-repo confidence golden shifted
+    from `0.002087041823245554` to `0.0020732096926410672`, likely because
+    adding the eval fixture changes the full-repo candidate set
+- Passed before the pytest failure:
+  - `.venv/bin/python -m ruff check src/ tests/`
+  - `.venv/bin/python -m ruff format --check src/ tests/`
+  - `.venv/bin/python -m mypy --strict src/`
+- Failed:
+  - `.venv/bin/python -m pytest tests/ -v`
+  - result: `2 failed, 1752 passed`
+- Commit-gating was not run because full regression failed.
+- Current recommendation:
+  - hold advancement
+  - request Ryan go/no-go for a narrow correction slice limited to updating
+    the catalog expectation and the Task 3 full-repo confidence golden, with
+    proof that selected units, document hash, warnings, and root-literal pilot
+    behavior remain unchanged
+- Acceptance status: held pending Ryan correction authorization
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Release-Unit Audit Cleared
+
+- Reviewed the returned read-only release-unit audit for the workspace-only
+  root-module literal dynamic-import pilot.
+- Findings: none.
+- Audit verdict: PASS.
+- Audit-cleared release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/main.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/__init__.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/weather.py`
+  - `evals/tasks/oracle_signal_dynamic_import_root_literal_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_root_literal_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- Audit-confirmed boundary:
+  - internal eval-only `DYNAMIC_IMPORT` / root-module literal
+    `importlib.import_module("plugins.weather")`
+  - 1 task x 2 budgets x 3 providers at budgets `220` and `100`
+  - `context_ir` selects no files and selects
+    `def:main.py:main.load_weather_plugin`,
+    `unsupported:call:main.py:5:13`, and
+    `frontier:call:main.py:6:11`
+  - file-level baselines may select small fixture files, but selected semantic
+    units remain empty and those providers do not select the
+    unsupported/runtime evidence unit
+  - one additive runtime provenance payload,
+    `{"imported_module": "plugins.weather"}`, attaches to the unsupported unit
+    at both budgets
+  - no `plugins.weather` dependency edge, selected symbol, selected
+    `plugins/weather.py` semantic unit, source/runtime/API/MCP/package-export/
+    schema/scoring/compiler/optimizer/winner-selection change, Task 4,
+    portfolio update, or public/demo claim widening is included
+- Audit-reviewed validation passed:
+  - `jq empty` on the task JSON, run spec JSON, and runtime observations JSON
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_dynamic_import_root_literal_probe.py -v`
+    (`6 passed`)
+  - `git diff --check`
+- Next control action:
+  - run full regression, then commit-gating over the exact audit-cleared
+    release unit
+  - do not stage, commit, push, run Task 4, update portfolio artifacts, or
+    update public/demo claims before those gates clear
+- Acceptance status: release-unit audit accepted first-pass
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Pilot Accepted For Audit
+
+- Reviewed the corrected root-module literal dynamic-import pilot release
+  candidate against the slice boundary and live matrix output.
+- Findings: none after the baseline-caveat correction.
+- Correction history:
+  - initial control review found that the docs/tests incorrectly implied
+    baseline providers selected zero files
+  - direct matrix execution showed file-level baselines may select small
+    fixture files, while still selecting no semantic units and not selecting
+    the unsupported/runtime evidence unit
+  - the correction updated the focused test and docs to record that boundary
+    truthfully
+- Control verification after correction:
+  - direct matrix execution matched the corrected contract:
+    - `context_ir` selects no files and selects
+      `def:main.py:main.load_weather_plugin`,
+      `unsupported:call:main.py:5:13`, and
+      `frontier:call:main.py:6:11` at budgets `100` and `220`
+    - `lexical_top_k_files` selects `plugins/__init__.py` at budget `100`
+      and `main.py`, `plugins/__init__.py`, and `plugins/weather.py` at
+      budget `220`
+    - `import_neighborhood_files` selects no files at budget `100` and
+      `main.py` plus `plugins/__init__.py` at budget `220`
+    - both baseline providers still select no semantic units
+  - `git diff --check` is clean
+  - no staged files are present
+- Workspace-accepted release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/main.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/__init__.py`
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/weather.py`
+  - `evals/tasks/oracle_signal_dynamic_import_root_literal_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_root_literal_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- Exclusions remain active:
+  - no source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+    winner-selection changes
+  - no Task 4
+  - no portfolio artifact update
+  - no public/demo, latency, benchmark, production, or generalized
+    dynamic-import claim
+- Next control action:
+  - run a dedicated read-only release-unit audit over the exact accepted
+    release unit before full regression, commit-gating, staging, local commit
+    creation, or push
+- Acceptance status: accepted after 1 correction
+
+## 2026-05-23 -- Root-Module Literal Dynamic-Import Pilot Returned For Review
+
+- The bounded implementation lane added the internal eval-only
+  `oracle_signal_dynamic_import_root_literal_probe_matrix` candidate.
+- Changed surfaces are limited to the new fixture, task JSON, run spec JSON,
+  focused test, and continuity/claim-boundary docs:
+  - `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/`
+  - `evals/tasks/oracle_signal_dynamic_import_root_literal_probe.json`
+  - `evals/run_specs/oracle_signal_dynamic_import_root_literal_probe_matrix.json`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+- Evidence boundary:
+  - fixture is exactly `import importlib` plus
+    `module = importlib.import_module("plugins.weather")`
+  - matrix is 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - providers are `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload is `imported_module=plugins.weather`
+  - runtime provenance remains additive only
+  - file-level baselines may select small fixture files, but their
+    selected-unit layer remains empty and they do not select the
+    unsupported/runtime evidence unit
+  - current `context_ir` behavior selects
+    `def:main.py:main.load_weather_plugin`,
+    `unsupported:call:main.py:5:13`, and
+    `frontier:call:main.py:6:11` at both budgets
+  - the selected unsupported boundary remains `unsupported/opaque` with
+    additive runtime provenance
+  - no `plugins.weather` dependency edge, selected symbol, or selected
+    `plugins/weather.py` unit is introduced
+- No source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+  winner-selection changes, Task 4, portfolio artifact updates, public/demo
+  claims, latency claims, benchmark claims, production claims, or generalized
+  dynamic-import claims are included.
+- Validation passed:
+  - `jq empty evals/tasks/oracle_signal_dynamic_import_root_literal_probe.json`
+  - `jq empty evals/run_specs/oracle_signal_dynamic_import_root_literal_probe_matrix.json`
+  - `jq empty evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/eval_runtime_observations.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_dynamic_import_root_literal_probe.py -v`
+    (`6 passed`)
+  - `git diff --check`
+- Acceptance status: superseded by corrected acceptance above
+
+## 2026-05-23 -- North-Star Transition Selects Root-Module Literal Dynamic-Import Pilot
+
+- The read-only north-star transition lane returned DONE with no blocking
+  findings and is accepted as current routing evidence.
+- Live repo truth at control review:
+  - branch `main`
+  - `HEAD=origin/main=6d0724f`
+  - worktree clean before this continuity update
+  - `git diff --check` clean
+- Accepted recommendation:
+  - next tranche should prioritize capability/generalization breadth rather
+    than another latency implementation slice, Task 4, or public/demo planning
+  - the smallest next implementation slice is a narrow internal eval-only
+    root-module literal dynamic-import pilot for exactly
+    `import importlib` plus `importlib.import_module("plugins.weather")`
+- Reasoning:
+  - Task 0-3 are STRONG internal evidence and the Task 0 refresh is pushed
+  - full-repo latency has improved materially from the original portfolio
+    evidence and no longer has one obvious single low-risk bottleneck
+  - existing dynamic-import matrices cover imported-name literal
+    `import_module("plugins.weather")`, root-module name-variable
+    `importlib.import_module(name)`, aliases, builtin import forms, and related
+    sibling forms; the root-module literal form remains a focused coverage gap
+  - Task 4 remains optional and is not needed unless eval-bundle/report/
+    pipeline reproducibility claims become the target
+  - public/demo planning remains held because `portfolio_001` is still
+    internal-only exact-query evidence, not public proof
+- Selected implementation boundaries:
+  - add `oracle_signal_dynamic_import_root_literal_probe_matrix`
+  - preserve unsupported/opaque primary truth and additive-only runtime
+    provenance
+  - do not introduce a static dependency edge or selected symbol/file for
+    `plugins.weather`
+  - no source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+    winner-selection changes
+  - no Task 4, no portfolio artifact updates, and no public/demo, latency,
+    benchmark, production, or generalized dynamic-import claims
+- Acceptance status: routing recommendation accepted first-pass
+
 ## 2026-05-23 -- Task 0 Portfolio Refresh Pushed
 
 - Ryan explicitly authorized pushing the Task 0 internal portfolio refresh

@@ -39,7 +39,11 @@ current internal eval-only
 `DYNAMIC_IMPORT` provider/budget matrix. The current internal eval-only
 `oracle_signal_dynamic_import_root_probe_matrix` evidence is narrow
 `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` sibling
-evidence. The narrow internal eval-only
+evidence. The current internal eval-only
+`oracle_signal_dynamic_import_root_literal_probe_matrix` evidence is narrow
+`DYNAMIC_IMPORT` / root-module literal
+`importlib.import_module("plugins.weather")` sibling evidence. The narrow
+internal eval-only
 `oracle_signal_dynamic_import_builtin_probe_matrix` evidence is narrow
 `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence. The current
 internal eval-only
@@ -115,7 +119,9 @@ keyword-site pilot, the current internal eval-only
 `DYNAMIC_IMPORT` original provider/budget matrix evidence, the current
 internal eval-only
 `DYNAMIC_IMPORT` / root-module `importlib.import_module(name)` sibling
-evidence, the narrow internal eval-only `DYNAMIC_IMPORT` /
+evidence, the current internal eval-only `DYNAMIC_IMPORT` / root-module
+literal `importlib.import_module("plugins.weather")` sibling evidence, the
+narrow internal eval-only `DYNAMIC_IMPORT` /
 builtin `__import__(name)` sibling evidence, the current internal eval-only
 `DYNAMIC_IMPORT` / builtins-attribute `builtins.__import__(name)` sibling
 evidence, the current internal eval-only
@@ -176,6 +182,28 @@ not cover `__import__(name)`, imported-name `import_module(name)`, alias or
 loader forms, generalized dynamic import support,
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or product-surface widening.
+The current internal `DYNAMIC_IMPORT` / root-module literal
+`importlib.import_module("plugins.weather")` sibling evidence covers only
+`oracle_signal_dynamic_import_root_literal_probe_matrix`: 1 task x 2 budgets x
+3 providers at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is exactly `import importlib` plus
+`module = importlib.import_module("plugins.weather")`; it excludes
+`name = "plugins.weather"`, `importlib.import_module(name)`,
+`from importlib import import_module`, `import_module("plugins.weather")`,
+`__import__(...)`, `load_module(...)`, and `loader.import_module(...)`. The
+runtime payload is `imported_module=plugins.weather`; file-level baselines
+may select small fixture files, but their selected-unit layer remains empty
+and they do not select the unsupported/runtime evidence unit.
+At both budgets, `context_ir` selects
+`def:main.py:main.load_weather_plugin`, `unsupported:call:main.py:5:13`, and
+`frontier:call:main.py:6:11`; the selected unsupported unit remains
+`unsupported/opaque` with additive runtime provenance. No `plugins.weather`
+dependency edge, selected symbol, or selected `plugins/weather.py` unit is
+introduced, public comparative claims remain bounded to the existing quad
+matrix, and no public/API/MCP/package-export/schema/scoring/optimizer/
+compiler/winner-selection/product/public benchmark widening or product-surface
+widening is included.
 The current internal `DYNAMIC_IMPORT` / root-module
 alias `loader.import_module(name)` sibling evidence covers only
 `oracle_signal_dynamic_import_root_alias_probe_matrix`: 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
@@ -279,7 +307,7 @@ modeling, generalized dynamic import support,
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or product-surface widening.
 
-Across these seven `DYNAMIC_IMPORT` sibling matrices
+Across the seven non-literal `DYNAMIC_IMPORT` sibling matrices
 (`oracle_signal_dynamic_import_root_probe_matrix`,
 `oracle_signal_dynamic_import_builtin_probe_matrix`,
 `oracle_signal_dynamic_import_imported_name_probe_matrix`,
@@ -388,6 +416,9 @@ Proven by current unit and integration tests:
   evidence records `imported_module=plugins.weather`, while
   the current internal eval-only `DYNAMIC_IMPORT` / root-module
   `importlib.import_module(name)` sibling evidence records
+  `imported_module=plugins.weather`, while the current internal eval-only
+  `DYNAMIC_IMPORT` / root-module literal
+  `importlib.import_module("plugins.weather")` sibling evidence records
   `imported_module=plugins.weather`, and the narrow internal
   eval-only `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence
   records `imported_module=plugins.weather`, while the current internal
@@ -446,6 +477,9 @@ Proven by current unit and integration tests:
   - the current internal eval-only `DYNAMIC_IMPORT` / root-module
     `importlib.import_module(name)` sibling evidence for
     `oracle_signal_dynamic_import_root_probe_matrix`
+  - the current internal eval-only `DYNAMIC_IMPORT` / root-module literal
+    `importlib.import_module("plugins.weather")` sibling evidence for
+    `oracle_signal_dynamic_import_root_literal_probe_matrix`
   - the narrow internal eval-only `DYNAMIC_IMPORT` / builtin
     `__import__(name)` sibling evidence for
     `oracle_signal_dynamic_import_builtin_probe_matrix`
@@ -833,6 +867,8 @@ Architecturally intended but not yet evaluated:
   runtime-backed, heuristic/frontier, and unsupported/opaque surfaces.
 - Narrow runtime-backed internal pilots: `DYNAMIC_IMPORT`, including the
   current root-module `importlib.import_module(name)` sibling evidence and the
+  current root-module literal
+  `importlib.import_module("plugins.weather")` sibling evidence, plus the
   narrow builtin `__import__(name)` sibling evidence, plus the current
   builtins-attribute `builtins.__import__(name)` sibling evidence, plus the
   current builtins-alias `loader.__import__(name)` sibling evidence, plus the
@@ -886,6 +922,29 @@ Architecturally intended but not yet evaluated:
   The evidence excludes `__import__(name)`, imported-name
   `import_module(name)`, alias or loader forms, generalized dynamic import
   support,
+  public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+  benchmark widening, and product-surface widening.
+- Narrow root-module literal
+  `importlib.import_module("plugins.weather")` provider/budget evidence: the
+  current internal eval-only `DYNAMIC_IMPORT` sibling evidence covers only
+  `oracle_signal_dynamic_import_root_literal_probe_matrix`: 1 task x 2 budgets
+  x 3 providers at budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+  is exactly `import importlib` plus
+  `module = importlib.import_module("plugins.weather")`; it excludes
+  `name = "plugins.weather"`, `importlib.import_module(name)`,
+  `from importlib import import_module`, `import_module("plugins.weather")`,
+  `__import__(...)`, `load_module(...)`, and `loader.import_module(...)`. The
+  runtime payload is `imported_module=plugins.weather`; file-level baselines
+  may select small fixture files, but their selected-unit layer remains empty
+  and they do not select the unsupported/runtime evidence unit.
+  At both budgets, `context_ir` selects
+  `def:main.py:main.load_weather_plugin`, `unsupported:call:main.py:5:13`,
+  and `frontier:call:main.py:6:11`; the selected unsupported unit remains
+  `unsupported/opaque` with additive runtime provenance. No `plugins.weather`
+  dependency edge, selected symbol, or selected `plugins/weather.py` unit is
+  introduced. The evidence excludes name-variable, imported-name, alias,
+  builtin, loader, generalized dynamic import support,
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening, and product-surface widening.
 - Narrow builtin `__import__(name)` provider/budget evidence: the narrow
@@ -995,7 +1054,7 @@ Architecturally intended but not yet evaluated:
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening, and product-surface widening.
 - Shared `DYNAMIC_IMPORT` sibling budget-pressure boundary: the seven current
-  sibling matrices remain 1 task x 2 budgets x 3 providers at budgets
+  non-literal sibling matrices remain 1 task x 2 budgets x 3 providers at budgets
   `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and
   `import_neighborhood_files`; fixture, task, query, and runtime payload
   boundaries are unchanged; runtime payload remains
@@ -1469,8 +1528,8 @@ The following claims are allowed because current repo artifacts support them:
   remain `unsupported/opaque`, runtime provenance remains additive only, no
   dependency edge or selected symbol is created from `plugins.weather`, and
   public comparative claims remain bounded to the existing quad matrix.
-  Across these seven `DYNAMIC_IMPORT` sibling matrices, fixture, task, query,
-  and runtime payload boundaries are unchanged, runtime payload remains
+  Across these seven non-literal `DYNAMIC_IMPORT` sibling matrices, fixture,
+  task, query, and runtime payload boundaries are unchanged, runtime payload remains
   `imported_module=plugins.weather`, and baseline providers remain empty at both
   budgets. At budget `220`, `context_ir` selects the unsupported/opaque
   boundary unit with additive runtime provenance. At budget `100`, `context_ir`
