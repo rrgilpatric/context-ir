@@ -2,6 +2,295 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Getattr Full Regression And Commit-Gating Cleared
+
+- Reviewed the returned full-regression and commit-gating lane for the
+  corrected-audit-cleared direct-literal `getattr(obj, "bit_length")` release
+  unit.
+- Findings: none.
+- Full regression result:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed, `116`
+    files already formatted
+  - `.venv/bin/python -m mypy --strict src/`: passed, `39` source files
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1,759` tests
+  - `git diff --check`: passed
+- Commit-gating verdict: PASS.
+- Commit-gating confirmed:
+  - exact file set matches the corrected release unit
+  - no release-blocking issue found
+- Release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - staged: no
+  - committed locally: no
+  - pushed: no
+  - push remains Ryan-gated
+- Next control action:
+  - create the local release commit for the exact corrected release unit
+- Acceptance status: full-regression-cleared and commit-gating-cleared
+  first-pass
+
+## 2026-05-23 -- Direct-Literal Getattr Corrected Release-Unit Audit Cleared
+
+- Reviewed the returned corrected read-only release-unit audit for the
+  direct-literal `getattr(obj, "bit_length")` release unit.
+- Findings: none.
+- Audit verdict: PASS / corrected audit-cleared first-pass.
+- Live repo/workspace verification matched the audit:
+  - branch `main`
+  - `HEAD=origin/main=1749ab9`
+  - no staged files
+  - dirty/untracked files limited to the corrected release unit
+  - `git diff --check` clean
+- Corrected audit confirmed:
+  - no `src/`, runtime/API/MCP/package-export/schema/scoring/compiler/
+    optimizer/winner-selection changes
+  - pilot remains exactly `getattr(obj, "bit_length")`
+  - runtime payload remains only `lookup_outcome=returned_value`
+  - selected-unit truth remains `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `bit_length` edge, selected symbol, or selected unit
+  - baselines may select `main.py` at budget `220`, but select no semantic
+    units and do not select the unsupported/runtime evidence unit
+  - no Task 4, portfolio artifact update, public/demo claim widening,
+    benchmark claim, latency claim, production claim, or generalized
+    reflective-builtin claim
+  - Task 3 confidence correction changes only the golden and preserves selected
+    units/order, document hash, tokens, warnings, warning IDs, and probe
+    behavior
+- Validation reviewed by the audit:
+  - `git diff --check`
+  - JSON validation for new task, run spec, and runtime observations
+  - focused ruff check and format check on touched tests
+  - strict mypy over `src/`
+  - focused pytest with `18 passed`
+- Next control action:
+  - run full regression, then commit-gating over the exact corrected
+    release unit before staging, local commit, or push
+- Acceptance status: corrected release-unit audit cleared first-pass
+
+## 2026-05-23 -- Direct-Literal Getattr Task 3 Confidence Correction Accepted
+
+- Reviewed the narrow correction for the blocked full-regression gate.
+- Findings: none.
+- Corrected file:
+  - `tests/test_eval_signal_smoke_e.py`
+- Correction:
+  - updated only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.00207294842117878` to `0.002061636001029515`
+- Control verification:
+  - live git state matched the expected corrected release unit
+  - `git diff --check` clean
+  - `git diff -- tests/test_eval_signal_smoke_e.py` showed exactly the
+    one-line confidence golden update
+  - reran
+    `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+    with `1 passed`
+- Preservation proof:
+  - selected units and selected-unit order unchanged
+  - document hash
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+    unchanged
+  - total tokens unchanged at `274`
+  - warnings unchanged as `omitted_uncertainty` x3
+  - warning IDs unchanged
+  - probe behavior unchanged
+  - confidence locked to `0.002061636001029515`
+- Release-state impact:
+  - the prior release-unit audit is stale because
+    `tests/test_eval_signal_smoke_e.py` entered the corrected release unit
+  - next control action is a corrected read-only release-unit audit over the
+    expanded release unit before full regression, commit-gating, staging, local
+    commit, or push
+- Acceptance status: correction accepted first-pass
+
+## 2026-05-23 -- Direct-Literal Getattr Eval Pilot Full Regression Blocked
+
+- Reviewed the returned full-regression lane for the audit-cleared
+  direct-literal `getattr(obj, "bit_length")` release unit.
+- Finding:
+  - `tests/test_eval_signal_smoke_e.py` full-repo Task 3 confidence golden
+    expected `0.00207294842117878`, but current output is
+    `0.002061636001029515`
+- Full regression status:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: failed with `1 failed, 1758 passed`
+  - `git diff --check`: passed
+- Commit-gating was not reached because full regression failed.
+- Control reproduced the failure in isolation with
+  `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`.
+- The failed assertion is after the test already verified unchanged Task 3
+  selected units, selected-unit order, document hash, total tokens, warnings,
+  warning IDs, and probe behavior. The finding is therefore classified as a
+  deterministic confidence-golden candidate-set drift caused by the added eval
+  surface, not selected context drift.
+- Recommended next control action:
+  - issue the Ryan-authorized narrow correction that updates only the Task 3
+    full-repo confidence golden and reruns focused preservation validation
+  - if accepted, rerun release-unit audit because
+    `tests/test_eval_signal_smoke_e.py` will enter the corrected release unit
+    before full regression, commit-gating, staging, local commit, or push
+- Ryan authorization:
+  - Ryan agreed to the narrow correction route
+- Acceptance status: blocked; narrow correction authorized
+
+## 2026-05-23 -- Direct-Literal Getattr Eval Pilot Release-Unit Audit Cleared
+
+- Reviewed the returned read-only release-unit audit for the workspace-only
+  direct-literal `getattr(obj, "bit_length")` release unit.
+- Findings: none.
+- Audit verdict: PASS / audit-cleared first-pass.
+- Live repo/workspace verification matched the audit:
+  - branch `main`
+  - `HEAD=origin/main=1749ab9`
+  - no staged files
+  - no unrelated dirty files
+  - `git diff --check` clean
+- Audit-cleared release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_getattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_getattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_literal_probe_matrix.json`
+- Audit confirmed:
+  - internal eval-only `REFLECTIVE_BUILTIN` direct-literal pilot for exactly
+    `getattr(obj, "bit_length")`
+  - 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - runtime payload records `lookup_outcome=returned_value` only
+  - selected-unit truth remains `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `bit_length` dependency edge, selected symbol, or selected unit
+  - no `src/`, runtime/API/MCP/package-export/schema/scoring/compiler/
+    optimizer/winner-selection changes
+  - no Task 4, portfolio artifact update, or public/demo claim widening
+  - baselines may select files, but select no semantic units and do not select
+    the unsupported/runtime evidence unit
+- Validation reviewed by the audit:
+  - JSON validation for task, run spec, and runtime observations
+  - focused ruff check and format check
+  - strict mypy over `src/`
+  - focused pytest with `17 passed`
+  - `git diff --check`
+- Next control action:
+  - run full regression, then commit-gating over the exact audit-cleared
+    release unit before staging, local commit creation, or push
+- Acceptance status: release-unit audit cleared first-pass
+
+## 2026-05-23 -- Direct-Literal Getattr Eval Pilot Accepted For Audit
+
+- Reviewed the workspace-only direct-literal `getattr(obj, "bit_length")`
+  implementation candidate.
+- Findings: none.
+- Accepted release-unit candidate:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_getattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_getattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_getattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_getattr_literal_probe_matrix.json`
+- Accepted boundary:
+  - internal eval-only `REFLECTIVE_BUILTIN` direct-literal pilot for exactly
+    `getattr(obj, "bit_length")`
+  - 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - runtime payload records `lookup_outcome=returned_value` only
+  - primary selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance is additive only
+  - `context_ir` selects `def:main.py:main.probe_literal_attribute`,
+    `def:main.py:main.render_probe_digest`, and
+    `unsupported:call:main.py:2:11` at both budgets
+  - baselines may select `main.py` at budget `220`, but select no semantic
+    units and do not select the unsupported/runtime evidence unit
+  - no static attribute dependency edge, selected `bit_length` symbol, selected
+    `bit_length` unit, source/runtime/API/MCP/package-export/schema/scoring/
+    compiler/optimizer/winner-selection change, Task 4, portfolio update,
+    public/demo claim, benchmark claim, latency claim, production claim, or
+    generalized reflective-builtin claim is included
+- Control verification:
+  - direct matrix execution matched the accepted provider/budget behavior
+  - `jq empty` passed for the task, run spec, and runtime observations JSON
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_getattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_getattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_getattr_literal_probe.py tests/test_eval_evidence.py -v`
+    returned `17 passed`
+  - `git diff --check` clean
+- Stale `PLAN.md` `What Is Next` routing away from the old `0650bb8`
+  metaclass-provider route is corrected in the workspace candidate.
+- Next control action:
+  - run a dedicated read-only release-unit audit over the exact accepted
+    release unit before full regression, commit-gating, staging, local commit
+    creation, or push
+- Acceptance status: accepted first-pass
+
+## 2026-05-23 -- Direct-Literal Getattr Eval Pilot Implementation Candidate
+
+- Added the internal eval-only
+  `oracle_signal_getattr_literal_probe_matrix` candidate for exactly
+  `getattr(obj, "bit_length")`.
+- Matrix shape:
+  - 1 task x 2 budgets x 3 providers
+  - budgets `[220, 100]`
+  - providers `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+- Fixture and evidence boundary:
+  - direct-literal call site only: `getattr(obj, "bit_length")`
+  - no name variable, `getattr(obj, name)`, defaulted `getattr`, `hasattr`,
+    `setattr`, `delattr`, `vars`, `dir`, or generalized reflective-builtin
+    support
+  - runtime provenance remains additive only
+  - payload records `lookup_outcome=returned_value`; the existing strict
+    `getattr` runtime evidence convention does not admit value/type summary
+    fields without source/runtime-evidence widening, which is out of scope
+- Current matrix behavior:
+  - `context_ir` selects `def:main.py:main.probe_literal_attribute`,
+    `def:main.py:main.render_probe_digest`, and
+    `unsupported:call:main.py:2:11` at both budgets
+  - baselines select no semantic units and do not select the
+    unsupported/runtime evidence unit
+  - file-level baselines may select `main.py` at budget `220`
+  - no static attribute dependency edge, selected `bit_length` symbol, or
+    selected `bit_length` unit is introduced
+- Related catalog golden:
+  - `tests/test_eval_evidence.py` now expects 28 runtime evidence records and
+    asserts `oracle_signal_getattr_literal_probe:getattr:main.py:2:11`
+- Documentation and continuity updated in `PLAN.md`, `ARCHITECTURE.md`,
+  `EVAL.md`, `README.md`, and `PUBLIC_CLAIMS.md` to keep the pilot narrow,
+  internal eval-only, and outside public/demo claims.
+- Stale `PLAN.md` `What Is Next` routing no longer points at
+  `0650bb8 Add metaclass default subprocess eval provider`; the immediate
+  route is control review of this workspace-only direct-literal candidate.
+- Validation during implementation:
+  - `jq empty evals/tasks/oracle_signal_getattr_literal_probe.json`
+  - `jq empty evals/run_specs/oracle_signal_getattr_literal_probe_matrix.json`
+  - `jq empty evals/fixtures/oracle_signal_getattr_literal_probe/eval_runtime_observations.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_getattr_literal_probe.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_getattr_literal_probe.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_getattr_literal_probe.py -v`
+  - related catalog check: `.venv/bin/python -m pytest tests/test_eval_evidence.py -q`
+- No source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+  winner-selection changes, Task 4 run, portfolio artifact update, or
+  public/demo claim widening is included.
+- Acceptance status: first-pass implementation candidate
+
 ## 2026-05-23 -- Root-Module Literal Dynamic-Import Pushed
 
 - Ryan explicitly authorized pushing the root-module literal dynamic-import

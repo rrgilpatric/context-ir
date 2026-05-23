@@ -19,11 +19,30 @@ imported-name `import_module(name)`, and imported-alias
 `load_module(name)` sibling pilots, plus the current root-module alias
 `loader.import_module(name)` sibling pilot, and
 `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
-`getattr(obj, name)`. Narrow internal eval-only pilots for
+`getattr(obj, name)`, plus a narrow direct-literal
+`getattr(obj, "bit_length")` sibling pilot. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
 evidence and value-return sibling evidence. The three existing getattr-family
 provider/budget matrices each remain one existing task only: 1 task x 2 budgets
 x 3 providers at budgets `100` and `220`. The current internal
+eval-only `REFLECTIVE_BUILTIN` / direct-literal
+`getattr(obj, "bit_length")` pilot remains one task only through
+`oracle_signal_getattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers
+at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is exactly `getattr(obj, "bit_length")`; no name variable, default argument,
+other reflective builtin, or generalized reflective-builtin behavior is
+included. The runtime payload is `lookup_outcome=returned_value`; existing
+strict `getattr` evidence conventions do not carry value/type summary fields
+without source/runtime evidence widening. Primary selector and selected-unit
+truth remain `unsupported/opaque`; runtime provenance remains additive only.
+`context_ir` selects the edit symbol, digest support symbol, and unsupported
+call boundary at both budgets. Baseline providers may select `main.py` at
+budget `220`, but they select no semantic units and do not select the
+unsupported/runtime evidence unit. No static attribute dependency edge,
+selected `bit_length` symbol, selected `bit_length` unit, public API, MCP,
+package export, schema, scoring, optimizer, compiler, winner-selection, or
+public benchmark widening is included. The current internal
 eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError`
 branch pilot remains one task only through
 `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 2 budgets x 3

@@ -43,6 +43,9 @@ evidence. The current internal eval-only
 `oracle_signal_dynamic_import_root_literal_probe_matrix` evidence is narrow
 `DYNAMIC_IMPORT` / root-module literal
 `importlib.import_module("plugins.weather")` sibling evidence. The narrow
+internal eval-only `oracle_signal_getattr_literal_probe_matrix` evidence is a
+`REFLECTIVE_BUILTIN` / direct-literal `getattr(obj, "bit_length")` sibling
+pilot. The narrow
 internal eval-only
 `oracle_signal_dynamic_import_builtin_probe_matrix` evidence is narrow
 `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence. The current
@@ -71,6 +74,27 @@ internal
 evidence beside the prior `7d43302` default-return branch, the earlier `c592dca`
 `getattr(obj, name)` runtime-backed evidence, and the `90dcc15` / `762dd51`
 `hasattr(obj, name)` runtime-backed evidence. The current internal eval-only
+`oracle_signal_getattr_literal_probe_matrix` evidence covers exactly
+`getattr(obj, "bit_length")`: 1 task x 2 budgets x 3 providers at budgets
+`[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The fixture boundary is the direct-literal call
+site only; it excludes a name variable, `getattr(obj, name)`, defaulted
+`getattr`, `hasattr`, `setattr`, `delattr`, `vars`, `dir`, and generalized
+reflective-builtin support. Runtime payload is exactly
+`lookup_outcome=returned_value`; the strict existing `getattr` evidence
+convention does not admit resolved value/type summary fields without source or
+runtime-evidence widening. Selector and selected-unit primary truth remain
+`unsupported/opaque`; runtime provenance is additive only. `context_ir`
+selects `def:main.py:main.probe_literal_attribute`,
+`def:main.py:main.render_probe_digest`, and
+`unsupported:call:main.py:2:11` at both budgets. File-level baselines may
+select `main.py` at budget `220`, but their selected-unit layer remains empty
+and they do not select the unsupported/runtime evidence unit. No static
+attribute dependency edge, selected attribute symbol, or selected `bit_length`
+unit is introduced. The no-widening boundary preserves public comparative
+claims at the existing quad matrix and includes no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening. The current internal eval-only
 `oracle_signal_hasattr_false_probe_matrix` evidence is a narrow
 `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` false-branch pilot: 1 task x 2
 budgets x 3 providers at budgets `[220, 100]`, against providers

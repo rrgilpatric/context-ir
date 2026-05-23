@@ -1,0 +1,16 @@
+{
+  "plan_id": "oracle_signal_getattr_literal_probe_matrix",
+  "cases": [
+    {
+      "case_id": "signal_getattr_literal_probe",
+      "task_path": "evals/tasks/oracle_signal_getattr_literal_probe.json",
+      "query": "Fix probe_literal_attribute unsupported getattr(obj, \"bit_length\") and keep digest output aligned",
+      "budgets": [220, 100],
+      "providers": [
+        "context_ir",
+        "lexical_top_k_files",
+        "import_neighborhood_files"
+      ]
+    }
+  ]
+}

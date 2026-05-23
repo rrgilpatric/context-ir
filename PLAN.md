@@ -204,7 +204,86 @@ regression, commit-gating, staging, local commit creation, or push absent new
 findings. Task 4 remains not run, portfolio artifacts remain unchanged, and
 public/demo claims remain held.
 
-The expanded release unit is:
+Direct-literal `getattr` implementation candidate:
+this workspace adds the internal eval-only
+`oracle_signal_getattr_literal_probe_matrix` candidate for exactly
+`getattr(obj, "bit_length")`. The matrix is 1 task x 2 budgets x 3 providers
+at budgets `[220, 100]`, against `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The fixture excludes the name-variable form,
+`getattr(obj, name)`, defaulted `getattr`, `hasattr`, `setattr`, `delattr`,
+`vars`, `dir`, and generalized reflective-builtin behavior. Runtime
+provenance is additive only. The existing strict `getattr` runtime evidence
+convention records `lookup_outcome=returned_value` only; value/type summary
+fields would require source/runtime evidence widening and are out of scope.
+Current direct matrix execution shows `context_ir` selects
+`def:main.py:main.probe_literal_attribute`,
+`def:main.py:main.render_probe_digest`, and
+`unsupported:call:main.py:2:11` at both budgets. Baselines may select `main.py`
+at budget `220`, but selected semantic units remain empty and they do not
+select the unsupported/runtime evidence unit. No static attribute dependency
+edge, selected `bit_length` symbol, selected `bit_length` unit,
+source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+winner-selection change, Task 4, portfolio update, public/demo claim, latency
+claim, benchmark claim, production claim, or generalized reflective-builtin
+claim is included. Control review found no issues and accepted this candidate
+workspace-only. Focused validation passed, including direct matrix execution,
+JSON validation, focused ruff/format-check, strict mypy, focused pytest with
+`17 passed`, and clean `git diff --check`.
+
+The dedicated read-only release-unit audit returned DONE with verdict PASS and
+no findings. Control review verified live git state still matches the audit:
+`main`, `HEAD=origin/main=1749ab9`, no staged files, no unrelated dirty files,
+and clean `git diff --check`. The audit confirmed the direct-literal
+`getattr` pilot remains internal eval-only, direct-literal only, additive
+runtime provenance only, selected-unit truth remains `unsupported/opaque`,
+baselines may select files but select no semantic units and do not select the
+unsupported/runtime evidence unit, and no `src/`, runtime/API/MCP/
+package-export/schema/scoring/compiler/optimizer/winner-selection, Task 4,
+portfolio, or public/demo claim surface changed.
+
+Full regression blocked after audit clearance because `pytest tests/ -v`
+found one deterministic Task 3 confidence golden mismatch in
+`tests/test_eval_signal_smoke_e.py`: expected `0.00207294842117878`, actual
+`0.002061636001029515`. Commit-gating was not reached. Control reproduced the
+failure in isolation and verified all prior Task 3 locks passed before the
+confidence assertion: selected units, selected-unit order, document hash, total
+tokens, warnings, warning IDs, and probe behavior stayed stable. This indicates
+candidate-set confidence drift from the added direct-literal eval surface, not
+selected context drift.
+
+Ryan authorized the narrow correction. The correction is accepted first-pass:
+`tests/test_eval_signal_smoke_e.py` now updates only
+`FULL_REPO_TASK3_CONFIDENCE` to `0.002061636001029515`. Control verified the
+diff is exactly one line and reran
+`tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+with `1 passed`, preserving selected units/order, document hash, total tokens,
+warnings, warning IDs, probe behavior, and confidence. The corrected release
+unit now includes `tests/test_eval_signal_smoke_e.py`; the prior release-unit
+audit is stale.
+
+The corrected read-only release-unit audit returned DONE with verdict PASS and
+no findings. Control review verified live state still matches the audit:
+`main`, `HEAD=origin/main=1749ab9`, no staged files, only the expected
+corrected direct-literal `getattr` release-unit files, and clean
+`git diff --check`. The audit confirmed scope and claim boundaries, including
+no `src/`, runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
+winner-selection changes, no Task 4, no portfolio update, no public/demo claim
+widening, additive runtime provenance only, selected-unit truth remains
+`unsupported/opaque`, and the Task 3 confidence correction is only the golden
+update with selected units/order, document hash, tokens, warnings, warning IDs,
+and probe behavior preserved.
+
+Full regression and commit-gating are cleared for the exact corrected release
+unit. Full regression passed `ruff check src/ tests/`, `ruff format --check
+src/ tests/`, `mypy --strict src/`, `pytest tests/ -v` with `1,759` passing
+tests, and `git diff --check`. Commit-gating confirmed the changed file set
+matches the corrected-audit-cleared release unit only, with no release-blocking
+findings.
+
+Next route: create the local release commit for the exact corrected
+direct-literal `getattr` release unit. Remote push remains Ryan-gated.
+
+The direct-literal `getattr` release unit is:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -212,15 +291,13 @@ The expanded release unit is:
 - `EVAL.md`
 - `README.md`
 - `PUBLIC_CLAIMS.md`
-- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/eval_runtime_observations.json`
-- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/main.py`
-- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/__init__.py`
-- `evals/fixtures/oracle_signal_dynamic_import_root_literal_probe/plugins/weather.py`
-- `evals/tasks/oracle_signal_dynamic_import_root_literal_probe.json`
-- `evals/run_specs/oracle_signal_dynamic_import_root_literal_probe_matrix.json`
-- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
 - `tests/test_eval_evidence.py`
 - `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_getattr_literal_probe.py`
+- `evals/fixtures/oracle_signal_getattr_literal_probe/eval_runtime_observations.json`
+- `evals/fixtures/oracle_signal_getattr_literal_probe/main.py`
+- `evals/tasks/oracle_signal_getattr_literal_probe.json`
+- `evals/run_specs/oracle_signal_getattr_literal_probe_matrix.json`
 
 Pushed certified optimizer probe interval release:
 `ea91718 Skip certified optimizer probe intervals`. This commit contains the
@@ -16883,15 +16960,22 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next bounded north-star lane from the pushed
-`0650bb8 Add metaclass default subprocess eval provider` authority.
-Current pushed release authority and latest pushed source/contract authority are
-`0650bb8 Add metaclass default subprocess eval provider`.
+Immediate next route: review the workspace-only
+`oracle_signal_getattr_literal_probe_matrix` direct-literal `getattr` release
+unit through the blocked full-regression correction path. It is accepted in
+workspace, and the narrow Task 3 confidence correction is also accepted
+first-pass. The corrected release-unit audit is cleared first-pass, and full
+regression plus commit-gating are cleared first-pass. It is not yet staged,
+committed locally, or pushed. At gate acceptance, git verified `main`,
+`HEAD=origin/main=1749ab9`, no staged files, and only the expected corrected
+direct-literal `getattr` release-unit changes; future lanes must continue to
+verify live refs from git rather than committed prose.
 
-The pushed metaclass provider release is closed/no-active-gate at
-`0650bb8 Add metaclass default subprocess eval provider`; do not route it back
-to release-unit audit, full regression, commit-gating, staging, local commit,
-or push absent new findings.
+Current pushed repo authority at slice intake is
+`1749ab9 Sync root literal pilot post-push state`. The prior root-module
+literal dynamic-import release remains closed/no-active-gate; do not route it
+back to release-unit audit, full regression, commit-gating, staging, local
+commit, or push absent new findings.
 
 The pushed exec/eval provider release is closed/no-active-gate at
 `125c44e Add exec/eval default subprocess eval provider`; do not route it back
@@ -16907,22 +16991,6 @@ The pushed vars-zero provider release is closed/no-active-gate at
 `eef7173 Add vars-zero default subprocess eval provider`; do not route it back
 to release-unit audit, full regression, commit-gating, staging, local commit,
 or push absent new findings.
-
-The metaclass provider-support release is pushed at
-`0650bb8 Add metaclass default subprocess eval provider`. The exact release
-unit is `BUILDLOG.md`,
-`PLAN.md`, `src/context_ir/eval_providers.py`,
-`tests/test_eval_signal_metaclass_behavior_probe.py`,
-`tests/test_eval_signal_locals_probe.py`,
-`tests/test_eval_signal_globals_probe.py`, and
-`tests/test_eval_signal_vars_zero_probe.py`. Focused validation passed with
-ruff, format check, strict mypy, targeted pytest with `77 passed`, and clean
-`git diff --check`. Dedicated read-only release-unit audit passed first-pass
-with no findings. Full regression passed first-pass with ruff, format check,
-strict mypy, full pytest reporting `1657 passed`, and clean final
-`git diff --check`. It is release-unit-audit-cleared,
-full-regression-cleared, commit-gating-cleared, locally committed, and pushed
-at `0650bb8 Add metaclass default subprocess eval provider`.
 
 Historical vars-zero provider release unit was exactly `BUILDLOG.md`, `PLAN.md`,
 `src/context_ir/eval_providers.py`,
