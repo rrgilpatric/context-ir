@@ -191,12 +191,44 @@ No active release gate remains for the direct-literal `hasattr` pilot. Do not
 route `b5d1719` or `a5cfeee` back to release-unit audit, full regression,
 commit-gating, staging, local commit creation, or push absent new findings.
 
-Next route: run a bounded read-only north-star selection/spec lane from current
-repo truth. The current recommended target is direct-literal runtime mutation,
-likely `setattr(obj, "some_attr", value)`, because direct-literal reflective
-lookup now has both `getattr(obj, "bit_length")` and
-`hasattr(obj, "bit_length")` coverage. Do not implement that slice until the
-selection/spec lane returns and is accepted.
+Post-`hasattr` north-star selection/spec lane accepted:
+the independent read-only confirmation spike returned DONE and agreed with the
+technical recommendation. The spike found one P3 process issue: the local
+docs-only route commit `743d233 Record direct-literal setattr route` was
+created before this independent confirmation spike. The commit was local-only
+and not pushed, so no release damage occurred. Ryan accepted that P3 finding
+and authorized correcting the local routing commit before any push. Live git
+truth at the spike was `main`, clean worktree, and local `main` ahead of
+`origin/main` by the provisional `743d233` commit. The selected next route is
+one bounded internal eval-only direct-literal runtime-mutation pilot for
+exactly `setattr(obj, "flag", value)`, suggested artifact name
+`oracle_signal_setattr_literal_probe_matrix`. This is recommended because
+direct-literal reflective lookup now has both `getattr(obj, "bit_length")` and
+`hasattr(obj, "bit_length")` coverage, while existing runtime-mutation evals
+cover only the name-variable forms `setattr(obj, name, value)` and
+`delattr(obj, name)`.
+
+Selected boundaries for the proposed slice:
+
+- fixture boundary exactly `setattr(obj, "flag", value)`
+- 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+- providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`
+- unsupported selector and selected-unit primary truth remain
+  `unsupported/opaque`
+- runtime provenance remains additive only
+- runtime payload remains `mutation_outcome=returned_none`
+- no static `flag` dependency edge, selected symbol, or selected attribute unit
+- eval-only committed-observation attachment may be used, but default
+  subprocess/runtime acquisition must not be widened; the existing subprocess
+  worker remains scoped to `setattr(obj, name, value)`
+- no `src/`, runtime acquisition, API, MCP, package export, schema, scoring,
+  compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
+  benchmark, latency, production, or generalized runtime-mutation changes
+
+Next route: execute the bounded implementation slice above. Do not broaden into
+`delattr(obj, "flag")`, default subprocess/runtime acquisition, source/runtime
+contract changes, public/demo planning, Task 4, or portfolio updates.
 
 The direct-literal `hasattr` release unit is:
 
@@ -17130,22 +17162,24 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: run a bounded read-only north-star selection/spec lane
-from current repo truth. The direct-literal `hasattr` release is pushed and
-closed/no-active-gate: `b5d1719 Add direct-literal hasattr eval pilot` and
-`a5cfeee Sync direct-literal hasattr push routing` are on remote `main`. Do
-not route that release back to release-unit audit, full regression,
-commit-gating, staging, local commit, or push absent new findings. At post-push
-route selection intake, git verified `main`, `HEAD=origin/main=a5cfeee`, and a
-clean worktree. Future lanes must continue to verify live refs from git rather
-than committed prose.
+Immediate next route: execute the bounded internal eval-only direct-literal
+runtime-mutation implementation slice for exactly
+`setattr(obj, "flag", value)`, suggested artifact name
+`oracle_signal_setattr_literal_probe_matrix`. The direct-literal `hasattr`
+release is pushed and closed/no-active-gate:
+`b5d1719 Add direct-literal hasattr eval pilot` and
+`a5cfeee Sync direct-literal hasattr push routing` are on remote `main`. Do not
+route that release back to release-unit audit, full regression, commit-gating,
+staging, local commit, or push absent new findings. At selection/spec intake,
+git verified `main`, `HEAD=origin/main=5633b04`, and a clean worktree. Future
+lanes must continue to verify live refs from git rather than committed prose.
 
-The recommended selection/spec target is direct-literal runtime mutation,
-likely `setattr(obj, "some_attr", value)`. This is not implementation
-authorization yet. The read-only lane should compare runtime mutation against
-remaining dynamic-import siblings, Task 4, public/demo planning, and further
-latency work, then return the smallest safe next slice if the recommendation
-holds.
+The `setattr` literal slice is eval-only and must not widen default subprocess/
+runtime acquisition. It may use committed fixture runtime observations attached
+to the unsupported boundary, but the existing default subprocess worker remains
+scoped to `setattr(obj, name, value)`. Keep `delattr(obj, "flag")`, Task 4,
+portfolio updates, public/demo planning, benchmark/latency/production claims,
+and generalized runtime-mutation behavior out of scope.
 
 The direct-literal `getattr` release remains pushed and closed/no-active-gate:
 `8afe99f Add direct-literal getattr eval pilot`,

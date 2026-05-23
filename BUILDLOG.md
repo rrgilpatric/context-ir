@@ -2,6 +2,56 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Setattr Selection Accepted
+
+- Reviewed the independent post-`hasattr` north-star confirmation spike.
+- Findings:
+  - P3 process finding: local docs-only route commit
+    `743d233 Record direct-literal setattr route` was created before the
+    independent confirmation spike
+  - no release damage occurred because the commit was local-only and not
+    pushed
+- Ryan accepted the P3 process finding and authorized correcting the local
+  routing commit before any push.
+- Live repo truth at confirmation:
+  - branch `main`
+  - clean worktree
+  - local `main` ahead of `origin/main` by provisional commit `743d233`
+  - no files edited, staged, committed, pushed, reset, or restored by the
+    confirmation spike
+- Earlier live repo truth at initial selection:
+  - branch `main`
+  - `HEAD=origin/main=5633b04`
+  - clean worktree
+  - `git diff --check` clean
+- Accepted next route:
+  - one bounded internal eval-only direct-literal runtime-mutation pilot for
+    exactly `setattr(obj, "flag", value)`
+  - suggested artifact name:
+    `oracle_signal_setattr_literal_probe_matrix`
+- Rationale:
+  - direct-literal reflective lookup now has
+    `getattr(obj, "bit_length")` and `hasattr(obj, "bit_length")` coverage
+  - existing runtime-mutation evals cover name-variable
+    `setattr(obj, name, value)` and `delattr(obj, name)` forms
+  - direct-literal `setattr` is the smallest next runtime-mutation
+    argument-shape gap
+- Boundary:
+  - eval-only committed-observation attachment may be used
+  - default subprocess/runtime acquisition must not be widened; the existing
+    subprocess worker remains scoped to `setattr(obj, name, value)`
+  - unsupported selector and selected-unit truth remain `unsupported/opaque`
+  - runtime provenance remains additive only
+  - runtime payload remains `mutation_outcome=returned_none`
+  - no static `flag` dependency edge, selected symbol, or selected attribute
+    unit
+  - no `src/`, runtime acquisition, API, MCP, package export, schema, scoring,
+    compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
+    benchmark, latency, production, or generalized runtime-mutation changes
+- Next control action:
+  - execute the bounded implementation slice above
+- Acceptance status: selection/spec accepted first-pass
+
 ## 2026-05-23 -- Direct-Literal Hasattr Push Completed
 
 - Ryan authorized pushing the direct-literal `hasattr(obj, "bit_length")`
