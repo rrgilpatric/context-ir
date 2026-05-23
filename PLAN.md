@@ -49,6 +49,56 @@ product-differentiation artifact authority is
 state must still be verified from git during control intake; do not infer them
 from committed prose.
 
+Workspace-only routing after Task 0 portfolio refresh acceptance:
+
+- local `HEAD` may be ahead of `origin/main` by docs-only continuity commit
+  `de8c0c5 Sync certified interval push routing`; push remains Ryan-gated
+- the read-only multi-query latency spike is recorded at
+  `/private/tmp/context_ir_portfolio_latency_generalization_y9uf9w5u/summary.json`
+- the read-only Task 0 revalidation is recorded at
+  `/private/tmp/context_ir_task0_drift_diagnosis_edjswlqz/revalidation_report.md`
+- the bounded internal Task 0 portfolio refresh/supersession slice returned
+  DONE and is workspace-only accepted first-pass
+- refreshed Task 0 evidence records `context_ir` at `218` tokens with `7`
+  selected units, including `_runtime_provenance_record`,
+  `_validate_selected_unit_runtime_provenance_links`, compact
+  `oracle_signal_hasattr_probe` evidence, and the selected-unit metadata field
+  assignments
+- Task 0 remains STRONG internal-only evidence; file-level baselines still
+  select zero files under budget; public/demo claims remain held; Task 4 was
+  not run
+- preserved evidence checks passed: `runs.jsonl` has `15` rows, Task 1-3
+  rows were byte-for-byte preserved, the manifest-recorded `runs.jsonl`
+  SHA-256 matches the actual file, `jq` validation passed, and
+  `git diff --check` is clean
+- accepted release unit is exactly:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+- release-unit audit is cleared for the exact six-file Task 0 portfolio
+  refresh unit with no findings
+- full regression is cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1748 passed in 49.28s`
+- commit-gating is cleared for the exact six-file release unit:
+  - dirty files exactly match the release unit
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+  - no diffs in root public docs, source, tests, eval tasks, eval run specs, or
+    eval fixtures
+- next route is local release commit creation for the exact six-file Task 0
+  portfolio refresh unit, if Ryan explicitly authorizes it; push remains a
+  separate Ryan-gated step after any local commit
+- do not push, run Task 4, or update public/demo claims from this release
+
 Pushed certified optimizer probe interval release:
 `ea91718 Skip certified optimizer probe intervals`. This commit contains the
 accepted, audit-cleared, full-regression-cleared, commit-gating-cleared,

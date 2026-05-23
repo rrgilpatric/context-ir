@@ -2,6 +2,135 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Task 0 Portfolio Refresh Audit, Regression, And Commit-Gating Cleared
+
+- Release-unit audit over the exact six-file Task 0 internal portfolio refresh
+  unit returned PASS with no findings and is accepted.
+- Audit-cleared release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+- Accepted audit result:
+  - dirty files exactly match the expected six-file release unit
+  - no staged files and no untracked files
+  - excluded surfaces have no diff: root `README.md`, `EVAL.md`,
+    `PUBLIC_CLAIMS.md`, `ARCHITECTURE.md`, `AGENTS.md`, `src/`, `tests/`,
+    `evals/tasks/`, `evals/run_specs/`, and `evals/fixtures/`
+  - `runs.jsonl` has `15` rows with Task 0/1/2/3 counts of `3/3/3/6`
+  - Task 1-3 rows are byte-for-byte preserved with SHA-256
+    `edce2c3ff24dedf8ad754402059f01cdfb757b9163245f6146e600f4233c59b4`
+  - manifest-recorded `runs.jsonl` SHA-256 matches actual
+    `bd8e232b97194ce9698b105f5541d50b86d907662d44e21cac505556492bad39`
+  - Task 0 records are consistent across the portfolio README, evidence,
+    manifest, and JSONL: `context_ir` uses `218` tokens, selects `7` units,
+    passes the required evidence path, and selects zero files; baselines select
+    zero files and fail the required evidence path
+  - internal-only and public/demo claim holds remain explicit; the artifact
+    does not broaden product proof
+- Full regression cleared:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1748 passed in 49.28s`
+- Commit-gating cleared:
+  - dirty files exactly match the six-file release unit
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+  - excluded-surface diff check returned no output for public docs, source,
+    tests, eval tasks, eval run specs, and eval fixtures
+- Next route:
+  - local release commit creation for the exact six-file release unit if Ryan
+    explicitly authorizes it
+  - push remains separately Ryan-gated after any local commit
+  - do not run Task 4 or update public/demo claims from this release
+- Acceptance status: audit-cleared, full-regression-cleared, and
+  commit-gating-cleared first-pass
+
+## 2026-05-23 -- Task 0 Portfolio Refresh Accepted Workspace-Only
+
+- The bounded internal Task 0 portfolio refresh/supersession lane returned
+  DONE and is accepted first-pass as workspace-only evidence state.
+- Scope stayed within the requested artifact/control boundary:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/portfolio_001/README.md`
+  - `evals/product_differentiation/portfolio_001/evidence.md`
+  - `evals/product_differentiation/portfolio_001/manifest.json`
+  - `evals/product_differentiation/portfolio_001/runs.jsonl`
+- Accepted Task 0 refresh facts:
+  - `context_ir` records `218` tokens and `7` selected units
+  - selected units include `_selected_unit_metadata`,
+    `_runtime_provenance_record`,
+    `_validate_selected_unit_runtime_provenance_links`, `EvalSelectedUnit`,
+    the selected-unit metadata field assignments, and compact
+    `oracle_signal_hasattr_probe` evidence
+  - lexical and import-neighborhood baselines still select zero files under
+    budget and fail the required evidence path
+  - Task 0 remains STRONG internal-only portfolio evidence
+  - public/demo claims remain held, and Task 4 was not run
+- Validation reviewed and accepted:
+  - `jq empty evals/product_differentiation/portfolio_001/manifest.json`
+    passed
+  - `jq -c . evals/product_differentiation/portfolio_001/runs.jsonl`
+    passed
+  - `runs.jsonl` row count remains `15`
+  - task row counts remain Task 0 `3`, Task 1 `3`, Task 2 `3`, Task 3 `6`
+  - Task 1-3 `runs.jsonl` rows are byte-for-byte preserved with SHA-256
+    `edce2c3ff24dedf8ad754402059f01cdfb757b9163245f6146e600f4233c59b4`
+  - non-Task0 manifest provider-result normalized hash is preserved at
+    `14f41b9b8879631a1fbfa2ee67266737debc0b69fe43cf19fd7973766f18cfb5`
+  - manifest-recorded `runs.jsonl` SHA-256 matches actual
+    `bd8e232b97194ce9698b105f5541d50b86d907662d44e21cac505556492bad39`
+  - `git diff --check` is clean
+- No source, tests, eval task/run-spec/fixture, API/MCP/schema/package-export,
+  `README.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, `ARCHITECTURE.md`, Task 4, or
+  public/demo claim drift was found.
+- Next route:
+  - read-only release-unit audit over the exact six-file Task 0 portfolio
+    refresh unit
+  - do not run full regression, commit-gating, stage, commit, push, run Task 4,
+    or update public/demo claims until that audit returns and is reviewed
+- Acceptance status: portfolio refresh accepted first-pass, workspace-only
+
+## 2026-05-23 -- Task 0 Revalidation Accepted As Stale Exact Artifact Finding
+
+- Ryan approved proceeding with the Task 0 revalidation recommendation.
+- Read-only artifacts:
+  - multi-query latency/generalization:
+    `/private/tmp/context_ir_portfolio_latency_generalization_y9uf9w5u/summary.json`
+  - Task 0 revalidation:
+    `/private/tmp/context_ir_task0_drift_diagnosis_edjswlqz/revalidation_report.md`
+- Findings:
+  - current Task 0 `context_ir` output no longer matches the committed
+    `portfolio_001` selected-unit set
+  - the drift is not caused by certified interval skipping; disabling certified
+    intervals produced the same current Task 0 output
+  - current Task 0 still satisfies the original semantic STRONG rubric:
+    `_selected_unit_metadata`, `EvalSelectedUnit`, eval-summary report
+    accounting, compact `oracle_signal_hasattr_probe` evidence,
+    `attribute_present=true`, unsupported/opaque primary truth, additive
+    runtime evidence, budget `220`, and baseline failure
+  - the exact artifact is stale because the current evidence path replaces
+    recorded `EvalProviderMetadata`, `EvalProviderResult`, and
+    `_build_runtime_provenance_record_lookup` waypoints with
+    `_runtime_provenance_record`,
+    `_validate_selected_unit_runtime_provenance_links`, and compact selected
+    field assignments
+- Selected route:
+  - bounded internal Task 0 portfolio refresh/supersession slice
+  - update only internal `portfolio_001` evidence files as needed
+  - preserve Task 1, Task 2, and Task 3 records unless mechanical hash/summary
+    updates are required by the artifact schema
+  - no source/test/API/MCP/schema changes, no Task 4, and no public/demo claim
+    updates
+- Acceptance status: revalidation accepted first-pass
+
 ## 2026-05-23 -- Certified Interval Release Pushed
 
 - Ryan explicitly authorized pushing the local certified same-result interval

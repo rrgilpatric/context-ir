@@ -17,6 +17,8 @@ It preserves reproduced provider comparisons for:
 
 Task 1's ceiling budget `360`, Task 2's ceiling budget, and Task 3's ceiling budget were not run because their primary budgets reached `STRONG`.
 
+Task 0 has been refreshed/superseded against current exact provider output. The refresh preserves the original `STRONG` internal-only classification under the original semantic rubric; it is not broad product proof and does not authorize public or demo claims.
+
 ## Claim Boundary
 
 This bundle supports only narrow internal claims for the recorded Task 0, Task 1, Task 2, and Task 3 queries at their recorded budgets. It is internal portfolio evidence, not broad product-level proof, not production-readiness evidence, and not a polished public demo.
@@ -33,7 +35,7 @@ Public claims remain held pending separate approval and broader evidence.
 
 ## Caveats
 
-- `context_ir` remains materially slower than the baselines on full-repo runs: Task 0 took `108.846s` versus about `0.25s`, Task 1 took `118.783s` versus about `0.27s`, Task 2 took about `129.702s` versus about `0.27s`, and Task 3 full-repo took `122.718s` versus about `0.27s`.
+- `context_ir` remains materially slower than the baselines on full-repo runs: the refreshed Task 0 provider run took `7.593s` versus `0.315s` and `0.279s` for the baselines, Task 1 took `118.783s` versus about `0.27s`, Task 2 took about `129.702s` versus about `0.27s`, and Task 3 full-repo took `122.718s` versus about `0.27s`.
 - Selected support units include summaries under budget pressure, not always full source.
 - The compact `oracle_signal_hasattr_probe` evidence is an internal eval evidence surface. It is not a selected unsupported runtime-attached source unit.
 - The evidence keeps `unsupported/opaque` as primary truth and treats `attribute_present=true` as additive runtime evidence.

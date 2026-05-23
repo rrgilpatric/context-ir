@@ -12,6 +12,8 @@ Task 3: `STRONG`
 
 This is internal-only product-differentiation evidence. Public claims remain held.
 
+Task 0 has been refreshed/superseded against current exact provider output. The refresh preserves the original `STRONG` internal-only classification under the original semantic rubric; it is not broad product proof and does not authorize public or demo claims.
+
 ## Task 0 Query And Budget
 
 Query:
@@ -30,26 +32,27 @@ Providers:
 
 | Provider | Tokens | Elapsed | Selected files | Selected units | Result |
 | --- | ---: | ---: | ---: | ---: | --- |
-| `context_ir` | `219` | `108.846s` | `0` | `6` | Passed required evidence path |
-| `lexical_top_k_files` | `71` | `0.252s` | `0` | `0` | Failed under budget |
-| `import_neighborhood_files` | `75` | `0.256s` | `0` | `0` | Failed under budget; `import_not_resolved` |
+| `context_ir` | `218` | `7.593s` | `0` | `7` | Passed required evidence path |
+| `lexical_top_k_files` | `71` | `0.315s` | `0` | `0` | Failed under budget |
+| `import_neighborhood_files` | `75` | `0.279s` | `0` | `0` | Failed under budget; `import_not_resolved` |
 
 ## Task 0 Selected Context_IR Units
 
 `context_ir` selected the required evidence path:
 
 - `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers._selected_unit_metadata`
+- `def:src/context_ir/eval_results.py:src.context_ir.eval_results._runtime_provenance_record`
+- `def:src/context_ir/eval_summary.py:src.context_ir.eval_summary._validate_selected_unit_runtime_provenance_links`
 - `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalSelectedUnit`
-- `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalProviderMetadata`
-- `def:src/context_ir/eval_providers.py:src.context_ir.eval_providers.EvalProviderResult`
-- `def:src/context_ir/eval_summary.py:src.context_ir.eval_summary._build_runtime_provenance_record_lookup`
+- `assign:src/context_ir/eval_providers.py:166:4`
+- `assign:src/context_ir/eval_providers.py:268:4`
 - `eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11`
 
 The rendered context included:
 
 `eval_evidence: oracle_signal_hasattr_probe; primary=unsupported/opaque; runtime=additive; payload=attribute_present=true`
 
-This preserves the main truth boundary: `unsupported/opaque` remains primary, and runtime evidence remains additive.
+This supersedes the stale exact selected-unit artifact while preserving the original semantic Task 0 rubric: `_selected_unit_metadata`, `EvalSelectedUnit`, eval-summary report accounting via `_validate_selected_unit_runtime_provenance_links`, compact `oracle_signal_hasattr_probe` evidence, `unsupported/opaque` primary truth, additive runtime evidence, and budget compliance.
 
 ## Task 0 Baseline Failure And Overinclude Analysis
 
@@ -60,7 +63,7 @@ The lexical baseline did identify related whole-file candidates, but the top can
 - `tests/test_eval_signal_hasattr_probe.py`: `6903` estimated tokens
 - `tests/test_eval_signal_getattr_probe.py`: `2656` estimated tokens
 - `tests/test_eval_signal_vars_probe.py`: `2726` estimated tokens
-- `tests/test_semantic_optimizer.py`: `12031` estimated tokens
+- `tests/test_semantic_optimizer.py`: `18572` estimated tokens
 
 The import-neighborhood baseline seeded from `tests/test_eval_signal_hasattr_probe.py` and `tests/test_eval_signal_getattr_probe.py`, but selected neither file under budget and emitted `import_not_resolved`.
 
@@ -256,7 +259,7 @@ Fixture-root baselines fit two files under budget, but both omitted the required
 
 ## Caveats
 
-- Latency is a real caveat: `context_ir` took `108.846s` for Task 0, `118.783s` for Task 1, about `129.702s` for Task 2, and `122.718s` for the Task 3 full-repo run, while the full-repo baselines took about `0.25s` to `0.28s`.
+- Latency is a real caveat: the refreshed `context_ir` Task 0 provider run took `7.593s`, Task 1 took `118.783s`, Task 2 took about `129.702s`, and the Task 3 full-repo run took `122.718s`, while the full-repo baselines are much faster.
 - Selected support units include summaries under budget pressure, not always full source.
 - The compact eval evidence unit is an internal evidence surface, not a selected unsupported runtime-attached source unit.
 - `context_ir` emitted `budget_pressure` and `omitted_uncertainty` warnings.
