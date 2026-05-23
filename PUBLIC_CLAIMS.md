@@ -32,8 +32,10 @@ stays scoped to repo-local evidence only.
   value-return branch pilots for `getattr(obj, name, default)`, and the current
   internal eval-only raised-`AttributeError` branch pilot for exactly
   `getattr(obj, name)`, plus the current narrow internal eval-only
-  direct-literal `getattr(obj, "bit_length")` pilot, and the current
-  internal one-argument `vars(obj)` and zero-argument `vars()` pilots, plus the
+  direct-literal `getattr(obj, "bit_length")` pilot, plus the current narrow
+  internal eval-only direct-literal `hasattr(obj, "bit_length")` pilot, and
+  the current internal one-argument `vars(obj)` and zero-argument `vars()`
+  pilots, plus the
   current internal eval-only `vars(obj)` raised-`TypeError` branch pilot, plus the
   current internal eval-only `RUNTIME_MUTATION` / `globals()` and `locals()`
   pilots, plus the current internal eval-only `RUNTIME_MUTATION` /
@@ -96,6 +98,24 @@ stays scoped to repo-local evidence only.
   `bit_length` unit, public comparative claim, public API, MCP, package
   export, schema, scoring, optimizer, compiler, product, winner-selection, or
   public benchmark widening is included.
+  The current internal eval-only `REFLECTIVE_BUILTIN` /
+  `oracle_signal_hasattr_literal_probe_matrix` covers only a direct-literal
+  `hasattr(obj, "bit_length")` pilot as 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+  exactly `hasattr(obj, "bit_length")`; no name variable,
+  `hasattr(obj, name)`, other reflective builtin, or generalized
+  reflective-builtin behavior; runtime payload exactly
+  `attribute_present=true`; unsupported selector and unsupported selected-unit
+  primary truth `unsupported/opaque`; runtime provenance is additive only;
+  `context_ir` selects the edit symbol, digest support symbol, and unsupported
+  call boundary at both budgets; file-level baselines may select `main.py` at
+  budget `220`, but their selected semantic units remain empty and they do not
+  select the unsupported/runtime evidence unit; no static attribute dependency
+  edge, selected `bit_length` symbol, selected `bit_length` unit, public
+  comparative claim, public API, MCP, package export, schema, scoring,
+  optimizer, compiler, product, winner-selection, or public benchmark widening
+  is included.
   The current internal eval-only `REFLECTIVE_BUILTIN` /
   `oracle_signal_hasattr_false_probe_matrix` covers only a
   `hasattr(obj, name)` false-branch pilot as 1 task x 2 budgets x 3 providers

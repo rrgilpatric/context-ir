@@ -35,8 +35,10 @@ infrastructure and a current four-asset signal evidence surface documented in
 default-return and value-return branches of `getattr(obj, name, default)`, plus
 a current internal eval-only raised-`AttributeError` branch pilot for exactly
 `getattr(obj, name)`, plus a narrow internal eval-only direct-literal
-`getattr(obj, "bit_length")` pilot, plus a current internal one-argument
-`vars(obj)` pilot and a current internal zero-argument `vars()` pilot, plus a
+`getattr(obj, "bit_length")` pilot, plus a narrow internal eval-only
+direct-literal `hasattr(obj, "bit_length")` pilot, plus a current internal
+one-argument `vars(obj)` pilot and a current internal zero-argument `vars()`
+pilot, plus a
 current internal
 eval-only `vars(obj)` raised-`TypeError` branch pilot, and a current internal
 eval-only
@@ -108,6 +110,22 @@ at both budgets; file-level baselines may select `main.py` at budget `220`,
 but selected semantic units stay empty and they do not select the
 unsupported/runtime evidence unit; no static attribute dependency edge,
 selected `bit_length` symbol, selected `bit_length` unit,
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening, or public/demo claim widening is included. The
+current internal eval-only direct-literal `hasattr(obj, "bit_length")` pilot
+covers only `oracle_signal_hasattr_literal_probe_matrix`: 1 task x 2 budgets x
+3 providers at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+exactly `hasattr(obj, "bit_length")`; no name variable,
+`hasattr(obj, name)`, other reflective builtin, or generalized
+reflective-builtin behavior; runtime payload exactly `attribute_present=true`;
+unsupported selector and unsupported selected-unit truth `unsupported/opaque`;
+additive runtime provenance only; `context_ir` selects the edit symbol, digest
+support symbol, and unsupported call boundary at both budgets; file-level
+baselines may select `main.py` at budget `220`, but selected semantic units
+stay empty and they do not select the unsupported/runtime evidence unit; no
+static attribute
+dependency edge, selected `bit_length` symbol, selected `bit_length` unit,
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or public/demo claim widening is included. The
 current internal eval-only `hasattr(obj, name)` false-branch pilot covers only

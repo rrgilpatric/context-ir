@@ -43,8 +43,10 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 Current pushed release authority is the direct-literal `getattr` internal
 eval-only release. The latest pushed internal eval capability evidence
 authority is `8afe99f Add direct-literal getattr eval pilot`, with push-routing
-continuity through `9ea679d Sync direct-literal getattr push routing`. The
-latest pushed internal product-differentiation artifact authority remains
+continuity through `9ea679d Sync direct-literal getattr push routing` and
+docs-only post-push continuity through
+`2295a56 Sync direct-literal getattr post-push state`. The latest pushed
+internal product-differentiation artifact authority remains
 `2f61c1e Refresh task 0 portfolio evidence`. The latest pushed source/contract
 authority remains `ea91718 Skip certified optimizer probe intervals`. Live git
 refs and worktree state must still be verified from git during control intake;
@@ -73,6 +75,125 @@ route `8afe99f` or `9ea679d` back to release-unit audit, full regression,
 commit-gating, staging, local commit creation, or push absent new findings.
 Task 4 remains not run, portfolio artifacts remain unchanged, and public/demo
 claims remain held.
+
+Post-direct-literal `getattr` north-star selection accepted:
+the read-only selection lane returned DONE with no blocking findings. Live git
+truth is `main`, `HEAD=origin/main=2295a56`, clean worktree. The lane noted
+that live git is newer than release-commit prose because `2295a56` is a
+docs-only post-push sync after the `8afe99f` implementation and `9ea679d`
+push-routing commits; this is consistent with the repo rule to verify live refs
+from git.
+
+The selected next route is one bounded internal eval-only
+`REFLECTIVE_BUILTIN` direct-literal `hasattr(obj, "bit_length")` pilot,
+suggested artifact name
+`oracle_signal_hasattr_literal_probe_matrix`. This is recommended because it is
+the closest reflective sibling to the pushed direct-literal
+`getattr(obj, "bit_length")` pilot and broadens evidence across the same
+argument-shape axis with lower risk than literal-name mutation, additional
+dynamic-import literal siblings, public/demo planning, Task 4, or another
+latency pass.
+
+Selected boundaries for the proposed slice:
+
+- fixture boundary exactly `hasattr(obj, "bit_length")`
+- 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+- providers `context_ir`, `lexical_top_k_files`, and
+  `import_neighborhood_files`
+- unsupported selector and unsupported selected-unit primary truth remain
+  `unsupported/opaque`
+- runtime provenance remains additive only
+- runtime payload limited to `attribute_present=true`
+- no `src/`, runtime acquisition, API, MCP, package export, schema, scoring,
+  compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
+  benchmark, latency, production, or generalized reflective-builtin changes
+- no `hasattr(obj, name)` reopening
+
+Ryan authorized this bounded implementation slice. The workspace implementation
+is accepted first-pass by control review. It adds the
+`oracle_signal_hasattr_literal_probe_matrix` fixture/task/run-spec/focused
+test, updates the runtime evidence catalog golden to `29` records, and updates
+the scoped claim-boundary docs while preserving the selected no-widening
+constraints above. Control review verified live git state, inspected the new
+assets and doc boundaries, found no findings, confirmed there is no `src/`
+diff, and reran focused validation:
+
+- `jq empty` on the new task, run spec, and runtime observations JSON
+- focused ruff check and format check on the new test plus
+  `tests/test_eval_evidence.py`
+- strict mypy over `src/`
+- focused pytest with `19 passed`
+- clean `git diff --check`
+
+The read-only release-unit audit returned DONE with no findings and is
+accepted. Control review verified live state still matches the audit:
+`main`, `HEAD=origin/main=2295a56`, no staged files, only the expected
+direct-literal `hasattr` release-unit files, and clean `git diff --check`.
+The audit confirmed the exact fixture call, `attribute_present=true` runtime
+payload, `unsupported/opaque` selector and selected-unit truth, additive-only
+runtime provenance, bounded baseline file behavior, no `src/` diff, no
+API/MCP/schema/scoring/compiler/optimizer/winner-selection changes, no Task 4,
+no portfolio update, no public/demo claim widening, and no reopening of
+`hasattr(obj, name)`.
+
+Full regression blocked after audit clearance because `pytest tests/ -v`
+found one deterministic Task 3 confidence golden mismatch in
+`tests/test_eval_signal_smoke_e.py`: expected `0.002061636001029515`, actual
+`0.0020484287549546155`. Commit-gating was not reached. Control reproduced the
+failure in isolation and verified all prior Task 3 locks passed before the
+confidence assertion: selected units, selected-unit order, document hash, total
+tokens, warnings, warning IDs, and probe behavior stayed stable. This indicates
+candidate-set confidence drift from the added direct-literal `hasattr` eval
+surface, not selected context drift.
+
+Ryan authorized the narrow correction. The correction is accepted first-pass:
+`tests/test_eval_signal_smoke_e.py` now updates only
+`FULL_REPO_TASK3_CONFIDENCE` to `0.0020484287549546155`. Control verified the
+diff is exactly one line and reran
+`tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+with `1 passed`, preserving selected units/order, document hash, total tokens,
+warnings, warning IDs, probe behavior, and confidence. The corrected release
+unit now includes `tests/test_eval_signal_smoke_e.py`; the prior release-unit
+audit is stale.
+
+The corrected read-only release-unit audit returned DONE with verdict PASS and
+no findings. Control review verified live state still matches the audit:
+`main`, `HEAD=origin/main=2295a56`, no staged files, only the expected
+corrected direct-literal `hasattr` release-unit files, and clean
+`git diff --check`. The audit confirmed scope and claim boundaries, including
+no `src/`, runtime acquisition, API/MCP/package-export/schema/scoring/
+compiler/optimizer/winner-selection changes, no Task 4, no portfolio update,
+no public/demo claim widening, additive runtime provenance only,
+`unsupported/opaque` selector and selected-unit truth, no `hasattr(obj, name)`
+reopening, and the Task 3 confidence correction is only the golden update with
+selected units/order, document hash, tokens, warnings, warning IDs, and probe
+behavior preserved.
+
+Full regression and commit-gating are cleared for the exact corrected release
+unit. Full regression passed `ruff check src/ tests/`, `ruff format --check
+src/ tests/`, `mypy --strict src/`, `pytest tests/ -v` with `1,766` passing
+tests, and `git diff --check`. Commit-gating confirmed the changed file set
+matches the corrected-audit-cleared release unit only, with no release-blocking
+findings and no `src/` diff.
+
+Next route: create the local release commit for the exact corrected
+direct-literal `hasattr` release unit. Remote push remains Ryan-gated.
+
+The direct-literal `hasattr` release unit is:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `ARCHITECTURE.md`
+- `EVAL.md`
+- `README.md`
+- `PUBLIC_CLAIMS.md`
+- `tests/test_eval_evidence.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `evals/fixtures/oracle_signal_hasattr_literal_probe/eval_runtime_observations.json`
+- `evals/fixtures/oracle_signal_hasattr_literal_probe/main.py`
+- `evals/tasks/oracle_signal_hasattr_literal_probe.json`
+- `evals/run_specs/oracle_signal_hasattr_literal_probe_matrix.json`
 
 Pushed Task 0 internal portfolio refresh release:
 `2f61c1e Refresh task 0 portfolio evidence`. This commit contains the accepted,
@@ -16990,15 +17111,20 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: select the next north-star move from current repo truth.
-The direct-literal `getattr` release is pushed and closed/no-active-gate:
-`8afe99f Add direct-literal getattr eval pilot` plus
-`9ea679d Sync direct-literal getattr push routing` are on remote `main`. Do
+Immediate next route: create the local release commit for the corrected,
+audit-cleared, full-regression-cleared, and commit-gating-cleared
+workspace-only internal eval-only `REFLECTIVE_BUILTIN` direct-literal
+`hasattr(obj, "bit_length")` candidate through
+`oracle_signal_hasattr_literal_probe_matrix`. This candidate is not yet
+committed or pushed. The direct-literal `getattr` release
+is pushed and closed/no-active-gate: `8afe99f Add direct-literal getattr eval
+pilot`, `9ea679d Sync direct-literal getattr push routing`, and
+`2295a56 Sync direct-literal getattr post-push state` are on remote `main`. Do
 not route that release back to release-unit audit, full regression,
-commit-gating, staging, local commit, or push absent new findings. At
-post-push routing sync, git verified `main`, `HEAD=origin/main=9ea679d`, and a
-clean worktree. Future lanes must continue to verify live refs from git rather
-than committed prose.
+commit-gating, staging, local commit, or push absent new findings. At route
+selection intake, git verified `main`, `HEAD=origin/main=2295a56`, and a clean
+worktree. Future lanes must continue to verify live refs from git rather than
+committed prose.
 
 Current pushed repo authority at slice intake for the next move is the pushed
 direct-literal `getattr` release above. The prior root-module literal

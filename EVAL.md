@@ -45,6 +45,9 @@ evidence. The current internal eval-only
 `importlib.import_module("plugins.weather")` sibling evidence. The narrow
 internal eval-only `oracle_signal_getattr_literal_probe_matrix` evidence is a
 `REFLECTIVE_BUILTIN` / direct-literal `getattr(obj, "bit_length")` sibling
+pilot. The narrow internal eval-only
+`oracle_signal_hasattr_literal_probe_matrix` evidence is a
+`REFLECTIVE_BUILTIN` / direct-literal `hasattr(obj, "bit_length")` sibling
 pilot. The narrow
 internal eval-only
 `oracle_signal_dynamic_import_builtin_probe_matrix` evidence is narrow
@@ -86,6 +89,24 @@ convention does not admit resolved value/type summary fields without source or
 runtime-evidence widening. Selector and selected-unit primary truth remain
 `unsupported/opaque`; runtime provenance is additive only. `context_ir`
 selects `def:main.py:main.probe_literal_attribute`,
+`def:main.py:main.render_probe_digest`, and
+`unsupported:call:main.py:2:11` at both budgets. File-level baselines may
+select `main.py` at budget `220`, but their selected-unit layer remains empty
+and they do not select the unsupported/runtime evidence unit. No static
+attribute dependency edge, selected attribute symbol, or selected `bit_length`
+unit is introduced. The no-widening boundary preserves public comparative
+claims at the existing quad matrix and includes no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening. The current internal eval-only
+`oracle_signal_hasattr_literal_probe_matrix` evidence covers exactly
+`hasattr(obj, "bit_length")`: 1 task x 2 budgets x 3 providers at budgets
+`[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The fixture boundary is the direct-literal call
+site only; it excludes a name variable, `hasattr(obj, name)`, other reflective
+builtins, and generalized reflective-builtin support. Runtime payload is
+exactly `attribute_present=true`. Unsupported selector and unsupported
+selected-unit primary truth remain `unsupported/opaque`; runtime provenance is
+additive only. `context_ir` selects `def:main.py:main.probe_literal_attribute`,
 `def:main.py:main.render_probe_digest`, and
 `unsupported:call:main.py:2:11` at both budgets. File-level baselines may
 select `main.py` at budget `220`, but their selected-unit layer remains empty

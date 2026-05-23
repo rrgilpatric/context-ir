@@ -2,6 +2,328 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Hasattr Full Regression And Commit-Gating Cleared
+
+- Reviewed the returned full-regression and commit-gating lane for the
+  corrected-audit-cleared direct-literal `hasattr(obj, "bit_length")` release
+  unit.
+- Findings: none.
+- Full regression result:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed, `117`
+    files already formatted
+  - `.venv/bin/python -m mypy --strict src/`: passed, `39` source files
+  - `.venv/bin/python -m pytest tests/ -v`: passed, `1,766` tests
+  - `git diff --check`: passed
+- Commit-gating verdict: PASS.
+- Commit-gating confirmed:
+  - exact file set matches the corrected release unit
+  - no release-blocking issue found
+  - `git diff -- src/` is empty
+- Release state:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - staged: no
+  - committed locally: no
+  - pushed: no
+  - push remains Ryan-gated
+- Next control action:
+  - create the local release commit for the exact corrected release unit
+- Acceptance status: full-regression-cleared and commit-gating-cleared
+  first-pass
+
+## 2026-05-23 -- Direct-Literal Hasattr Corrected Release-Unit Audit Cleared
+
+- Reviewed the returned corrected read-only release-unit audit for the
+  direct-literal `hasattr(obj, "bit_length")` release unit.
+- Findings: none.
+- Audit verdict: PASS / corrected audit-cleared first-pass.
+- Live repo/workspace verification matched the audit:
+  - branch `main`
+  - `HEAD=origin/main=2295a56`
+  - no staged files
+  - dirty/untracked files limited to the corrected release unit
+  - `git diff --check` clean
+- Corrected audit confirmed:
+  - scope stays within the listed release unit
+  - `git diff -- src/` is empty
+  - no runtime acquisition, API/MCP/package export, schema, scoring, compiler,
+    optimizer, winner-selection, or source contract files changed
+  - pilot remains exactly `hasattr(obj, "bit_length")`
+  - no `hasattr(obj, name)` reopening
+  - runtime provenance remains additive
+  - unsupported selector and unsupported selected-unit truth remain
+    `unsupported/opaque`
+  - no Task 4, portfolio update, public/demo widening, benchmark claim,
+    latency claim, production claim, or generalized reflective-builtin claim
+  - Task 3 confidence correction changes only the golden and preserves selected
+    units/order, document hash, tokens, warnings, warning IDs, and probe
+    behavior
+- Validation reviewed by the audit:
+  - `git diff --check`
+  - JSON validation for new task, run spec, and runtime observations
+  - focused ruff check and format check
+  - strict mypy over `src/`
+  - focused pytest with `20 passed`
+- Next control action:
+  - run full regression, then commit-gating over the exact corrected
+    release unit before staging, local commit, or push
+- Acceptance status: corrected release-unit audit cleared first-pass
+
+## 2026-05-23 -- Direct-Literal Hasattr Task 3 Confidence Correction Accepted
+
+- Reviewed the narrow correction for the blocked full-regression gate.
+- Findings: none.
+- Corrected file:
+  - `tests/test_eval_signal_smoke_e.py`
+- Correction:
+  - updated only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.002061636001029515` to `0.0020484287549546155`
+- Control verification:
+  - live git state matched the expected corrected release unit
+  - `git diff --check` clean
+  - `git diff -- tests/test_eval_signal_smoke_e.py` showed exactly the
+    one-line confidence golden update
+  - reran
+    `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+    with `1 passed`
+- Preservation proof:
+  - selected units and selected-unit order unchanged
+  - document hash
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+    unchanged
+  - total tokens unchanged at `274`
+  - warnings unchanged as `omitted_uncertainty` x3
+  - warning IDs unchanged
+  - probe behavior unchanged
+  - confidence locked to `0.0020484287549546155`
+- Release-state impact:
+  - the prior release-unit audit is stale because
+    `tests/test_eval_signal_smoke_e.py` entered the corrected release unit
+  - next control action is a corrected read-only release-unit audit over the
+    expanded release unit before full regression, commit-gating, staging, local
+    commit, or push
+- Acceptance status: correction accepted first-pass
+
+## 2026-05-23 -- Direct-Literal Hasattr Full Regression Blocked
+
+- Reviewed the returned full-regression lane for the audit-cleared
+  direct-literal `hasattr(obj, "bit_length")` release unit.
+- Finding:
+  - `tests/test_eval_signal_smoke_e.py` full-repo Task 3 confidence golden
+    expected `0.002061636001029515`, but current output is
+    `0.0020484287549546155`
+- Full regression status:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `.venv/bin/python -m mypy --strict src/`: passed
+  - `.venv/bin/python -m pytest tests/ -v`: failed with `1 failed, 1765 passed`
+  - `git diff --check`: passed
+- Commit-gating was not reached because full regression failed.
+- Control reproduced the failure in isolation with
+  `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`.
+- The failed assertion is after the test already verified unchanged Task 3
+  selected units, selected-unit order, document hash, total tokens, warnings,
+  warning IDs, and probe behavior. The finding is therefore classified as
+  deterministic confidence-golden candidate-set drift caused by the added
+  direct-literal `hasattr` eval surface, not selected context drift.
+- Recommended next control action:
+  - issue the Ryan-authorized narrow correction that updates only the Task 3
+    full-repo confidence golden and reruns focused preservation validation
+  - if authorized and accepted, rerun release-unit audit because
+    `tests/test_eval_signal_smoke_e.py` will enter the corrected release unit
+    before full regression, commit-gating, staging, local commit, or push
+- Ryan authorization:
+  - Ryan agreed to the narrow correction route
+- Acceptance status: blocked; narrow correction authorized
+
+## 2026-05-23 -- Direct-Literal Hasattr Release-Unit Audit Cleared
+
+- Reviewed the returned read-only release-unit audit for the workspace-only
+  direct-literal `hasattr(obj, "bit_length")` release unit.
+- Findings: none.
+- Audit verdict: PASS / audit-cleared first-pass.
+- Live repo/workspace verification matched the audit:
+  - branch `main`
+  - `HEAD=origin/main=2295a56`
+  - no staged files
+  - dirty/untracked files limited to the accepted release unit
+  - `git diff --check` clean
+- Audit confirmed:
+  - exact fixture call remains `hasattr(obj, "bit_length")`
+  - runtime payload remains only `attribute_present=true`
+  - unsupported selector and unsupported selected-unit truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `bit_length` dependency edge, selected symbol, or selected unit
+  - no `src/`, API/MCP/schema/scoring/compiler/optimizer/winner-selection
+    changes
+  - no Task 4, portfolio, public/demo, benchmark, latency, production, or
+    generalized reflective-builtin claim widening
+  - no `hasattr(obj, name)` reopening
+  - baselines may select `main.py` at budget `220`, but select no semantic
+    units and do not select the unsupported/runtime evidence unit
+- Validation reviewed by the audit:
+  - `git diff --check`
+  - JSON validation for new task, run spec, and runtime observations
+  - focused ruff check and format check
+  - strict mypy over `src/`
+  - focused pytest with `19 passed`
+- Next control action:
+  - run full regression, then commit-gating over the exact audit-cleared
+    release unit before staging, local commit, or push
+- Acceptance status: release-unit audit cleared first-pass
+
+## 2026-05-23 -- Direct-Literal Hasattr Eval Pilot Accepted For Audit
+
+- Reviewed the workspace-only direct-literal `hasattr(obj, "bit_length")`
+  implementation candidate.
+- Findings: none.
+- Accepted release-unit candidate:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_hasattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_hasattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_hasattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_hasattr_literal_probe_matrix.json`
+- Accepted boundary:
+  - internal eval-only `REFLECTIVE_BUILTIN` direct-literal pilot for exactly
+    `hasattr(obj, "bit_length")`
+  - 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - runtime payload records `attribute_present=true` only
+  - unsupported selector and unsupported selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance is additive only
+  - `context_ir` selects `def:main.py:main.probe_literal_attribute`,
+    `def:main.py:main.render_probe_digest`, and
+    `unsupported:call:main.py:2:11` at both budgets
+  - baselines may select `main.py` at budget `220`, but select no semantic
+    units and do not select the unsupported/runtime evidence unit
+  - no static attribute dependency edge, selected `bit_length` symbol, selected
+    `bit_length` unit, `src/`, runtime acquisition, API, MCP, package export,
+    schema, scoring, compiler, optimizer, winner-selection, Task 4, portfolio,
+    public/demo claim, benchmark claim, latency claim, production claim, or
+    generalized reflective-builtin claim is included
+  - no `hasattr(obj, name)` reopening
+- Control verification:
+  - live git state matched the expected workspace candidate
+  - inspected the new fixture, runtime observations, task, run spec, focused
+    test, catalog update, and scoped claim-boundary docs
+  - `git diff -- src/` was empty
+  - `jq empty` passed for the task, run spec, and runtime observations JSON
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_hasattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_hasattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_hasattr_literal_probe.py tests/test_eval_evidence.py -v`
+    returned `19 passed`
+  - `git diff --check` clean
+- Next control action:
+  - run a dedicated read-only release-unit audit over the exact accepted
+    release unit before full regression, commit-gating, staging, local commit,
+    or push
+- Acceptance status: accepted first-pass
+
+## 2026-05-23 -- Direct-Literal Hasattr Eval Pilot Implemented In Workspace
+
+- Implemented the bounded internal eval-only `REFLECTIVE_BUILTIN`
+  direct-literal pilot for exactly `hasattr(obj, "bit_length")`.
+- Added workspace candidate artifacts:
+  - `evals/fixtures/oracle_signal_hasattr_literal_probe/main.py`
+  - `evals/fixtures/oracle_signal_hasattr_literal_probe/eval_runtime_observations.json`
+  - `evals/tasks/oracle_signal_hasattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_hasattr_literal_probe_matrix.json`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+- Updated scoped evidence and claim-boundary artifacts:
+  - `tests/test_eval_evidence.py`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+- Boundary preserved:
+  - 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - providers `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - unsupported selector and unsupported selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - runtime payload is limited to `attribute_present=true`
+  - file-level baselines may select `main.py` at budget `220`, but selected
+    semantic units remain empty and they do not select the unsupported/runtime
+    evidence unit
+  - no `src/`, runtime acquisition, API, MCP, package export, schema, scoring,
+    compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
+    benchmark, latency, production, or generalized reflective-builtin changes
+  - no `hasattr(obj, name)` reopening
+- Validation run by implementation lane:
+  - `jq empty evals/tasks/oracle_signal_hasattr_literal_probe.json evals/run_specs/oracle_signal_hasattr_literal_probe_matrix.json evals/fixtures/oracle_signal_hasattr_literal_probe/eval_runtime_observations.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_hasattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_hasattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_hasattr_literal_probe.py tests/test_eval_evidence.py -v`
+- Acceptance status: implementation lane DONE; control-lane acceptance pending
+
+## 2026-05-23 -- Post-Getattr Direct-Literal North-Star Selection Accepted
+
+- Reviewed the read-only post-release north-star selection lane after the
+  pushed direct-literal `getattr(obj, "bit_length")` release.
+- Findings: none.
+- Live repo truth:
+  - branch `main`
+  - `HEAD=origin/main=2295a56`
+  - clean worktree
+  - latest commits are `2295a56`, `9ea679d`, `8afe99f`, `1749ab9`,
+    `a0b7ffb`, `76204f9`, `6d0724f`, and `2f61c1e`
+- Accepted note:
+  - live git state is newer than the direct-literal `getattr` release-commit
+    prose because `2295a56` is a docs-only post-push sync after the `8afe99f`
+    implementation and `9ea679d` push-routing commits
+  - this is consistent with verifying live refs from git rather than committed
+    prose
+- Candidate comparison accepted:
+  - direct-literal reflective sibling `hasattr(obj, "bit_length")`: selected
+  - literal-name mutation siblings: later because side-effecting replay
+    semantics are higher risk
+  - remaining dynamic-import literal siblings: later because the family is
+    already broad and some builtin literal boundaries are explicitly rejected
+    elsewhere
+  - methodology/reporting hardening: defer absent a current reporting blocker
+  - Task 4: keep optional unless eval-bundle/report/pipeline reproducibility
+    evidence becomes the target
+  - public/demo planning: hold because claims remain held
+  - latency/performance: defer because no current public performance claim is
+    allowed and no immediate scale blocker was selected
+- Recommended next route:
+  - one bounded internal eval-only implementation slice for exactly
+    `hasattr(obj, "bit_length")`
+  - suggested artifact name:
+    `oracle_signal_hasattr_literal_probe_matrix`
+- Selected boundaries:
+  - 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - providers `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - unsupported selector and unsupported selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - runtime payload limited to `attribute_present=true`
+  - no `src/`, runtime acquisition, API, MCP, package export, schema, scoring,
+    compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
+    benchmark, latency, production, or generalized reflective-builtin changes
+  - no `hasattr(obj, name)` reopening
+- Next control action:
+  - wait for Ryan go/no-go before issuing the implementation prompt
+- Acceptance status: selection accepted first-pass; implementation not yet
+  authorized
+
 ## 2026-05-23 -- Direct-Literal Getattr Release Pushed
 
 - Ryan explicitly authorized pushing the direct-literal `getattr` release.
