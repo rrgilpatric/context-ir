@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import replace
 from pathlib import Path
 from typing import cast
+
+import pytest
 
 import context_ir
 import context_ir.eval_bundle as eval_bundle
 import context_ir.eval_providers as eval_providers
 import context_ir.eval_runs as eval_runs
 import context_ir.eval_summary as eval_summary
+import context_ir.semantic_optimizer as semantic_optimizer
 import context_ir.semantic_types as semantic_types
 from context_ir.eval_metrics import score_eval_run
 from context_ir.eval_oracles import (
@@ -70,6 +74,13 @@ FULL_REPO_TASK3_RESOLVER_NOISE_ID = (
     "def:src/context_ir/resolver.py:"
     "src.context_ir.resolver._resolve_transitive_sole_provider_self_call_symbol_id"
 )
+FIXTURE_TASK3_DOCUMENT_SHA256 = (
+    "e576ae0dff78ab31871f38e6cf8e705274516164bb67dd841a7a433a5d34c4ae"
+)
+FULL_REPO_TASK3_DOCUMENT_SHA256 = (
+    "78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2"
+)
+FULL_REPO_TASK3_CONFIDENCE = 0.0020877837965136577
 
 
 def _execute_signal_smoke_e_bundle(bundle_dir: Path) -> eval_bundle.EvalBundleArtifact:
@@ -240,6 +251,10 @@ def test_signal_smoke_e_task3_query_keeps_child_method_support_pack() -> None:
     }
 
     assert result.total_tokens <= 280
+    assert (
+        hashlib.sha256(result.document.encode("utf-8")).hexdigest()
+        == FIXTURE_TASK3_DOCUMENT_SHA256
+    )
     assert set(selected_units) == expected_unit_ids
     assert (
         selected_units[
@@ -262,9 +277,78 @@ def test_signal_smoke_e_task3_query_keeps_child_method_support_pack() -> None:
     assert result.warnings == ()
 
 
-def test_signal_smoke_e_task3_query_selects_full_repo_exact_units() -> None:
+def test_signal_smoke_e_task3_query_selects_full_repo_exact_units(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """The full-repo Task 3 query keeps exact fixture units over repo noise."""
+    original_probe = semantic_optimizer._SemanticOptimizerSession.probe
+    original_build_warnings = semantic_optimizer._build_warnings
+    original_confidence = semantic_optimizer._confidence
+    probe_budgets: list[int] = []
+    warning_call_count = 0
+    confidence_values: list[float] = []
+
+    def counting_probe(
+        self: semantic_optimizer._SemanticOptimizerSession,
+        budget: int,
+    ) -> semantic_optimizer._SemanticOptimizationProbe:
+        probe_budgets.append(budget)
+        return original_probe(self, budget)
+
+    def counting_build_warnings(
+        *,
+        candidates: tuple[semantic_optimizer._SemanticCandidate, ...]
+        | list[semantic_optimizer._SemanticCandidate],
+        selections: tuple[semantic_types.SemanticSelectionRecord, ...],
+        omitted_unit_ids: tuple[str, ...],
+        focus_unit_ids: frozenset[str],
+        suppressed_uncertainty_unit_ids: frozenset[str],
+        program: semantic_types.SemanticProgram,
+    ) -> list[semantic_types.SemanticOptimizationWarning]:
+        nonlocal warning_call_count
+        warning_call_count += 1
+        return original_build_warnings(
+            candidates=candidates,
+            selections=selections,
+            omitted_unit_ids=omitted_unit_ids,
+            focus_unit_ids=focus_unit_ids,
+            suppressed_uncertainty_unit_ids=suppressed_uncertainty_unit_ids,
+            program=program,
+        )
+
+    def counting_confidence(
+        *,
+        candidates: tuple[semantic_optimizer._SemanticCandidate, ...]
+        | list[semantic_optimizer._SemanticCandidate],
+        selections: tuple[semantic_types.SemanticSelectionRecord, ...],
+    ) -> float:
+        confidence = original_confidence(
+            candidates=candidates,
+            selections=selections,
+        )
+        confidence_values.append(confidence)
+        return confidence
+
+    monkeypatch.setattr(
+        semantic_optimizer._SemanticOptimizerSession,
+        "probe",
+        counting_probe,
+    )
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_build_warnings",
+        counting_build_warnings,
+    )
+    monkeypatch.setattr(
+        semantic_optimizer,
+        "_confidence",
+        counting_confidence,
+    )
+
     for budget in (280, 400):
+        probe_budgets.clear()
+        warning_call_count = 0
+        confidence_values.clear()
         result = eval_providers.build_context_ir_provider_pack(
             EvalProviderRequest(
                 repo_root=REPO_ROOT,
@@ -292,6 +376,10 @@ def test_signal_smoke_e_task3_query_selects_full_repo_exact_units() -> None:
         assert FULL_REPO_TASK3_RESOLVER_NOISE_ID not in selected_units
         if budget == 280:
             assert result.total_tokens == 274
+            assert (
+                hashlib.sha256(result.document.encode("utf-8")).hexdigest()
+                == FULL_REPO_TASK3_DOCUMENT_SHA256
+            )
             assert result.warnings == ("omitted_uncertainty",) * 3
             assert (
                 tuple(warning.unit_id for warning in result.metadata.warning_details)
@@ -304,6 +392,9 @@ def test_signal_smoke_e_task3_query_selects_full_repo_exact_units() -> None:
                 FULL_REPO_TASK3_ALIAS_UNCERTAINTY_ID,
             )
             assert selected_units[FULL_REPO_TASK3_RESOLVER_ID].detail == "source"
+            assert len(probe_budgets) == 8
+            assert warning_call_count == 1
+            assert confidence_values == [FULL_REPO_TASK3_CONFIDENCE]
         parent_class = selected_units.get(FULL_REPO_TASK3_PARENT_ID)
         assert parent_class is None or parent_class.detail != "source"
 

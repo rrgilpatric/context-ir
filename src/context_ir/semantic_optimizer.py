@@ -104,6 +104,18 @@ _CandidateSortKeyCache = dict[tuple[_CandidateSortState, str], _CandidateSortKey
 
 
 @dataclass(frozen=True)
+class _SemanticOptimizationProbe:
+    """Budget probe selection before warning and confidence finalization."""
+
+    selections: tuple[SemanticSelectionRecord, ...]
+    omitted_unit_ids: tuple[str, ...]
+    total_tokens: int
+    budget: int
+    focus_unit_ids: frozenset[str]
+    suppressed_uncertainty_unit_ids: frozenset[str]
+
+
+@dataclass(frozen=True)
 class _SemanticOptimizerSession:
     """Compile-scoped optimizer state with reusable rendered candidates."""
 
@@ -137,7 +149,11 @@ class _SemanticOptimizerSession:
 
     def optimize(self, budget: int) -> SemanticOptimizationResult:
         """Select budget-feasible semantic units from prebuilt candidates."""
-        return _optimize_prepared_semantic_units(
+        return self.finalize_probe(self.probe(budget))
+
+    def probe(self, budget: int) -> _SemanticOptimizationProbe:
+        """Select budget-feasible semantic units without final diagnostics."""
+        return _probe_prepared_semantic_units(
             program=self.program,
             scoring=self.scoring,
             ordered_candidates=self.ordered_candidates,
@@ -146,9 +162,24 @@ class _SemanticOptimizerSession:
             budget=budget,
         )
 
+    def finalize_probe(
+        self,
+        probe: _SemanticOptimizationProbe,
+        *,
+        budget: int | None = None,
+    ) -> SemanticOptimizationResult:
+        """Finalize a probe into the public optimizer result shape."""
+        result_budget = probe.budget if budget is None else budget
+        return _finalize_optimization_probe(
+            program=self.program,
+            ordered_candidates=self.ordered_candidates,
+            probe=probe,
+            budget=result_budget,
+        )
+
     def render_selected_units(
         self,
-        optimization: SemanticOptimizationResult,
+        optimization: SemanticOptimizationResult | _SemanticOptimizationProbe,
     ) -> dict[str, RenderedUnit]:
         """Return already materialized renders for selected optimization records."""
         return {
@@ -209,7 +240,7 @@ def optimize_semantic_units(
     return optimizer_session.optimize(budget)
 
 
-def _optimize_prepared_semantic_units(
+def _probe_prepared_semantic_units(
     *,
     program: SemanticProgram,
     scoring: SemanticScoringResult,
@@ -217,19 +248,19 @@ def _optimize_prepared_semantic_units(
     candidate_by_id: dict[str, _SemanticCandidate],
     sort_key_cache: _CandidateSortKeyCache,
     budget: int,
-) -> SemanticOptimizationResult:
+) -> _SemanticOptimizationProbe:
     """Select semantic units from compile-scoped materialized candidates."""
     if budget < 0:
         raise ValueError("budget must be >= 0")
 
     if not ordered_candidates:
-        return SemanticOptimizationResult(
+        return _SemanticOptimizationProbe(
             selections=(),
             omitted_unit_ids=(),
-            warnings=(),
             total_tokens=0,
             budget=budget,
-            confidence=1.0,
+            focus_unit_ids=frozenset(),
+            suppressed_uncertainty_unit_ids=frozenset(),
         )
 
     selections: list[SemanticSelectionRecord] = []
@@ -433,26 +464,44 @@ def _optimize_prepared_semantic_units(
         key=lambda unit_id: _candidate_sort_key(candidate_by_id[unit_id])
     )
 
+    total_tokens = sum(record.token_count for record in selections)
+    return _SemanticOptimizationProbe(
+        selections=tuple(selections),
+        omitted_unit_ids=tuple(omitted_unit_ids),
+        total_tokens=total_tokens,
+        budget=budget,
+        focus_unit_ids=frozenset(focus_unit_ids),
+        suppressed_uncertainty_unit_ids=frozenset(suppressed_uncertainty_unit_ids),
+    )
+
+
+def _finalize_optimization_probe(
+    *,
+    program: SemanticProgram,
+    ordered_candidates: tuple[_SemanticCandidate, ...],
+    probe: _SemanticOptimizationProbe,
+    budget: int,
+) -> SemanticOptimizationResult:
+    """Build warning and confidence metadata for an accepted budget probe."""
     warnings = tuple(
         _build_warnings(
             candidates=ordered_candidates,
-            selections=tuple(selections),
-            omitted_unit_ids=tuple(omitted_unit_ids),
-            focus_unit_ids=frozenset(focus_unit_ids),
-            suppressed_uncertainty_unit_ids=frozenset(suppressed_uncertainty_unit_ids),
+            selections=probe.selections,
+            omitted_unit_ids=probe.omitted_unit_ids,
+            focus_unit_ids=probe.focus_unit_ids,
+            suppressed_uncertainty_unit_ids=probe.suppressed_uncertainty_unit_ids,
             program=program,
         )
     )
-    total_tokens = sum(record.token_count for record in selections)
     confidence = _confidence(
         candidates=ordered_candidates,
-        selections=tuple(selections),
+        selections=probe.selections,
     )
     return SemanticOptimizationResult(
-        selections=tuple(selections),
-        omitted_unit_ids=tuple(omitted_unit_ids),
+        selections=probe.selections,
+        omitted_unit_ids=probe.omitted_unit_ids,
         warnings=warnings,
-        total_tokens=total_tokens,
+        total_tokens=probe.total_tokens,
         budget=budget,
         confidence=confidence,
     )

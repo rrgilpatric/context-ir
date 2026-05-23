@@ -40,13 +40,28 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the scorer searchable-parts release.
+Current pushed release authority is the summary-content lexical fast-path release.
 The latest pushed source/contract/routing authority is
-`39dfda4 Cache scorer searchable parts`; the latest pushed internal
+`6895096 Fast-path summary lexical terms`; the latest pushed internal
 product-differentiation artifact authority is
 `b34fb0e Record task 3 differentiation evidence`. Live git refs and worktree
 state must still be verified from git during control intake; do not infer them
 from committed prose.
+
+Pushed summary-content lexical fast-path release:
+`6895096 Fast-path summary lexical terms`. This commit contains the accepted,
+audit-cleared, full-regression-cleared, commit-gating-cleared, locally
+committed, and pushed scorer/test/continuity release unit that adds private
+`_SearchablePart` metadata parallel to `searchable_parts` and fast-paths
+summary-content lexical extraction through token fragments while preserving the
+joined `candidate.searchable_text` embedding surface, scoring policy,
+selected-unit order, warning semantics, eval schema, API/MCP and package-export
+boundaries, Task 3 exact behavior, Task 4 hold, and public/demo claim holds.
+Ryan explicitly authorized the push, and `git push origin main` advanced remote
+`main` from `39dfda4` to `6895096`. This continuity entry records the
+post-push state. Do not route `6895096` back to release-unit audit, full
+regression, commit-gating, staging, local commit creation, or push absent new
+findings.
 
 Pushed scorer searchable-parts release:
 `39dfda4 Cache scorer searchable parts`. This commit contains the accepted,
@@ -204,12 +219,164 @@ commit-gating checks:
 - no API/MCP/schema/config/package-export, eval schema, portfolio artifact,
   Task 4, or public/demo claim drift was found
 
+The read-only post-push summary-content fast-path latency verification lane
+returned DONE and is accepted as workspace-only routing evidence. Artifacts are
+under
+`/private/tmp/context_ir_latency_profile_after_summary_fast_path_olczFpbt/`.
+Accepted verification result:
+
+- no Task 3 behavior drift:
+  - full-repo budget `280` still selects the accepted exact four units in
+    `274` tokens with `omitted_uncertainty x3`
+  - fixture-root control still selects the expected 5 units in `223` tokens
+    with no warnings
+- current timing:
+  - full-repo raw latency is `8.094761s`
+  - full-repo cProfile latency is `22.313047s`
+  - fixture-root raw latency is `0.003853s`
+- summary fast-path evidence:
+  - `_extract_terms` calls: `52,446`
+  - summary searchable parts: `70,575`
+  - unique summary content texts: `70,566`
+  - summary term fragments: `2,699,103`
+  - raw summary-content extract calls: `0`
+  - raw summary-content extract unique texts: `0`
+- accepted diagnosis:
+  - the pushed release preserved behavior and eliminated raw summary-content
+    `_extract_terms` misses
+  - the next dominant area is now compiler/optimizer budget probing:
+    `_compile_budget_honest_artifact` is `9.931s`, optimizer `optimize` /
+    `_optimize_prepared_semantic_units` runs 8 times for `7.562s`, with
+    `564,600` pending-candidate visits and `1,623,179` optimizer sort-key
+    requests
+  - scorer lexical work is still close behind, but raw summary extraction is
+    no longer the problem
+
 Current next route:
-- create the local release commit for the exact four-file release unit
-- push remains Ryan-gated
-- do not run Task 4, portfolio updates, public/demo claim work, or next
-  optimization measurement before the local release commit is created and
-  reviewed
+- the read-only optimizer budget-probe diagnosis lane returned DONE and is
+  accepted as workspace-only routing evidence
+- artifact:
+  `/private/tmp/context_ir_optimizer_budget_probe_diagnosis_PcZSI1/budget_probe_diagnosis.json`
+- accepted diagnosis:
+  - the smallest safe target is deferring warning/confidence construction for
+    intermediate budget probes only
+  - `_compile_budget_honest_artifact` uses each probe result only to render
+    selected units and measure document tokens before deciding fit
+  - warnings and confidence are not used in that probe fit decision path
+  - candidate scan reuse is not the safe first move because selected sets are
+    not prefix-stable across budgets and dynamic pending sort depends on focus
+    state during the scan
+  - sort-key caching is already effective after the first two probes, with
+    zero sort-key misses on later probes
+  - accepted Task 3 preservation matched the summary fast-path verification
+    artifact: final selected units, total tokens, warnings, and warning unit
+    IDs remained unchanged
+- accepted probe evidence:
+  - 8 probe decisions were observed for budget `280`
+  - totals: `564,600` pending-candidate visits, `1,623,179` sort-key
+    requests, and `211,692` sort-key misses
+  - non-cProfile diagnostic timing attributed about `121ms` to warning
+    construction and `425ms` to confidence construction across intermediate
+    probes
+  - existing cProfile evidence reported `_build_warnings` at `0.123s`
+    cumulative and `_confidence` at `1.323s` cumulative under profiler
+    overhead
+- next route is a bounded implementation slice to add a private optimizer
+  budget-probe/finalize path:
+  - intermediate compile budget probes should return enough data to render
+    selected units and measure document tokens
+  - `_build_warnings` and `_confidence` should run only once for the final
+    accepted unit budget
+  - scoring, selection order, warning rules, omitted-unit semantics, public
+    result types, API/MCP/package exports, eval schema, Task 4, portfolio, and
+    public/demo claim boundaries must remain unchanged
+  - acceptance requires full-repo Task 3 budget `280` byte-for-byte equivalent
+    document text, selected unit IDs/order, total tokens, warnings, warning
+    unit IDs, and confidence; fixture-root Task 3 unchanged; 8 probe decisions
+    preserved; and instrumentation proving `_build_warnings` and `_confidence`
+    run once, not 8 times, in the compiler path
+
+The bounded optimizer budget-probe/finalize implementation lane returned DONE
+and is workspace-only accepted first-pass. Accepted implementation result:
+
+- changed only `src/context_ir/semantic_optimizer.py`,
+  `src/context_ir/semantic_compiler.py`, `tests/test_semantic_compiler.py`, and
+  `tests/test_eval_signal_smoke_e.py` beyond the pre-existing dirty control
+  docs
+- added private `_SemanticOptimizationProbe`,
+  `_SemanticOptimizerSession.probe(...)`, and
+  `_SemanticOptimizerSession.finalize_probe(...)`
+- `optimize_semantic_units(...)` and standalone session `optimize(...)`
+  behavior still go through full finalization
+- compiler budget binary search now uses probes and finalizes only the accepted
+  probe
+- preserves scoring, selected-unit order, warning rules, omitted-unit
+  semantics, public result types, API/MCP/package exports, eval schema, Task 4
+  hold, portfolio boundaries, and public/demo claim holds
+- accepted validation:
+  - implementation lane reported scoped ruff, format check, strict mypy,
+    focused pytest, and `git diff --check` passed
+  - control review reran:
+    - `.venv/bin/python -m ruff check src/context_ir/semantic_optimizer.py src/context_ir/semantic_compiler.py tests/test_semantic_optimizer.py tests/test_semantic_compiler.py tests/test_eval_signal_smoke_e.py`: passed
+    - `.venv/bin/python -m ruff format --check src/context_ir/semantic_optimizer.py src/context_ir/semantic_compiler.py tests/test_semantic_optimizer.py tests/test_semantic_compiler.py tests/test_eval_signal_smoke_e.py`: passed
+    - `.venv/bin/python -m mypy --strict src/`: passed
+    - `.venv/bin/python -m pytest tests/test_semantic_optimizer.py tests/test_semantic_compiler.py tests/test_eval_signal_smoke_e.py -v`: `52 passed`
+    - `git diff --check`: clean
+- accepted Task 3 equivalence evidence:
+  - fixture-root budget `280` document SHA-256:
+    `e576ae0dff78ab31871f38e6cf8e705274516164bb67dd841a7a433a5d34c4ae`
+  - full-repo budget `280` document SHA-256:
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+  - full-repo budget `280` remains `274` tokens with
+    `omitted_uncertainty x3`
+  - full-repo confidence remains `0.0020877837965136577`
+  - instrumentation asserts 8 probe decisions, `_build_warnings` once, and
+    `_confidence` once
+- the read-only release-unit audit returned DONE with verdict PASS and no
+  findings
+- release-unit audit is cleared for the exact six-file workspace unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_optimizer.py`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- accepted audit result:
+  - scope stayed clean with no staged or untracked files
+  - no Task 4, portfolio, public/demo claim, API/MCP/export, eval schema,
+    README, EVAL, PUBLIC_CLAIMS, or ARCHITECTURE drift was found
+  - public optimizer behavior still finalizes through
+    `optimize_semantic_units(...)`
+  - compiler binary search uses private probes for intermediate fit decisions
+    and finalizes only the accepted probe
+  - Task 3 full-repo locks cover document hash, selected-unit order, total
+    tokens, warnings, warning IDs, confidence, and instrumentation for 8 probes
+    with `_build_warnings` and `_confidence` once
+- full regression is cleared for the exact six-file release unit:
+  - `.venv/bin/python -m ruff check src/ tests/`: passed
+  - `.venv/bin/python -m ruff format --check src/ tests/`: passed,
+    `114 files already formatted`
+  - `.venv/bin/python -m mypy --strict src/`: passed,
+    `Success: no issues found in 39 source files`
+  - `.venv/bin/python -m pytest tests/ -v`: `1748 passed in 44.39s`
+- commit-gating is cleared for the exact six-file release unit
+- accepted commit-gating checks:
+  - dirty files are exactly `PLAN.md`, `BUILDLOG.md`,
+    `src/context_ir/semantic_optimizer.py`,
+    `src/context_ir/semantic_compiler.py`, `tests/test_semantic_compiler.py`,
+    and `tests/test_eval_signal_smoke_e.py`
+  - no staged files
+  - no untracked files
+  - `git diff --check` clean
+  - no diffs in README, EVAL, PUBLIC_CLAIMS, ARCHITECTURE, AGENTS,
+    `pyproject.toml`, package-root exports, MCP, eval tasks, eval run specs,
+    eval fixtures, or portfolio artifacts
+  - no Task 4 or public/demo claim drift was found
+- next route is local release commit creation for the exact six-file release
+  unit; push remains Ryan-gated
+- do not run Task 4, update portfolio artifacts, update public/demo claims, or
+  start another optimization lane before the local release commit is created
+  and reviewed
 
 Historical release and routing notes below remain accepted evidence and
 non-reopen constraints. Any older "Active next route" wording below is

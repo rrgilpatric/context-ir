@@ -841,7 +841,7 @@ def test_compile_semantic_context_reuses_optimizer_materialization_across_budget
     program = _semantic_program(tmp_path)
     scoring = score_semantic_units(program, "run missing_call helper")
     original_build_candidates = semantic_optimizer._build_candidates
-    original_optimize = semantic_optimizer._SemanticOptimizerSession.optimize
+    original_probe = semantic_optimizer._SemanticOptimizerSession.probe
     original_session = semantic_optimizer._SemanticRenderSession
     original_candidate_sort_key_for_state = (
         semantic_optimizer._candidate_sort_key_for_state
@@ -874,12 +874,12 @@ def test_compile_semantic_context_reuses_optimizer_materialization_across_budget
         build_candidate_calls += 1
         return original_build_candidates(program_arg, scoring_arg)
 
-    def counting_optimize(
+    def counting_probe(
         self: semantic_optimizer._SemanticOptimizerSession,
         budget: int,
-    ) -> SemanticOptimizationResult:
+    ) -> semantic_optimizer._SemanticOptimizationProbe:
         probe_budgets.append(budget)
-        result = original_optimize(self, budget)
+        result = original_probe(self, budget)
         sort_key_cache_sizes.append(len(self.sort_key_cache))
         return result
 
@@ -902,8 +902,8 @@ def test_compile_semantic_context_reuses_optimizer_materialization_across_budget
     )
     monkeypatch.setattr(
         semantic_optimizer._SemanticOptimizerSession,
-        "optimize",
-        counting_optimize,
+        "probe",
+        counting_probe,
     )
     monkeypatch.setattr(
         semantic_optimizer,

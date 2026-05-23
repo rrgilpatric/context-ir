@@ -6,7 +6,10 @@ from collections.abc import Callable
 from dataclasses import replace
 
 from context_ir.eval_evidence import discover_semantic_eval_runtime_evidence
-from context_ir.semantic_optimizer import _SemanticOptimizerSession
+from context_ir.semantic_optimizer import (
+    _SemanticOptimizationProbe,
+    _SemanticOptimizerSession,
+)
 from context_ir.semantic_renderer import RenderedUnit
 from context_ir.semantic_scorer import SemanticScoringResult, score_semantic_units
 from context_ir.semantic_types import (
@@ -86,7 +89,7 @@ def _compile_budget_honest_artifact(
 ) -> tuple[SemanticOptimizationResult, dict[str, RenderedUnit], str]:
     """Reserve document-assembly overhead before returning a compiled artifact."""
     max_unit_budget = _initial_unit_budget(query=query, scoring=scoring, budget=budget)
-    best_fit: tuple[SemanticOptimizationResult, dict[str, RenderedUnit], str] | None = (
+    best_fit: tuple[_SemanticOptimizationProbe, dict[str, RenderedUnit], str] | None = (
         None
     )
     optimizer_session = _SemanticOptimizerSession.build(program, scoring)
@@ -95,23 +98,24 @@ def _compile_budget_honest_artifact(
 
     while low <= high:
         unit_budget = (low + high) // 2
-        raw_optimization = optimizer_session.optimize(unit_budget)
-        optimization = _with_compile_budget(raw_optimization, budget)
-        rendered_units = optimizer_session.render_selected_units(optimization)
+        probe = optimizer_session.probe(unit_budget)
+        rendered_units = optimizer_session.render_selected_units(probe)
         document = _assemble_document(
             query=query,
-            optimization=optimization,
+            optimization=probe,
             rendered_units=rendered_units,
         )
         document_tokens = _estimate_document_tokens(document)
         if document_tokens <= budget:
-            best_fit = (optimization, rendered_units, document)
+            best_fit = (probe, rendered_units, document)
             low = unit_budget + 1
             continue
         high = unit_budget - 1
 
     if best_fit is not None:
-        return best_fit
+        probe, rendered_units, document = best_fit
+        optimization = optimizer_session.finalize_probe(probe, budget=budget)
+        return optimization, rendered_units, document
     raise ValueError("budget is too small for the compiled document envelope")
 
 
@@ -173,7 +177,7 @@ def _copy_warnings(
 def _assemble_document(
     *,
     query: str,
-    optimization: SemanticOptimizationResult,
+    optimization: SemanticOptimizationResult | _SemanticOptimizationProbe,
     rendered_units: dict[str, RenderedUnit],
 ) -> str:
     """Assemble the selected semantic units into a stable compiled document."""
