@@ -40,10 +40,12 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the direct-literal `hasattr` internal
+Current pushed release authority is the direct-literal `setattr` internal
 eval-only release. The latest pushed internal eval capability evidence
-authority is `b5d1719 Add direct-literal hasattr eval pilot`, with push-routing
-continuity through `a5cfeee Sync direct-literal hasattr push routing`. The
+authority is `ff07430 Add direct-literal setattr eval pilot`; this continuity
+entry records the post-push route state for that release. The previous
+direct-literal `hasattr` release remains closed through
+`a5cfeee Sync direct-literal hasattr push routing`. The
 previous direct-literal `getattr` release remains closed through
 `2295a56 Sync direct-literal getattr post-push state`. The latest pushed
 internal product-differentiation artifact authority remains
@@ -259,11 +261,16 @@ warnings, warning IDs, probe behavior, and confidence. The corrected release
 unit now includes `tests/test_eval_signal_smoke_e.py`; the original
 release-unit audit is stale.
 
-Next route: run a corrected dedicated read-only release-unit audit over the
-exact corrected release unit before full regression, commit-gating, staging,
-local commit, or push.
+The corrected read-only release-unit audit returned PASS with no findings.
+Full regression then passed `ruff check src/ tests/`, `ruff format --check
+src/ tests/`, `mypy --strict src/`, `pytest tests/ -v` with `1,773` passing
+tests, and clean `git diff --check`. Commit-gating passed over the exact
+corrected release-unit file set with no staged-file mismatch and no `src/`
+diff. Ryan authorized local commit creation and remote push. Local release
+commit `ff07430 Add direct-literal setattr eval pilot` was created and pushed
+to `origin/main`, advancing remote `main` from `1bfecd0` to `ff07430`.
 
-The direct-literal `setattr` corrected release-unit candidate is:
+The pushed direct-literal `setattr` release unit is:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -278,6 +285,11 @@ The direct-literal `setattr` corrected release-unit candidate is:
 - `evals/fixtures/oracle_signal_setattr_literal_probe/main.py`
 - `evals/tasks/oracle_signal_setattr_literal_probe.json`
 - `evals/run_specs/oracle_signal_setattr_literal_probe_matrix.json`
+
+No active release gate remains for the direct-literal `setattr` pilot. Do not
+route `ff07430` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings. Task 4 remains not
+run, portfolio artifacts remain unchanged, and public/demo claims remain held.
 
 The direct-literal `hasattr` release unit is:
 

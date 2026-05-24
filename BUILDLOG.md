@@ -2,6 +2,52 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Setattr Push Completed
+
+- Ryan authorized pushing the direct-literal
+  `setattr(obj, "flag", value)` release.
+- Pushed release commit:
+  - `ff07430 Add direct-literal setattr eval pilot`
+- `git push origin main` advanced remote `main` from `1bfecd0` to `ff07430`.
+- The pushed release unit is:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_setattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_setattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_setattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_setattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_setattr_literal_probe_matrix.json`
+- Gate state before commit/push:
+  - corrected release-unit audit: PASS with no findings
+  - full regression: passed with `1,773` tests
+  - commit-gating: PASS with exact corrected file set and no `src/` diff
+- Live post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=ff07430`
+  - clean worktree
+  - `git diff --check` clean
+- Release-state impact:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - staged: yes, then committed
+  - committed locally: yes
+  - pushed: yes
+- No active release gate remains for the direct-literal `setattr` pilot.
+- Public/demo claims remain held, Task 4 remains not run, and portfolio
+  artifacts remain unchanged.
+- This docs-only continuity sync supersedes the pre-push route in the preceding
+  correction entry, which correctly recorded the state before the corrected
+  release-unit audit, full regression, commit-gating, local commit, and push.
+- Acceptance status: pushed first-pass after Ryan authorization
+
 ## 2026-05-23 -- Direct-Literal Setattr Task 3 Confidence Correction Accepted
 
 - Reviewed and accepted the narrow correction for the blocked full-regression
