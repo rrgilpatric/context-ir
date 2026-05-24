@@ -48,6 +48,9 @@ internal eval-only `oracle_signal_getattr_literal_probe_matrix` evidence is a
 pilot. The narrow internal eval-only
 `oracle_signal_hasattr_literal_probe_matrix` evidence is a
 `REFLECTIVE_BUILTIN` / direct-literal `hasattr(obj, "bit_length")` sibling
+pilot. The current internal eval-only
+`oracle_signal_setattr_literal_probe_matrix` evidence is a
+`RUNTIME_MUTATION` / direct-literal `setattr(obj, "flag", value)` sibling
 pilot. The narrow
 internal eval-only
 `oracle_signal_dynamic_import_builtin_probe_matrix` evidence is narrow
@@ -114,6 +117,24 @@ and they do not select the unsupported/runtime evidence unit. No static
 attribute dependency edge, selected attribute symbol, or selected `bit_length`
 unit is introduced. The no-widening boundary preserves public comparative
 claims at the existing quad matrix and includes no
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening. The current internal eval-only
+`oracle_signal_setattr_literal_probe_matrix` evidence covers exactly
+`setattr(obj, "flag", value)`: 1 task x 2 budgets x 3 providers at budgets
+`[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and
+`import_neighborhood_files`. The fixture boundary is the direct-literal call
+site only; it excludes a name variable, `setattr(obj, name, value)`,
+`delattr`, other runtime-mutation forms, and generalized runtime-mutation
+support. Runtime payload is exactly `mutation_outcome=returned_none`.
+Unsupported selector and selected-unit primary truth remain
+`unsupported/opaque`; runtime provenance is additive only. `context_ir`
+selects the unsupported call boundary at both budgets. File-level baselines
+may select `main.py` at budget `220`, but their selected-unit layer remains
+empty and they do not select the unsupported/runtime evidence unit. No static
+`flag` dependency edge, selected attribute symbol, or selected `flag` unit is
+introduced. The default subprocess/runtime acquisition path remains scoped to
+`setattr(obj, name, value)`. The no-widening boundary preserves public
+comparative claims at the existing quad matrix and includes no
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening. The current internal eval-only
 `oracle_signal_hasattr_false_probe_matrix` evidence is a narrow

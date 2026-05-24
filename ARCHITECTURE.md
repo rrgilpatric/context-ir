@@ -21,7 +21,8 @@ imported-name `import_module(name)`, and imported-alias
 `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
 `getattr(obj, name)`, plus a narrow direct-literal
 `getattr(obj, "bit_length")` sibling pilot and a narrow direct-literal
-`hasattr(obj, "bit_length")` sibling pilot. Narrow internal eval-only pilots for
+`hasattr(obj, "bit_length")` sibling pilot, plus a narrow direct-literal
+`setattr(obj, "flag", value)` runtime-mutation pilot. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
 evidence and value-return sibling evidence. The three existing getattr-family
 provider/budget matrices each remain one existing task only: 1 task x 2 budgets
@@ -61,6 +62,23 @@ unsupported/runtime evidence unit. No static attribute dependency edge,
 selected `bit_length` symbol, selected `bit_length` unit, public API, MCP,
 package export, schema, scoring, optimizer, compiler, winner-selection, or
 public benchmark widening is included. The current internal
+eval-only `RUNTIME_MUTATION` / direct-literal
+`setattr(obj, "flag", value)` pilot remains one task only through
+`oracle_signal_setattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers
+at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
+is exactly `setattr(obj, "flag", value)`; no name variable,
+`setattr(obj, name, value)`, `delattr`, other runtime-mutation form, or
+generalized runtime-mutation behavior is included. The runtime payload is
+exactly `mutation_outcome=returned_none`. Unsupported selector and
+selected-unit truth remain `unsupported/opaque`; runtime provenance remains
+additive only. `context_ir` selects the unsupported call boundary at both
+budgets. Baseline providers may select `main.py` at budget `220`, but they
+select no semantic units and do not select the unsupported/runtime evidence
+unit. No static `flag` dependency edge, selected `flag` symbol, selected
+attribute unit, default subprocess/runtime acquisition widening, public API,
+MCP, package export, schema, scoring, optimizer, compiler, winner-selection,
+or public benchmark widening is included. The current internal
 eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError`
 branch pilot remains one task only through
 `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 2 budgets x 3

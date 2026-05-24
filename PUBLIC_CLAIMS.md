@@ -41,6 +41,8 @@ stays scoped to repo-local evidence only.
   pilots, plus the current internal eval-only `RUNTIME_MUTATION` /
   `delattr(obj, name)` pilot, plus the current narrow internal eval-only
   `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
+  internal eval-only direct-literal `RUNTIME_MUTATION` /
+  `setattr(obj, "flag", value)` pilot, plus the current
   internal eval-only one-argument `dir(obj)` pilot, plus the current internal
   eval-only zero-argument `dir()` pilot, plus the current internal eval-only
   `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus
@@ -116,6 +118,24 @@ stays scoped to repo-local evidence only.
   comparative claim, public API, MCP, package export, schema, scoring,
   optimizer, compiler, product, winner-selection, or public benchmark widening
   is included.
+  The current internal eval-only `RUNTIME_MUTATION` /
+  `oracle_signal_setattr_literal_probe_matrix` covers only a direct-literal
+  `setattr(obj, "flag", value)` pilot as 1 task x 2 budgets x 3 providers at
+  budgets `[220, 100]`, against providers `context_ir`,
+  `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+  exactly `setattr(obj, "flag", value)`; no name variable,
+  `setattr(obj, name, value)`, `delattr`, other runtime-mutation form, or
+  generalized runtime-mutation behavior; runtime payload exactly
+  `mutation_outcome=returned_none`; unsupported selector and selected-unit
+  primary truth `unsupported/opaque`; runtime provenance is additive only;
+  `context_ir` selects the unsupported call boundary at both budgets;
+  file-level baselines may select `main.py` at budget `220`, but their
+  selected semantic units remain empty and they do not select the
+  unsupported/runtime evidence unit; no static `flag` dependency edge,
+  selected `flag` symbol, selected attribute unit, default subprocess/runtime
+  acquisition widening, public comparative claim, public API, MCP, package
+  export, schema, scoring, optimizer, compiler, product, winner-selection, or
+  public benchmark widening is included.
   The current internal eval-only `REFLECTIVE_BUILTIN` /
   `oracle_signal_hasattr_false_probe_matrix` covers only a
   `hasattr(obj, name)` false-branch pilot as 1 task x 2 budgets x 3 providers

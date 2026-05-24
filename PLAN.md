@@ -226,9 +226,58 @@ Selected boundaries for the proposed slice:
   compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
   benchmark, latency, production, or generalized runtime-mutation changes
 
-Next route: execute the bounded implementation slice above. Do not broaden into
-`delattr(obj, "flag")`, default subprocess/runtime acquisition, source/runtime
-contract changes, public/demo planning, Task 4, or portfolio updates.
+Direct-literal `setattr` implementation candidate is workspace-only accepted
+for release-unit audit. It adds the internal eval-only
+`oracle_signal_setattr_literal_probe_matrix` fixture/task/run-spec/focused
+test, updates the runtime evidence catalog golden to `30` records, and updates
+the scoped claim-boundary docs. It preserves the selected no-widening
+constraints above: no `src/` diff, no default subprocess/runtime acquisition
+expansion, no source/runtime/API/MCP/package-export/schema/scoring/compiler/
+optimizer/winner-selection changes, no Task 4, no portfolio update, and no
+public/demo/benchmark/latency/production/generalized runtime-mutation claim
+widening. Focused validation passed:
+
+- `jq empty` on the new task, run spec, and runtime observations JSON
+- focused ruff check and format check on the new test plus
+  `tests/test_eval_evidence.py`
+- strict mypy over `src/`
+- focused pytest with `20 passed`
+- empty `git diff -- src/`
+- clean `git diff --check`
+
+The original read-only release-unit audit over this accepted candidate returned
+PASS with no findings. Full regression then failed before commit-gating on a
+deterministic Task 3 confidence golden drift in
+`tests/test_eval_signal_smoke_e.py`: expected `0.0020484287549546155`, actual
+`0.002035250202035903`. The narrow correction is accepted:
+`tests/test_eval_signal_smoke_e.py` updates only
+`FULL_REPO_TASK3_CONFIDENCE` to `0.002035250202035903`. Control verified the
+diff is exactly one line and reran
+`tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+with `1 passed`, preserving selected units/order, document hash, total tokens,
+warnings, warning IDs, probe behavior, and confidence. The corrected release
+unit now includes `tests/test_eval_signal_smoke_e.py`; the original
+release-unit audit is stale.
+
+Next route: run a corrected dedicated read-only release-unit audit over the
+exact corrected release unit before full regression, commit-gating, staging,
+local commit, or push.
+
+The direct-literal `setattr` corrected release-unit candidate is:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `ARCHITECTURE.md`
+- `EVAL.md`
+- `README.md`
+- `PUBLIC_CLAIMS.md`
+- `tests/test_eval_evidence.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_setattr_literal_probe.py`
+- `evals/fixtures/oracle_signal_setattr_literal_probe/eval_runtime_observations.json`
+- `evals/fixtures/oracle_signal_setattr_literal_probe/main.py`
+- `evals/tasks/oracle_signal_setattr_literal_probe.json`
+- `evals/run_specs/oracle_signal_setattr_literal_probe_matrix.json`
 
 The direct-literal `hasattr` release unit is:
 

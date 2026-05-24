@@ -2,6 +2,122 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-23 -- Direct-Literal Setattr Task 3 Confidence Correction Accepted
+
+- Reviewed and accepted the narrow correction for the blocked full-regression
+  gate on the direct-literal `setattr(obj, "flag", value)` release unit.
+- Correction:
+  - `tests/test_eval_signal_smoke_e.py` updates only
+    `FULL_REPO_TASK3_CONFIDENCE` from `0.0020484287549546155` to
+    `0.002035250202035903`
+- Preservation proof:
+  - selected units and selected-unit order unchanged
+  - document hash
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+    unchanged
+  - total tokens unchanged at `274`
+  - warnings unchanged as `omitted_uncertainty` x3
+  - warning IDs unchanged
+  - probe behavior unchanged
+  - confidence locked to `0.002035250202035903`
+- Control verification:
+  - live diff for `tests/test_eval_signal_smoke_e.py` was exactly the
+    one-line confidence golden update
+  - `git diff --check` clean
+  - `git diff -- src/` empty
+  - `.venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units -v`
+    returned `1 passed`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_smoke_e.py tests/test_eval_signal_setattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_smoke_e.py tests/test_eval_signal_setattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py tests/test_eval_signal_setattr_literal_probe.py tests/test_eval_evidence.py -v`
+    returned `28 passed`
+- Corrected release-unit candidate:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_setattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_setattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_setattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_setattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_setattr_literal_probe_matrix.json`
+- Continuity finding corrected:
+  - the original accepted release-unit list did not include
+    `tests/test_eval_signal_smoke_e.py` because the confidence correction
+    occurred after the original release-unit audit
+  - Ryan authorized this narrow continuity correction before any further
+    release gates
+- Release-state impact:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - committed locally: no
+  - pushed: no
+- Next control action:
+  - run a corrected dedicated read-only release-unit audit over the exact
+    corrected release unit before full regression, commit-gating, staging,
+    local commit, or push
+- Acceptance status: 1 correction
+
+## 2026-05-23 -- Direct-Literal Setattr Eval Pilot Accepted For Audit
+
+- Implemented and reviewed the bounded internal eval-only direct-literal
+  `setattr(obj, "flag", value)` candidate.
+- Findings: none.
+- Accepted release-unit candidate:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_setattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_setattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_setattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_setattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_setattr_literal_probe_matrix.json`
+- Accepted boundary:
+  - internal eval-only `RUNTIME_MUTATION` direct-literal pilot for exactly
+    `setattr(obj, "flag", value)`
+  - 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - runtime payload remains `mutation_outcome=returned_none`
+  - unsupported selector and unsupported selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance is additive only
+  - `context_ir` selects the unsupported/runtime evidence unit at both budgets
+  - baselines may select `main.py` at budget `220`, but select no semantic
+    units and do not select the unsupported/runtime evidence unit
+  - no static `flag` dependency edge, selected symbol, selected attribute unit,
+    default subprocess/runtime acquisition widening, `src/`, API, MCP, package
+    export, schema, scoring, compiler, optimizer, winner-selection, Task 4,
+    portfolio, public/demo claim, benchmark claim, latency claim, production
+    claim, or generalized runtime-mutation claim is included
+- Control verification:
+  - live git state matched the expected workspace candidate
+  - inspected the new fixture, runtime observations, task, run spec, focused
+    test, catalog update, and scoped claim-boundary docs
+  - `jq empty` passed for the task, run spec, and runtime observations JSON
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_setattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_setattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_setattr_literal_probe.py tests/test_eval_evidence.py -v`
+    returned `20 passed`
+  - `git diff -- src/` was empty
+  - `git diff --check` clean
+- Next control action:
+  - run a dedicated read-only release-unit audit over the exact accepted
+    release unit before full regression, commit-gating, staging, local commit,
+    or push
+- Acceptance status: accepted first-pass
+
 ## 2026-05-23 -- Direct-Literal Setattr Selection Accepted
 
 - Reviewed the independent post-`hasattr` north-star confirmation spike.
