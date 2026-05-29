@@ -149,15 +149,16 @@ def test_catalog_discovers_current_fixture_runtime_evidence() -> None:
     """The current eval assets produce the expected compact evidence catalog."""
     catalog = discover_eval_runtime_evidence(REPO_ROOT)
 
-    assert len(catalog.records) == 30
+    assert len(catalog.records) == 31
     assert [record.evidence_id for record in catalog.records] == sorted(
         record.evidence_id for record in catalog.records
     )
     evidence_by_id = catalog.by_evidence_id()
-    assert len(evidence_by_id) == 30
+    assert len(evidence_by_id) == 31
     assert "oracle_signal_getattr_literal_probe:getattr:main.py:2:11" in evidence_by_id
     assert "oracle_signal_hasattr_literal_probe:hasattr:main.py:2:11" in evidence_by_id
     assert "oracle_signal_setattr_literal_probe:setattr:main.py:7:4" in evidence_by_id
+    assert "oracle_signal_delattr_literal_probe:delattr:main.py:7:4" in evidence_by_id
     assert (
         "oracle_signal_dynamic_import_root_literal_probe:dynamic_import:main.py:5:13"
         in evidence_by_id
@@ -249,6 +250,35 @@ def test_catalog_includes_setattr_literal_probe_runtime_evidence() -> None:
     assert (
         evidence.durable_payload_reference
         == "artifact://setattr/literal-probe-target-flag-observation.json"
+    )
+
+
+def test_catalog_includes_delattr_literal_probe_runtime_evidence() -> None:
+    """The direct-literal delattr probe stays additive and unsupported."""
+    catalog = discover_eval_runtime_evidence(REPO_ROOT)
+
+    evidence = _evidence_by_fixture(
+        catalog.records,
+        "oracle_signal_delattr_literal_probe",
+    )
+
+    assert evidence.runtime_family == "delattr"
+    assert evidence.task_ids == ("oracle_signal_delattr_literal_probe",)
+    assert "oracle_signal_delattr_literal_probe_matrix" in evidence.run_spec_ids
+    assert (
+        evidence.artifact_path == "evals/fixtures/oracle_signal_delattr_literal_probe/"
+        "eval_runtime_observations.json"
+    )
+    assert evidence.construct_text == 'delattr(obj, "flag")'
+    assert evidence.reason_code is UnresolvedReasonCode.RUNTIME_MUTATION
+    assert (
+        evidence.expected_primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    )
+    assert evidence.expect_attached_runtime_provenance is True
+    assert _payload(evidence) == {"mutation_outcome": "deleted_attribute"}
+    assert (
+        evidence.durable_payload_reference
+        == "artifact://delattr/literal-probe-target-flag-observation.json"
     )
 
 

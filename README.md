@@ -38,7 +38,8 @@ a current internal eval-only raised-`AttributeError` branch pilot for exactly
 `getattr(obj, "bit_length")` pilot, plus a narrow internal eval-only
 direct-literal `hasattr(obj, "bit_length")` pilot, plus a current internal
 eval-only direct-literal `RUNTIME_MUTATION` /
-`setattr(obj, "flag", value)` pilot, plus a current internal one-argument
+`setattr(obj, "flag", value)` pilot, plus a current internal eval-only
+direct-literal `RUNTIME_MUTATION` / `delattr(obj, "flag")` pilot, plus a current internal one-argument
 `vars(obj)` pilot and a current internal zero-argument `vars()`
 pilot, plus a
 current internal
@@ -144,6 +145,21 @@ the unsupported call boundary at both budgets; file-level baselines may select
 not select the unsupported/runtime evidence unit; no static `flag` dependency
 edge, selected symbol, selected attribute unit, default subprocess/runtime
 acquisition widening, source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+benchmark widening, or public/demo claim widening is included. The
+current internal eval-only direct-literal `delattr(obj, "flag")` pilot covers
+only `oracle_signal_delattr_literal_probe_matrix`: 1 task x 2 budgets x 3
+providers at budgets `[220, 100]`, against providers `context_ir`,
+`lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
+exactly `delattr(obj, "flag")`; no name variable, `delattr(obj, name)`,
+`setattr`, other runtime-mutation form, or generalized runtime-mutation
+behavior; runtime payload exactly `mutation_outcome=deleted_attribute`;
+unsupported selector and selected-unit truth `unsupported/opaque`; additive
+runtime provenance only; `context_ir` selects the unsupported call boundary at
+both budgets; file-level baselines may select `main.py` at budget `220`, but
+selected semantic units stay empty and they do not select the
+unsupported/runtime evidence unit; no static `flag` dependency edge, selected
+symbol, selected attribute unit, runtime acquisition widening,
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or public/demo claim widening is included. The
 current internal eval-only `hasattr(obj, name)` false-branch pilot covers only
 `oracle_signal_hasattr_false_probe_matrix`: 1 task x 2 budgets x 3 providers

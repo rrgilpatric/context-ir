@@ -291,6 +291,36 @@ route `ff07430` back to release-unit audit, full regression, commit-gating,
 staging, local commit creation, or push absent new findings. Task 4 remains not
 run, portfolio artifacts remain unchanged, and public/demo claims remain held.
 
+Direct-literal `delattr` implementation candidate is workspace-only accepted
+for release-unit audit. It adds the internal eval-only
+`oracle_signal_delattr_literal_probe_matrix` fixture/task/run-spec/focused
+test, updates the runtime evidence catalog golden to `31` records, and updates
+the scoped claim-boundary docs. It preserves the selected no-widening
+constraints: no `src/` diff, no runtime acquisition/default subprocess worker
+widening, no source/runtime/API/MCP/package-export/schema/scoring/compiler/
+optimizer/winner-selection changes, no Task 4, no portfolio update, and no
+public/demo/benchmark/latency/production/generalized runtime-mutation claim
+widening. The fixture boundary is exactly `delattr(obj, "flag")`, with
+runtime payload `mutation_outcome=deleted_attribute`; unsupported selector and
+selected-unit truth remain `unsupported/opaque`; runtime provenance remains
+additive only; no static `flag` dependency edge, selected symbol, or selected
+attribute unit is introduced. File-level baselines may select `main.py` at
+budget `220`, but they select no semantic units and do not select the
+unsupported/runtime evidence unit. Control review found no findings, confirmed
+the expected changed-file set, reran focused validation, and accepted the
+candidate first-pass. The original read-only release-unit audit returned PASS
+with no findings. Full regression then failed before commit-gating on the
+deterministic Task 3 confidence golden in
+`tests/test_eval_signal_smoke_e.py`: expected `0.002035250202035903`, actual
+`0.0020225477352722814`. The narrow correction is accepted:
+`tests/test_eval_signal_smoke_e.py` updates only
+`FULL_REPO_TASK3_CONFIDENCE` to `0.0020225477352722814`; focused validation
+passed with selected units/order, document hash, total tokens, warnings,
+warning IDs, and probe behavior preserved. The corrected release unit now
+includes `tests/test_eval_signal_smoke_e.py`; the original release-unit audit
+is stale. This corrected candidate is not yet audit-cleared,
+regression-cleared, commit-gating-cleared, locally committed, or pushed.
+
 The direct-literal `hasattr` release unit is:
 
 - `PLAN.md`

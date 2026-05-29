@@ -2,6 +2,81 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-29 -- Direct-Literal Delattr Eval Pilot Candidate Accepted
+
+- Implemented and control-accepted the bounded internal eval-only
+  direct-literal `delattr(obj, "flag")` candidate for release-unit audit.
+- Findings reported by implementation validation: none.
+- Findings from control review: none.
+- Candidate file set:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_delattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_delattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_delattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_delattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_delattr_literal_probe_matrix.json`
+- Candidate boundary:
+  - exactly `delattr(obj, "flag")`
+  - 1 task x 2 budgets x 3 providers at budgets `[220, 100]`
+  - providers `context_ir`, `lexical_top_k_files`, and
+    `import_neighborhood_files`
+  - runtime payload `mutation_outcome=deleted_attribute`
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - baseline providers may select `main.py` at budget `220`, but select no
+    semantic units and do not select the unsupported/runtime evidence unit
+  - no static `flag` dependency edge, selected symbol, selected attribute
+    unit, `src/`, runtime acquisition/default subprocess worker widening, API,
+    MCP, package export, schema, scoring, compiler, optimizer,
+    winner-selection, Task 4, portfolio, public/demo, benchmark, latency,
+    production, or generalized runtime-mutation change is included
+- Implementation validation:
+  - `jq empty evals/tasks/oracle_signal_delattr_literal_probe.json evals/run_specs/oracle_signal_delattr_literal_probe_matrix.json evals/fixtures/oracle_signal_delattr_literal_probe/eval_runtime_observations.json`
+  - `.venv/bin/python -m ruff check tests/test_eval_signal_delattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m ruff format --check tests/test_eval_signal_delattr_literal_probe.py tests/test_eval_evidence.py`
+  - `.venv/bin/python -m mypy --strict src/`
+  - `.venv/bin/python -m pytest tests/test_eval_signal_delattr_literal_probe.py tests/test_eval_evidence.py -v`
+    returned `21 passed`
+  - `git diff -- src/` empty
+  - `git diff --check` clean
+- Release-state impact:
+  - accepted in workspace: yes, first-pass control review
+  - original release-unit audit cleared: yes, then stale after correction
+  - corrected release-unit audit cleared: no
+  - full regression cleared: no
+  - commit-gating cleared: no
+  - staged: no
+  - committed locally: no
+  - pushed: no
+- Next control action:
+  - run/request a corrected read-only release-unit audit over this accepted
+    workspace candidate, including `tests/test_eval_signal_smoke_e.py`, before
+    any full regression, commit-gating, staging, local commit creation, or push
+- Acceptance status: first-pass
+
+### Correction Notes
+
+- The original read-only release-unit audit returned PASS with no findings.
+- Full regression then failed before commit-gating on
+  `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`.
+- Failure was isolated to the deterministic Task 3 confidence golden:
+  expected `0.002035250202035903`, actual `0.0020225477352722814`.
+- The narrow correction changed only
+  `tests/test_eval_signal_smoke_e.py` line 83, updating
+  `FULL_REPO_TASK3_CONFIDENCE` to `0.0020225477352722814`.
+- Focused validation passed and preserved selected units/order, document hash,
+  total tokens, warnings, warning IDs, and probe behavior.
+- The corrected release unit now includes `tests/test_eval_signal_smoke_e.py`,
+  so the original release-unit audit is stale.
+
 ## 2026-05-23 -- Direct-Literal Setattr Push Completed
 
 - Ryan authorized pushing the direct-literal
