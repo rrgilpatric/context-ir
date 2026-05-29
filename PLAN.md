@@ -40,10 +40,12 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the direct-literal `setattr` internal
+Current pushed release authority is the direct-literal `delattr` internal
 eval-only release. The latest pushed internal eval capability evidence
-authority is `ff07430 Add direct-literal setattr eval pilot`; this continuity
+authority is `a1df336 Add direct-literal delattr eval pilot`; this continuity
 entry records the post-push route state for that release. The previous
+direct-literal `setattr` release remains closed through
+`a72a4d1 Sync direct-literal setattr push routing`. The previous
 direct-literal `hasattr` release remains closed through
 `a5cfeee Sync direct-literal hasattr push routing`. The
 previous direct-literal `getattr` release remains closed through
@@ -291,35 +293,37 @@ route `ff07430` back to release-unit audit, full regression, commit-gating,
 staging, local commit creation, or push absent new findings. Task 4 remains not
 run, portfolio artifacts remain unchanged, and public/demo claims remain held.
 
-Direct-literal `delattr` implementation candidate is workspace-only accepted
-for release-unit audit. It adds the internal eval-only
+Pushed direct-literal `delattr` release:
+`a1df336 Add direct-literal delattr eval pilot`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed direct-literal `delattr`
+release unit. It adds the internal eval-only
 `oracle_signal_delattr_literal_probe_matrix` fixture/task/run-spec/focused
-test, updates the runtime evidence catalog golden to `31` records, and updates
-the scoped claim-boundary docs. It preserves the selected no-widening
-constraints: no `src/` diff, no runtime acquisition/default subprocess worker
-widening, no source/runtime/API/MCP/package-export/schema/scoring/compiler/
-optimizer/winner-selection changes, no Task 4, no portfolio update, and no
-public/demo/benchmark/latency/production/generalized runtime-mutation claim
-widening. The fixture boundary is exactly `delattr(obj, "flag")`, with
-runtime payload `mutation_outcome=deleted_attribute`; unsupported selector and
-selected-unit truth remain `unsupported/opaque`; runtime provenance remains
-additive only; no static `flag` dependency edge, selected symbol, or selected
-attribute unit is introduced. File-level baselines may select `main.py` at
-budget `220`, but they select no semantic units and do not select the
-unsupported/runtime evidence unit. Control review found no findings, confirmed
-the expected changed-file set, reran focused validation, and accepted the
-candidate first-pass. The original read-only release-unit audit returned PASS
-with no findings. Full regression then failed before commit-gating on the
-deterministic Task 3 confidence golden in
-`tests/test_eval_signal_smoke_e.py`: expected `0.002035250202035903`, actual
-`0.0020225477352722814`. The narrow correction is accepted:
-`tests/test_eval_signal_smoke_e.py` updates only
-`FULL_REPO_TASK3_CONFIDENCE` to `0.0020225477352722814`; focused validation
-passed with selected units/order, document hash, total tokens, warnings,
-warning IDs, and probe behavior preserved. The corrected release unit now
-includes `tests/test_eval_signal_smoke_e.py`; the original release-unit audit
-is stale. This corrected candidate is not yet audit-cleared,
-regression-cleared, commit-gating-cleared, locally committed, or pushed.
+test, updates the runtime evidence catalog golden to `31` records, updates the
+Task 3 confidence golden to `0.0020225477352722814`, and updates scoped
+claim-boundary docs. The fixture boundary is exactly `delattr(obj, "flag")`;
+the runtime payload is exactly `mutation_outcome=deleted_attribute`;
+unsupported selector and selected-unit truth remain `unsupported/opaque`;
+runtime provenance remains additive only; no static `flag` dependency edge,
+selected symbol, or selected attribute unit is introduced. File-level
+baselines may select `main.py` at budget `220`, but they select no semantic
+units and do not select the unsupported/runtime evidence unit. The release
+does not change `src/`, runtime acquisition/default subprocess worker
+behavior, API, MCP, package export, schema, scoring, compiler, optimizer,
+winner-selection, Task 4, portfolio, public/demo, benchmark, latency,
+production, or generalized runtime-mutation behavior.
+
+Gate state before commit/push: corrected read-only release-unit audit PASS
+with no findings; full regression passed `ruff check src/ tests/`, `ruff
+format --check src/ tests/`, `mypy --strict src/`, `pytest tests/ -v` with
+`1,780` passing tests, and clean `git diff --check`; commit-gating passed over
+the exact corrected release-unit file set with no staged-file mismatch and no
+`src/` diff. Ryan authorized the push, and `git push origin main` advanced
+remote `main` from `a72a4d1` to `a1df336`. No active release gate remains for
+the direct-literal `delattr` pilot. Do not route `a1df336` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings. Task 4 remains not run, portfolio
+artifacts remain unchanged, and public/demo claims remain held.
 
 The direct-literal `hasattr` release unit is:
 

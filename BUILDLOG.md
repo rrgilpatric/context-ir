@@ -2,6 +2,60 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-29 -- Direct-Literal Delattr Push Completed
+
+- Ryan authorized pushing the direct-literal `delattr(obj, "flag")` release.
+- Pushed release commit:
+  - `a1df336 Add direct-literal delattr eval pilot`
+- `git push origin main` advanced remote `main` from `a72a4d1` to `a1df336`.
+- The pushed release unit is:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `ARCHITECTURE.md`
+  - `EVAL.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `tests/test_eval_evidence.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_delattr_literal_probe.py`
+  - `evals/fixtures/oracle_signal_delattr_literal_probe/eval_runtime_observations.json`
+  - `evals/fixtures/oracle_signal_delattr_literal_probe/main.py`
+  - `evals/tasks/oracle_signal_delattr_literal_probe.json`
+  - `evals/run_specs/oracle_signal_delattr_literal_probe_matrix.json`
+- Gate state before commit/push:
+  - original release-unit audit: PASS with no findings, then stale after the
+    Task 3 confidence correction
+  - corrected release-unit audit: PASS with no findings
+  - full regression: passed with `1,780` tests
+  - commit-gating: PASS with exact corrected file set and no `src/` diff
+- Task 3 confidence correction:
+  - `tests/test_eval_signal_smoke_e.py` updates only
+    `FULL_REPO_TASK3_CONFIDENCE` from `0.002035250202035903` to
+    `0.0020225477352722814`
+  - selected units/order, document hash, total tokens, warnings, warning IDs,
+    and probe behavior stayed unchanged
+- Live post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=a1df336`
+  - clean worktree
+  - `git diff --check` clean
+  - `git diff -- src/` empty
+- Release-state impact:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - staged: yes, then committed
+  - committed locally: yes
+  - pushed: yes
+- No active release gate remains for the direct-literal `delattr` pilot.
+- Public/demo claims remain held, Task 4 remains not run, and portfolio
+  artifacts remain unchanged.
+- This docs-only continuity sync supersedes the pre-push route in the following
+  candidate entry, which correctly recorded the state before corrected audit,
+  full regression, commit-gating, local commit, and push.
+- Acceptance status: pushed first-pass after Ryan authorization
+
 ## 2026-05-29 -- Direct-Literal Delattr Eval Pilot Candidate Accepted
 
 - Implemented and control-accepted the bounded internal eval-only
