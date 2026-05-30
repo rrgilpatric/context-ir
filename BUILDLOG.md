@@ -2,6 +2,82 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Direct-Literal Delattr Runtime Acquisition Candidate Accepted
+
+- Accepted a workspace-only implementation candidate that promotes only the
+  exact direct-literal `delattr(obj, "flag")` replay identity into default
+  local runtime probe acquisition.
+- Files in the proposed release unit are exactly:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Control review found no source/test boundary findings.
+- A P2 continuity routing finding was corrected:
+  - `PLAN.md` did not route the active workspace candidate or exact 12-file
+    release unit
+  - `BUILDLOG.md` had no candidate acceptance entry for this workspace state
+  - Ryan agreed to the correction before advancement
+- Full regression then failed only on the deterministic Task 3 confidence
+  golden in `tests/test_eval_signal_smoke_e.py`.
+- The focused correction updated only `FULL_REPO_TASK3_CONFIDENCE`:
+  - from `0.0020015353080911295`
+  - to `0.0019893748381455438`
+- The focused preservation test passed with selected units/order, document SHA,
+  `274` tokens, warnings, warning IDs, and probe behavior unchanged.
+- Boundary preserved:
+  - default local runtime probe acquisition admits only
+    `unsupported:call:main.py:7:4` / `delattr(obj, "flag")`
+  - replay target is `main.probe_delete_literal_attribute`
+  - replay inputs are exactly `object_type=main.ProbeTarget` and
+    `attribute_name=flag`
+  - runtime payload remains `mutation_outcome=deleted_attribute`
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no `setattr(obj, "flag", value)` promotion, generalized literal
+    `delattr`, `delattr(obj, name)` widening, static `flag` dependency edge,
+    selected symbol, selected attribute unit, fixture-general object
+    construction path, API/MCP/package-export/schema/scoring/compiler/
+    optimizer/winner-selection, Task 4, portfolio, public/demo, benchmark,
+    latency, production, or generalized runtime-mutation change is included
+- Focused validation:
+  - `ruff check` on the two source files and four focused test files: passed
+  - `ruff format --check` on the same source/test files: passed
+  - `mypy --strict src/`: passed
+  - focused pytest over runtime probe execution, worker, recompile, and facade
+    tests: `893 passed`
+  - focused Task 3 preservation pytest after the confidence correction:
+    `1 passed`
+  - `git diff --check`: clean
+- Release-state impact:
+  - accepted in workspace: yes, after continuity and Task 3 confidence-golden
+    corrections
+  - release-unit audit cleared: yes, corrected 13-file audit PASS with no
+    findings
+  - full regression cleared: yes, `ruff check src/ tests/`, `ruff format
+    --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` passed
+    with `1,823` tests
+  - commit-gating cleared: yes, exact corrected 13-file set, no staged files,
+    clean `git diff --check`, and no `evals/` or API/MCP/package-export/
+    schema/scoring/compiler/optimizer/winner-selection diffs
+  - staged: no
+  - committed locally: yes, as the local release commit on `main`
+  - pushed: no
+- Next route: wait for explicit Ryan push authorization for the local release
+  commit. After push, run a narrow continuity sync only if fresh-control
+  routing would otherwise be stale.
+- Acceptance status: 2 corrections
+
 ## 2026-05-30 -- Direct-Literal Getattr Runtime Acquisition Push Completed
 
 - Ryan authorized pushing the exact direct-literal `getattr(obj, "bit_length")`

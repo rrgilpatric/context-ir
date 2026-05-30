@@ -840,6 +840,24 @@ def _write_local_python_getattr_literal_probe_program(tmp_path: Path) -> None:
     )
 
 
+def _write_local_python_delattr_literal_probe_program(tmp_path: Path) -> None:
+    """Write the exact direct-literal delattr replay-input source."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class ProbeTarget:
+                def __init__(self) -> None:
+                    self.flag = "ready"
+
+
+            def probe_delete_literal_attribute(obj: object) -> None:
+                delattr(obj, "flag")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
 def _snapshot_basis() -> RepositorySnapshotBasis:
     """Return stable repository snapshot metadata for runner facade tests."""
     return RepositorySnapshotBasis(
@@ -1230,6 +1248,68 @@ def _default_local_python_subprocess_getattr_literal_facade_fixture(
     assert all(
         "bit_length" not in dependency.source_symbol_id
         and "bit_length" not in dependency.target_symbol_id
+        for dependency in previous_response.program.proven_dependencies
+    )
+    return (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        unsupported_id,
+    )
+
+
+def _default_local_python_subprocess_delattr_literal_facade_fixture(
+    tmp_path: Path,
+) -> tuple[
+    SemanticContextResponse,
+    SemanticMissEvidence,
+    SemanticDiagnosticResult,
+    runtime_probe_requests.RuntimeProbeRequestPlan,
+    runtime_probe_requests.RuntimeProbeRequest,
+    str,
+]:
+    """Build a prior facade response with the exact literal-delattr request."""
+    _write_local_python_delattr_literal_probe_program(tmp_path)
+    previous_response = compile_repository_context(
+        SemanticContextRequest(
+            repo_root=tmp_path,
+            query="literal delattr probe",
+            budget=32,
+        )
+    )
+    boundary_text = 'delattr(obj, "flag")'
+    unsupported_id = _unsupported_id_for(previous_response.program, boundary_text)
+    miss_evidence = SemanticMissEvidence(
+        kind=SemanticMissKind.ABSENT_SYMBOL,
+        evidence=boundary_text,
+    )
+    diagnostic = diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert diagnostic.omitted_unit_ids == (unsupported_id,)
+    assert len(plan.requests) == 1
+    request = plan.requests[0]
+    assert request.subject_id == "unsupported:call:main.py:7:4"
+    assert request.boundary_text == boundary_text
+    assert (
+        request.family_label
+        is runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION
+    )
+    assert request.form_label == "runtime_mutation:delattr/2"
+    assert request.replay_target_seed == "main.probe_delete_literal_attribute"
+    assert all(
+        "flag" not in (symbol_id, symbol.qualified_name)
+        for symbol_id, symbol in previous_response.program.resolved_symbols.items()
+    )
+    assert all(
+        "flag" not in dependency.source_symbol_id
+        and "flag" not in dependency.target_symbol_id
         for dependency in previous_response.program.proven_dependencies
     )
     return (
@@ -2465,6 +2545,105 @@ def test_default_local_python_subprocess_recompile_facade_runs_literal_getattr(
     assert unsupported_id in response.newly_selected_unit_ids
     assert unsupported_id in selected_unit_ids
     assert all("bit_length" not in unit_id for unit_id in selected_unit_ids)
+
+
+def test_default_local_python_subprocess_recompile_facade_runs_literal_delattr(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The facade carries direct-literal delattr replay inputs by default."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        plan,
+        request,
+        unsupported_id,
+    ) = _default_local_python_subprocess_delattr_literal_facade_fixture(tmp_path)
+    runtime_assumptions = _runner_runtime_assumptions()
+    runner_environment = _local_python_runner_environment(tmp_path)
+    runner_assumptions = _runner_assumptions()
+    original_run = runtime_probe_execution.subprocess.run
+    subprocess_invocations: list[tuple[str, ...]] = []
+
+    def spying_run(*args: object, **kwargs: object) -> object:
+        argv = args[0]
+        if isinstance(argv, tuple | list):
+            subprocess_invocations.append(tuple(str(part) for part in argv))
+        else:
+            subprocess_invocations.append((str(argv),))
+        return original_run(*args, **kwargs)
+
+    monkeypatch.setattr(runtime_probe_execution.subprocess, "run", spying_run)
+
+    response = recompile_repository_context_with_default_local_python_subprocess(
+        SemanticDefaultLocalPythonSubprocessRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            miss_evidence=miss_evidence,
+            delta_budget=160,
+            python_executable=sys.executable,
+            invocation_contract_revision=(
+                "runtime-probe-local-python-subprocess:test.1"
+            ),
+            completion_contract_revision=(
+                "runtime-probe-local-python-completion:test.1"
+            ),
+            repository_snapshot_basis=_snapshot_basis(),
+            probe_contract_revision="runtime-probe-contract:test.1",
+            runtime_assumptions=runtime_assumptions,
+            runner_contract_revision="runtime-probe-runner:test.1",
+            timeout_seconds=30,
+            runner_environment=runner_environment,
+            runner_assumptions=runner_assumptions,
+        )
+    )
+    preparation = response.runner_request_preparation
+    collection = response.runner_attempt_collection
+    runner_request = preparation.runner_request_batch.runner_requests[0]
+    attempt = collection.attempts[0]
+    observed_result = collection.result_batch.results[0]
+    admission = response.observation_application.admissions[0]
+    boundary = _boundary_for(response.diagnostic, unsupported_id)
+    selected_unit_ids = tuple(
+        record.unit_id for record in response.compile_result.optimization.selections
+    )
+    expected_payload = (_probe_field("mutation_outcome", "deleted_attribute"),)
+    expected_replay_inputs = (
+        _probe_field("object_type", "main.ProbeTarget"),
+        _probe_field("attribute_name", "flag"),
+    )
+
+    assert subprocess_invocations == [
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+    ]
+    assert preparation.request_plan is plan
+    assert runner_request.request is request
+    assert runner_request.replay_artifact.replay_inputs[-2:] == expected_replay_inputs
+    assert attempt.request is request
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == expected_payload
+    assert attempt.observed_replay_inputs == ()
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.request is request
+    assert observed_result.normalized_payload == expected_payload
+    assert observed_result.replay_artifact.replay_inputs[-2:] == expected_replay_inputs
+    assert admission.request is request
+    assert tuple(
+        (field.key, field.value) for field in admission.observation.normalized_payload
+    ) == (("mutation_outcome", "deleted_attribute"),)
+    assert tuple(
+        (field.key, field.value) for field in admission.observation.replay_inputs[-2:]
+    ) == (("object_type", "main.ProbeTarget"), ("attribute_name", "flag"))
+    assert response.non_proof_results == ()
+    assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert boundary.boundary_kind is (
+        SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_WITH_ATTACHED_RUNTIME_SUPPORT
+    )
+    assert boundary.has_attached_runtime_provenance is True
+    assert unsupported_id in response.newly_selected_unit_ids
+    assert unsupported_id in selected_unit_ids
+    assert all("flag" not in unit_id for unit_id in selected_unit_ids)
 
 
 def test_default_local_python_subprocess_recompile_facade_delegates(

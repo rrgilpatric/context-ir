@@ -59,6 +59,69 @@ task 0 portfolio evidence`. Live git refs and worktree state must still be
 verified from git during control intake; do not infer them from committed
 prose.
 
+Active workspace-only direct-literal `delattr(obj, "flag")` runtime
+acquisition candidate: accepted by control after continuity and Task 3
+confidence-golden corrections.
+This candidate promotes only the exact direct-literal
+`delattr(obj, "flag")` replay identity into default local runtime probe
+acquisition. The proposed release unit is exactly:
+
+- `ARCHITECTURE.md`
+- `BUILDLOG.md`
+- `EVAL.md`
+- `PLAN.md`
+- `PUBLIC_CLAIMS.md`
+- `README.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_runtime_observation_recompile.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
+- `tests/test_tool_facade.py`
+
+The source/test implementation admits only
+`unsupported:call:main.py:7:4` / `delattr(obj, "flag")`, targeting
+`main.probe_delete_literal_attribute` with replay inputs
+`object_type=main.ProbeTarget` and `attribute_name=flag`. Runtime payload
+remains `mutation_outcome=deleted_attribute`; unsupported selector and
+selected-unit primary truth remain `unsupported/opaque`; runtime provenance
+remains additive only. No `setattr(obj, "flag", value)` promotion,
+generalized literal `delattr`, `delattr(obj, name)` widening, static `flag`
+dependency edge, selected `flag` symbol, selected attribute unit, fixture-
+general object construction path, API, MCP, package export, schema, scoring,
+compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
+benchmark, latency, production, or generalized runtime-mutation change is
+included.
+
+The first full-regression attempt after the 12-file audit failed only on the
+deterministic Task 3 confidence golden in `tests/test_eval_signal_smoke_e.py`.
+The focused correction changed only `FULL_REPO_TASK3_CONFIDENCE` to
+`0.0019893748381455438`; the focused preservation test passed with selected
+units/order, document SHA
+`78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`, `274`
+tokens, warnings, warning IDs, and probe behavior unchanged.
+
+Release state for this workspace candidate:
+
+- accepted in workspace: yes, after continuity and Task 3 confidence-golden
+  corrections
+- release-unit audit cleared: yes, corrected 13-file audit PASS with no
+  findings
+- full regression cleared: yes, `ruff check src/ tests/`, `ruff format
+  --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` passed
+  with `1,823` tests
+- commit-gating cleared: yes, exact corrected 13-file set, no staged files,
+  clean `git diff --check`, and no `evals/` or API/MCP/package-export/schema/
+  scoring/compiler/optimizer/winner-selection diffs
+- staged: no
+- locally committed: yes, as the local release commit on `main`
+- pushed: no
+
+Next control action: wait for explicit Ryan push authorization for the local
+release commit. After push, run a narrow continuity sync only if fresh-control
+routing would otherwise be stale.
+
 Pushed direct-literal `hasattr(obj, "bit_length")` runtime acquisition release:
 `c86d57c Promote literal hasattr runtime probe`. This commit contains the
 accepted, corrected-audit-cleared, full-regression-cleared,
@@ -461,17 +524,11 @@ runtime-backed evidence, including the direct-literal `getattr` / `hasattr` /
 `src/`, runtime acquisition, API/MCP, schema, scoring, compiler, optimizer,
 winner selection, public/demo claims, or benchmark/latency claims.
 
-Immediate next route: issue one read-only runtime acquisition/generalization
-planning and decomposition spike. The spike must decide the smallest safe
-source/contract implementation slice, if any, that promotes one
-already-evidenced subset into default runtime probe acquisition while
-preserving unsupported/opaque primary truth and additive-only runtime
-provenance. Do not implement yet, do not run Task 4, do not update
-public/demo/benchmark/latency/production/generalized-runtime/API/MCP claims,
-and do not route another eval-only pilot unless Ryan rejects or defers this
-planning tranche. Fallback only after such rejection or deferral is one bounded
-internal eval-only `DYNAMIC_IMPORT` imported-name literal pilot for exactly
-`from importlib import import_module` plus `import_module("plugins.weather")`.
+This planning route is now complete and superseded by the active
+workspace-only direct-literal `delattr(obj, "flag")` runtime acquisition
+candidate recorded in the canonical active release-state block above. Do not
+reroute to the planning spike unless a new finding invalidates the accepted
+candidate.
 
 Runtime acquisition/generalization planning accepted:
 the read-only planning lane returned DONE with no findings. Control verified

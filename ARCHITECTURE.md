@@ -24,9 +24,11 @@ imported-name `import_module(name)`, and imported-alias
 matrices remain internal evidence and whose exact replay identities now have
 default local runtime probe acquisition, plus a narrow direct-literal
 `setattr(obj, "flag", value)` runtime-mutation pilot and a narrow
-direct-literal `delattr(obj, "flag")` runtime-mutation pilot. Narrow internal eval-only pilots for
-`getattr(obj, name, default)` additionally record default-return branch
-evidence and value-return sibling evidence. The three existing getattr-family
+direct-literal `delattr(obj, "flag")` surface whose matrix remains internal
+evidence and whose exact replay identity now has default local runtime probe
+acquisition. Narrow internal eval-only pilots for `getattr(obj, name, default)`
+additionally record default-return branch evidence and value-return sibling
+evidence. The three existing getattr-family
 provider/budget matrices each remain one existing task only: 1 task x 2 budgets
 x 3 providers at budgets `100` and `220`. The current `REFLECTIVE_BUILTIN` /
 direct-literal `getattr(obj, "bit_length")` surface has two bounded parts:
@@ -88,26 +90,30 @@ additive only. `context_ir` selects the unsupported call boundary at both
 budgets. Baseline providers may select `main.py` at budget `220`, but they
 select no semantic units and do not select the unsupported/runtime evidence
 unit. No static `flag` dependency edge, selected `flag` symbol, selected
-attribute unit, default subprocess/runtime acquisition widening, public API,
-MCP, package export, schema, scoring, optimizer, compiler, winner-selection,
-or public benchmark widening is included. The current internal
-eval-only `RUNTIME_MUTATION` / direct-literal
+attribute unit, default subprocess/runtime acquisition for this `setattr`
+literal, public API, MCP, package export, schema, scoring, optimizer,
+compiler, winner-selection, or public benchmark widening is included. The
+narrow `RUNTIME_MUTATION` / direct-literal
 `delattr(obj, "flag")` pilot remains one task only through
 `oracle_signal_delattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers
 at budgets `[220, 100]`, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
-is exactly `delattr(obj, "flag")`; no name variable,
+`lexical_top_k_files`, and `import_neighborhood_files`, and its exact replay
+identity now also has default local runtime probe acquisition. The fixture
+boundary is exactly `delattr(obj, "flag")`; no name variable,
 `delattr(obj, name)`, `setattr`, other runtime-mutation form, or generalized
 runtime-mutation behavior is included. The runtime payload is exactly
-`mutation_outcome=deleted_attribute`. Unsupported selector and selected-unit
-truth remain `unsupported/opaque`; runtime provenance remains additive only.
+`mutation_outcome=deleted_attribute`, with replay input
+`object_type=main.ProbeTarget` and `attribute_name=flag` only for the exact
+`main.probe_delete_literal_attribute` identity. Unsupported selector and
+selected-unit truth remain `unsupported/opaque`; runtime provenance remains
+additive only.
 `context_ir` selects the unsupported call boundary at both budgets. Baseline
 providers may select `main.py` at budget `220`, but they select no semantic
 units and do not select the unsupported/runtime evidence unit. No static
 `flag` dependency edge, selected `flag` symbol, selected attribute unit,
-runtime acquisition widening, public API, MCP, package export, schema,
-scoring, optimizer, compiler, winner-selection, or public benchmark widening
-is included. The current internal
+runtime acquisition widening beyond that exact replay identity, public API,
+MCP, package export, schema, scoring, optimizer, compiler, winner-selection,
+or public benchmark widening is included. The current internal
 eval-only `REFLECTIVE_BUILTIN` / `getattr(obj, name)` raised-`AttributeError`
 branch pilot remains one task only through
 `oracle_signal_getattr_attribute_error_probe_matrix`: 1 task x 2 budgets x 3

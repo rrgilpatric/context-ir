@@ -43,8 +43,10 @@ stays scoped to repo-local evidence only.
   `delattr(obj, name)` pilot, plus the current narrow internal eval-only
   `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
   internal eval-only direct-literal `RUNTIME_MUTATION` /
-  `setattr(obj, "flag", value)` pilot, plus the current internal eval-only
-  direct-literal `RUNTIME_MUTATION` / `delattr(obj, "flag")` pilot, plus the current
+  `setattr(obj, "flag", value)` pilot, plus the narrow direct-literal
+  `RUNTIME_MUTATION` / `delattr(obj, "flag")` surface whose matrix remains
+  internal evidence and whose exact replay identity now has default local
+  runtime probe acquisition, plus the current
   internal eval-only one-argument `dir(obj)` pilot, plus the current internal
   eval-only zero-argument `dir()` pilot, plus the current internal eval-only
   `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus
@@ -143,26 +145,29 @@ stays scoped to repo-local evidence only.
   selected semantic units remain empty and they do not select the
   unsupported/runtime evidence unit; no static `flag` dependency edge,
   selected `flag` symbol, selected attribute unit, default subprocess/runtime
-  acquisition widening, public comparative claim, public API, MCP, package
-  export, schema, scoring, optimizer, compiler, product, winner-selection, or
-  public benchmark widening is included.
-  The current internal eval-only `RUNTIME_MUTATION` /
+  acquisition for this `setattr` literal, public comparative claim, public API,
+  MCP, package export, schema, scoring, optimizer, compiler, product,
+  winner-selection, or public benchmark widening is included.
+  The narrow `RUNTIME_MUTATION` /
   `oracle_signal_delattr_literal_probe_matrix` covers only a direct-literal
   `delattr(obj, "flag")` pilot as 1 task x 2 budgets x 3 providers at budgets
   `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and
-  `import_neighborhood_files`; fixture boundary exactly
+  `import_neighborhood_files`; the same exact replay identity now also has
+  default local runtime probe acquisition; fixture boundary exactly
   `delattr(obj, "flag")`; no name variable, `delattr(obj, name)`, `setattr`,
   other runtime-mutation form, or generalized runtime-mutation behavior;
-  runtime payload exactly `mutation_outcome=deleted_attribute`; unsupported
-  selector and selected-unit primary truth `unsupported/opaque`; runtime
-  provenance is additive only; `context_ir` selects the unsupported call
+  runtime payload exactly `mutation_outcome=deleted_attribute`, with replay
+  input `object_type=main.ProbeTarget` and `attribute_name=flag` only for the
+  exact `main.probe_delete_literal_attribute` identity; unsupported selector
+  and selected-unit primary truth `unsupported/opaque`; runtime provenance is
+  additive only; `context_ir` selects the unsupported call
   boundary at both budgets; file-level baselines may select `main.py` at
   budget `220`, but their selected semantic units remain empty and they do not
   select the unsupported/runtime evidence unit; no static `flag` dependency
   edge, selected `flag` symbol, selected attribute unit, runtime acquisition
-  widening, public comparative claim, public API, MCP, package export, schema,
-  scoring, optimizer, compiler, product, winner-selection, or public benchmark
-  widening is included.
+  widening beyond that exact replay identity, public comparative claim, public
+  API, MCP, package export, schema, scoring, optimizer, compiler, product,
+  winner-selection, or public benchmark widening is included.
   The current internal eval-only `REFLECTIVE_BUILTIN` /
   `oracle_signal_hasattr_false_probe_matrix` covers only a
   `hasattr(obj, name)` false-branch pilot as 1 task x 2 budgets x 3 providers

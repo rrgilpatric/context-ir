@@ -288,8 +288,27 @@ _RUNTIME_MUTATION_SETATTR_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
 )
 _RUNTIME_MUTATION_DELATTR_WORKER_FORM_LABEL = "runtime_mutation:delattr/2"
 _RUNTIME_MUTATION_DELATTR_WORKER_BOUNDARY_TEXT = "delattr(obj, name)"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT = 'delattr(obj, "flag")'
 _RUNTIME_MUTATION_DELATTR_WORKER_GLOBAL_NAME = "delattr"
 _RUNTIME_MUTATION_DELATTR_WORKER_DELETED_ATTRIBUTE = "deleted_attribute"
+_RUNTIME_MUTATION_DELATTR_OBJECT_TYPE_REPLAY_KEY = "object_type"
+_RUNTIME_MUTATION_DELATTR_ATTRIBUTE_NAME_REPLAY_KEY = "attribute_name"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SUBJECT_ID = "unsupported:call:main.py:7:4"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_FILE_PATH = "main.py"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_LINE = "7"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_COLUMN = "4"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_LINE = "7"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_COLUMN = "24"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_TARGET_SEED = (
+    "main.probe_delete_literal_attribute"
+)
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_delete_literal_attribute:runtime_mutation:delattr/2"
+    "@main.py:7:4:7:24"
+)
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE = "main.ProbeTarget"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_ATTRIBUTE_NAME = "flag"
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_CLASS_NAME = "ProbeTarget"
 _RUNTIME_MUTATION_DELATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
     "runtime probe runtime mutation delattr worker target execution failed"
 )
@@ -399,6 +418,13 @@ _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS = frozenset(
         *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
         _REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY,
         _REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY,
+    )
+)
+_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS = frozenset(
+    (
+        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
+        _RUNTIME_MUTATION_DELATTR_OBJECT_TYPE_REPLAY_KEY,
+        _RUNTIME_MUTATION_DELATTR_ATTRIBUTE_NAME_REPLAY_KEY,
     )
 )
 
@@ -1981,6 +2007,8 @@ class _RuntimeProbeRuntimeMutationDelattrCapture:
 
     original_delattr: Callable[[object, str], None]
     captured_mutation_outcomes: list[str] = field(default_factory=list)
+    captured_object_types: list[str] = field(default_factory=list)
+    captured_attribute_names: list[str] = field(default_factory=list)
     captured_rejections: list[str] = field(default_factory=list)
 
     def delattr(self, *args: object, **kwargs: object) -> None:
@@ -1998,6 +2026,8 @@ class _RuntimeProbeRuntimeMutationDelattrCapture:
                 "runtime probe runtime mutation delattr worker attribute name must "
                 "be a string"
             )
+        self.captured_object_types.append(_runtime_probe_worker_object_type_name(obj))
+        self.captured_attribute_names.append(name)
         try:
             self.original_delattr(obj, name)
         except Exception as error:
@@ -4944,16 +4974,25 @@ def materialize_runtime_probe_runtime_mutation_delattr_observation_from_target(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonRuntimeMutationDelattrTargetCallable,
 ) -> RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerObservation:
-    """Observe one zero-argument target under exact ``delattr`` interception."""
+    """Observe a ``delattr`` target with zero args or exact pilot replay inputs."""
     _validate_runtime_probe_runtime_mutation_delattr_replay_target(replay_target)
     _validate_runtime_probe_runtime_mutation_delattr_replay_target_source_module(
         replay_target,
         source_module,
     )
     _validate_runtime_probe_runtime_mutation_delattr_target_callable(target)
+    exact_replay_inputs = _runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
+        replay_target.request
+    )
+    target_args = _runtime_probe_runtime_mutation_delattr_target_args(
+        source_module,
+        exact_replay_inputs,
+    )
     mutation_outcome = _runtime_probe_runtime_mutation_delattr_captured_outcome(
         source_module,
         target,
+        target_args=target_args,
+        exact_replay_inputs=exact_replay_inputs,
     )
     return materialize_runtime_probe_runtime_mutation_delattr_worker_observation(
         replay_target.request,
@@ -8889,6 +8928,9 @@ def _restore_runtime_probe_runtime_mutation_setattr_builtin(
 def _runtime_probe_runtime_mutation_delattr_captured_outcome(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonRuntimeMutationDelattrTargetCallable,
+    *,
+    target_args: tuple[object, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Run a target while capturing one exact ``delattr`` deletion."""
     _validate_runtime_probe_runtime_mutation_delattr_source_global_absent(source_module)
@@ -8910,7 +8952,7 @@ def _runtime_probe_runtime_mutation_delattr_captured_outcome(
         try:
             sys.stdout = shielded_stdout
             sys.stderr = shielded_stderr
-            target()
+            target(*target_args)
         finally:
             sys.stdout = original_stdout
             sys.stderr = original_stderr
@@ -8935,16 +8977,24 @@ def _runtime_probe_runtime_mutation_delattr_captured_outcome(
     if target_failure is not None:
         _raise_runtime_probe_runtime_mutation_delattr_target_failure(target_failure)
 
-    return _runtime_probe_runtime_mutation_delattr_capture_outcome(capture)
+    return _runtime_probe_runtime_mutation_delattr_capture_outcome(
+        capture,
+        exact_replay_inputs=exact_replay_inputs,
+    )
 
 
 def _runtime_probe_runtime_mutation_delattr_capture_outcome(
     capture: _RuntimeProbeRuntimeMutationDelattrCapture,
+    *,
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Return the single captured delattr mutation outcome after validation."""
     _validate_runtime_probe_runtime_mutation_delattr_intercepted_calls(
         captured_mutation_outcomes=capture.captured_mutation_outcomes,
+        captured_object_types=tuple(capture.captured_object_types),
+        captured_attribute_names=tuple(capture.captured_attribute_names),
         captured_rejections=tuple(capture.captured_rejections),
+        exact_replay_inputs=exact_replay_inputs,
     )
     return capture.captured_mutation_outcomes[0]
 
@@ -8952,7 +9002,10 @@ def _runtime_probe_runtime_mutation_delattr_capture_outcome(
 def _validate_runtime_probe_runtime_mutation_delattr_intercepted_calls(
     *,
     captured_mutation_outcomes: list[str],
+    captured_object_types: tuple[str, ...],
+    captured_attribute_names: tuple[str, ...],
     captured_rejections: tuple[str, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> None:
     """Reject intercepted delattr behavior outside exact successful deletion."""
     if "arity" in captured_rejections:
@@ -8971,6 +9024,23 @@ def _validate_runtime_probe_runtime_mutation_delattr_intercepted_calls(
         raise ValueError(
             "runtime probe runtime mutation delattr worker target must capture "
             "exactly one delattr call"
+        )
+    if len(captured_object_types) != 1 or len(captured_attribute_names) != 1:
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker target must capture "
+            "exactly one delattr call"
+        )
+    if exact_replay_inputs is None:
+        return
+    if (
+        captured_object_types[0]
+        != exact_replay_inputs[_RUNTIME_MUTATION_DELATTR_OBJECT_TYPE_REPLAY_KEY]
+        or captured_attribute_names[0]
+        != exact_replay_inputs[_RUNTIME_MUTATION_DELATTR_ATTRIBUTE_NAME_REPLAY_KEY]
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker exact replay inputs "
+            "must match captured object_type and attribute_name"
         )
 
 
@@ -13332,6 +13402,10 @@ def _validate_runtime_probe_runtime_mutation_delattr_worker_payload(
         replay_target_seed=payload.replay_target_seed,
         replay_selector_seed=payload.replay_selector_seed,
     )
+    _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs_if_needed(
+        payload.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
         plan_id=payload.plan_id,
         request_id=payload.request_id,
@@ -13393,9 +13467,6 @@ def _validate_runtime_probe_runtime_mutation_delattr_worker_request(
         request.boundary_text,
         field_name="boundary_text",
     )
-    _validate_runtime_probe_runtime_mutation_delattr_worker_request_boundary_text(
-        request.boundary_text
-    )
     _validate_runtime_probe_worker_metadata_text(
         request.replay_target_seed,
         field_name="replay_target_seed",
@@ -13435,6 +13506,10 @@ def _validate_runtime_probe_runtime_mutation_delattr_worker_request(
         replay_target_seed=request.replay_target_seed,
         replay_selector_seed=request.replay_selector_seed,
     )
+    _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs_if_needed(
+        request.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     for field_key, expected_value in (
         ("subject_kind", request.subject_kind.value),
         ("subject_id", request.subject_id),
@@ -13470,14 +13545,28 @@ def _validate_runtime_probe_runtime_mutation_delattr_worker_request(
 
 
 def _validate_runtime_probe_runtime_mutation_delattr_worker_request_boundary_text(
-    boundary_text: str,
+    replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject exact-delattr requests that do not carry the approved boundary."""
-    if boundary_text != _RUNTIME_MUTATION_DELATTR_WORKER_BOUNDARY_TEXT:
-        raise ValueError(
-            "runtime probe runtime mutation delattr worker boundary_text must be "
-            f"{_RUNTIME_MUTATION_DELATTR_WORKER_BOUNDARY_TEXT}"
+    """Reject delattr requests outside approved boundary identities."""
+    boundary_text = replay_fields_by_key["boundary_text"]
+    if boundary_text == _RUNTIME_MUTATION_DELATTR_WORKER_BOUNDARY_TEXT:
+        return
+    if (
+        boundary_text == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT
+        and _is_runtime_probe_runtime_mutation_delattr_literal_flag_replay_input_pilot(
+            replay_fields_by_key
         )
+    ):
+        return
+    if boundary_text == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT:
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker boundary_text must match "
+            "the exact direct-literal flag replay identity"
+        )
+    raise ValueError(
+        "runtime probe runtime mutation delattr worker boundary_text must be "
+        f"{_RUNTIME_MUTATION_DELATTR_WORKER_BOUNDARY_TEXT}"
+    )
 
 
 def _validate_runtime_probe_runtime_mutation_delattr_worker_observer(
@@ -13498,6 +13587,73 @@ def _validate_runtime_probe_runtime_mutation_delattr_target_callable(
         raise ValueError(
             "runtime probe runtime mutation delattr worker target must be callable"
         )
+
+
+def _runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
+    request: RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest,
+) -> Mapping[str, str] | None:
+    """Return exact literal delattr replay inputs for the accepted pilot."""
+    _validate_runtime_probe_runtime_mutation_delattr_worker_request(request)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    if not _is_runtime_probe_runtime_mutation_delattr_literal_flag_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return None
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        request.request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
+        exact_fields_by_key
+    )
+    return exact_fields_by_key
+
+
+def _runtime_probe_runtime_mutation_delattr_target_args(
+    source_module: ModuleType,
+    exact_replay_inputs: Mapping[str, str] | None,
+) -> tuple[object, ...]:
+    """Return target args for the exact literal delattr pilot, otherwise none."""
+    if exact_replay_inputs is None:
+        return ()
+    _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
+        exact_replay_inputs
+    )
+    return (
+        _runtime_probe_runtime_mutation_delattr_literal_probe_target(source_module),
+    )
+
+
+def _runtime_probe_runtime_mutation_delattr_literal_probe_target(
+    source_module: ModuleType,
+) -> object:
+    """Instantiate the single accepted literal-delattr replay object."""
+    if source_module.__name__ != "main":
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker literal replay source "
+            "module is unsupported"
+        )
+    probe_target_class = source_module.__dict__.get(
+        _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_CLASS_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if not isinstance(probe_target_class, type):
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker literal replay target "
+            "class is unsupported"
+        )
+    probe_target = probe_target_class()
+    if (
+        _runtime_probe_worker_object_type_name(probe_target)
+        != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker literal replay target "
+            "object type is unsupported"
+        )
+    return probe_target
 
 
 def _validate_runtime_probe_runtime_mutation_delattr_replay_target_source_module(
@@ -13763,7 +13919,7 @@ def _validate_runtime_probe_runtime_mutation_delattr_replay_metadata(
         field_name="boundary_text",
     )
     _validate_runtime_probe_runtime_mutation_delattr_worker_request_boundary_text(
-        replay_fields_by_key["boundary_text"]
+        replay_fields_by_key
     )
     _validate_runtime_probe_worker_source_span(
         start_line=_runtime_probe_worker_replay_span_value(
@@ -13783,6 +13939,78 @@ def _validate_runtime_probe_runtime_mutation_delattr_replay_metadata(
             field_name="source_end_column",
         ),
     )
+
+
+def _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs_if_needed(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    replay_fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject drifted replay inputs for the exact literal delattr pilot."""
+    if not _is_runtime_probe_runtime_mutation_delattr_literal_flag_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
+        exact_fields_by_key
+    )
+
+
+def _is_runtime_probe_runtime_mutation_delattr_literal_flag_replay_input_pilot(
+    replay_fields_by_key: Mapping[str, str],
+) -> bool:
+    """Return whether replay identity targets ``delattr(obj, "flag")``."""
+    return (
+        replay_fields_by_key["subject_id"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SUBJECT_ID
+        and replay_fields_by_key["source_file_path"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_FILE_PATH
+        and replay_fields_by_key["source_start_line"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_LINE
+        and replay_fields_by_key["source_start_column"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_COLUMN
+        and replay_fields_by_key["source_end_line"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_LINE
+        and replay_fields_by_key["source_end_column"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_COLUMN
+        and replay_fields_by_key["reason_code"]
+        == UnresolvedReasonCode.RUNTIME_MUTATION.value
+        and replay_fields_by_key["boundary_text"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT
+        and replay_fields_by_key["family_label"]
+        == RuntimeProbeFamily.RUNTIME_MUTATION.value
+        and replay_fields_by_key["form_label"]
+        == _RUNTIME_MUTATION_DELATTR_WORKER_FORM_LABEL
+        and replay_fields_by_key["replay_target_seed"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_TARGET_SEED
+        and replay_fields_by_key["replay_selector_seed"]
+        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED
+    )
+
+
+def _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Require the exact literal pilot to carry only the accepted replay pair."""
+    if set(fields_by_key) != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS:
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker exact replay inputs "
+            "must contain only object_type and attribute_name"
+        )
+    if (
+        fields_by_key[_RUNTIME_MUTATION_DELATTR_OBJECT_TYPE_REPLAY_KEY]
+        != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE
+        or fields_by_key[_RUNTIME_MUTATION_DELATTR_ATTRIBUTE_NAME_REPLAY_KEY]
+        != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_ATTRIBUTE_NAME
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation delattr worker exact replay inputs "
+            "must be object_type=main.ProbeTarget and attribute_name=flag"
+        )
 
 
 def _validate_runtime_probe_runtime_mutation_delattr_replay_field_match(

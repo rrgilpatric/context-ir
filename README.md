@@ -39,8 +39,10 @@ a current internal eval-only raised-`AttributeError` branch pilot for exactly
 matrices remain internal evidence and whose exact replay identities now have
 default local runtime probe acquisition, plus a current internal
 eval-only direct-literal `RUNTIME_MUTATION` /
-`setattr(obj, "flag", value)` pilot, plus a current internal eval-only
-direct-literal `RUNTIME_MUTATION` / `delattr(obj, "flag")` pilot, plus a current internal one-argument
+`setattr(obj, "flag", value)` pilot, plus a narrow direct-literal
+`RUNTIME_MUTATION` / `delattr(obj, "flag")` surface whose matrix remains
+internal evidence and whose exact replay identity now has default local
+runtime probe acquisition, plus a current internal one-argument
 `vars(obj)` pilot and a current internal zero-argument `vars()`
 pilot, plus a
 current internal
@@ -152,21 +154,26 @@ the unsupported call boundary at both budgets; file-level baselines may select
 `main.py` at budget `220`, but selected semantic units stay empty and they do
 not select the unsupported/runtime evidence unit; no static `flag` dependency
 edge, selected symbol, selected attribute unit, default subprocess/runtime
-acquisition widening, source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
+acquisition for this `setattr` literal,
+source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or public/demo claim widening is included. The
-current internal eval-only direct-literal `delattr(obj, "flag")` pilot covers
+narrow direct-literal `delattr(obj, "flag")` pilot covers
 only `oracle_signal_delattr_literal_probe_matrix`: 1 task x 2 budgets x 3
 providers at budgets `[220, 100]`, against providers `context_ir`,
-`lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
-exactly `delattr(obj, "flag")`; no name variable, `delattr(obj, name)`,
-`setattr`, other runtime-mutation form, or generalized runtime-mutation
-behavior; runtime payload exactly `mutation_outcome=deleted_attribute`;
-unsupported selector and selected-unit truth `unsupported/opaque`; additive
-runtime provenance only; `context_ir` selects the unsupported call boundary at
-both budgets; file-level baselines may select `main.py` at budget `220`, but
-selected semantic units stay empty and they do not select the
-unsupported/runtime evidence unit; no static `flag` dependency edge, selected
-symbol, selected attribute unit, runtime acquisition widening,
+`lexical_top_k_files`, and `import_neighborhood_files`; the same exact replay
+identity now also has default local runtime probe acquisition; fixture
+boundary exactly `delattr(obj, "flag")`; no name variable,
+`delattr(obj, name)`, `setattr`, other runtime-mutation form, or generalized
+runtime-mutation behavior; runtime payload exactly
+`mutation_outcome=deleted_attribute`, with replay input
+`object_type=main.ProbeTarget` and `attribute_name=flag` only for the exact
+`main.probe_delete_literal_attribute` identity; unsupported selector and
+selected-unit truth `unsupported/opaque`; additive runtime provenance only;
+`context_ir` selects the unsupported call boundary at both budgets; file-level
+baselines may select `main.py` at budget `220`, but selected semantic units
+stay empty and they do not select the unsupported/runtime evidence unit; no
+static `flag` dependency edge, selected symbol, selected attribute unit,
+runtime acquisition widening beyond that exact replay identity,
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or public/demo claim widening is included. The
 current internal eval-only `hasattr(obj, name)` false-branch pilot covers only
