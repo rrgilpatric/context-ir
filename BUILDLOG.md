@@ -4,13 +4,13 @@ Most recent supersession entries override older architectural decisions when the
 
 ## 2026-05-30 -- Direct-Literal Runtime Acquisition Quartet Contract Cleanup
 
-- Workspace-only cleanup candidate codifies the already-pushed exact
+- Pushed cleanup release codifies the already-pushed exact
   direct-literal runtime-acquisition quartet:
   - `hasattr(obj, "bit_length")`
   - `getattr(obj, "bit_length")`
   - `delattr(obj, "flag")`
   - `setattr(obj, "flag", value)`
-- This candidate is behavior-preserving and keeps production source out of
+- This release is behavior-preserving and keeps production source out of
   scope.
 - The corrected release unit is exactly:
   - `ARCHITECTURE.md`
@@ -53,8 +53,12 @@ Most recent supersession entries override older architectural decisions when the
   - post-correction full regression: `ruff check src/ tests/`, `ruff format
     --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with
     `1,850` tests passed
-- Acceptance status: 1 correction; audit-cleared and regression-cleared;
-  commit-gating cleared; ready for local commit
+- Release status:
+  - local release commit: `93d9f9e Codify literal runtime probe contracts`
+  - Ryan authorized push
+  - `git push origin main` completed with remote already current
+- Acceptance status: 1 correction; audit-cleared, regression-cleared,
+  commit-gating-cleared, locally committed, and pushed
 
 ## 2026-05-30 -- Direct-Literal Setattr Runtime Acquisition Push Completed
 

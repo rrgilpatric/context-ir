@@ -40,12 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority and latest pushed source/contract authority is
-`f3e8db3 Promote literal setattr runtime probe`. This release promotes only the
-exact direct-literal `setattr(obj, "flag", value)` replay identity into default
-local runtime probe acquisition. The previous direct-literal `delattr(obj,
-"flag")` runtime-acquisition release remains closed through `a24bf79 Promote
-literal delattr runtime probe`. The previous direct-literal `getattr(obj,
+Current pushed contract-cleanup release authority is `93d9f9e Codify literal
+runtime probe contracts`. It codifies the completed exact direct-literal
+runtime-acquisition quartet in tests and docs only; it does not change `src/`,
+eval assets, API, MCP, package export, schema, scoring, compiler, optimizer,
+winner-selection, Task 4, portfolio, public/demo, benchmark, latency,
+production, or generalized runtime-mutation surfaces. The latest pushed source
+runtime-behavior authority remains `f3e8db3 Promote literal setattr runtime
+probe`, which promotes only the exact direct-literal
+`setattr(obj, "flag", value)` replay identity into default local runtime probe
+acquisition. The previous direct-literal `delattr(obj, "flag")`
+runtime-acquisition release remains closed through `a24bf79 Promote literal
+delattr runtime probe`. The previous direct-literal `getattr(obj,
 "bit_length")` runtime-acquisition release remains closed through
 `4aea87d Promote literal getattr runtime probe`. The previous direct-literal
 `hasattr(obj, "bit_length")` runtime-acquisition release remains closed through
@@ -89,34 +95,31 @@ passed with `ruff check src/ tests/`, `ruff format --check src/ tests/`,
 passed for the exact 13-file set. `git push origin main` advanced remote
 `main` from `7c7a1d3` to `f3e8db3`.
 
-Workspace-only candidate in progress: bounded runtime acquisition contract
-cleanup for the completed exact direct-literal `hasattr` / `getattr` /
-`delattr` / `setattr` quartet. This candidate is behavior-preserving and
-source-out-of-scope; it codifies tests and docs for fixed replay identities,
-form-specific replay payload fields, the `setattr` durable reference shape,
-exact normalized runtime payloads, empty quartet `observed_replay_inputs`,
-unsupported/opaque primary truth, and additive-only runtime provenance. The
-corrected release unit is exactly `ARCHITECTURE.md`, `BUILDLOG.md`, `EVAL.md`,
-`PLAN.md`, `PUBLIC_CLAIMS.md`, `README.md`,
+Pushed direct-literal runtime acquisition quartet contract cleanup release:
+`93d9f9e Codify literal runtime probe contracts`. This release is
+behavior-preserving and source-out-of-scope; it codifies tests and docs for the
+completed exact direct-literal `hasattr` / `getattr` / `delattr` / `setattr`
+quartet. The pushed release unit is exactly `ARCHITECTURE.md`, `BUILDLOG.md`,
+`EVAL.md`, `PLAN.md`, `PUBLIC_CLAIMS.md`, `README.md`,
 `tests/test_eval_signal_smoke_e.py`,
 `tests/test_runtime_observation_recompile.py`,
 `tests/test_runtime_probe_execution.py`, `tests/test_runtime_probe_worker.py`,
-and `tests/test_tool_facade.py`. The candidate does not edit `src/`, eval
-assets, API, MCP, package export, schema, scoring, compiler, optimizer,
-winner-selection, Task 4, portfolio, public/demo, benchmark, latency,
-production, or generalized runtime-mutation claims.
+and `tests/test_tool_facade.py`. It records fixed replay identities,
+form-specific replay payload fields, the `setattr` durable reference shape,
+exact normalized runtime payloads, empty quartet `observed_replay_inputs`,
+unsupported/opaque primary truth, and additive-only runtime provenance.
 
-Control status: the corrected 11-file unit is accepted in the workspace, the
-corrected read-only release-unit audit passed, and the post-correction full
+Control status: Ryan authorized the push, `git push origin main` completed, and
+the contract cleanup is audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed. Post-correction full
 regression passed with `ruff check src/ tests/`, `ruff format --check src/
 tests/`, `mypy --strict src/`, and `pytest tests/ -v` with `1,850` tests. Full
 regression initially failed only on the deterministic Task 3 confidence scalar;
 the correction changed only `FULL_REPO_TASK3_CONFIDENCE` from
 `0.001975727120229694` to `0.0019683503398339377`, while selected units/order,
 document SHA, total tokens, warnings, warning IDs, probe behavior, and warning
-call count stayed fixed. Commit-gating cleared for the exact corrected 11-file
-set. Next control action: stage and create the local release commit. Push still
-requires explicit Ryan authorization.
+call count stayed fixed. No active workspace-only release unit is pending. Next
+control action: select the next substantive tranche from current repo truth.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
