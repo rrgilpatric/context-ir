@@ -88,8 +88,9 @@ docs-only post-push sync after the `8afe99f` implementation and `9ea679d`
 push-routing commits; this is consistent with the repo rule to verify live refs
 from git.
 
-The selected next route is one bounded internal eval-only
-`REFLECTIVE_BUILTIN` direct-literal `hasattr(obj, "bit_length")` pilot,
+The historical selected route for the eval matrix was one bounded internal
+eval-only `REFLECTIVE_BUILTIN` direct-literal
+`hasattr(obj, "bit_length")` matrix,
 suggested artifact name
 `oracle_signal_hasattr_literal_probe_matrix`. This is recommended because it is
 the closest reflective sibling to the pushed direct-literal
@@ -108,9 +109,13 @@ Selected boundaries for the proposed slice:
   `unsupported/opaque`
 - runtime provenance remains additive only
 - runtime payload limited to `attribute_present=true`
-- no `src/`, runtime acquisition, API, MCP, package export, schema, scoring,
-  compiler, optimizer, winner-selection, Task 4, portfolio, public/demo,
-  benchmark, latency, production, or generalized reflective-builtin changes
+- for the original eval-only pilot, no `src/` or runtime acquisition change
+  was included; the later exact runtime acquisition slice below supersedes
+  only the runtime-acquisition hold for this single direct-literal replay
+  identity
+- no API, MCP, package export, schema, scoring, compiler, optimizer,
+  winner-selection, Task 4, portfolio, public/demo, benchmark, latency,
+  production, or generalized reflective-builtin changes
 - no `hasattr(obj, name)` reopening
 
 Ryan authorized this bounded implementation slice. The workspace implementation
@@ -164,10 +169,13 @@ The corrected read-only release-unit audit returned DONE with verdict PASS and
 no findings. Control review verified live state still matches the audit:
 `main`, `HEAD=origin/main=2295a56`, no staged files, only the expected
 corrected direct-literal `hasattr` release-unit files, and clean
-`git diff --check`. The audit confirmed scope and claim boundaries, including
-no `src/`, runtime acquisition, API/MCP/package-export/schema/scoring/
-compiler/optimizer/winner-selection changes, no Task 4, no portfolio update,
-no public/demo claim widening, additive runtime provenance only,
+`git diff --check`. The audit confirmed scope and claim boundaries for that
+eval-only release unit, including no `src/` or runtime acquisition change at
+that time. The later exact source slice below supersedes only the
+runtime-acquisition hold for the single direct-literal replay identity. The
+audit also confirmed no API/MCP/package-export/schema/scoring/compiler/
+optimizer/winner-selection changes, no Task 4, no portfolio update, no
+public/demo claim widening, additive runtime provenance only,
 `unsupported/opaque` selector and selected-unit truth, no `hasattr(obj, name)`
 reopening, and the Task 3 confidence correction is only the golden update with
 selected units/order, document hash, tokens, warnings, warning IDs, and probe
@@ -325,21 +333,92 @@ release-unit audit, full regression, commit-gating, staging, local commit
 creation, or push absent new findings. Task 4 remains not run, portfolio
 artifacts remain unchanged, and public/demo claims remain held.
 
-The direct-literal `hasattr` release unit is:
+Post-direct-literal `delattr` tranche selection accepted:
+the read-only selection lane returned DONE with no findings. Before this
+continuity update, live git truth was verified as `main`,
+`HEAD=origin/main=b9b1973`, clean worktree, clean `git diff --check`, empty
+`git diff -- src/`, and only `PLAN.md` / `BUILDLOG.md` changed between the
+implementation/eval authority `a1df336` and the latest continuity authority
+`b9b1973`. The lane found that the repo now has broad internal eval-only
+runtime-backed evidence, including the direct-literal `getattr` / `hasattr` /
+`setattr` / `delattr` quartet, while those releases deliberately did not widen
+`src/`, runtime acquisition, API/MCP, schema, scoring, compiler, optimizer,
+winner selection, public/demo claims, or benchmark/latency claims.
 
-- `PLAN.md`
-- `BUILDLOG.md`
+Immediate next route: issue one read-only runtime acquisition/generalization
+planning and decomposition spike. The spike must decide the smallest safe
+source/contract implementation slice, if any, that promotes one
+already-evidenced subset into default runtime probe acquisition while
+preserving unsupported/opaque primary truth and additive-only runtime
+provenance. Do not implement yet, do not run Task 4, do not update
+public/demo/benchmark/latency/production/generalized-runtime/API/MCP claims,
+and do not route another eval-only pilot unless Ryan rejects or defers this
+planning tranche. Fallback only after such rejection or deferral is one bounded
+internal eval-only `DYNAMIC_IMPORT` imported-name literal pilot for exactly
+`from importlib import import_module` plus `import_module("plugins.weather")`.
+
+Runtime acquisition/generalization planning accepted:
+the read-only planning lane returned DONE with no findings. Control verified
+`main`, `HEAD=origin/main=b9b1973`, no staged files, `git diff --check`
+clean, and empty `git diff -- src/`; the workspace is dirty only with
+control-state `PLAN.md` / `BUILDLOG.md` continuity edits. The accepted finding
+is that the smallest safe source/contract implementation slice is exactly
+direct-literal `hasattr(obj, "bit_length")` default runtime probe acquisition.
+This slice reuses the existing `reflective_builtin:hasattr/2`
+acquisition/admission/provenance path, produces only a boolean presence
+observation, avoids returned-value materialization, and has no runtime mutation
+side effect. The current planner/request derivation can identify the
+direct-literal request, while the default local subprocess execution path is
+still wired to the older exact `hasattr(obj, name)` replay-input pilot.
+
+Immediate next route: issue one bounded implementation prompt to promote only
+exact direct-literal `hasattr(obj, "bit_length")` into default local runtime
+probe acquisition. Preserve unsupported/opaque primary truth and additive-only
+runtime provenance. Do not generalize literal `hasattr`, do not promote all
+`hasattr/2`, do not promote `getattr`, `setattr`, or `delattr`, and do not
+change runtime mutation support, API, MCP, package exports, schema, scoring,
+compiler, optimizer, winner selection, Task 4, public/demo, benchmark,
+latency, production, or generalized-runtime surfaces.
+
+The exact direct-literal `hasattr(obj, "bit_length")` runtime acquisition
+implementation is now workspace-accepted, with source/test changes promoting
+only that single replay identity into default local runtime probe acquisition.
+The P3 documentation correction updates the claim-boundary docs so they no
+longer describe that surface as eval-only or as having no source-runtime
+widening. The preserved boundary remains: unsupported selector and
+selected-unit primary truth stay `unsupported/opaque`; runtime provenance
+stays additive only; no static `bit_length` dependency edge, selected symbol,
+or selected attribute unit is introduced; no generalized literal `hasattr`,
+all `hasattr/2`, `getattr`, `setattr`, or `delattr` promotion is included; and
+public/demo, benchmark, latency, production, API/MCP/package-export/schema/
+scoring/compiler/optimizer/winner-selection claims remain held.
+
+The current direct-literal `hasattr(obj, "bit_length")` runtime acquisition
+release unit is exactly:
+
 - `ARCHITECTURE.md`
+- `BUILDLOG.md`
 - `EVAL.md`
-- `README.md`
+- `PLAN.md`
 - `PUBLIC_CLAIMS.md`
-- `tests/test_eval_evidence.py`
+- `README.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
 - `tests/test_eval_signal_smoke_e.py`
-- `tests/test_eval_signal_hasattr_literal_probe.py`
-- `evals/fixtures/oracle_signal_hasattr_literal_probe/eval_runtime_observations.json`
-- `evals/fixtures/oracle_signal_hasattr_literal_probe/main.py`
-- `evals/tasks/oracle_signal_hasattr_literal_probe.json`
-- `evals/run_specs/oracle_signal_hasattr_literal_probe_matrix.json`
+- `tests/test_runtime_observation_recompile.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
+- `tests/test_tool_facade.py`
+
+`tests/test_eval_signal_smoke_e.py` is included only for the deterministic
+Task 3 full-repo confidence-golden correction to
+`FULL_REPO_TASK3_CONFIDENCE = 0.002012787339374718`; preservation locks for
+selected units/order, document hash, total tokens, warnings, warning IDs, and
+probe behavior remain unchanged.
+
+The older direct-literal `hasattr` eval-matrix release unit remains historical
+and closed. Do not route the old eval fixture/task/run-spec list into the
+current runtime-acquisition release gates.
 
 Pushed Task 0 internal portfolio refresh release:
 `2f61c1e Refresh task 0 portfolio evidence`. This commit contains the accepted,

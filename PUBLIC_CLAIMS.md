@@ -33,7 +33,9 @@ stays scoped to repo-local evidence only.
   internal eval-only raised-`AttributeError` branch pilot for exactly
   `getattr(obj, name)`, plus the current narrow internal eval-only
   direct-literal `getattr(obj, "bit_length")` pilot, plus the current narrow
-  internal eval-only direct-literal `hasattr(obj, "bit_length")` pilot, and
+  direct-literal `hasattr(obj, "bit_length")` surface whose matrix remains
+  internal evidence and whose exact replay identity now has default local
+  runtime probe acquisition, and
   the current internal one-argument `vars(obj)` and zero-argument `vars()`
   pilots, plus the
   current internal eval-only `vars(obj)` raised-`TypeError` branch pilot, plus the
@@ -101,9 +103,10 @@ stays scoped to repo-local evidence only.
   `bit_length` unit, public comparative claim, public API, MCP, package
   export, schema, scoring, optimizer, compiler, product, winner-selection, or
   public benchmark widening is included.
-  The current internal eval-only `REFLECTIVE_BUILTIN` /
-  `oracle_signal_hasattr_literal_probe_matrix` covers only a direct-literal
-  `hasattr(obj, "bit_length")` pilot as 1 task x 2 budgets x 3 providers at
+  The current `REFLECTIVE_BUILTIN` /
+  `oracle_signal_hasattr_literal_probe_matrix` remains internal evidence for a
+  direct-literal `hasattr(obj, "bit_length")` matrix as 1 task x 2 budgets x
+  3 providers at
   budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
   exactly `hasattr(obj, "bit_length")`; no name variable,
@@ -116,9 +119,11 @@ stays scoped to repo-local evidence only.
   budget `220`, but their selected semantic units remain empty and they do not
   select the unsupported/runtime evidence unit; no static attribute dependency
   edge, selected `bit_length` symbol, selected `bit_length` unit, public
-  comparative claim, public API, MCP, package export, schema, scoring,
-  optimizer, compiler, product, winner-selection, or public benchmark widening
-  is included.
+  comparative claim, public/demo, benchmark, latency, production,
+  API/MCP/package-export/schema/scoring/compiler/optimizer/winner-selection
+  widening is included. The same exact direct-literal replay identity now has
+  default local runtime probe acquisition; this does not generalize literal `hasattr`,
+  all `hasattr/2`, `hasattr(obj, name)`, or `getattr` / `setattr` / `delattr`.
   The current internal eval-only `RUNTIME_MUTATION` /
   `oracle_signal_setattr_literal_probe_matrix` covers only a direct-literal
   `setattr(obj, "flag", value)` pilot as 1 task x 2 budgets x 3 providers at

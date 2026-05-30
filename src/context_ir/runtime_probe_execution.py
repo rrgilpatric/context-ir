@@ -76,6 +76,9 @@ _RUNTIME_PROBE_REFLECTIVE_HASATTR_LOCAL_PYTHON_FORM_LABEL = (
     "reflective_builtin:hasattr/2"
 )
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_BOUNDARY_TEXT = "hasattr(obj, name)"
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT = (
+    'hasattr(obj, "bit_length")'
+)
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SUBJECT_ID = (
     "unsupported:call:main.py:2:11"
 )
@@ -86,6 +89,10 @@ _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE = 2
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN = 29
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED = (
     "main.probe_attribute"
+)
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = 37
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
+    "main.probe_literal_attribute"
 )
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
@@ -214,6 +221,39 @@ _REQUIRED_WORKER_REQUEST_REPLAY_FIELD_KEYS = (
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
 RuntimeProbeRunnerHandlerKey: TypeAlias = tuple[RuntimeProbeFamily, str]
 _LocalPythonEnvironmentParts: TypeAlias = tuple[str, str, tuple[str, ...]]
+_ReflectiveHasattrReplayInputIdentity: TypeAlias = tuple[
+    str,
+    str,
+    int,
+    int,
+    int,
+    int,
+    str,
+]
+
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
+    _ReflectiveHasattrReplayInputIdentity,
+    ...,
+] = (
+    (
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_BOUNDARY_TEXT,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED,
+    ),
+    (
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED,
+    ),
+)
 
 _RUNTIME_PROBE_DEFAULT_LOCAL_PYTHON_HANDLER_KEYS: tuple[
     RuntimeProbeRunnerHandlerKey,
@@ -4362,31 +4402,37 @@ def _request_replay_payload_fields_for_request(
 def _is_reflective_hasattr_int_bit_length_probe_request(
     request: RuntimeProbeRequest,
 ) -> bool:
-    """Return whether a request is the exact ``hasattr`` replay-input pilot."""
+    """Return whether a request is an exact accepted ``hasattr`` replay path."""
     span = request.source_site.span
     return (
         request.family_label is RuntimeProbeFamily.REFLECTIVE_BUILTIN
         and request.form_label
         == _RUNTIME_PROBE_REFLECTIVE_HASATTR_LOCAL_PYTHON_FORM_LABEL
-        and request.boundary_text == _RUNTIME_PROBE_REFLECTIVE_HASATTR_BOUNDARY_TEXT
-        and request.source_site.snippet
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_BOUNDARY_TEXT
         and request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
         and request.subject_id
         == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SUBJECT_ID
         and request.reason_code is UnresolvedReasonCode.REFLECTIVE_BUILTIN
-        and request.source_site.file_path
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
-        and span.start_line
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
-        and span.start_column
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
-        and span.end_line
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE
-        and span.end_column
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN
-        and request.replay_target_seed
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
+        and any(
+            (
+                request.boundary_text == boundary_text
+                and request.source_site.snippet == boundary_text
+                and request.source_site.file_path == source_file_path
+                and span.start_line == source_start_line
+                and span.start_column == source_start_column
+                and span.end_line == source_end_line
+                and span.end_column == source_end_column
+                and request.replay_target_seed == replay_target_seed
+            )
+            for (
+                boundary_text,
+                source_file_path,
+                source_start_line,
+                source_start_column,
+                source_end_line,
+                source_end_column,
+                replay_target_seed,
+            ) in _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES
+        )
     )
 
 

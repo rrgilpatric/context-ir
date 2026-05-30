@@ -2,6 +2,144 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Direct-Literal Hasattr Runtime Acquisition Release Unit Corrected
+
+- Corrected a P2 release-unit routing mismatch found by read-only
+  release-unit audit.
+- Finding corrected:
+  - `PLAN.md` still listed the older direct-literal `hasattr` eval-matrix
+    release unit immediately after the new runtime-acquisition slice
+  - that stale list omitted the current source/test/docs release unit and
+    included old eval fixture/task/run-spec files
+  - after full regression, `tests/test_eval_signal_smoke_e.py` also joined the
+    release unit for the deterministic Task 3 confidence-golden correction to
+    `0.002012787339374718`
+- Current runtime-acquisition release unit is now recorded as exactly:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- The older direct-literal `hasattr` eval-matrix release unit remains
+  historical and closed.
+- No source/runtime behavior was changed by this continuity correction.
+- Acceptance status: first-pass
+
+## 2026-05-30 -- Direct-Literal Hasattr Runtime Acquisition Docs Correction
+
+- Corrected the P3 documentation and claim-boundary gap after the accepted
+  source/test slice that promotes exactly
+  `hasattr(obj, "bit_length")` into default local runtime probe acquisition.
+- Stale claim corrected:
+  - the direct-literal `hasattr(obj, "bit_length")` surface is no longer
+    described as eval-only or as having no source-runtime widening
+  - the `oracle_signal_hasattr_literal_probe_matrix` remains internal evidence,
+    and the same exact replay identity now also has default local runtime
+    probe acquisition
+- Preserved boundary:
+  - this is still a single exact replay identity, not generalized literal
+    `hasattr`, not all `hasattr/2`, and not `getattr` / `setattr` / `delattr`
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `bit_length` dependency edge, selected symbol, or selected
+    attribute unit is introduced
+  - public/demo, benchmark, latency, production, API/MCP/package-export/
+    schema/scoring/compiler/optimizer/winner-selection claims remain held
+- Acceptance status: first-pass
+
+## 2026-05-30 -- Direct-Literal Hasattr Runtime Acquisition Slice Selected
+
+- Reviewed the returned read-only runtime acquisition/generalization planning
+  spike.
+- Completion state: DONE.
+- Findings: none.
+- Live repo truth verified by control before this continuity update:
+  - branch `main`
+  - `HEAD=origin/main=b9b1973`
+  - workspace dirty only with control-state `PLAN.md` / `BUILDLOG.md`
+    continuity edits
+  - no staged files
+  - `git diff --check` clean
+  - `git diff -- src/` empty
+- Accepted planning finding:
+  - the smallest safe source/contract implementation slice is exactly
+    direct-literal `hasattr(obj, "bit_length")` default runtime probe
+    acquisition
+  - this is safer than `getattr`, `setattr`, or `delattr` because it reuses
+    the existing `reflective_builtin:hasattr/2` acquisition/admission/
+    provenance path, produces only a boolean presence observation, does not
+    materialize returned values, and has no runtime mutation side effect
+  - current planner/request derivation can identify the direct-literal request,
+    but default local subprocess execution remains wired to the older exact
+    `hasattr(obj, name)` replay-input pilot
+- Selected next implementation slice:
+  - promote only exact direct-literal `hasattr(obj, "bit_length")` into
+    default local runtime probe acquisition
+  - preserve unsupported/opaque primary truth and additive-only runtime
+    provenance
+  - keep adjacent `hasattr` forms, all `getattr`, `setattr`, `delattr`,
+    generalized reflective-builtin support, runtime mutation promotion, API,
+    MCP, schema, scoring, compiler, optimizer, winner selection, package
+    export, Task 4, public/demo, benchmark, latency, production, and
+    generalized-runtime surfaces held
+- Acceptance status: first-pass
+
+## 2026-05-29 -- Runtime Acquisition Planning Tranche Selected
+
+- Reviewed the returned read-only tranche-selection spike after the pushed
+  direct-literal `delattr(obj, "flag")` route sync.
+- Completion state: DONE.
+- Findings: none.
+- Live repo truth verified by control before this continuity update:
+  - branch `main`
+  - `HEAD=origin/main=b9b1973`
+  - clean worktree
+  - `git diff --check` clean
+  - `git diff -- src/` empty
+  - `a1df336..HEAD` contains only `PLAN.md` and `BUILDLOG.md`
+- Accepted routing evidence:
+  - the latest implementation/eval authority remains
+    `a1df336 Add direct-literal delattr eval pilot`
+  - the latest continuity authority is
+    `b9b1973 Sync direct-literal delattr push routing`
+  - the repo now has broad internal eval-only runtime-backed evidence,
+    including the direct-literal `getattr` / `hasattr` / `setattr` /
+    `delattr` quartet
+  - those releases deliberately did not widen `src/`, runtime acquisition,
+    API/MCP, schema, scoring, compiler, optimizer, winner selection,
+    public/demo claims, or benchmark/latency claims
+- Selected next tranche:
+  - one read-only runtime acquisition/generalization planning and
+    decomposition spike
+  - the spike must decide the smallest safe source/contract implementation
+    slice, if any, that promotes one already-evidenced subset into default
+    runtime probe acquisition while preserving unsupported/opaque primary truth
+    and additive-only runtime provenance
+- Fallback only if Ryan rejects or defers the planning tranche:
+  - one bounded internal eval-only `DYNAMIC_IMPORT` imported-name literal pilot
+    for exactly `from importlib import import_module` plus
+    `import_module("plugins.weather")`
+- Guardrails:
+  - do not implement yet
+  - do not run Task 4
+  - do not update public/demo, benchmark, latency, production, generalized
+    runtime, API, or MCP claims
+  - do not route another eval-only pilot unless Ryan rejects or defers the
+    planning tranche
+  - do not stage, commit, or push
+- Next control action:
+  - issue the read-only runtime acquisition/generalization planning prompt
+- Acceptance status: first-pass
+
 ## 2026-05-29 -- Direct-Literal Delattr Push Completed
 
 - Ryan authorized pushing the direct-literal `delattr(obj, "flag")` release.

@@ -45,10 +45,11 @@ evidence. The current internal eval-only
 `importlib.import_module("plugins.weather")` sibling evidence. The narrow
 internal eval-only `oracle_signal_getattr_literal_probe_matrix` evidence is a
 `REFLECTIVE_BUILTIN` / direct-literal `getattr(obj, "bit_length")` sibling
-pilot. The narrow internal eval-only
-`oracle_signal_hasattr_literal_probe_matrix` evidence is a
-`REFLECTIVE_BUILTIN` / direct-literal `hasattr(obj, "bit_length")` sibling
-pilot. The current internal eval-only
+pilot. The narrow `oracle_signal_hasattr_literal_probe_matrix` evidence
+remains an internal `REFLECTIVE_BUILTIN` / direct-literal
+`hasattr(obj, "bit_length")` sibling matrix; the same exact replay identity
+now also has default local runtime probe acquisition. The current internal
+eval-only
 `oracle_signal_setattr_literal_probe_matrix` evidence is a
 `RUNTIME_MUTATION` / direct-literal `setattr(obj, "flag", value)` sibling
 pilot. The narrow internal eval-only
@@ -102,8 +103,8 @@ attribute dependency edge, selected attribute symbol, or selected `bit_length`
 unit is introduced. The no-widening boundary preserves public comparative
 claims at the existing quad matrix and includes no
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark widening. The current internal eval-only
-`oracle_signal_hasattr_literal_probe_matrix` evidence covers exactly
+benchmark widening. The current `oracle_signal_hasattr_literal_probe_matrix`
+matrix evidence covers exactly
 `hasattr(obj, "bit_length")`: 1 task x 2 budgets x 3 providers at budgets
 `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and
 `import_neighborhood_files`. The fixture boundary is the direct-literal call
@@ -117,10 +118,13 @@ additive only. `context_ir` selects `def:main.py:main.probe_literal_attribute`,
 select `main.py` at budget `220`, but their selected-unit layer remains empty
 and they do not select the unsupported/runtime evidence unit. No static
 attribute dependency edge, selected attribute symbol, or selected `bit_length`
-unit is introduced. The no-widening boundary preserves public comparative
-claims at the existing quad matrix and includes no
-source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark widening. The current internal eval-only
+unit is introduced. The same exact direct-literal replay identity now has
+default local runtime probe acquisition. That acquisition does not generalize
+literal `hasattr`, all `hasattr/2`, `hasattr(obj, name)`, or `getattr` /
+`setattr` / `delattr`. Public comparative claims stay bounded to the existing
+quad matrix, and no API/MCP/package-export/schema/scoring/compiler/optimizer/
+winner-selection/product/public-demo/benchmark/latency/production widening is
+included. The current internal eval-only
 `oracle_signal_setattr_literal_probe_matrix` evidence covers exactly
 `setattr(obj, "flag", value)`: 1 task x 2 budgets x 3 providers at budgets
 `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and

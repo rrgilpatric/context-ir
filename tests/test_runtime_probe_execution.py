@@ -371,6 +371,36 @@ def _reflective_hasattr_exact_replay_input_request() -> (
     )
 
 
+def _reflective_hasattr_literal_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact literal-hasattr pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=37,
+            ),
+            snippet='hasattr(obj, "bit_length")',
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text='hasattr(obj, "bit_length")',
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_HASATTR_FORM_LABEL,
+        replay_target_seed="main.probe_literal_attribute",
+        replay_selector_seed=(
+            "call:main.probe_literal_attribute:"
+            f"{_REFLECTIVE_HASATTR_FORM_LABEL}@main.py:2:11:2:37"
+        ),
+    )
+
+
 def _reflective_getattr_request(
     start_line: int = 3,
     *,
@@ -1157,10 +1187,18 @@ def test_materialize_runtime_probe_execution_inputs_preserves_plan_order_and_rep
     assert program.provenance_records == original_provenance_records
 
 
-def test_exact_hasattr_probe_appends_request_replay_payload_fields() -> None:
+@pytest.mark.parametrize(
+    "source_request",
+    (
+        _reflective_hasattr_exact_replay_input_request(),
+        _reflective_hasattr_literal_exact_replay_input_request(),
+    ),
+)
+def test_exact_hasattr_probe_appends_request_replay_payload_fields(
+    source_request: runtime_probe_requests.RuntimeProbeRequest,
+) -> None:
     """The exact hasattr pilot appends pre-observation replay inputs."""
-    request = _reflective_hasattr_exact_replay_input_request()
-    runner_request = _local_python_runner_request(request=request)
+    runner_request = _local_python_runner_request(request=source_request)
     invocation = _local_python_subprocess_invocation(runner_request)
     payload = _local_python_worker_request_payload(invocation)
     transport = _local_python_worker_request_stdin_transport(invocation)
@@ -4053,6 +4091,53 @@ def test_default_local_python_subprocess_runner_executes_exact_hasattr_replay_in
     assert attempt.failure_detail_fields == ()
 
 
+def test_default_local_python_subprocess_runner_executes_exact_literal_hasattr(
+    tmp_path: Path,
+) -> None:
+    """The default runner calls ``main.probe_literal_attribute(1)``."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_literal_attribute(obj: object) -> bool:
+                assert obj == 1
+                return hasattr(obj, "bit_length")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_hasattr_literal_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (_field("attribute_present", "true"),)
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
 def test_reflective_hasattr_local_python_runner_rejects_boundary_drift(
     tmp_path: Path,
 ) -> None:
@@ -4074,6 +4159,49 @@ def test_reflective_hasattr_local_python_runner_rejects_boundary_drift(
     )
     request = _reflective_hasattr_request(
         boundary_text='hasattr(obj, "value")',
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_reflective_hasattr_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.failure_detail_fields[0] == _field(
+        "failure_source",
+        "local_python_process_completion",
+    )
+
+
+def test_reflective_hasattr_local_python_runner_rejects_unapproved_literal(
+    tmp_path: Path,
+) -> None:
+    """The literal boundary is accepted only for the exact replay identity."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run() -> bool:
+                obj = 1
+                return hasattr(obj, "bit_length")
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_hasattr_request(
+        boundary_text='hasattr(obj, "bit_length")',
     )
     runner_request = _local_python_runner_request(
         (

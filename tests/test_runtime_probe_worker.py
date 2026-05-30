@@ -424,6 +424,36 @@ def _reflective_hasattr_exact_replay_input_request() -> (
     )
 
 
+def _reflective_hasattr_literal_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact literal-hasattr pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=37,
+            ),
+            snippet='hasattr(obj, "bit_length")',
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text='hasattr(obj, "bit_length")',
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_HASATTR_FORM_LABEL,
+        replay_target_seed="main.probe_literal_attribute",
+        replay_selector_seed=(
+            "call:main.probe_literal_attribute:"
+            f"{_REFLECTIVE_HASATTR_FORM_LABEL}@main.py:2:11:2:37"
+        ),
+    )
+
+
 def _reflective_getattr_request(
     *,
     source_file_path: str = "main.py",
@@ -4549,11 +4579,18 @@ def test_reflective_hasattr_worker_request_materializes_replay_contract() -> Non
     )
 
 
-def test_reflective_hasattr_worker_request_materializes_exact_replay_inputs() -> None:
+@pytest.mark.parametrize(
+    "source_request",
+    (
+        _reflective_hasattr_exact_replay_input_request(),
+        _reflective_hasattr_literal_exact_replay_input_request(),
+    ),
+)
+def test_reflective_hasattr_worker_request_materializes_exact_replay_inputs(
+    source_request: runtime_probe_requests.RuntimeProbeRequest,
+) -> None:
     """The exact pilot keeps object and attribute replay inputs in the request."""
-    payload = _valid_worker_payload_for_request(
-        _reflective_hasattr_exact_replay_input_request()
-    )
+    payload = _valid_worker_payload_for_request(source_request)
 
     materialize_request = (
         runtime_probe_worker.materialize_runtime_probe_reflective_hasattr_worker_request
@@ -4563,7 +4600,9 @@ def test_reflective_hasattr_worker_request_materializes_exact_replay_inputs() ->
     assert request.subject_id == "unsupported:call:main.py:2:11"
     assert request.source_start_line == 2
     assert request.source_start_column == 11
-    assert request.replay_target_seed == "main.probe_attribute"
+    assert request.source_end_column == source_request.source_site.span.end_column
+    assert request.boundary_text == source_request.boundary_text
+    assert request.replay_target_seed == source_request.replay_target_seed
     assert request.request_replay_payload_fields[-2:] == (
         _field("object_type", "builtins.int"),
         _field("attribute_name", "bit_length"),
@@ -4602,6 +4641,7 @@ def test_reflective_hasattr_worker_request_accepts_only_exact_form(
     ("replay_key", "replay_value", "error_match"),
     (
         ("reason_code", "dynamic_import", "reason_code"),
+        ("boundary_text", 'hasattr(obj, "bit_length")', "direct-literal"),
         ("boundary_text", 'hasattr(obj, "value")', "boundary_text"),
         ("family_label", "dynamic_import", "family_label"),
         ("form_label", _REFLECTIVE_GETATTR_TWO_FORM_LABEL, "form_label"),
@@ -4636,15 +4676,21 @@ def test_reflective_hasattr_worker_request_rejects_replay_drift(
         ("unexpected", "value", "exact replay inputs"),
     ),
 )
+@pytest.mark.parametrize(
+    "source_request",
+    (
+        _reflective_hasattr_exact_replay_input_request(),
+        _reflective_hasattr_literal_exact_replay_input_request(),
+    ),
+)
 def test_reflective_hasattr_worker_request_rejects_bad_exact_replay_inputs(
+    source_request: runtime_probe_requests.RuntimeProbeRequest,
     replay_key: str,
     replay_value: str | None,
     error_match: str,
 ) -> None:
     """The exact pilot rejects missing, wrong, duplicate, or extra replay keys."""
-    payload = _valid_worker_payload_for_request(
-        _reflective_hasattr_exact_replay_input_request()
-    )
+    payload = _valid_worker_payload_for_request(source_request)
     if replay_value is None:
         fields = tuple(
             field
@@ -4736,6 +4782,51 @@ def test_reflective_hasattr_worker_concrete_observer_consumes_exact_replay_input
     )
     payload = _valid_worker_payload_for_request(
         _reflective_hasattr_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+    materialize_request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_hasattr_worker_request
+    )
+    request = materialize_request(payload)
+    original_hasattr = builtins.hasattr
+    sys.modules.pop("main", None)
+
+    try:
+        observation = _observe_reflective_hasattr_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+
+    assert observation.attribute_present is True
+    assert observation.request_replay_payload_fields[-2:] == (
+        _field("object_type", "builtins.int"),
+        _field("attribute_name", "bit_length"),
+    )
+    assert (
+        runtime_probe_worker.materialize_runtime_probe_reflective_hasattr_worker_success_response(
+            observation
+        ).observed_replay_inputs
+        == ()
+    )
+    assert builtins.hasattr is original_hasattr
+
+
+def test_reflective_hasattr_worker_concrete_observer_consumes_literal_replay_inputs(
+    tmp_path: Path,
+) -> None:
+    """The exact literal pilot calls ``main.probe_literal_attribute(1)``."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_literal_attribute(obj: object) -> bool:\n"
+            "    assert obj == 1\n"
+            '    return hasattr(obj, "bit_length")\n'
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_hasattr_literal_exact_replay_input_request(),
         python_executable=sys.executable,
         working_directory=str(tmp_path),
         python_path_entries=(project_source_path,),
@@ -8470,6 +8561,52 @@ def test_reflective_hasattr_worker_default_subprocess_observes_exact_replay_inpu
     )
     payload = _valid_worker_payload_for_request(
         _reflective_hasattr_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    assert json.loads(completed.stdout) == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "attribute_present",
+                "value": "true",
+            },
+        ],
+    }
+
+
+def test_reflective_hasattr_worker_default_subprocess_observes_literal_replay_inputs(
+    tmp_path: Path,
+) -> None:
+    """The real worker consumes the exact direct-literal replay-input pair."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_literal_attribute(obj: object) -> bool:\n"
+            "    assert obj == 1\n"
+            '    return hasattr(obj, "bit_length")\n'
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_hasattr_literal_exact_replay_input_request(),
         python_executable=sys.executable,
         working_directory=str(tmp_path),
         python_path_entries=(project_source_path,),

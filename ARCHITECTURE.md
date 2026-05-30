@@ -21,7 +21,9 @@ imported-name `import_module(name)`, and imported-alias
 `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
 `getattr(obj, name)`, plus a narrow direct-literal
 `getattr(obj, "bit_length")` sibling pilot and a narrow direct-literal
-`hasattr(obj, "bit_length")` sibling pilot, plus a narrow direct-literal
+`hasattr(obj, "bit_length")` surface whose matrix remains internal evidence
+and whose exact replay identity now has default local runtime probe
+acquisition, plus a narrow direct-literal
 `setattr(obj, "flag", value)` runtime-mutation pilot and a narrow
 direct-literal `delattr(obj, "flag")` runtime-mutation pilot. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
@@ -45,9 +47,9 @@ budget `220`, but they select no semantic units and do not select the
 unsupported/runtime evidence unit. No static attribute dependency edge,
 selected `bit_length` symbol, selected `bit_length` unit, public API, MCP,
 package export, schema, scoring, optimizer, compiler, winner-selection, or
-public benchmark widening is included. The current internal
-eval-only `REFLECTIVE_BUILTIN` / direct-literal
-`hasattr(obj, "bit_length")` pilot remains one task only through
+public benchmark widening is included. The current `REFLECTIVE_BUILTIN` /
+direct-literal `hasattr(obj, "bit_length")` surface has two bounded parts:
+the internal evidence matrix remains one task only through
 `oracle_signal_hasattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers
 at budgets `[220, 100]`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
@@ -56,13 +58,18 @@ is exactly `hasattr(obj, "bit_length")`; no name variable,
 reflective-builtin behavior is included. The runtime payload is exactly
 `attribute_present=true`. Unsupported selector and unsupported selected-unit
 truth remain `unsupported/opaque`; runtime provenance remains additive only.
+The same exact replay identity is now admitted by default local runtime probe
+acquisition. That acquisition is limited to this single direct-literal replay
+identity; it does not generalize literal `hasattr`, all `hasattr/2`,
+`hasattr(obj, name)`, or `getattr` / `setattr` / `delattr`.
 `context_ir` selects the edit symbol, digest support symbol, and unsupported
 call boundary at both budgets. Baseline providers may select `main.py` at
 budget `220`, but they select no semantic units and do not select the
 unsupported/runtime evidence unit. No static attribute dependency edge,
 selected `bit_length` symbol, selected `bit_length` unit, public API, MCP,
-package export, schema, scoring, optimizer, compiler, winner-selection, or
-public benchmark widening is included. The current internal
+package export, schema, scoring, optimizer, compiler, winner-selection,
+public/demo, benchmark, latency, production, or generalized
+reflective-builtin widening is included. The current internal
 eval-only `RUNTIME_MUTATION` / direct-literal
 `setattr(obj, "flag", value)` pilot remains one task only through
 `oracle_signal_setattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers

@@ -107,6 +107,9 @@ _DYNAMIC_IMPORT_WORKER_IMPORT_SHAPE_ERROR_MESSAGES = frozenset(
 )
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL = "reflective_builtin:hasattr/2"
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT = "hasattr(obj, name)"
+_REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT = (
+    'hasattr(obj, "bit_length")'
+)
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_GLOBAL_NAME = "hasattr"
 _REFLECTIVE_BUILTIN_HASATTR_OBJECT_TYPE_REPLAY_KEY = "object_type"
 _REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY = "attribute_name"
@@ -117,6 +120,10 @@ _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN = "11"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE = "2"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN = "29"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED = "main.probe_attribute"
+_REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = "37"
+_REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
+    "main.probe_literal_attribute"
+)
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_FORM_LABEL = "reflective_builtin:getattr/2"
@@ -6241,9 +6248,6 @@ def _validate_runtime_probe_reflective_hasattr_worker_request(
         request.boundary_text,
         field_name="boundary_text",
     )
-    _validate_runtime_probe_reflective_hasattr_worker_request_boundary_text(
-        request.boundary_text
-    )
     _validate_runtime_probe_worker_metadata_text(
         request.replay_target_seed,
         field_name="replay_target_seed",
@@ -6355,14 +6359,32 @@ def _validate_runtime_probe_reflective_hasattr_worker_request(
 
 
 def _validate_runtime_probe_reflective_hasattr_worker_request_boundary_text(
-    boundary_text: str,
+    replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject exact-hasattr requests that do not carry the approved boundary."""
-    if boundary_text != _REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT:
-        raise ValueError(
-            "runtime probe reflective builtin hasattr worker boundary_text must be "
-            f"{_REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT}"
+    """Reject exact-hasattr requests outside approved boundary identities."""
+    boundary_text = replay_fields_by_key["boundary_text"]
+    if boundary_text == _REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT:
+        return
+    if (
+        boundary_text
+        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
+        and _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
+            replay_fields_by_key
         )
+    ):
+        return
+    if (
+        boundary_text
+        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin hasattr worker boundary_text must match "
+            "the exact direct-literal bit_length replay identity"
+        )
+    raise ValueError(
+        "runtime probe reflective builtin hasattr worker boundary_text must be "
+        f"{_REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT}"
+    )
 
 
 def _validate_runtime_probe_reflective_hasattr_worker_observer(
@@ -6403,6 +6425,10 @@ def _runtime_probe_reflective_hasattr_target_args(
         field_name="request_replay_payload_fields",
     )
     _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(exact_fields_by_key)
+    if _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return (1,)
     return (
         1,
         exact_fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY],
@@ -6877,7 +6903,7 @@ def _validate_runtime_probe_reflective_hasattr_replay_metadata(
         field_name="boundary_text",
     )
     _validate_runtime_probe_reflective_hasattr_worker_request_boundary_text(
-        replay_fields_by_key["boundary_text"]
+        replay_fields_by_key
     )
     _validate_runtime_probe_worker_source_span(
         start_line=_runtime_probe_worker_replay_span_value(
@@ -6919,7 +6945,18 @@ def _validate_runtime_probe_reflective_hasattr_exact_replay_inputs_if_needed(
 def _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
     replay_fields_by_key: Mapping[str, str],
 ) -> bool:
-    """Return whether replay identity targets the single exact hasattr pilot."""
+    """Return whether replay identity targets an exact accepted hasattr pilot."""
+    return _is_runtime_probe_reflective_hasattr_name_variable_replay_input_pilot(
+        replay_fields_by_key
+    ) or _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
+        replay_fields_by_key
+    )
+
+
+def _is_runtime_probe_reflective_hasattr_name_variable_replay_input_pilot(
+    replay_fields_by_key: Mapping[str, str],
+) -> bool:
+    """Return whether replay identity targets ``hasattr(obj, name)``."""
     return (
         replay_fields_by_key["subject_id"]
         == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SUBJECT_ID
@@ -6943,6 +6980,36 @@ def _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
         == _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
         and replay_fields_by_key["replay_target_seed"]
         == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
+    )
+
+
+def _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
+    replay_fields_by_key: Mapping[str, str],
+) -> bool:
+    """Return whether replay identity targets ``hasattr(obj, "bit_length")``."""
+    return (
+        replay_fields_by_key["subject_id"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SUBJECT_ID
+        and replay_fields_by_key["source_file_path"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
+        and replay_fields_by_key["source_start_line"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+        and replay_fields_by_key["source_start_column"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+        and replay_fields_by_key["source_end_line"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE
+        and replay_fields_by_key["source_end_column"]
+        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN
+        and replay_fields_by_key["reason_code"]
+        == UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
+        and replay_fields_by_key["boundary_text"]
+        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
+        and replay_fields_by_key["family_label"]
+        == RuntimeProbeFamily.REFLECTIVE_BUILTIN.value
+        and replay_fields_by_key["form_label"]
+        == _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
+        and replay_fields_by_key["replay_target_seed"]
+        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED
     )
 
 

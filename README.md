@@ -35,8 +35,10 @@ infrastructure and a current four-asset signal evidence surface documented in
 default-return and value-return branches of `getattr(obj, name, default)`, plus
 a current internal eval-only raised-`AttributeError` branch pilot for exactly
 `getattr(obj, name)`, plus a narrow internal eval-only direct-literal
-`getattr(obj, "bit_length")` pilot, plus a narrow internal eval-only
-direct-literal `hasattr(obj, "bit_length")` pilot, plus a current internal
+`getattr(obj, "bit_length")` pilot, plus a narrow direct-literal
+`hasattr(obj, "bit_length")` surface whose matrix remains internal evidence
+and whose exact replay identity now has default local runtime probe
+acquisition, plus a current internal
 eval-only direct-literal `RUNTIME_MUTATION` /
 `setattr(obj, "flag", value)` pilot, plus a current internal eval-only
 direct-literal `RUNTIME_MUTATION` / `delattr(obj, "flag")` pilot, plus a current internal one-argument
@@ -115,8 +117,8 @@ unsupported/runtime evidence unit; no static attribute dependency edge,
 selected `bit_length` symbol, selected `bit_length` unit,
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or public/demo claim widening is included. The
-current internal eval-only direct-literal `hasattr(obj, "bit_length")` pilot
-covers only `oracle_signal_hasattr_literal_probe_matrix`: 1 task x 2 budgets x
+current direct-literal `hasattr(obj, "bit_length")` surface includes
+`oracle_signal_hasattr_literal_probe_matrix`: 1 task x 2 budgets x
 3 providers at budgets `[220, 100]`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
 exactly `hasattr(obj, "bit_length")`; no name variable,
@@ -129,8 +131,11 @@ baselines may select `main.py` at budget `220`, but selected semantic units
 stay empty and they do not select the unsupported/runtime evidence unit; no
 static attribute
 dependency edge, selected `bit_length` symbol, selected `bit_length` unit,
-source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
-benchmark widening, or public/demo claim widening is included. The
+API/MCP/package-export/schema/scoring/compiler/optimizer/winner-selection,
+public/demo, benchmark, latency, or production claim widening is included. The
+same exact direct-literal replay identity now has default local runtime probe
+acquisition; this does not generalize literal `hasattr`, all `hasattr/2`,
+`hasattr(obj, name)`, or `getattr` / `setattr` / `delattr`. The
 current internal eval-only direct-literal `setattr(obj, "flag", value)` pilot
 covers only `oracle_signal_setattr_literal_probe_matrix`: 1 task x 2 budgets x
 3 providers at budgets `[220, 100]`, against providers `context_ir`,
