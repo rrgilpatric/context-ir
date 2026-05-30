@@ -289,93 +289,241 @@ _REQUIRED_WORKER_REQUEST_REPLAY_FIELD_KEYS = (
 _SourceSiteIdentity: TypeAlias = tuple[str, int, int, int, int]
 RuntimeProbeRunnerHandlerKey: TypeAlias = tuple[RuntimeProbeFamily, str]
 _LocalPythonEnvironmentParts: TypeAlias = tuple[str, str, tuple[str, ...]]
-_ReflectiveHasattrReplayInputIdentity: TypeAlias = tuple[
-    str,
-    str,
-    int,
-    int,
-    int,
-    int,
-    str,
-    str,
-]
-_ReflectiveGetattrReplayInputIdentity: TypeAlias = _ReflectiveHasattrReplayInputIdentity
-_RuntimeMutationSetattrReplayInputIdentity: TypeAlias = (
-    _ReflectiveHasattrReplayInputIdentity
-)
-_RuntimeMutationDelattrReplayInputIdentity: TypeAlias = (
-    _ReflectiveHasattrReplayInputIdentity
-)
+_RuntimeProbeExactReplayPayloadField: TypeAlias = tuple[str, str]
 
-_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
-    _ReflectiveHasattrReplayInputIdentity,
-    ...,
-] = (
-    (
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_BOUNDARY_TEXT,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED,
+
+@dataclass(frozen=True)
+class _RuntimeProbeExactReplayContract:
+    """Internal exact replay contract for accepted runtime-acquisition probes."""
+
+    contract_id: str
+    family_label: RuntimeProbeFamily
+    form_label: str
+    subject_kind: SemanticSubjectKind
+    subject_id: str
+    reason_code: UnresolvedReasonCode
+    boundary_text: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    replay_target_seed: str
+    replay_selector_seed: str
+    replay_payload_fields: tuple[_RuntimeProbeExactReplayPayloadField, ...]
+
+
+_EXACT_REPLAY_HASATTR_NAME_CONTRACT = _RuntimeProbeExactReplayContract(
+    contract_id="reflective_builtin:hasattr/2:name-variable-bit_length",
+    family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+    form_label=_RUNTIME_PROBE_REFLECTIVE_HASATTR_LOCAL_PYTHON_FORM_LABEL,
+    subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+    subject_id=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SUBJECT_ID,
+    reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+    boundary_text=_RUNTIME_PROBE_REFLECTIVE_HASATTR_BOUNDARY_TEXT,
+    source_file_path=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
     ),
-    (
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED,
-        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED,
+    source_start_line=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+    ),
+    source_start_column=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+    ),
+    source_end_line=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+    source_end_column=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN
+    ),
+    replay_target_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
+    ),
+    replay_selector_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    ),
+    replay_payload_fields=(
+        (
+            "object_type",
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE,
+        ),
+        (
+            "attribute_name",
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
+        ),
     ),
 )
-_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
-    _ReflectiveGetattrReplayInputIdentity,
-    ...,
-] = (
-    (
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT,
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH,
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE,
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN,
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN,
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED,
-        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED,
+_EXACT_REPLAY_HASATTR_LITERAL_CONTRACT = _RuntimeProbeExactReplayContract(
+    contract_id="reflective_builtin:hasattr/2:literal-bit_length",
+    family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+    form_label=_RUNTIME_PROBE_REFLECTIVE_HASATTR_LOCAL_PYTHON_FORM_LABEL,
+    subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+    subject_id=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SUBJECT_ID,
+    reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+    boundary_text=(_RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT),
+    source_file_path=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
+    ),
+    source_start_line=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+    ),
+    source_start_column=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+    ),
+    source_end_line=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+    source_end_column=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN
+    ),
+    replay_target_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED
+    ),
+    replay_selector_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    ),
+    replay_payload_fields=(
+        (
+            "object_type",
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE,
+        ),
+        (
+            "attribute_name",
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
+        ),
     ),
 )
-_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_IDENTITIES: tuple[
-    _RuntimeMutationSetattrReplayInputIdentity,
-    ...,
-] = (
-    (
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_BOUNDARY_TEXT,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_FILE_PATH,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_LINE,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_COLUMN,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_LINE,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_COLUMN,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_TARGET_SEED,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED,
+_EXACT_REPLAY_GETATTR_LITERAL_CONTRACT = _RuntimeProbeExactReplayContract(
+    contract_id="reflective_builtin:getattr/2:literal-bit_length",
+    family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+    form_label=_RUNTIME_PROBE_REFLECTIVE_GETATTR_LOCAL_PYTHON_FORM_LABEL,
+    subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+    subject_id=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SUBJECT_ID,
+    reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+    boundary_text=(_RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT),
+    source_file_path=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
+    ),
+    source_start_line=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+    ),
+    source_start_column=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+    ),
+    source_end_line=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+    source_end_column=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN
+    ),
+    replay_target_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED
+    ),
+    replay_selector_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    ),
+    replay_payload_fields=(
+        (
+            "object_type",
+            _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE,
+        ),
+        (
+            "attribute_name",
+            _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
+        ),
     ),
 )
-_RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_IDENTITIES: tuple[
-    _RuntimeMutationDelattrReplayInputIdentity,
+_EXACT_REPLAY_SETATTR_LITERAL_CONTRACT = _RuntimeProbeExactReplayContract(
+    contract_id="runtime_mutation:setattr/3:literal-flag",
+    family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+    form_label=_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LOCAL_PYTHON_FORM_LABEL,
+    subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+    subject_id=_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SUBJECT_ID,
+    reason_code=UnresolvedReasonCode.RUNTIME_MUTATION,
+    boundary_text=_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_BOUNDARY_TEXT,
+    source_file_path=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_FILE_PATH
+    ),
+    source_start_line=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_LINE
+    ),
+    source_start_column=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_COLUMN
+    ),
+    source_end_line=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_LINE
+    ),
+    source_end_column=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_COLUMN
+    ),
+    replay_target_seed=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_TARGET_SEED
+    ),
+    replay_selector_seed=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED
+    ),
+    replay_payload_fields=(
+        (
+            "object_type",
+            _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE,
+        ),
+        (
+            "attribute_name",
+            _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME,
+        ),
+        (
+            "assigned_value_type",
+            _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE,
+        ),
+        (
+            "assigned_value_literal",
+            _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL,
+        ),
+    ),
+)
+_EXACT_REPLAY_DELATTR_LITERAL_CONTRACT = _RuntimeProbeExactReplayContract(
+    contract_id="runtime_mutation:delattr/2:literal-flag",
+    family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+    form_label=_RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL,
+    subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+    subject_id=_RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SUBJECT_ID,
+    reason_code=UnresolvedReasonCode.RUNTIME_MUTATION,
+    boundary_text=_RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_BOUNDARY_TEXT,
+    source_file_path=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_FILE_PATH
+    ),
+    source_start_line=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_LINE
+    ),
+    source_start_column=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_COLUMN
+    ),
+    source_end_line=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_LINE
+    ),
+    source_end_column=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_COLUMN
+    ),
+    replay_target_seed=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_TARGET_SEED
+    ),
+    replay_selector_seed=(
+        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED
+    ),
+    replay_payload_fields=(
+        (
+            "object_type",
+            _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE,
+        ),
+        (
+            "attribute_name",
+            _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_ATTRIBUTE_NAME,
+        ),
+    ),
+)
+_RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS: tuple[
+    _RuntimeProbeExactReplayContract,
     ...,
 ] = (
-    (
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_BOUNDARY_TEXT,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_FILE_PATH,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_LINE,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_COLUMN,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_LINE,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_COLUMN,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_TARGET_SEED,
-        _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED,
-    ),
+    _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+    _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
 )
 
 _RUNTIME_PROBE_DEFAULT_LOCAL_PYTHON_HANDLER_KEYS: tuple[
@@ -4508,109 +4656,118 @@ def _request_replay_payload_fields_for_request(
     request: RuntimeProbeRequest,
 ) -> tuple[RuntimeProbeReplayField, ...]:
     """Return exact pre-observation replay inputs for pushed pilot requests."""
-    if _is_reflective_hasattr_int_bit_length_probe_request(request):
-        return (
-            RuntimeProbeReplayField(
-                key="object_type",
-                value=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE,
-            ),
-            RuntimeProbeReplayField(
-                key="attribute_name",
-                value=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
-            ),
-        )
-    if _is_reflective_getattr_int_bit_length_probe_request(request):
-        return (
-            RuntimeProbeReplayField(
-                key="object_type",
-                value=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE,
-            ),
-            RuntimeProbeReplayField(
-                key="attribute_name",
-                value=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
-            ),
-        )
-    if _is_runtime_mutation_setattr_literal_flag_probe_request(request):
-        return (
-            RuntimeProbeReplayField(
-                key="object_type",
-                value=(
-                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE
-                ),
-            ),
-            RuntimeProbeReplayField(
-                key="attribute_name",
-                value=(
-                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME
-                ),
-            ),
-            RuntimeProbeReplayField(
-                key="assigned_value_type",
-                value=(
-                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE
-                ),
-            ),
-            RuntimeProbeReplayField(
-                key="assigned_value_literal",
-                value=(
-                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL
-                ),
-            ),
-        )
-    if _is_runtime_mutation_delattr_literal_flag_probe_request(request):
-        return (
-            RuntimeProbeReplayField(
-                key="object_type",
-                value=(
-                    _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE
-                ),
-            ),
-            RuntimeProbeReplayField(
-                key="attribute_name",
-                value=(
-                    _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_ATTRIBUTE_NAME
-                ),
-            ),
-        )
-    return ()
+    contract = _runtime_probe_exact_replay_contract_for_request(request)
+    if contract is None:
+        return ()
+    return _runtime_probe_exact_replay_payload_fields(contract)
+
+
+def _runtime_probe_exact_replay_contract_for_request(
+    request: RuntimeProbeRequest,
+) -> _RuntimeProbeExactReplayContract | None:
+    """Return the accepted exact replay contract for a planned request."""
+    for contract in _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS:
+        if _runtime_probe_request_matches_exact_replay_contract(request, contract):
+            return contract
+    return None
+
+
+def _runtime_probe_request_matches_exact_replay_contract(
+    request: RuntimeProbeRequest,
+    contract: _RuntimeProbeExactReplayContract,
+) -> bool:
+    """Return whether a request matches one exact runtime-acquisition contract."""
+    span = request.source_site.span
+    return (
+        request.family_label is contract.family_label
+        and request.form_label == contract.form_label
+        and request.subject_kind is contract.subject_kind
+        and request.subject_id == contract.subject_id
+        and request.reason_code is contract.reason_code
+        and request.boundary_text == contract.boundary_text
+        and request.source_site.snippet == contract.boundary_text
+        and request.source_site.file_path == contract.source_file_path
+        and span.start_line == contract.source_start_line
+        and span.start_column == contract.source_start_column
+        and span.end_line == contract.source_end_line
+        and span.end_column == contract.source_end_column
+        and request.replay_target_seed == contract.replay_target_seed
+        and request.replay_selector_seed == contract.replay_selector_seed
+    )
+
+
+def _runtime_probe_exact_replay_contract_for_replay_fields(
+    replay_fields_by_key: Mapping[str, str],
+) -> _RuntimeProbeExactReplayContract | None:
+    """Return the accepted exact replay contract for copied replay fields."""
+    for contract in _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS:
+        if _runtime_probe_replay_fields_match_exact_replay_contract(
+            replay_fields_by_key,
+            contract,
+        ):
+            return contract
+    return None
+
+
+def _runtime_probe_replay_fields_match_exact_replay_contract(
+    replay_fields_by_key: Mapping[str, str],
+    contract: _RuntimeProbeExactReplayContract,
+) -> bool:
+    """Return whether copied replay fields match an accepted exact contract."""
+    return (
+        replay_fields_by_key.get("subject_kind") == contract.subject_kind.value
+        and replay_fields_by_key.get("subject_id") == contract.subject_id
+        and replay_fields_by_key.get("source_file_path") == contract.source_file_path
+        and replay_fields_by_key.get("source_start_line")
+        == str(contract.source_start_line)
+        and replay_fields_by_key.get("source_start_column")
+        == str(contract.source_start_column)
+        and replay_fields_by_key.get("source_end_line") == str(contract.source_end_line)
+        and replay_fields_by_key.get("source_end_column")
+        == str(contract.source_end_column)
+        and replay_fields_by_key.get("reason_code") == contract.reason_code.value
+        and replay_fields_by_key.get("boundary_text") == contract.boundary_text
+        and replay_fields_by_key.get("family_label") == contract.family_label.value
+        and replay_fields_by_key.get("form_label") == contract.form_label
+        and replay_fields_by_key.get("replay_target_seed")
+        == contract.replay_target_seed
+        and replay_fields_by_key.get("replay_selector_seed")
+        == contract.replay_selector_seed
+    )
+
+
+def _runtime_probe_exact_replay_payload_fields(
+    contract: _RuntimeProbeExactReplayContract,
+) -> tuple[RuntimeProbeReplayField, ...]:
+    """Return typed replay payload fields for one exact contract."""
+    return tuple(
+        RuntimeProbeReplayField(key=key, value=value)
+        for key, value in contract.replay_payload_fields
+    )
+
+
+def _runtime_probe_exact_replay_payload_fields_by_key(
+    contract: _RuntimeProbeExactReplayContract,
+) -> dict[str, str]:
+    """Return exact replay payload fields keyed by singleton key."""
+    return dict(contract.replay_payload_fields)
+
+
+def _runtime_probe_exact_replay_payload_field_keys(
+    contract: _RuntimeProbeExactReplayContract,
+) -> frozenset[str]:
+    """Return the field keys appended by one exact replay contract."""
+    return frozenset(key for key, _value in contract.replay_payload_fields)
 
 
 def _is_reflective_hasattr_int_bit_length_probe_request(
     request: RuntimeProbeRequest,
 ) -> bool:
     """Return whether a request is an exact accepted ``hasattr`` replay path."""
-    span = request.source_site.span
-    return (
-        request.family_label is RuntimeProbeFamily.REFLECTIVE_BUILTIN
-        and request.form_label
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_LOCAL_PYTHON_FORM_LABEL
-        and request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
-        and request.subject_id
-        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SUBJECT_ID
-        and request.reason_code is UnresolvedReasonCode.REFLECTIVE_BUILTIN
-        and any(
-            (
-                request.boundary_text == boundary_text
-                and request.source_site.snippet == boundary_text
-                and request.source_site.file_path == source_file_path
-                and span.start_line == source_start_line
-                and span.start_column == source_start_column
-                and span.end_line == source_end_line
-                and span.end_column == source_end_column
-                and request.replay_target_seed == replay_target_seed
-                and request.replay_selector_seed == replay_selector_seed
-            )
-            for (
-                boundary_text,
-                source_file_path,
-                source_start_line,
-                source_start_column,
-                source_end_line,
-                source_end_column,
-                replay_target_seed,
-                replay_selector_seed,
-            ) in _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES
-        )
+    contract = _runtime_probe_exact_replay_contract_for_request(request)
+    return contract in (
+        _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     )
 
 
@@ -4618,121 +4775,24 @@ def _is_reflective_getattr_int_bit_length_probe_request(
     request: RuntimeProbeRequest,
 ) -> bool:
     """Return whether a request is the exact literal ``getattr`` replay path."""
-    span = request.source_site.span
-    return (
-        request.family_label is RuntimeProbeFamily.REFLECTIVE_BUILTIN
-        and request.form_label
-        == _RUNTIME_PROBE_REFLECTIVE_GETATTR_LOCAL_PYTHON_FORM_LABEL
-        and request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
-        and request.subject_id
-        == _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SUBJECT_ID
-        and request.reason_code is UnresolvedReasonCode.REFLECTIVE_BUILTIN
-        and any(
-            (
-                request.boundary_text == boundary_text
-                and request.source_site.snippet == boundary_text
-                and request.source_site.file_path == source_file_path
-                and span.start_line == source_start_line
-                and span.start_column == source_start_column
-                and span.end_line == source_end_line
-                and span.end_column == source_end_column
-                and request.replay_target_seed == replay_target_seed
-                and request.replay_selector_seed == replay_selector_seed
-            )
-            for (
-                boundary_text,
-                source_file_path,
-                source_start_line,
-                source_start_column,
-                source_end_line,
-                source_end_column,
-                replay_target_seed,
-                replay_selector_seed,
-            ) in _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES
-        )
-    )
+    contract = _runtime_probe_exact_replay_contract_for_request(request)
+    return contract is _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT
 
 
 def _is_runtime_mutation_setattr_literal_flag_probe_request(
     request: RuntimeProbeRequest,
 ) -> bool:
     """Return whether a request is the exact literal ``setattr`` replay path."""
-    span = request.source_site.span
-    return (
-        request.family_label is RuntimeProbeFamily.RUNTIME_MUTATION
-        and request.form_label
-        == _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LOCAL_PYTHON_FORM_LABEL
-        and request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
-        and request.subject_id
-        == _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SUBJECT_ID
-        and request.reason_code is UnresolvedReasonCode.RUNTIME_MUTATION
-        and any(
-            (
-                request.boundary_text == boundary_text
-                and request.source_site.snippet == boundary_text
-                and request.source_site.file_path == source_file_path
-                and span.start_line == source_start_line
-                and span.start_column == source_start_column
-                and span.end_line == source_end_line
-                and span.end_column == source_end_column
-                and request.replay_target_seed == replay_target_seed
-                and request.replay_selector_seed == replay_selector_seed
-            )
-            for (
-                boundary_text,
-                source_file_path,
-                source_start_line,
-                source_start_column,
-                source_end_line,
-                source_end_column,
-                replay_target_seed,
-                replay_selector_seed,
-            ) in (
-                _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_IDENTITIES
-            )
-        )
-    )
+    contract = _runtime_probe_exact_replay_contract_for_request(request)
+    return contract is _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT
 
 
 def _is_runtime_mutation_delattr_literal_flag_probe_request(
     request: RuntimeProbeRequest,
 ) -> bool:
     """Return whether a request is the exact literal ``delattr`` replay path."""
-    span = request.source_site.span
-    return (
-        request.family_label is RuntimeProbeFamily.RUNTIME_MUTATION
-        and request.form_label
-        == _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL
-        and request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
-        and request.subject_id
-        == _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SUBJECT_ID
-        and request.reason_code is UnresolvedReasonCode.RUNTIME_MUTATION
-        and any(
-            (
-                request.boundary_text == boundary_text
-                and request.source_site.snippet == boundary_text
-                and request.source_site.file_path == source_file_path
-                and span.start_line == source_start_line
-                and span.start_column == source_start_column
-                and span.end_line == source_end_line
-                and span.end_column == source_end_column
-                and request.replay_target_seed == replay_target_seed
-                and request.replay_selector_seed == replay_selector_seed
-            )
-            for (
-                boundary_text,
-                source_file_path,
-                source_start_line,
-                source_start_column,
-                source_end_line,
-                source_end_column,
-                replay_target_seed,
-                replay_selector_seed,
-            ) in (
-                _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_IDENTITIES
-            )
-        )
-    )
+    contract = _runtime_probe_exact_replay_contract_for_request(request)
+    return contract is _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT
 
 
 __all__ = [

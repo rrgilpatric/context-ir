@@ -19,7 +19,16 @@ from types import MappingProxyType, ModuleType
 from typing import NoReturn, TextIO, TypeAlias, cast
 
 from context_ir.runtime_probe_execution import (
+    _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+    _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
     RuntimeProbeLocalPythonWorkerRequestPayload,
+    _runtime_probe_exact_replay_contract_for_replay_fields,
+    _runtime_probe_exact_replay_payload_field_keys,
+    _runtime_probe_exact_replay_payload_fields_by_key,
+    _RuntimeProbeExactReplayContract,
     parse_runtime_probe_local_python_worker_request_payload,
 )
 from context_ir.runtime_probe_requests import RuntimeProbeFamily
@@ -429,36 +438,6 @@ _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "form_label",
     "replay_target_seed",
     "replay_selector_seed",
-)
-_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS = frozenset(
-    (
-        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
-        _REFLECTIVE_BUILTIN_HASATTR_OBJECT_TYPE_REPLAY_KEY,
-        _REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY,
-    )
-)
-_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS = frozenset(
-    (
-        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
-        _REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY,
-        _REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY,
-    )
-)
-_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS = frozenset(
-    (
-        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
-        _RUNTIME_MUTATION_SETATTR_OBJECT_TYPE_REPLAY_KEY,
-        _RUNTIME_MUTATION_SETATTR_ATTRIBUTE_NAME_REPLAY_KEY,
-        _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_TYPE_REPLAY_KEY,
-        _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY,
-    )
-)
-_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS = frozenset(
-    (
-        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
-        _RUNTIME_MUTATION_DELATTR_OBJECT_TYPE_REPLAY_KEY,
-        _RUNTIME_MUTATION_DELATTR_ATTRIBUTE_NAME_REPLAY_KEY,
-    )
 )
 
 
@@ -6559,8 +6538,12 @@ def _runtime_probe_reflective_hasattr_target_args(
     replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
         request.request_replay_payload_fields
     )
-    if not _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
+    )
+    if contract not in (
+        _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     ):
         return ()
 
@@ -6568,10 +6551,11 @@ def _runtime_probe_reflective_hasattr_target_args(
         request.request_replay_payload_fields,
         field_name="request_replay_payload_fields",
     )
-    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(exact_fields_by_key)
-    if _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
-        replay_fields_by_key
-    ):
+    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(
+        exact_fields_by_key,
+        contract=contract,
+    )
+    if contract is _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT:
         return (1,)
     return (
         1,
@@ -7075,25 +7059,34 @@ def _validate_runtime_probe_reflective_hasattr_exact_replay_inputs_if_needed(
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
     """Reject drifted request replay inputs for the exact hasattr pilot."""
-    if not _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
+    )
+    if contract not in (
+        _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     ):
         return
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
         field_name="request_replay_payload_fields",
     )
-    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(exact_fields_by_key)
+    _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(
+        exact_fields_by_key,
+        contract=contract,
+    )
 
 
 def _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
     replay_fields_by_key: Mapping[str, str],
 ) -> bool:
     """Return whether replay identity targets an exact accepted hasattr pilot."""
-    return _is_runtime_probe_reflective_hasattr_name_variable_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
-    ) or _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
-        replay_fields_by_key
+    )
+    return contract in (
+        _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     )
 
 
@@ -7101,83 +7094,60 @@ def _is_runtime_probe_reflective_hasattr_name_variable_replay_input_pilot(
     replay_fields_by_key: Mapping[str, str],
 ) -> bool:
     """Return whether replay identity targets ``hasattr(obj, name)``."""
-    return (
-        replay_fields_by_key["subject_id"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SUBJECT_ID
-        and replay_fields_by_key["source_file_path"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
-        and replay_fields_by_key["source_start_line"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
-        and replay_fields_by_key["source_start_column"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
-        and replay_fields_by_key["source_end_line"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE
-        and replay_fields_by_key["source_end_column"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN
-        and replay_fields_by_key["reason_code"]
-        == UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
-        and replay_fields_by_key["boundary_text"]
-        == _REFLECTIVE_BUILTIN_HASATTR_WORKER_BOUNDARY_TEXT
-        and replay_fields_by_key["family_label"]
-        == RuntimeProbeFamily.REFLECTIVE_BUILTIN.value
-        and replay_fields_by_key["form_label"]
-        == _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
-        and replay_fields_by_key["replay_target_seed"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
-        and replay_fields_by_key["replay_selector_seed"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        replay_fields_by_key
     )
+    return contract is _EXACT_REPLAY_HASATTR_NAME_CONTRACT
 
 
 def _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
     replay_fields_by_key: Mapping[str, str],
 ) -> bool:
     """Return whether replay identity targets ``hasattr(obj, "bit_length")``."""
-    return (
-        replay_fields_by_key["subject_id"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SUBJECT_ID
-        and replay_fields_by_key["source_file_path"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
-        and replay_fields_by_key["source_start_line"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
-        and replay_fields_by_key["source_start_column"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
-        and replay_fields_by_key["source_end_line"]
-        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE
-        and replay_fields_by_key["source_end_column"]
-        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN
-        and replay_fields_by_key["reason_code"]
-        == UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
-        and replay_fields_by_key["boundary_text"]
-        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
-        and replay_fields_by_key["family_label"]
-        == RuntimeProbeFamily.REFLECTIVE_BUILTIN.value
-        and replay_fields_by_key["form_label"]
-        == _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
-        and replay_fields_by_key["replay_target_seed"]
-        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED
-        and replay_fields_by_key["replay_selector_seed"]
-        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        replay_fields_by_key
+    )
+    return contract is _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT
+
+
+def _runtime_probe_worker_exact_replay_input_keys(
+    contract: _RuntimeProbeExactReplayContract,
+) -> frozenset[str]:
+    """Return full request replay-input keys for one exact worker contract."""
+    return frozenset(
+        (
+            *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
+            *_runtime_probe_exact_replay_payload_field_keys(contract),
+        )
+    )
+
+
+def _runtime_probe_worker_exact_replay_payload_matches_contract(
+    fields_by_key: Mapping[str, str],
+    contract: _RuntimeProbeExactReplayContract,
+) -> bool:
+    """Return whether exact payload fields match the accepted contract values."""
+    expected_fields = _runtime_probe_exact_replay_payload_fields_by_key(contract)
+    return all(
+        fields_by_key.get(field_key) == expected_value
+        for field_key, expected_value in expected_fields.items()
     )
 
 
 def _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(
     fields_by_key: Mapping[str, str],
+    *,
+    contract: _RuntimeProbeExactReplayContract = (_EXACT_REPLAY_HASATTR_NAME_CONTRACT),
 ) -> None:
     """Require the exact pilot to carry only the accepted replay input pair."""
-    if (
-        set(fields_by_key)
-        != _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS
-    ):
+    if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
         raise ValueError(
             "runtime probe reflective builtin hasattr worker exact replay inputs "
             "must contain only object_type and attribute_name"
         )
-    if (
-        fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_OBJECT_TYPE_REPLAY_KEY]
-        != _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE
-        or fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY]
-        != _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME
+    if not _runtime_probe_worker_exact_replay_payload_matches_contract(
+        fields_by_key,
+        contract,
     ):
         raise ValueError(
             "runtime probe reflective builtin hasattr worker exact replay inputs "
@@ -7466,15 +7436,19 @@ def _runtime_probe_reflective_getattr_exact_replay_inputs(
     replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
         request.request_replay_payload_fields
     )
-    if not _is_runtime_probe_reflective_getattr_literal_bit_length_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
-    ):
+    )
+    if contract is not _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT:
         return None
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
         field_name="request_replay_payload_fields",
     )
-    _validate_runtime_probe_reflective_getattr_exact_replay_inputs(exact_fields_by_key)
+    _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
+        exact_fields_by_key,
+        contract=contract,
+    )
     return exact_fields_by_key
 
 
@@ -9555,66 +9529,47 @@ def _validate_runtime_probe_reflective_getattr_exact_replay_inputs_if_needed(
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
     """Reject drifted request replay inputs for the exact literal getattr pilot."""
-    if not _is_runtime_probe_reflective_getattr_literal_bit_length_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
-    ):
+    )
+    if contract is not _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT:
         return
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
         field_name="request_replay_payload_fields",
     )
-    _validate_runtime_probe_reflective_getattr_exact_replay_inputs(exact_fields_by_key)
+    _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
+        exact_fields_by_key,
+        contract=contract,
+    )
 
 
 def _is_runtime_probe_reflective_getattr_literal_bit_length_replay_input_pilot(
     replay_fields_by_key: Mapping[str, str],
 ) -> bool:
     """Return whether replay identity targets ``getattr(obj, "bit_length")``."""
-    return (
-        replay_fields_by_key["subject_id"]
-        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SUBJECT_ID
-        and replay_fields_by_key["source_file_path"]
-        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
-        and replay_fields_by_key["source_start_line"]
-        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE
-        and replay_fields_by_key["source_start_column"]
-        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
-        and replay_fields_by_key["source_end_line"]
-        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE
-        and replay_fields_by_key["source_end_column"]
-        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN
-        and replay_fields_by_key["reason_code"]
-        == UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
-        and replay_fields_by_key["boundary_text"]
-        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
-        and replay_fields_by_key["family_label"]
-        == RuntimeProbeFamily.REFLECTIVE_BUILTIN.value
-        and replay_fields_by_key["form_label"]
-        == _REFLECTIVE_BUILTIN_GETATTR_WORKER_FORM_LABEL
-        and replay_fields_by_key["replay_target_seed"]
-        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED
-        and replay_fields_by_key["replay_selector_seed"]
-        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        replay_fields_by_key
     )
+    return contract is _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT
 
 
 def _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
     fields_by_key: Mapping[str, str],
+    *,
+    contract: _RuntimeProbeExactReplayContract = (
+        _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT
+    ),
 ) -> None:
     """Require the exact literal pilot to carry only the accepted replay pair."""
-    if (
-        set(fields_by_key)
-        != _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS
-    ):
+    if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
         raise ValueError(
             "runtime probe reflective builtin getattr worker exact replay inputs "
             "must contain only object_type and attribute_name"
         )
-    if (
-        fields_by_key[_REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY]
-        != _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE
-        or fields_by_key[_REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY]
-        != _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME
+    if not _runtime_probe_worker_exact_replay_payload_matches_contract(
+        fields_by_key,
+        contract,
     ):
         raise ValueError(
             "runtime probe reflective builtin getattr worker exact replay inputs "
@@ -13175,16 +13130,18 @@ def _runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
     replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
         request.request_replay_payload_fields
     )
-    if not _is_runtime_probe_runtime_mutation_setattr_literal_flag_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
-    ):
+    )
+    if contract is not _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT:
         return None
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
         field_name="request_replay_payload_fields",
     )
     _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
-        exact_fields_by_key
+        exact_fields_by_key,
+        contract=contract,
     )
     return exact_fields_by_key
 
@@ -13538,16 +13495,18 @@ def _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs_if_need
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
     """Reject drifted replay inputs for the exact literal setattr pilot."""
-    if not _is_runtime_probe_runtime_mutation_setattr_literal_flag_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
-    ):
+    )
+    if contract is not _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT:
         return
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
         field_name="request_replay_payload_fields",
     )
     _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
-        exact_fields_by_key
+        exact_fields_by_key,
+        contract=contract,
     )
 
 
@@ -13555,53 +13514,29 @@ def _is_runtime_probe_runtime_mutation_setattr_literal_flag_replay_input_pilot(
     replay_fields_by_key: Mapping[str, str],
 ) -> bool:
     """Return whether replay identity targets ``setattr(obj, "flag", value)``."""
-    return (
-        replay_fields_by_key["subject_id"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SUBJECT_ID
-        and replay_fields_by_key["source_file_path"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_FILE_PATH
-        and replay_fields_by_key["source_start_line"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_LINE
-        and replay_fields_by_key["source_start_column"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_COLUMN
-        and replay_fields_by_key["source_end_line"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_LINE
-        and replay_fields_by_key["source_end_column"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_COLUMN
-        and replay_fields_by_key["reason_code"]
-        == UnresolvedReasonCode.RUNTIME_MUTATION.value
-        and replay_fields_by_key["boundary_text"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT
-        and replay_fields_by_key["family_label"]
-        == RuntimeProbeFamily.RUNTIME_MUTATION.value
-        and replay_fields_by_key["form_label"]
-        == _RUNTIME_MUTATION_SETATTR_WORKER_FORM_LABEL
-        and replay_fields_by_key["replay_target_seed"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_TARGET_SEED
-        and replay_fields_by_key["replay_selector_seed"]
-        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        replay_fields_by_key
     )
+    return contract is _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT
 
 
 def _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
     fields_by_key: Mapping[str, str],
+    *,
+    contract: _RuntimeProbeExactReplayContract = (
+        _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT
+    ),
 ) -> None:
     """Require the exact literal pilot to carry only the accepted replay fields."""
-    if set(fields_by_key) != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS:
+    if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
         raise ValueError(
             "runtime probe runtime mutation setattr worker exact replay inputs "
             "must contain only object_type, attribute_name, assigned_value_type, "
             "and assigned_value_literal"
         )
-    if (
-        fields_by_key[_RUNTIME_MUTATION_SETATTR_OBJECT_TYPE_REPLAY_KEY]
-        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE
-        or fields_by_key[_RUNTIME_MUTATION_SETATTR_ATTRIBUTE_NAME_REPLAY_KEY]
-        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME
-        or fields_by_key[_RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_TYPE_REPLAY_KEY]
-        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE
-        or fields_by_key[_RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY]
-        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL
+    if not _runtime_probe_worker_exact_replay_payload_matches_contract(
+        fields_by_key,
+        contract,
     ):
         raise ValueError(
             "runtime probe runtime mutation setattr worker exact replay inputs "
@@ -13894,16 +13829,18 @@ def _runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
     replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
         request.request_replay_payload_fields
     )
-    if not _is_runtime_probe_runtime_mutation_delattr_literal_flag_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
-    ):
+    )
+    if contract is not _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT:
         return None
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
         field_name="request_replay_payload_fields",
     )
     _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
-        exact_fields_by_key
+        exact_fields_by_key,
+        contract=contract,
     )
     return exact_fields_by_key
 
@@ -14244,16 +14181,18 @@ def _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs_if_need
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
     """Reject drifted replay inputs for the exact literal delattr pilot."""
-    if not _is_runtime_probe_runtime_mutation_delattr_literal_flag_replay_input_pilot(
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
-    ):
+    )
+    if contract is not _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT:
         return
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
         field_name="request_replay_payload_fields",
     )
     _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
-        exact_fields_by_key
+        exact_fields_by_key,
+        contract=contract,
     )
 
 
@@ -14261,48 +14200,28 @@ def _is_runtime_probe_runtime_mutation_delattr_literal_flag_replay_input_pilot(
     replay_fields_by_key: Mapping[str, str],
 ) -> bool:
     """Return whether replay identity targets ``delattr(obj, "flag")``."""
-    return (
-        replay_fields_by_key["subject_id"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SUBJECT_ID
-        and replay_fields_by_key["source_file_path"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_FILE_PATH
-        and replay_fields_by_key["source_start_line"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_LINE
-        and replay_fields_by_key["source_start_column"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_START_COLUMN
-        and replay_fields_by_key["source_end_line"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_LINE
-        and replay_fields_by_key["source_end_column"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_SOURCE_END_COLUMN
-        and replay_fields_by_key["reason_code"]
-        == UnresolvedReasonCode.RUNTIME_MUTATION.value
-        and replay_fields_by_key["boundary_text"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT
-        and replay_fields_by_key["family_label"]
-        == RuntimeProbeFamily.RUNTIME_MUTATION.value
-        and replay_fields_by_key["form_label"]
-        == _RUNTIME_MUTATION_DELATTR_WORKER_FORM_LABEL
-        and replay_fields_by_key["replay_target_seed"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_TARGET_SEED
-        and replay_fields_by_key["replay_selector_seed"]
-        == _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        replay_fields_by_key
     )
+    return contract is _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT
 
 
 def _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
     fields_by_key: Mapping[str, str],
+    *,
+    contract: _RuntimeProbeExactReplayContract = (
+        _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT
+    ),
 ) -> None:
     """Require the exact literal pilot to carry only the accepted replay pair."""
-    if set(fields_by_key) != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS:
+    if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
         raise ValueError(
             "runtime probe runtime mutation delattr worker exact replay inputs "
             "must contain only object_type and attribute_name"
         )
-    if (
-        fields_by_key[_RUNTIME_MUTATION_DELATTR_OBJECT_TYPE_REPLAY_KEY]
-        != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE
-        or fields_by_key[_RUNTIME_MUTATION_DELATTR_ATTRIBUTE_NAME_REPLAY_KEY]
-        != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_ATTRIBUTE_NAME
+    if not _runtime_probe_worker_exact_replay_payload_matches_contract(
+        fields_by_key,
+        contract,
     ):
         raise ValueError(
             "runtime probe runtime mutation delattr worker exact replay inputs "

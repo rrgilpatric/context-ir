@@ -2,6 +2,67 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Exact Replay-Contract Source Cleanup Accepted
+
+- Reviewed the returned behavior-preserving source cleanup for the already
+  pushed direct-literal runtime-acquisition quartet plus the legacy
+  `hasattr(obj, name)` replay-input bridge.
+- Findings: none.
+- Changed source files:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+- Current workspace release-unit files:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Scope accepted:
+  - `runtime_probe_execution.py` now owns a frozen internal exact
+    replay-contract table for the accepted replay-input identities
+  - `runtime_probe_worker.py` routes exact identity and replay-input validation
+    through that table
+  - replay fields, exact quartet identities, legacy `hasattr(obj, name)` bridge
+    behavior, `setattr` durable reference shape, empty quartet
+    `observed_replay_inputs`, and fail-closed worker behavior remain preserved
+- Boundary preserved:
+  - no tests, eval assets, claim-boundary docs, public API, MCP, package export,
+    schema, scoring, compiler, optimizer, winner-selection, Task 4, portfolio,
+    public/demo, benchmark, latency, production, or generalized runtime-mutation
+    change is included
+- Validation:
+  - `ruff check` on the scoped source/test files passed
+  - `ruff format --check` on the scoped source/test files passed
+  - `mypy --strict src/` passed
+  - focused runtime/recompile/facade pytest passed with `920` tests
+  - `git diff --check` passed
+  - `git diff -- evals/` produced no diff
+- Release-gate status:
+  - read-only release-unit audit: PASS with no findings
+  - post-audit `ruff check src/ tests/`: PASS
+  - post-audit `ruff format --check src/ tests/`: PASS
+  - post-audit `mypy --strict src/`: PASS
+  - post-audit `pytest tests/ -v`: FAIL, exactly one failure in
+    `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+  - Task 3 confidence expected `0.0019683503398339377`; actual
+    `0.001968764351473344`
+  - the focused preservation assertions before that failure proved selected
+    units/order, document SHA, total tokens, warnings, warning IDs, probe
+    behavior, probe count, and warning-call count stayed fixed
+- Ryan authorized a narrow confidence-golden correction
+- correction changed only `FULL_REPO_TASK3_CONFIDENCE` to
+  `0.001968764351473344`
+- focused Task 3 preservation test passed after correction
+- post-correction full regression passed with `ruff check src/ tests/`, `ruff
+  format --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v`
+  with `1,850` tests
+- commit-gating passed over the exact five-file unit with live git refs at
+  `HEAD=origin/main=33b3905`, clean `git diff --check`, no staged files, no
+  excluded test/eval/package-export diffs, and exact replay contracts limited to
+  the legacy bridge plus the quartet
+- Acceptance status: first-pass workspace accepted and audit-cleared; corrected
+  full regression and commit-gating passed; local commit pending before push
+
 ## 2026-05-30 -- Direct-Literal Runtime Acquisition Quartet Contract Cleanup
 
 - Pushed cleanup release codifies the already-pushed exact

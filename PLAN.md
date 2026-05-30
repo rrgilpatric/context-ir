@@ -121,6 +121,51 @@ document SHA, total tokens, warnings, warning IDs, probe behavior, and warning
 call count stayed fixed. No active workspace-only release unit is pending. Next
 control action: select the next substantive tranche from current repo truth.
 
+Workspace-only candidate in progress: behavior-preserving exact replay-contract
+source cleanup for the completed runtime-acquisition quartet plus the legacy
+`hasattr(obj, name)` replay-input bridge. The accepted candidate introduces an
+internal frozen exact replay-contract table in
+`src/context_ir/runtime_probe_execution.py` and routes worker exact-identity
+validation through that table in `src/context_ir/runtime_probe_worker.py`.
+Changed source files are exactly:
+
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+
+The current workspace release-unit files are exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_smoke_e.py`
+
+Control status: the implementation slice is accepted in the workspace with no
+findings, and the read-only release-unit audit passed with no findings. Focused
+validation passed with `ruff check`, `ruff format --check`, `mypy --strict
+src/`, focused runtime/recompile/facade pytest with `920` tests, clean
+`git diff --check`, and no `evals/` diff. Post-audit full regression passed
+`ruff check src/ tests/`, `ruff format --check src/ tests/`, and `mypy --strict
+src/`, then failed only on
+`tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`:
+expected `0.0019683503398339377`, actual `0.001968764351473344`. The focused
+Task 3 preservation assertions before that failure proved selected units/order,
+document SHA, total tokens, warnings, warning IDs, probe behavior, probe count,
+and warning-call count stayed fixed. Ryan authorized the narrow correction; the
+only test diff changes `FULL_REPO_TASK3_CONFIDENCE` to
+`0.001968764351473344`, and the focused Task 3 preservation test passed.
+Post-correction full regression passed with `ruff check src/ tests/`, `ruff
+format --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with
+`1,850` tests. No eval assets, documentation claims, public API, MCP, package
+export, schema, scoring, compiler, optimizer, winner-selection, Task 4,
+portfolio, public/demo, benchmark, latency, production, or generalized
+runtime-mutation behavior is in scope. Commit-gating passed over the exact
+five-file release unit with live git state matching `HEAD=origin/main=33b3905`,
+clean `git diff --check`, no staged files, no excluded test/eval/package-export
+diffs, and exact replay contracts limited to the legacy bridge plus the quartet.
+Next control action: stage the exact five-file unit and create a local commit;
+push still requires explicit Ryan authorization.
+
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
 This release promotes only the exact direct-literal
