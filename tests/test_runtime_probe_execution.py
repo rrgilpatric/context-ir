@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import textwrap
+from collections.abc import Callable
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 
@@ -1427,6 +1428,127 @@ def test_exact_literal_setattr_probe_appends_request_replay_payload_fields() -> 
     assert transport.payload.request_replay_payload_fields is (
         invocation.request_replay_payload_fields
     )
+
+
+def test_direct_literal_runtime_acquisition_quartet_keeps_exact_replay_contracts() -> (
+    None
+):
+    """The pushed quartet keeps fixed identity and form-specific replay fields."""
+    cases = (
+        (
+            _reflective_hasattr_literal_exact_replay_input_request,
+            "unsupported:call:main.py:2:11",
+            SourceSpan(2, 11, 2, 37),
+            'hasattr(obj, "bit_length")',
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_HASATTR_FORM_LABEL,
+            "main.probe_literal_attribute",
+            (
+                "call:main.probe_literal_attribute:"
+                f"{_REFLECTIVE_HASATTR_FORM_LABEL}@main.py:2:11:2:37"
+            ),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "bit_length"),
+            ),
+        ),
+        (
+            _reflective_getattr_literal_exact_replay_input_request,
+            "unsupported:call:main.py:2:11",
+            SourceSpan(2, 11, 2, 37),
+            'getattr(obj, "bit_length")',
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_GETATTR_TWO_FORM_LABEL,
+            "main.probe_literal_attribute",
+            (
+                "call:main.probe_literal_attribute:"
+                f"{_REFLECTIVE_GETATTR_TWO_FORM_LABEL}@main.py:2:11:2:37"
+            ),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "bit_length"),
+            ),
+        ),
+        (
+            _runtime_mutation_delattr_literal_exact_replay_input_request,
+            "unsupported:call:main.py:7:4",
+            SourceSpan(7, 4, 7, 24),
+            'delattr(obj, "flag")',
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            _RUNTIME_MUTATION_DELATTR_FORM_LABEL,
+            "main.probe_delete_literal_attribute",
+            (
+                "call:main.probe_delete_literal_attribute:"
+                f"{_RUNTIME_MUTATION_DELATTR_FORM_LABEL}@main.py:7:4:7:24"
+            ),
+            (
+                _field("object_type", "main.ProbeTarget"),
+                _field("attribute_name", "flag"),
+            ),
+        ),
+        (
+            _runtime_mutation_setattr_literal_exact_replay_input_request,
+            "unsupported:call:main.py:7:4",
+            SourceSpan(7, 4, 7, 31),
+            'setattr(obj, "flag", value)',
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            _RUNTIME_MUTATION_SETATTR_FORM_LABEL,
+            "main.probe_set_literal_attribute",
+            (
+                "call:main.probe_set_literal_attribute:"
+                f"{_RUNTIME_MUTATION_SETATTR_FORM_LABEL}@main.py:7:4:7:31"
+            ),
+            (
+                _field("object_type", "main.ProbeTarget"),
+                _field("attribute_name", "flag"),
+                _field("assigned_value_type", "builtins.str"),
+                _field("assigned_value_literal", "ready"),
+            ),
+        ),
+    )
+
+    for (
+        request_factory,
+        subject_id,
+        source_span,
+        boundary_text,
+        family_label,
+        form_label,
+        replay_target_seed,
+        replay_selector_seed,
+        expected_request_replay_fields,
+    ) in cases:
+        request = request_factory()
+        runner_request = _local_python_runner_request(request=request)
+        replay_field_keys = tuple(
+            field.key for field in runner_request.replay_artifact.replay_inputs
+        )
+
+        assert request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+        assert request.subject_id == subject_id
+        assert request.source_site == SourceSite(
+            site_id=f"site:{subject_id.removeprefix('unsupported:call:')}",
+            file_path="main.py",
+            span=source_span,
+            snippet=boundary_text,
+        )
+        assert request.boundary_text == boundary_text
+        assert request.family_label is family_label
+        assert request.form_label == form_label
+        assert request.replay_target_seed == replay_target_seed
+        assert request.replay_selector_seed == replay_selector_seed
+        assert runner_request.replay_artifact.replay_target == replay_target_seed
+        assert runner_request.replay_artifact.replay_selector == replay_selector_seed
+        assert (
+            runner_request.replay_artifact.replay_inputs[
+                -len(expected_request_replay_fields) :
+            ]
+            == expected_request_replay_fields
+        )
+        assert replay_field_keys == (
+            *_EXPECTED_REPLAY_INPUT_KEYS,
+            *(field.key for field in expected_request_replay_fields),
+        )
 
 
 def test_materialize_runtime_probe_runner_requests_preserves_order_and_identities() -> (
@@ -7497,6 +7619,63 @@ def test_local_python_stdout_protocol_rejects_metaclass_observed_replay_inputs()
                 {"key": "class_creation_outcome", "value": "created_class"},
             ],
             durable_artifact_reference="artifact://runtime-probe/metaclass/main.json",
+            observed_replay_inputs=[
+                {"key": "source_shape", "value": "literal_statement"},
+                {"key": "source_sha256", "value": _EXEC_PASS_SOURCE_SHA256},
+            ],
+        ),
+    )
+
+    with pytest.raises(ValueError, match="only for exact exec/eval"):
+        materialize_runtime_probe_local_python_stdout_protocol_result(completion)
+
+
+@pytest.mark.parametrize(
+    ("request_factory", "normalized_payload", "uses_setattr_artifact"),
+    (
+        (
+            _reflective_hasattr_literal_exact_replay_input_request,
+            ({"key": "attribute_present", "value": "true"},),
+            False,
+        ),
+        (
+            _reflective_getattr_literal_exact_replay_input_request,
+            ({"key": "lookup_outcome", "value": "returned_value"},),
+            False,
+        ),
+        (
+            _runtime_mutation_delattr_literal_exact_replay_input_request,
+            ({"key": "mutation_outcome", "value": "deleted_attribute"},),
+            False,
+        ),
+        (
+            _runtime_mutation_setattr_literal_exact_replay_input_request,
+            ({"key": "mutation_outcome", "value": "returned_none"},),
+            True,
+        ),
+    ),
+)
+def test_local_python_stdout_protocol_rejects_observed_replay_inputs_for_quartet(
+    request_factory: Callable[[], runtime_probe_requests.RuntimeProbeRequest],
+    normalized_payload: tuple[dict[str, str], ...],
+    uses_setattr_artifact: bool,
+) -> None:
+    """The quartet cannot use the exec/eval observed replay-input proof channel."""
+    request = request_factory()
+    durable_reference = (
+        f"artifact://runtime-probe/setattr-value/{request.request_id}.json"
+        if uses_setattr_artifact
+        else None
+    )
+    invocation = _local_python_subprocess_invocation(
+        _local_python_runner_request(request=request)
+    )
+    completion = _local_python_process_completion(
+        invocation,
+        returncode=0,
+        stdout_text=_local_python_stdout_protocol_text(
+            normalized_payload=list(normalized_payload),
+            durable_artifact_reference=durable_reference,
             observed_replay_inputs=[
                 {"key": "source_shape", "value": "literal_statement"},
                 {"key": "source_sha256", "value": _EXEC_PASS_SOURCE_SHA256},

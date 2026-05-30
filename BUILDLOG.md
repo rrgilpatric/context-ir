@@ -2,6 +2,60 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Direct-Literal Runtime Acquisition Quartet Contract Cleanup
+
+- Workspace-only cleanup candidate codifies the already-pushed exact
+  direct-literal runtime-acquisition quartet:
+  - `hasattr(obj, "bit_length")`
+  - `getattr(obj, "bit_length")`
+  - `delattr(obj, "flag")`
+  - `setattr(obj, "flag", value)`
+- This candidate is behavior-preserving and keeps production source out of
+  scope.
+- The corrected release unit is exactly:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Contract locks added or documented:
+  - exact replay identities remain fixed by subject, span, family/form, replay
+    target, and replay selector
+  - replay payload fields remain exact and form-specific
+  - `setattr` durable references keep
+    `artifact://runtime-probe/setattr-value/{request_id}.json`
+  - normalized payloads remain exactly `attribute_present=true`,
+    `lookup_outcome=returned_value`, `mutation_outcome=deleted_attribute`, and
+    `mutation_outcome=returned_none`
+  - `observed_replay_inputs` remains limited to exact exec/eval source proof
+    and stays empty for the quartet
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+- Boundary preserved:
+  - no source behavior, eval asset, Task 4, portfolio, public/demo, benchmark,
+    latency, production, generalized runtime-mutation, API, MCP, package
+    export, schema, scoring, compiler, optimizer, or winner-selection change is
+    included
+- Full regression initially failed only on the deterministic Task 3 confidence
+  scalar in `tests/test_eval_signal_smoke_e.py`; selected units/order, token
+  count, warnings, warning IDs, and document SHA stayed fixed. The correction
+  updates only `FULL_REPO_TASK3_CONFIDENCE` from
+  `0.001975727120229694` to `0.0019683503398339377`.
+- Gate status:
+  - corrected read-only release-unit audit: PASS
+  - post-correction full regression: `ruff check src/ tests/`, `ruff format
+    --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with
+    `1,850` tests passed
+- Acceptance status: 1 correction; audit-cleared and regression-cleared;
+  commit-gating cleared; ready for local commit
+
 ## 2026-05-30 -- Direct-Literal Setattr Runtime Acquisition Push Completed
 
 - Ryan authorized pushing the exact direct-literal

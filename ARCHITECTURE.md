@@ -32,7 +32,28 @@ pilots for `getattr(obj, name, default)`
 additionally record default-return branch evidence and value-return sibling
 evidence. The three existing getattr-family
 provider/budget matrices each remain one existing task only: 1 task x 2 budgets
-x 3 providers at budgets `100` and `220`. The current `REFLECTIVE_BUILTIN` /
+x 3 providers at budgets `100` and `220`.
+
+The completed direct-literal runtime-acquisition quartet is a closed internal
+replay contract, not a generalized acquisition family. The quartet is exactly
+`hasattr(obj, "bit_length")`, `getattr(obj, "bit_length")`,
+`delattr(obj, "flag")`, and `setattr(obj, "flag", value)`. Each identity
+keeps its exact subject, span, family/form, replay target, replay selector, and
+form-specific replay inputs. `hasattr` and `getattr` keep
+`object_type=builtins.int` and `attribute_name=bit_length`; `delattr` keeps
+`object_type=main.ProbeTarget` and `attribute_name=flag`; `setattr` keeps
+`object_type=main.ProbeTarget`, `attribute_name=flag`,
+`assigned_value_type=builtins.str`, and `assigned_value_literal=ready`, with
+the assigned-value durable reference shape
+`artifact://runtime-probe/setattr-value/{request_id}.json`. Normalized runtime
+payloads remain exactly `attribute_present=true`,
+`lookup_outcome=returned_value`, `mutation_outcome=deleted_attribute`, and
+`mutation_outcome=returned_none`, respectively. `observed_replay_inputs`
+remains reserved for exact `exec(source)` / `eval(source)` source proof and
+stays empty for the quartet. Unsupported selector and selected-unit primary
+truth remain `unsupported/opaque`; runtime provenance remains additive only.
+
+The current `REFLECTIVE_BUILTIN` /
 direct-literal `getattr(obj, "bit_length")` surface has two bounded parts:
 the internal evidence matrix remains one task only through
 `oracle_signal_getattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers

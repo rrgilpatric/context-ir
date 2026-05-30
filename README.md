@@ -84,6 +84,17 @@ runtime_acquisition, analyzer, and tool_facade; that seam is internal evidence
 plumbing only and does not authorize
 public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening.
+The direct-literal runtime-acquisition quartet is closed to exactly
+`hasattr(obj, "bit_length")`, `getattr(obj, "bit_length")`,
+`delattr(obj, "flag")`, and `setattr(obj, "flag", value)`. These are internal
+default local runtime probe acquisition identities only: replay payload fields
+and normalized runtime payloads are form-specific and fixed, `setattr` keeps
+the `artifact://runtime-probe/setattr-value/{request_id}.json` durable
+reference shape, `observed_replay_inputs` remains empty for the quartet, and
+unsupported/opaque primary truth with additive-only runtime provenance is
+preserved. This does not widen public/demo, benchmark, latency, production,
+API, MCP, package export, schema, scoring, compiler, optimizer,
+winner-selection, or generalized runtime-mutation claims.
 The public-safe quad-matrix comparative boundary remains unchanged, and public
 comparative claims remain bounded to the existing quad matrix. The three
 existing getattr-family pilot matrices cover only 1 task x 2 budgets x 3

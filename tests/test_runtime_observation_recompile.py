@@ -1709,6 +1709,11 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_hasat
         record.unit_id
         for record in recompile_result.compile_result.optimization.selections
     )
+    selected_trace = next(
+        selection.trace_summary
+        for selection in recompile_result.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
     expected_payload = (_probe_field("attribute_present", "true"),)
     expected_replay_inputs = (
         _probe_field("object_type", "builtins.int"),
@@ -1728,10 +1733,17 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_hasat
     assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
     assert observed_result.request is request
     assert observed_result.normalized_payload == expected_payload
+    assert (
+        observed_result.replay_artifact.replay_inputs
+        == runner_request.replay_artifact.replay_inputs
+    )
     assert observed_result.replay_artifact.replay_inputs[-2:] == expected_replay_inputs
     assert admission.request is request
     assert admission.observation.normalized_payload == (
         _runtime_fields_from_probe_fields(expected_payload)
+    )
+    assert admission.observation.replay_inputs == _runtime_fields_from_probe_fields(
+        runner_request.replay_artifact.replay_inputs
     )
     assert admission.observation.replay_inputs[-2:] == (
         _runtime_fields_from_probe_fields(expected_replay_inputs)
@@ -1746,6 +1758,9 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_hasat
     )
     assert recompiled_boundary.has_attached_runtime_provenance is True
     assert unsupported_id in selected_unit_ids
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
     assert all("bit_length" not in unit_id for unit_id in selected_unit_ids)
 
 
@@ -1836,6 +1851,11 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_getat
         record.unit_id
         for record in recompile_result.compile_result.optimization.selections
     )
+    selected_trace = next(
+        selection.trace_summary
+        for selection in recompile_result.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
     expected_payload = (_probe_field("lookup_outcome", "returned_value"),)
     expected_replay_inputs = (
         _probe_field("object_type", "builtins.int"),
@@ -1855,10 +1875,17 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_getat
     assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
     assert observed_result.request is request
     assert observed_result.normalized_payload == expected_payload
+    assert (
+        observed_result.replay_artifact.replay_inputs
+        == runner_request.replay_artifact.replay_inputs
+    )
     assert observed_result.replay_artifact.replay_inputs[-2:] == expected_replay_inputs
     assert admission.request is request
     assert admission.observation.normalized_payload == (
         _runtime_fields_from_probe_fields(expected_payload)
+    )
+    assert admission.observation.replay_inputs == _runtime_fields_from_probe_fields(
+        runner_request.replay_artifact.replay_inputs
     )
     assert admission.observation.replay_inputs[-2:] == (
         _runtime_fields_from_probe_fields(expected_replay_inputs)
@@ -1873,6 +1900,9 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_getat
     )
     assert recompiled_boundary.has_attached_runtime_provenance is True
     assert unsupported_id in selected_unit_ids
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
     assert all("bit_length" not in unit_id for unit_id in selected_unit_ids)
 
 
@@ -1963,6 +1993,11 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_delat
         record.unit_id
         for record in recompile_result.compile_result.optimization.selections
     )
+    selected_trace = next(
+        selection.trace_summary
+        for selection in recompile_result.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
     expected_payload = (_probe_field("mutation_outcome", "deleted_attribute"),)
     expected_replay_inputs = (
         _probe_field("object_type", "main.ProbeTarget"),
@@ -1982,10 +2017,17 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_delat
     assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
     assert observed_result.request is request
     assert observed_result.normalized_payload == expected_payload
+    assert (
+        observed_result.replay_artifact.replay_inputs
+        == runner_request.replay_artifact.replay_inputs
+    )
     assert observed_result.replay_artifact.replay_inputs[-2:] == expected_replay_inputs
     assert admission.request is request
     assert admission.observation.normalized_payload == (
         _runtime_fields_from_probe_fields(expected_payload)
+    )
+    assert admission.observation.replay_inputs == _runtime_fields_from_probe_fields(
+        runner_request.replay_artifact.replay_inputs
     )
     assert admission.observation.replay_inputs[-2:] == (
         _runtime_fields_from_probe_fields(expected_replay_inputs)
@@ -2000,6 +2042,9 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_delat
     )
     assert recompiled_boundary.has_attached_runtime_provenance is True
     assert unsupported_id in selected_unit_ids
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
     assert all("flag" not in unit_id for unit_id in selected_unit_ids)
 
 
@@ -2090,6 +2135,11 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_setat
         record.unit_id
         for record in recompile_result.compile_result.optimization.selections
     )
+    selected_trace = next(
+        selection.trace_summary
+        for selection in recompile_result.compile_result.optimization.selections
+        if selection.unit_id == unsupported_id
+    )
     expected_payload = (_probe_field("mutation_outcome", "returned_none"),)
     expected_replay_inputs = (
         _probe_field("object_type", "main.ProbeTarget"),
@@ -2116,10 +2166,17 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_setat
     assert observed_result.request is request
     assert observed_result.normalized_payload == expected_payload
     assert observed_result.durable_artifact_reference == expected_artifact_reference
+    assert (
+        observed_result.replay_artifact.replay_inputs
+        == runner_request.replay_artifact.replay_inputs
+    )
     assert observed_result.replay_artifact.replay_inputs[-4:] == expected_replay_inputs
     assert admission.request is request
     assert admission.observation.normalized_payload == (
         _runtime_fields_from_probe_fields(expected_payload)
+    )
+    assert admission.observation.replay_inputs == _runtime_fields_from_probe_fields(
+        runner_request.replay_artifact.replay_inputs
     )
     assert admission.observation.replay_inputs[-4:] == (
         _runtime_fields_from_probe_fields(expected_replay_inputs)
@@ -2137,6 +2194,9 @@ def test_default_local_python_subprocess_recompile_helper_observes_literal_setat
     )
     assert recompiled_boundary.has_attached_runtime_provenance is True
     assert unsupported_id in selected_unit_ids
+    assert selected_trace is not None
+    assert selected_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert selected_trace.has_attached_runtime_provenance is True
     assert all("flag" not in unit_id for unit_id in selected_unit_ids)
 
 

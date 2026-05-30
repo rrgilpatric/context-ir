@@ -199,11 +199,17 @@ _REFLECTIVE_HASATTR_REQUEST_MATERIALIZER = (
 _REFLECTIVE_HASATTR_OBSERVATION_MATERIALIZER = (
     "materialize_runtime_probe_reflective_hasattr_worker_observation"
 )
+_REFLECTIVE_HASATTR_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_hasattr_worker_success_response"
+)
 _REFLECTIVE_GETATTR_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_getattr_worker_request"
 )
 _REFLECTIVE_GETATTR_OBSERVATION_MATERIALIZER = (
     "materialize_runtime_probe_reflective_getattr_worker_observation"
+)
+_REFLECTIVE_GETATTR_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_getattr_worker_success_response"
 )
 _REFLECTIVE_GETATTR_DEFAULT_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_getattr_default_worker_request"
@@ -4699,6 +4705,128 @@ def test_reflective_hasattr_worker_request_materializes_exact_replay_inputs(
     )
 
 
+def test_direct_literal_runtime_acquisition_worker_requests_keep_exact_contracts() -> (
+    None
+):
+    """Worker ingress keeps the pushed direct-literal quartet identities fixed."""
+    cases = (
+        (
+            _reflective_hasattr_literal_exact_replay_input_request,
+            runtime_probe_worker.materialize_runtime_probe_reflective_hasattr_worker_request,
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_HASATTR_FORM_LABEL,
+            "unsupported:call:main.py:2:11",
+            (2, 11, 2, 37),
+            'hasattr(obj, "bit_length")',
+            "main.probe_literal_attribute",
+            (
+                "call:main.probe_literal_attribute:"
+                f"{_REFLECTIVE_HASATTR_FORM_LABEL}@main.py:2:11:2:37"
+            ),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "bit_length"),
+            ),
+        ),
+        (
+            _reflective_getattr_literal_exact_replay_input_request,
+            runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request,
+            runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+            _REFLECTIVE_GETATTR_TWO_FORM_LABEL,
+            "unsupported:call:main.py:2:11",
+            (2, 11, 2, 37),
+            'getattr(obj, "bit_length")',
+            "main.probe_literal_attribute",
+            (
+                "call:main.probe_literal_attribute:"
+                f"{_REFLECTIVE_GETATTR_TWO_FORM_LABEL}@main.py:2:11:2:37"
+            ),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "bit_length"),
+            ),
+        ),
+        (
+            _runtime_mutation_delattr_literal_exact_replay_input_request,
+            (
+                runtime_probe_worker.materialize_runtime_probe_runtime_mutation_delattr_worker_request
+            ),
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            _RUNTIME_MUTATION_DELATTR_FORM_LABEL,
+            "unsupported:call:main.py:7:4",
+            (7, 4, 7, 24),
+            'delattr(obj, "flag")',
+            "main.probe_delete_literal_attribute",
+            (
+                "call:main.probe_delete_literal_attribute:"
+                f"{_RUNTIME_MUTATION_DELATTR_FORM_LABEL}@main.py:7:4:7:24"
+            ),
+            (
+                _field("object_type", "main.ProbeTarget"),
+                _field("attribute_name", "flag"),
+            ),
+        ),
+        (
+            _runtime_mutation_setattr_literal_exact_replay_input_request,
+            (
+                runtime_probe_worker.materialize_runtime_probe_runtime_mutation_setattr_worker_request
+            ),
+            runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+            _RUNTIME_MUTATION_SETATTR_FORM_LABEL,
+            "unsupported:call:main.py:7:4",
+            (7, 4, 7, 31),
+            'setattr(obj, "flag", value)',
+            "main.probe_set_literal_attribute",
+            (
+                "call:main.probe_set_literal_attribute:"
+                f"{_RUNTIME_MUTATION_SETATTR_FORM_LABEL}@main.py:7:4:7:31"
+            ),
+            (
+                _field("object_type", "main.ProbeTarget"),
+                _field("attribute_name", "flag"),
+                _field("assigned_value_type", "builtins.str"),
+                _field("assigned_value_literal", "ready"),
+            ),
+        ),
+    )
+
+    for (
+        source_request_factory,
+        materialize_request,
+        family_label,
+        form_label,
+        subject_id,
+        source_span,
+        boundary_text,
+        replay_target_seed,
+        replay_selector_seed,
+        expected_replay_fields,
+    ) in cases:
+        source_request = source_request_factory()
+        payload = _valid_worker_payload_for_request(source_request)
+        request = materialize_request(payload)
+
+        assert request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+        assert request.subject_id == subject_id
+        assert request.source_start_line == source_span[0]
+        assert request.source_start_column == source_span[1]
+        assert request.source_end_line == source_span[2]
+        assert request.source_end_column == source_span[3]
+        assert request.reason_code is source_request.reason_code
+        assert request.family_label is family_label
+        assert request.form_label == form_label
+        assert request.boundary_text == boundary_text
+        assert request.replay_target_seed == replay_target_seed
+        assert request.replay_selector_seed == replay_selector_seed
+        assert (
+            request.request_replay_payload_fields
+            == payload.request_replay_payload_fields
+        )
+        assert request.request_replay_payload_fields[
+            -len(expected_replay_fields) :
+        ] == (expected_replay_fields)
+
+
 @pytest.mark.parametrize(
     ("form_label", "boundary_text"),
     (
@@ -4893,12 +5021,13 @@ def test_reflective_hasattr_worker_concrete_observer_consumes_exact_replay_input
         _field("object_type", "builtins.int"),
         _field("attribute_name", "bit_length"),
     )
-    assert (
-        runtime_probe_worker.materialize_runtime_probe_reflective_hasattr_worker_success_response(
-            observation
-        ).observed_replay_inputs
-        == ()
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_HASATTR_SUCCESS_RESPONSE_MATERIALIZER,
     )
+    success_response = materialize_success_response(observation)
+    assert success_response.normalized_payload == (_field("attribute_present", "true"),)
+    assert success_response.observed_replay_inputs == ()
     assert builtins.hasattr is original_hasattr
 
 
@@ -5431,12 +5560,15 @@ def test_reflective_getattr_worker_concrete_observer_consumes_literal_replay_inp
         _field("object_type", "builtins.int"),
         _field("attribute_name", "bit_length"),
     )
-    assert (
-        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_success_response(
-            observation
-        ).observed_replay_inputs
-        == ()
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_GETATTR_SUCCESS_RESPONSE_MATERIALIZER,
     )
+    success_response = materialize_success_response(observation)
+    assert success_response.normalized_payload == (
+        _field("lookup_outcome", "returned_value"),
+    )
+    assert success_response.observed_replay_inputs == ()
     assert builtins.getattr is original_getattr
 
 
@@ -8826,7 +8958,12 @@ def test_runtime_mutation_delattr_worker_observer_consumes_literal_inputs(
         runtime_probe_worker,
         _RUNTIME_MUTATION_DELATTR_SUCCESS_RESPONSE_MATERIALIZER,
     )
-    assert materialize_success_response(observation).observed_replay_inputs == ()
+    success_response = materialize_success_response(observation)
+    assert success_response.normalized_payload == (
+        _field("mutation_outcome", "deleted_attribute"),
+    )
+    assert success_response.durable_artifact_reference is None
+    assert success_response.observed_replay_inputs == ()
     assert builtins.delattr is original_delattr
 
 

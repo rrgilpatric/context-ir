@@ -69,6 +69,18 @@ stays scoped to repo-local evidence only.
   `DYNAMIC_IMPORT` / imported-alias `load_module(name)` sibling evidence, plus
   the current internal eval-only `DYNAMIC_IMPORT` /
   root-module alias `loader.import_module(name)` sibling evidence.
+  The direct-literal runtime-acquisition quartet remains claim-limited to the
+  exact internal identities `hasattr(obj, "bit_length")`,
+  `getattr(obj, "bit_length")`, `delattr(obj, "flag")`, and
+  `setattr(obj, "flag", value)`. The allowed description is that tests codify
+  their existing exact replay identities, form-specific replay fields, fixed
+  normalized payloads, the `setattr` durable reference shape
+  `artifact://runtime-probe/setattr-value/{request_id}.json`, empty quartet
+  `observed_replay_inputs`, unsupported/opaque primary truth, and additive-only
+  runtime provenance. This does not authorize public/demo, benchmark, latency,
+  production, API, MCP, package-export, schema, scoring, compiler, optimizer,
+  winner-selection, generalized reflective-builtin, or generalized
+  runtime-mutation claims.
   The current internal eval-only original `DYNAMIC_IMPORT` provider/budget
   matrix (`oracle_signal_dynamic_import_probe_matrix`) is limited to 1 task x
   3 budgets x 3 providers at budgets `[220, 180, 100]`, against providers

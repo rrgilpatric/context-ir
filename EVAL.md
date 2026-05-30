@@ -58,7 +58,19 @@ probe acquisition. The narrow
 `oracle_signal_delattr_literal_probe_matrix` evidence is a
 `RUNTIME_MUTATION` / direct-literal `delattr(obj, "flag")` sibling matrix;
 the same exact replay identity now also has default local runtime probe
-acquisition. The narrow
+acquisition. The completed direct-literal runtime-acquisition quartet is
+therefore a closed contract over exactly `hasattr(obj, "bit_length")`,
+`getattr(obj, "bit_length")`, `delattr(obj, "flag")`, and
+`setattr(obj, "flag", value)`. This cleanup codifies existing behavior only:
+the replay identities, form-specific replay fields, `setattr` durable
+reference shape `artifact://runtime-probe/setattr-value/{request_id}.json`,
+normalized payloads (`attribute_present=true`,
+`lookup_outcome=returned_value`, `mutation_outcome=deleted_attribute`, and
+`mutation_outcome=returned_none`), empty quartet `observed_replay_inputs`,
+unsupported/opaque primary truth, and additive-only runtime provenance remain
+fixed. No eval assets, run specs, public/demo claims, benchmark claims,
+latency claims, production claims, or generalized runtime-mutation /
+reflective-builtin claims are added. The narrow
 internal eval-only
 `oracle_signal_dynamic_import_builtin_probe_matrix` evidence is narrow
 `DYNAMIC_IMPORT` / builtin `__import__(name)` sibling evidence. The current
