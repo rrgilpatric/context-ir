@@ -2,12 +2,13 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-05-30 -- Direct-Literal Setattr Runtime Acquisition Workspace Candidate
+## 2026-05-30 -- Direct-Literal Setattr Runtime Acquisition Push Completed
 
-- Completed a workspace-only execution slice for exact direct-literal
-  `setattr(obj, "flag", value)` default local runtime acquisition.
-- Pushed authority remains:
-  - `a24bf79 Promote literal delattr runtime probe`
+- Ryan authorized pushing the exact direct-literal
+  `setattr(obj, "flag", value)` runtime-acquisition release.
+- Pushed release commit:
+  - `f3e8db3 Promote literal setattr runtime probe`
+- `git push origin main` advanced remote `main` from `7c7a1d3` to `f3e8db3`.
 - Control review accepted the workspace candidate first-pass with no open
   findings.
 - The read-only release-unit audit returned PASS with no findings.
@@ -18,8 +19,7 @@ Most recent supersession entries override older architectural decisions when the
   `git diff --check`, source diffs limited to `runtime_probe_execution.py` and
   `runtime_probe_worker.py`, no `evals/` diff, and no API/MCP/package-export/
   schema/scoring/compiler/optimizer/winner-selection diffs.
-- The workspace candidate is not staged, committed, or pushed.
-- Candidate file set:
+- The pushed release unit is exactly:
   - `ARCHITECTURE.md`
   - `BUILDLOG.md`
   - `EVAL.md`
@@ -33,7 +33,7 @@ Most recent supersession entries override older architectural decisions when the
   - `tests/test_runtime_probe_execution.py`
   - `tests/test_runtime_probe_worker.py`
   - `tests/test_tool_facade.py`
-- Boundary implemented:
+- Boundary released:
   - default local runtime probe acquisition admits only
     `unsupported:call:main.py:7:4` / `setattr(obj, "flag", value)`
   - span is `main.py:7:4-7:31`
@@ -73,7 +73,12 @@ Most recent supersession entries override older architectural decisions when the
     tests: `914 passed`
   - full pytest: `1,844 passed`
 - Acceptance status: first-pass control accepted; read-only release-unit audit,
-  post-audit full regression, and commit-gating cleared
+  post-audit full regression, commit-gating, local commit, and push cleared
+- Next route: read-only tranche-selection spike now that the exact
+  direct-literal `hasattr` / `getattr` / `delattr` / `setattr` runtime
+  acquisition quartet is complete. Do not implement source, advance Task 4, or
+  update public/demo, benchmark, latency, production, or generalized
+  runtime-mutation claims before that spike returns.
 
 ## 2026-05-30 -- Direct-Literal Delattr Runtime Acquisition Push Completed
 

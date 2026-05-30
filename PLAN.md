@@ -41,28 +41,30 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority and latest pushed source/contract authority is
-`a24bf79 Promote literal delattr runtime probe`. This release promotes only the
-exact direct-literal `delattr(obj, "flag")` replay identity into default local
-runtime probe acquisition. The previous direct-literal `getattr(obj,
+`f3e8db3 Promote literal setattr runtime probe`. This release promotes only the
+exact direct-literal `setattr(obj, "flag", value)` replay identity into default
+local runtime probe acquisition. The previous direct-literal `delattr(obj,
+"flag")` runtime-acquisition release remains closed through `a24bf79 Promote
+literal delattr runtime probe`. The previous direct-literal `getattr(obj,
 "bit_length")` runtime-acquisition release remains closed through
 `4aea87d Promote literal getattr runtime probe`. The previous direct-literal
 `hasattr(obj, "bit_length")` runtime-acquisition release remains closed through
 `7f7c885 Sync literal hasattr push routing`. The previous direct-literal
 `delattr` eval route remains closed through `b9b1973 Sync direct-literal
-delattr push routing`; its implementation release is now `a24bf79`. The
-previous direct-literal `setattr` release remains closed through `a72a4d1 Sync
-direct-literal setattr push routing`. The previous direct-literal `hasattr`
-eval-matrix release remains closed through `a5cfeee Sync direct-literal hasattr
-push routing`. The previous direct-literal `getattr` eval-matrix release
-remains closed through `2295a56 Sync direct-literal getattr post-push state`.
-The latest pushed internal product-differentiation artifact authority remains
-`2f61c1e Refresh task 0 portfolio evidence`. Live git refs and worktree state
-must still be verified from git during control intake; do not infer them from
-committed prose.
+delattr push routing`; its implementation release is `a24bf79`. The previous
+direct-literal `setattr` eval route remains closed through `a72a4d1 Sync
+direct-literal setattr push routing`; its implementation release is now
+`f3e8db3`. The previous direct-literal `hasattr` eval-matrix release remains
+closed through `a5cfeee Sync direct-literal hasattr push routing`. The previous
+direct-literal `getattr` eval-matrix release remains closed through `2295a56
+Sync direct-literal getattr post-push state`. The latest pushed internal
+product-differentiation artifact authority remains `2f61c1e Refresh task 0
+portfolio evidence`. Live git refs and worktree state must still be verified
+from git during control intake; do not infer them from committed prose.
 
-Workspace-only direct-literal `setattr(obj, "flag", value)` runtime
-acquisition candidate: accepted by control after first-pass review. This
-candidate promotes only `unsupported:call:main.py:7:4` /
+Pushed direct-literal `setattr(obj, "flag", value)` runtime acquisition
+release: `f3e8db3 Promote literal setattr runtime probe`.
+This release promotes only `unsupported:call:main.py:7:4` /
 `setattr(obj, "flag", value)`, span `main.py:7:4-7:31`, form
 `runtime_mutation:setattr/3`, replay target
 `main.probe_set_literal_attribute`, and replay selector seed
@@ -73,25 +75,25 @@ Planned replay inputs are exactly `object_type=main.ProbeTarget`,
 `mutation_outcome=returned_none`; assigned-value durable references keep the
 `artifact://runtime-probe/setattr-value/{request_id}.json` shape. Unsupported
 selector and selected-unit primary truth remain `unsupported/opaque`; runtime
-provenance remains additive only. This candidate does not generalize literal
+provenance remains additive only. This release does not generalize literal
 `setattr`, `setattr(obj, name, value)`, object construction, assigned-value
 replay, `getattr`, `hasattr`, `delattr`, API, MCP, package export, schema,
 scoring, compiler, optimizer, winner-selection, Task 4, portfolio,
 public/demo, benchmark, latency, production, or generalized runtime-mutation
-surfaces. Implementation validation reported `ruff check src/ tests/`, `ruff
-format --check src/ tests/`, `mypy --strict src/`, focused runtime/facade
-pytest with `914` tests, and full pytest with `1,844` tests passing. The
-read-only release-unit audit returned PASS with no findings. The post-audit
-full regression gate passed: `ruff check src/ tests/`, `ruff format --check
-src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with `1,844`
-tests. Commit-gating passed for the exact 13-file set with no staged files, a
-clean `git diff --check`, source diffs limited to
-`runtime_probe_execution.py` and `runtime_probe_worker.py`, no `evals/` diff,
-and no API/MCP/package-export/schema/scoring/compiler/optimizer/
-winner-selection diffs. It is not staged, locally committed, or pushed.
+surfaces.
 
-Next control action: stage and create the local release commit for the exact
-13-file candidate. Push still requires explicit Ryan authorization.
+The pushed `setattr` release was first-pass control accepted; read-only
+release-unit audit returned PASS with no findings; post-audit full regression
+passed with `ruff check src/ tests/`, `ruff format --check src/ tests/`,
+`mypy --strict src/`, and `pytest tests/ -v` with `1,844` tests; commit-gating
+passed for the exact 13-file set. `git push origin main` advanced remote
+`main` from `7c7a1d3` to `f3e8db3`.
+
+Next control action: run a read-only tranche-selection spike now that the
+exact direct-literal `hasattr` / `getattr` / `delattr` / `setattr` runtime
+acquisition quartet is complete. Do not implement source, advance Task 4, or
+update public/demo, benchmark, latency, production, or generalized
+runtime-mutation claims before that spike returns.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
