@@ -142,6 +142,29 @@ _RUNTIME_PROBE_RUNTIME_MUTATION_LOCALS_ZERO_LOCAL_PYTHON_FORM_LABEL = (
 _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LOCAL_PYTHON_FORM_LABEL = (
     "runtime_mutation:setattr/3"
 )
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_BOUNDARY_TEXT = (
+    'setattr(obj, "flag", value)'
+)
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SUBJECT_ID = (
+    "unsupported:call:main.py:7:4"
+)
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_FILE_PATH = "main.py"
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_LINE = 7
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_COLUMN = 4
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_LINE = 7
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_COLUMN = 31
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_TARGET_SEED = (
+    "main.probe_set_literal_attribute"
+)
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_set_literal_attribute:runtime_mutation:setattr/3@main.py:7:4:7:31"
+)
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE = "main.ProbeTarget"
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME = "flag"
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE = (
+    "builtins.str"
+)
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL = "ready"
 _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LOCAL_PYTHON_FORM_LABEL = (
     "runtime_mutation:delattr/2"
 )
@@ -277,6 +300,9 @@ _ReflectiveHasattrReplayInputIdentity: TypeAlias = tuple[
     str,
 ]
 _ReflectiveGetattrReplayInputIdentity: TypeAlias = _ReflectiveHasattrReplayInputIdentity
+_RuntimeMutationSetattrReplayInputIdentity: TypeAlias = (
+    _ReflectiveHasattrReplayInputIdentity
+)
 _RuntimeMutationDelattrReplayInputIdentity: TypeAlias = (
     _ReflectiveHasattrReplayInputIdentity
 )
@@ -319,6 +345,21 @@ _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
         _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN,
         _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED,
         _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED,
+    ),
+)
+_RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_IDENTITIES: tuple[
+    _RuntimeMutationSetattrReplayInputIdentity,
+    ...,
+] = (
+    (
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_BOUNDARY_TEXT,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_FILE_PATH,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_LINE,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_COLUMN,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_LINE,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_COLUMN,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_TARGET_SEED,
+        _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED,
     ),
 )
 _RUNTIME_PROBE_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_IDENTITIES: tuple[
@@ -4489,6 +4530,33 @@ def _request_replay_payload_fields_for_request(
                 value=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
             ),
         )
+    if _is_runtime_mutation_setattr_literal_flag_probe_request(request):
+        return (
+            RuntimeProbeReplayField(
+                key="object_type",
+                value=(
+                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE
+                ),
+            ),
+            RuntimeProbeReplayField(
+                key="attribute_name",
+                value=(
+                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME
+                ),
+            ),
+            RuntimeProbeReplayField(
+                key="assigned_value_type",
+                value=(
+                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE
+                ),
+            ),
+            RuntimeProbeReplayField(
+                key="assigned_value_literal",
+                value=(
+                    _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL
+                ),
+            ),
+        )
     if _is_runtime_mutation_delattr_literal_flag_probe_request(request):
         return (
             RuntimeProbeReplayField(
@@ -4581,6 +4649,47 @@ def _is_reflective_getattr_int_bit_length_probe_request(
                 replay_target_seed,
                 replay_selector_seed,
             ) in _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES
+        )
+    )
+
+
+def _is_runtime_mutation_setattr_literal_flag_probe_request(
+    request: RuntimeProbeRequest,
+) -> bool:
+    """Return whether a request is the exact literal ``setattr`` replay path."""
+    span = request.source_site.span
+    return (
+        request.family_label is RuntimeProbeFamily.RUNTIME_MUTATION
+        and request.form_label
+        == _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LOCAL_PYTHON_FORM_LABEL
+        and request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+        and request.subject_id
+        == _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SUBJECT_ID
+        and request.reason_code is UnresolvedReasonCode.RUNTIME_MUTATION
+        and any(
+            (
+                request.boundary_text == boundary_text
+                and request.source_site.snippet == boundary_text
+                and request.source_site.file_path == source_file_path
+                and span.start_line == source_start_line
+                and span.start_column == source_start_column
+                and span.end_line == source_end_line
+                and span.end_column == source_end_column
+                and request.replay_target_seed == replay_target_seed
+                and request.replay_selector_seed == replay_selector_seed
+            )
+            for (
+                boundary_text,
+                source_file_path,
+                source_start_line,
+                source_start_column,
+                source_end_line,
+                source_end_column,
+                replay_target_seed,
+                replay_selector_seed,
+            ) in (
+                _RUNTIME_PROBE_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_IDENTITIES
+            )
         )
     )
 

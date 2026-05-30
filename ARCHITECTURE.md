@@ -23,10 +23,12 @@ imported-name `import_module(name)`, and imported-alias
 `getattr(obj, "bit_length")` and `hasattr(obj, "bit_length")` surfaces whose
 matrices remain internal evidence and whose exact replay identities now have
 default local runtime probe acquisition, plus a narrow direct-literal
-`setattr(obj, "flag", value)` runtime-mutation pilot and a narrow
-direct-literal `delattr(obj, "flag")` surface whose matrix remains internal
-evidence and whose exact replay identity now has default local runtime probe
-acquisition. Narrow internal eval-only pilots for `getattr(obj, name, default)`
+`setattr(obj, "flag", value)` runtime-mutation surface whose matrix remains
+internal evidence and whose exact replay identity now has default local
+runtime probe acquisition, plus a narrow direct-literal `delattr(obj, "flag")`
+surface whose matrix remains internal evidence and whose exact replay identity
+now has default local runtime probe acquisition. Narrow internal eval-only
+pilots for `getattr(obj, name, default)`
 additionally record default-return branch evidence and value-return sibling
 evidence. The three existing getattr-family
 provider/budget matrices each remain one existing task only: 1 task x 2 budgets
@@ -75,9 +77,8 @@ unsupported/runtime evidence unit. No static attribute dependency edge,
 selected `bit_length` symbol, selected `bit_length` unit, public API, MCP,
 package export, schema, scoring, optimizer, compiler, winner-selection,
 public/demo, benchmark, latency, production, or generalized
-reflective-builtin widening is included. The current internal
-eval-only `RUNTIME_MUTATION` / direct-literal
-`setattr(obj, "flag", value)` pilot remains one task only through
+reflective-builtin widening is included. The current `RUNTIME_MUTATION` /
+direct-literal `setattr(obj, "flag", value)` surface remains one task only through
 `oracle_signal_setattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers
 at budgets `[220, 100]`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
@@ -86,13 +87,19 @@ is exactly `setattr(obj, "flag", value)`; no name variable,
 generalized runtime-mutation behavior is included. The runtime payload is
 exactly `mutation_outcome=returned_none`. Unsupported selector and
 selected-unit truth remain `unsupported/opaque`; runtime provenance remains
-additive only. `context_ir` selects the unsupported call boundary at both
-budgets. Baseline providers may select `main.py` at budget `220`, but they
-select no semantic units and do not select the unsupported/runtime evidence
-unit. No static `flag` dependency edge, selected `flag` symbol, selected
-attribute unit, default subprocess/runtime acquisition for this `setattr`
-literal, public API, MCP, package export, schema, scoring, optimizer,
-compiler, winner-selection, or public benchmark widening is included. The
+additive only. The same exact replay identity is now admitted by default local
+runtime probe acquisition through `main.probe_set_literal_attribute` with
+planned replay inputs `object_type=main.ProbeTarget`, `attribute_name=flag`,
+`assigned_value_type=builtins.str`, and `assigned_value_literal=ready`; the
+durable assigned-value reference keeps the
+`artifact://runtime-probe/setattr-value/{request_id}.json` shape. `context_ir`
+selects the unsupported call boundary at both budgets. Baseline providers may
+select `main.py` at budget `220`, but they select no semantic units and do not
+select the unsupported/runtime evidence unit. No static `flag` dependency
+edge, selected `flag` symbol, selected attribute unit, runtime acquisition
+widening beyond that exact replay identity, public API, MCP, package export,
+schema, scoring, optimizer, compiler, winner-selection, or public benchmark
+widening is included. The
 narrow `RUNTIME_MUTATION` / direct-literal
 `delattr(obj, "flag")` pilot remains one task only through
 `oracle_signal_delattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers

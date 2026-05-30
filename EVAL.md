@@ -53,7 +53,8 @@ now also has default local runtime probe acquisition. The current internal
 eval-only
 `oracle_signal_setattr_literal_probe_matrix` evidence is a
 `RUNTIME_MUTATION` / direct-literal `setattr(obj, "flag", value)` sibling
-pilot. The narrow
+matrix; the same exact replay identity now also has default local runtime
+probe acquisition. The narrow
 `oracle_signal_delattr_literal_probe_matrix` evidence is a
 `RUNTIME_MUTATION` / direct-literal `delattr(obj, "flag")` sibling matrix;
 the same exact replay identity now also has default local runtime probe
@@ -145,9 +146,14 @@ selects the unsupported call boundary at both budgets. File-level baselines
 may select `main.py` at budget `220`, but their selected-unit layer remains
 empty and they do not select the unsupported/runtime evidence unit. No static
 `flag` dependency edge, selected attribute symbol, or selected `flag` unit is
-introduced. The direct-literal `setattr(obj, "flag", value)` pilot still has
-no default subprocess/runtime acquisition. The no-widening boundary preserves public
-comparative claims at the existing quad matrix and includes no
+introduced. The same exact direct-literal replay identity now has default local
+runtime probe acquisition through `main.probe_set_literal_attribute`, with
+replay inputs `object_type=main.ProbeTarget`, `attribute_name=flag`,
+`assigned_value_type=builtins.str`, and `assigned_value_literal=ready`, plus
+the existing durable reference shape
+`artifact://runtime-probe/setattr-value/{request_id}.json`. The no-widening
+boundary preserves public comparative claims at the existing quad matrix and
+includes no
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening. The narrow internal
 `oracle_signal_delattr_literal_probe_matrix` evidence covers exactly

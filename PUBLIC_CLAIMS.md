@@ -43,10 +43,12 @@ stays scoped to repo-local evidence only.
   `delattr(obj, name)` pilot, plus the current narrow internal eval-only
   `RUNTIME_MUTATION` / `setattr(obj, name, value)` evidence, plus the current
   internal eval-only direct-literal `RUNTIME_MUTATION` /
-  `setattr(obj, "flag", value)` pilot, plus the narrow direct-literal
-  `RUNTIME_MUTATION` / `delattr(obj, "flag")` surface whose matrix remains
-  internal evidence and whose exact replay identity now has default local
-  runtime probe acquisition, plus the current
+  `setattr(obj, "flag", value)` surface whose matrix remains internal evidence
+  and whose exact replay identity now has default local runtime probe
+  acquisition, plus the narrow direct-literal `RUNTIME_MUTATION` /
+  `delattr(obj, "flag")` surface whose matrix remains internal evidence and
+  whose exact replay identity now has default local runtime probe acquisition,
+  plus the current
   internal eval-only one-argument `dir(obj)` pilot, plus the current internal
   eval-only zero-argument `dir()` pilot, plus the current internal eval-only
   `METACLASS_BEHAVIOR` / preserved `metaclass=...` keyword-site pilot, plus
@@ -144,10 +146,13 @@ stays scoped to repo-local evidence only.
   file-level baselines may select `main.py` at budget `220`, but their
   selected semantic units remain empty and they do not select the
   unsupported/runtime evidence unit; no static `flag` dependency edge,
-  selected `flag` symbol, selected attribute unit, default subprocess/runtime
-  acquisition for this `setattr` literal, public comparative claim, public API,
-  MCP, package export, schema, scoring, optimizer, compiler, product,
-  winner-selection, or public benchmark widening is included.
+  selected `flag` symbol, selected attribute unit, runtime acquisition
+  widening beyond this exact replay identity, public comparative claim, public
+  API, MCP, package export, schema, scoring, optimizer, compiler, product,
+  winner-selection, or public benchmark widening is included. Default local
+  runtime probe acquisition uses `main.probe_set_literal_attribute` with
+  replay inputs `object_type=main.ProbeTarget`, `attribute_name=flag`,
+  `assigned_value_type=builtins.str`, and `assigned_value_literal=ready`.
   The narrow `RUNTIME_MUTATION` /
   `oracle_signal_delattr_literal_probe_matrix` covers only a direct-literal
   `delattr(obj, "flag")` pilot as 1 task x 2 budgets x 3 providers at budgets

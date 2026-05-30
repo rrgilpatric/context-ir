@@ -60,6 +60,39 @@ The latest pushed internal product-differentiation artifact authority remains
 must still be verified from git during control intake; do not infer them from
 committed prose.
 
+Workspace-only direct-literal `setattr(obj, "flag", value)` runtime
+acquisition candidate: accepted by control after first-pass review. This
+candidate promotes only `unsupported:call:main.py:7:4` /
+`setattr(obj, "flag", value)`, span `main.py:7:4-7:31`, form
+`runtime_mutation:setattr/3`, replay target
+`main.probe_set_literal_attribute`, and replay selector seed
+`call:main.probe_set_literal_attribute:runtime_mutation:setattr/3@main.py:7:4:7:31`.
+Planned replay inputs are exactly `object_type=main.ProbeTarget`,
+`attribute_name=flag`, `assigned_value_type=builtins.str`, and
+`assigned_value_literal=ready`; runtime payload remains exactly
+`mutation_outcome=returned_none`; assigned-value durable references keep the
+`artifact://runtime-probe/setattr-value/{request_id}.json` shape. Unsupported
+selector and selected-unit primary truth remain `unsupported/opaque`; runtime
+provenance remains additive only. This candidate does not generalize literal
+`setattr`, `setattr(obj, name, value)`, object construction, assigned-value
+replay, `getattr`, `hasattr`, `delattr`, API, MCP, package export, schema,
+scoring, compiler, optimizer, winner-selection, Task 4, portfolio,
+public/demo, benchmark, latency, production, or generalized runtime-mutation
+surfaces. Implementation validation reported `ruff check src/ tests/`, `ruff
+format --check src/ tests/`, `mypy --strict src/`, focused runtime/facade
+pytest with `914` tests, and full pytest with `1,844` tests passing. The
+read-only release-unit audit returned PASS with no findings. The post-audit
+full regression gate passed: `ruff check src/ tests/`, `ruff format --check
+src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with `1,844`
+tests. Commit-gating passed for the exact 13-file set with no staged files, a
+clean `git diff --check`, source diffs limited to
+`runtime_probe_execution.py` and `runtime_probe_worker.py`, no `evals/` diff,
+and no API/MCP/package-export/schema/scoring/compiler/optimizer/
+winner-selection diffs. It is not staged, locally committed, or pushed.
+
+Next control action: stage and create the local release commit for the exact
+13-file candidate. Push still requires explicit Ryan authorization.
+
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
 This release promotes only the exact direct-literal

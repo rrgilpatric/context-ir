@@ -39,10 +39,12 @@ a current internal eval-only raised-`AttributeError` branch pilot for exactly
 matrices remain internal evidence and whose exact replay identities now have
 default local runtime probe acquisition, plus a current internal
 eval-only direct-literal `RUNTIME_MUTATION` /
-`setattr(obj, "flag", value)` pilot, plus a narrow direct-literal
-`RUNTIME_MUTATION` / `delattr(obj, "flag")` surface whose matrix remains
-internal evidence and whose exact replay identity now has default local
-runtime probe acquisition, plus a current internal one-argument
+`setattr(obj, "flag", value)` surface whose matrix remains internal evidence
+and whose exact replay identity now has default local runtime probe
+acquisition, plus a narrow direct-literal `RUNTIME_MUTATION` /
+`delattr(obj, "flag")` surface whose matrix remains internal evidence and
+whose exact replay identity now has default local runtime probe acquisition,
+plus a current internal one-argument
 `vars(obj)` pilot and a current internal zero-argument `vars()`
 pilot, plus a
 current internal
@@ -140,21 +142,24 @@ API/MCP/package-export/schema/scoring/compiler/optimizer/winner-selection,
 public/demo, benchmark, latency, or production claim widening is included. The
 same exact direct-literal replay identity now has default local runtime probe
 acquisition; this does not generalize literal `hasattr`, all `hasattr/2`,
-`hasattr(obj, name)`, or `getattr` / `setattr` / `delattr`. The
-current internal eval-only direct-literal `setattr(obj, "flag", value)` pilot
-covers only `oracle_signal_setattr_literal_probe_matrix`: 1 task x 2 budgets x
-3 providers at budgets `[220, 100]`, against providers `context_ir`,
+`hasattr(obj, name)`, or `getattr` / `setattr` / `delattr`. The current
+direct-literal `setattr(obj, "flag", value)` surface covers only
+`oracle_signal_setattr_literal_probe_matrix`: 1 task x 2 budgets x 3
+providers at budgets `[220, 100]`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
 exactly `setattr(obj, "flag", value)`; no name variable,
 `setattr(obj, name, value)`, `delattr`, other runtime-mutation form, or
 generalized runtime-mutation behavior; runtime payload exactly
 `mutation_outcome=returned_none`; unsupported selector and selected-unit truth
-`unsupported/opaque`; additive runtime provenance only; `context_ir` selects
-the unsupported call boundary at both budgets; file-level baselines may select
-`main.py` at budget `220`, but selected semantic units stay empty and they do
-not select the unsupported/runtime evidence unit; no static `flag` dependency
-edge, selected symbol, selected attribute unit, default subprocess/runtime
-acquisition for this `setattr` literal,
+`unsupported/opaque`; additive runtime provenance only; default local runtime
+probe acquisition uses `main.probe_set_literal_attribute` with replay inputs
+`object_type=main.ProbeTarget`, `attribute_name=flag`,
+`assigned_value_type=builtins.str`, and `assigned_value_literal=ready`;
+`context_ir` selects the unsupported call boundary at both budgets; file-level
+baselines may select `main.py` at budget `220`, but selected semantic units
+stay empty and they do not select the unsupported/runtime evidence unit; no
+static `flag` dependency edge, selected symbol, selected attribute unit,
+runtime acquisition widening beyond this exact `setattr` replay identity,
 source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
 benchmark widening, or public/demo claim widening is included. The
 narrow direct-literal `delattr(obj, "flag")` pilot covers

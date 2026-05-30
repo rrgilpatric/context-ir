@@ -2,6 +2,79 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Direct-Literal Setattr Runtime Acquisition Workspace Candidate
+
+- Completed a workspace-only execution slice for exact direct-literal
+  `setattr(obj, "flag", value)` default local runtime acquisition.
+- Pushed authority remains:
+  - `a24bf79 Promote literal delattr runtime probe`
+- Control review accepted the workspace candidate first-pass with no open
+  findings.
+- The read-only release-unit audit returned PASS with no findings.
+- The post-audit full regression gate passed: `ruff check src/ tests/`, `ruff
+  format --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v`
+  with `1,844` tests.
+- Commit-gating passed for the exact 13-file set with no staged files, a clean
+  `git diff --check`, source diffs limited to `runtime_probe_execution.py` and
+  `runtime_probe_worker.py`, no `evals/` diff, and no API/MCP/package-export/
+  schema/scoring/compiler/optimizer/winner-selection diffs.
+- The workspace candidate is not staged, committed, or pushed.
+- Candidate file set:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Boundary implemented:
+  - default local runtime probe acquisition admits only
+    `unsupported:call:main.py:7:4` / `setattr(obj, "flag", value)`
+  - span is `main.py:7:4-7:31`
+  - family/form is `runtime_mutation:setattr/3`
+  - replay target is `main.probe_set_literal_attribute`
+  - replay selector seed is
+    `call:main.probe_set_literal_attribute:runtime_mutation:setattr/3@main.py:7:4:7:31`
+  - planned replay inputs are exactly `object_type=main.ProbeTarget`,
+    `attribute_name=flag`, `assigned_value_type=builtins.str`, and
+    `assigned_value_literal=ready`
+  - worker-side replay verifies the object has `flag == "ready"` after replay
+  - runtime payload remains exactly `mutation_outcome=returned_none`
+  - durable reference shape remains
+    `artifact://runtime-probe/setattr-value/{request_id}.json`
+- Boundary preserved:
+  - `observed_replay_inputs` remains limited to exec/eval source proof and is
+    not emitted for this runtime mutation path
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `flag` dependency edge, selected `flag` symbol, selected
+    attribute unit, generalized literal `setattr`, arbitrary object
+    construction, arbitrary assigned-value replay, `getattr`, `hasattr`,
+    `delattr`, API, MCP, package export, schema, scoring, compiler,
+    optimizer, winner-selection, Task 4, portfolio, public/demo, benchmark,
+    latency, production, or generalized runtime-mutation change is included
+- Full regression initially failed only on the deterministic Task 3 confidence
+  scalar in `tests/test_eval_signal_smoke_e.py`; selected units/order, token
+  count, warnings, warning IDs, and document SHA stayed fixed. The candidate
+  updates only `FULL_REPO_TASK3_CONFIDENCE` from
+  `0.0019893748381455438` to `0.001975727120229694`.
+- Validation:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - focused pytest over runtime probe execution, worker, recompile, and facade
+    tests: `914 passed`
+  - full pytest: `1,844 passed`
+- Acceptance status: first-pass control accepted; read-only release-unit audit,
+  post-audit full regression, and commit-gating cleared
+
 ## 2026-05-30 -- Direct-Literal Delattr Runtime Acquisition Push Completed
 
 - Ryan authorized pushing the exact direct-literal `delattr(obj, "flag")`

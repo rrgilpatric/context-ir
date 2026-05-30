@@ -605,6 +605,36 @@ def _runtime_mutation_delattr_literal_exact_replay_input_request() -> (
     )
 
 
+def _runtime_mutation_setattr_literal_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact literal-setattr pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:7:4",
+        source_site=SourceSite(
+            site_id="site:main.py:7:4",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=7,
+                start_column=4,
+                end_line=7,
+                end_column=31,
+            ),
+            snippet='setattr(obj, "flag", value)',
+        ),
+        reason_code=UnresolvedReasonCode.RUNTIME_MUTATION,
+        boundary_text='setattr(obj, "flag", value)',
+        family_label=runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=_RUNTIME_MUTATION_SETATTR_FORM_LABEL,
+        replay_target_seed="main.probe_set_literal_attribute",
+        replay_selector_seed=(
+            "call:main.probe_set_literal_attribute:"
+            f"{_RUNTIME_MUTATION_SETATTR_FORM_LABEL}@main.py:7:4:7:31"
+        ),
+    )
+
+
 def _runtime_mutation_setattr_request(
     start_line: int = 3,
     *,
@@ -1345,6 +1375,45 @@ def test_exact_literal_delattr_probe_appends_request_replay_payload_fields() -> 
     assert runner_request.replay_artifact.replay_inputs[-2:] == (
         _field("object_type", "main.ProbeTarget"),
         _field("attribute_name", "flag"),
+    )
+    assert invocation.request_replay_payload_fields is (
+        runner_request.replay_artifact.replay_inputs
+    )
+    assert payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+
+
+def test_exact_literal_setattr_probe_appends_request_replay_payload_fields() -> None:
+    """The exact literal setattr pilot appends pre-observation replay inputs."""
+    source_request = _runtime_mutation_setattr_literal_exact_replay_input_request()
+    runner_request = _local_python_runner_request(request=source_request)
+    invocation = _local_python_subprocess_invocation(runner_request)
+    payload = _local_python_worker_request_payload(invocation)
+    transport = _local_python_worker_request_stdin_transport(invocation)
+    expected_replay_inputs = (
+        *_EXPECTED_REPLAY_INPUT_KEYS,
+        "object_type",
+        "attribute_name",
+        "assigned_value_type",
+        "assigned_value_literal",
+    )
+
+    assert (
+        tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
+        == expected_replay_inputs
+    )
+    assert runner_request.replay_artifact.replay_inputs[-4:] == (
+        _field("object_type", "main.ProbeTarget"),
+        _field("attribute_name", "flag"),
+        _field("assigned_value_type", "builtins.str"),
+        _field("assigned_value_literal", "ready"),
     )
     assert invocation.request_replay_payload_fields is (
         runner_request.replay_artifact.replay_inputs
@@ -5524,6 +5593,59 @@ def test_runtime_mutation_setattr_local_python_runner_executes_setattr_subproces
     _assert_attempt_identity(attempt, expected_invocation)
     assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
     assert attempt.normalized_payload == (_field("mutation_outcome", "returned_none"),)
+    assert attempt.durable_artifact_reference == (
+        f"artifact://runtime-probe/setattr-value/{runner_request.request_id}.json"
+    )
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_default_local_python_subprocess_runner_executes_exact_literal_setattr(
+    tmp_path: Path,
+) -> None:
+    """The default runner calls the exact literal-setattr target with inputs."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class ProbeTarget:
+                def __init__(self) -> None:
+                    pass
+
+
+            def probe_set_literal_attribute(obj: object, value: str) -> None:
+                setattr(obj, "flag", value)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _runtime_mutation_setattr_literal_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (_field("mutation_outcome", "returned_none"),)
+    assert attempt.observed_replay_inputs == ()
     assert attempt.durable_artifact_reference == (
         f"artifact://runtime-probe/setattr-value/{runner_request.request_id}.json"
     )

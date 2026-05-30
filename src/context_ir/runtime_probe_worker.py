@@ -269,8 +269,32 @@ _RUNTIME_MUTATION_LOCALS_ZERO_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
 )
 _RUNTIME_MUTATION_SETATTR_WORKER_FORM_LABEL = "runtime_mutation:setattr/3"
 _RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT = "setattr(obj, name, value)"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT = (
+    'setattr(obj, "flag", value)'
+)
 _RUNTIME_MUTATION_SETATTR_WORKER_GLOBAL_NAME = "setattr"
 _RUNTIME_MUTATION_SETATTR_WORKER_RETURNED_NONE = "returned_none"
+_RUNTIME_MUTATION_SETATTR_OBJECT_TYPE_REPLAY_KEY = "object_type"
+_RUNTIME_MUTATION_SETATTR_ATTRIBUTE_NAME_REPLAY_KEY = "attribute_name"
+_RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_TYPE_REPLAY_KEY = "assigned_value_type"
+_RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY = "assigned_value_literal"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SUBJECT_ID = "unsupported:call:main.py:7:4"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_FILE_PATH = "main.py"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_LINE = "7"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_COLUMN = "4"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_LINE = "7"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_COLUMN = "31"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_TARGET_SEED = (
+    "main.probe_set_literal_attribute"
+)
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_set_literal_attribute:runtime_mutation:setattr/3@main.py:7:4:7:31"
+)
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE = "main.ProbeTarget"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME = "flag"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE = "builtins.str"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL = "ready"
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_CLASS_NAME = "ProbeTarget"
 _RUNTIME_MUTATION_SETATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
     "runtime probe runtime mutation setattr worker target execution failed"
 )
@@ -418,6 +442,15 @@ _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS = frozenset(
         *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
         _REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY,
         _REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY,
+    )
+)
+_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS = frozenset(
+    (
+        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
+        _RUNTIME_MUTATION_SETATTR_OBJECT_TYPE_REPLAY_KEY,
+        _RUNTIME_MUTATION_SETATTR_ATTRIBUTE_NAME_REPLAY_KEY,
+        _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_TYPE_REPLAY_KEY,
+        _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY,
     )
 )
 _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS = frozenset(
@@ -1969,6 +2002,11 @@ class _RuntimeProbeRuntimeMutationSetattrCapture:
 
     original_setattr: Callable[[object, str, object], object]
     captured_mutation_outcomes: list[str] = field(default_factory=list)
+    captured_objects: list[object] = field(default_factory=list)
+    captured_object_types: list[str] = field(default_factory=list)
+    captured_attribute_names: list[str] = field(default_factory=list)
+    captured_assigned_value_types: list[str] = field(default_factory=list)
+    captured_assigned_value_literals: list[str] = field(default_factory=list)
     captured_rejections: list[str] = field(default_factory=list)
 
     def setattr(self, *args: object, **kwargs: object) -> None:
@@ -1986,6 +2024,16 @@ class _RuntimeProbeRuntimeMutationSetattrCapture:
                 "runtime probe runtime mutation setattr worker attribute name must "
                 "be a string"
             )
+        self.captured_objects.append(obj)
+        self.captured_object_types.append(_runtime_probe_worker_object_type_name(obj))
+        self.captured_attribute_names.append(name)
+        self.captured_assigned_value_types.append(
+            _runtime_probe_worker_object_type_name(value)
+        )
+        if isinstance(value, str):
+            self.captured_assigned_value_literals.append(value)
+        else:
+            self.captured_assigned_value_literals.append("")
         try:
             result = self.original_setattr(obj, name, value)
         except Exception as error:
@@ -4925,16 +4973,25 @@ def materialize_runtime_probe_runtime_mutation_setattr_observation_from_target(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonRuntimeMutationSetattrTargetCallable,
 ) -> RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerObservation:
-    """Observe one zero-argument target under exact ``setattr`` interception."""
+    """Observe a ``setattr`` target with zero args or exact pilot replay inputs."""
     _validate_runtime_probe_runtime_mutation_setattr_replay_target(replay_target)
     _validate_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
         replay_target,
         source_module,
     )
     _validate_runtime_probe_runtime_mutation_setattr_target_callable(target)
+    exact_replay_inputs = _runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
+        replay_target.request
+    )
+    target_args = _runtime_probe_runtime_mutation_setattr_target_args(
+        source_module,
+        exact_replay_inputs,
+    )
     mutation_outcome = _runtime_probe_runtime_mutation_setattr_captured_outcome(
         source_module,
         target,
+        target_args=target_args,
+        exact_replay_inputs=exact_replay_inputs,
     )
     return materialize_runtime_probe_runtime_mutation_setattr_worker_observation(
         replay_target.request,
@@ -8735,6 +8792,9 @@ def _restore_runtime_probe_runtime_mutation_locals_zero_builtin(
 def _runtime_probe_runtime_mutation_setattr_captured_outcome(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonRuntimeMutationSetattrTargetCallable,
+    *,
+    target_args: tuple[object, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Run a target while capturing one exact ``setattr`` mutation."""
     _validate_runtime_probe_runtime_mutation_setattr_source_global_absent(source_module)
@@ -8756,7 +8816,7 @@ def _runtime_probe_runtime_mutation_setattr_captured_outcome(
         try:
             sys.stdout = shielded_stdout
             sys.stderr = shielded_stderr
-            target()
+            target(*target_args)
         finally:
             sys.stdout = original_stdout
             sys.stderr = original_stderr
@@ -8781,16 +8841,29 @@ def _runtime_probe_runtime_mutation_setattr_captured_outcome(
     if target_failure is not None:
         _raise_runtime_probe_runtime_mutation_setattr_target_failure(target_failure)
 
-    return _runtime_probe_runtime_mutation_setattr_capture_outcome(capture)
+    return _runtime_probe_runtime_mutation_setattr_capture_outcome(
+        capture,
+        exact_replay_inputs=exact_replay_inputs,
+    )
 
 
 def _runtime_probe_runtime_mutation_setattr_capture_outcome(
     capture: _RuntimeProbeRuntimeMutationSetattrCapture,
+    *,
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Return the single captured setattr mutation outcome after validation."""
     _validate_runtime_probe_runtime_mutation_setattr_intercepted_calls(
         captured_mutation_outcomes=capture.captured_mutation_outcomes,
+        captured_objects=tuple(capture.captured_objects),
+        captured_object_types=tuple(capture.captured_object_types),
+        captured_attribute_names=tuple(capture.captured_attribute_names),
+        captured_assigned_value_types=tuple(capture.captured_assigned_value_types),
+        captured_assigned_value_literals=tuple(
+            capture.captured_assigned_value_literals
+        ),
         captured_rejections=tuple(capture.captured_rejections),
+        exact_replay_inputs=exact_replay_inputs,
     )
     return capture.captured_mutation_outcomes[0]
 
@@ -8798,7 +8871,13 @@ def _runtime_probe_runtime_mutation_setattr_capture_outcome(
 def _validate_runtime_probe_runtime_mutation_setattr_intercepted_calls(
     *,
     captured_mutation_outcomes: list[str],
+    captured_objects: tuple[object, ...],
+    captured_object_types: tuple[str, ...],
+    captured_attribute_names: tuple[str, ...],
+    captured_assigned_value_types: tuple[str, ...],
+    captured_assigned_value_literals: tuple[str, ...],
     captured_rejections: tuple[str, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> None:
     """Reject intercepted setattr behavior outside exact successful assignment."""
     if "arity" in captured_rejections:
@@ -8817,6 +8896,57 @@ def _validate_runtime_probe_runtime_mutation_setattr_intercepted_calls(
         raise ValueError(
             "runtime probe runtime mutation setattr worker target must capture "
             "exactly one setattr call"
+        )
+    if (
+        len(captured_objects) != 1
+        or len(captured_object_types) != 1
+        or len(captured_attribute_names) != 1
+        or len(captured_assigned_value_types) != 1
+        or len(captured_assigned_value_literals) != 1
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker target must capture "
+            "exactly one setattr call"
+        )
+    if exact_replay_inputs is None:
+        return
+    expected_object_type = exact_replay_inputs[
+        _RUNTIME_MUTATION_SETATTR_OBJECT_TYPE_REPLAY_KEY
+    ]
+    expected_attribute_name = exact_replay_inputs[
+        _RUNTIME_MUTATION_SETATTR_ATTRIBUTE_NAME_REPLAY_KEY
+    ]
+    expected_assigned_value_type = exact_replay_inputs[
+        _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_TYPE_REPLAY_KEY
+    ]
+    expected_assigned_value_literal = exact_replay_inputs[
+        _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY
+    ]
+    if (
+        captured_object_types[0] != expected_object_type
+        or captured_attribute_names[0] != expected_attribute_name
+        or captured_assigned_value_types[0] != expected_assigned_value_type
+        or captured_assigned_value_literals[0] != expected_assigned_value_literal
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker exact replay inputs "
+            "must match captured object_type attribute_name assigned_value_type "
+            "and assigned_value_literal"
+        )
+    try:
+        assigned_attribute_value = getattr(
+            captured_objects[0],
+            expected_attribute_name,
+        )
+    except AttributeError as error:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker exact replay must assign "
+            "flag=ready"
+        ) from error
+    if assigned_attribute_value != expected_assigned_value_literal:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker exact replay must assign "
+            "flag=ready"
         )
 
 
@@ -12850,6 +12980,10 @@ def _validate_runtime_probe_runtime_mutation_setattr_worker_payload(
         replay_target_seed=payload.replay_target_seed,
         replay_selector_seed=payload.replay_selector_seed,
     )
+    _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs_if_needed(
+        payload.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
         plan_id=payload.plan_id,
         request_id=payload.request_id,
@@ -12911,9 +13045,6 @@ def _validate_runtime_probe_runtime_mutation_setattr_worker_request(
         request.boundary_text,
         field_name="boundary_text",
     )
-    _validate_runtime_probe_runtime_mutation_setattr_worker_request_boundary_text(
-        request.boundary_text
-    )
     _validate_runtime_probe_worker_metadata_text(
         request.replay_target_seed,
         field_name="replay_target_seed",
@@ -12953,6 +13084,10 @@ def _validate_runtime_probe_runtime_mutation_setattr_worker_request(
         replay_target_seed=request.replay_target_seed,
         replay_selector_seed=request.replay_selector_seed,
     )
+    _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs_if_needed(
+        request.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     for field_key, expected_value in (
         ("subject_kind", request.subject_kind.value),
         ("subject_id", request.subject_id),
@@ -12988,14 +13123,28 @@ def _validate_runtime_probe_runtime_mutation_setattr_worker_request(
 
 
 def _validate_runtime_probe_runtime_mutation_setattr_worker_request_boundary_text(
-    boundary_text: str,
+    replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject exact-setattr requests that do not carry the approved boundary."""
-    if boundary_text != _RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT:
-        raise ValueError(
-            "runtime probe runtime mutation setattr worker boundary_text must be "
-            f"{_RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT}"
+    """Reject setattr requests outside approved boundary identities."""
+    boundary_text = replay_fields_by_key["boundary_text"]
+    if boundary_text == _RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT:
+        return
+    if (
+        boundary_text == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT
+        and _is_runtime_probe_runtime_mutation_setattr_literal_flag_replay_input_pilot(
+            replay_fields_by_key
         )
+    ):
+        return
+    if boundary_text == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker boundary_text must match "
+            "the exact direct-literal flag replay identity"
+        )
+    raise ValueError(
+        "runtime probe runtime mutation setattr worker boundary_text must be "
+        f"{_RUNTIME_MUTATION_SETATTR_WORKER_BOUNDARY_TEXT}"
+    )
 
 
 def _validate_runtime_probe_runtime_mutation_setattr_worker_observer(
@@ -13016,6 +13165,76 @@ def _validate_runtime_probe_runtime_mutation_setattr_target_callable(
         raise ValueError(
             "runtime probe runtime mutation setattr worker target must be callable"
         )
+
+
+def _runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+) -> Mapping[str, str] | None:
+    """Return exact literal setattr replay inputs for the accepted pilot."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    if not _is_runtime_probe_runtime_mutation_setattr_literal_flag_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return None
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        request.request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
+        exact_fields_by_key
+    )
+    return exact_fields_by_key
+
+
+def _runtime_probe_runtime_mutation_setattr_target_args(
+    source_module: ModuleType,
+    exact_replay_inputs: Mapping[str, str] | None,
+) -> tuple[object, ...]:
+    """Return target args for the exact literal setattr pilot, otherwise none."""
+    if exact_replay_inputs is None:
+        return ()
+    _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
+        exact_replay_inputs
+    )
+    return (
+        _runtime_probe_runtime_mutation_setattr_literal_probe_target(source_module),
+        exact_replay_inputs[
+            _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY
+        ],
+    )
+
+
+def _runtime_probe_runtime_mutation_setattr_literal_probe_target(
+    source_module: ModuleType,
+) -> object:
+    """Instantiate the single accepted literal-setattr replay object."""
+    if source_module.__name__ != "main":
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker literal replay source "
+            "module is unsupported"
+        )
+    probe_target_class = source_module.__dict__.get(
+        _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_CLASS_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if not isinstance(probe_target_class, type):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker literal replay target "
+            "class is unsupported"
+        )
+    probe_target = probe_target_class()
+    if (
+        _runtime_probe_worker_object_type_name(probe_target)
+        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker literal replay target "
+            "object type is unsupported"
+        )
+    return probe_target
 
 
 def _validate_runtime_probe_runtime_mutation_setattr_replay_target_source_module(
@@ -13291,7 +13510,7 @@ def _validate_runtime_probe_runtime_mutation_setattr_replay_metadata(
         field_name="boundary_text",
     )
     _validate_runtime_probe_runtime_mutation_setattr_worker_request_boundary_text(
-        replay_fields_by_key["boundary_text"]
+        replay_fields_by_key
     )
     _validate_runtime_probe_worker_source_span(
         start_line=_runtime_probe_worker_replay_span_value(
@@ -13311,6 +13530,84 @@ def _validate_runtime_probe_runtime_mutation_setattr_replay_metadata(
             field_name="source_end_column",
         ),
     )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs_if_needed(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    replay_fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject drifted replay inputs for the exact literal setattr pilot."""
+    if not _is_runtime_probe_runtime_mutation_setattr_literal_flag_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
+        exact_fields_by_key
+    )
+
+
+def _is_runtime_probe_runtime_mutation_setattr_literal_flag_replay_input_pilot(
+    replay_fields_by_key: Mapping[str, str],
+) -> bool:
+    """Return whether replay identity targets ``setattr(obj, "flag", value)``."""
+    return (
+        replay_fields_by_key["subject_id"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SUBJECT_ID
+        and replay_fields_by_key["source_file_path"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_FILE_PATH
+        and replay_fields_by_key["source_start_line"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_LINE
+        and replay_fields_by_key["source_start_column"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_START_COLUMN
+        and replay_fields_by_key["source_end_line"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_LINE
+        and replay_fields_by_key["source_end_column"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_SOURCE_END_COLUMN
+        and replay_fields_by_key["reason_code"]
+        == UnresolvedReasonCode.RUNTIME_MUTATION.value
+        and replay_fields_by_key["boundary_text"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_WORKER_BOUNDARY_TEXT
+        and replay_fields_by_key["family_label"]
+        == RuntimeProbeFamily.RUNTIME_MUTATION.value
+        and replay_fields_by_key["form_label"]
+        == _RUNTIME_MUTATION_SETATTR_WORKER_FORM_LABEL
+        and replay_fields_by_key["replay_target_seed"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_TARGET_SEED
+        and replay_fields_by_key["replay_selector_seed"]
+        == _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED
+    )
+
+
+def _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Require the exact literal pilot to carry only the accepted replay fields."""
+    if set(fields_by_key) != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_REPLAY_INPUT_KEYS:
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker exact replay inputs "
+            "must contain only object_type, attribute_name, assigned_value_type, "
+            "and assigned_value_literal"
+        )
+    if (
+        fields_by_key[_RUNTIME_MUTATION_SETATTR_OBJECT_TYPE_REPLAY_KEY]
+        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE
+        or fields_by_key[_RUNTIME_MUTATION_SETATTR_ATTRIBUTE_NAME_REPLAY_KEY]
+        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME
+        or fields_by_key[_RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_TYPE_REPLAY_KEY]
+        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE
+        or fields_by_key[_RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY]
+        != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL
+    ):
+        raise ValueError(
+            "runtime probe runtime mutation setattr worker exact replay inputs "
+            "must be object_type=main.ProbeTarget, attribute_name=flag, "
+            "assigned_value_type=builtins.str, and assigned_value_literal=ready"
+        )
 
 
 def _validate_runtime_probe_runtime_mutation_setattr_replay_field_match(
