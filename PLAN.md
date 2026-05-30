@@ -40,20 +40,23 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed contract-cleanup release authority is `93d9f9e Codify literal
-runtime probe contracts`. It codifies the completed exact direct-literal
-runtime-acquisition quartet in tests and docs only; it does not change `src/`,
-eval assets, API, MCP, package export, schema, scoring, compiler, optimizer,
-winner-selection, Task 4, portfolio, public/demo, benchmark, latency,
-production, or generalized runtime-mutation surfaces. The latest pushed source
-runtime-behavior authority remains `f3e8db3 Promote literal setattr runtime
-probe`, which promotes only the exact direct-literal
-`setattr(obj, "flag", value)` replay identity into default local runtime probe
-acquisition. The previous direct-literal `delattr(obj, "flag")`
+Current pushed exact replay-contract source cleanup authority is `09ce30d
+Refactor exact runtime replay contracts`. This behavior-preserving release
+promotes no new runtime acquisition identity. It replaces repeated exact replay
+identity and payload checks with an internal frozen contract table for the
+legacy `hasattr(obj, name)` bridge plus the accepted direct-literal quartet, and
+routes worker exact-identity validation through the same contract table. The
+previous pushed contract-cleanup release authority remains `93d9f9e Codify
+literal runtime probe contracts`; it codifies the completed exact direct-literal
+runtime-acquisition quartet in tests and docs only. The pushed source
+runtime-behavior authority before the replay-contract cleanup is `f3e8db3
+Promote literal setattr runtime probe`, which promotes only the exact
+direct-literal `setattr(obj, "flag", value)` replay identity into default local
+runtime probe acquisition. The previous direct-literal `delattr(obj, "flag")`
 runtime-acquisition release remains closed through `a24bf79 Promote literal
 delattr runtime probe`. The previous direct-literal `getattr(obj,
-"bit_length")` runtime-acquisition release remains closed through
-`4aea87d Promote literal getattr runtime probe`. The previous direct-literal
+"bit_length")` runtime-acquisition release remains closed through `4aea87d
+Promote literal getattr runtime probe`. The previous direct-literal
 `hasattr(obj, "bit_length")` runtime-acquisition release remains closed through
 `7f7c885 Sync literal hasattr push routing`. The previous direct-literal
 `delattr` eval route remains closed through `b9b1973 Sync direct-literal
@@ -67,11 +70,6 @@ Sync direct-literal getattr post-push state`. The latest pushed internal
 product-differentiation artifact authority remains `2f61c1e Refresh task 0
 portfolio evidence`. Live git refs and worktree state must still be verified
 from git during control intake; do not infer them from committed prose.
-
-Local unpushed exact replay-contract source cleanup release:
-`09ce30d Refactor exact runtime replay contracts`. This release is
-behavior-preserving and promotes no new runtime acquisition identity. Push is
-pending explicit Ryan authorization.
 
 Pushed direct-literal `setattr(obj, "flag", value)` runtime acquisition
 release: `f3e8db3 Promote literal setattr runtime probe`.
@@ -126,7 +124,7 @@ document SHA, total tokens, warnings, warning IDs, probe behavior, and warning
 call count stayed fixed. No active workspace-only release unit is pending. Next
 control action: select the next substantive tranche from current repo truth.
 
-Local exact replay-contract source cleanup release:
+Pushed exact replay-contract source cleanup release:
 `09ce30d Refactor exact runtime replay contracts`. This behavior-preserving
 source cleanup covers the completed runtime-acquisition quartet plus the legacy
 `hasattr(obj, name)` replay-input bridge. It introduces an internal frozen exact
@@ -137,7 +135,7 @@ worker exact-identity validation through that table in
 - `src/context_ir/runtime_probe_execution.py`
 - `src/context_ir/runtime_probe_worker.py`
 
-The local committed release-unit files are exactly:
+The pushed release-unit files are exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -168,8 +166,10 @@ runtime-mutation behavior is in scope. Commit-gating passed over the exact
 five-file release unit with live git state matching `HEAD=origin/main=33b3905`,
 clean `git diff --check`, no staged files, no excluded test/eval/package-export
 diffs, and exact replay contracts limited to the legacy bridge plus the quartet.
-The exact five-file unit was locally committed as `09ce30d`; push still requires
-explicit Ryan authorization.
+The exact five-file unit was locally committed as `09ce30d`; Ryan authorized
+push, and `git push origin main` completed. No active workspace-only release
+unit is pending. Next control action: select the next substantive tranche from
+current repo truth.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.

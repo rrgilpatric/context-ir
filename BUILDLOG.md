@@ -2,7 +2,7 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-05-30 -- Exact Replay-Contract Source Cleanup Committed Locally
+## 2026-05-30 -- Exact Replay-Contract Source Cleanup Pushed
 
 - Reviewed the returned behavior-preserving source cleanup for the already
   pushed direct-literal runtime-acquisition quartet plus the legacy
@@ -11,7 +11,7 @@ Most recent supersession entries override older architectural decisions when the
 - Changed source files:
   - `src/context_ir/runtime_probe_execution.py`
   - `src/context_ir/runtime_probe_worker.py`
-- Local committed release-unit files:
+- Pushed release-unit files:
   - `BUILDLOG.md`
   - `PLAN.md`
   - `src/context_ir/runtime_probe_execution.py`
@@ -62,8 +62,8 @@ Most recent supersession entries override older architectural decisions when the
   the legacy bridge plus the quartet
 - Acceptance status: first-pass workspace accepted and audit-cleared; corrected
   full regression and commit-gating passed; local release commit is `09ce30d`
-  (`Refactor exact runtime replay contracts`); push pending explicit Ryan
-  authorization
+  (`Refactor exact runtime replay contracts`); Ryan authorized push, and
+  `git push origin main` completed
 
 ## 2026-05-30 -- Direct-Literal Runtime Acquisition Quartet Contract Cleanup
 
