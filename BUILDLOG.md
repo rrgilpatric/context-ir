@@ -2,6 +2,70 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Direct-Literal Hasattr Runtime Acquisition Push Completed
+
+- Ryan authorized pushing the exact direct-literal `hasattr(obj, "bit_length")`
+  runtime-acquisition release.
+- Pushed release commit:
+  - `c86d57c Promote literal hasattr runtime probe`
+- `git push origin main` advanced remote `main` from `b9b1973` to `c86d57c`.
+- The pushed release unit is:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Gate state before commit/push:
+  - corrected release-unit audit: PASS with no findings
+  - full regression: passed with `1,795` tests
+  - corrected audit focused validation: passed with `866` tests
+  - commit-gating: PASS with exact 13-file set
+- Boundary preserved:
+  - default local runtime probe acquisition admits only the exact
+    direct-literal `hasattr(obj, "bit_length")` replay identity
+  - the existing exact `hasattr(obj, name)` path remains intact
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `bit_length` dependency edge, selected symbol, or selected
+    attribute unit is introduced
+  - public/demo, benchmark, latency, production, API/MCP/package-export/
+    schema/scoring/compiler/optimizer/winner-selection, and generalized
+    reflective-builtin claims remain held
+- Task 3 confidence correction:
+  - `tests/test_eval_signal_smoke_e.py` updates
+    `FULL_REPO_TASK3_CONFIDENCE` to `0.002012787339374718`
+  - selected units/order, document hash, total tokens, warnings, warning IDs,
+    and probe behavior stayed unchanged
+- Live post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=c86d57c`
+  - clean worktree
+- Release-state impact:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - staged: yes, then committed
+  - committed locally: yes
+  - pushed: yes
+- No active release gate remains for the direct-literal `hasattr(obj,
+  "bit_length")` runtime-acquisition release.
+- Task 4 remains not run, portfolio artifacts remain unchanged, and
+  public/demo claims remain held.
+- This docs-only continuity sync supersedes the pre-push route in the following
+  candidate entries, which correctly recorded the state before corrected audit,
+  full regression, commit-gating, local commit, and push.
+- Acceptance status: pushed first-pass after Ryan authorization
+
 ## 2026-05-30 -- Direct-Literal Hasattr Runtime Acquisition Release Unit Corrected
 
 - Corrected a P2 release-unit routing mismatch found by read-only

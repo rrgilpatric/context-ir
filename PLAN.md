@@ -40,21 +40,68 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Current pushed release authority is the direct-literal `delattr` internal
-eval-only release. The latest pushed internal eval capability evidence
-authority is `a1df336 Add direct-literal delattr eval pilot`; this continuity
-entry records the post-push route state for that release. The previous
+Current pushed release authority and latest pushed source/contract authority is
+`c86d57c Promote literal hasattr runtime probe`. This release promotes only the
+exact direct-literal `hasattr(obj, "bit_length")` replay identity into default
+local runtime probe acquisition. The latest pushed internal eval capability
+evidence authority remains `a1df336 Add direct-literal delattr eval pilot`; the
+previous direct-literal `delattr` route remains closed through
+`b9b1973 Sync direct-literal delattr push routing`. The previous
 direct-literal `setattr` release remains closed through
 `a72a4d1 Sync direct-literal setattr push routing`. The previous
-direct-literal `hasattr` release remains closed through
-`a5cfeee Sync direct-literal hasattr push routing`. The
-previous direct-literal `getattr` release remains closed through
+direct-literal `hasattr` eval-matrix release remains closed through
+`a5cfeee Sync direct-literal hasattr push routing`. The previous direct-literal
+`getattr` release remains closed through
 `2295a56 Sync direct-literal getattr post-push state`. The latest pushed
 internal product-differentiation artifact authority remains
-`2f61c1e Refresh task 0 portfolio evidence`. The latest pushed source/contract
-authority remains `ea91718 Skip certified optimizer probe intervals`. Live git
-refs and worktree state must still be verified from git during control intake;
-do not infer them from committed prose.
+`2f61c1e Refresh task 0 portfolio evidence`. Live git refs and worktree state
+must still be verified from git during control intake; do not infer them from
+committed prose.
+
+Pushed direct-literal `hasattr(obj, "bit_length")` runtime acquisition release:
+`c86d57c Promote literal hasattr runtime probe`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed 13-file release unit:
+
+- `ARCHITECTURE.md`
+- `BUILDLOG.md`
+- `EVAL.md`
+- `PLAN.md`
+- `PUBLIC_CLAIMS.md`
+- `README.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_runtime_observation_recompile.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
+- `tests/test_tool_facade.py`
+
+The release admits only the exact direct-literal
+`hasattr(obj, "bit_length")` replay identity into default local runtime probe
+acquisition, while preserving the existing exact `hasattr(obj, name)` path.
+Unsupported selector and selected-unit primary truth remain
+`unsupported/opaque`; runtime provenance remains additive only; no static
+`bit_length` dependency edge, selected symbol, or selected attribute unit is
+introduced. The deterministic Task 3 full-repo confidence golden is corrected
+to `FULL_REPO_TASK3_CONFIDENCE = 0.002012787339374718` with selected
+units/order, document hash, total tokens, warnings, warning IDs, and probe
+behavior unchanged.
+
+Gate state before commit/push:
+
+- corrected read-only release-unit audit: PASS with no findings
+- full regression: passed with `1,795` tests
+- commit-gating: PASS with exact 13-file set
+- local commit was created after gates cleared; Ryan explicitly authorized push
+
+`git push origin main` advanced remote `main` from `b9b1973` to `c86d57c`.
+No active release gate remains for this runtime-acquisition release. Do not
+route `c86d57c` back to release-unit audit, full regression, commit-gating,
+staging, local commit creation, or push absent new findings. Task 4 remains not
+run, portfolio artifacts remain unchanged, and public/demo, benchmark, latency,
+production, API/MCP/package-export/schema/scoring/compiler/optimizer/
+winner-selection, and generalized reflective-builtin claims remain held.
 
 Pushed direct-literal `getattr` release:
 `8afe99f Add direct-literal getattr eval pilot`. This commit contains the
