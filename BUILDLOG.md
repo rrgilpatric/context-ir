@@ -2,6 +2,26 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Correct Stale Active Routing Sections
+
+- Findings:
+  - P2 continuity defect: `PLAN.md` still had stale active-route text in
+    `What Is In Progress` and `What Is Next` after the pushed exact
+    replay-contract source cleanup.
+- Ryan authorized the correction.
+- Corrected `PLAN.md` so the only active route is selecting the next substantive
+  tranche from current repo truth after pushed `09ce30d` and routing sync
+  `9595476`.
+- Marked the adjacent stale post-`0650bb8` route-selection checklist item
+  complete because that route is historical and superseded.
+- Preserved old closed-route notes as historical context only; they must not
+  override the canonical active release-state block.
+- Validation: docs-only diff review passed, `git diff --check` passed, and
+  source/test/eval diffs are empty.
+- Acceptance status: continuity correction accepted; staging, commit, and push
+  state must be verified from live git state rather than inferred from this
+  historical entry.
+
 ## 2026-05-30 -- Exact Replay-Contract Source Cleanup Pushed
 
 - Reviewed the returned behavior-preserving source cleanup for the already

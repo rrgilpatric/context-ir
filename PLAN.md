@@ -16408,55 +16408,18 @@ sequencing for `c1a12d7` absent new findings.
   metaclass provider release unit
 - [x] Ryan-authorized remote push for internal default local-Python subprocess
   metaclass provider release unit
-- [ ] Post-`0650bb8` control selection of the next bounded north-star lane
+- [x] Post-`0650bb8` control selection of the next bounded north-star lane
 
 ## What Is In Progress
 
-- Exact `oracle_signal_exec_probe` and `oracle_signal_eval_probe` support
-  inside `context_ir_default_local_python_subprocess` is locally committed and
-  pushed at `125c44e Add exec/eval default subprocess eval provider` with
-  explicit Ryan authorization. Do not route it back to release-unit audit, full
-  regression, commit-gating, staging, local commit, or push absent new findings.
-- Post-`125c44e` route selection is complete and superseded by the pushed
-  `0650bb8 Add metaclass default subprocess eval provider` release. It
-  selected the exact internal provider-support slice for
-  `oracle_signal_metaclass_behavior_probe`, and that slice has now completed
-  all release gates, local commit creation, and Ryan-authorized push.
-- Exact `oracle_signal_metaclass_behavior_probe` support inside
-  `context_ir_default_local_python_subprocess` is locally committed and pushed
-  at `0650bb8 Add metaclass default subprocess eval provider` with explicit
-  Ryan authorization. The release unit is `BUILDLOG.md`,
-  `PLAN.md`, `src/context_ir/eval_providers.py`,
-  `tests/test_eval_signal_metaclass_behavior_probe.py`,
-  `tests/test_eval_signal_locals_probe.py`,
-  `tests/test_eval_signal_globals_probe.py`, and
-  `tests/test_eval_signal_vars_zero_probe.py`. The implementation adds only
-  the exact metaclass fixture-map entry, validates the exact
-  `RuntimeProbeFamily.METACLASS_BEHAVIOR` / `metaclass_behavior:keyword`
-  planned request, requires boundary `metaclass=Meta`, subject
-  `unsupported:metaclass:main.py:9:20:def:main.py:main.Example:1`, replay
-  target seed `main.Example`, one runner attempt, one observed result, and the
-  expected created-class payload, uses `sys.executable` with `delta_budget=0`,
-  returns provider-owned runtime provenance, preserves unsupported/opaque
-  primary truth, and does not select `def:main.py:main.Meta`. Focused control
-  validation passed with ruff, format check, strict mypy, targeted pytest
-  reporting `77 passed`, and clean `git diff --check`. A dedicated read-only
-  release-unit audit passed first-pass with no findings. Full regression passed
-  first-pass with ruff, format check, strict mypy, full pytest reporting
-  `1657 passed`, and clean final `git diff --check`. This release unit is
-  release-unit-audit-cleared, full-regression-cleared,
-  commit-gating-cleared, locally committed, and pushed. Do not route it back
-  to release-unit audit, full regression, commit-gating, staging, local commit,
-  or push absent new findings. Next route is control selection of the next
-  bounded north-star lane from the pushed `0650bb8` authority.
-- No implementation or release-gate lane is currently in progress. The active
-  control action is selecting the next bounded north-star lane from the pushed
-  `0650bb8` authority.
-- Exact exec/eval observed replay-input preservation for default local-Python
-  subprocess recompile is locally committed and pushed at
-  `53c82df Preserve exec/eval observed replay inputs` with explicit Ryan
-  authorization. Do not route it back to release-unit audit, full regression,
-  commit-gating, staging, local commit, or push absent new findings.
+- No implementation, release-gate, staging, commit, or push lane is currently in
+  progress.
+- The active control action is the canonical route in the current release-state
+  block: select the next substantive tranche from live repo truth after the
+  pushed exact replay-contract source cleanup at `09ce30d` and routing sync at
+  `9595476`.
+- Older items that previously appeared here are historical closed releases and
+  must not override the canonical active release-state block above.
 
 ## Historical Active Notes
 
@@ -17625,24 +17588,15 @@ supersession entries.
 
 ## What Is Next
 
-Immediate next route: execute the bounded internal eval-only direct-literal
-runtime-mutation implementation slice for exactly
-`setattr(obj, "flag", value)`, suggested artifact name
-`oracle_signal_setattr_literal_probe_matrix`. The direct-literal `hasattr`
-release is pushed and closed/no-active-gate:
-`b5d1719 Add direct-literal hasattr eval pilot` and
-`a5cfeee Sync direct-literal hasattr push routing` are on remote `main`. Do not
-route that release back to release-unit audit, full regression, commit-gating,
-staging, local commit, or push absent new findings. At selection/spec intake,
-git verified `main`, `HEAD=origin/main=5633b04`, and a clean worktree. Future
-lanes must continue to verify live refs from git rather than committed prose.
+Current next route: run a read-only tranche-selection spike from live repo truth
+after the pushed exact replay-contract source cleanup at `09ce30d` and routing
+sync at `9595476`. The spike should choose the smallest substantive next
+north-star tranche or recommend an explicit hold. Do not implement code, run
+Task 4, update public/demo claims, widen benchmark/latency/production claims,
+or generalize runtime acquisition before that selection is reviewed.
 
-The `setattr` literal slice is eval-only and must not widen default subprocess/
-runtime acquisition. It may use committed fixture runtime observations attached
-to the unsupported boundary, but the existing default subprocess worker remains
-scoped to `setattr(obj, name, value)`. Keep `delattr(obj, "flag")`, Task 4,
-portfolio updates, public/demo planning, benchmark/latency/production claims,
-and generalized runtime-mutation behavior out of scope.
+Historical closed-route notes retained below must not override the current next
+route above or the canonical active release-state block.
 
 The direct-literal `getattr` release remains pushed and closed/no-active-gate:
 `8afe99f Add direct-literal getattr eval pilot`,
