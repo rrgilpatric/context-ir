@@ -41,22 +41,23 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority and latest pushed source/contract authority is
-`c86d57c Promote literal hasattr runtime probe`. This release promotes only the
-exact direct-literal `hasattr(obj, "bit_length")` replay identity into default
-local runtime probe acquisition. The latest pushed internal eval capability
-evidence authority remains `a1df336 Add direct-literal delattr eval pilot`; the
-previous direct-literal `delattr` route remains closed through
-`b9b1973 Sync direct-literal delattr push routing`. The previous
-direct-literal `setattr` release remains closed through
-`a72a4d1 Sync direct-literal setattr push routing`. The previous
-direct-literal `hasattr` eval-matrix release remains closed through
-`a5cfeee Sync direct-literal hasattr push routing`. The previous direct-literal
-`getattr` release remains closed through
+`4aea87d Promote literal getattr runtime probe`. This release promotes only the
+exact direct-literal `getattr(obj, "bit_length")` replay identity into default
+local runtime probe acquisition. The previous direct-literal `hasattr(obj,
+"bit_length")` runtime-acquisition release remains closed through
+`7f7c885 Sync literal hasattr push routing`. The latest pushed internal eval
+capability evidence authority remains `a1df336 Add direct-literal delattr eval
+pilot`; the previous direct-literal `delattr` route remains closed through
+`b9b1973 Sync direct-literal delattr push routing`. The previous direct-literal
+`setattr` release remains closed through `a72a4d1 Sync direct-literal setattr
+push routing`. The previous direct-literal `hasattr` eval-matrix release
+remains closed through `a5cfeee Sync direct-literal hasattr push routing`. The
+previous direct-literal `getattr` eval-matrix release remains closed through
 `2295a56 Sync direct-literal getattr post-push state`. The latest pushed
-internal product-differentiation artifact authority remains
-`2f61c1e Refresh task 0 portfolio evidence`. Live git refs and worktree state
-must still be verified from git during control intake; do not infer them from
-committed prose.
+internal product-differentiation artifact authority remains `2f61c1e Refresh
+task 0 portfolio evidence`. Live git refs and worktree state must still be
+verified from git during control intake; do not infer them from committed
+prose.
 
 Pushed direct-literal `hasattr(obj, "bit_length")` runtime acquisition release:
 `c86d57c Promote literal hasattr runtime probe`. This commit contains the
@@ -103,8 +104,10 @@ run, portfolio artifacts remain unchanged, and public/demo, benchmark, latency,
 production, API/MCP/package-export/schema/scoring/compiler/optimizer/
 winner-selection, and generalized reflective-builtin claims remain held.
 
-Workspace-only direct-literal `getattr(obj, "bit_length")` runtime-acquisition
-candidate:
+Pushed direct-literal `getattr(obj, "bit_length")` runtime acquisition release:
+`4aea87d Promote literal getattr runtime probe`. This commit contains the
+accepted, corrected-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed 13-file release unit:
 
 - implementation slice returned DONE and was reviewed by control with no
   source/test findings
@@ -157,15 +160,17 @@ candidate:
     --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v`
     passed with `1,810` tests
   - commit-gating cleared: yes, first-pass after corrected full regression
-  - staged: no
-  - locally committed: no
-  - pushed: no
-- next control action: stage and create the local release commit for the exact
-  corrected 13-file release unit
+  - staged: yes, then committed
+  - locally committed: yes, `4aea87d Promote literal getattr runtime probe`
+  - pushed: yes, Ryan explicitly authorized push
+- `git push origin main` advanced remote `main` from `7f7c885` to `4aea87d`.
+- No active release gate remains for this runtime-acquisition release. Do not
+  route `4aea87d` back to release-unit audit, full regression, commit-gating,
+  staging, local commit creation, or push absent new findings.
 - Task 4 remains not run, portfolio artifacts remain unchanged, and
   public/demo, benchmark, latency, production, API/MCP/package-export/schema/
   scoring/compiler/optimizer/winner-selection, and generalized
-  reflective-builtin claims remain held
+  reflective-builtin claims remain held.
 
 Pushed direct-literal `getattr` release:
 `8afe99f Add direct-literal getattr eval pilot`. This commit contains the

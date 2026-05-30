@@ -2,6 +2,70 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Direct-Literal Getattr Runtime Acquisition Push Completed
+
+- Ryan authorized pushing the exact direct-literal `getattr(obj, "bit_length")`
+  runtime-acquisition release.
+- Pushed release commit:
+  - `4aea87d Promote literal getattr runtime probe`
+- `git push origin main` advanced remote `main` from `7f7c885` to `4aea87d`.
+- The pushed release unit is:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Gate state before commit/push:
+  - prior 12-file release-unit audit: PASS with no findings
+  - corrected 13-file release-unit audit: PASS with no findings
+  - full regression: passed with `1,810` tests
+  - commit-gating: PASS with exact 13-file set
+- Boundary preserved:
+  - default local runtime probe acquisition admits only the exact
+    direct-literal `getattr(obj, "bit_length")` replay identity
+  - runtime payload remains `lookup_outcome=returned_value`
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `bit_length` dependency edge, selected symbol, or selected
+    attribute unit is introduced
+  - public/demo, benchmark, latency, production, API/MCP/package-export/
+    schema/scoring/compiler/optimizer/winner-selection, and generalized
+    reflective-builtin claims remain held
+- Task 3 confidence correction:
+  - `tests/test_eval_signal_smoke_e.py` updates
+    `FULL_REPO_TASK3_CONFIDENCE` to `0.0020015353080911295`
+  - selected units/order, document hash, total tokens, warnings, warning IDs,
+    and probe behavior stayed unchanged
+- Live post-push verification:
+  - branch `main`
+  - `HEAD=origin/main=4aea87d`
+  - clean worktree
+- Release-state impact:
+  - accepted in workspace: yes
+  - corrected release-unit audit cleared: yes
+  - full regression cleared: yes
+  - commit-gating cleared: yes
+  - staged: yes, then committed
+  - committed locally: yes
+  - pushed: yes
+- No active release gate remains for the direct-literal `getattr(obj,
+  "bit_length")` runtime-acquisition release.
+- Task 4 remains not run, portfolio artifacts remain unchanged, and
+  public/demo claims remain held.
+- This docs-only continuity sync supersedes the pre-push route in the following
+  candidate entry, which correctly recorded the state before local commit and
+  push.
+- Acceptance status: pushed first-pass after Ryan authorization
+
 ## 2026-05-30 -- Direct-Literal Getattr Runtime Acquisition Candidate Accepted
 
 - Accepted a workspace-only implementation candidate that promotes only the
