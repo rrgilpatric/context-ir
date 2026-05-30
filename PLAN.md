@@ -41,30 +41,30 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Current pushed release authority and latest pushed source/contract authority is
-`4aea87d Promote literal getattr runtime probe`. This release promotes only the
-exact direct-literal `getattr(obj, "bit_length")` replay identity into default
-local runtime probe acquisition. The previous direct-literal `hasattr(obj,
+`a24bf79 Promote literal delattr runtime probe`. This release promotes only the
+exact direct-literal `delattr(obj, "flag")` replay identity into default local
+runtime probe acquisition. The previous direct-literal `getattr(obj,
 "bit_length")` runtime-acquisition release remains closed through
-`7f7c885 Sync literal hasattr push routing`. The latest pushed internal eval
-capability evidence authority remains `a1df336 Add direct-literal delattr eval
-pilot`; the previous direct-literal `delattr` route remains closed through
-`b9b1973 Sync direct-literal delattr push routing`. The previous direct-literal
-`setattr` release remains closed through `a72a4d1 Sync direct-literal setattr
-push routing`. The previous direct-literal `hasattr` eval-matrix release
-remains closed through `a5cfeee Sync direct-literal hasattr push routing`. The
-previous direct-literal `getattr` eval-matrix release remains closed through
-`2295a56 Sync direct-literal getattr post-push state`. The latest pushed
-internal product-differentiation artifact authority remains `2f61c1e Refresh
-task 0 portfolio evidence`. Live git refs and worktree state must still be
-verified from git during control intake; do not infer them from committed
-prose.
+`4aea87d Promote literal getattr runtime probe`. The previous direct-literal
+`hasattr(obj, "bit_length")` runtime-acquisition release remains closed through
+`7f7c885 Sync literal hasattr push routing`. The previous direct-literal
+`delattr` eval route remains closed through `b9b1973 Sync direct-literal
+delattr push routing`; its implementation release is now `a24bf79`. The
+previous direct-literal `setattr` release remains closed through `a72a4d1 Sync
+direct-literal setattr push routing`. The previous direct-literal `hasattr`
+eval-matrix release remains closed through `a5cfeee Sync direct-literal hasattr
+push routing`. The previous direct-literal `getattr` eval-matrix release
+remains closed through `2295a56 Sync direct-literal getattr post-push state`.
+The latest pushed internal product-differentiation artifact authority remains
+`2f61c1e Refresh task 0 portfolio evidence`. Live git refs and worktree state
+must still be verified from git during control intake; do not infer them from
+committed prose.
 
-Active workspace-only direct-literal `delattr(obj, "flag")` runtime
-acquisition candidate: accepted by control after continuity and Task 3
-confidence-golden corrections.
-This candidate promotes only the exact direct-literal
+Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
+`a24bf79 Promote literal delattr runtime probe`.
+This release promotes only the exact direct-literal
 `delattr(obj, "flag")` replay identity into default local runtime probe
-acquisition. The proposed release unit is exactly:
+acquisition. The pushed release unit is exactly:
 
 - `ARCHITECTURE.md`
 - `BUILDLOG.md`
@@ -102,7 +102,7 @@ units/order, document SHA
 `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`, `274`
 tokens, warnings, warning IDs, and probe behavior unchanged.
 
-Release state for this workspace candidate:
+Release state for this release:
 
 - accepted in workspace: yes, after continuity and Task 3 confidence-golden
   corrections
@@ -114,13 +114,15 @@ Release state for this workspace candidate:
 - commit-gating cleared: yes, exact corrected 13-file set, no staged files,
   clean `git diff --check`, and no `evals/` or API/MCP/package-export/schema/
   scoring/compiler/optimizer/winner-selection diffs
-- staged: no
-- locally committed: yes, as the local release commit on `main`
-- pushed: no
+- locally committed: yes, `a24bf79 Promote literal delattr runtime probe`
+- pushed: yes, Ryan explicitly authorized push
 
-Next control action: wait for explicit Ryan push authorization for the local
-release commit. After push, run a narrow continuity sync only if fresh-control
-routing would otherwise be stale.
+`git push origin main` advanced remote `main` from `2a56c6d` to `a24bf79`.
+
+Next control action: run a read-only planning/decomposition spike for exact
+`setattr(obj, "flag", value)` runtime acquisition. Do not implement source
+before the spike resolves assigned-value replay and durable value-proof
+semantics.
 
 Pushed direct-literal `hasattr(obj, "bit_length")` runtime acquisition release:
 `c86d57c Promote literal hasattr runtime probe`. This commit contains the

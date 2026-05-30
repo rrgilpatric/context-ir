@@ -2,12 +2,14 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-05-30 -- Direct-Literal Delattr Runtime Acquisition Candidate Accepted
+## 2026-05-30 -- Direct-Literal Delattr Runtime Acquisition Push Completed
 
-- Accepted a workspace-only implementation candidate that promotes only the
-  exact direct-literal `delattr(obj, "flag")` replay identity into default
-  local runtime probe acquisition.
-- Files in the proposed release unit are exactly:
+- Ryan authorized pushing the exact direct-literal `delattr(obj, "flag")`
+  runtime-acquisition release.
+- Pushed release commit:
+  - `a24bf79 Promote literal delattr runtime probe`
+- `git push origin main` advanced remote `main` from `2a56c6d` to `a24bf79`.
+- The pushed release unit is exactly:
   - `ARCHITECTURE.md`
   - `BUILDLOG.md`
   - `EVAL.md`
@@ -70,12 +72,13 @@ Most recent supersession entries override older architectural decisions when the
   - commit-gating cleared: yes, exact corrected 13-file set, no staged files,
     clean `git diff --check`, and no `evals/` or API/MCP/package-export/
     schema/scoring/compiler/optimizer/winner-selection diffs
-  - staged: no
-  - committed locally: yes, as the local release commit on `main`
-  - pushed: no
-- Next route: wait for explicit Ryan push authorization for the local release
-  commit. After push, run a narrow continuity sync only if fresh-control
-  routing would otherwise be stale.
+  - staged for release commit: yes, exact 13-file set
+  - committed locally: yes, `a24bf79 Promote literal delattr runtime probe`
+  - pushed: yes, with Ryan authorization
+- Next route: read-only planning/decomposition spike for exact
+  `setattr(obj, "flag", value)` runtime acquisition. Do not implement source
+  before the spike resolves assigned-value replay and durable value-proof
+  semantics.
 - Acceptance status: 2 corrections
 
 ## 2026-05-30 -- Direct-Literal Getattr Runtime Acquisition Push Completed
