@@ -19,35 +19,39 @@ imported-name `import_module(name)`, and imported-alias
 `load_module(name)` sibling pilots, plus the current root-module alias
 `loader.import_module(name)` sibling pilot, and
 `REFLECTIVE_BUILTIN` pilots for `hasattr(obj, name)` and
-`getattr(obj, name)`, plus a narrow direct-literal
-`getattr(obj, "bit_length")` sibling pilot and a narrow direct-literal
-`hasattr(obj, "bit_length")` surface whose matrix remains internal evidence
-and whose exact replay identity now has default local runtime probe
-acquisition, plus a narrow direct-literal
+`getattr(obj, name)`, plus narrow direct-literal
+`getattr(obj, "bit_length")` and `hasattr(obj, "bit_length")` surfaces whose
+matrices remain internal evidence and whose exact replay identities now have
+default local runtime probe acquisition, plus a narrow direct-literal
 `setattr(obj, "flag", value)` runtime-mutation pilot and a narrow
 direct-literal `delattr(obj, "flag")` runtime-mutation pilot. Narrow internal eval-only pilots for
 `getattr(obj, name, default)` additionally record default-return branch
 evidence and value-return sibling evidence. The three existing getattr-family
 provider/budget matrices each remain one existing task only: 1 task x 2 budgets
-x 3 providers at budgets `100` and `220`. The current internal
-eval-only `REFLECTIVE_BUILTIN` / direct-literal
-`getattr(obj, "bit_length")` pilot remains one task only through
+x 3 providers at budgets `100` and `220`. The current `REFLECTIVE_BUILTIN` /
+direct-literal `getattr(obj, "bit_length")` surface has two bounded parts:
+the internal evidence matrix remains one task only through
 `oracle_signal_getattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers
 at budgets `[220, 100]`, against providers `context_ir`,
 `lexical_top_k_files`, and `import_neighborhood_files`. The fixture boundary
 is exactly `getattr(obj, "bit_length")`; no name variable, default argument,
 other reflective builtin, or generalized reflective-builtin behavior is
-included. The runtime payload is `lookup_outcome=returned_value`; existing
-strict `getattr` evidence conventions do not carry value/type summary fields
-without source/runtime evidence widening. Primary selector and selected-unit
-truth remain `unsupported/opaque`; runtime provenance remains additive only.
+included. The runtime payload is `lookup_outcome=returned_value`; the exact
+default acquisition path still does not carry returned value/type summary
+fields. Primary selector and selected-unit truth remain `unsupported/opaque`;
+runtime provenance remains additive only. The same exact replay identity is now
+admitted by default local runtime probe acquisition. That acquisition is
+limited to this single direct-literal replay identity; it does not generalize
+literal `getattr`, all `getattr/2`, defaulted `getattr`, `getattr(obj, name)`,
+or `hasattr` / `setattr` / `delattr`.
 `context_ir` selects the edit symbol, digest support symbol, and unsupported
 call boundary at both budgets. Baseline providers may select `main.py` at
 budget `220`, but they select no semantic units and do not select the
 unsupported/runtime evidence unit. No static attribute dependency edge,
 selected `bit_length` symbol, selected `bit_length` unit, public API, MCP,
-package export, schema, scoring, optimizer, compiler, winner-selection, or
-public benchmark widening is included. The current `REFLECTIVE_BUILTIN` /
+package export, schema, scoring, optimizer, compiler, winner-selection,
+public/demo, benchmark, latency, production, or generalized reflective-builtin
+widening is included. The current `REFLECTIVE_BUILTIN` /
 direct-literal `hasattr(obj, "bit_length")` surface has two bounded parts:
 the internal evidence matrix remains one task only through
 `oracle_signal_hasattr_literal_probe_matrix`: 1 task x 2 budgets x 3 providers

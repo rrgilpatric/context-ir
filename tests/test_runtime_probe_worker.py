@@ -491,6 +491,36 @@ def _reflective_getattr_request(
     )
 
 
+def _reflective_getattr_literal_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact literal-getattr pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=37,
+            ),
+            snippet='getattr(obj, "bit_length")',
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text='getattr(obj, "bit_length")',
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_GETATTR_TWO_FORM_LABEL,
+        replay_target_seed="main.probe_literal_attribute",
+        replay_selector_seed=(
+            "call:main.probe_literal_attribute:"
+            f"{_REFLECTIVE_GETATTR_TWO_FORM_LABEL}@main.py:2:11:2:37"
+        ),
+    )
+
+
 def _reflective_getattr_default_request(
     *,
     source_file_path: str = "main.py",
@@ -5116,6 +5146,29 @@ def test_reflective_getattr_worker_request_materializes_replay_contract() -> Non
     )
 
 
+def test_reflective_getattr_worker_request_materializes_exact_replay_inputs() -> None:
+    """The exact literal pilot keeps object and attribute replay inputs."""
+    source_request = _reflective_getattr_literal_exact_replay_input_request()
+    payload = _valid_worker_payload_for_request(source_request)
+
+    materialize_request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request
+    )
+    request = materialize_request(payload)
+
+    assert request.subject_id == "unsupported:call:main.py:2:11"
+    assert request.source_start_line == 2
+    assert request.source_start_column == 11
+    assert request.source_end_column == source_request.source_site.span.end_column
+    assert request.boundary_text == source_request.boundary_text
+    assert request.replay_target_seed == source_request.replay_target_seed
+    assert request.replay_selector_seed == source_request.replay_selector_seed
+    assert request.request_replay_payload_fields[-2:] == (
+        _field("object_type", "builtins.int"),
+        _field("attribute_name", "bit_length"),
+    )
+
+
 @pytest.mark.parametrize(
     ("form_label", "boundary_text"),
     (
@@ -5148,6 +5201,7 @@ def test_reflective_getattr_worker_request_accepts_only_exact_form(
     ("replay_key", "replay_value", "error_match"),
     (
         ("reason_code", "dynamic_import", "reason_code"),
+        ("boundary_text", 'getattr(obj, "bit_length")', "direct-literal"),
         ("boundary_text", 'getattr(obj, "value")', "boundary_text"),
         ("family_label", "dynamic_import", "family_label"),
         ("form_label", _REFLECTIVE_HASATTR_FORM_LABEL, "form_label"),
@@ -5164,6 +5218,55 @@ def test_reflective_getattr_worker_request_rejects_replay_drift(
         replay_value,
         payload=_valid_worker_payload_for_request(_reflective_getattr_request()),
     )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("object_type", None, "exact replay inputs"),
+        ("attribute_name", None, "exact replay inputs"),
+        ("object_type", "builtins.str", "exact replay inputs"),
+        ("attribute_name", "missing", "exact replay inputs"),
+        ("object_type", "duplicate", "duplicate keys"),
+        ("unexpected", "value", "exact replay inputs"),
+    ),
+)
+def test_reflective_getattr_worker_request_rejects_bad_exact_replay_inputs(
+    replay_key: str,
+    replay_value: str | None,
+    error_match: str,
+) -> None:
+    """The exact literal pilot rejects missing, wrong, duplicate, or extra keys."""
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_literal_exact_replay_input_request()
+    )
+    if replay_value is None:
+        fields = tuple(
+            field
+            for field in payload.request_replay_payload_fields
+            if field.key != replay_key
+        )
+    elif replay_value == "duplicate":
+        fields = (
+            *payload.request_replay_payload_fields,
+            _field(replay_key, payload.request_replay_payload_fields[-2].value),
+        )
+    elif replay_key == "unexpected":
+        fields = (
+            *payload.request_replay_payload_fields,
+            _field(replay_key, replay_value),
+        )
+    else:
+        fields = tuple(
+            _field(field.key, replay_value) if field.key == replay_key else field
+            for field in payload.request_replay_payload_fields
+        )
+    object.__setattr__(payload, "request_replay_payload_fields", fields)
 
     with pytest.raises(ValueError, match=error_match):
         runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request(
@@ -5230,6 +5333,86 @@ def test_reflective_getattr_worker_concrete_observer_captures_lookup_outcome(
         ).normalized_payload
         == (_field("lookup_outcome", expected_outcome),)
     )
+
+
+def test_reflective_getattr_worker_concrete_observer_consumes_literal_replay_inputs(
+    tmp_path: Path,
+) -> None:
+    """The exact literal pilot calls ``main.probe_literal_attribute(1)``."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_literal_attribute(obj: object) -> object:\n"
+            "    assert obj == 1\n"
+            '    return getattr(obj, "bit_length")\n'
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_literal_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+    materialize_request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request
+    )
+    request = materialize_request(payload)
+    original_getattr = builtins.getattr
+    sys.modules.pop("main", None)
+
+    try:
+        observation = _observe_reflective_getattr_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+
+    assert observation.lookup_outcome == "returned_value"
+    assert observation.request_replay_payload_fields[-2:] == (
+        _field("object_type", "builtins.int"),
+        _field("attribute_name", "bit_length"),
+    )
+    assert (
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_success_response(
+            observation
+        ).observed_replay_inputs
+        == ()
+    )
+    assert builtins.getattr is original_getattr
+
+
+def test_reflective_getattr_worker_concrete_observer_rejects_literal_drift(
+    tmp_path: Path,
+) -> None:
+    """The exact literal pilot rejects a captured attribute-name mismatch."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_literal_attribute(obj: object) -> object:\n"
+            "    assert obj == 1\n"
+            '    return getattr(obj, "to_bytes")\n'
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_literal_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+    materialize_request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request
+    )
+    request = materialize_request(payload)
+    original_getattr = builtins.getattr
+    sys.modules.pop("main", None)
+
+    try:
+        with pytest.raises(ValueError, match="exact replay inputs"):
+            _observe_reflective_getattr_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+
+    assert builtins.getattr is original_getattr
 
 
 @pytest.mark.parametrize(
@@ -8680,6 +8863,52 @@ def test_reflective_getattr_worker_default_subprocess_observes_getattr(
     assert completed.stderr == ""
     protocol_payload = json.loads(completed.stdout)
     assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "lookup_outcome",
+                "value": "returned_value",
+            },
+        ],
+    }
+
+
+def test_reflective_getattr_worker_default_subprocess_observes_literal_replay_inputs(
+    tmp_path: Path,
+) -> None:
+    """The real worker consumes the exact direct-literal getattr replay-input pair."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_literal_attribute(obj: object) -> object:\n"
+            "    assert obj == 1\n"
+            '    return getattr(obj, "bit_length")\n'
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_literal_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    assert json.loads(completed.stdout) == {
         "runtime_probe_stdout_protocol_revision": (
             "runtime_probe_local_python_stdout_protocol:v1"
         ),

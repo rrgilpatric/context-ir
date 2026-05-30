@@ -103,6 +103,70 @@ run, portfolio artifacts remain unchanged, and public/demo, benchmark, latency,
 production, API/MCP/package-export/schema/scoring/compiler/optimizer/
 winner-selection, and generalized reflective-builtin claims remain held.
 
+Workspace-only direct-literal `getattr(obj, "bit_length")` runtime-acquisition
+candidate:
+
+- implementation slice returned DONE and was reviewed by control with no
+  source/test findings
+- a P3 docs/claim-boundary gap was found and corrected so the current docs now
+  describe this exact surface as internal matrix evidence plus one exact
+  default-acquisition replay identity
+- proposed release unit is exactly:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- source boundary admits only the exact direct-literal
+  `getattr(obj, "bit_length")` replay identity into default local runtime
+  probe acquisition
+- the exact replay identity uses the accepted literal boundary and preserves
+  `lookup_outcome=returned_value`
+- unsupported selector and selected-unit primary truth remain
+  `unsupported/opaque`
+- runtime provenance remains additive only
+- no static `bit_length` dependency edge, selected symbol, or selected
+  attribute unit is introduced
+- this does not generalize literal `getattr`, all `getattr/2`, defaulted
+  `getattr`, `getattr(obj, name)`, or `hasattr` / `setattr` / `delattr`
+- full regression initially failed only on the deterministic Task 3 confidence
+  golden; the focused preservation test passed after updating
+  `FULL_REPO_TASK3_CONFIDENCE` to `0.0020015353080911295`
+- the Task 3 correction preserves selected units/order, document SHA
+  `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`,
+  `274` tokens, warnings, warning IDs, and probe behavior
+- source-slice validation passed before the docs correction:
+  - `ruff check`
+  - `ruff format --check`
+  - `mypy --strict src/`
+  - focused pytest with `1,032` tests
+  - `git diff --check`
+- release state:
+  - accepted in workspace: yes, after docs and confidence-golden corrections
+  - prior 12-file release-unit audit cleared: yes
+  - corrected 13-file release-unit audit cleared: yes
+  - full regression cleared: yes, `ruff check src/ tests/`, `ruff format
+    --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v`
+    passed with `1,810` tests
+  - commit-gating cleared: yes, first-pass after corrected full regression
+  - staged: no
+  - locally committed: no
+  - pushed: no
+- next control action: stage and create the local release commit for the exact
+  corrected 13-file release unit
+- Task 4 remains not run, portfolio artifacts remain unchanged, and
+  public/demo, benchmark, latency, production, API/MCP/package-export/schema/
+  scoring/compiler/optimizer/winner-selection, and generalized
+  reflective-builtin claims remain held
+
 Pushed direct-literal `getattr` release:
 `8afe99f Add direct-literal getattr eval pilot`. This commit contains the
 accepted, corrected-audit-cleared, full-regression-cleared,
@@ -623,8 +687,10 @@ regression, commit-gating, staging, local commit creation, or push absent new
 findings. Task 4 remains not run, portfolio artifacts remain unchanged, and
 public/demo claims remain held.
 
-Direct-literal `getattr` implementation candidate:
-this workspace adds the internal eval-only
+Closed historical direct-literal `getattr` eval-matrix implementation
+candidate:
+the pushed eval-only release added the internal
+eval-only
 `oracle_signal_getattr_literal_probe_matrix` candidate for exactly
 `getattr(obj, "bit_length")`. The matrix is 1 task x 2 budgets x 3 providers
 at budgets `[220, 100]`, against `context_ir`, `lexical_top_k_files`, and
@@ -644,8 +710,9 @@ edge, selected `bit_length` symbol, selected `bit_length` unit,
 source/runtime/API/MCP/package-export/schema/scoring/compiler/optimizer/
 winner-selection change, Task 4, portfolio update, public/demo claim, latency
 claim, benchmark claim, production claim, or generalized reflective-builtin
-claim is included. Control review found no issues and accepted this candidate
-workspace-only. Focused validation passed, including direct matrix execution,
+claim is included. Control review found no issues and accepted that candidate
+workspace-only before its later release gates and push. Focused validation
+passed, including direct matrix execution,
 JSON validation, focused ruff/format-check, strict mypy, focused pytest with
 `17 passed`, and clean `git diff --check`.
 

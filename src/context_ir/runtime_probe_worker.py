@@ -120,20 +120,45 @@ _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN = "11"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE = "2"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN = "29"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED = "main.probe_attribute"
+_REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_attribute:reflective_builtin:hasattr/2@main.py:2:11:2:29"
+)
 _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = "37"
 _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
     "main.probe_literal_attribute"
+)
+_REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_literal_attribute:reflective_builtin:hasattr/2@main.py:2:11:2:37"
 )
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
 _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_FORM_LABEL = "reflective_builtin:getattr/2"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_BOUNDARY_TEXT = "getattr(obj, name)"
+_REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT = (
+    'getattr(obj, "bit_length")'
+)
 _REFLECTIVE_BUILTIN_GETATTR_DEFAULT_WORKER_FORM_LABEL = "reflective_builtin:getattr/3"
 _REFLECTIVE_BUILTIN_GETATTR_DEFAULT_WORKER_BOUNDARY_TEXT = "getattr(obj, name, default)"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_GLOBAL_NAME = "getattr"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_RETURNED_VALUE = "returned_value"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_RAISED_ATTRIBUTE_ERROR = "raised_attribute_error"
 _REFLECTIVE_BUILTIN_GETATTR_WORKER_RETURNED_DEFAULT_VALUE = "returned_default_value"
+_REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY = "object_type"
+_REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY = "attribute_name"
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SUBJECT_ID = "unsupported:call:main.py:2:11"
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH = "main.py"
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE = "2"
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN = "11"
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE = "2"
+_REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = "37"
+_REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
+    "main.probe_literal_attribute"
+)
+_REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_literal_attribute:reflective_builtin:getattr/2@main.py:2:11:2:37"
+)
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
 _REFLECTIVE_BUILTIN_VARS_WORKER_FORM_LABEL = "reflective_builtin:vars/1"
 _REFLECTIVE_BUILTIN_VARS_WORKER_BOUNDARY_TEXT = "vars(obj)"
 _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_FORM_LABEL = "reflective_builtin:vars/0"
@@ -367,6 +392,13 @@ _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS = frozenset(
         *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
         _REFLECTIVE_BUILTIN_HASATTR_OBJECT_TYPE_REPLAY_KEY,
         _REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY,
+    )
+)
+_REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS = frozenset(
+    (
+        *_DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS,
+        _REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY,
+        _REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY,
     )
 )
 
@@ -1481,7 +1513,7 @@ RuntimeProbeLocalPythonReflectiveHasattrTargetCallable: TypeAlias = Callable[
     object,
 ]
 RuntimeProbeLocalPythonReflectiveGetattrTargetCallable: TypeAlias = Callable[
-    [],
+    ...,
     object,
 ]
 RuntimeProbeLocalPythonReflectiveGetattrDefaultTargetCallable: TypeAlias = Callable[
@@ -1683,6 +1715,8 @@ class _RuntimeProbeReflectiveGetattrCapture:
 
     original_getattr: Callable[[object, str], object]
     captured_lookup_outcomes: list[str] = field(default_factory=list)
+    captured_object_types: list[str] = field(default_factory=list)
+    captured_attribute_names: list[str] = field(default_factory=list)
     captured_rejections: list[str] = field(default_factory=list)
 
     def getattr(self, *args: object, **kwargs: object) -> object:
@@ -1700,6 +1734,8 @@ class _RuntimeProbeReflectiveGetattrCapture:
                 "runtime probe reflective builtin getattr worker attribute name "
                 "must be a string"
             )
+        self.captured_object_types.append(_runtime_probe_worker_object_type_name(obj))
+        self.captured_attribute_names.append(name)
         try:
             result = self.original_getattr(obj, name)
         except AttributeError:
@@ -1747,6 +1783,12 @@ class _RuntimeProbeReflectiveGetattrDefaultCapture:
             _REFLECTIVE_BUILTIN_GETATTR_WORKER_RETURNED_VALUE
         )
         return result
+
+
+def _runtime_probe_worker_object_type_name(value: object) -> str:
+    """Return the stable module-qualified type name for a captured object."""
+    value_type = type(value)
+    return f"{value_type.__module__}.{value_type.__qualname__}"
 
 
 @dataclass
@@ -4521,16 +4563,22 @@ def materialize_runtime_probe_reflective_getattr_worker_observation_from_target(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonReflectiveGetattrTargetCallable,
 ) -> RuntimeProbeLocalPythonReflectiveGetattrWorkerObservation:
-    """Observe one zero-argument target under exact ``getattr`` interception."""
+    """Observe one target under exact ``getattr`` interception."""
     _validate_runtime_probe_reflective_getattr_replay_target(replay_target)
     _validate_runtime_probe_reflective_getattr_replay_target_source_module(
         replay_target,
         source_module,
     )
     _validate_runtime_probe_reflective_getattr_target_callable(target)
+    exact_replay_inputs = _runtime_probe_reflective_getattr_exact_replay_inputs(
+        replay_target.request
+    )
+    target_args = _runtime_probe_reflective_getattr_target_args(exact_replay_inputs)
     lookup_outcome = _runtime_probe_reflective_getattr_captured_lookup_outcome(
         source_module,
         target,
+        target_args=target_args,
+        exact_replay_inputs=exact_replay_inputs,
     )
     return materialize_runtime_probe_reflective_getattr_worker_observation(
         replay_target.request,
@@ -6980,6 +7028,8 @@ def _is_runtime_probe_reflective_hasattr_name_variable_replay_input_pilot(
         == _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
         and replay_fields_by_key["replay_target_seed"]
         == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
+        and replay_fields_by_key["replay_selector_seed"]
+        == _REFLECTIVE_BUILTIN_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED
     )
 
 
@@ -7010,6 +7060,8 @@ def _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
         == _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
         and replay_fields_by_key["replay_target_seed"]
         == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED
+        and replay_fields_by_key["replay_selector_seed"]
+        == _REFLECTIVE_BUILTIN_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED
     )
 
 
@@ -7118,6 +7170,10 @@ def _validate_runtime_probe_reflective_getattr_worker_payload(
         replay_target_seed=payload.replay_target_seed,
         replay_selector_seed=payload.replay_selector_seed,
     )
+    _validate_runtime_probe_reflective_getattr_exact_replay_inputs_if_needed(
+        payload.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
         plan_id=payload.plan_id,
         request_id=payload.request_id,
@@ -7180,9 +7236,6 @@ def _validate_runtime_probe_reflective_getattr_worker_request(
         request.boundary_text,
         field_name="boundary_text",
     )
-    _validate_runtime_probe_reflective_getattr_worker_request_boundary_text(
-        request.boundary_text
-    )
     _validate_runtime_probe_worker_metadata_text(
         request.replay_target_seed,
         field_name="replay_target_seed",
@@ -7222,6 +7275,10 @@ def _validate_runtime_probe_reflective_getattr_worker_request(
         replay_target_seed=request.replay_target_seed,
         replay_selector_seed=request.replay_selector_seed,
     )
+    _validate_runtime_probe_reflective_getattr_exact_replay_inputs_if_needed(
+        request.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     for field_key, expected_value in (
         ("subject_kind", request.subject_kind.value),
         ("subject_id", request.subject_id),
@@ -7257,14 +7314,32 @@ def _validate_runtime_probe_reflective_getattr_worker_request(
 
 
 def _validate_runtime_probe_reflective_getattr_worker_request_boundary_text(
-    boundary_text: str,
+    replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject exact-getattr requests that do not carry the approved boundary."""
-    if boundary_text != _REFLECTIVE_BUILTIN_GETATTR_WORKER_BOUNDARY_TEXT:
-        raise ValueError(
-            "runtime probe reflective builtin getattr worker boundary_text must be "
-            f"{_REFLECTIVE_BUILTIN_GETATTR_WORKER_BOUNDARY_TEXT}"
+    """Reject exact-getattr requests outside approved boundary identities."""
+    boundary_text = replay_fields_by_key["boundary_text"]
+    if boundary_text == _REFLECTIVE_BUILTIN_GETATTR_WORKER_BOUNDARY_TEXT:
+        return
+    if (
+        boundary_text
+        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
+        and _is_runtime_probe_reflective_getattr_literal_bit_length_replay_input_pilot(
+            replay_fields_by_key
         )
+    ):
+        return
+    if (
+        boundary_text
+        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin getattr worker boundary_text must match "
+            "the exact direct-literal bit_length replay identity"
+        )
+    raise ValueError(
+        "runtime probe reflective builtin getattr worker boundary_text must be "
+        f"{_REFLECTIVE_BUILTIN_GETATTR_WORKER_BOUNDARY_TEXT}"
+    )
 
 
 def _validate_runtime_probe_reflective_getattr_worker_observer(
@@ -7287,6 +7362,35 @@ def _validate_runtime_probe_reflective_getattr_target_callable(
         )
 
 
+def _runtime_probe_reflective_getattr_exact_replay_inputs(
+    request: RuntimeProbeLocalPythonReflectiveGetattrWorkerRequest,
+) -> Mapping[str, str] | None:
+    """Return exact literal replay inputs for the accepted pilot, if present."""
+    _validate_runtime_probe_reflective_getattr_worker_request(request)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    if not _is_runtime_probe_reflective_getattr_literal_bit_length_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return None
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        request.request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_reflective_getattr_exact_replay_inputs(exact_fields_by_key)
+    return exact_fields_by_key
+
+
+def _runtime_probe_reflective_getattr_target_args(
+    exact_replay_inputs: Mapping[str, str] | None,
+) -> tuple[object, ...]:
+    """Return target arguments for the exact literal pilot, otherwise none."""
+    if exact_replay_inputs is None:
+        return ()
+    return (1,)
+
+
 def _validate_runtime_probe_reflective_getattr_replay_target_source_module(
     replay_target: RuntimeProbeLocalPythonReflectiveGetattrReplayTarget,
     source_module: ModuleType,
@@ -7307,6 +7411,9 @@ def _validate_runtime_probe_reflective_getattr_replay_target_source_module(
 def _runtime_probe_reflective_getattr_captured_lookup_outcome(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonReflectiveGetattrTargetCallable,
+    *,
+    target_args: tuple[object, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Run a target while capturing one exact bare ``getattr(obj, name)`` call."""
     _validate_runtime_probe_reflective_getattr_source_global_absent(source_module)
@@ -7326,7 +7433,7 @@ def _runtime_probe_reflective_getattr_captured_lookup_outcome(
         try:
             sys.stdout = shielded_stdout
             sys.stderr = shielded_stderr
-            target()
+            target(*target_args)
         finally:
             sys.stdout = original_stdout
             sys.stderr = original_stderr
@@ -7351,16 +7458,24 @@ def _runtime_probe_reflective_getattr_captured_lookup_outcome(
     if target_failure is not None:
         _raise_runtime_probe_reflective_getattr_target_failure(target_failure)
 
-    return _runtime_probe_reflective_getattr_capture_lookup_outcome(capture)
+    return _runtime_probe_reflective_getattr_capture_lookup_outcome(
+        capture,
+        exact_replay_inputs=exact_replay_inputs,
+    )
 
 
 def _runtime_probe_reflective_getattr_capture_lookup_outcome(
     capture: _RuntimeProbeReflectiveGetattrCapture,
+    *,
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Return the single captured lookup outcome after validation."""
     _validate_runtime_probe_reflective_getattr_intercepted_calls(
         captured_lookup_outcomes=capture.captured_lookup_outcomes,
+        captured_object_types=tuple(capture.captured_object_types),
+        captured_attribute_names=tuple(capture.captured_attribute_names),
         captured_rejections=tuple(capture.captured_rejections),
+        exact_replay_inputs=exact_replay_inputs,
     )
     return capture.captured_lookup_outcomes[0]
 
@@ -7368,7 +7483,10 @@ def _runtime_probe_reflective_getattr_capture_lookup_outcome(
 def _validate_runtime_probe_reflective_getattr_intercepted_calls(
     *,
     captured_lookup_outcomes: list[str],
+    captured_object_types: tuple[str, ...],
+    captured_attribute_names: tuple[str, ...],
     captured_rejections: tuple[str, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> None:
     """Reject intercepted getattr behavior outside the exact two-argument form."""
     if "arity" in captured_rejections:
@@ -7385,6 +7503,23 @@ def _validate_runtime_probe_reflective_getattr_intercepted_calls(
         raise ValueError(
             "runtime probe reflective builtin getattr worker target must capture "
             "exactly one getattr call"
+        )
+    if len(captured_object_types) != 1 or len(captured_attribute_names) != 1:
+        raise ValueError(
+            "runtime probe reflective builtin getattr worker target must capture "
+            "exactly one getattr call"
+        )
+    if exact_replay_inputs is None:
+        return
+    if (
+        captured_object_types[0]
+        != exact_replay_inputs[_REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY]
+        or captured_attribute_names[0]
+        != exact_replay_inputs[_REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY]
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin getattr worker exact replay inputs "
+            "must match captured object_type and attribute_name"
         )
 
 
@@ -9192,7 +9327,7 @@ def _validate_runtime_probe_reflective_getattr_replay_metadata(
         field_name="boundary_text",
     )
     _validate_runtime_probe_reflective_getattr_worker_request_boundary_text(
-        replay_fields_by_key["boundary_text"]
+        replay_fields_by_key
     )
     _validate_runtime_probe_worker_source_span(
         start_line=_runtime_probe_worker_replay_span_value(
@@ -9212,6 +9347,79 @@ def _validate_runtime_probe_reflective_getattr_replay_metadata(
             field_name="source_end_column",
         ),
     )
+
+
+def _validate_runtime_probe_reflective_getattr_exact_replay_inputs_if_needed(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    replay_fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject drifted request replay inputs for the exact literal getattr pilot."""
+    if not _is_runtime_probe_reflective_getattr_literal_bit_length_replay_input_pilot(
+        replay_fields_by_key
+    ):
+        return
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        fields,
+        field_name="request_replay_payload_fields",
+    )
+    _validate_runtime_probe_reflective_getattr_exact_replay_inputs(exact_fields_by_key)
+
+
+def _is_runtime_probe_reflective_getattr_literal_bit_length_replay_input_pilot(
+    replay_fields_by_key: Mapping[str, str],
+) -> bool:
+    """Return whether replay identity targets ``getattr(obj, "bit_length")``."""
+    return (
+        replay_fields_by_key["subject_id"]
+        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SUBJECT_ID
+        and replay_fields_by_key["source_file_path"]
+        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
+        and replay_fields_by_key["source_start_line"]
+        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+        and replay_fields_by_key["source_start_column"]
+        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+        and replay_fields_by_key["source_end_line"]
+        == _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE
+        and replay_fields_by_key["source_end_column"]
+        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN
+        and replay_fields_by_key["reason_code"]
+        == UnresolvedReasonCode.REFLECTIVE_BUILTIN.value
+        and replay_fields_by_key["boundary_text"]
+        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_WORKER_BOUNDARY_TEXT
+        and replay_fields_by_key["family_label"]
+        == RuntimeProbeFamily.REFLECTIVE_BUILTIN.value
+        and replay_fields_by_key["form_label"]
+        == _REFLECTIVE_BUILTIN_GETATTR_WORKER_FORM_LABEL
+        and replay_fields_by_key["replay_target_seed"]
+        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED
+        and replay_fields_by_key["replay_selector_seed"]
+        == _REFLECTIVE_BUILTIN_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    )
+
+
+def _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Require the exact literal pilot to carry only the accepted replay pair."""
+    if (
+        set(fields_by_key)
+        != _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_REPLAY_INPUT_KEYS
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin getattr worker exact replay inputs "
+            "must contain only object_type and attribute_name"
+        )
+    if (
+        fields_by_key[_REFLECTIVE_BUILTIN_GETATTR_OBJECT_TYPE_REPLAY_KEY]
+        != _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE
+        or fields_by_key[_REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY]
+        != _REFLECTIVE_BUILTIN_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin getattr worker exact replay inputs "
+            "must be object_type=builtins.int and attribute_name=bit_length"
+        )
 
 
 def _validate_runtime_probe_reflective_getattr_replay_field_match(

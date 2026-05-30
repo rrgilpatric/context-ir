@@ -90,15 +90,40 @@ _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN = 29
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED = (
     "main.probe_attribute"
 )
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_attribute:reflective_builtin:hasattr/2@main.py:2:11:2:29"
+)
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = 37
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
     "main.probe_literal_attribute"
+)
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_literal_attribute:reflective_builtin:hasattr/2@main.py:2:11:2:37"
 )
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
 _RUNTIME_PROBE_REFLECTIVE_GETATTR_LOCAL_PYTHON_FORM_LABEL = (
     "reflective_builtin:getattr/2"
 )
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT = (
+    'getattr(obj, "bit_length")'
+)
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SUBJECT_ID = (
+    "unsupported:call:main.py:2:11"
+)
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH = "main.py"
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE = 2
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN = 11
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE = 2
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = 37
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
+    "main.probe_literal_attribute"
+)
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
+    "call:main.probe_literal_attribute:reflective_builtin:getattr/2@main.py:2:11:2:37"
+)
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
 _RUNTIME_PROBE_REFLECTIVE_GETATTR_DEFAULT_LOCAL_PYTHON_FORM_LABEL = (
     "reflective_builtin:getattr/3"
 )
@@ -229,7 +254,9 @@ _ReflectiveHasattrReplayInputIdentity: TypeAlias = tuple[
     int,
     int,
     str,
+    str,
 ]
+_ReflectiveGetattrReplayInputIdentity: TypeAlias = _ReflectiveHasattrReplayInputIdentity
 
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
     _ReflectiveHasattrReplayInputIdentity,
@@ -243,6 +270,7 @@ _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
         _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
         _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN,
         _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED,
     ),
     (
         _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT,
@@ -252,6 +280,22 @@ _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
         _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
         _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN,
         _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED,
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED,
+    ),
+)
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES: tuple[
+    _ReflectiveGetattrReplayInputIdentity,
+    ...,
+] = (
+    (
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_BOUNDARY_TEXT,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED,
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED,
     ),
 )
 
@@ -4385,18 +4429,29 @@ def _request_replay_payload_fields_for_request(
     request: RuntimeProbeRequest,
 ) -> tuple[RuntimeProbeReplayField, ...]:
     """Return exact pre-observation replay inputs for pushed pilot requests."""
-    if not _is_reflective_hasattr_int_bit_length_probe_request(request):
-        return ()
-    return (
-        RuntimeProbeReplayField(
-            key="object_type",
-            value=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE,
-        ),
-        RuntimeProbeReplayField(
-            key="attribute_name",
-            value=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
-        ),
-    )
+    if _is_reflective_hasattr_int_bit_length_probe_request(request):
+        return (
+            RuntimeProbeReplayField(
+                key="object_type",
+                value=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE,
+            ),
+            RuntimeProbeReplayField(
+                key="attribute_name",
+                value=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
+            ),
+        )
+    if _is_reflective_getattr_int_bit_length_probe_request(request):
+        return (
+            RuntimeProbeReplayField(
+                key="object_type",
+                value=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE,
+            ),
+            RuntimeProbeReplayField(
+                key="attribute_name",
+                value=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
+            ),
+        )
+    return ()
 
 
 def _is_reflective_hasattr_int_bit_length_probe_request(
@@ -4422,6 +4477,7 @@ def _is_reflective_hasattr_int_bit_length_probe_request(
                 and span.end_line == source_end_line
                 and span.end_column == source_end_column
                 and request.replay_target_seed == replay_target_seed
+                and request.replay_selector_seed == replay_selector_seed
             )
             for (
                 boundary_text,
@@ -4431,7 +4487,47 @@ def _is_reflective_hasattr_int_bit_length_probe_request(
                 source_end_line,
                 source_end_column,
                 replay_target_seed,
+                replay_selector_seed,
             ) in _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES
+        )
+    )
+
+
+def _is_reflective_getattr_int_bit_length_probe_request(
+    request: RuntimeProbeRequest,
+) -> bool:
+    """Return whether a request is the exact literal ``getattr`` replay path."""
+    span = request.source_site.span
+    return (
+        request.family_label is RuntimeProbeFamily.REFLECTIVE_BUILTIN
+        and request.form_label
+        == _RUNTIME_PROBE_REFLECTIVE_GETATTR_LOCAL_PYTHON_FORM_LABEL
+        and request.subject_kind is SemanticSubjectKind.UNSUPPORTED_FINDING
+        and request.subject_id
+        == _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SUBJECT_ID
+        and request.reason_code is UnresolvedReasonCode.REFLECTIVE_BUILTIN
+        and any(
+            (
+                request.boundary_text == boundary_text
+                and request.source_site.snippet == boundary_text
+                and request.source_site.file_path == source_file_path
+                and span.start_line == source_start_line
+                and span.start_column == source_start_column
+                and span.end_line == source_end_line
+                and span.end_column == source_end_column
+                and request.replay_target_seed == replay_target_seed
+                and request.replay_selector_seed == replay_selector_seed
+            )
+            for (
+                boundary_text,
+                source_file_path,
+                source_start_line,
+                source_start_column,
+                source_end_line,
+                source_end_column,
+                replay_target_seed,
+                replay_selector_seed,
+            ) in _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_IDENTITIES
         )
     )
 

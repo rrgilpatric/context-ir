@@ -2,6 +2,82 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-30 -- Direct-Literal Getattr Runtime Acquisition Candidate Accepted
+
+- Accepted a workspace-only implementation candidate that promotes only the
+  exact direct-literal `getattr(obj, "bit_length")` replay identity into
+  default local runtime probe acquisition.
+- Files in the proposed release unit are exactly:
+  - `ARCHITECTURE.md`
+  - `BUILDLOG.md`
+  - `EVAL.md`
+  - `PLAN.md`
+  - `PUBLIC_CLAIMS.md`
+  - `README.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_tool_facade.py`
+- Control review found no source/test findings.
+- A P3 docs/claim-boundary gap was corrected:
+  - `ARCHITECTURE.md`, `EVAL.md`, `README.md`, and `PUBLIC_CLAIMS.md` now
+    state that `oracle_signal_getattr_literal_probe_matrix` remains internal
+    evidence while the same exact replay identity has default local runtime
+    probe acquisition
+  - `PLAN.md` records the corrected 13-file release unit and the workspace-only
+    release state
+- Full regression initially failed only on the deterministic Task 3 confidence
+  golden in `tests/test_eval_signal_smoke_e.py`.
+- The focused correction updated only `FULL_REPO_TASK3_CONFIDENCE`:
+  - from `0.002012787339374718`
+  - to `0.0020015353080911295`
+- The focused preservation test passed with selected units/order, document SHA,
+  `274` tokens, warnings, warning IDs, and probe behavior unchanged.
+- Boundary preserved:
+  - default local runtime probe acquisition admits only the exact
+    direct-literal `getattr(obj, "bit_length")` replay identity
+  - runtime payload remains `lookup_outcome=returned_value`
+  - unsupported selector and selected-unit primary truth remain
+    `unsupported/opaque`
+  - runtime provenance remains additive only
+  - no static `bit_length` dependency edge, selected symbol, or selected
+    attribute unit is introduced
+  - no generalized literal `getattr`, all `getattr/2`, defaulted `getattr`,
+    `getattr(obj, name)`, or `hasattr` / `setattr` / `delattr` widening is
+    included
+  - public/demo, benchmark, latency, production, API/MCP/package-export/
+    schema/scoring/compiler/optimizer/winner-selection, and generalized
+    reflective-builtin claims remain held
+- Validation already run before docs correction:
+  - `ruff check`
+  - `ruff format --check`
+  - `mypy --strict src/`
+  - focused pytest with `1,032` tests
+  - `git diff --check`
+- Focused confidence-golden correction validation:
+  - `ruff check tests/test_eval_signal_smoke_e.py`
+  - `ruff format --check tests/test_eval_signal_smoke_e.py`
+  - `mypy --strict src/`
+  - focused Task 3 pytest passed
+  - `git diff --check`
+- Release-state impact:
+  - accepted in workspace: yes
+  - prior 12-file release-unit audit cleared: yes
+  - corrected 13-file release-unit audit cleared: yes
+  - full regression cleared: yes, `ruff check src/ tests/`, `ruff format
+    --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v`
+    passed with `1,810` tests
+  - commit-gating cleared: yes, first-pass after corrected full regression
+  - staged: no
+  - committed locally: no
+  - pushed: no
+- Next control action: stage and create the local release commit for the exact
+  corrected 13-file release unit.
+- Acceptance status: 2 corrections
+
 ## 2026-05-30 -- Direct-Literal Hasattr Runtime Acquisition Push Completed
 
 - Ryan authorized pushing the exact direct-literal `hasattr(obj, "bit_length")`

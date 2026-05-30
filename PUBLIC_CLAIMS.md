@@ -31,11 +31,10 @@ stays scoped to repo-local evidence only.
   eval-only default-return and
   value-return branch pilots for `getattr(obj, name, default)`, and the current
   internal eval-only raised-`AttributeError` branch pilot for exactly
-  `getattr(obj, name)`, plus the current narrow internal eval-only
-  direct-literal `getattr(obj, "bit_length")` pilot, plus the current narrow
-  direct-literal `hasattr(obj, "bit_length")` surface whose matrix remains
-  internal evidence and whose exact replay identity now has default local
-  runtime probe acquisition, and
+  `getattr(obj, name)`, plus the current narrow direct-literal
+  `getattr(obj, "bit_length")` and `hasattr(obj, "bit_length")` surfaces whose
+  matrices remain internal evidence and whose exact replay identities now have
+  default local runtime probe acquisition, and
   the current internal one-argument `vars(obj)` and zero-argument `vars()`
   pilots, plus the
   current internal eval-only `vars(obj)` raised-`TypeError` branch pilot, plus the
@@ -86,9 +85,10 @@ stays scoped to repo-local evidence only.
   comparative claims remain bounded to the existing quad matrix. No
   public/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is included.
-  The current internal eval-only `REFLECTIVE_BUILTIN` /
-  `oracle_signal_getattr_literal_probe_matrix` covers only a direct-literal
-  `getattr(obj, "bit_length")` pilot as 1 task x 2 budgets x 3 providers at
+  The current `REFLECTIVE_BUILTIN` /
+  `oracle_signal_getattr_literal_probe_matrix` remains internal evidence for a
+  direct-literal `getattr(obj, "bit_length")` matrix as 1 task x 2 budgets x
+  3 providers at
   budgets `[220, 100]`, against providers `context_ir`,
   `lexical_top_k_files`, and `import_neighborhood_files`; fixture boundary
   exactly `getattr(obj, "bit_length")`; no name variable, defaulted
@@ -101,8 +101,12 @@ stays scoped to repo-local evidence only.
   empty and they do not select the unsupported/runtime evidence unit; no
   static attribute dependency edge, selected `bit_length` symbol, selected
   `bit_length` unit, public comparative claim, public API, MCP, package
-  export, schema, scoring, optimizer, compiler, product, winner-selection, or
-  public benchmark widening is included.
+  export, schema, scoring, optimizer, compiler, product, winner-selection,
+  public/demo, benchmark, latency, or production widening is included. The
+  same exact direct-literal replay identity now has default local runtime
+  probe acquisition; this does not generalize literal `getattr`, all
+  `getattr/2`, defaulted `getattr`, `getattr(obj, name)`, or `hasattr` /
+  `setattr` / `delattr`.
   The current `REFLECTIVE_BUILTIN` /
   `oracle_signal_hasattr_literal_probe_matrix` remains internal evidence for a
   direct-literal `hasattr(obj, "bit_length")` matrix as 1 task x 2 budgets x
