@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Setattr Literal Default Provider Slice Pushed
+
+- Ryan authorized pushing the exact `oracle_signal_setattr_literal_probe`
+  default-provider release.
+- Local release commit was created and pushed:
+  `fade74c Add literal setattr default provider support`.
+- Post-push verification:
+  - `HEAD=origin/main=fade74c797104e7a7b011a9f88f9f1b61824388b`
+  - worktree clean
+  - `git diff --check` clean
+  - `git diff -- src/` empty
+- Release state: pushed and closed/no-active-gate. The exact literal default-
+  provider quartet is now complete through pushed releases for
+  `oracle_signal_hasattr_literal_probe`,
+  `oracle_signal_getattr_literal_probe`,
+  `oracle_signal_delattr_literal_probe`, and
+  `oracle_signal_setattr_literal_probe`.
+- Next control action: run one read-only post-quartet planning spike from live
+  git truth to select the smallest safe next substantive tranche. Do not run
+  Task 4, public/demo claim work, benchmark/latency/production widening,
+  generalized runtime acquisition, or another implementation slice as part of
+  that spike.
+- Acceptance status: first-pass after one approved deterministic Task 3
+  confidence correction.
+
 ## 2026-05-31 -- Setattr Literal Default Provider Slice Returned
 
 - Execution slice completed for exact
