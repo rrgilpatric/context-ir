@@ -88,7 +88,6 @@ UNSUPPORTED_DYNAMIC_IMPORT_SIBLING_TASK_IDS = (
     "oracle_signal_dynamic_import_builtins_attr_probe",
     "oracle_signal_dynamic_import_imported_alias_probe",
     "oracle_signal_dynamic_import_imported_name_probe",
-    "oracle_signal_dynamic_import_probe",
     "oracle_signal_dynamic_import_root_alias_probe",
     "oracle_signal_dynamic_import_root_probe",
 )

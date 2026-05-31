@@ -40,83 +40,92 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Corrected dynamic-import root-literal default-provider release unit is pushed
-and closed with no active gate:
-`ef10b76 Add dynamic import root literal provider support` adds
-`context_ir_default_local_python_subprocess` support for exactly
-`oracle_signal_dynamic_import_root_literal_probe`. The correction removes the
-previous committed fixture-observation bypass and routes the exact
-`DYNAMIC_IMPORT` / `dynamic_import:importlib.import_module/1` provider fixture
-through `recompile_repository_context_with_dynamic_import_local_python_subprocess`.
-The exact request remains `importlib.import_module("plugins.weather")`,
-unsupported unit `unsupported:call:main.py:5:13`, span
-`main.py:5:13-5:55`, replay target `main.load_weather_plugin`, replay selector
-`call:main.load_weather_plugin:dynamic_import:importlib.import_module/1@main.py:5:13:5:55`,
-and normalized payload `imported_module=plugins.weather`.
+Imported dynamic-import literal default-provider slice is workspace-only returned
+and not staged, committed, or pushed. Execution intake verified branch `main`,
+`HEAD=origin/main=f63dcf338da808ecd52a572da0ab32526f544f80` (`f63dcf3 Sync
+dynamic import provider push state`), and a clean worktree before editing.
 
-The worker correction is exact and fail-closed for this replay identity only:
-the worker supplies a local `plugins.weather` module stub with `render_card()`
-only when the copied request identity matches the subject, site, source span,
-boundary, family/form, replay target, and replay selector above. It does not
-import the real plugin, does not generalize dynamic-import materialization, and
-does not add arbitrary module stubs or arbitrary attributes.
+This workspace slice adds `context_ir_default_local_python_subprocess` support
+for exactly `oracle_signal_dynamic_import_probe`: boundary
+`import_module("plugins.weather")`, unsupported unit
+`unsupported:call:main.py:5:13`, family/form `DYNAMIC_IMPORT` /
+`dynamic_import:import_module/1`, replay target `main.load_weather_plugin`,
+replay selector
+`call:main.load_weather_plugin:dynamic_import:import_module/1@main.py:5:13:5:45`,
+empty observed replay inputs, and normalized payload
+`imported_module=plugins.weather`.
 
-The pushed release unit is exactly:
+The worker support is exact and fail-closed for this copied replay identity only.
+The fixture-only stub supplies a local `plugins.weather` module object with
+`render_card()` only when subject, site, source span, boundary, family/form,
+replay target, replay selector, and imported module match. It does not import the
+real plugin and does not generalize module materialization.
+
+The proposed workspace execution unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
 - `src/context_ir/eval_providers.py`
 - `src/context_ir/runtime_probe_worker.py`
-- `tests/test_eval_signal_delattr_literal_probe.py`
-- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_dynamic_import_probe.py`
 - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
-- `tests/test_eval_signal_getattr_literal_probe.py`
 - `tests/test_eval_signal_globals_probe.py`
-- `tests/test_eval_signal_hasattr_literal_probe.py`
 - `tests/test_eval_signal_hasattr_probe.py`
 - `tests/test_eval_signal_locals_probe.py`
 - `tests/test_eval_signal_metaclass_behavior_probe.py`
-- `tests/test_eval_signal_setattr_literal_probe.py`
 - `tests/test_eval_signal_smoke_e.py`
 - `tests/test_eval_signal_vars_zero_probe.py`
 - `tests/test_runtime_probe_worker.py`
 
-Execution-lane validation passed with scoped `ruff check`, scoped `ruff format
---check`, `mypy --strict src/`, targeted pytest with `670` tests, full
-regression with `pytest tests/ -v` reporting `1,885` passed, clean
+Correction-lane validation passed with scoped `ruff check`, scoped `ruff format
+--check`, `mypy --strict src/`, targeted pytest with `607` tests, full
+regression with `pytest tests/ -v` reporting `1,899` passed, clean
 `git diff --check`, and empty `git diff -- evals/` plus empty
-`git diff -- src/context_ir/runtime_probe_execution.py`. Control review
-accepted the corrected slice with no findings. The read-only release-unit audit
-returned PASS with no findings over the exact 17-file unit. Post-audit full
-regression passed with `ruff check src/ tests/`, `ruff format --check src/
-tests/`, `mypy --strict src/`, and `pytest tests/ -v` reporting `1,885` passed.
-The correction rerun initially exposed only the known deterministic Task 3
-confidence scalar drift in `tests/test_eval_signal_smoke_e.py`; selected
-units/order, document SHA, total tokens, warnings, warning IDs, probe behavior,
-probe count, and warning-call count stayed fixed, and the only scalar
-correction changed `FULL_REPO_TASK3_CONFIDENCE` from
-`0.0019108189609775563` to `0.001903652569243661`.
+`git diff -- src/context_ir/runtime_probe_execution.py`.
 
-Preservation locks for this pushed release: primary truth remains
+Control review found one P2 methodology/contract issue in the first-pass
+workspace slice: the exact provider fixture silently compiled this task at
+budget `180` while reporting the requested budget `220`. The correction removes
+that hidden cap. For this exact default-local subprocess provider task, budget
+`180` is the only admitted provider budget; budget `220` now fails closed before
+compilation with a clear unsupported-budget error. Successful provider results
+now report `result.budget == 180` and compile at budget `180`, keeping the
+reported budget aligned with the actual compile budget while still proving no
+selected `plugins/weather.py` unit or imported-module symbol is introduced.
+
+The validation rerun exposed only deterministic Task 3 confidence scalar drift
+in `tests/test_eval_signal_smoke_e.py`; selected units/order, document SHA,
+`274` tokens, warnings, warning IDs, probe behavior, and warning-call count
+stayed fixed, and the only scalar correction set `FULL_REPO_TASK3_CONFIDENCE` to
+`0.001884948089018067`.
+
+Preservation locks for this workspace slice: primary truth remains
 unsupported/opaque; runtime provenance remains additive only; no static
 `plugins.weather` dependency edge, selected `plugins/weather.py` unit, selected
-imported-module symbol, runtime-backed primary tier, observed replay inputs,
-eval asset, runtime execution, schema/API/MCP/export/scoring/compiler/optimizer/
+imported-module symbol, runtime-backed primary tier, observed replay inputs, eval
+asset, runtime execution, schema/API/MCP/export/scoring/compiler/optimizer/
 winner-selection, Task 4, public/demo/benchmark/latency/production, or
 generalized dynamic-import support change is included. Dynamic-import sibling
-tasks still fail closed at the provider level, and worker tests cover wrong
-module name, wrong replay target, wrong source span, wrong boundary, and
-non-root sibling forms.
+tasks still fail closed at the provider and worker levels; worker tests cover
+wrong module name, wrong replay target, wrong source span, wrong boundary, and
+sibling dynamic-import forms.
 
+Release state: workspace-only correction return accepted by control review,
+release-unit-audit-cleared, full-control-validation-cleared, and
+commit-gating-cleared with no findings. Full control validation passed with
+`ruff check src/ tests/`, `ruff format --check src/ tests/`,
+`mypy --strict src/`, and `pytest tests/ -v` reporting `1,899` passed.
+Commit-gating passed over the exact 13-file release unit with no staged files,
+clean `git diff --check`, empty `git diff -- evals/`, and empty
+`git diff -- src/context_ir/runtime_probe_execution.py`. Local staging and
+commit are the next release steps; push remains separately Ryan-gated. Current
+pushed authority before this workspace slice remains `f63dcf3 Sync dynamic
+import provider push state`.
 Current pushed dynamic-import root-literal default-provider support authority is
 `ef10b76 Add dynamic import root literal provider support`. Current pushed exact
-literal default-provider support authority is `fade74c Add
-literal setattr default provider support`. That release completes the exact
-literal default-provider quartet: `oracle_signal_hasattr_literal_probe`,
-`oracle_signal_getattr_literal_probe`, `oracle_signal_delattr_literal_probe`,
-and `oracle_signal_setattr_literal_probe`. Live git refs and worktree state
-must still be verified from git during control intake; do not infer them from
-committed prose.
+literal default-provider support authority is `fade74c Add literal setattr
+default provider support`. Live git refs and worktree state must still be
+verified from git during control intake; do not infer them from committed prose.
 
 Current pushed exact replay-contract source cleanup authority is `09ce30d
 Refactor exact runtime replay contracts`. This behavior-preserving release

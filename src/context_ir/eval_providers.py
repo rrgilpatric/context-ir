@@ -81,6 +81,10 @@ _DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID = (
 )
 _DYNAMIC_IMPORT_ROOT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
 _DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
+_DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID = "oracle_signal_dynamic_import_probe"
+_DYNAMIC_IMPORT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
+_DYNAMIC_IMPORT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
+_DYNAMIC_IMPORT_LITERAL_CONTEXT_BUDGET = 180
 _SETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_setattr_literal_probe"
 _SETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 _SETATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "returned_none"),)
@@ -432,6 +436,16 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         ),
         runtime_payload=_DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD,
     ),
+    _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_DYNAMIC_IMPORT_LITERAL_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text='import_module("plugins.weather")',
+        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:import_module/1",
+        boundary_text='import_module("plugins.weather")',
+        replay_target_seed="main.load_weather_plugin",
+        snapshot_id="oracle_signal_dynamic_import_probe@default-local-python:v1",
+        runtime_payload=_DYNAMIC_IMPORT_LITERAL_RUNTIME_PAYLOAD,
+    ),
     _SETATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_SETATTR_LITERAL_UNSUPPORTED_UNIT_ID,
         miss_evidence_text='setattr(obj, "flag", value)',
@@ -660,11 +674,12 @@ def build_context_ir_default_local_python_subprocess_pack(
     fixture = _default_local_python_subprocess_fixture(request.task_id)
 
     repo_root = Path(request.repo_root).resolve()
+    context_budget = _default_local_python_context_budget(request)
     previous_response = tool_facade.compile_repository_context(
         tool_facade.SemanticContextRequest(
             repo_root=repo_root,
             query=request.query,
-            budget=request.budget,
+            budget=context_budget,
         )
     )
     miss_evidence = SemanticMissEvidence(
@@ -1339,12 +1354,26 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
+            "oracle_signal_dynamic_import_probe, "
             "oracle_signal_setattr_literal_probe, "
             "oracle_signal_delattr_literal_probe, oracle_signal_exec_probe, "
             "oracle_signal_eval_probe, or "
             "oracle_signal_metaclass_behavior_probe"
         )
     return fixture
+
+
+def _default_local_python_context_budget(request: EvalProviderRequest) -> int:
+    """Return the honest compile budget for exact subprocess provider fixtures."""
+    if (
+        request.task_id == _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID
+        and request.budget != _DYNAMIC_IMPORT_LITERAL_CONTEXT_BUDGET
+    ):
+        raise ValueError(
+            "context_ir_default_local_python_subprocess only supports "
+            "budget 180 for oracle_signal_dynamic_import_probe"
+        )
+    return request.budget
 
 
 def _require_default_local_python_runtime_probe_request(

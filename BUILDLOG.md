@@ -2,6 +2,145 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Imported Dynamic Import Budget Contract Correction Returned
+
+- Correction execution lane addressed the P2 methodology/contract drift found in
+  the first-pass workspace slice for exact
+  `context_ir_default_local_python_subprocess` support on
+  `oracle_signal_dynamic_import_probe`.
+- Finding corrected:
+  - the first-pass provider fixture used a hidden `max_context_budget` cap that
+    compiled at budget `180` while returning a provider result that still
+    reported budget `220`
+- Exact correction:
+  - removed the fixture-level hidden budget cap from
+    `src/context_ir/eval_providers.py`
+  - kept the provider compile budget equal to the requested provider budget
+  - made `oracle_signal_dynamic_import_probe` fail closed for the default local
+    subprocess provider unless the request budget is exactly `180`
+  - added test coverage proving budget `180` succeeds with
+    `result.budget == 180` and compile budget `180`, while budget `220` fails
+    before compilation with a clear unsupported-budget message
+- Preservation proof:
+  - exact task remains only `oracle_signal_dynamic_import_probe`
+  - boundary remains `import_module("plugins.weather")`
+  - family/form remains `DYNAMIC_IMPORT` / `dynamic_import:import_module/1`
+  - replay target remains `main.load_weather_plugin`
+  - normalized runtime payload remains exactly
+    `imported_module=plugins.weather`
+  - observed replay inputs remain empty
+  - primary truth remains unsupported/opaque and runtime provenance remains
+    additive only
+  - no static `plugins.weather` dependency edge, selected `plugins/weather.py`
+    unit, selected imported-module symbol, runtime-backed primary selected unit,
+    eval asset, runtime execution, schema/API/MCP/export/scoring/compiler/
+    optimizer/winner-selection, Task 4, public/demo/benchmark/latency/
+    production, or generalized dynamic-import support change is included
+- Validation:
+  - scoped `ruff check` passed over provider, worker, and touched tests
+  - scoped `ruff format --check` passed over provider, worker, and touched tests
+  - `mypy --strict src/` passed
+  - targeted pytest passed with `607` tests
+  - full regression passed: `pytest tests/ -v` with `1,899` tests
+  - `git diff --check` passed
+  - `git diff -- evals/` is empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` is empty
+- Validation initially exposed only deterministic Task 3 confidence scalar drift:
+  selected units/order, document SHA, `274` tokens, warnings, warning IDs, probe
+  behavior, and warning-call count stayed fixed. The only scalar correction set
+  `FULL_REPO_TASK3_CONFIDENCE` in `tests/test_eval_signal_smoke_e.py` to
+  `0.001884948089018067`.
+- Release gates:
+  - control review accepted the correction with no findings
+  - read-only release-unit audit returned PASS with no findings for the exact
+    13-file workspace unit
+  - full control validation passed:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1,899` tests
+  - commit-gating review passed over the exact 13-file release unit with no
+    staged files, clean `git diff --check`, empty `git diff -- evals/`, and
+    empty `git diff -- src/context_ir/runtime_probe_execution.py`
+- Acceptance status: correction accepted; release-unit audit, full control
+  validation, and commit-gating cleared; staging, commit, and push remain
+  pending.
+
+## 2026-05-31 -- Imported Dynamic Import Default Provider Slice Returned
+
+- Execution slice completed for exact
+  `context_ir_default_local_python_subprocess` support for
+  `oracle_signal_dynamic_import_probe`.
+- Intake verified the requested live base before edits:
+  `HEAD=origin/main=f63dcf338da808ecd52a572da0ab32526f544f80`,
+  branch `main`, latest route `f63dcf3 Sync dynamic import provider push state`,
+  and a clean worktree.
+- Findings: none known from the execution lane; control review and
+  release-unit audit remain pending.
+- Proposed workspace execution unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_dynamic_import_probe.py`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_runtime_probe_worker.py`
+- Scope implemented:
+  - one exact provider fixture for `import_module("plugins.weather")`
+  - family `DYNAMIC_IMPORT`, form `dynamic_import:import_module/1`, replay target
+    `main.load_weather_plugin`, unsupported unit
+    `unsupported:call:main.py:5:13`, span `main.py:5:13-5:45`, replay selector
+    `call:main.load_weather_plugin:dynamic_import:import_module/1@main.py:5:13:5:45`,
+    and normalized runtime payload exactly `imported_module=plugins.weather`
+  - provider route uses
+    `recompile_repository_context_with_dynamic_import_local_python_subprocess`
+    and records one `OBSERVED` runner attempt with empty
+    `observed_replay_inputs`
+  - exact fixture-only worker stub satisfies `module.render_card()` for the
+    copied replay identity only and does not import the real plugin or generalize
+    module materialization
+  - first-pass provider code capped the internal context compile budget at
+    `180` for this task while preserving the caller-visible requested budget;
+    control review rejected that as P2 methodology/contract drift, and the
+    budget-contract correction entry above supersedes it
+- Preservation proof:
+  - primary truth remains unsupported/opaque and runtime provenance remains
+    additive only
+  - provider tests prove the dynamic-import subprocess facade is used, the runner
+    attempt matches the planned request, no observed replay inputs are recorded,
+    and normalized payload is `imported_module=plugins.weather`
+  - provider and fixture tests prove no static `plugins.weather` dependency edge,
+    selected `plugins/weather.py` unit, selected imported-module symbol, or
+    runtime-backed primary selected unit is introduced
+  - worker tests prove exact success and fail-closed behavior for wrong module,
+    wrong replay target, wrong source span, wrong boundary, and sibling
+    dynamic-import forms
+  - no eval asset, runtime execution, schema/API/MCP/export/scoring/compiler/
+    optimizer/winner-selection, Task 4, public/demo/benchmark/latency/production,
+    or generalized dynamic-import support change is included
+- Validation:
+  - scoped `ruff check` passed over provider, worker, and touched tests
+  - scoped `ruff format --check` passed over provider, worker, and touched tests
+  - `mypy --strict src/` passed
+  - targeted pytest passed with `606` tests
+  - full regression passed: `pytest tests/ -v` with `1,898` tests
+  - `git diff --check` passed
+  - `git diff -- evals/` is empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` is empty
+- Validation initially exposed only deterministic Task 3 confidence scalar drift:
+  selected units/order, document SHA, `274` tokens, warnings, warning IDs, probe
+  behavior, and warning-call count stayed fixed. The only scalar correction set
+  `FULL_REPO_TASK3_CONFIDENCE` in `tests/test_eval_signal_smoke_e.py` to
+  `0.0018855884799838796`.
+- Acceptance status: first-pass execution return; workspace-only; control review,
+  release-unit audit, commit-gating, staging, commit, and push remain pending.
+
 ## 2026-05-31 -- Dynamic Import Root Literal Default Provider Pushed
 
 - Ryan authorized remote push for the corrected dynamic-import root-literal
