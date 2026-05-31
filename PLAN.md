@@ -167,9 +167,61 @@ five-file release unit with live git state matching `HEAD=origin/main=33b3905`,
 clean `git diff --check`, no staged files, no excluded test/eval/package-export
 diffs, and exact replay contracts limited to the legacy bridge plus the quartet.
 The exact five-file unit was locally committed as `09ce30d`; Ryan authorized
-push, and `git push origin main` completed. No active workspace-only release
-unit is pending. Next control action: select the next substantive tranche from
-current repo truth.
+push, and `git push origin main` completed. This release has no active gate.
+
+Workspace-only accepted exact provider-support candidate:
+`context_ir_default_local_python_subprocess` support for exactly
+`oracle_signal_hasattr_literal_probe`. The candidate adds one exact fixture
+contract in `src/context_ir/eval_providers.py` for
+`hasattr(obj, "bit_length")`, family `REFLECTIVE_BUILTIN`, form
+`reflective_builtin:hasattr/2`, replay target `main.probe_literal_attribute`,
+unsupported unit `unsupported:call:main.py:2:11`, and runtime payload
+`attribute_present=true`.
+
+The current workspace release-unit files are exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+
+Control status: implementation review found no findings and accepted the slice
+workspace-only. Focused validation passed with `ruff check`, `ruff format
+--check`, `mypy --strict src/`, targeted pytest over
+`tests/test_eval_signal_hasattr_literal_probe.py`, `tests/test_eval_providers.py`,
+and `tests/test_eval_runs.py` with `49` tests, and clean `git diff --check`.
+The first read-only release-unit audit failed on one P1 test expectation drift:
+`tests/test_eval_signal_hasattr_probe.py` still expected the old provider
+fail-closed support message. Ryan authorized the narrow correction, and the only
+added correction file updates that existing fail-closed test expectation to
+include `oracle_signal_hasattr_literal_probe`. There is no diff to `evals/`,
+runtime execution/worker files, public docs/claims, API, MCP, package exports,
+schema, scoring, compiler, optimizer, winner-selection, Task 4, benchmark,
+latency, production, or generalized runtime support. The corrected read-only
+release-unit audit returned PASS with no findings for the exact five-file unit.
+Full regression then failed on four additional sibling fail-closed message
+expectations plus deterministic Task 3 confidence drift. Ryan authorized the
+narrow correction. The active workspace unit is now the exact ten-file unit
+listed above: the provider source, the literal provider tests, five
+fail-closed/message or confidence test corrections, and continuity docs. The
+prior five-file audit is stale for commit sequencing. Focused correction
+validation passed with `ruff check`, `ruff format --check`, `mypy --strict
+src/`, and targeted pytest with `55` tests. The corrected read-only
+release-unit audit over the exact ten-file workspace unit returned PASS with no
+findings. Full regression passed with `ruff check src/ tests/`, `ruff format
+--check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with
+`1,856` tests. Commit-gating passed over the exact ten-file release unit with
+live git state matching `HEAD=origin/main=3d286f1`, clean `git diff --check`,
+no staged files, no excluded eval/runtime/public-claim/package diffs, and no
+stale provider support-message assertions. Next control action: stage and
+locally commit the exact ten-file release unit. Push requires explicit Ryan
+authorization.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
