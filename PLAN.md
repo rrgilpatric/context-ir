@@ -121,8 +121,9 @@ regression initially failed only on the deterministic Task 3 confidence scalar;
 the correction changed only `FULL_REPO_TASK3_CONFIDENCE` from
 `0.001975727120229694` to `0.0019683503398339377`, while selected units/order,
 document SHA, total tokens, warnings, warning IDs, probe behavior, and warning
-call count stayed fixed. No active workspace-only release unit is pending. Next
-control action: select the next substantive tranche from current repo truth.
+call count stayed fixed. This historical pushed release has no active gate.
+Current active routing is superseded by the workspace-only delattr literal
+default provider candidate recorded below.
 
 Pushed exact replay-contract source cleanup release:
 `09ce30d Refactor exact runtime replay contracts`. This behavior-preserving
@@ -223,8 +224,8 @@ no staged files, no excluded eval/runtime/public-claim/package diffs, and no
 stale provider support-message assertions. Next control action: stage and
 locally commit the exact ten-file release unit. Ryan authorized local commit and
 push; `dbc662d` was created and `git push origin main` completed. This release
-has no active gate. Next control action: select the next substantive tranche
-from current repo truth.
+has no active gate. Current active routing is superseded by the workspace-only
+delattr literal default provider candidate below.
 
 Pushed exact provider-support release:
 `06ef129 Add literal getattr default provider support`. This release adds
@@ -280,8 +281,55 @@ package-export diffs, no stale provider support-message assertions, and the
 Task 3 confidence scalar set to `0.0019480149073584105`. Next control action:
 stage and locally commit the exact eleven-file release unit. Ryan authorized
 local commit and push; `06ef129` was created and `git push origin main`
-completed. This release has no active gate. Next control action: select the next
-substantive tranche from current repo truth.
+completed. This release has no active gate. Current active routing is
+superseded by the workspace-only delattr literal default provider candidate
+below.
+
+Workspace-only exact provider-support candidate:
+`context_ir_default_local_python_subprocess` support for exactly
+`oracle_signal_delattr_literal_probe`. This candidate adds one exact fixture
+contract in `src/context_ir/eval_providers.py` for `delattr(obj, "flag")`,
+family `RUNTIME_MUTATION`, form `runtime_mutation:delattr/2`, replay target
+`main.probe_delete_literal_attribute`, unsupported unit
+`unsupported:call:main.py:7:4`, and runtime payload exactly
+`mutation_outcome=deleted_attribute`.
+
+The proposed workspace release-unit files are exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_delattr_literal_probe.py`
+- `tests/test_eval_signal_getattr_literal_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+
+Execution-lane validation passed with scoped `ruff check`, scoped `ruff format
+--check`, `mypy --strict src/`, targeted pytest over the delattr/getattr/hasattr
+literal provider tests plus provider/run-spec tests with `66` tests, and an
+extra focused pytest over the five support-message assertions with `5` tests.
+Control review found no implementation or audit findings, then full regression
+initially failed only on deterministic Task 3 confidence drift in
+`tests/test_eval_signal_smoke_e.py`. Ryan approved the narrow correction, and
+the correction changes only `FULL_REPO_TASK3_CONFIDENCE` from
+`0.0019480149073584105` to `0.001938111989302464`; the focused Task 3
+preservation test passed after correction. Corrected release-unit audit passed
+over the exact twelve-file unit. Full regression passed with `ruff check src/
+tests/`, `ruff format --check src/ tests/`, `mypy --strict src/`, and
+`pytest tests/ -v` reporting `1862` passed. There is no diff to `evals/`,
+`src/context_ir/runtime_probe_execution.py`, or
+`src/context_ir/runtime_probe_worker.py`.
+
+Release state: corrected implementation candidate is audit-cleared and
+full-regression-cleared. Commit-gating passed over the exact twelve-file
+workspace unit. It is not staged, committed, or pushed. Next control action:
+stage and locally commit the exact twelve-file release unit if Ryan approves
+release sequencing; push requires explicit Ryan authorization.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
@@ -16521,15 +16569,26 @@ sequencing for `c1a12d7` absent new findings.
 - [x] Ryan-authorized remote push for internal default local-Python subprocess
   metaclass provider release unit
 - [x] Post-`0650bb8` control selection of the next bounded north-star lane
+- [x] Internal `context_ir_default_local_python_subprocess` provider
+  implementation candidate for exact `oracle_signal_hasattr_literal_probe`
+  release; pushed at `dbc662d`
+- [x] Internal `context_ir_default_local_python_subprocess` provider
+  implementation candidate for exact `oracle_signal_getattr_literal_probe`
+  release; pushed at `06ef129`
+- [x] Internal `context_ir_default_local_python_subprocess` provider
+  implementation candidate for exact `oracle_signal_delattr_literal_probe`;
+  workspace-only, pending corrected release-unit audit after Task 3 confidence
+  correction
 
 ## What Is In Progress
 
-- No implementation, release-gate, staging, commit, or push lane is currently in
-  progress.
+- A workspace-only implementation candidate is present for exact
+  `oracle_signal_delattr_literal_probe` support inside
+  `context_ir_default_local_python_subprocess`.
 - The active control action is the canonical route in the current release-state
-  block: select the next substantive tranche from live repo truth after the
-  pushed exact replay-contract source cleanup at `09ce30d` and routing sync at
-  `9595476`.
+  block: the corrected exact twelve-file delattr literal default provider
+  workspace unit is audit-cleared, full-regression-cleared, and
+  commit-gating-cleared; it is awaiting staging/local commit sequencing.
 - Older items that previously appeared here are historical closed releases and
   must not override the canonical active release-state block above.
 
@@ -17700,12 +17759,15 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: run a read-only tranche-selection spike from live repo truth
-after the pushed exact replay-contract source cleanup at `09ce30d` and routing
-sync at `9595476`. The spike should choose the smallest substantive next
-north-star tranche or recommend an explicit hold. Do not implement code, run
-Task 4, update public/demo claims, widen benchmark/latency/production claims,
-or generalize runtime acquisition before that selection is reviewed.
+Current next route: review and audit the workspace-only exact
+`oracle_signal_delattr_literal_probe` default provider candidate recorded in
+the canonical active release-state block. The proposed release unit is the
+exact twelve-file set listed there and is now corrected-audit-cleared and
+full-regression-cleared, and commit-gating-cleared. Do not run a
+tranche-selection spike, implement another provider fixture, run Task 4, update
+public/demo claims, widen benchmark/latency/production claims, or generalize
+runtime acquisition before this exact release unit is staged and locally
+committed. Push still requires explicit Ryan authorization.
 
 Historical closed-route notes retained below must not override the current next
 route above or the canonical active release-state block.

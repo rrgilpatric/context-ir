@@ -2,6 +2,84 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Delattr Literal Default Provider Slice Returned
+
+- Execution slice completed for exact
+  `context_ir_default_local_python_subprocess` support for
+  `oracle_signal_delattr_literal_probe`.
+- Findings: none known from the execution lane; control review and release-unit
+  audit remain pending.
+- Proposed workspace release-unit files:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_delattr_literal_probe.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Scope implemented:
+  - one exact default local-Python subprocess provider fixture contract for
+    `delattr(obj, "flag")`
+  - family `RUNTIME_MUTATION`, form `runtime_mutation:delattr/2`, replay target
+    `main.probe_delete_literal_attribute`, unsupported unit
+    `unsupported:call:main.py:7:4`, and runtime payload exactly
+    `mutation_outcome=deleted_attribute`
+  - focused tests proving budget-220 provider replay, exact replay inputs
+    `object_type=main.ProbeTarget` and `attribute_name=flag`, exact payload,
+    empty `observed_replay_inputs`, additive runtime provenance,
+    unsupported/opaque primary truth, no static `flag` selected unit/symbol/
+    dependency, wrong-plan fail-closed behavior, remaining literal sibling
+    rejection, and updated support-message expectations
+- Boundary preserved:
+  - no `evals/`, runtime acquisition/worker, runtime execution, run-spec,
+    fixture, task, eval schema, public docs/claims, API, MCP, package export,
+    scoring, compiler, optimizer, winner-selection, benchmark, latency,
+    production, Task 4, or generalized runtime-support change is included
+- Validation:
+  - scoped `ruff check` passed
+  - scoped `ruff format --check` passed
+  - `mypy --strict src/` passed
+  - targeted pytest over `tests/test_eval_signal_delattr_literal_probe.py`,
+    `tests/test_eval_signal_hasattr_literal_probe.py`,
+    `tests/test_eval_signal_getattr_literal_probe.py`,
+    `tests/test_eval_providers.py`, and `tests/test_eval_runs.py` passed with
+    `66` tests
+  - extra focused pytest over the five edited support-message tests passed with
+    `5` tests
+  - `git diff --check` passed
+  - `git diff -- evals/ src/context_ir/runtime_probe_execution.py
+    src/context_ir/runtime_probe_worker.py` is empty
+- Control review and release-unit audit found no implementation or boundary
+  findings for the original eleven-file unit.
+- Full regression initially failed only on deterministic Task 3 confidence drift
+  in `tests/test_eval_signal_smoke_e.py`:
+  - expected `0.0019480149073584105`
+  - actual `0.001938111989302464`
+- Ryan approved the narrow correction. The correction changes only
+  `tests/test_eval_signal_smoke_e.py`, updating `FULL_REPO_TASK3_CONFIDENCE`
+  to `0.001938111989302464`; the focused Task 3 preservation test passed after
+  correction.
+- Corrected release-unit audit passed over the exact twelve-file unit.
+- Full regression passed:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` with `1862` passed
+- Commit-gating passed over the exact twelve-file release unit: dirty file set
+  matched the planned unit, no staged files were present, `git diff --check`
+  was clean, and excluded `evals/`, runtime worker/execution, public claim,
+  package export, API/MCP, schema, scoring, compiler, optimizer,
+  winner-selection, Task 4, benchmark, latency, and production surfaces were
+  unchanged.
+- Acceptance status: corrected workspace unit is audit-cleared and
+  full-regression-cleared; commit-gating is cleared; staging, commit, and push
+  remain pending.
+
 ## 2026-05-31 -- Getattr Literal Default Provider Slice Pushed
 
 - Reviewed the returned implementation slice adding exact
