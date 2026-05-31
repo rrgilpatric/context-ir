@@ -122,8 +122,8 @@ the correction changed only `FULL_REPO_TASK3_CONFIDENCE` from
 `0.001975727120229694` to `0.0019683503398339377`, while selected units/order,
 document SHA, total tokens, warnings, warning IDs, probe behavior, and warning
 call count stayed fixed. This historical pushed release has no active gate.
-Current active routing is superseded by the pushed delattr literal default
-provider release recorded below.
+Current active routing is superseded by the workspace-only setattr literal
+default provider slice returned below.
 
 Pushed exact replay-contract source cleanup release:
 `09ce30d Refactor exact runtime replay contracts`. This behavior-preserving
@@ -224,8 +224,8 @@ no staged files, no excluded eval/runtime/public-claim/package diffs, and no
 stale provider support-message assertions. Next control action: stage and
 locally commit the exact ten-file release unit. Ryan authorized local commit and
 push; `dbc662d` was created and `git push origin main` completed. This release
-has no active gate. Current active routing is superseded by the pushed delattr
-literal default provider release below.
+has no active gate. Current active routing is superseded by the workspace-only
+setattr literal default provider slice returned below.
 
 Pushed exact provider-support release:
 `06ef129 Add literal getattr default provider support`. This release adds
@@ -327,8 +327,74 @@ tests/`, `ruff format --check src/ tests/`, `mypy --strict src/`, and
 
 Release state: corrected release unit was audit-cleared,
 full-regression-cleared, commit-gating-cleared, locally committed, and pushed
-with Ryan authorization. This release has no active gate. Next control action:
-select the next substantive tranche from current repo truth.
+with Ryan authorization. This release has no active gate. Current active
+routing is the workspace-only setattr literal default provider slice returned
+below.
+
+Workspace-only exact provider-support slice returned:
+`oracle_signal_setattr_literal_probe` default local-Python subprocess support.
+This slice adds exactly one provider fixture contract for
+`setattr(obj, "flag", value)`, family `RUNTIME_MUTATION`, form
+`runtime_mutation:setattr/3`, replay target
+`main.probe_set_literal_attribute`, unsupported unit
+`unsupported:call:main.py:7:4`, and runtime payload exactly
+`mutation_outcome=returned_none`. It also locks the exact runtime replay tail:
+`object_type=main.ProbeTarget`, `attribute_name=flag`,
+`assigned_value_type=builtins.str`, and `assigned_value_literal=ready`; durable
+value references retain
+`artifact://runtime-probe/setattr-value/{request_id}.json`; observed replay
+inputs remain empty; unsupported selector and selected-unit primary truth remain
+`unsupported/opaque`; runtime provenance remains additive only.
+
+The proposed workspace release-unit files are exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_delattr_literal_probe.py`
+- `tests/test_eval_signal_getattr_literal_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_setattr_literal_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+
+Execution-lane validation passed with scoped `ruff check`, scoped `ruff format
+--check`, `mypy --strict src/`, targeted pytest over the setattr/hasattr/
+getattr/delattr literal provider tests plus provider/run-spec tests with `73`
+tests, focused pytest over the five edited support-message tests with `5`
+tests, and clean `git diff --check`. `git diff -- evals/
+src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`
+is empty, so those areas remain out of scope and unchanged.
+
+Release state: workspace-only execution return accepted after one continuity
+correction. The first corrected release-unit audit passed over the exact
+twelve-file unit, then full regression failed only on deterministic Task 3
+confidence drift in `tests/test_eval_signal_smoke_e.py`. Ryan authorized the
+narrow correction, changing only `FULL_REPO_TASK3_CONFIDENCE` from
+`0.001938111989302464` to `0.0019257444292302217`; the focused Task 3
+preservation test passed, proving selected units/order, document SHA, total
+tokens, warnings, warning IDs, probe behavior, probe count, and warning-call
+count stayed fixed. Post-correction full regression passed with `ruff check
+src/ tests/`, `ruff format --check src/ tests/`, `mypy --strict src/`, and
+`pytest tests/ -v` with `1,863` tests. The active corrected release unit is now
+the exact thirteen-file unit listed above. Corrected release-unit audit for the
+expanded unit passed with no findings: live git matched
+`HEAD=origin/main=fa161f9`, dirty files matched the exact release unit, no
+staged files were present, `git diff --check` was clean, and excluded `evals/`,
+runtime worker/execution, public claim, package export, API/MCP, schema,
+scoring, compiler, optimizer, winner-selection, Task 4, benchmark, latency, and
+production surfaces were unchanged. Commit-gating passed over the exact
+thirteen-file release unit with no findings: live git matched
+`HEAD=origin/main=fa161f9`, the dirty file set matched the intended release
+unit, no staged files were present during review, `git diff --check` was clean,
+`src/` changes were limited to `src/context_ir/eval_providers.py`, and excluded
+eval/runtime/public/package/schema/scoring/compiler/optimizer/winner-selection
+surfaces stayed unchanged. Staging, commit, and push remain pending. Do not
+treat this slice as committed or pushed.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
@@ -16580,11 +16646,14 @@ sequencing for `c1a12d7` absent new findings.
 
 ## What Is In Progress
 
-- No implementation, release-gate, staging, commit, or push lane is currently in
-  progress.
+- Workspace-only implementation candidate for exact
+  `oracle_signal_setattr_literal_probe` default local-Python subprocess provider
+  support has been returned by the execution lane, corrected after full
+  regression exposed deterministic Task 3 confidence drift, and
+  commit-gating-cleared.
 - The active control action is the canonical route in the current release-state
-  block: select the next substantive tranche from current repo truth after the
-  pushed exact delattr literal default provider release at `5d3c01d`.
+  block: stage and locally commit the exact thirteen-file release unit. Push
+  remains blocked until Ryan explicitly authorizes it.
 - Older items that previously appeared here are historical closed releases and
   must not override the canonical active release-state block above.
 
@@ -17755,11 +17824,15 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: select the next substantive tranche from live repo truth
-after the pushed exact delattr literal default provider release at `5d3c01d`.
-Do not implement another provider fixture, run Task 4, update public/demo
-claims, widen benchmark/latency/production claims, or generalize runtime
-acquisition before that selection is reviewed.
+Current next route: stage and locally commit the corrected-audit-cleared,
+full-regression-cleared, and commit-gating-cleared workspace-only exact
+`oracle_signal_setattr_literal_probe` default provider candidate recorded in
+the canonical active release-state block. The active release unit is the exact
+thirteen-file unit listed there, including the approved Task 3 confidence
+correction in `tests/test_eval_signal_smoke_e.py`. Do not run a tranche-
+selection spike, implement another provider fixture, run Task 4, update
+public/demo claims, widen benchmark/latency/production claims, generalize
+runtime acquisition, or push before Ryan explicitly authorizes push.
 
 Historical closed-route notes retained below must not override the current next
 route above or the canonical active release-state block.

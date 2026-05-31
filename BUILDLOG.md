@@ -2,6 +2,124 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Setattr Literal Default Provider Slice Returned
+
+- Execution slice completed for exact
+  `context_ir_default_local_python_subprocess` support for
+  `oracle_signal_setattr_literal_probe`.
+- Intake verified the requested live base before edits:
+  `HEAD=origin/main=fa161f93c5eca82487e64f5d7b5acee3694956e5`,
+  branch `main`, latest route `fa161f9 Sync literal delattr provider push
+  state`, clean `git diff --check`, and empty `git diff -- src/`.
+- Findings: none known from the execution lane; control review and
+  release-unit audit remain pending.
+- Proposed workspace release-unit files:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_delattr_literal_probe.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_setattr_literal_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Scope implemented:
+  - one exact default local-Python subprocess provider fixture contract for
+    `setattr(obj, "flag", value)`
+  - family `RUNTIME_MUTATION`, form `runtime_mutation:setattr/3`, replay target
+    `main.probe_set_literal_attribute`, unsupported unit
+    `unsupported:call:main.py:7:4`, and runtime payload exactly
+    `mutation_outcome=returned_none`
+  - focused tests proving budget-220 provider replay, exact replay inputs
+    `object_type=main.ProbeTarget`, `attribute_name=flag`,
+    `assigned_value_type=builtins.str`, and `assigned_value_literal=ready`,
+    durable value-reference shape
+    `artifact://runtime-probe/setattr-value/{request_id}.json`, empty
+    `observed_replay_inputs`, additive runtime provenance, unsupported/opaque
+    primary truth, no static `flag` selected unit/symbol/dependency, no
+    returned-value/type summary fields, wrong-plan fail-closed behavior,
+    assigned-value drift fail-closed behavior, remaining literal sibling
+    rejection, and updated support-message expectations
+- Boundary preserved:
+  - no `evals/`, runtime acquisition/worker, runtime execution, run-spec,
+    fixture, task, eval schema, public docs/claims, API, MCP, package export,
+    scoring, compiler, optimizer, winner-selection, benchmark, latency,
+    production, Task 4, or generalized runtime-support change is included
+- Validation:
+  - scoped `ruff check` passed
+  - scoped `ruff format --check` passed
+  - `mypy --strict src/` passed
+  - targeted pytest over `tests/test_eval_signal_setattr_literal_probe.py`,
+    `tests/test_eval_signal_hasattr_literal_probe.py`,
+    `tests/test_eval_signal_getattr_literal_probe.py`,
+    `tests/test_eval_signal_delattr_literal_probe.py`,
+    `tests/test_eval_providers.py`, and `tests/test_eval_runs.py` passed with
+    `73` tests
+  - extra focused pytest over the five edited support-message tests passed with
+    `5` tests
+  - `git diff --check` passed
+  - `git diff -- evals/ src/context_ir/runtime_probe_execution.py
+    src/context_ir/runtime_probe_worker.py` is empty
+- Acceptance status: first-pass execution return; workspace-only; control
+  review, release-unit audit, full regression, commit-gating, staging, commit,
+  and push remain pending.
+- Control review found one continuity routing issue outside the implementation
+  boundary: the lower `PLAN.md` `What Is Next` section still routed to tranche
+  selection instead of this returned workspace candidate. Ryan approved the
+  narrow correction; `PLAN.md` now routes this exact release unit to corrected
+  release-unit audit before full regression or release sequencing.
+- Corrected release-unit audit passed over the exact twelve-file unit:
+  live git matched `HEAD=origin/main=fa161f9`, dirty files matched the planned
+  release unit, no staged files were present, `git diff --check` was clean, and
+  excluded `evals/`, runtime worker/execution, public claim, package export,
+  API/MCP, schema, scoring, compiler, optimizer, winner-selection, Task 4,
+  benchmark, latency, and production surfaces were unchanged.
+- Full regression initially failed only on deterministic Task 3 confidence
+  drift:
+  - expected `0.001938111989302464`
+  - actual `0.0019257444292302217`
+  - the preservation assertions before that failure proved selected
+    units/order, document SHA, `274` tokens, warnings, warning IDs, probe
+    behavior, probe count, and warning-call count stayed fixed
+- Ryan authorized the narrow correction. The only correction diff changes
+  `FULL_REPO_TASK3_CONFIDENCE` in `tests/test_eval_signal_smoke_e.py` to
+  `0.0019257444292302217`.
+- Focused correction validation passed:
+  - `ruff check tests/test_eval_signal_smoke_e.py`
+  - `ruff format --check tests/test_eval_signal_smoke_e.py`
+  - focused Task 3 preservation pytest with `1` test
+  - `git diff --check`
+- Post-correction full regression passed:
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `pytest tests/ -v` with `1,863` tests
+- Corrected release-unit audit over the expanded exact thirteen-file unit
+  passed with no findings:
+  - live git matched `HEAD=origin/main=fa161f9`
+  - dirty files matched the exact release unit above
+  - no staged files were present
+  - `git diff --check` was clean
+  - excluded `evals/`, runtime worker/execution, public claim, package export,
+    API/MCP, schema, scoring, compiler, optimizer, winner-selection, Task 4,
+    benchmark, latency, and production surfaces were unchanged
+- Commit-gating passed over the exact thirteen-file release unit with no
+  findings:
+  - live git matched `HEAD=origin/main=fa161f9`
+  - dirty files matched the intended release unit
+  - no staged files were present during review
+  - `git diff --check` was clean
+  - source changes were limited to `src/context_ir/eval_providers.py`
+  - excluded eval/runtime/public/package/schema/scoring/compiler/optimizer/
+    winner-selection surfaces stayed unchanged
+- Acceptance status: corrected workspace unit is corrected-audit-cleared,
+  full-regression-cleared, and commit-gating-cleared; staging, commit, and push
+  remain pending.
+
 ## 2026-05-31 -- Delattr Literal Default Provider Slice Pushed
 
 - Ryan authorized pushing the exact delattr literal default provider release.

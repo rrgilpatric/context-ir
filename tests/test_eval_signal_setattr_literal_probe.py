@@ -10,10 +10,14 @@ from pathlib import Path
 from types import ModuleType
 from typing import cast
 
+import pytest
+
 import context_ir
 import context_ir.eval_providers as eval_providers
 import context_ir.eval_runs as eval_runs
+import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.semantic_types as semantic_types
+import context_ir.tool_facade as tool_facade
 from context_ir.eval_oracles import (
     SymbolOracleSelector,
     UnsupportedOracleSelector,
@@ -71,6 +75,15 @@ QUERY = (
 )
 UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 UNSUPPORTED_SITE_ID = "site:call:main.py:7:4"
+UNSUPPORTED_LITERAL_SIBLING_TASK_IDS = (
+    "oracle_signal_dynamic_import_root_literal_probe",
+)
+DEFAULT_LOCAL_PROVIDER_SELECTED_UNIT_IDS = (
+    "def:main.py:main.probe_set_literal_attribute",
+    "def:main.py:main.render_probe_digest",
+    UNSUPPORTED_UNIT_ID,
+    "def:main.py:main.ProbeTarget",
+)
 
 
 def _parsed_ledger_records(ledger_path: Path) -> list[dict[str, object]]:
@@ -232,6 +245,243 @@ def test_setattr_literal_probe_resolves_without_static_attribute_proof() -> None
         dependency.evidence_site_id != UNSUPPORTED_SITE_ID
         for dependency in program.proven_dependencies
     )
+
+
+def test_setattr_literal_probe_default_local_provider_replays_exact_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The default local-Python provider admits only the exact literal fixture."""
+    captured_responses: list[
+        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse
+    ] = []
+    original_recompile = (
+        tool_facade.recompile_repository_context_with_default_local_python_subprocess
+    )
+
+    def capturing_recompile(
+        request: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest,
+    ) -> tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse:
+        response = original_recompile(request)
+        captured_responses.append(response)
+        return response
+
+    monkeypatch.setattr(
+        tool_facade,
+        "recompile_repository_context_with_default_local_python_subprocess",
+        capturing_recompile,
+    )
+
+    result = eval_providers.build_context_ir_default_local_python_subprocess_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=FIXTURE_ROOT,
+            task_id="oracle_signal_setattr_literal_probe",
+            query=QUERY,
+            budget=220,
+        )
+    )
+
+    assert len(captured_responses) == 1
+    response = captured_responses[0]
+    attempt = response.runner_attempt_collection.attempts[0]
+    observed_result = response.runner_attempt_collection.result_batch.results[0]
+    planned_request = attempt.request
+    unsupported_unit = next(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id == UNSUPPORTED_UNIT_ID
+    )
+    static_units = tuple(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id != UNSUPPORTED_UNIT_ID
+    )
+    provenance_record = result.runtime_provenance_records[0]
+    origin_detail = cast(dict[str, object], json.loads(provenance_record.origin_detail))
+    expected_durable_reference = (
+        f"artifact://runtime-probe/setattr-value/{planned_request.request_id}.json"
+    )
+
+    assert result.provider_name == (
+        eval_providers.CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER
+    )
+    assert result.task_id == "oracle_signal_setattr_literal_probe"
+    assert result.budget == 220
+    assert result.selected_files == ()
+    assert result.selected_unit_ids == DEFAULT_LOCAL_PROVIDER_SELECTED_UNIT_IDS
+    assert result.warnings == ()
+    assert planned_request.subject_id == UNSUPPORTED_UNIT_ID
+    assert planned_request.boundary_text == 'setattr(obj, "flag", value)'
+    assert (
+        planned_request.family_label
+        is eval_providers.RuntimeProbeFamily.RUNTIME_MUTATION
+    )
+    assert planned_request.form_label == "runtime_mutation:setattr/3"
+    assert planned_request.replay_target_seed == "main.probe_set_literal_attribute"
+    assert attempt.normalized_payload == (
+        runtime_probe_results.RuntimeProbeReplayField(
+            key="mutation_outcome",
+            value="returned_none",
+        ),
+    )
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference == expected_durable_reference
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.normalized_payload == attempt.normalized_payload
+    assert observed_result.durable_artifact_reference == expected_durable_reference
+    assert tuple(
+        (field.key, field.value)
+        for field in observed_result.replay_artifact.replay_inputs[-4:]
+    ) == (
+        ("object_type", "main.ProbeTarget"),
+        ("attribute_name", "flag"),
+        ("assigned_value_type", "builtins.str"),
+        ("assigned_value_literal", "ready"),
+    )
+    assert len(result.runtime_provenance_records) == 1
+    assert origin_detail["normalized_payload"] == {"mutation_outcome": "returned_none"}
+    assert origin_detail["durable_payload_reference"] == expected_durable_reference
+    assert "observed_replay_inputs" not in origin_detail
+    assert "returned_value_summary" not in origin_detail
+    assert "returned_type_summary" not in origin_detail
+    assert unsupported_unit.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        unsupported_unit.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported_unit.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported_unit.has_attached_runtime_provenance is True
+    assert unsupported_unit.attached_runtime_provenance_record_ids == (
+        provenance_record.record_id,
+    )
+    assert all(
+        unit.primary_capability_tier is CapabilityTier.STATICALLY_PROVED
+        for unit in static_units
+    )
+    assert all(unit.has_attached_runtime_provenance is False for unit in static_units)
+    assert all(
+        unit.primary_capability_tier is not CapabilityTier.RUNTIME_BACKED
+        for unit in result.metadata.selected_units
+    )
+    assert all("flag" not in unit_id for unit_id in result.selected_unit_ids)
+    assert all(
+        "flag" not in (symbol_id, symbol.qualified_name)
+        for symbol_id, symbol in response.program.resolved_symbols.items()
+    )
+    assert all(
+        "flag" not in dependency.source_symbol_id
+        and "flag" not in dependency.target_symbol_id
+        for dependency in response.program.proven_dependencies
+    )
+    assert all(
+        dependency.evidence_site_id != UNSUPPORTED_SITE_ID
+        for dependency in response.program.proven_dependencies
+    )
+    assert all(
+        "returned_value" not in unit.detail and "returned_type" not in unit.detail
+        for unit in result.metadata.selected_units
+    )
+
+
+def test_setattr_literal_probe_default_local_provider_rejects_wrong_plan_fields() -> (
+    None
+):
+    """The provider fails closed when the planned probe identity drifts."""
+    previous_response = eval_providers.tool_facade.compile_repository_context(
+        tool_facade.SemanticContextRequest(
+            repo_root=FIXTURE_ROOT,
+            query=QUERY,
+            budget=220,
+        )
+    )
+    fixture = eval_providers._default_local_python_subprocess_fixture(
+        "oracle_signal_setattr_literal_probe"
+    )
+    miss_evidence = semantic_types.SemanticMissEvidence(
+        kind=semantic_types.SemanticMissKind.ABSENT_SYMBOL,
+        evidence='setattr(obj, "flag", value)',
+    )
+    diagnostic = eval_providers.diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert len(plan.requests) == 1
+    object.__setattr__(plan.requests[0], "boundary_text", "setattr(obj, name, value)")
+
+    with pytest.raises(ValueError, match="wrong boundary"):
+        eval_providers._require_default_local_python_runtime_probe_request(
+            diagnostic,
+            fixture,
+        )
+
+
+def test_setattr_literal_probe_default_local_provider_rejects_assigned_value_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The provider fails closed when exact assigned-value replay input drifts."""
+    original_recompile = (
+        tool_facade.recompile_repository_context_with_default_local_python_subprocess
+    )
+
+    def drifting_recompile(
+        request: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest,
+    ) -> tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse:
+        response = original_recompile(request)
+        observed_result = response.runner_attempt_collection.result_batch.results[0]
+        assert isinstance(
+            observed_result, runtime_probe_results.RuntimeProbeObservedResult
+        )
+        replay_artifact = observed_result.replay_artifact
+        object.__setattr__(
+            replay_artifact,
+            "replay_inputs",
+            tuple(
+                runtime_probe_results.RuntimeProbeReplayField(
+                    key=field.key,
+                    value="waiting"
+                    if field.key == "assigned_value_literal"
+                    else field.value,
+                )
+                for field in replay_artifact.replay_inputs
+            ),
+        )
+        return response
+
+    monkeypatch.setattr(
+        tool_facade,
+        "recompile_repository_context_with_default_local_python_subprocess",
+        drifting_recompile,
+    )
+
+    with pytest.raises(ValueError, match="unexpected runtime replay inputs"):
+        eval_providers.build_context_ir_default_local_python_subprocess_pack(
+            eval_providers.EvalProviderRequest(
+                repo_root=FIXTURE_ROOT,
+                task_id="oracle_signal_setattr_literal_probe",
+                query=QUERY,
+                budget=220,
+            )
+        )
+
+
+@pytest.mark.parametrize("task_id", UNSUPPORTED_LITERAL_SIBLING_TASK_IDS)
+def test_setattr_literal_probe_default_local_provider_rejects_literal_siblings(
+    task_id: str,
+) -> None:
+    """Literal sibling tasks remain outside this exact provider slice."""
+    sibling_fixture_root = REPO_ROOT / "evals" / "fixtures" / task_id
+
+    with pytest.raises(ValueError, match="only supports"):
+        eval_providers.build_context_ir_default_local_python_subprocess_pack(
+            eval_providers.EvalProviderRequest(
+                repo_root=sibling_fixture_root,
+                task_id=task_id,
+                query=QUERY,
+                budget=220,
+            )
+        )
 
 
 def test_setattr_literal_probe_run_spec_loads_two_budget_matrix() -> None:

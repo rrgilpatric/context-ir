@@ -76,6 +76,9 @@ _HASATTR_LITERAL_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
 _GETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_getattr_literal_probe"
 _GETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _GETATTR_LITERAL_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_value"),)
+_SETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_setattr_literal_probe"
+_SETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
+_SETATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "returned_none"),)
 _DELATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_delattr_literal_probe"
 _DELATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 _DELATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "deleted_attribute"),)
@@ -338,6 +341,7 @@ class _DefaultLocalPythonSubprocessFixture:
     replay_target_seed: str
     snapshot_id: str
     runtime_payload: tuple[tuple[str, str], ...]
+    runtime_replay_input_tail: tuple[tuple[str, str], ...] = ()
 
 
 _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
@@ -410,6 +414,22 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         replay_target_seed="main.probe_literal_attribute",
         snapshot_id="oracle_signal_getattr_literal_probe@default-local-python:v1",
         runtime_payload=_GETATTR_LITERAL_RUNTIME_PAYLOAD,
+    ),
+    _SETATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_SETATTR_LITERAL_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text='setattr(obj, "flag", value)',
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label="runtime_mutation:setattr/3",
+        boundary_text='setattr(obj, "flag", value)',
+        replay_target_seed="main.probe_set_literal_attribute",
+        snapshot_id="oracle_signal_setattr_literal_probe@default-local-python:v1",
+        runtime_payload=_SETATTR_LITERAL_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(
+            ("object_type", "main.ProbeTarget"),
+            ("attribute_name", "flag"),
+            ("assigned_value_type", "builtins.str"),
+            ("assigned_value_literal", "ready"),
+        ),
     ),
     _DELATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_DELATTR_LITERAL_UNSUPPORTED_UNIT_ID,
@@ -1269,6 +1289,7 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_literal_probe, "
+            "oracle_signal_setattr_literal_probe, "
             "oracle_signal_delattr_literal_probe, oracle_signal_exec_probe, "
             "oracle_signal_eval_probe, or "
             "oracle_signal_metaclass_behavior_probe"
@@ -1348,6 +1369,18 @@ def _require_default_local_python_runtime_payload(
         raise ValueError(
             "default local-Python provider observed an unexpected runtime payload"
         )
+    if fixture.runtime_replay_input_tail:
+        observed_replay_input_tail = tuple(
+            (field.key, field.value)
+            for field in result.replay_artifact.replay_inputs[
+                -len(fixture.runtime_replay_input_tail) :
+            ]
+        )
+        if observed_replay_input_tail != fixture.runtime_replay_input_tail:
+            raise ValueError(
+                "default local-Python provider observed unexpected runtime replay "
+                "inputs"
+            )
 
 
 def _default_local_python_runtime_assumptions() -> tuple[

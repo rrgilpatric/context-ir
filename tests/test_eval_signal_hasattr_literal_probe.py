@@ -68,7 +68,6 @@ CONTEXT_IR_SELECTED_UNIT_IDS = (
     UNSUPPORTED_UNIT_ID,
 )
 UNSUPPORTED_LITERAL_SIBLING_TASK_IDS = (
-    "oracle_signal_setattr_literal_probe",
     "oracle_signal_dynamic_import_root_literal_probe",
 )
 
