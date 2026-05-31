@@ -2,6 +2,21 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Delattr Literal Default Provider Slice Pushed
+
+- Ryan authorized pushing the exact delattr literal default provider release.
+- Local release commit was created and pushed:
+  `5d3c01d Add literal delattr default provider support`.
+- Post-push verification:
+  - `HEAD=origin/main=5d3c01dc1fac788679a0e9826b613ecd84340d17`
+  - worktree clean
+  - `git diff --check` clean
+  - `git diff -- src/` empty
+- Release state: pushed and closed/no-active-gate. Next control action is to
+  select the next substantive tranche from current repo truth.
+- Acceptance status: first-pass after one approved deterministic Task 3
+  confidence correction.
+
 ## 2026-05-31 -- Delattr Literal Default Provider Slice Returned
 
 - Execution slice completed for exact
