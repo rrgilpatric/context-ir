@@ -226,6 +226,60 @@ push; `dbc662d` was created and `git push origin main` completed. This release
 has no active gate. Next control action: select the next substantive tranche
 from current repo truth.
 
+Workspace-only accepted exact provider-support candidate:
+`context_ir_default_local_python_subprocess` support for exactly
+`oracle_signal_getattr_literal_probe`. The candidate adds one exact fixture
+contract in `src/context_ir/eval_providers.py` for
+`getattr(obj, "bit_length")`, family `REFLECTIVE_BUILTIN`, form
+`reflective_builtin:getattr/2`, replay target `main.probe_literal_attribute`,
+unsupported unit `unsupported:call:main.py:2:11`, and runtime payload exactly
+`lookup_outcome=returned_value`.
+
+The current workspace release-unit files are exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_getattr_literal_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+
+Control status: implementation review found no findings and accepted the slice
+workspace-only. Focused validation passed with `ruff check`, `ruff format
+--check`, `mypy --strict src/`, targeted pytest over the `getattr_literal`,
+`hasattr_literal`, provider, run-spec, and support-message tests with `63`
+tests, and clean `git diff --check`. There is no diff to `evals/`, runtime
+execution/worker files, public docs/claims, API, MCP, package exports, schema,
+scoring, compiler, optimizer, winner-selection, Task 4, benchmark, latency,
+production, or generalized runtime support. The read-only release-unit audit
+over the exact ten-file workspace unit returned PASS with no findings. Next
+control action: run full regression before commit-gating, staging, commit, or
+push. Full regression failed only on deterministic Task 3 confidence drift:
+expected `0.0019587010676722074`, actual `0.0019480149073584105`; the focused
+preservation assertions before that failure proved selected units/order,
+document SHA, total tokens, warnings, warning IDs, probe behavior, probe count,
+and warning-call count stayed fixed. Ryan authorized the narrow correction. The
+active workspace release unit now also includes
+`tests/test_eval_signal_smoke_e.py`; rerun focused Task 3 validation, then full
+regression, then commit-gating before staging, commit, or push. Focused
+validation over the expanded eleven-file unit passed with `ruff check`, `ruff
+format --check`, `mypy --strict src/`, and targeted pytest with `64` tests. The
+corrected read-only release-unit audit over the exact eleven-file workspace unit
+returned PASS with no findings. Full regression passed with `ruff check src/
+tests/`, `ruff format --check src/ tests/`, `mypy --strict src/`, and `pytest
+tests/ -v` with `1,860` tests. Commit-gating passed over the exact eleven-file
+release unit with live git state matching `HEAD=origin/main=7bc23d9`, clean
+`git diff --check`, no staged files, no excluded eval/runtime/public-claim/
+package-export diffs, no stale provider support-message assertions, and the
+Task 3 confidence scalar set to `0.0019480149073584105`. Next control action:
+stage and locally commit the exact eleven-file release unit. Push requires
+explicit Ryan authorization.
+
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
 This release promotes only the exact direct-literal

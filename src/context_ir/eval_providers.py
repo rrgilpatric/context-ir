@@ -73,6 +73,9 @@ _HASATTR_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
 _HASATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_hasattr_literal_probe"
 _HASATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _HASATTR_LITERAL_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
+_GETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_getattr_literal_probe"
+_GETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_GETATTR_LITERAL_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_value"),)
 _EXEC_PROBE_TASK_ID = "oracle_signal_exec_probe"
 _EXEC_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:3:4"
 _EXEC_RUNTIME_PAYLOAD = (
@@ -394,6 +397,16 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         replay_target_seed="main.probe_literal_attribute",
         snapshot_id="oracle_signal_hasattr_literal_probe@default-local-python:v1",
         runtime_payload=_HASATTR_LITERAL_RUNTIME_PAYLOAD,
+    ),
+    _GETATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_GETATTR_LITERAL_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text='getattr(obj, "bit_length")',
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:getattr/2",
+        boundary_text='getattr(obj, "bit_length")',
+        replay_target_seed="main.probe_literal_attribute",
+        snapshot_id="oracle_signal_getattr_literal_probe@default-local-python:v1",
+        runtime_payload=_GETATTR_LITERAL_RUNTIME_PAYLOAD,
     ),
     _EXEC_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_EXEC_UNSUPPORTED_UNIT_ID,
@@ -1242,7 +1255,8 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
             "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_literal_probe, "
-            "oracle_signal_exec_probe, oracle_signal_eval_probe, or "
+            "oracle_signal_getattr_literal_probe, oracle_signal_exec_probe, "
+            "oracle_signal_eval_probe, or "
             "oracle_signal_metaclass_behavior_probe"
         )
     return fixture

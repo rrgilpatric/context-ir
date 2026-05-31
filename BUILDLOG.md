@@ -2,6 +2,86 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Getattr Literal Default Provider Slice Accepted
+
+- Reviewed the returned implementation slice adding exact
+  `context_ir_default_local_python_subprocess` support for
+  `oracle_signal_getattr_literal_probe`.
+- Findings: none.
+- Accepted workspace release-unit files:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Scope accepted:
+  - one exact default local-Python subprocess provider fixture contract for
+    `getattr(obj, "bit_length")`
+  - family `REFLECTIVE_BUILTIN`, form `reflective_builtin:getattr/2`, replay
+    target `main.probe_literal_attribute`, unsupported unit
+    `unsupported:call:main.py:2:11`, and runtime payload exactly
+    `lookup_outcome=returned_value`
+  - tests proving budget-220 provider replay, exact payload, additive runtime
+    provenance, unsupported/opaque primary truth, no static `bit_length`
+    selected unit/symbol/dependency, no returned-value/type summary fields,
+    empty observed replay inputs, wrong-plan fail-closed behavior, remaining
+    literal sibling rejection, and updated support-message expectations
+- Boundary preserved:
+  - no runtime execution/worker, run spec, fixture, task, eval schema, public
+    docs/claims, API, MCP, package export, scoring, compiler, optimizer,
+    winner-selection, benchmark, latency, production, Task 4, or generalized
+    runtime-support change is included
+- Validation:
+  - `ruff check` on the scoped files passed
+  - `ruff format --check` on the scoped files passed
+  - `mypy --strict src/` passed
+  - targeted pytest over `tests/test_eval_signal_getattr_literal_probe.py`,
+    `tests/test_eval_signal_hasattr_literal_probe.py`,
+    `tests/test_eval_providers.py`, `tests/test_eval_runs.py`, and the touched
+    support-message tests passed with `63` tests
+  - `git diff --check` passed
+  - `git diff -- evals/ src/context_ir/runtime_probe_execution.py
+    src/context_ir/runtime_probe_worker.py` is empty
+- Acceptance status: first-pass workspace accepted; release-unit audit pending
+  before full regression, commit-gating, staging, commit, or push
+- Read-only release-unit audit result:
+  - verdict PASS with no findings
+  - exact ten-file dirty set confirmed with no staged files
+  - no excluded eval/runtime-worker/public-claim/package-export diffs found
+  - no stale provider support-message assertions found
+  - full regression then failed only on deterministic Task 3 confidence drift:
+    expected `0.0019587010676722074`, actual `0.0019480149073584105`
+  - the preservation assertions before that failure proved selected units/order,
+    document SHA, total tokens, warnings, warning IDs, probe behavior, probe
+    count, and warning-call count stayed fixed
+  - Ryan authorized the narrow correction
+  - correction changes only `tests/test_eval_signal_smoke_e.py` by updating
+    `FULL_REPO_TASK3_CONFIDENCE` to `0.0019480149073584105`
+  - the active workspace release unit now also includes
+    `tests/test_eval_signal_smoke_e.py`; focused Task 3 validation, full
+    regression, and commit-gating remain pending before staging, commit, or push
+  - focused validation over the expanded eleven-file unit passed with
+    `ruff check`, `ruff format --check`, `mypy --strict src/`, and targeted
+    pytest with `64` tests
+  - corrected read-only release-unit audit over the exact eleven-file workspace
+    unit returned PASS with no findings
+  - full regression passed with `ruff check src/ tests/`, `ruff format --check
+    src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with `1,860`
+    tests
+  - commit-gating passed over the exact eleven-file release unit with
+    `HEAD=origin/main=7bc23d9`, clean `git diff --check`, no staged files, no
+    excluded eval/runtime/public-claim/package-export diffs, no stale provider
+    support-message assertions, and the Task 3 confidence scalar set to
+    `0.0019480149073584105`
+  - next route is staging and local commit creation for the exact eleven-file
+    release unit; push requires explicit Ryan authorization
+
 ## 2026-05-30 -- Hasattr Literal Default Provider Slice Pushed
 
 - Reviewed the returned implementation slice adding exact

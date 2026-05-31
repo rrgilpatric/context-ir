@@ -7,10 +7,14 @@ import json
 from pathlib import Path
 from typing import cast
 
+import pytest
+
 import context_ir
 import context_ir.eval_providers as eval_providers
 import context_ir.eval_runs as eval_runs
+import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.semantic_types as semantic_types
+import context_ir.tool_facade as tool_facade
 from context_ir.eval_oracles import (
     SymbolOracleSelector,
     UnsupportedOracleSelector,
@@ -59,6 +63,11 @@ CONTEXT_IR_SELECTED_UNIT_IDS = (
     "def:main.py:main.probe_literal_attribute",
     "def:main.py:main.render_probe_digest",
     UNSUPPORTED_UNIT_ID,
+)
+UNSUPPORTED_LITERAL_SIBLING_TASK_IDS = (
+    "oracle_signal_setattr_literal_probe",
+    "oracle_signal_delattr_literal_probe",
+    "oracle_signal_dynamic_import_root_literal_probe",
 )
 
 
@@ -207,6 +216,181 @@ def test_getattr_literal_probe_resolves_without_static_attribute_proof() -> None
         dependency.evidence_site_id != UNSUPPORTED_SITE_ID
         for dependency in program.proven_dependencies
     )
+
+
+def test_getattr_literal_probe_default_local_provider_replays_exact_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The default local-Python provider admits only the exact literal fixture."""
+    captured_responses: list[
+        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse
+    ] = []
+    original_recompile = (
+        tool_facade.recompile_repository_context_with_default_local_python_subprocess
+    )
+
+    def capturing_recompile(
+        request: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest,
+    ) -> tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse:
+        response = original_recompile(request)
+        captured_responses.append(response)
+        return response
+
+    monkeypatch.setattr(
+        tool_facade,
+        "recompile_repository_context_with_default_local_python_subprocess",
+        capturing_recompile,
+    )
+
+    result = eval_providers.build_context_ir_default_local_python_subprocess_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=FIXTURE_ROOT,
+            task_id="oracle_signal_getattr_literal_probe",
+            query=QUERY,
+            budget=220,
+        )
+    )
+
+    assert len(captured_responses) == 1
+    response = captured_responses[0]
+    attempt = response.runner_attempt_collection.attempts[0]
+    observed_result = response.runner_attempt_collection.result_batch.results[0]
+    planned_request = attempt.request
+    unsupported_unit = next(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id == UNSUPPORTED_UNIT_ID
+    )
+    static_units = tuple(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id != UNSUPPORTED_UNIT_ID
+    )
+    provenance_record = result.runtime_provenance_records[0]
+    origin_detail = cast(dict[str, object], json.loads(provenance_record.origin_detail))
+
+    assert result.provider_name == (
+        eval_providers.CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER
+    )
+    assert result.task_id == "oracle_signal_getattr_literal_probe"
+    assert result.budget == 220
+    assert result.selected_files == ()
+    assert result.selected_unit_ids == CONTEXT_IR_SELECTED_UNIT_IDS
+    assert result.warnings == ()
+    assert planned_request.subject_id == UNSUPPORTED_UNIT_ID
+    assert planned_request.boundary_text == 'getattr(obj, "bit_length")'
+    assert (
+        planned_request.family_label
+        is eval_providers.RuntimeProbeFamily.REFLECTIVE_BUILTIN
+    )
+    assert planned_request.form_label == "reflective_builtin:getattr/2"
+    assert planned_request.replay_target_seed == "main.probe_literal_attribute"
+    assert attempt.normalized_payload == (
+        runtime_probe_results.RuntimeProbeReplayField(
+            key="lookup_outcome",
+            value="returned_value",
+        ),
+    )
+    assert attempt.observed_replay_inputs == ()
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.normalized_payload == attempt.normalized_payload
+    assert tuple(
+        (field.key, field.value)
+        for field in observed_result.replay_artifact.replay_inputs[-2:]
+    ) == (("object_type", "builtins.int"), ("attribute_name", "bit_length"))
+    assert len(result.runtime_provenance_records) == 1
+    assert origin_detail["normalized_payload"] == {"lookup_outcome": "returned_value"}
+    assert "observed_replay_inputs" not in origin_detail
+    assert "returned_value_summary" not in origin_detail
+    assert "returned_type_summary" not in origin_detail
+    assert unsupported_unit.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        unsupported_unit.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported_unit.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported_unit.has_attached_runtime_provenance is True
+    assert unsupported_unit.attached_runtime_provenance_record_ids == (
+        provenance_record.record_id,
+    )
+    assert all(
+        unit.primary_capability_tier is CapabilityTier.STATICALLY_PROVED
+        for unit in static_units
+    )
+    assert all(unit.has_attached_runtime_provenance is False for unit in static_units)
+    assert all(
+        unit.primary_capability_tier is not CapabilityTier.RUNTIME_BACKED
+        for unit in result.metadata.selected_units
+    )
+    assert all("bit_length" not in unit_id for unit_id in result.selected_unit_ids)
+    assert all(
+        "bit_length" not in (symbol_id, symbol.qualified_name)
+        for symbol_id, symbol in response.program.resolved_symbols.items()
+    )
+    assert all(
+        "bit_length" not in dependency.source_symbol_id
+        and "bit_length" not in dependency.target_symbol_id
+        for dependency in response.program.proven_dependencies
+    )
+    assert all(
+        "returned_value" not in unit.detail
+        and "returned_type" not in unit.detail
+        and "builtins.builtin_function_or_method" not in unit.detail
+        for unit in result.metadata.selected_units
+    )
+
+
+def test_getattr_literal_probe_default_local_provider_rejects_wrong_plan_fields() -> (
+    None
+):
+    """The provider fails closed when the planned probe identity drifts."""
+    previous_response = eval_providers.tool_facade.compile_repository_context(
+        tool_facade.SemanticContextRequest(
+            repo_root=FIXTURE_ROOT,
+            query=QUERY,
+            budget=220,
+        )
+    )
+    fixture = eval_providers._default_local_python_subprocess_fixture(
+        "oracle_signal_getattr_literal_probe"
+    )
+    miss_evidence = semantic_types.SemanticMissEvidence(
+        kind=semantic_types.SemanticMissKind.ABSENT_SYMBOL,
+        evidence='getattr(obj, "bit_length")',
+    )
+    diagnostic = eval_providers.diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert len(plan.requests) == 1
+    object.__setattr__(plan.requests[0], "form_label", "reflective_builtin:getattr/3")
+
+    with pytest.raises(ValueError, match="wrong form"):
+        eval_providers._require_default_local_python_runtime_probe_request(
+            diagnostic,
+            fixture,
+        )
+
+
+@pytest.mark.parametrize("task_id", UNSUPPORTED_LITERAL_SIBLING_TASK_IDS)
+def test_getattr_literal_probe_default_local_provider_rejects_literal_siblings(
+    task_id: str,
+) -> None:
+    """Literal sibling tasks remain outside this exact provider slice."""
+    sibling_fixture_root = REPO_ROOT / "evals" / "fixtures" / task_id
+
+    with pytest.raises(ValueError, match="only supports"):
+        eval_providers.build_context_ir_default_local_python_subprocess_pack(
+            eval_providers.EvalProviderRequest(
+                repo_root=sibling_fixture_root,
+                task_id=task_id,
+                query=QUERY,
+                budget=220,
+            )
+        )
 
 
 def test_getattr_literal_probe_run_spec_loads_two_budget_matrix() -> None:
