@@ -2,7 +2,7 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-05-30 -- Hasattr Literal Default Provider Slice Accepted
+## 2026-05-30 -- Hasattr Literal Default Provider Slice Pushed
 
 - Reviewed the returned implementation slice adding exact
   `context_ir_default_local_python_subprocess` support for
@@ -77,8 +77,12 @@ Most recent supersession entries override older architectural decisions when the
     `HEAD=origin/main=3d286f1`, clean `git diff --check`, no staged files, no
     excluded eval/runtime/public-claim/package diffs, and no stale provider
     support-message assertions
-  - next route is staging and local commit creation for the exact ten-file
-    release unit; push requires explicit Ryan authorization
+  - local release commit created as
+    `dbc662d Add literal hasattr default provider support`
+  - Ryan authorized push, and `git push origin main` completed
+  - release state: audit-cleared, full-regression-cleared, commit-gating-cleared,
+    locally committed, and pushed
+  - next route is selecting the next substantive tranche from current repo truth
 
 ## 2026-05-30 -- Correct Stale Active Routing Sections
 

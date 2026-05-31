@@ -169,16 +169,17 @@ diffs, and exact replay contracts limited to the legacy bridge plus the quartet.
 The exact five-file unit was locally committed as `09ce30d`; Ryan authorized
 push, and `git push origin main` completed. This release has no active gate.
 
-Workspace-only accepted exact provider-support candidate:
+Pushed exact provider-support release:
+`dbc662d Add literal hasattr default provider support`. This release adds
 `context_ir_default_local_python_subprocess` support for exactly
-`oracle_signal_hasattr_literal_probe`. The candidate adds one exact fixture
+`oracle_signal_hasattr_literal_probe`. It adds one exact fixture
 contract in `src/context_ir/eval_providers.py` for
 `hasattr(obj, "bit_length")`, family `REFLECTIVE_BUILTIN`, form
 `reflective_builtin:hasattr/2`, replay target `main.probe_literal_attribute`,
 unsupported unit `unsupported:call:main.py:2:11`, and runtime payload
 `attribute_present=true`.
 
-The current workspace release-unit files are exactly:
+The pushed release-unit files are exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -220,8 +221,10 @@ findings. Full regression passed with `ruff check src/ tests/`, `ruff format
 live git state matching `HEAD=origin/main=3d286f1`, clean `git diff --check`,
 no staged files, no excluded eval/runtime/public-claim/package diffs, and no
 stale provider support-message assertions. Next control action: stage and
-locally commit the exact ten-file release unit. Push requires explicit Ryan
-authorization.
+locally commit the exact ten-file release unit. Ryan authorized local commit and
+push; `dbc662d` was created and `git push origin main` completed. This release
+has no active gate. Next control action: select the next substantive tranche
+from current repo truth.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.
