@@ -40,8 +40,8 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Imported-name dynamic-import default-provider workspace candidate is accepted
-pending release-unit audit. The accepted workspace slice adds exact
+Imported-name dynamic-import default-provider release is pushed and closed with
+no active gate. The pushed release adds exact
 `context_ir_default_local_python_subprocess` support for only
 `oracle_signal_dynamic_import_imported_name_probe`, with boundary
 `import_module(name)`, unsupported unit `unsupported:call:main.py:6:13`,
@@ -55,7 +55,7 @@ Provider budget contract: this exact task admits budget `220` only, compiles
 honestly at budget `220`, returns `result.budget == 220`, and fails closed
 before compilation for budget `100`, `180`, or any other budget.
 
-The accepted workspace release unit is exactly:
+The pushed release unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`

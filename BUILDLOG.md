@@ -2,6 +2,28 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Imported-Name Push Routing Wording Corrected
+
+- Corrected stale current-state wording in `PLAN.md` after the pushed
+  imported-name dynamic-import default-provider release.
+- Finding corrected:
+  - the canonical active release-state block still described the release as an
+    accepted workspace candidate pending release-unit audit, even though the
+    same block already recorded that `e73e007` was pushed and closed
+- Exact correction:
+  - changed the current-state heading text to say the imported-name release is
+    pushed and closed with no active gate
+  - changed the release-unit wording from accepted workspace unit to pushed
+    release unit
+- Validation:
+  - `git diff --check` passed
+  - `git diff -- src/` was empty
+- Release state:
+  - docs-only continuity correction
+  - locally committed after validation
+  - push remains Ryan-gated
+- Acceptance status: first-pass continuity correction.
+
 ## 2026-05-31 -- Imported-Name Dynamic Import Default Provider Accepted
 
 - Execution slice returned exact `context_ir_default_local_python_subprocess`
