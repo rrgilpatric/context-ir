@@ -226,16 +226,17 @@ push; `dbc662d` was created and `git push origin main` completed. This release
 has no active gate. Next control action: select the next substantive tranche
 from current repo truth.
 
-Workspace-only accepted exact provider-support candidate:
+Pushed exact provider-support release:
+`06ef129 Add literal getattr default provider support`. This release adds
 `context_ir_default_local_python_subprocess` support for exactly
-`oracle_signal_getattr_literal_probe`. The candidate adds one exact fixture
+`oracle_signal_getattr_literal_probe`. It adds one exact fixture
 contract in `src/context_ir/eval_providers.py` for
 `getattr(obj, "bit_length")`, family `REFLECTIVE_BUILTIN`, form
 `reflective_builtin:getattr/2`, replay target `main.probe_literal_attribute`,
 unsupported unit `unsupported:call:main.py:2:11`, and runtime payload exactly
 `lookup_outcome=returned_value`.
 
-The current workspace release-unit files are exactly:
+The pushed release-unit files are exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -277,8 +278,10 @@ release unit with live git state matching `HEAD=origin/main=7bc23d9`, clean
 `git diff --check`, no staged files, no excluded eval/runtime/public-claim/
 package-export diffs, no stale provider support-message assertions, and the
 Task 3 confidence scalar set to `0.0019480149073584105`. Next control action:
-stage and locally commit the exact eleven-file release unit. Push requires
-explicit Ryan authorization.
+stage and locally commit the exact eleven-file release unit. Ryan authorized
+local commit and push; `06ef129` was created and `git push origin main`
+completed. This release has no active gate. Next control action: select the next
+substantive tranche from current repo truth.
 
 Pushed direct-literal `delattr(obj, "flag")` runtime acquisition release:
 `a24bf79 Promote literal delattr runtime probe`.

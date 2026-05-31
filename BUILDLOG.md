@@ -2,7 +2,7 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-05-31 -- Getattr Literal Default Provider Slice Accepted
+## 2026-05-31 -- Getattr Literal Default Provider Slice Pushed
 
 - Reviewed the returned implementation slice adding exact
   `context_ir_default_local_python_subprocess` support for
@@ -79,8 +79,12 @@ Most recent supersession entries override older architectural decisions when the
     excluded eval/runtime/public-claim/package-export diffs, no stale provider
     support-message assertions, and the Task 3 confidence scalar set to
     `0.0019480149073584105`
-  - next route is staging and local commit creation for the exact eleven-file
-    release unit; push requires explicit Ryan authorization
+  - local release commit created as
+    `06ef129 Add literal getattr default provider support`
+  - Ryan authorized push, and `git push origin main` completed
+  - release state: audit-cleared, full-regression-cleared, commit-gating-cleared,
+    locally committed, and pushed
+  - next route is selecting the next substantive tranche from current repo truth
 
 ## 2026-05-30 -- Hasattr Literal Default Provider Slice Pushed
 
