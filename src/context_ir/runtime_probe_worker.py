@@ -101,6 +101,25 @@ _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_REPLAY_SELECTOR = (
     "importlib.import_module/1@main.py:5:13:5:55"
 )
 _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SUBJECT_ID = (
+    "unsupported:call:main.py:6:13"
+)
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_SITE_ID = (
+    "site:call:main.py:6:13"
+)
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_LINE = 6
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_COLUMN = 13
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_LINE = 6
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_COLUMN = 32
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_BOUNDARY_TEXT = "import_module(name)"
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_TARGET = (
+    "main.load_weather_plugin"
+)
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_SELECTOR = (
+    "call:main.load_weather_plugin:dynamic_import:import_module/1@main.py:6:13:6:32"
+)
+_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
 _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SUBJECT_ID = (
     "unsupported:call:main.py:5:13"
 )
@@ -1646,6 +1665,7 @@ class _RuntimeProbeDynamicImportCapture:
     captured_rejections: list[str] = field(default_factory=list)
     captured_sys_modules: dict[str, ModuleType | object] = field(default_factory=dict)
     support_root_literal_render_card_fixture: bool = False
+    support_imported_name_render_card_fixture: bool = False
     support_imported_literal_render_card_fixture: bool = False
 
     def import_module(self, name: str, package: str | None = None) -> ModuleType:
@@ -1671,6 +1691,14 @@ class _RuntimeProbeDynamicImportCapture:
         if self.support_root_literal_render_card_fixture:
             stubbed_module = (
                 _runtime_probe_dynamic_import_root_literal_render_card_module_stub(name)
+            )
+            if stubbed_module is not None:
+                return stubbed_module
+        if self.support_imported_name_render_card_fixture:
+            stubbed_module = (
+                _runtime_probe_dynamic_import_imported_name_render_card_module_stub(
+                    name
+                )
             )
             if stubbed_module is not None:
                 return stubbed_module
@@ -4614,6 +4642,7 @@ def observe_runtime_probe_dynamic_import_worker_request(
     deterministic_target = _runtime_probe_dynamic_import_target_execution_guard(target)
     if request.form_label in _DYNAMIC_IMPORT_WORKER_SOURCE_GLOBAL_NAMES_BY_FORM_LABEL:
         supports_imported_fixture = _supports_imported_literal_fixture(request)
+        supports_imported_name_fixture = _supports_imported_name_fixture(request)
         observation = (
             _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
                 replay_target=replay_target,
@@ -4625,10 +4654,17 @@ def observe_runtime_probe_dynamic_import_worker_request(
                 support_imported_literal_render_card_fixture=(
                     supports_imported_fixture
                 ),
+                support_imported_name_render_card_fixture=(
+                    supports_imported_name_fixture
+                ),
             )
         )
         if supports_imported_fixture:
             _validate_runtime_probe_dynamic_import_imported_literal_render_card_imported_module(
+                observation.imported_module
+            )
+        if supports_imported_name_fixture:
+            _validate_runtime_probe_dynamic_import_imported_name_render_card_imported_module(
                 observation.imported_module
             )
         return observation
@@ -14765,6 +14801,52 @@ def _supports_imported_literal_fixture(
     )
 
 
+def _supports_imported_name_fixture(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+) -> bool:
+    """Return whether the request is the exact imported-name replay."""
+    return (
+        request.subject_id
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SUBJECT_ID
+        and request.source_site_id
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_SITE_ID
+        and request.source_file_path
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_FILE_PATH
+        and request.source_start_line
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_LINE
+        and request.source_start_column
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_COLUMN
+        and request.source_end_line
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_LINE
+        and request.source_end_column
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_COLUMN
+        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
+        and request.boundary_text
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_BOUNDARY_TEXT
+        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
+        and request.form_label == _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL
+        and request.replay_target_seed
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_TARGET
+        and request.replay_selector_seed
+        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_SELECTOR
+    )
+
+
+def _runtime_probe_dynamic_import_imported_name_render_card_module_stub(
+    name: str,
+) -> ModuleType | None:
+    """Return the one exact imported-name fixture stub, or no stub."""
+    if name != _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_IMPORTED_MODULE:
+        return None
+    module = ModuleType(name)
+
+    def render_card() -> str:
+        return "forecast-ready"
+
+    module.__dict__["render_card"] = render_card
+    return module
+
+
 def _runtime_probe_dynamic_import_imported_literal_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
@@ -14803,6 +14885,18 @@ def _validate_runtime_probe_dynamic_import_imported_literal_render_card_imported
         raise ValueError(
             "runtime probe dynamic import worker imported_module must match exact "
             "imported literal fixture"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_imported_name_render_card_imported_module(
+    imported_module: str,
+) -> None:
+    """Reject exact imported-name executions that captured another module."""
+    expected_module = _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_IMPORTED_MODULE
+    if imported_module != expected_module:
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module must match exact "
+            "imported name fixture"
         )
 
 
@@ -15043,6 +15137,7 @@ def _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
     global_name: str,
     support_imported_literal_render_card_fixture: bool = False,
+    support_imported_name_render_card_fixture: bool = False,
 ) -> RuntimeProbeLocalPythonDynamicImportWorkerObservation:
     """Observe a target by rebinding its exact import_module/load_module global."""
     _validate_runtime_probe_dynamic_import_replay_target(replay_target)
@@ -15058,6 +15153,9 @@ def _materialize_runtime_probe_dynamic_import_worker_observation_from_global(
         support_imported_literal_render_card_fixture=(
             support_imported_literal_render_card_fixture
         ),
+        support_imported_name_render_card_fixture=(
+            support_imported_name_render_card_fixture
+        ),
     )
     return materialize_runtime_probe_dynamic_import_worker_observation(
         replay_target.request,
@@ -15071,6 +15169,7 @@ def _runtime_probe_dynamic_import_captured_import_module_global_name(
     *,
     global_name: str,
     support_imported_literal_render_card_fixture: bool = False,
+    support_imported_name_render_card_fixture: bool = False,
 ) -> str:
     """Run a target while capturing one exact import_module/load_module global."""
     original_import_module = _runtime_probe_dynamic_import_source_import_module_global(
@@ -15078,9 +15177,12 @@ def _runtime_probe_dynamic_import_captured_import_module_global_name(
         global_name=global_name,
     )
     capture = _RuntimeProbeDynamicImportCapture(
+        support_imported_name_render_card_fixture=(
+            support_imported_name_render_card_fixture
+        ),
         support_imported_literal_render_card_fixture=(
             support_imported_literal_render_card_fixture
-        )
+        ),
     )
     controlled_import_module = capture.import_module
     module_globals = source_module.__dict__

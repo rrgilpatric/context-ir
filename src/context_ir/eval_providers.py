@@ -81,6 +81,14 @@ _DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID = (
 )
 _DYNAMIC_IMPORT_ROOT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
 _DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
+_DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID = (
+    "oracle_signal_dynamic_import_imported_name_probe"
+)
+_DYNAMIC_IMPORT_IMPORTED_NAME_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:6:13"
+_DYNAMIC_IMPORT_IMPORTED_NAME_RUNTIME_PAYLOAD = (
+    ("imported_module", "plugins.weather"),
+)
+_DYNAMIC_IMPORT_IMPORTED_NAME_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID = "oracle_signal_dynamic_import_probe"
 _DYNAMIC_IMPORT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
 _DYNAMIC_IMPORT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
@@ -351,6 +359,13 @@ class _DefaultLocalPythonSubprocessFixture:
     snapshot_id: str
     runtime_payload: tuple[tuple[str, str], ...]
     runtime_replay_input_tail: tuple[tuple[str, str], ...] = ()
+    source_site_id: str | None = None
+    source_file_path: str | None = None
+    source_start_line: int | None = None
+    source_start_column: int | None = None
+    source_end_line: int | None = None
+    source_end_column: int | None = None
+    replay_selector_seed: str | None = None
 
 
 _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
@@ -435,6 +450,28 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
             "oracle_signal_dynamic_import_root_literal_probe@default-local-python:v1"
         ),
         runtime_payload=_DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD,
+    ),
+    _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_DYNAMIC_IMPORT_IMPORTED_NAME_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="import_module(name)",
+        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:import_module/1",
+        boundary_text="import_module(name)",
+        replay_target_seed="main.load_weather_plugin",
+        snapshot_id=(
+            "oracle_signal_dynamic_import_imported_name_probe@default-local-python:v1"
+        ),
+        runtime_payload=_DYNAMIC_IMPORT_IMPORTED_NAME_RUNTIME_PAYLOAD,
+        source_site_id="site:call:main.py:6:13",
+        source_file_path="main.py",
+        source_start_line=6,
+        source_start_column=13,
+        source_end_line=6,
+        source_end_column=32,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "import_module/1@main.py:6:13:6:32"
+        ),
     ),
     _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_DYNAMIC_IMPORT_LITERAL_UNSUPPORTED_UNIT_ID,
@@ -1354,6 +1391,7 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
+            "oracle_signal_dynamic_import_imported_name_probe, "
             "oracle_signal_dynamic_import_probe, "
             "oracle_signal_setattr_literal_probe, "
             "oracle_signal_delattr_literal_probe, oracle_signal_exec_probe, "
@@ -1365,6 +1403,14 @@ def _default_local_python_subprocess_fixture(
 
 def _default_local_python_context_budget(request: EvalProviderRequest) -> int:
     """Return the honest compile budget for exact subprocess provider fixtures."""
+    if (
+        request.task_id == _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID
+        and request.budget != _DYNAMIC_IMPORT_IMPORTED_NAME_CONTEXT_BUDGET
+    ):
+        raise ValueError(
+            "context_ir_default_local_python_subprocess only supports "
+            "budget 220 for oracle_signal_dynamic_import_imported_name_probe"
+        )
     if (
         request.task_id == _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID
         and request.budget != _DYNAMIC_IMPORT_LITERAL_CONTEXT_BUDGET
@@ -1412,6 +1458,56 @@ def _require_default_local_python_runtime_probe_request(
     if request.replay_target_seed != fixture.replay_target_seed:
         raise ValueError(
             "default local-Python provider planned request has the wrong replay target"
+        )
+    if (
+        fixture.source_site_id is not None
+        and request.source_site.site_id != fixture.source_site_id
+    ):
+        raise ValueError(
+            "default local-Python provider planned request has the wrong source site"
+        )
+    if (
+        fixture.source_file_path is not None
+        and request.source_site.file_path != fixture.source_file_path
+    ):
+        raise ValueError(
+            "default local-Python provider planned request has the wrong source file"
+        )
+    if (
+        fixture.source_start_line is not None
+        and request.source_site.span.start_line != fixture.source_start_line
+    ):
+        raise ValueError(
+            "default local-Python provider planned request has the wrong source span"
+        )
+    if (
+        fixture.source_start_column is not None
+        and request.source_site.span.start_column != fixture.source_start_column
+    ):
+        raise ValueError(
+            "default local-Python provider planned request has the wrong source span"
+        )
+    if (
+        fixture.source_end_line is not None
+        and request.source_site.span.end_line != fixture.source_end_line
+    ):
+        raise ValueError(
+            "default local-Python provider planned request has the wrong source span"
+        )
+    if (
+        fixture.source_end_column is not None
+        and request.source_site.span.end_column != fixture.source_end_column
+    ):
+        raise ValueError(
+            "default local-Python provider planned request has the wrong source span"
+        )
+    if (
+        fixture.replay_selector_seed is not None
+        and request.replay_selector_seed != fixture.replay_selector_seed
+    ):
+        raise ValueError(
+            "default local-Python provider planned request has the wrong replay "
+            "selector"
         )
     return request
 

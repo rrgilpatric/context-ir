@@ -2,6 +2,84 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Imported-Name Dynamic Import Default Provider Accepted
+
+- Execution slice returned exact `context_ir_default_local_python_subprocess`
+  support for only `oracle_signal_dynamic_import_imported_name_probe`.
+- Scope implemented:
+  - boundary `import_module(name)`
+  - unsupported unit `unsupported:call:main.py:6:13`
+  - family/form `DYNAMIC_IMPORT` / `dynamic_import:import_module/1`
+  - replay target `main.load_weather_plugin`
+  - replay selector
+    `call:main.load_weather_plugin:dynamic_import:import_module/1@main.py:6:13:6:32`
+  - normalized runtime payload exactly `imported_module=plugins.weather`
+  - empty observed replay inputs
+- Provider budget contract:
+  - budget `220` is admitted and compiled honestly at `220`
+  - successful provider result reports `result.budget == 220`
+  - budgets `100`, `180`, and other non-`220` budgets fail closed before
+    compilation
+- Accepted workspace release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_runtime_probe_worker.py`
+- Preservation proof:
+  - primary truth remains unsupported/opaque
+  - runtime provenance remains additive only
+  - no selected `plugins/weather.py`, selected `plugins.weather`
+    imported-module symbol, static `plugins.weather` dependency edge,
+    runtime-backed primary unit, eval asset, runtime execution, schema/API/MCP/
+    export/scoring/compiler/optimizer/winner-selection, Task 4, public/demo/
+    benchmark/latency/production, or generalized dynamic-import support change
+    is included
+  - dynamic-import sibling tasks remain unsupported for this provider and
+    worker path
+- Validation:
+  - execution lane reported scoped `ruff check`, scoped `ruff format --check`,
+    `mypy --strict src/`, focused pytest with `573` tests, full regression with
+    `pytest tests/ -v` reporting `1,920` passed, clean `git diff --check`,
+    empty `git diff -- evals/`, and empty
+    `git diff -- src/context_ir/runtime_probe_execution.py`
+  - control review found no findings and reran clean `git diff --check`, empty
+    eval/runtime-execution diff checks, scoped ruff checks over the core
+    provider/worker/tests, strict mypy, focused pytest with `573` tests, and the
+    Task 3 confidence preservation test
+  - deterministic Task 3 confidence drift was limited to the scalar
+    `FULL_REPO_TASK3_CONFIDENCE = 0.0018660470025593505`
+- Release gates:
+  - read-only release-unit audit returned PASS with no findings over the exact
+    14-file release unit
+  - full control validation passed:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1,920` tests
+  - commit-gating passed over the exact 14-file release unit with no staged
+    files before staging, clean `git diff --check`, empty `git diff -- evals/`,
+    and empty `git diff -- src/context_ir/runtime_probe_execution.py`
+- Release state recorded for the local release commit carrying this entry:
+  - accepted
+  - release-unit-audit-cleared
+  - full-control-validation-cleared
+  - commit-gating-cleared
+  - locally committed
+  - not pushed
+- Next control action: push only after explicit Ryan authorization.
+- Acceptance status: first-pass accepted; audit, full control validation,
+  commit-gating, staging, and local commit cleared.
+
 ## 2026-05-31 -- Imported Dynamic Import Default Provider Pushed
 
 - Ryan authorized remote push for the corrected imported dynamic-import literal

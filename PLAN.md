@@ -40,6 +40,71 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+Imported-name dynamic-import default-provider workspace candidate is accepted
+pending release-unit audit. The accepted workspace slice adds exact
+`context_ir_default_local_python_subprocess` support for only
+`oracle_signal_dynamic_import_imported_name_probe`, with boundary
+`import_module(name)`, unsupported unit `unsupported:call:main.py:6:13`,
+family/form `DYNAMIC_IMPORT` / `dynamic_import:import_module/1`, replay target
+`main.load_weather_plugin`, replay selector
+`call:main.load_weather_plugin:dynamic_import:import_module/1@main.py:6:13:6:32`,
+empty observed replay inputs, and normalized payload
+`imported_module=plugins.weather`.
+
+Provider budget contract: this exact task admits budget `220` only, compiles
+honestly at budget `220`, returns `result.budget == 220`, and fails closed
+before compilation for budget `100`, `180`, or any other budget.
+
+The accepted workspace release unit is exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+- `tests/test_runtime_probe_worker.py`
+
+Execution-lane validation reported scoped `ruff check`, scoped `ruff format
+--check`, `mypy --strict src/`, focused pytest with `573` tests, full
+regression with `pytest tests/ -v` reporting `1,920` passed, clean
+`git diff --check`, empty `git diff -- evals/`, and empty
+`git diff -- src/context_ir/runtime_probe_execution.py`. Control review found
+no findings and reran clean `git diff --check`, empty eval/runtime-execution
+diff checks, scoped ruff checks over the core provider/worker/tests, strict
+mypy, focused pytest with `573` tests, and the Task 3 confidence preservation
+test. Validation exposed only deterministic Task 3 confidence scalar drift; the
+only scalar correction sets `FULL_REPO_TASK3_CONFIDENCE` to
+`0.0018660470025593505`.
+
+Preservation locks: primary truth remains unsupported/opaque; runtime
+provenance remains additive only; no selected `plugins/weather.py`, selected
+`plugins.weather` imported-module symbol, static `plugins.weather` dependency
+edge, runtime-backed primary tier, eval asset, runtime execution, schema/API/
+MCP/export/scoring/compiler/optimizer/winner-selection, Task 4, public/demo/
+benchmark/latency/production, or generalized dynamic-import support change is
+included. Dynamic-import sibling tasks remain unsupported for this provider and
+worker path.
+
+Release state recorded for the local release commit carrying this entry:
+accepted, release-unit-audit-cleared, full-control-validation-cleared,
+commit-gating-cleared, and locally committed; not pushed. The read-only
+release-unit audit returned PASS with no findings over the exact 14-file release
+unit. Full control validation passed with `ruff check src/ tests/`, `ruff
+format --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v`
+reporting `1,920` passed. Commit-gating passed over the exact 14-file release
+unit with no staged files before staging, clean `git diff --check`, empty
+`git diff -- evals/`, and empty
+`git diff -- src/context_ir/runtime_probe_execution.py`. Push remains held for
+explicit Ryan authorization.
+
 Imported dynamic-import literal default-provider release is pushed and closed
 with no active gate:
 `686242f Add imported dynamic import provider support` adds
@@ -17911,8 +17976,11 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: choose the next bounded planning or implementation tranche
-from the pushed state. The exact 13-file imported dynamic-import literal
+Current next route: push the locally committed
+`oracle_signal_dynamic_import_imported_name_probe` default-provider release only
+after explicit Ryan authorization. The release-unit audit, full control
+validation, commit-gating, staging, and local release commit are cleared in the
+commit carrying this entry. The exact 13-file imported dynamic-import literal
 default-provider release is closed at `686242f`, and the earlier exact 17-file
 dynamic-import root-literal default-provider release is closed at `ef10b76`; do
 not route either back to release-unit audit, full regression, commit-gating,
