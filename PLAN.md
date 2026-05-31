@@ -93,17 +93,16 @@ benchmark/latency/production, or generalized dynamic-import support change is
 included. Dynamic-import sibling tasks remain unsupported for this provider and
 worker path.
 
-Release state recorded for the local release commit carrying this entry:
-accepted, release-unit-audit-cleared, full-control-validation-cleared,
-commit-gating-cleared, and locally committed; not pushed. The read-only
+Release state: pushed and closed with no active gate. Ryan authorized remote
+push for `e73e007 Add imported-name dynamic import provider support`; `git push
+origin main` advanced remote `main` from `c6757bc` to `e73e007`. The read-only
 release-unit audit returned PASS with no findings over the exact 14-file release
 unit. Full control validation passed with `ruff check src/ tests/`, `ruff
 format --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v`
 reporting `1,920` passed. Commit-gating passed over the exact 14-file release
 unit with no staged files before staging, clean `git diff --check`, empty
 `git diff -- evals/`, and empty
-`git diff -- src/context_ir/runtime_probe_execution.py`. Push remains held for
-explicit Ryan authorization.
+`git diff -- src/context_ir/runtime_probe_execution.py`.
 
 Imported dynamic-import literal default-provider release is pushed and closed
 with no active gate:
@@ -17976,17 +17975,17 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: push the locally committed
-`oracle_signal_dynamic_import_imported_name_probe` default-provider release only
-after explicit Ryan authorization. The release-unit audit, full control
-validation, commit-gating, staging, and local release commit are cleared in the
-commit carrying this entry. The exact 13-file imported dynamic-import literal
-default-provider release is closed at `686242f`, and the earlier exact 17-file
-dynamic-import root-literal default-provider release is closed at `ef10b76`; do
-not route either back to release-unit audit, full regression, commit-gating,
-staging, local commit, or push absent new findings. Do not run Task 4, update
-public/demo claims, widen benchmark/latency/production claims, or generalize
-runtime acquisition without an explicit new control decision.
+Current next route: choose the next bounded planning or implementation tranche
+from the pushed state. The imported-name dynamic-import default-provider release
+is closed at `e73e007`; do not route it back to release-unit audit, full
+regression, commit-gating, staging, local commit, or push absent new findings.
+The exact 13-file imported dynamic-import literal default-provider release is
+closed at `686242f`, and the earlier exact 17-file dynamic-import root-literal
+default-provider release is closed at `ef10b76`; do not route either back to
+release-unit audit, full regression, commit-gating, staging, local commit, or
+push absent new findings. Do not run Task 4, update public/demo claims, widen
+benchmark/latency/production claims, or generalize runtime acquisition without
+an explicit new control decision.
 
 Historical closed-route notes retained below must not override the current next
 route above or the canonical active release-state block.

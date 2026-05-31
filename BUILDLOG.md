@@ -69,16 +69,18 @@ Most recent supersession entries override older architectural decisions when the
   - commit-gating passed over the exact 14-file release unit with no staged
     files before staging, clean `git diff --check`, empty `git diff -- evals/`,
     and empty `git diff -- src/context_ir/runtime_probe_execution.py`
-- Release state recorded for the local release commit carrying this entry:
+- Release state:
   - accepted
   - release-unit-audit-cleared
   - full-control-validation-cleared
   - commit-gating-cleared
-  - locally committed
-  - not pushed
-- Next control action: push only after explicit Ryan authorization.
+  - locally committed as
+    `e73e007 Add imported-name dynamic import provider support`
+  - pushed after explicit Ryan authorization; `git push origin main` advanced
+    remote `main` from `c6757bc` to `e73e007`
+- Next control action: select the next bounded tranche from the pushed state.
 - Acceptance status: first-pass accepted; audit, full control validation,
-  commit-gating, staging, and local commit cleared.
+  commit-gating, staging, local commit, and push cleared.
 
 ## 2026-05-31 -- Imported Dynamic Import Default Provider Pushed
 
