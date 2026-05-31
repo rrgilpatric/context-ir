@@ -2,6 +2,32 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Imported Dynamic Import Default Provider Pushed
+
+- Ryan authorized remote push for the corrected imported dynamic-import literal
+  default-provider release.
+- Verified before push:
+  - local `HEAD` was `686242f Add imported dynamic import provider support`
+  - `origin/main` was `f63dcf3 Sync dynamic import provider push state`
+  - the worktree was clean except for the already-created local commit being
+    ahead of `origin/main` by one
+- `git push origin main` advanced remote `main` from `f63dcf3` to `686242f`.
+- Verified after push:
+  - `HEAD` and `origin/main` both resolve to
+    `686242fddd0518fcddc0548aa6cef2ff9cb04fe6`
+  - `git status --short --branch -uall` reports `## main...origin/main`
+- Release state:
+  - `686242f` is the pushed source/test/continuity authority for exact
+    `context_ir_default_local_python_subprocess` support for
+    `oracle_signal_dynamic_import_probe`
+  - the release is control-review-cleared, release-unit-audit-cleared,
+    full-control-validation-cleared, commit-gating-cleared, locally committed,
+    and pushed
+  - no active gate remains for this release absent new findings
+- Acceptance status: pushed after one control-review correction, read-only
+  release-unit audit, full control validation, commit-gating, local commit, and
+  explicit Ryan push authorization.
+
 ## 2026-05-31 -- Imported Dynamic Import Budget Contract Correction Returned
 
 - Correction execution lane addressed the P2 methodology/contract drift found in

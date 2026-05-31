@@ -40,13 +40,15 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Imported dynamic-import literal default-provider slice is workspace-only returned
-and not staged, committed, or pushed. Execution intake verified branch `main`,
+Imported dynamic-import literal default-provider release is pushed and closed
+with no active gate:
+`686242f Add imported dynamic import provider support` adds
+`context_ir_default_local_python_subprocess` support for exactly
+`oracle_signal_dynamic_import_probe`. Execution intake verified branch `main`,
 `HEAD=origin/main=f63dcf338da808ecd52a572da0ab32526f544f80` (`f63dcf3 Sync
 dynamic import provider push state`), and a clean worktree before editing.
 
-This workspace slice adds `context_ir_default_local_python_subprocess` support
-for exactly `oracle_signal_dynamic_import_probe`: boundary
+This pushed release covers boundary
 `import_module("plugins.weather")`, unsupported unit
 `unsupported:call:main.py:5:13`, family/form `DYNAMIC_IMPORT` /
 `dynamic_import:import_module/1`, replay target `main.load_weather_plugin`,
@@ -61,7 +63,7 @@ The fixture-only stub supplies a local `plugins.weather` module object with
 replay target, replay selector, and imported module match. It does not import the
 real plugin and does not generalize module materialization.
 
-The proposed workspace execution unit is exactly:
+The pushed release unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -99,7 +101,7 @@ in `tests/test_eval_signal_smoke_e.py`; selected units/order, document SHA,
 stayed fixed, and the only scalar correction set `FULL_REPO_TASK3_CONFIDENCE` to
 `0.001884948089018067`.
 
-Preservation locks for this workspace slice: primary truth remains
+Preservation locks for this pushed release: primary truth remains
 unsupported/opaque; runtime provenance remains additive only; no static
 `plugins.weather` dependency edge, selected `plugins/weather.py` unit, selected
 imported-module symbol, runtime-backed primary tier, observed replay inputs, eval
@@ -110,17 +112,17 @@ tasks still fail closed at the provider and worker levels; worker tests cover
 wrong module name, wrong replay target, wrong source span, wrong boundary, and
 sibling dynamic-import forms.
 
-Release state: workspace-only correction return accepted by control review,
-release-unit-audit-cleared, full-control-validation-cleared, and
-commit-gating-cleared with no findings. Full control validation passed with
+Release state: control-review-cleared, release-unit-audit-cleared,
+full-control-validation-cleared, commit-gating-cleared, locally committed, and
+pushed with explicit Ryan authorization. Full control validation passed with
 `ruff check src/ tests/`, `ruff format --check src/ tests/`,
 `mypy --strict src/`, and `pytest tests/ -v` reporting `1,899` passed.
 Commit-gating passed over the exact 13-file release unit with no staged files,
 clean `git diff --check`, empty `git diff -- evals/`, and empty
-`git diff -- src/context_ir/runtime_probe_execution.py`. Local staging and
-commit are the next release steps; push remains separately Ryan-gated. Current
-pushed authority before this workspace slice remains `f63dcf3 Sync dynamic
-import provider push state`.
+`git diff -- src/context_ir/runtime_probe_execution.py`. `git push origin main`
+advanced remote `main` from `f63dcf3` to `686242f`. Current pushed imported
+dynamic-import literal default-provider support authority is `686242f Add
+imported dynamic import provider support`.
 Current pushed dynamic-import root-literal default-provider support authority is
 `ef10b76 Add dynamic import root literal provider support`. Current pushed exact
 literal default-provider support authority is `fade74c Add literal setattr
@@ -17910,12 +17912,13 @@ supersession entries.
 ## What Is Next
 
 Current next route: choose the next bounded planning or implementation tranche
-from the pushed state. The exact 17-file dynamic-import root-literal
-default-provider release is closed at `ef10b76`; do not route it back to
-release-unit audit, full regression, commit-gating, staging, local commit, or
-push absent new findings. Do not run Task 4, update public/demo claims, widen
-benchmark/latency/production claims, or generalize runtime acquisition without
-an explicit new control decision.
+from the pushed state. The exact 13-file imported dynamic-import literal
+default-provider release is closed at `686242f`, and the earlier exact 17-file
+dynamic-import root-literal default-provider release is closed at `ef10b76`; do
+not route either back to release-unit audit, full regression, commit-gating,
+staging, local commit, or push absent new findings. Do not run Task 4, update
+public/demo claims, widen benchmark/latency/production claims, or generalize
+runtime acquisition without an explicit new control decision.
 
 Historical closed-route notes retained below must not override the current next
 route above or the canonical active release-state block.
