@@ -76,6 +76,11 @@ _HASATTR_LITERAL_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
 _GETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_getattr_literal_probe"
 _GETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _GETATTR_LITERAL_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_value"),)
+_DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID = (
+    "oracle_signal_dynamic_import_root_literal_probe"
+)
+_DYNAMIC_IMPORT_ROOT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
+_DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
 _SETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_setattr_literal_probe"
 _SETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 _SETATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "returned_none"),)
@@ -415,6 +420,18 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         snapshot_id="oracle_signal_getattr_literal_probe@default-local-python:v1",
         runtime_payload=_GETATTR_LITERAL_RUNTIME_PAYLOAD,
     ),
+    _DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_DYNAMIC_IMPORT_ROOT_LITERAL_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text='importlib.import_module("plugins.weather")',
+        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        boundary_text='importlib.import_module("plugins.weather")',
+        replay_target_seed="main.load_weather_plugin",
+        snapshot_id=(
+            "oracle_signal_dynamic_import_root_literal_probe@default-local-python:v1"
+        ),
+        runtime_payload=_DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD,
+    ),
     _SETATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_SETATTR_LITERAL_UNSUPPORTED_UNIT_ID,
         miss_evidence_text='setattr(obj, "flag", value)',
@@ -663,37 +680,69 @@ def build_context_ir_default_local_python_subprocess_pack(
         diagnostic,
         fixture,
     )
-    recompile_request = (
-        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest(
-            previous_response=previous_response,
-            diagnostic=diagnostic,
-            miss_evidence=miss_evidence,
-            delta_budget=0,
-            python_executable=sys.executable,
-            invocation_contract_revision=(
-                _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION
-            ),
-            completion_contract_revision=(
-                _DEFAULT_LOCAL_PYTHON_COMPLETION_CONTRACT_REVISION
-            ),
-            repository_snapshot_basis=RepositorySnapshotBasis(
-                snapshot_kind="eval_fixture",
-                snapshot_id=fixture.snapshot_id,
-                is_dirty_worktree=False,
-            ),
-            probe_contract_revision=_DEFAULT_LOCAL_PYTHON_PROBE_CONTRACT_REVISION,
-            runtime_assumptions=_default_local_python_runtime_assumptions(),
-            runner_contract_revision=_DEFAULT_LOCAL_PYTHON_RUNNER_CONTRACT_REVISION,
-            timeout_seconds=30,
-            runner_environment=_default_local_python_runner_environment(repo_root),
-            runner_assumptions=_default_local_python_runner_assumptions(),
-        )
+    response: (
+        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse
+        | tool_facade.SemanticDynamicImportLocalPythonSubprocessRecompileResponse
     )
-    response = (
-        tool_facade.recompile_repository_context_with_default_local_python_subprocess(
-            recompile_request
+    if fixture.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT:
+        dynamic_recompile_request = (
+            tool_facade.SemanticDynamicImportLocalPythonSubprocessRecompileRequest(
+                previous_response=previous_response,
+                diagnostic=diagnostic,
+                miss_evidence=miss_evidence,
+                delta_budget=0,
+                python_executable=sys.executable,
+                invocation_contract_revision=(
+                    _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION
+                ),
+                completion_contract_revision=(
+                    _DEFAULT_LOCAL_PYTHON_COMPLETION_CONTRACT_REVISION
+                ),
+                repository_snapshot_basis=RepositorySnapshotBasis(
+                    snapshot_kind="eval_fixture",
+                    snapshot_id=fixture.snapshot_id,
+                    is_dirty_worktree=False,
+                ),
+                probe_contract_revision=_DEFAULT_LOCAL_PYTHON_PROBE_CONTRACT_REVISION,
+                runtime_assumptions=_default_local_python_runtime_assumptions(),
+                runner_contract_revision=_DEFAULT_LOCAL_PYTHON_RUNNER_CONTRACT_REVISION,
+                timeout_seconds=30,
+                runner_environment=_default_local_python_runner_environment(repo_root),
+                runner_assumptions=_default_local_python_runner_assumptions(),
+            )
         )
-    )
+        dynamic_recompile = tool_facade.recompile_repository_context_with_dynamic_import_local_python_subprocess  # noqa: E501
+        response = dynamic_recompile(dynamic_recompile_request)
+    else:
+        default_recompile_request = (
+            tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest(
+                previous_response=previous_response,
+                diagnostic=diagnostic,
+                miss_evidence=miss_evidence,
+                delta_budget=0,
+                python_executable=sys.executable,
+                invocation_contract_revision=(
+                    _DEFAULT_LOCAL_PYTHON_INVOCATION_CONTRACT_REVISION
+                ),
+                completion_contract_revision=(
+                    _DEFAULT_LOCAL_PYTHON_COMPLETION_CONTRACT_REVISION
+                ),
+                repository_snapshot_basis=RepositorySnapshotBasis(
+                    snapshot_kind="eval_fixture",
+                    snapshot_id=fixture.snapshot_id,
+                    is_dirty_worktree=False,
+                ),
+                probe_contract_revision=_DEFAULT_LOCAL_PYTHON_PROBE_CONTRACT_REVISION,
+                runtime_assumptions=_default_local_python_runtime_assumptions(),
+                runner_contract_revision=_DEFAULT_LOCAL_PYTHON_RUNNER_CONTRACT_REVISION,
+                timeout_seconds=30,
+                runner_environment=_default_local_python_runner_environment(repo_root),
+                runner_assumptions=_default_local_python_runner_assumptions(),
+            )
+        )
+        recompile = tool_facade.recompile_repository_context_with_default_local_python_subprocess  # noqa: E501
+        response = recompile(default_recompile_request)
+
     _require_default_local_python_runtime_probe_attempt(response, planned_request)
     _require_default_local_python_runtime_payload(response, fixture)
 
@@ -1289,6 +1338,7 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_literal_probe, "
+            "oracle_signal_dynamic_import_root_literal_probe, "
             "oracle_signal_setattr_literal_probe, "
             "oracle_signal_delattr_literal_probe, oracle_signal_exec_probe, "
             "oracle_signal_eval_probe, or "
@@ -1338,7 +1388,10 @@ def _require_default_local_python_runtime_probe_request(
 
 
 def _require_default_local_python_runtime_probe_attempt(
-    response: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse,
+    response: (
+        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse
+        | tool_facade.SemanticDynamicImportLocalPythonSubprocessRecompileResponse
+    ),
     planned_request: RuntimeProbeRequest,
 ) -> None:
     """Require the subprocess attempt collection to replay the planned request."""
@@ -1352,7 +1405,10 @@ def _require_default_local_python_runtime_probe_attempt(
 
 
 def _require_default_local_python_runtime_payload(
-    response: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse,
+    response: (
+        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse
+        | tool_facade.SemanticDynamicImportLocalPythonSubprocessRecompileResponse
+    ),
     fixture: _DefaultLocalPythonSubprocessFixture,
 ) -> None:
     """Require the observed payload to match the exact eval oracle signal."""

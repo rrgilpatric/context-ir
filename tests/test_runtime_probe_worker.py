@@ -278,6 +278,14 @@ _LOAD_MODULE_FORM_LABEL = "dynamic_import:load_module/1"
 _BUILTIN_IMPORT_FORM_LABEL = "dynamic_import:__import__/1"
 _BUILTINS_IMPORT_FORM_LABEL = "dynamic_import:builtins.__import__/1"
 _LOADER_BUILTIN_IMPORT_FORM_LABEL = "dynamic_import:loader.__import__/1"
+_ROOT_LITERAL_RENDER_CARD_SUBJECT_ID = "unsupported:call:main.py:5:13"
+_ROOT_LITERAL_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:5:13"
+_ROOT_LITERAL_RENDER_CARD_BOUNDARY_TEXT = 'importlib.import_module("plugins.weather")'
+_ROOT_LITERAL_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
+_ROOT_LITERAL_RENDER_CARD_REPLAY_SELECTOR = (
+    "call:main.load_weather_plugin:dynamic_import:"
+    "importlib.import_module/1@main.py:5:13:5:55"
+)
 _REFLECTIVE_HASATTR_FORM_LABEL = "reflective_builtin:hasattr/2"
 _REFLECTIVE_GETATTR_TWO_FORM_LABEL = "reflective_builtin:getattr/2"
 _REFLECTIVE_GETATTR_THREE_FORM_LABEL = "reflective_builtin:getattr/3"
@@ -360,6 +368,43 @@ def _request(
         form_label=form_label,
         replay_target_seed=replay_target_seed,
         replay_selector_seed=resolved_replay_selector_seed,
+    )
+
+
+def _dynamic_import_root_literal_render_card_request(
+    *,
+    subject_id: str = _ROOT_LITERAL_RENDER_CARD_SUBJECT_ID,
+    source_site_id: str = _ROOT_LITERAL_RENDER_CARD_SOURCE_SITE_ID,
+    source_start_line: int = 5,
+    source_start_column: int = 13,
+    source_end_line: int = 5,
+    source_end_column: int = 55,
+    boundary_text: str = _ROOT_LITERAL_RENDER_CARD_BOUNDARY_TEXT,
+    form_label: str = _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+    replay_target_seed: str = _ROOT_LITERAL_RENDER_CARD_REPLAY_TARGET,
+    replay_selector_seed: str = _ROOT_LITERAL_RENDER_CARD_REPLAY_SELECTOR,
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return the exact root-literal render_card replay request."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=subject_id,
+        source_site=SourceSite(
+            site_id=source_site_id,
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=source_start_line,
+                start_column=source_start_column,
+                end_line=source_end_line,
+                end_column=source_end_column,
+            ),
+            snippet=boundary_text,
+        ),
+        reason_code=UnresolvedReasonCode.DYNAMIC_IMPORT,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label=form_label,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
     )
 
 
@@ -1875,6 +1920,33 @@ def _dynamic_import_worker_request_with_source(
         form_label=form_label,
         working_directory=str(working_directory),
         python_path_entries=(str(python_path),),
+    )
+
+
+def _dynamic_import_root_literal_render_card_request_with_source(
+    tmp_path: Path,
+    *,
+    source_text: str,
+    request: runtime_probe_requests.RuntimeProbeRequest | None = None,
+) -> DynamicImportWorkerRequest:
+    """Return an exact root-literal request backed by a temp ``main.py``."""
+    working_directory = tmp_path / "root_literal_workspace"
+    python_path = tmp_path / "root_literal_python_path"
+    working_directory.mkdir(exist_ok=True)
+    python_path.mkdir(exist_ok=True)
+    (python_path / "main.py").write_text(source_text, encoding="utf-8")
+    payload = _valid_worker_payload_for_request(
+        (
+            _dynamic_import_root_literal_render_card_request()
+            if request is None
+            else request
+        ),
+        python_executable=sys.executable,
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+    return runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+        payload
     )
 
 
@@ -3835,6 +3907,243 @@ def test_dynamic_import_worker_concrete_observer_observes_source_target(
     assert sys.path == original_sys_path
     assert os.getcwd() == original_working_directory
     assert importlib.import_module is original_import_module
+
+
+def test_dynamic_import_worker_observes_root_literal_render_card_fixture(
+    tmp_path: Path,
+) -> None:
+    """The exact root-literal fixture gets a stubbed render_card module only."""
+    source_text = (
+        "import importlib\n"
+        "\n"
+        "\n"
+        "def load_weather_plugin() -> str:\n"
+        '    module = importlib.import_module("plugins.weather")\n'
+        "    return module.render_card()\n"
+        "\n"
+        "\n"
+        "def render_probe_digest() -> str:\n"
+        "    digest = load_weather_plugin()\n"
+        '    return f"probe:{digest}"\n'
+    )
+    request = _dynamic_import_root_literal_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+    )
+    original_import_module = importlib.import_module
+    sys.modules.pop("main", None)
+    sys.modules.pop("plugins.weather", None)
+
+    try:
+        observation = _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+        sys.modules.pop("plugins.weather", None)
+
+    assert observation.request is request
+    assert observation.imported_module == "plugins.weather"
+    assert "plugins.weather" not in sys.modules
+    assert importlib.import_module is original_import_module
+
+
+def test_dynamic_import_worker_subprocess_observes_root_literal_render_card(
+    tmp_path: Path,
+) -> None:
+    """The real worker subprocess supports only the exact render_card fixture."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    source_text = (
+        "import importlib\n"
+        "\n"
+        "\n"
+        "def load_weather_plugin() -> str:\n"
+        '    module = importlib.import_module("plugins.weather")\n'
+        "    return module.render_card()\n"
+    )
+    request = _dynamic_import_root_literal_render_card_request()
+    worker_request = _dynamic_import_root_literal_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+        request=request,
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        python_executable=sys.executable,
+        working_directory=worker_request.working_directory,
+        python_path_entries=worker_request.python_path_entries,
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=worker_request.working_directory,
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "imported_module",
+                "value": "plugins.weather",
+            },
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    "drift_case",
+    (
+        "wrong_module_name",
+        "wrong_replay_target",
+        "wrong_source_span",
+        "wrong_boundary",
+    ),
+)
+def test_dynamic_import_worker_root_literal_render_card_support_fails_closed_on_drift(
+    tmp_path: Path,
+    drift_case: str,
+) -> None:
+    """The render_card stub is unavailable when any fixture identity field drifts."""
+    source_text = (
+        "import importlib\n"
+        "\n"
+        "\n"
+        "def load_weather_plugin() -> str:\n"
+        '    module = importlib.import_module("plugins.weather")\n'
+        "    return module.render_card()\n"
+        "\n"
+        "\n"
+        "def render_probe_digest() -> str:\n"
+        "    digest = load_weather_plugin()\n"
+        '    return f"probe:{digest}"\n'
+    )
+    request = _dynamic_import_root_literal_render_card_request()
+    if drift_case == "wrong_module_name":
+        source_text = source_text.replace("plugins.weather", "plugins.rain")
+    elif drift_case == "wrong_replay_target":
+        request = _dynamic_import_root_literal_render_card_request(
+            replay_target_seed="main.render_probe_digest",
+            replay_selector_seed=(
+                "call:main.render_probe_digest:dynamic_import:"
+                "importlib.import_module/1@main.py:5:13:5:55"
+            ),
+        )
+    elif drift_case == "wrong_source_span":
+        request = _dynamic_import_root_literal_render_card_request(
+            source_site_id="site:call:main.py:5:14",
+            source_start_column=14,
+        )
+    else:
+        request = _dynamic_import_root_literal_render_card_request(
+            boundary_text='importlib.import_module("plugins.rain")',
+        )
+    worker_request = _dynamic_import_root_literal_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+        request=request,
+    )
+    sys.modules.pop("main", None)
+
+    try:
+        with pytest.raises(ValueError, match="target execution failed"):
+            _observe_dynamic_import_worker_request(worker_request)
+    finally:
+        sys.modules.pop("main", None)
+
+
+@pytest.mark.parametrize(
+    ("form_label", "source_text"),
+    (
+        (
+            _LOADER_IMPORT_MODULE_FORM_LABEL,
+            "import importlib as loader\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    module = loader.import_module("plugins.weather")\n'
+            "    return module.render_card()\n",
+        ),
+        (
+            _IMPORTED_IMPORT_MODULE_FORM_LABEL,
+            "from importlib import import_module\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    module = import_module("plugins.weather")\n'
+            "    return module.render_card()\n",
+        ),
+        (
+            _LOAD_MODULE_FORM_LABEL,
+            "from importlib import import_module as load_module\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    module = load_module("plugins.weather")\n'
+            "    return module.render_card()\n",
+        ),
+        (
+            _BUILTIN_IMPORT_FORM_LABEL,
+            "VALUE = 1\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    module = __import__("plugins.weather")\n'
+            "    return module.render_card()\n",
+        ),
+        (
+            _BUILTINS_IMPORT_FORM_LABEL,
+            "import builtins\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    module = builtins.__import__("plugins.weather")\n'
+            "    return module.render_card()\n",
+        ),
+        (
+            _LOADER_BUILTIN_IMPORT_FORM_LABEL,
+            "import builtins as loader\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    module = loader.__import__("plugins.weather")\n'
+            "    return module.render_card()\n",
+        ),
+    ),
+)
+def test_dynamic_import_worker_root_literal_render_card_support_rejects_sibling_forms(
+    tmp_path: Path,
+    form_label: str,
+    source_text: str,
+) -> None:
+    """Non-root dynamic-import sibling forms do not get render_card stubs."""
+    request = _dynamic_import_root_literal_render_card_request(
+        boundary_text=_boundary_text_for_form_label(form_label),
+        form_label=form_label,
+        replay_selector_seed=(
+            f"call:main.load_weather_plugin:{form_label}@main.py:5:13:5:55"
+        ),
+    )
+    worker_request = _dynamic_import_root_literal_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+        request=request,
+    )
+    sys.modules.pop("main", None)
+
+    try:
+        with pytest.raises(ValueError, match="target execution failed"):
+            _observe_dynamic_import_worker_request(worker_request)
+    finally:
+        sys.modules.pop("main", None)
 
 
 def test_dynamic_import_worker_concrete_observer_is_handler_injectable(

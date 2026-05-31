@@ -75,8 +75,8 @@ QUERY = (
 )
 UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 UNSUPPORTED_SITE_ID = "site:call:main.py:7:4"
-UNSUPPORTED_LITERAL_SIBLING_TASK_IDS = (
-    "oracle_signal_dynamic_import_root_literal_probe",
+UNSUPPORTED_EXACT_PROVIDER_SIBLING_TASK_IDS = (
+    "oracle_signal_dynamic_import_root_alias_probe",
 )
 DEFAULT_LOCAL_PROVIDER_SELECTED_UNIT_IDS = (
     "def:main.py:main.probe_set_literal_attribute",
@@ -466,11 +466,11 @@ def test_setattr_literal_probe_default_local_provider_rejects_assigned_value_dri
         )
 
 
-@pytest.mark.parametrize("task_id", UNSUPPORTED_LITERAL_SIBLING_TASK_IDS)
-def test_setattr_literal_probe_default_local_provider_rejects_literal_siblings(
+@pytest.mark.parametrize("task_id", UNSUPPORTED_EXACT_PROVIDER_SIBLING_TASK_IDS)
+def test_setattr_literal_probe_default_local_provider_rejects_unsupported_siblings(
     task_id: str,
 ) -> None:
-    """Literal sibling tasks remain outside this exact provider slice."""
+    """Unsupported sibling tasks remain outside this exact provider slice."""
     sibling_fixture_root = REPO_ROOT / "evals" / "fixtures" / task_id
 
     with pytest.raises(ValueError, match="only supports"):

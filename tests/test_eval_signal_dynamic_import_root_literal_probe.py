@@ -7,10 +7,14 @@ import json
 from pathlib import Path
 from typing import cast
 
+import pytest
+
 import context_ir
 import context_ir.eval_providers as eval_providers
 import context_ir.eval_runs as eval_runs
+import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.semantic_types as semantic_types
+import context_ir.tool_facade as tool_facade
 from context_ir.eval_oracles import (
     SymbolOracleSelector,
     UnsupportedOracleSelector,
@@ -72,6 +76,21 @@ CONTEXT_IR_SELECTED_UNIT_IDS = (
     "def:main.py:main.load_weather_plugin",
     UNSUPPORTED_UNIT_ID,
     "frontier:call:main.py:6:11",
+)
+DEFAULT_LOCAL_PROVIDER_SELECTED_UNIT_IDS = (
+    UNSUPPORTED_UNIT_ID,
+    "def:main.py:main.load_weather_plugin",
+    "frontier:call:main.py:6:11",
+)
+UNSUPPORTED_DYNAMIC_IMPORT_SIBLING_TASK_IDS = (
+    "oracle_signal_dynamic_import_builtin_probe",
+    "oracle_signal_dynamic_import_builtins_alias_probe",
+    "oracle_signal_dynamic_import_builtins_attr_probe",
+    "oracle_signal_dynamic_import_imported_alias_probe",
+    "oracle_signal_dynamic_import_imported_name_probe",
+    "oracle_signal_dynamic_import_probe",
+    "oracle_signal_dynamic_import_root_alias_probe",
+    "oracle_signal_dynamic_import_root_probe",
 )
 
 
@@ -300,6 +319,233 @@ def test_root_literal_probe_keeps_runtime_module_out_of_static_proof() -> None:
         selector.resolved_unit_id not in weather_symbol_ids
         for selector in setup.resolved_selectors
     )
+
+
+def test_root_literal_probe_default_local_provider_replays_exact_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The default local-Python provider admits only this dynamic-import literal."""
+    captured_responses: list[
+        tool_facade.SemanticDynamicImportLocalPythonSubprocessRecompileResponse
+    ] = []
+    real_recompile = eval_providers.tool_facade.recompile_repository_context_with_dynamic_import_local_python_subprocess  # noqa: E501
+
+    def capture_dynamic_import_recompile(
+        recompile_request: (
+            tool_facade.SemanticDynamicImportLocalPythonSubprocessRecompileRequest
+        ),
+    ) -> tool_facade.SemanticDynamicImportLocalPythonSubprocessRecompileResponse:
+        response = real_recompile(recompile_request)
+        captured_responses.append(response)
+        return response
+
+    monkeypatch.setattr(
+        eval_providers.tool_facade,
+        "recompile_repository_context_with_dynamic_import_local_python_subprocess",
+        capture_dynamic_import_recompile,
+    )
+
+    result = eval_providers.build_context_ir_default_local_python_subprocess_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=FIXTURE_ROOT,
+            task_id="oracle_signal_dynamic_import_root_literal_probe",
+            query=QUERY,
+            budget=220,
+        )
+    )
+    unsupported_unit = next(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id == UNSUPPORTED_UNIT_ID
+    )
+    static_units = tuple(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id != UNSUPPORTED_UNIT_ID
+    )
+    provenance_record = result.runtime_provenance_records[0]
+    origin_detail = cast(dict[str, object], json.loads(provenance_record.origin_detail))
+    previous_response = eval_providers.tool_facade.compile_repository_context(
+        tool_facade.SemanticContextRequest(
+            repo_root=FIXTURE_ROOT,
+            query=QUERY,
+            budget=220,
+        )
+    )
+    fixture = eval_providers._default_local_python_subprocess_fixture(
+        "oracle_signal_dynamic_import_root_literal_probe"
+    )
+    miss_evidence = semantic_types.SemanticMissEvidence(
+        kind=semantic_types.SemanticMissKind.ABSENT_SYMBOL,
+        evidence='importlib.import_module("plugins.weather")',
+    )
+    diagnostic = eval_providers.diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    planned_request = (
+        eval_providers._require_default_local_python_runtime_probe_request(
+            diagnostic,
+            fixture,
+        )
+    )
+    weather_symbol_ids = {
+        symbol.symbol_id
+        for symbol in previous_response.program.resolved_symbols.values()
+        if symbol.definition_site.file_path == "plugins/weather.py"
+    }
+    load_weather_symbol_id = next(
+        symbol.symbol_id
+        for symbol in previous_response.program.resolved_symbols.values()
+        if symbol.qualified_name == "main.load_weather_plugin"
+    )
+
+    assert result.provider_name == (
+        eval_providers.CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER
+    )
+    assert result.task_id == "oracle_signal_dynamic_import_root_literal_probe"
+    assert result.budget == 220
+    assert result.selected_files == ()
+    assert result.selected_unit_ids == DEFAULT_LOCAL_PROVIDER_SELECTED_UNIT_IDS
+    assert result.warnings == ()
+    assert planned_request.subject_id == UNSUPPORTED_UNIT_ID
+    assert planned_request.boundary_text == (
+        'importlib.import_module("plugins.weather")'
+    )
+    assert (
+        planned_request.family_label is eval_providers.RuntimeProbeFamily.DYNAMIC_IMPORT
+    )
+    assert planned_request.form_label == "dynamic_import:importlib.import_module/1"
+    assert planned_request.replay_target_seed == "main.load_weather_plugin"
+    assert planned_request.replay_selector_seed == (
+        "call:main.load_weather_plugin:dynamic_import:"
+        "importlib.import_module/1@main.py:5:13:5:55"
+    )
+    assert len(captured_responses) == 1
+    runner_attempts = captured_responses[0].runner_attempt_collection.attempts
+    runner_results = captured_responses[
+        0
+    ].runner_attempt_collection.result_batch.results
+    assert len(runner_attempts) == 1
+    assert len(runner_results) == 1
+    assert runner_attempts[0].request == planned_request
+    assert runner_attempts[0].outcome is (
+        runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    )
+    assert runner_attempts[0].observed_replay_inputs == ()
+    assert tuple(
+        (field.key, field.value) for field in runner_attempts[0].normalized_payload
+    ) == (("imported_module", "plugins.weather"),)
+    assert isinstance(
+        runner_results[0],
+        runtime_probe_results.RuntimeProbeObservedResult,
+    )
+    assert runner_results[0].request == planned_request
+    assert tuple(
+        (field.key, field.value) for field in runner_results[0].normalized_payload
+    ) == (("imported_module", "plugins.weather"),)
+    assert len(result.runtime_provenance_records) == 1
+    assert origin_detail["normalized_payload"] == {"imported_module": "plugins.weather"}
+    assert origin_detail["replay_target"] == "main.load_weather_plugin"
+    assert origin_detail["replay_selector"] == (
+        "call:main.load_weather_plugin:dynamic_import:"
+        "importlib.import_module/1@main.py:5:13:5:55"
+    )
+    assert "observed_replay_inputs" not in origin_detail
+    assert unsupported_unit.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        unsupported_unit.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert unsupported_unit.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert unsupported_unit.has_attached_runtime_provenance is True
+    assert unsupported_unit.attached_runtime_provenance_record_ids == (
+        provenance_record.record_id,
+    )
+    assert all(
+        unit.primary_capability_tier is not CapabilityTier.RUNTIME_BACKED
+        for unit in result.metadata.selected_units
+    )
+    assert all(
+        unit.primary_capability_tier
+        in {CapabilityTier.STATICALLY_PROVED, CapabilityTier.HEURISTIC_FRONTIER}
+        for unit in static_units
+    )
+    assert all(unit.has_attached_runtime_provenance is False for unit in static_units)
+    assert all(
+        "plugins/weather.py" not in unit.unit_id
+        and "plugins.weather" not in unit.unit_id
+        for unit in result.metadata.selected_units
+    )
+    assert all(
+        resolved_import.target_qualified_name != "plugins.weather"
+        for resolved_import in previous_response.program.resolved_imports
+    )
+    assert all(
+        dependency.evidence_site_id != UNSUPPORTED_SITE_ID
+        for dependency in previous_response.program.proven_dependencies
+    )
+    assert all(
+        not (
+            dependency.source_symbol_id == load_weather_symbol_id
+            and dependency.target_symbol_id in weather_symbol_ids
+        )
+        for dependency in previous_response.program.proven_dependencies
+    )
+
+
+def test_root_literal_probe_default_local_provider_rejects_wrong_plan_fields() -> None:
+    """The provider fails closed when the planned probe identity drifts."""
+    previous_response = eval_providers.tool_facade.compile_repository_context(
+        tool_facade.SemanticContextRequest(
+            repo_root=FIXTURE_ROOT,
+            query=QUERY,
+            budget=220,
+        )
+    )
+    fixture = eval_providers._default_local_python_subprocess_fixture(
+        "oracle_signal_dynamic_import_root_literal_probe"
+    )
+    miss_evidence = semantic_types.SemanticMissEvidence(
+        kind=semantic_types.SemanticMissKind.ABSENT_SYMBOL,
+        evidence='importlib.import_module("plugins.weather")',
+    )
+    diagnostic = eval_providers.diagnose_semantic_miss(
+        previous_response.compile_result,
+        miss_evidence,
+        previous_response.program,
+    )
+    plan = diagnostic.planned_runtime_probe_request_plan
+    assert plan is not None
+    assert len(plan.requests) == 1
+    object.__setattr__(
+        plan.requests[0], "replay_target_seed", "main.render_probe_digest"
+    )
+
+    with pytest.raises(ValueError, match="wrong replay target"):
+        eval_providers._require_default_local_python_runtime_probe_request(
+            diagnostic,
+            fixture,
+        )
+
+
+@pytest.mark.parametrize("task_id", UNSUPPORTED_DYNAMIC_IMPORT_SIBLING_TASK_IDS)
+def test_root_literal_probe_default_local_provider_rejects_dynamic_import_siblings(
+    task_id: str,
+) -> None:
+    """Dynamic-import sibling forms remain outside this exact provider slice."""
+    sibling_fixture_root = REPO_ROOT / "evals" / "fixtures" / task_id
+
+    with pytest.raises(ValueError, match="only supports"):
+        eval_providers.build_context_ir_default_local_python_subprocess_pack(
+            eval_providers.EvalProviderRequest(
+                repo_root=sibling_fixture_root,
+                task_id=task_id,
+                query=QUERY,
+                budget=220,
+            )
+        )
 
 
 def test_root_literal_probe_run_executes_with_additive_runtime_provenance(

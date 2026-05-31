@@ -2,6 +2,160 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Dynamic Import Root Literal Default Provider Correction Returned
+
+- Correction slice completed for exact
+  `context_ir_default_local_python_subprocess` support for
+  `oracle_signal_dynamic_import_root_literal_probe`.
+- Supersedes the earlier workspace-only return below that used committed fixture
+  observations for this provider path.
+- Findings: none known from the correction execution lane; control review found
+  no issues and accepted the corrected workspace slice.
+- Scope corrected:
+  - removed the provider's committed fixture-observation bypass for this
+    dynamic-import fixture
+  - routed the exact `DYNAMIC_IMPORT` /
+    `dynamic_import:importlib.import_module/1` request through
+    `recompile_repository_context_with_dynamic_import_local_python_subprocess`
+  - added exact worker support for only the root-literal replay identity:
+    subject `unsupported:call:main.py:5:13`, span `main.py:5:13-5:55`,
+    boundary `importlib.import_module("plugins.weather")`, replay target
+    `main.load_weather_plugin`, replay selector
+    `call:main.load_weather_plugin:dynamic_import:importlib.import_module/1@main.py:5:13:5:55`,
+    imported module `plugins.weather`
+  - the worker stub satisfies `module.render_card()` without importing the real
+    plugin and without arbitrary module stubs, arbitrary attributes, or
+    generalized dynamic-import materialization
+- Proposed workspace execution unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_delattr_literal_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_setattr_literal_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_runtime_probe_worker.py`
+- Preservation proof:
+  - provider test proves one subprocess runner attempt exists, is `OBSERVED`,
+    matches the exact planned request, carries no `observed_replay_inputs`, and
+    normalizes to `imported_module=plugins.weather`
+  - worker tests prove the exact render-card replay succeeds, and wrong module,
+    wrong replay target, wrong source span, wrong boundary, and non-root sibling
+    dynamic-import forms fail closed
+  - primary truth remains unsupported/opaque; runtime provenance remains
+    additive only; no static `plugins.weather` edge, selected `plugins/weather.py`
+    unit, selected imported-module symbol, runtime-backed primary tier, eval
+    asset, runtime execution, schema/API/MCP/export/scoring/compiler/optimizer/
+    winner-selection, Task 4, public/demo/benchmark/latency/production, or
+    generalized dynamic-import support change is included
+- Validation:
+  - scoped `ruff check` passed over provider, worker, and touched tests
+  - scoped `ruff format --check` passed over provider, worker, and touched tests
+  - `mypy --strict src/` passed
+  - targeted pytest passed with `670` tests
+  - full regression passed: `pytest tests/ -v` with `1,885` tests
+  - `git diff --check` passed
+  - `git diff -- evals/` is empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` is empty
+- Release gates:
+  - read-only release-unit audit returned PASS with no findings for the exact
+    17-file workspace unit
+  - post-audit full regression passed:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1,885` tests
+  - commit-gating review found no issues over the exact release unit
+- The first targeted correction run exposed only deterministic Task 3 confidence
+  scalar drift:
+  - expected `0.0019108189609775563`
+  - actual `0.001903652569243661`
+  - preservation assertions before that scalar check proved selected units/order,
+    document SHA, `274` tokens, warnings, warning IDs, probe behavior, probe
+    count, and warning-call count stayed fixed
+  - the only correction changes `FULL_REPO_TASK3_CONFIDENCE` in
+    `tests/test_eval_signal_smoke_e.py` to `0.001903652569243661`
+- Acceptance status: corrected workspace slice accepted; release-unit audit,
+  full regression, and commit-gating cleared; staging, commit, and push remain
+  pending.
+
+## 2026-05-31 -- Dynamic Import Root Literal Default Provider Slice Returned
+
+- Execution slice completed for exact
+  `context_ir_default_local_python_subprocess` support for
+  `oracle_signal_dynamic_import_root_literal_probe`.
+- Findings: none known from the execution lane; control review and release-unit
+  audit remain pending.
+- Proposed workspace execution unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_delattr_literal_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_setattr_literal_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Scope implemented:
+  - one exact provider fixture for `importlib.import_module("plugins.weather")`
+  - family `DYNAMIC_IMPORT`, form `dynamic_import:importlib.import_module/1`,
+    replay target `main.load_weather_plugin`, unsupported unit
+    `unsupported:call:main.py:5:13`, span `main.py:5:13-5:55`, replay selector
+    `call:main.load_weather_plugin:dynamic_import:importlib.import_module/1@main.py:5:13:5:55`,
+    and normalized runtime payload exactly `imported_module=plugins.weather`
+  - planned-request validation before replay, fixture-observation payload/source
+    checks, and additive runtime provenance attachment through the existing
+    runtime-observation recompile path because runtime worker/execution changes
+    were explicitly out of scope
+  - focused tests proving the unsupported primary truth remains
+    unsupported/opaque, runtime provenance remains additive, no
+    `observed_replay_inputs` are emitted, no `plugins.weather` static dependency
+    edge or selected module/symbol is introduced, dynamic-import sibling tasks
+    remain rejected, and exact support-message expectations include only the new
+    supported task
+- Boundary preserved:
+  - no `evals/`, runtime worker/execution, runtime acquisition, schema/API/MCP/
+    export, scoring, compiler, optimizer, winner-selection, Task 4, public/demo/
+    benchmark/latency/production, or generalized dynamic-import support change
+    is included
+- Validation:
+  - scoped `ruff check` passed over the provider and touched tests
+  - scoped `ruff format --check` passed over the provider and touched tests
+  - `mypy --strict src/` passed
+  - targeted pytest over the dynamic-import root-literal tests, provider/run-spec
+    tests, touched fail-closed tests, support-message tests, and Task 3 smoke
+    preservation test passed with `64` tests
+  - full regression passed: `pytest tests/ -v` with `1,873` tests
+  - `git diff --check` passed
+  - `git diff -- evals/ src/context_ir/runtime_probe_execution.py
+    src/context_ir/runtime_probe_worker.py` is empty
+- Full regression initially failed only on deterministic Task 3 confidence drift:
+  - expected `0.0019257444292302217`
+  - actual `0.0019108189609775563`
+  - preservation assertions before that scalar check proved selected units/order,
+    document SHA, `274` tokens, warnings, warning IDs, probe behavior, probe
+    count, and warning-call count stayed fixed
+  - the only correction changes `FULL_REPO_TASK3_CONFIDENCE` in
+    `tests/test_eval_signal_smoke_e.py` to `0.0019108189609775563`
+- Acceptance status: first-pass execution return; workspace-only; control
+  review, release-unit audit, commit-gating, staging, commit, and push remain
+  pending.
+
 ## 2026-05-31 -- Setattr Literal Default Provider Slice Pushed
 
 - Ryan authorized pushing the exact `oracle_signal_setattr_literal_probe`
