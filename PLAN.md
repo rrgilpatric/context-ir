@@ -40,13 +40,12 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Corrected dynamic-import root-literal default-provider release unit is
-workspace-only, audit-cleared, full-regression-cleared, and
-commit-gating-cleared:
+Corrected dynamic-import root-literal default-provider release unit is pushed
+and closed with no active gate:
+`ef10b76 Add dynamic import root literal provider support` adds
 `context_ir_default_local_python_subprocess` support for exactly
-`oracle_signal_dynamic_import_root_literal_probe` is implemented locally and
-not staged, committed, or pushed. The correction removes the previous committed
-fixture-observation bypass and routes the exact
+`oracle_signal_dynamic_import_root_literal_probe`. The correction removes the
+previous committed fixture-observation bypass and routes the exact
 `DYNAMIC_IMPORT` / `dynamic_import:importlib.import_module/1` provider fixture
 through `recompile_repository_context_with_dynamic_import_local_python_subprocess`.
 The exact request remains `importlib.import_module("plugins.weather")`,
@@ -62,7 +61,7 @@ boundary, family/form, replay target, and replay selector above. It does not
 import the real plugin, does not generalize dynamic-import materialization, and
 does not add arbitrary module stubs or arbitrary attributes.
 
-The workspace-only execution unit is exactly:
+The pushed release unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -98,7 +97,7 @@ probe count, and warning-call count stayed fixed, and the only scalar
 correction changed `FULL_REPO_TASK3_CONFIDENCE` from
 `0.0019108189609775563` to `0.001903652569243661`.
 
-Preservation locks for this workspace-only return: primary truth remains
+Preservation locks for this pushed release: primary truth remains
 unsupported/opaque; runtime provenance remains additive only; no static
 `plugins.weather` dependency edge, selected `plugins/weather.py` unit, selected
 imported-module symbol, runtime-backed primary tier, observed replay inputs,
@@ -109,7 +108,9 @@ tasks still fail closed at the provider level, and worker tests cover wrong
 module name, wrong replay target, wrong source span, wrong boundary, and
 non-root sibling forms.
 
-Current pushed exact literal default-provider support authority is `fade74c Add
+Current pushed dynamic-import root-literal default-provider support authority is
+`ef10b76 Add dynamic import root literal provider support`. Current pushed exact
+literal default-provider support authority is `fade74c Add
 literal setattr default provider support`. That release completes the exact
 literal default-provider quartet: `oracle_signal_hasattr_literal_probe`,
 `oracle_signal_getattr_literal_probe`, `oracle_signal_delattr_literal_probe`,
@@ -17899,11 +17900,13 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: local staging/commit for the exact 17-file dynamic-import
-root-literal default-provider release unit. Push still requires explicit Ryan
-authorization. Do not run Task 4, update public/demo claims, widen
-benchmark/latency/production claims, or generalize runtime acquisition as part
-of this release route.
+Current next route: choose the next bounded planning or implementation tranche
+from the pushed state. The exact 17-file dynamic-import root-literal
+default-provider release is closed at `ef10b76`; do not route it back to
+release-unit audit, full regression, commit-gating, staging, local commit, or
+push absent new findings. Do not run Task 4, update public/demo claims, widen
+benchmark/latency/production claims, or generalize runtime acquisition without
+an explicit new control decision.
 
 Historical closed-route notes retained below must not override the current next
 route above or the canonical active release-state block.

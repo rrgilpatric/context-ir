@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-05-31 -- Dynamic Import Root Literal Default Provider Pushed
+
+- Ryan authorized remote push for the corrected dynamic-import root-literal
+  default-provider release.
+- Verified before push:
+  - local `HEAD` was `ef10b76 Add dynamic import root literal provider support`
+  - `origin/main` was `190d138 Sync literal setattr provider push state`
+  - the worktree was clean except for the already-created local commit being
+    ahead of `origin/main` by one
+- `git push origin main` advanced remote `main` from `190d138` to `ef10b76`.
+- Verified after push:
+  - `HEAD` and `origin/main` both resolve to
+    `ef10b7658267415a6bfa2a3b028611e6478d62ae`
+  - `git status --short --branch -uall` reports `## main...origin/main`
+- Release state:
+  - `ef10b76` is the pushed source/test/continuity authority for exact
+    `context_ir_default_local_python_subprocess` support for
+    `oracle_signal_dynamic_import_root_literal_probe`
+  - the release is audit-cleared, full-regression-cleared,
+    commit-gating-cleared, locally committed, and pushed
+  - no active gate remains for this release absent new findings
+- Acceptance status: pushed first-pass after corrected workspace review,
+  read-only release-unit audit, full regression, commit-gating, local commit,
+  and explicit Ryan push authorization.
+
 ## 2026-05-31 -- Dynamic Import Root Literal Default Provider Correction Returned
 
 - Correction slice completed for exact
