@@ -302,6 +302,13 @@ _ROOT_ALIAS_RENDER_CARD_REPLAY_SELECTOR = (
     "call:main.load_weather_plugin:dynamic_import:"
     "loader.import_module/1@main.py:6:13:6:39"
 )
+_BUILTIN_RENDER_CARD_SUBJECT_ID = "unsupported:call:main.py:6:4"
+_BUILTIN_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:6:4"
+_BUILTIN_RENDER_CARD_BOUNDARY_TEXT = "__import__(name)"
+_BUILTIN_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
+_BUILTIN_RENDER_CARD_REPLAY_SELECTOR = (
+    "call:main.load_weather_plugin:dynamic_import:__import__/1@main.py:6:4:6:20"
+)
 _IMPORTED_LITERAL_RENDER_CARD_SUBJECT_ID = "unsupported:call:main.py:5:13"
 _IMPORTED_LITERAL_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:5:13"
 _IMPORTED_LITERAL_RENDER_CARD_BOUNDARY_TEXT = 'import_module("plugins.weather")'
@@ -496,6 +503,43 @@ def _dynamic_import_root_alias_render_card_request(
     replay_selector_seed: str = _ROOT_ALIAS_RENDER_CARD_REPLAY_SELECTOR,
 ) -> runtime_probe_requests.RuntimeProbeRequest:
     """Return the exact root-alias render_card replay request."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id=subject_id,
+        source_site=SourceSite(
+            site_id=source_site_id,
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=source_start_line,
+                start_column=source_start_column,
+                end_line=source_end_line,
+                end_column=source_end_column,
+            ),
+            snippet=boundary_text,
+        ),
+        reason_code=UnresolvedReasonCode.DYNAMIC_IMPORT,
+        boundary_text=boundary_text,
+        family_label=runtime_probe_requests.RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label=form_label,
+        replay_target_seed=replay_target_seed,
+        replay_selector_seed=replay_selector_seed,
+    )
+
+
+def _dynamic_import_builtin_render_card_request(
+    *,
+    subject_id: str = _BUILTIN_RENDER_CARD_SUBJECT_ID,
+    source_site_id: str = _BUILTIN_RENDER_CARD_SOURCE_SITE_ID,
+    source_start_line: int = 6,
+    source_start_column: int = 4,
+    source_end_line: int = 6,
+    source_end_column: int = 20,
+    boundary_text: str = _BUILTIN_RENDER_CARD_BOUNDARY_TEXT,
+    form_label: str = _BUILTIN_IMPORT_FORM_LABEL,
+    replay_target_seed: str = _BUILTIN_RENDER_CARD_REPLAY_TARGET,
+    replay_selector_seed: str = _BUILTIN_RENDER_CARD_REPLAY_SELECTOR,
+) -> runtime_probe_requests.RuntimeProbeRequest:
+    """Return the exact builtin render_card replay request."""
     return runtime_probe_requests.RuntimeProbeRequest(
         subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
         subject_id=subject_id,
@@ -2217,6 +2261,29 @@ def _dynamic_import_root_alias_render_card_request_with_source(
             if request is None
             else request
         ),
+        python_executable=sys.executable,
+        working_directory=str(working_directory),
+        python_path_entries=(str(python_path),),
+    )
+    return runtime_probe_worker.materialize_runtime_probe_dynamic_import_worker_request(
+        payload
+    )
+
+
+def _dynamic_import_builtin_render_card_request_with_source(
+    tmp_path: Path,
+    *,
+    source_text: str,
+    request: runtime_probe_requests.RuntimeProbeRequest | None = None,
+) -> DynamicImportWorkerRequest:
+    """Return an exact builtin request backed by a temp ``main.py``."""
+    working_directory = tmp_path / "builtin_workspace"
+    python_path = tmp_path / "builtin_python_path"
+    working_directory.mkdir(exist_ok=True)
+    python_path.mkdir(exist_ok=True)
+    (python_path / "main.py").write_text(source_text, encoding="utf-8")
+    payload = _valid_worker_payload_for_request(
+        (_dynamic_import_builtin_render_card_request() if request is None else request),
         python_executable=sys.executable,
         working_directory=str(working_directory),
         python_path_entries=(str(python_path),),
@@ -4841,6 +4908,265 @@ def test_dynamic_import_worker_root_alias_support_rejects_sibling_forms(
         ),
     )
     worker_request = _dynamic_import_root_alias_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+        request=request,
+    )
+    sys.modules.pop("main", None)
+
+    try:
+        with pytest.raises(ValueError, match="target execution failed"):
+            _observe_dynamic_import_worker_request(worker_request)
+    finally:
+        sys.modules.pop("main", None)
+
+
+def test_dynamic_import_worker_observes_builtin_render_card_fixture(
+    tmp_path: Path,
+) -> None:
+    """The exact builtin fixture gets a temporary sys.modules render_card stub."""
+    source_text = (
+        "import sys\n"
+        "\n"
+        "\n"
+        "def load_weather_plugin() -> str:\n"
+        '    name = "plugins.weather"\n'
+        "    __import__(name)\n"
+        "    module = sys.modules[name]\n"
+        "    return module.render_card()\n"
+        "\n"
+        "\n"
+        "def render_probe_digest() -> str:\n"
+        "    digest = load_weather_plugin()\n"
+        '    return f"probe:{digest}"\n'
+    )
+    request = _dynamic_import_builtin_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+    )
+    original_builtin_import = builtins.__import__
+    sys.modules.pop("main", None)
+    sys.modules.pop("plugins.weather", None)
+
+    try:
+        observation = _observe_dynamic_import_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+        sys.modules.pop("plugins.weather", None)
+
+    assert observation.request is request
+    assert observation.imported_module == "plugins.weather"
+    assert "plugins.weather" not in sys.modules
+    assert builtins.__import__ is original_builtin_import
+
+
+def test_dynamic_import_worker_subprocess_observes_builtin_render_card(
+    tmp_path: Path,
+) -> None:
+    """The real worker subprocess supports the exact builtin fixture."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    source_text = (
+        "import sys\n"
+        "\n"
+        "\n"
+        "def load_weather_plugin() -> str:\n"
+        '    name = "plugins.weather"\n'
+        "    __import__(name)\n"
+        "    module = sys.modules[name]\n"
+        "    return module.render_card()\n"
+    )
+    request = _dynamic_import_builtin_render_card_request()
+    worker_request = _dynamic_import_builtin_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+        request=request,
+    )
+    payload = _valid_worker_payload_for_request(
+        request,
+        python_executable=sys.executable,
+        working_directory=worker_request.working_directory,
+        python_path_entries=worker_request.python_path_entries,
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=worker_request.working_directory,
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "imported_module",
+                "value": "plugins.weather",
+            },
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    "drift_case",
+    (
+        "wrong_module_name",
+        "wrong_replay_target",
+        "wrong_source_span",
+        "wrong_boundary",
+    ),
+)
+def test_dynamic_import_worker_builtin_support_fails_closed_on_drift(
+    tmp_path: Path,
+    drift_case: str,
+) -> None:
+    """The builtin stub is unavailable when fixture identity drifts."""
+    source_text = (
+        "import sys\n"
+        "\n"
+        "\n"
+        "def load_weather_plugin() -> str:\n"
+        '    name = "plugins.weather"\n'
+        "    __import__(name)\n"
+        "    module = sys.modules[name]\n"
+        "    return module.render_card()\n"
+        "\n"
+        "\n"
+        "def render_probe_digest() -> str:\n"
+        "    digest = load_weather_plugin()\n"
+        '    return f"probe:{digest}"\n'
+    )
+    request = _dynamic_import_builtin_render_card_request()
+    if drift_case == "wrong_module_name":
+        source_text = source_text.replace(
+            'name = "plugins.weather"',
+            'name = "plugins.rain"',
+        )
+    elif drift_case == "wrong_replay_target":
+        request = _dynamic_import_builtin_render_card_request(
+            replay_target_seed="main.render_probe_digest",
+            replay_selector_seed=(
+                "call:main.render_probe_digest:dynamic_import:"
+                "__import__/1@main.py:6:4:6:20"
+            ),
+        )
+    elif drift_case == "wrong_source_span":
+        request = _dynamic_import_builtin_render_card_request(
+            source_site_id="site:call:main.py:6:5",
+            source_start_column=5,
+        )
+    else:
+        request = _dynamic_import_builtin_render_card_request(
+            boundary_text="builtins.__import__(name)",
+        )
+        with pytest.raises(ValueError, match="boundary_text"):
+            _dynamic_import_builtin_render_card_request_with_source(
+                tmp_path,
+                source_text=source_text,
+                request=request,
+            )
+        return
+    worker_request = _dynamic_import_builtin_render_card_request_with_source(
+        tmp_path,
+        source_text=source_text,
+        request=request,
+    )
+    sys.modules.pop("main", None)
+
+    try:
+        with pytest.raises(ValueError, match="target execution failed"):
+            _observe_dynamic_import_worker_request(worker_request)
+    finally:
+        sys.modules.pop("main", None)
+
+
+@pytest.mark.parametrize(
+    ("form_label", "source_text"),
+    (
+        (
+            _IMPORTLIB_IMPORT_MODULE_FORM_LABEL,
+            "import importlib\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    name = "plugins.weather"\n'
+            "    module = importlib.import_module(name)\n"
+            "    return module.render_card()\n",
+        ),
+        (
+            _IMPORTED_IMPORT_MODULE_FORM_LABEL,
+            "from importlib import import_module\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    name = "plugins.weather"\n'
+            "    module = import_module(name)\n"
+            "    return module.render_card()\n",
+        ),
+        (
+            _LOAD_MODULE_FORM_LABEL,
+            "from importlib import import_module as load_module\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    name = "plugins.weather"\n'
+            "    module = load_module(name)\n"
+            "    return module.render_card()\n",
+        ),
+        (
+            _LOADER_IMPORT_MODULE_FORM_LABEL,
+            "import importlib as loader\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    name = "plugins.weather"\n'
+            "    module = loader.import_module(name)\n"
+            "    return module.render_card()\n",
+        ),
+        (
+            _BUILTINS_IMPORT_FORM_LABEL,
+            "import builtins\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    name = "plugins.weather"\n'
+            "    module = builtins.__import__(name)\n"
+            "    return module.render_card()\n",
+        ),
+        (
+            _LOADER_BUILTIN_IMPORT_FORM_LABEL,
+            "import builtins as loader\n"
+            "\n"
+            "\n"
+            "def load_weather_plugin() -> str:\n"
+            '    name = "plugins.weather"\n'
+            "    module = loader.__import__(name)\n"
+            "    return module.render_card()\n",
+        ),
+    ),
+)
+def test_dynamic_import_worker_builtin_support_rejects_sibling_forms(
+    tmp_path: Path,
+    form_label: str,
+    source_text: str,
+) -> None:
+    """Sibling dynamic-import forms do not get the builtin sys.modules stub."""
+    request = _dynamic_import_builtin_render_card_request(
+        boundary_text=_boundary_text_for_form_label(form_label),
+        form_label=form_label,
+        replay_selector_seed=(
+            f"call:main.load_weather_plugin:{form_label}@main.py:6:4:6:20"
+        ),
+    )
+    worker_request = _dynamic_import_builtin_render_card_request_with_source(
         tmp_path,
         source_text=source_text,
         request=request,

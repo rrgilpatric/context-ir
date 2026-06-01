@@ -137,6 +137,19 @@ _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_SELECTOR = (
     "loader.import_module/1@main.py:6:13:6:39"
 )
 _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SUBJECT_ID = "unsupported:call:main.py:6:4"
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:6:4"
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_LINE = 6
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_COLUMN = 4
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_LINE = 6
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_COLUMN = 20
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_BOUNDARY_TEXT = "__import__(name)"
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_SELECTOR = (
+    "call:main.load_weather_plugin:dynamic_import:__import__/1@main.py:6:4:6:20"
+)
+_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
 _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SUBJECT_ID = (
     "unsupported:call:main.py:6:13"
 )
@@ -1722,6 +1735,7 @@ class _RuntimeProbeDynamicImportCapture:
     support_root_literal_render_card_fixture: bool = False
     support_root_name_render_card_fixture: bool = False
     support_root_alias_render_card_fixture: bool = False
+    support_builtin_render_card_fixture: bool = False
     support_imported_name_render_card_fixture: bool = False
     support_imported_alias_render_card_fixture: bool = False
     support_imported_literal_render_card_fixture: bool = False
@@ -1849,7 +1863,13 @@ class _RuntimeProbeDynamicImportCapture:
                 "runtime probe dynamic import worker module name is malformed"
             ) from error
         self.captured_modules.append(name)
-        controlled_module = ModuleType(name)
+        controlled_module = (
+            _runtime_probe_dynamic_import_builtin_render_card_module_stub(name)
+            if self.support_builtin_render_card_fixture
+            else None
+        )
+        if controlled_module is None:
+            controlled_module = ModuleType(name)
         self._insert_controlled_sys_module(name, controlled_module)
         return controlled_module
 
@@ -4679,9 +4699,19 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
         _DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL,
         _DYNAMIC_IMPORT_WORKER_LOADER_BUILTIN_IMPORT_FORM_LABEL,
     ):
-        imported_module = _runtime_probe_dynamic_import_captured_builtin_import_name(
-            target
+        supports_builtin_render_card_fixture = (
+            _is_runtime_probe_dynamic_import_builtin_render_card_fixture_request(
+                request
+            )
         )
+        imported_module = _runtime_probe_dynamic_import_captured_builtin_import_name(
+            target,
+            support_builtin_render_card_fixture=supports_builtin_render_card_fixture,
+        )
+        if supports_builtin_render_card_fixture:
+            _validate_runtime_probe_dynamic_import_builtin_render_card_imported_module(
+                imported_module
+            )
     else:
         supports_root_literal_render_card_fixture = (
             _is_runtime_probe_dynamic_import_root_literal_render_card_fixture_request(
@@ -14974,6 +15004,51 @@ def _runtime_probe_dynamic_import_root_alias_render_card_module_stub(
     return module
 
 
+def _is_runtime_probe_dynamic_import_builtin_render_card_fixture_request(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+) -> bool:
+    """Return whether the request is the exact builtin render_card replay."""
+    return (
+        request.subject_id == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SUBJECT_ID
+        and request.source_site_id
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_SITE_ID
+        and request.source_file_path
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_FILE_PATH
+        and request.source_start_line
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_LINE
+        and request.source_start_column
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_COLUMN
+        and request.source_end_line
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_LINE
+        and request.source_end_column
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_COLUMN
+        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
+        and request.boundary_text
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_BOUNDARY_TEXT
+        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
+        and request.form_label == _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL
+        and request.replay_target_seed
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_TARGET
+        and request.replay_selector_seed
+        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_SELECTOR
+    )
+
+
+def _runtime_probe_dynamic_import_builtin_render_card_module_stub(
+    name: str,
+) -> ModuleType | None:
+    """Return the one exact builtin dynamic-import fixture stub, or no stub."""
+    if name != _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_IMPORTED_MODULE:
+        return None
+    module = ModuleType(name)
+
+    def render_card() -> str:
+        return "forecast-ready"
+
+    module.__dict__["render_card"] = render_card
+    return module
+
+
 def _supports_imported_literal_fixture(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
@@ -15148,6 +15223,18 @@ def _validate_runtime_probe_dynamic_import_root_alias_render_card_imported_modul
         )
 
 
+def _validate_runtime_probe_dynamic_import_builtin_render_card_imported_module(
+    imported_module: str,
+) -> None:
+    """Reject exact builtin executions that captured another module."""
+    expected_module = _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_IMPORTED_MODULE
+    if imported_module != expected_module:
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module must match exact "
+            "builtin fixture"
+        )
+
+
 def _validate_runtime_probe_dynamic_import_imported_literal_render_card_imported_module(
     imported_module: str,
 ) -> None:
@@ -15202,7 +15289,19 @@ def _materialize_runtime_probe_dynamic_import_builtin_observation(
     _validate_runtime_probe_dynamic_import_source_builtin_import_global_absent(
         source_module
     )
-    imported_module = _runtime_probe_dynamic_import_captured_builtin_import_name(target)
+    supports_builtin_render_card_fixture = (
+        _is_runtime_probe_dynamic_import_builtin_render_card_fixture_request(
+            replay_target.request
+        )
+    )
+    imported_module = _runtime_probe_dynamic_import_captured_builtin_import_name(
+        target,
+        support_builtin_render_card_fixture=supports_builtin_render_card_fixture,
+    )
+    if supports_builtin_render_card_fixture:
+        _validate_runtime_probe_dynamic_import_builtin_render_card_imported_module(
+            imported_module
+        )
     return materialize_runtime_probe_dynamic_import_worker_observation(
         replay_target.request,
         imported_module=imported_module,
@@ -15236,9 +15335,13 @@ def _materialize_runtime_probe_dynamic_import_builtins_observation(
 
 def _runtime_probe_dynamic_import_captured_builtin_import_name(
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
+    *,
+    support_builtin_render_card_fixture: bool = False,
 ) -> str:
     """Run a target while capturing one exact bare __import__(name) call."""
-    capture = _RuntimeProbeDynamicImportCapture()
+    capture = _RuntimeProbeDynamicImportCapture(
+        support_builtin_render_card_fixture=support_builtin_render_card_fixture
+    )
     original_builtin_import: Callable[..., ModuleType] = builtins.__import__
     controlled_builtin_import: Callable[..., ModuleType] = capture.builtin_import
     target_failure: BaseException | None = None

@@ -40,6 +40,96 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+Builtin dynamic-import default-provider support is a workspace-only execution
+candidate accepted by the control lane after findings-first review. The first
+read-only release-unit audit failed on this stale continuity wording, not on a
+code-boundary issue. The corrected read-only release-unit audit, full control
+validation, and commit-gating are now cleared. It is not staged, committed, or
+pushed.
+
+The candidate adds exact `context_ir_default_local_python_subprocess` support
+for only `oracle_signal_dynamic_import_builtin_probe`, with boundary
+`__import__(name)`, unsupported unit `unsupported:call:main.py:6:4`, site/span
+`site:call:main.py:6:4` / `main.py:6:4-6:20`, family/form
+`DYNAMIC_IMPORT` / `dynamic_import:__import__/1`, replay target
+`main.load_weather_plugin`, replay selector
+`call:main.load_weather_plugin:dynamic_import:__import__/1@main.py:6:4:6:20`,
+empty observed replay inputs, and normalized payload
+`imported_module=plugins.weather`.
+
+Provider budget contract: this exact task admits budget `220` only, compiles
+honestly at budget `220`, returns `result.budget == 220`, and fails closed
+before compilation for budget `100`, `180`, or any other non-`220` budget.
+
+The accepted workspace release-unit file set is exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_delattr_literal_probe.py`
+- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_dynamic_import_builtin_probe.py`
+- `tests/test_eval_signal_dynamic_import_imported_alias_probe.py`
+- `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- `tests/test_eval_signal_getattr_literal_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_setattr_literal_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+- `tests/test_runtime_probe_worker.py`
+
+Execution-lane validation passed after implementation:
+
+- `ruff check src/ tests/`
+- `ruff format --check src/ tests/`
+- `mypy --strict src/`
+- focused pytest over builtin dynamic-import provider and worker tests: `602`
+  passed
+- initial full `pytest tests/ -v` exposed only the allowed deterministic Task 3
+  confidence scalar drift after all preservation locks remained unchanged;
+  `FULL_REPO_TASK3_CONFIDENCE` is now `0.0017805322399294576`
+- final full `pytest tests/ -v` passed with `1,981` tests
+
+Preservation locks: primary truth remains unsupported/opaque; runtime
+provenance remains additive only; no selected `plugins/weather.py`, selected
+`plugins.weather` imported-module symbol, static `plugins.weather` dependency
+edge, runtime-backed primary selected unit, observed replay inputs, eval asset,
+runtime probe execution module, generalized runtime-execution behavior,
+schema/API/MCP/export/scoring/compiler/optimizer/winner-selection, Task 4,
+public/demo/benchmark/latency/production, or generalized dynamic-import
+support change is included. Existing supported dynamic-import sibling behavior
+remains intact, and remaining unsupported sibling forms still fail closed.
+
+Control-lane review found no code or boundary findings and accepted this
+workspace-only candidate. The first read-only release-unit audit failed on a P2
+continuity mismatch because this block and `BUILDLOG.md` still routed the slice
+as pre-control-review. The audit confirmed the exact 20-file dirty set, clean
+`git diff --check`, empty `git diff -- evals/`, empty
+`git diff -- src/context_ir/runtime_probe_execution.py`, no staged files, and
+no code-boundary issue.
+
+Release gates cleared:
+
+- corrected read-only release-unit audit returned PASS with no findings over
+  the exact 20-file workspace unit
+- full control validation passed with `ruff check src/ tests/`, `ruff format
+  --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with
+  `1,981` tests
+- commit-gating passed over the exact 20-file release unit with no staged files
+  before staging, clean `git diff --check`, empty `git diff -- evals/`, and
+  empty `git diff -- src/context_ir/runtime_probe_execution.py`
+
+Next control action: stage and locally commit the exact 20-file release unit.
+Push requires explicit Ryan authorization after local commit.
+
+### Canonical Active Release-State Block
+
 Root-alias dynamic-import default-provider support has been implemented,
 accepted after findings-first control review, release-unit-audit-cleared,
 full-control-validation-cleared, commit-gating-cleared, locally committed, and

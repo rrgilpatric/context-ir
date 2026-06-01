@@ -57,7 +57,6 @@ BASELINE_PROVIDERS = (
     eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
 )
 UNSUPPORTED_DYNAMIC_IMPORT_SIBLING_TASK_IDS = (
-    "oracle_signal_dynamic_import_builtin_probe",
     "oracle_signal_dynamic_import_builtins_alias_probe",
     "oracle_signal_dynamic_import_builtins_attr_probe",
 )
