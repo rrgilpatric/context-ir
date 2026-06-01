@@ -2,6 +2,78 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-01 -- Root Dynamic Import Default Provider Implemented
+
+- Execution slice implemented exact `context_ir_default_local_python_subprocess`
+  support for only `oracle_signal_dynamic_import_root_probe`.
+- Scope implemented:
+  - boundary `importlib.import_module(name)`
+  - unsupported unit `unsupported:call:main.py:6:13`
+  - site/span `site:call:main.py:6:13` / `main.py:6:13-6:42`
+  - family/form `DYNAMIC_IMPORT` /
+    `dynamic_import:importlib.import_module/1`
+  - replay target `main.load_weather_plugin`
+  - replay selector
+    `call:main.load_weather_plugin:dynamic_import:importlib.import_module/1@main.py:6:13:6:42`
+  - normalized runtime payload exactly `imported_module=plugins.weather`
+  - empty observed replay inputs
+- Provider budget contract:
+  - budget `220` is admitted and compiled honestly at `220`
+  - successful provider result reports `result.budget == 220`
+  - budgets `100`, `180`, and other non-`220` budgets fail closed before
+    compilation
+- Preservation proof:
+  - primary truth remains unsupported/opaque
+  - runtime provenance remains additive only
+  - no selected `plugins/weather.py`, selected `plugins.weather`
+    imported-module symbol, static `plugins.weather` dependency edge,
+    runtime-backed primary unit, observed replay inputs, eval asset, runtime
+    execution, schema/API/MCP/export/scoring/compiler/optimizer/
+    winner-selection, Task 4, public/demo/benchmark/latency/production, or
+    generalized dynamic-import support change is included
+  - worker drift tests cover wrong imported module, replay target, source span,
+    boundary, and sibling dynamic-import forms
+- Validation:
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed
+  - `mypy --strict src/` passed
+  - focused pytest over root probe, sibling dynamic-import provider tests, and
+    worker tests passed with `618` tests
+  - first full `pytest tests/ -v` exposed only the allowed deterministic Task 3
+    confidence scalar drift; `FULL_REPO_TASK3_CONFIDENCE` is now
+    `0.0018212754946975297`
+  - final `pytest tests/ -v` passed with `1,953` tests
+  - `git diff --check` passed
+  - `git diff -- evals/` was empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
+- Control-lane review:
+  - found no findings
+  - reran `ruff check src/ tests/`
+  - reran `ruff format --check src/ tests/`
+  - reran `mypy --strict src/`
+  - reran focused pytest over root probe, sibling dynamic-import provider tests,
+    and worker tests with `618` tests passing
+- Release state:
+  - accepted in workspace
+  - release-unit-audit-cleared
+  - full-control-validation-cleared
+  - commit-gating-cleared
+  - locally committed
+  - not pushed
+- Release gates:
+  - read-only release-unit audit returned PASS with no findings over the exact
+    16-file workspace unit
+  - full control validation passed:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1,953` tests
+  - commit-gating passed over the exact 16-file release unit with no staged
+    files before staging, clean `git diff --check`, empty `git diff -- evals/`,
+    and empty `git diff -- src/context_ir/runtime_probe_execution.py`
+- Acceptance status: first-pass execution accepted; audit, full control
+  validation, commit-gating, and local commit cleared.
+
 ## 2026-06-01 -- Imported-Alias Dynamic Import Default Provider Implemented
 
 - Execution slice implemented exact `context_ir_default_local_python_subprocess`

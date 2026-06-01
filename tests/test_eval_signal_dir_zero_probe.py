@@ -660,6 +660,7 @@ def test_dir_zero_probe_default_subprocess_provider_fails_closed_for_other_tasks
     assert "oracle_signal_dir_zero_probe" in message
     assert "oracle_signal_hasattr_probe" in message
     assert "oracle_signal_dynamic_import_root_literal_probe" in message
+    assert "oracle_signal_dynamic_import_root_probe" in message
     assert "oracle_signal_dynamic_import_imported_name_probe" in message
     assert "oracle_signal_dynamic_import_imported_alias_probe" in message
     assert "oracle_signal_exec_probe" in message

@@ -81,6 +81,10 @@ _DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID = (
 )
 _DYNAMIC_IMPORT_ROOT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
 _DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
+_DYNAMIC_IMPORT_ROOT_PROBE_TASK_ID = "oracle_signal_dynamic_import_root_probe"
+_DYNAMIC_IMPORT_ROOT_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:6:13"
+_DYNAMIC_IMPORT_ROOT_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
+_DYNAMIC_IMPORT_ROOT_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID = (
     "oracle_signal_dynamic_import_imported_name_probe"
 )
@@ -458,6 +462,26 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
             "oracle_signal_dynamic_import_root_literal_probe@default-local-python:v1"
         ),
         runtime_payload=_DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD,
+    ),
+    _DYNAMIC_IMPORT_ROOT_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_DYNAMIC_IMPORT_ROOT_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="importlib.import_module(name)",
+        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label="dynamic_import:importlib.import_module/1",
+        boundary_text="importlib.import_module(name)",
+        replay_target_seed="main.load_weather_plugin",
+        snapshot_id="oracle_signal_dynamic_import_root_probe@default-local-python:v1",
+        runtime_payload=_DYNAMIC_IMPORT_ROOT_RUNTIME_PAYLOAD,
+        source_site_id="site:call:main.py:6:13",
+        source_file_path="main.py",
+        source_start_line=6,
+        source_start_column=13,
+        source_end_line=6,
+        source_end_column=42,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "importlib.import_module/1@main.py:6:13:6:42"
+        ),
     ),
     _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_DYNAMIC_IMPORT_IMPORTED_NAME_UNSUPPORTED_UNIT_ID,
@@ -1421,6 +1445,7 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
+            "oracle_signal_dynamic_import_root_probe, "
             "oracle_signal_dynamic_import_imported_name_probe, "
             "oracle_signal_dynamic_import_imported_alias_probe, "
             "oracle_signal_dynamic_import_probe, "
@@ -1434,6 +1459,14 @@ def _default_local_python_subprocess_fixture(
 
 def _default_local_python_context_budget(request: EvalProviderRequest) -> int:
     """Return the honest compile budget for exact subprocess provider fixtures."""
+    if (
+        request.task_id == _DYNAMIC_IMPORT_ROOT_PROBE_TASK_ID
+        and request.budget != _DYNAMIC_IMPORT_ROOT_CONTEXT_BUDGET
+    ):
+        raise ValueError(
+            "context_ir_default_local_python_subprocess only supports "
+            "budget 220 for oracle_signal_dynamic_import_root_probe"
+        )
     if (
         request.task_id == _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID
         and request.budget != _DYNAMIC_IMPORT_IMPORTED_NAME_CONTEXT_BUDGET
