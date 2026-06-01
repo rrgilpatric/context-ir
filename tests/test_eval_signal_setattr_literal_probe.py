@@ -76,7 +76,7 @@ QUERY = (
 UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 UNSUPPORTED_SITE_ID = "site:call:main.py:7:4"
 UNSUPPORTED_EXACT_PROVIDER_SIBLING_TASK_IDS = (
-    "oracle_signal_dynamic_import_builtins_attr_probe",
+    "oracle_signal_dynamic_import_builtins_alias_probe",
 )
 DEFAULT_LOCAL_PROVIDER_SELECTED_UNIT_IDS = (
     "def:main.py:main.probe_set_literal_attribute",

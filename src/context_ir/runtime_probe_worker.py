@@ -150,6 +150,28 @@ _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_SELECTOR = (
     "call:main.load_weather_plugin:dynamic_import:__import__/1@main.py:6:4:6:20"
 )
 _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SUBJECT_ID = (
+    "unsupported:call:main.py:7:4"
+)
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_SITE_ID = (
+    "site:call:main.py:7:4"
+)
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_LINE = 7
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_COLUMN = 4
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_LINE = 7
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_COLUMN = 29
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_BOUNDARY_TEXT = (
+    "builtins.__import__(name)"
+)
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_TARGET = (
+    "main.load_weather_plugin"
+)
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_SELECTOR = (
+    "call:main.load_weather_plugin:dynamic_import:"
+    "builtins.__import__/1@main.py:7:4:7:29"
+)
+_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
 _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SUBJECT_ID = (
     "unsupported:call:main.py:6:13"
 )
@@ -1736,6 +1758,7 @@ class _RuntimeProbeDynamicImportCapture:
     support_root_name_render_card_fixture: bool = False
     support_root_alias_render_card_fixture: bool = False
     support_builtin_render_card_fixture: bool = False
+    support_builtins_attr_render_card_fixture: bool = False
     support_imported_name_render_card_fixture: bool = False
     support_imported_alias_render_card_fixture: bool = False
     support_imported_literal_render_card_fixture: bool = False
@@ -1868,6 +1891,12 @@ class _RuntimeProbeDynamicImportCapture:
             if self.support_builtin_render_card_fixture
             else None
         )
+        if controlled_module is None and self.support_builtins_attr_render_card_fixture:
+            controlled_module = (
+                _runtime_probe_dynamic_import_builtins_attr_render_card_module_stub(
+                    name
+                )
+            )
         if controlled_module is None:
             controlled_module = ModuleType(name)
         self._insert_controlled_sys_module(name, controlled_module)
@@ -15049,6 +15078,52 @@ def _runtime_probe_dynamic_import_builtin_render_card_module_stub(
     return module
 
 
+def _is_runtime_probe_dynamic_import_builtins_attr_render_card_fixture_request(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+) -> bool:
+    """Return whether the request is the exact builtins-attribute replay."""
+    return (
+        request.subject_id
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SUBJECT_ID
+        and request.source_site_id
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_SITE_ID
+        and request.source_file_path
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_FILE_PATH
+        and request.source_start_line
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_LINE
+        and request.source_start_column
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_COLUMN
+        and request.source_end_line
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_LINE
+        and request.source_end_column
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_COLUMN
+        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
+        and request.boundary_text
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_BOUNDARY_TEXT
+        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
+        and request.form_label == _DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL
+        and request.replay_target_seed
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_TARGET
+        and request.replay_selector_seed
+        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_SELECTOR
+    )
+
+
+def _runtime_probe_dynamic_import_builtins_attr_render_card_module_stub(
+    name: str,
+) -> ModuleType | None:
+    """Return the one exact builtins-attribute fixture stub, or no stub."""
+    if name != _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_IMPORTED_MODULE:
+        return None
+    module = ModuleType(name)
+
+    def render_card() -> str:
+        return "forecast-ready"
+
+    module.__dict__["render_card"] = render_card
+    return module
+
+
 def _supports_imported_literal_fixture(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
@@ -15235,6 +15310,18 @@ def _validate_runtime_probe_dynamic_import_builtin_render_card_imported_module(
         )
 
 
+def _validate_runtime_probe_dynamic_import_builtins_attr_render_card_imported_module(
+    imported_module: str,
+) -> None:
+    """Reject exact builtins-attribute executions that captured another module."""
+    expected_module = _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_IMPORTED_MODULE
+    if imported_module != expected_module:
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module must match exact "
+            "builtins attribute fixture"
+        )
+
+
 def _validate_runtime_probe_dynamic_import_imported_literal_render_card_imported_module(
     imported_module: str,
 ) -> None:
@@ -15322,11 +15409,23 @@ def _materialize_runtime_probe_dynamic_import_builtins_observation(
         source_module,
     )
     _validate_runtime_probe_dynamic_import_target_callable(target)
+    supports_builtins_attr_render_card_fixture = (
+        _is_runtime_probe_dynamic_import_builtins_attr_render_card_fixture_request(
+            replay_target.request
+        )
+    )
     imported_module = _runtime_probe_dynamic_import_captured_builtins_import_name(
         source_module,
         target,
         global_name=global_name,
+        support_builtins_attr_render_card_fixture=(
+            supports_builtins_attr_render_card_fixture
+        ),
     )
+    if supports_builtins_attr_render_card_fixture:
+        _validate_runtime_probe_dynamic_import_builtins_attr_render_card_imported_module(
+            imported_module
+        )
     return materialize_runtime_probe_dynamic_import_worker_observation(
         replay_target.request,
         imported_module=imported_module,
@@ -15337,10 +15436,14 @@ def _runtime_probe_dynamic_import_captured_builtin_import_name(
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
     *,
     support_builtin_render_card_fixture: bool = False,
+    support_builtins_attr_render_card_fixture: bool = False,
 ) -> str:
     """Run a target while capturing one exact bare __import__(name) call."""
     capture = _RuntimeProbeDynamicImportCapture(
-        support_builtin_render_card_fixture=support_builtin_render_card_fixture
+        support_builtin_render_card_fixture=support_builtin_render_card_fixture,
+        support_builtins_attr_render_card_fixture=(
+            support_builtins_attr_render_card_fixture
+        ),
     )
     original_builtin_import: Callable[..., ModuleType] = builtins.__import__
     controlled_builtin_import: Callable[..., ModuleType] = capture.builtin_import
@@ -15381,6 +15484,7 @@ def _runtime_probe_dynamic_import_captured_builtins_import_name(
     target: RuntimeProbeLocalPythonDynamicImportTargetCallable,
     *,
     global_name: str,
+    support_builtins_attr_render_card_fixture: bool = False,
 ) -> str:
     """Run a target while requiring an exact source-global builtins binding."""
     original_global = _runtime_probe_dynamic_import_source_builtins_global(
@@ -15392,7 +15496,10 @@ def _runtime_probe_dynamic_import_captured_builtins_import_name(
 
     try:
         imported_module = _runtime_probe_dynamic_import_captured_builtin_import_name(
-            target
+            target,
+            support_builtins_attr_render_card_fixture=(
+                support_builtins_attr_render_card_fixture
+            ),
         )
     except BaseException as error:
         target_failure = error

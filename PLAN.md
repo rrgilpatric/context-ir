@@ -40,6 +40,78 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+Builtins-attribute dynamic-import default-provider support is accepted as a
+workspace-only candidate after findings-first control review and one narrow
+continuity correction. It has passed release-unit audit, full regression, and
+commit-gating. It is not staged, committed, or pushed.
+
+The candidate adds exact `context_ir_default_local_python_subprocess` support
+for only `oracle_signal_dynamic_import_builtins_attr_probe`, with boundary
+`builtins.__import__(name)`, unsupported unit `unsupported:call:main.py:7:4`,
+site/span `site:call:main.py:7:4` / `main.py:7:4-7:29`, family/form
+`DYNAMIC_IMPORT` / `dynamic_import:builtins.__import__/1`, replay target
+`main.load_weather_plugin`, replay selector
+`call:main.load_weather_plugin:dynamic_import:builtins.__import__/1@main.py:7:4:7:29`,
+empty observed replay inputs, and normalized payload
+`imported_module=plugins.weather`.
+
+Provider budget contract: this exact task admits budget `220` only, compiles
+honestly at budget `220`, returns `result.budget == 220`, and fails closed
+before compilation for budget `100`, `180`, `219`, `221`, or any other
+non-`220` budget.
+
+The workspace-only candidate file set is exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_delattr_literal_probe.py`
+- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_dynamic_import_builtins_attr_probe.py`
+- `tests/test_eval_signal_dynamic_import_imported_alias_probe.py`
+- `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- `tests/test_eval_signal_getattr_literal_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_setattr_literal_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+- `tests/test_runtime_probe_worker.py`
+
+Execution-lane validation passed after implementation:
+
+- `ruff check src/ tests/`
+- `ruff format --check src/ tests/`
+- `mypy --strict src/`
+- focused pytest over builtins-attribute dynamic-import provider and worker
+  tests: `617` passed
+- first full `pytest tests/ -v` exposed only stale exact-provider allowlist
+  assertions plus the allowed deterministic Task 3 confidence scalar drift;
+  assertions were updated to include the new exact task and
+  `FULL_REPO_TASK3_CONFIDENCE` is now `0.0017634825089281327`
+- final full `pytest tests/ -v` passed with `1,998` tests
+
+Preservation locks: primary truth remains unsupported/opaque; runtime
+provenance remains additive only; no selected `plugins/weather.py`, selected
+`plugins.weather` imported-module symbol, static `plugins.weather` dependency
+edge, runtime-backed primary selected unit, observed replay inputs, eval asset,
+runtime probe execution module, generalized runtime-execution behavior,
+schema/API/MCP/export/scoring/compiler/optimizer/winner-selection, Task 4,
+public/demo/benchmark/latency/production, or generalized dynamic-import support
+change is included. Builtins alias support is not included. Existing supported
+dynamic-import sibling behavior remains intact, and remaining unsupported
+sibling forms still fail closed.
+
+Next control action: stage and locally commit this exact 20-file release unit.
+Push still requires explicit Ryan authorization.
+
+### Historical Pushed Release-State Block
+
 Builtin dynamic-import default-provider support has been implemented, accepted
 after findings-first control review, corrected-audit-cleared,
 full-control-validation-cleared, commit-gating-cleared, locally committed, and
@@ -131,7 +203,7 @@ This release is closed with no active gate. Do not reopen `a0f7cf4` back to
 release-unit audit, full regression, commit-gating, staging, local commit
 creation, or push absent new findings.
 
-### Canonical Active Release-State Block
+### Historical Pushed Release-State Block
 
 Root-alias dynamic-import default-provider support has been implemented,
 accepted after findings-first control review, release-unit-audit-cleared,
@@ -228,7 +300,7 @@ This release is closed with no active gate. Do not reopen `12675b6` back to
 release-unit audit, full regression, commit-gating, staging, local commit
 creation, or push absent new findings.
 
-### Canonical Active Release-State Block
+### Historical Pushed Release-State Block
 
 Root dynamic-import default-provider release is pushed and closed with no active
 gate. The pushed release adds exact `context_ir_default_local_python_subprocess`

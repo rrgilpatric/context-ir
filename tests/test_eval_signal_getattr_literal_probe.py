@@ -65,7 +65,7 @@ CONTEXT_IR_SELECTED_UNIT_IDS = (
     UNSUPPORTED_UNIT_ID,
 )
 UNSUPPORTED_EXACT_PROVIDER_SIBLING_TASK_IDS = (
-    "oracle_signal_dynamic_import_builtins_attr_probe",
+    "oracle_signal_dynamic_import_builtins_alias_probe",
 )
 
 
