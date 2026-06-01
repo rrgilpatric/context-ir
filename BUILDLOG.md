@@ -2,6 +2,69 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-01 -- Imported-Alias Dynamic Import Default Provider Implemented
+
+- Execution slice implemented exact `context_ir_default_local_python_subprocess`
+  support for only `oracle_signal_dynamic_import_imported_alias_probe`.
+- Scope implemented:
+  - boundary `load_module(name)`
+  - unsupported unit `unsupported:call:main.py:6:13`
+  - site/span `site:call:main.py:6:13` / `main.py:6:13-6:30`
+  - family/form `DYNAMIC_IMPORT` / `dynamic_import:load_module/1`
+  - replay target `main.load_weather_plugin`
+  - replay selector
+    `call:main.load_weather_plugin:dynamic_import:load_module/1@main.py:6:13:6:30`
+  - normalized runtime payload exactly `imported_module=plugins.weather`
+  - empty observed replay inputs
+- Provider budget contract:
+  - budget `220` is admitted and compiled honestly at `220`
+  - successful provider result reports `result.budget == 220`
+  - budgets `100`, `180`, and other non-`220` budgets fail closed before
+    compilation
+- Preservation proof:
+  - primary truth remains unsupported/opaque
+  - runtime provenance remains additive only
+  - no selected `plugins/weather.py`, selected `plugins.weather`
+    imported-module symbol, static `plugins.weather` dependency edge,
+    runtime-backed primary unit, observed replay inputs, eval asset, runtime
+    execution, schema/API/MCP/export/scoring/compiler/optimizer/
+    winner-selection, Task 4, public/demo/benchmark/latency/production, or
+    generalized dynamic-import support change is included
+  - worker drift tests cover wrong imported module, replay target, source span,
+    boundary, and sibling dynamic-import forms
+- Validation:
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed
+  - `mypy --strict src/` passed
+  - focused pytest over imported-alias, imported-name, and worker tests passed
+    with `585` tests
+  - `pytest tests/ -v` passed with `1,939` tests
+  - `git diff --check` passed
+  - `git diff -- evals/` was empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
+- Release gates:
+  - control review found one P3 wrong-date continuity finding, corrected it,
+    and found no code or boundary findings
+  - read-only release-unit audit returned PASS with no findings over the exact
+    15-file workspace unit
+  - full control validation passed:
+    - `ruff check src/ tests/`
+    - `ruff format --check src/ tests/`
+    - `mypy --strict src/`
+    - `pytest tests/ -v` with `1,939` tests
+  - commit-gating passed over the exact 15-file release unit with no staged
+    files before staging, clean `git diff --check`, empty `git diff -- evals/`,
+    and empty `git diff -- src/context_ir/runtime_probe_execution.py`
+- Release state:
+  - accepted in workspace
+  - release-unit-audit-cleared
+  - full-control-validation-cleared
+  - commit-gating-cleared
+  - locally committed
+  - not pushed
+- Acceptance status: accepted after one P3 continuity correction; audit and full
+  control validation cleared; commit-gating and local commit cleared.
+
 ## 2026-05-31 -- Imported-Name Push Routing Wording Corrected
 
 - Corrected stale current-state wording in `PLAN.md` after the pushed
