@@ -40,11 +40,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Root dynamic-import default-provider release state recorded for the local
-release commit carrying this entry: accepted, release-unit-audit-cleared,
-full-control-validation-cleared, commit-gating-cleared, and locally committed;
-not pushed. The workspace adds exact
-`context_ir_default_local_python_subprocess` support for only
+Root dynamic-import default-provider release is pushed and closed with no active
+gate. The pushed release adds exact `context_ir_default_local_python_subprocess`
+support for only
 `oracle_signal_dynamic_import_root_probe`, with boundary
 `importlib.import_module(name)`, unsupported unit
 `unsupported:call:main.py:6:13`, site/span `site:call:main.py:6:13` /
@@ -55,11 +53,13 @@ not pushed. The workspace adds exact
 empty observed replay inputs, and normalized payload
 `imported_module=plugins.weather`.
 
+Release anchor: `0560096 Add root dynamic import provider support`.
+
 Provider budget contract: this exact task admits budget `220` only, compiles
 honestly at budget `220`, returns `result.budget == 220`, and fails closed
 before compilation for budget `100`, `180`, or any other budget.
 
-The current workspace-only release candidate is exactly:
+The pushed release unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -100,13 +100,13 @@ Control-lane review found no findings and reran:
   worker tests: `618` passed
 
 Read-only release-unit audit returned PASS with no findings over the exact
-16-file workspace unit. Full control validation passed with
+16-file release unit. Full control validation passed with
 `ruff check src/ tests/`, `ruff format --check src/ tests/`,
 `mypy --strict src/`, and `pytest tests/ -v` reporting `1,953` passed.
 Commit-gating passed over the exact 16-file release unit with no staged files
 before staging, clean `git diff --check`, empty `git diff -- evals/`, and
-empty `git diff -- src/context_ir/runtime_probe_execution.py`. Push remains
-held for explicit Ryan authorization.
+empty `git diff -- src/context_ir/runtime_probe_execution.py`. The release was
+pushed to `origin/main` after explicit Ryan authorization.
 
 Preservation locks: primary truth remains unsupported/opaque; runtime
 provenance remains additive only; no selected `plugins/weather.py`, selected
@@ -118,9 +118,8 @@ dynamic-import support change is included. Worker drift tests cover wrong
 imported module, replay target, source span, boundary, and sibling
 dynamic-import forms.
 
-Next control action: push remains held for explicit Ryan authorization. After
-push, update continuity only if pushed state would otherwise misroute a fresh
-controller.
+Next control action: route the next substantive slice only after this post-push
+continuity correction is committed and pushed.
 
 Imported-alias dynamic-import default-provider release is pushed and closed with
 no active gate. The pushed release adds exact

@@ -59,7 +59,7 @@ Most recent supersession entries override older architectural decisions when the
   - full-control-validation-cleared
   - commit-gating-cleared
   - locally committed
-  - not pushed
+  - pushed to `origin/main` at `0560096`
 - Release gates:
   - read-only release-unit audit returned PASS with no findings over the exact
     16-file workspace unit
@@ -72,7 +72,10 @@ Most recent supersession entries override older architectural decisions when the
     files before staging, clean `git diff --check`, empty `git diff -- evals/`,
     and empty `git diff -- src/context_ir/runtime_probe_execution.py`
 - Acceptance status: first-pass execution accepted; audit, full control
-  validation, commit-gating, and local commit cleared.
+  validation, commit-gating, local commit, and push cleared.
+- Post-push continuity correction:
+  - updated `PLAN.md` and this entry to replace stale locally-committed/not-pushed
+    wording with pushed-and-closed routing after explicit Ryan authorization
 
 ## 2026-06-01 -- Imported-Alias Dynamic Import Default Provider Implemented
 
