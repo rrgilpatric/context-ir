@@ -40,12 +40,14 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Builtins-attribute dynamic-import default-provider support is accepted as a
-workspace-only candidate after findings-first control review and one narrow
-continuity correction. It has passed release-unit audit, full regression, and
-commit-gating. It is not staged, committed, or pushed.
+Builtins-attribute dynamic-import default-provider support is pushed and closed.
+It passed findings-first control review after one narrow continuity correction,
+release-unit audit, full regression, commit-gating, local commit creation, and
+Ryan-authorized push.
 
-The candidate adds exact `context_ir_default_local_python_subprocess` support
+Release anchor: `caf3349 Add builtins-attribute dynamic import provider`.
+
+The release adds exact `context_ir_default_local_python_subprocess` support
 for only `oracle_signal_dynamic_import_builtins_attr_probe`, with boundary
 `builtins.__import__(name)`, unsupported unit `unsupported:call:main.py:7:4`,
 site/span `site:call:main.py:7:4` / `main.py:7:4-7:29`, family/form
@@ -60,7 +62,7 @@ honestly at budget `220`, returns `result.budget == 220`, and fails closed
 before compilation for budget `100`, `180`, `219`, `221`, or any other
 non-`220` budget.
 
-The workspace-only candidate file set is exactly:
+The pushed release-unit file set is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -107,8 +109,11 @@ change is included. Builtins alias support is not included. Existing supported
 dynamic-import sibling behavior remains intact, and remaining unsupported
 sibling forms still fail closed.
 
-Next control action: stage and locally commit this exact 20-file release unit.
-Push still requires explicit Ryan authorization.
+This release is closed with no active gate. Do not route `caf3349` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
+
+Next control action: select the next bounded tranche from the pushed state.
 
 ### Historical Pushed Release-State Block
 

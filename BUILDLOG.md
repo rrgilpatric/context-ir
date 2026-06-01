@@ -71,14 +71,13 @@ Most recent supersession entries override older architectural decisions when the
     `FULL_REPO_TASK3_CONFIDENCE` is now `0.0017634825089281327`
   - final full `pytest tests/ -v` passed with `1,998` tests
 - Release state:
-  - workspace-only accepted candidate
+  - pushed and closed
   - control-review accepted after one narrow continuity correction
   - read-only release-unit audit passed with no findings
   - full regression passed
   - commit-gating passed
-  - not staged
-  - not committed
-  - not pushed
+  - locally committed as `caf3349 Add builtins-attribute dynamic import provider`
+  - pushed to `origin/main` after explicit Ryan authorization
 - Findings:
   - no execution-lane findings after final validation
   - control review found one P2 continuity issue: `PLAN.md` had multiple
@@ -92,9 +91,9 @@ Most recent supersession entries override older architectural decisions when the
   - commit-gating confirmed the exact 20-file unit, no staged files, no eval
     asset diff, no `runtime_probe_execution.py` diff, and clean
     `git diff --check`
-- Acceptance status: accepted after 1 correction; commit-ready.
-- Next control action: stage and locally commit the exact 20-file release unit.
-  Push still requires explicit Ryan authorization.
+- Acceptance status: accepted after 1 correction; pushed and closed.
+- Next control action: select the next bounded tranche from the pushed state.
+  Do not route `caf3349` back to release gates absent new findings.
 
 ## 2026-06-01 -- Builtin Dynamic Import Default Provider Implemented
 
