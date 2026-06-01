@@ -38,15 +38,14 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
-### Active Workspace-Only Execution Candidate
+### Canonical Active Release-State Block
 
 Root-alias dynamic-import default-provider support has been implemented,
 accepted after findings-first control review, release-unit-audit-cleared,
-full-control-validation-cleared, commit-gating-cleared, and locally committed.
-It is not pushed. Remote authority remains
-`b2a98e79b509192954b517e947dcfdc8ac84ced7` /
-`b2a98e7 Sync root provider push routing` until Ryan explicitly authorizes and
-control completes the remote push.
+full-control-validation-cleared, commit-gating-cleared, locally committed, and
+pushed to `origin/main` after explicit Ryan authorization.
+
+Release anchor: `12675b6 Add root-alias dynamic import provider support`.
 
 The release unit adds exact
 `context_ir_default_local_python_subprocess` support for only
@@ -64,7 +63,7 @@ Provider budget contract: this exact task admits budget `220` only, compiles
 honestly at budget `220`, returns `result.budget == 220`, and fails closed
 before compilation for budget `100`, `180`, or any other budget.
 
-The locally committed release-unit file set is exactly:
+The pushed release-unit file set is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -132,9 +131,9 @@ public/demo/benchmark/latency/production, or generalized dynamic-import support
 change is included. Worker drift tests cover wrong imported module, replay
 target, source span, boundary, and sibling dynamic-import forms.
 
-Next control action: push only after explicit Ryan authorization. Do not reopen
-this release-unit audit, full regression, commit-gating, staging, or local
-commit path absent new findings.
+This release is closed with no active gate. Do not reopen `12675b6` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 ### Canonical Active Release-State Block
 

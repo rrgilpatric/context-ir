@@ -53,7 +53,7 @@ Most recent supersession entries override older architectural decisions when the
   - full-control-validation-cleared
   - commit-gating-cleared
   - locally committed
-  - not pushed
+  - pushed to `origin/main` at `12675b6`
 - Control-lane review:
   - found one P3 continuity wording issue and corrected it
   - found no code or boundary findings
@@ -72,8 +72,11 @@ Most recent supersession entries override older architectural decisions when the
     before staging, clean `git diff --check`, empty `git diff -- evals/`, and
     empty `git diff -- src/context_ir/runtime_probe_execution.py`
 - Acceptance status: accepted after one P3 continuity correction; audit, full
-  control validation, commit-gating, and local commit cleared; push pending
+  control validation, commit-gating, local commit, and push cleared after
   explicit Ryan authorization.
+- Post-push continuity correction:
+  - updated `PLAN.md` and this entry to replace stale locally-committed/not-pushed
+    wording with pushed-and-closed routing after explicit Ryan authorization
 
 ## 2026-06-01 -- Root Dynamic Import Default Provider Implemented
 
