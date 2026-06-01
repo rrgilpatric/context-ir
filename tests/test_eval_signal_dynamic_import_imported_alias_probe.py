@@ -56,9 +56,6 @@ BASELINE_PROVIDERS = (
     eval_providers.LEXICAL_TOP_K_FILES_PROVIDER,
     eval_providers.IMPORT_NEIGHBORHOOD_FILES_PROVIDER,
 )
-UNSUPPORTED_DYNAMIC_IMPORT_SIBLING_TASK_IDS = (
-    "oracle_signal_dynamic_import_builtins_alias_probe",
-)
 QUERY = (
     "Fix unsupported dynamic import load_module(name) "
     "while keeping probe digest output aligned"
@@ -514,24 +511,6 @@ def test_imported_alias_probe_default_local_provider_fails_closed_for_non_220_bu
                 task_id="oracle_signal_dynamic_import_imported_alias_probe",
                 query=QUERY,
                 budget=budget,
-            )
-        )
-
-
-@pytest.mark.parametrize("task_id", UNSUPPORTED_DYNAMIC_IMPORT_SIBLING_TASK_IDS)
-def test_imported_alias_probe_default_local_provider_rejects_dynamic_import_siblings(
-    task_id: str,
-) -> None:
-    """Unsupported dynamic-import sibling forms remain outside this exact slice."""
-    sibling_fixture_root = REPO_ROOT / "evals" / "fixtures" / task_id
-
-    with pytest.raises(ValueError, match="only supports"):
-        eval_providers.build_context_ir_default_local_python_subprocess_pack(
-            eval_providers.EvalProviderRequest(
-                repo_root=sibling_fixture_root,
-                task_id=task_id,
-                query=QUERY,
-                budget=220,
             )
         )
 

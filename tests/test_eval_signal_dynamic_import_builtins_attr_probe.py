@@ -617,19 +617,3 @@ def test_builtins_attr_probe_default_local_provider_fails_closed_for_non_220_bud
                 budget=budget,
             )
         )
-
-
-def test_builtins_attr_probe_default_local_provider_rejects_builtins_alias() -> None:
-    """The remaining builtins-alias dynamic-import sibling stays unsupported."""
-    sibling_task_id = "oracle_signal_dynamic_import_builtins_alias_probe"
-    sibling_fixture_root = REPO_ROOT / "evals" / "fixtures" / sibling_task_id
-
-    with pytest.raises(ValueError, match="only supports"):
-        eval_providers.build_context_ir_default_local_python_subprocess_pack(
-            eval_providers.EvalProviderRequest(
-                repo_root=sibling_fixture_root,
-                task_id=sibling_task_id,
-                query=QUERY,
-                budget=220,
-            )
-        )

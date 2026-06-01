@@ -2,6 +2,94 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-01 -- Builtins-Alias Dynamic Import Default Provider Implemented
+
+- Execution slice implemented exact `context_ir_default_local_python_subprocess`
+  support for only `oracle_signal_dynamic_import_builtins_alias_probe`.
+- Scope implemented:
+  - boundary `loader.__import__(name)`
+  - unsupported unit `unsupported:call:main.py:7:4`
+  - site/span `site:call:main.py:7:4` / `main.py:7:4-7:27`
+  - family/form `DYNAMIC_IMPORT` /
+    `dynamic_import:loader.__import__/1`
+  - replay target `main.load_weather_plugin`
+  - replay selector
+    `call:main.load_weather_plugin:dynamic_import:loader.__import__/1@main.py:7:4:7:27`
+  - normalized runtime payload exactly `imported_module=plugins.weather`
+  - empty observed replay inputs
+- Provider budget contract:
+  - budget `220` is admitted and compiled honestly at `220`
+  - successful provider result reports `result.budget == 220`
+  - budgets `100`, `180`, `219`, `221`, and other non-`220` budgets fail
+    closed before compilation
+- Workspace-only candidate file set:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_delattr_literal_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py`
+  - `tests/test_eval_signal_dynamic_import_builtins_attr_probe.py`
+  - `tests/test_eval_signal_dynamic_import_imported_alias_probe.py`
+  - `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+  - `tests/test_eval_signal_getattr_literal_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_literal_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_setattr_literal_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_runtime_probe_worker.py`
+- Preservation proof:
+  - primary truth remains unsupported/opaque
+  - runtime provenance remains additive only
+  - no selected `plugins/weather.py`, selected `plugins.weather`
+    imported-module symbol, static `plugins.weather` dependency edge,
+    runtime-backed primary unit, observed replay inputs, eval asset, runtime
+    probe execution module, generalized runtime-execution behavior,
+    schema/API/MCP/export/scoring/compiler/optimizer/winner-selection, Task 4,
+    public/demo/benchmark/latency/production, or generalized dynamic-import
+    support change is included
+  - existing supported dynamic-import sibling behavior remains intact
+  - remaining unsupported sibling forms still fail closed
+  - worker drift tests cover wrong imported module, replay target, source span,
+    boundary, missing source `loader` binding, wrong source `loader` binding,
+    and sibling dynamic-import forms
+- Validation:
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed
+  - `mypy --strict src/` passed
+  - focused pytest over builtins-alias provider, runtime worker, and touched
+    support-message tests passed with `636` tests
+  - first full `pytest tests/ -v` exposed only the allowed deterministic Task 3
+    confidence scalar drift after all preservation locks remained unchanged;
+    `FULL_REPO_TASK3_CONFIDENCE` is now `0.0017431222537246753`
+  - final full `pytest tests/ -v` passed with `2,009` tests
+- Findings:
+  - no execution-lane findings after final validation
+  - control review found one P2 release-unit file-set omission and one P2
+    gate-routing omission in `PLAN.md`
+  - the correction added
+    `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py` to the exact
+    file set and restored the required post-audit full regression gate before
+    commit-gating
+- Acceptance status: accepted after 1 correction; read-only release-unit audit
+  passed with no findings.
+- Post-audit full regression passed with `2,009` tests.
+- Commit-gating passed over the exact 21-file set:
+  - dirty file set matched the declared release unit
+  - no staged files were present before staging
+  - `git diff --check` was clean
+  - `git diff -- evals/` was empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
+  - public/export-sensitive diff checks were empty
+- Release state: commit-ready for local commit creation. Push still requires
+  explicit Ryan authorization.
+
 ## 2026-06-01 -- Builtins-Attribute Dynamic Import Default Provider Implemented
 
 - Execution slice implemented exact `context_ir_default_local_python_subprocess`

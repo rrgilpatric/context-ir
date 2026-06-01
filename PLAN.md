@@ -40,21 +40,20 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Builtins-attribute dynamic-import default-provider support is pushed and closed.
-It passed findings-first control review after one narrow continuity correction,
-release-unit audit, full regression, commit-gating, local commit creation, and
-Ryan-authorized push.
+Builtins-alias dynamic-import default-provider support is implemented as a
+workspace-only execution slice. It is not staged, committed, or pushed.
 
-Release anchor: `caf3349 Add builtins-attribute dynamic import provider`.
+Repo-backed start state was branch `main` with `HEAD=origin/main` at
+`2a6e04dcc1b48bd4f3118142edfd091694c4dd35` and a clean worktree.
 
-The release adds exact `context_ir_default_local_python_subprocess` support
-for only `oracle_signal_dynamic_import_builtins_attr_probe`, with boundary
-`builtins.__import__(name)`, unsupported unit `unsupported:call:main.py:7:4`,
-site/span `site:call:main.py:7:4` / `main.py:7:4-7:29`, family/form
-`DYNAMIC_IMPORT` / `dynamic_import:builtins.__import__/1`, replay target
+The slice adds exact `context_ir_default_local_python_subprocess` support for
+only `oracle_signal_dynamic_import_builtins_alias_probe`, with fixture boundary
+`loader.__import__(name)`, unsupported unit `unsupported:call:main.py:7:4`,
+source site `site:call:main.py:7:4`, span `main.py:7:4-7:27`, family/form
+`DYNAMIC_IMPORT` / `dynamic_import:loader.__import__/1`, replay target
 `main.load_weather_plugin`, replay selector
-`call:main.load_weather_plugin:dynamic_import:builtins.__import__/1@main.py:7:4:7:29`,
-empty observed replay inputs, and normalized payload
+`call:main.load_weather_plugin:dynamic_import:loader.__import__/1@main.py:7:4:7:27`,
+empty observed replay inputs, and normalized payload exactly
 `imported_module=plugins.weather`.
 
 Provider budget contract: this exact task admits budget `220` only, compiles
@@ -62,7 +61,7 @@ honestly at budget `220`, returns `result.budget == 220`, and fails closed
 before compilation for budget `100`, `180`, `219`, `221`, or any other
 non-`220` budget.
 
-The pushed release-unit file set is exactly:
+The workspace-only candidate file set is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -70,6 +69,7 @@ The pushed release-unit file set is exactly:
 - `src/context_ir/runtime_probe_worker.py`
 - `tests/test_eval_signal_delattr_literal_probe.py`
 - `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py`
 - `tests/test_eval_signal_dynamic_import_builtins_attr_probe.py`
 - `tests/test_eval_signal_dynamic_import_imported_alias_probe.py`
 - `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
@@ -90,13 +90,12 @@ Execution-lane validation passed after implementation:
 - `ruff check src/ tests/`
 - `ruff format --check src/ tests/`
 - `mypy --strict src/`
-- focused pytest over builtins-attribute dynamic-import provider and worker
-  tests: `617` passed
-- first full `pytest tests/ -v` exposed only stale exact-provider allowlist
-  assertions plus the allowed deterministic Task 3 confidence scalar drift;
-  assertions were updated to include the new exact task and
-  `FULL_REPO_TASK3_CONFIDENCE` is now `0.0017634825089281327`
-- final full `pytest tests/ -v` passed with `1,998` tests
+- focused pytest over builtins-alias provider, runtime worker, and touched
+  support-message tests: `636` passed
+- first full `pytest tests/ -v` exposed only the allowed deterministic Task 3
+  confidence scalar drift after preservation locks remained unchanged;
+  `FULL_REPO_TASK3_CONFIDENCE` is now `0.0017431222537246753`
+- final full `pytest tests/ -v` passed with `2,009` tests
 
 Preservation locks: primary truth remains unsupported/opaque; runtime
 provenance remains additive only; no selected `plugins/weather.py`, selected
@@ -105,15 +104,17 @@ edge, runtime-backed primary selected unit, observed replay inputs, eval asset,
 runtime probe execution module, generalized runtime-execution behavior,
 schema/API/MCP/export/scoring/compiler/optimizer/winner-selection, Task 4,
 public/demo/benchmark/latency/production, or generalized dynamic-import support
-change is included. Builtins alias support is not included. Existing supported
-dynamic-import sibling behavior remains intact, and remaining unsupported
-sibling forms still fail closed.
+change is included. Existing supported dynamic-import sibling behavior remains
+intact, and remaining unsupported sibling forms still fail closed.
 
-This release is closed with no active gate. Do not route `caf3349` back to
-release-unit audit, full regression, commit-gating, staging, local commit
-creation, or push absent new findings.
-
-Next control action: select the next bounded tranche from the pushed state.
+Release state: workspace-only execution slice accepted after one narrow
+continuity correction. Read-only release-unit audit passed with no findings.
+Post-audit full regression passed with `2,009` tests. Commit-gating over the
+exact 21-file set passed: file set matched, no staged files were present, `git
+diff --check` was clean, `git diff -- evals/` was empty, `git diff --
+src/context_ir/runtime_probe_execution.py` was empty, and public/export-sensitive
+diff checks were empty. The unit is ready for local commit creation. Push still
+requires explicit Ryan authorization.
 
 ### Historical Pushed Release-State Block
 

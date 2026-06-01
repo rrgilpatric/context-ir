@@ -75,9 +75,6 @@ QUERY = (
 )
 UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 UNSUPPORTED_SITE_ID = "site:call:main.py:7:4"
-UNSUPPORTED_EXACT_PROVIDER_SIBLING_TASK_IDS = (
-    "oracle_signal_dynamic_import_builtins_alias_probe",
-)
 DEFAULT_LOCAL_PROVIDER_SELECTED_UNIT_IDS = (
     "def:main.py:main.probe_delete_literal_attribute",
     "def:main.py:main.render_probe_digest",
@@ -393,24 +390,6 @@ def test_delattr_literal_probe_default_local_provider_rejects_wrong_plan_fields(
         eval_providers._require_default_local_python_runtime_probe_request(
             diagnostic,
             fixture,
-        )
-
-
-@pytest.mark.parametrize("task_id", UNSUPPORTED_EXACT_PROVIDER_SIBLING_TASK_IDS)
-def test_delattr_literal_probe_default_local_provider_rejects_unsupported_siblings(
-    task_id: str,
-) -> None:
-    """Unsupported sibling tasks remain outside this exact provider slice."""
-    sibling_fixture_root = REPO_ROOT / "evals" / "fixtures" / task_id
-
-    with pytest.raises(ValueError, match="only supports"):
-        eval_providers.build_context_ir_default_local_python_subprocess_pack(
-            eval_providers.EvalProviderRequest(
-                repo_root=sibling_fixture_root,
-                task_id=task_id,
-                query=QUERY,
-                budget=220,
-            )
         )
 
 
