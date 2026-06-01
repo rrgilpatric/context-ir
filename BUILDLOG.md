@@ -61,9 +61,12 @@ Most recent supersession entries override older architectural decisions when the
   - full-control-validation-cleared
   - commit-gating-cleared
   - locally committed
-  - not pushed
+  - pushed to `origin/main` at `6db2f08`
+- Post-push continuity correction:
+  - updated `PLAN.md` and this entry to replace stale locally-committed/not-pushed
+    wording with pushed-and-closed routing after explicit Ryan authorization
 - Acceptance status: accepted after one P3 continuity correction; audit and full
-  control validation cleared; commit-gating and local commit cleared.
+  control validation cleared; commit-gating, local commit, and push cleared.
 
 ## 2026-05-31 -- Imported-Name Push Routing Wording Corrected
 

@@ -40,12 +40,8 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Imported-alias dynamic-import default-provider release state recorded for the
-local release commit carrying this entry: accepted, release-unit-audit-cleared,
-full-control-validation-cleared, commit-gating-cleared, and locally committed;
-not pushed.
-
-This workspace-only slice adds exact
+Imported-alias dynamic-import default-provider release is pushed and closed with
+no active gate. The pushed release adds exact
 `context_ir_default_local_python_subprocess` support for only
 `oracle_signal_dynamic_import_imported_alias_probe`, with boundary
 `load_module(name)`, unsupported unit `unsupported:call:main.py:6:13`,
@@ -56,11 +52,13 @@ site/span `site:call:main.py:6:13` / `main.py:6:13-6:30`, family/form
 empty observed replay inputs, and normalized payload
 `imported_module=plugins.weather`.
 
+Release anchor: `6db2f08 Add imported-alias dynamic import provider support`.
+
 Provider budget contract: this exact task admits budget `220` only, compiles
 honestly at budget `220`, returns `result.budget == 220`, and fails closed
 before compilation for budget `100`, `180`, or any other budget.
 
-Workspace-only changed files are:
+The pushed release unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -91,13 +89,13 @@ Validation passed after implementation:
 - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
 
 Release-unit audit returned PASS with no findings over the exact 15-file
-workspace unit. Full control validation passed with `ruff check src/ tests/`,
+release unit. Full control validation passed with `ruff check src/ tests/`,
 `ruff format --check src/ tests/`, `mypy --strict src/`, and
 `pytest tests/ -v` reporting `1,939` passed. Commit-gating passed over the
 exact 15-file release unit with no staged files before staging, clean
 `git diff --check`, empty `git diff -- evals/`, and empty
-`git diff -- src/context_ir/runtime_probe_execution.py`. Push remains held for
-explicit Ryan authorization.
+`git diff -- src/context_ir/runtime_probe_execution.py`. The release was
+pushed to `origin/main` after explicit Ryan authorization.
 
 Preservation locks: primary truth remains unsupported/opaque; runtime
 provenance remains additive only; no selected `plugins/weather.py`, selected
