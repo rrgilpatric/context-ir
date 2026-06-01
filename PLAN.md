@@ -40,12 +40,14 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Builtin dynamic-import default-provider support is a workspace-only execution
-candidate accepted by the control lane after findings-first review. The first
-read-only release-unit audit failed on this stale continuity wording, not on a
-code-boundary issue. The corrected read-only release-unit audit, full control
-validation, and commit-gating are now cleared. It is not staged, committed, or
-pushed.
+Builtin dynamic-import default-provider support has been implemented, accepted
+after findings-first control review, corrected-audit-cleared,
+full-control-validation-cleared, commit-gating-cleared, locally committed, and
+pushed to `origin/main` after explicit Ryan authorization. The first read-only
+release-unit audit failed on stale continuity wording, not on a code-boundary
+issue.
+
+Release anchor: `a0f7cf4 Add builtin dynamic import provider support`.
 
 The candidate adds exact `context_ir_default_local_python_subprocess` support
 for only `oracle_signal_dynamic_import_builtin_probe`, with boundary
@@ -61,7 +63,7 @@ Provider budget contract: this exact task admits budget `220` only, compiles
 honestly at budget `220`, returns `result.budget == 220`, and fails closed
 before compilation for budget `100`, `180`, or any other non-`220` budget.
 
-The accepted workspace release-unit file set is exactly:
+The pushed release-unit file set is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -125,8 +127,9 @@ Release gates cleared:
   before staging, clean `git diff --check`, empty `git diff -- evals/`, and
   empty `git diff -- src/context_ir/runtime_probe_execution.py`
 
-Next control action: stage and locally commit the exact 20-file release unit.
-Push requires explicit Ryan authorization after local commit.
+This release is closed with no active gate. Do not reopen `a0f7cf4` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
 
 ### Canonical Active Release-State Block
 

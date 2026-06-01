@@ -21,7 +21,7 @@ Most recent supersession entries override older architectural decisions when the
   - successful provider result reports `result.budget == 220`
   - budgets `100`, `180`, and other non-`220` budgets fail closed before
     compilation
-- Accepted workspace release-unit file set:
+- Pushed release-unit file set:
   - `BUILDLOG.md`
   - `PLAN.md`
   - `src/context_ir/eval_providers.py`
@@ -74,8 +74,8 @@ Most recent supersession entries override older architectural decisions when the
     review
 - Acceptance status: workspace-only accepted by control review; first
   release-unit audit failed on continuity only. Corrected release-unit audit,
-  full-control validation, and commit-gating are cleared. Staging, local commit,
-  and push remain pending.
+  full-control validation, commit-gating, local commit, and push are cleared
+  after explicit Ryan authorization.
 - Release gates:
   - corrected read-only release-unit audit returned PASS with no findings over
     the exact 20-file workspace unit
@@ -85,6 +85,9 @@ Most recent supersession entries override older architectural decisions when the
   - commit-gating passed over the exact 20-file release unit with no staged files
     before staging, clean `git diff --check`, empty `git diff -- evals/`, and
     empty `git diff -- src/context_ir/runtime_probe_execution.py`
+- Post-push continuity correction:
+  - updated `PLAN.md` and this entry to replace stale locally-committed/not-pushed
+    routing with pushed-and-closed routing after explicit Ryan authorization
 
 ## 2026-06-01 -- Root-Alias Dynamic Import Default Provider Implemented
 
