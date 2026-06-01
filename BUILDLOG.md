@@ -87,8 +87,15 @@ Most recent supersession entries override older architectural decisions when the
   - `git diff -- evals/` was empty
   - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
   - public/export-sensitive diff checks were empty
-- Release state: commit-ready for local commit creation. Push still requires
-  explicit Ryan authorization.
+- Release state:
+  - locally committed as `54236c4 Add builtins-alias dynamic import provider`
+  - pushed to `origin/main` after explicit Ryan authorization
+  - release closed
+- Next control action: run a read-only tranche-selection spike to choose the
+  first post-dynamic-import-provider tranche. Do not reopen the pushed
+  dynamic-import provider siblings, Task 4, public/demo, benchmark, latency,
+  production, API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+  or generalized dynamic-import support before that spike is accepted.
 
 ## 2026-06-01 -- Builtins-Attribute Dynamic Import Default Provider Implemented
 

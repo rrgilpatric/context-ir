@@ -40,8 +40,14 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Builtins-alias dynamic-import default-provider support is implemented as a
-workspace-only execution slice. It is not staged, committed, or pushed.
+No workspace release unit is currently active.
+
+Builtins-alias dynamic-import default-provider support is implemented, accepted
+after one narrow continuity correction, read-only release-unit-audit-cleared,
+full-regression-cleared, commit-gating-cleared, locally committed, and pushed to
+`origin/main` after explicit Ryan authorization.
+
+Release anchor: `54236c4 Add builtins-alias dynamic import provider`.
 
 Repo-backed start state was branch `main` with `HEAD=origin/main` at
 `2a6e04dcc1b48bd4f3118142edfd091694c4dd35` and a clean worktree.
@@ -107,14 +113,18 @@ public/demo/benchmark/latency/production, or generalized dynamic-import support
 change is included. Existing supported dynamic-import sibling behavior remains
 intact, and remaining unsupported sibling forms still fail closed.
 
-Release state: workspace-only execution slice accepted after one narrow
-continuity correction. Read-only release-unit audit passed with no findings.
-Post-audit full regression passed with `2,009` tests. Commit-gating over the
-exact 21-file set passed: file set matched, no staged files were present, `git
-diff --check` was clean, `git diff -- evals/` was empty, `git diff --
-src/context_ir/runtime_probe_execution.py` was empty, and public/export-sensitive
-diff checks were empty. The unit is ready for local commit creation. Push still
-requires explicit Ryan authorization.
+Release state: pushed and closed. Read-only release-unit audit passed with no
+findings. Post-audit full regression passed with `2,009` tests. Commit-gating
+over the exact 21-file set passed: file set matched, no staged files were
+present, `git diff --check` was clean, `git diff -- evals/` was empty, `git diff
+-- src/context_ir/runtime_probe_execution.py` was empty, and
+public/export-sensitive diff checks were empty.
+
+Next control action: run a read-only tranche-selection spike to choose the first
+post-dynamic-import-provider tranche. Do not reopen the pushed dynamic-import
+provider siblings, Task 4, public/demo, benchmark, latency, production,
+API/MCP/export/schema/scoring/compiler/optimizer/winner-selection, or
+generalized dynamic-import support before that spike is accepted.
 
 ### Historical Pushed Release-State Block
 
