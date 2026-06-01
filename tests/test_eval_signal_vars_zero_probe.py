@@ -434,6 +434,7 @@ def test_vars_zero_probe_default_subprocess_provider_fails_closed_for_other_task
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
             "oracle_signal_dynamic_import_root_probe, "
+            "oracle_signal_dynamic_import_root_alias_probe, "
             "oracle_signal_dynamic_import_imported_name_probe, "
             "oracle_signal_dynamic_import_imported_alias_probe, "
             "oracle_signal_dynamic_import_probe, "

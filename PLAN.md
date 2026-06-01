@@ -38,6 +38,104 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ## Current Phase
 
+### Active Workspace-Only Execution Candidate
+
+Root-alias dynamic-import default-provider support has been implemented,
+accepted after findings-first control review, release-unit-audit-cleared,
+full-control-validation-cleared, commit-gating-cleared, and locally committed.
+It is not pushed. Remote authority remains
+`b2a98e79b509192954b517e947dcfdc8ac84ced7` /
+`b2a98e7 Sync root provider push routing` until Ryan explicitly authorizes and
+control completes the remote push.
+
+The release unit adds exact
+`context_ir_default_local_python_subprocess` support for only
+`oracle_signal_dynamic_import_root_alias_probe`, with boundary
+`loader.import_module(name)`, unsupported unit
+`unsupported:call:main.py:6:13`, site/span `site:call:main.py:6:13` /
+`main.py:6:13-6:39`, family/form `DYNAMIC_IMPORT` /
+`dynamic_import:loader.import_module/1`, replay target
+`main.load_weather_plugin`, replay selector
+`call:main.load_weather_plugin:dynamic_import:loader.import_module/1@main.py:6:13:6:39`,
+empty observed replay inputs, and normalized payload
+`imported_module=plugins.weather`.
+
+Provider budget contract: this exact task admits budget `220` only, compiles
+honestly at budget `220`, returns `result.budget == 220`, and fails closed
+before compilation for budget `100`, `180`, or any other budget.
+
+The locally committed release-unit file set is exactly:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_delattr_literal_probe.py`
+- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_dynamic_import_imported_alias_probe.py`
+- `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
+- `tests/test_eval_signal_dynamic_import_root_alias_probe.py`
+- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- `tests/test_eval_signal_getattr_literal_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_literal_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_setattr_literal_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+- `tests/test_runtime_probe_worker.py`
+
+Execution-lane validation passed after implementation:
+
+- `ruff check src/ tests/`
+- `ruff format --check src/ tests/`
+- `mypy --strict src/`
+- focused pytest over root-alias, root, root-literal, imported-name,
+  imported-alias, and worker tests: `638` passed
+- initial full `pytest tests/ -v` exposed only the allowed deterministic Task 3
+  confidence scalar drift; `FULL_REPO_TASK3_CONFIDENCE` is now
+  `0.0017968529163446747`
+- final full `pytest tests/ -v` passed with `1,967` tests
+- `git diff --check`, `git diff -- evals/`, and
+  `git diff -- src/context_ir/runtime_probe_execution.py` passed after
+  continuity sync
+
+Control-lane review found one P3 continuity wording issue, corrected it, and
+found no code or boundary findings. Control reran:
+
+- `ruff check src/ tests/`
+- `ruff format --check src/ tests/`
+- `mypy --strict src/`
+- focused pytest over root-alias, root, root-literal, imported-name,
+  imported-alias, and worker tests: `638` passed
+
+Release gates cleared:
+
+- read-only release-unit audit returned PASS with no findings over the exact
+  20-file workspace unit
+- full control validation passed with `ruff check src/ tests/`, `ruff format
+  --check src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with
+  `1,967` tests
+- commit-gating passed over the exact 20-file release unit with no staged files
+  before staging, clean `git diff --check`, empty `git diff -- evals/`, and
+  empty `git diff -- src/context_ir/runtime_probe_execution.py`
+
+Preservation locks: primary truth remains unsupported/opaque; runtime
+provenance remains additive only; no selected `plugins/weather.py`, selected
+`plugins.weather` imported-module symbol, static `plugins.weather` dependency
+edge, runtime-backed primary unit, observed replay inputs, eval asset, runtime
+probe execution module, generalized runtime-execution behavior,
+schema/API/MCP/export/scoring/compiler/optimizer/winner-selection, Task 4,
+public/demo/benchmark/latency/production, or generalized dynamic-import support
+change is included. Worker drift tests cover wrong imported module, replay
+target, source span, boundary, and sibling dynamic-import forms.
+
+Next control action: push only after explicit Ryan authorization. Do not reopen
+this release-unit audit, full regression, commit-gating, staging, or local
+commit path absent new findings.
+
 ### Canonical Active Release-State Block
 
 Root dynamic-import default-provider release is pushed and closed with no active

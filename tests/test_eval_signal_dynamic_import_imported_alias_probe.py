@@ -60,7 +60,6 @@ UNSUPPORTED_DYNAMIC_IMPORT_SIBLING_TASK_IDS = (
     "oracle_signal_dynamic_import_builtin_probe",
     "oracle_signal_dynamic_import_builtins_alias_probe",
     "oracle_signal_dynamic_import_builtins_attr_probe",
-    "oracle_signal_dynamic_import_root_alias_probe",
 )
 QUERY = (
     "Fix unsupported dynamic import load_module(name) "

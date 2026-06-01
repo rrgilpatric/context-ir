@@ -119,6 +119,24 @@ _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_REPLAY_SELECTOR = (
     "importlib.import_module/1@main.py:6:13:6:42"
 )
 _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SUBJECT_ID = (
+    "unsupported:call:main.py:6:13"
+)
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:6:13"
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_LINE = 6
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_COLUMN = 13
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_LINE = 6
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_COLUMN = 39
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_BOUNDARY_TEXT = (
+    "loader.import_module(name)"
+)
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_SELECTOR = (
+    "call:main.load_weather_plugin:dynamic_import:"
+    "loader.import_module/1@main.py:6:13:6:39"
+)
+_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
 _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SUBJECT_ID = (
     "unsupported:call:main.py:6:13"
 )
@@ -1703,6 +1721,7 @@ class _RuntimeProbeDynamicImportCapture:
     captured_sys_modules: dict[str, ModuleType | object] = field(default_factory=dict)
     support_root_literal_render_card_fixture: bool = False
     support_root_name_render_card_fixture: bool = False
+    support_root_alias_render_card_fixture: bool = False
     support_imported_name_render_card_fixture: bool = False
     support_imported_alias_render_card_fixture: bool = False
     support_imported_literal_render_card_fixture: bool = False
@@ -1736,6 +1755,12 @@ class _RuntimeProbeDynamicImportCapture:
         if self.support_root_name_render_card_fixture:
             stubbed_module = (
                 _runtime_probe_dynamic_import_root_name_render_card_module_stub(name)
+            )
+            if stubbed_module is not None:
+                return stubbed_module
+        if self.support_root_alias_render_card_fixture:
+            stubbed_module = (
+                _runtime_probe_dynamic_import_root_alias_render_card_module_stub(name)
             )
             if stubbed_module is not None:
                 return stubbed_module
@@ -4668,6 +4693,11 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
                 request
             )
         )
+        supports_root_alias_render_card_fixture = (
+            _is_runtime_probe_dynamic_import_root_alias_render_card_fixture_request(
+                request
+            )
+        )
         imported_module = _runtime_probe_dynamic_import_captured_import_module_name(
             target,
             support_root_literal_render_card_fixture=(
@@ -4676,6 +4706,9 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
             support_root_name_render_card_fixture=(
                 supports_root_name_render_card_fixture
             ),
+            support_root_alias_render_card_fixture=(
+                supports_root_alias_render_card_fixture
+            ),
         )
         if supports_root_literal_render_card_fixture:
             _validate_runtime_probe_dynamic_import_root_literal_render_card_imported_module(
@@ -4683,6 +4716,10 @@ def materialize_runtime_probe_dynamic_import_worker_observation_from_target(
             )
         if supports_root_name_render_card_fixture:
             _validate_runtime_probe_dynamic_import_root_name_render_card_imported_module(
+                imported_module
+            )
+        if supports_root_alias_render_card_fixture:
+            _validate_runtime_probe_dynamic_import_root_alias_render_card_imported_module(
                 imported_module
             )
     return materialize_runtime_probe_dynamic_import_worker_observation(
@@ -14777,6 +14814,7 @@ def _runtime_probe_dynamic_import_captured_import_module_name(
     *,
     support_root_literal_render_card_fixture: bool = False,
     support_root_name_render_card_fixture: bool = False,
+    support_root_alias_render_card_fixture: bool = False,
 ) -> str:
     """Run a target while capturing one importlib.import_module module name."""
     capture = _RuntimeProbeDynamicImportCapture(
@@ -14784,6 +14822,7 @@ def _runtime_probe_dynamic_import_captured_import_module_name(
             support_root_literal_render_card_fixture
         ),
         support_root_name_render_card_fixture=support_root_name_render_card_fixture,
+        support_root_alias_render_card_fixture=support_root_alias_render_card_fixture,
     )
     original_import_module = importlib.import_module
 
@@ -14880,6 +14919,51 @@ def _runtime_probe_dynamic_import_root_name_render_card_module_stub(
 ) -> ModuleType | None:
     """Return the one exact root-name dynamic-import fixture stub, or no stub."""
     if name != _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_IMPORTED_MODULE:
+        return None
+    module = ModuleType(name)
+
+    def render_card() -> str:
+        return "forecast-ready"
+
+    module.__dict__["render_card"] = render_card
+    return module
+
+
+def _is_runtime_probe_dynamic_import_root_alias_render_card_fixture_request(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+) -> bool:
+    """Return whether the request is the exact root-alias render_card replay."""
+    return (
+        request.subject_id == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SUBJECT_ID
+        and request.source_site_id
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_SITE_ID
+        and request.source_file_path
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_FILE_PATH
+        and request.source_start_line
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_LINE
+        and request.source_start_column
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_COLUMN
+        and request.source_end_line
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_LINE
+        and request.source_end_column
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_COLUMN
+        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
+        and request.boundary_text
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_BOUNDARY_TEXT
+        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
+        and request.form_label == _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL
+        and request.replay_target_seed
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_TARGET
+        and request.replay_selector_seed
+        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_SELECTOR
+    )
+
+
+def _runtime_probe_dynamic_import_root_alias_render_card_module_stub(
+    name: str,
+) -> ModuleType | None:
+    """Return the one exact root-alias dynamic-import fixture stub, or no stub."""
+    if name != _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_IMPORTED_MODULE:
         return None
     module = ModuleType(name)
 
@@ -15049,6 +15133,18 @@ def _validate_runtime_probe_dynamic_import_root_name_render_card_imported_module
         raise ValueError(
             "runtime probe dynamic import worker imported_module must match exact "
             "root name fixture"
+        )
+
+
+def _validate_runtime_probe_dynamic_import_root_alias_render_card_imported_module(
+    imported_module: str,
+) -> None:
+    """Reject exact root-alias executions that captured another module."""
+    expected_module = _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_IMPORTED_MODULE
+    if imported_module != expected_module:
+        raise ValueError(
+            "runtime probe dynamic import worker imported_module must match exact "
+            "root alias fixture"
         )
 
 
