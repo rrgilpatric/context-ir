@@ -70,6 +70,9 @@ _DIR_ZERO_RUNTIME_PAYLOAD = (("listing_entry_count", "0"),)
 _HASATTR_PROBE_TASK_ID = "oracle_signal_hasattr_probe"
 _HASATTR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _HASATTR_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
+_HASATTR_FALSE_PROBE_TASK_ID = "oracle_signal_hasattr_false_probe"
+_HASATTR_FALSE_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_HASATTR_FALSE_RUNTIME_PAYLOAD = (("attribute_present", "false"),)
 _HASATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_hasattr_literal_probe"
 _HASATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _HASATTR_LITERAL_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
@@ -608,6 +611,20 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         replay_target_seed="main.probe_attribute",
         snapshot_id="oracle_signal_hasattr_probe@default-local-python:v1",
         runtime_payload=_HASATTR_RUNTIME_PAYLOAD,
+    ),
+    _HASATTR_FALSE_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_HASATTR_FALSE_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="hasattr(obj, name)",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:hasattr/2",
+        boundary_text="hasattr(obj, name)",
+        replay_target_seed="main.probe_attribute",
+        snapshot_id="oracle_signal_hasattr_false_probe@default-local-python:v1",
+        runtime_payload=_HASATTR_FALSE_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(
+            ("object_type", "builtins.int"),
+            ("attribute_name", "definitely_missing_attribute"),
+        ),
     ),
     _HASATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_HASATTR_LITERAL_UNSUPPORTED_UNIT_ID,
@@ -1535,7 +1552,8 @@ def _default_local_python_subprocess_fixture(
             "context_ir_default_local_python_subprocess only supports "
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
             "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
-            "oracle_signal_hasattr_probe, oracle_signal_hasattr_literal_probe, "
+            "oracle_signal_hasattr_probe, oracle_signal_hasattr_false_probe, "
+            "oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
             "oracle_signal_dynamic_import_root_probe, "

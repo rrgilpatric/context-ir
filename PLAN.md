@@ -40,7 +40,84 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Active workspace release unit: exact default-local Python subprocess provider
+support for `oracle_signal_hasattr_false_probe`.
+
+Base verified before implementation: `HEAD=origin/main=203d2075071bdddb1751e0da281d4b49e5b9d6f6`.
+
+Release state: workspace-only implementation return, control-review-accepted,
+read-only release-unit-audit-cleared, execution-lane full-regression-cleared
+after one narrow validation correction, and post-audit control
+full-regression-cleared. Commit-gating cleared over the exact ten-file unit.
+It is not staged, not locally committed, and not pushed.
+
+The active workspace release unit currently includes:
+
+- `BUILDLOG.md`
+- `PLAN.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_false_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+
+Implemented behavior:
+
+- `context_ir_default_local_python_subprocess` now supports exactly
+  `oracle_signal_hasattr_false_probe`
+- the false provider fixture keeps boundary `hasattr(obj, name)`, unsupported
+  unit `unsupported:call:main.py:2:11`,
+  `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+  `reflective_builtin:hasattr/2`, replay target `main.probe_attribute`, and
+  snapshot id `oracle_signal_hasattr_false_probe@default-local-python:v1`
+- false replay stdin/replay fields carry
+  `attribute_name=definitely_missing_attribute`; runtime payload is
+  `attribute_present=false`; observed replay inputs remain empty
+- existing true `oracle_signal_hasattr_probe` default-local behavior remains
+  `attribute_name=bit_length`
+
+Validation:
+
+- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
+- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/` passed
+- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_hasattr_false_probe.py tests/test_eval_signal_hasattr_probe.py -q`
+  passed with `17` tests
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed with `2,028`
+  tests after updating duplicated fail-closed message expectations and the
+  deterministic Task 3 confidence scalar for the `eval_providers.py` source
+  text change
+- control review found no issues in the exact ten-file workspace unit; focused
+  provider tests passed with `17` tests, the Task 3 preservation lock passed,
+  `git diff --check` passed, and diff checks for `evals/`,
+  `runtime_probe_execution.py`, `runtime_probe_worker.py`, `README.md`,
+  `ARCHITECTURE.md`, `EVAL.md`, and `PUBLIC_CLAIMS.md` were empty
+- read-only release-unit audit passed with no findings over the exact
+  ten-file unit
+- post-audit control full regression passed with `ruff check src/ tests/`,
+  `ruff format --check src/ tests/`, `mypy --strict src/`, and
+  `pytest tests/ -v` with `2,028` tests
+- commit-gating passed with no staged files, clean `git diff --check`, exact
+  ten-file dirty set, empty `git diff -- evals/`, empty
+  `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`,
+  empty public/API-sensitive diff checks, and only the deterministic Task 3
+  confidence scalar changed in `tests/test_eval_signal_smoke_e.py`
+
+Preservation locks: no eval asset or run-spec changes, no
+`runtime_probe_execution.py` or `runtime_probe_worker.py` changes, no provider
+support for any other remaining non-dynamic probe, no public/API/MCP/export/
+schema/scoring/compiler/optimizer/winner-selection, Task 4, public/demo,
+benchmark, latency, production, or generalized replay framework change.
+
+Next control action: stage and locally commit the exact ten-file release unit.
+Push still requires explicit Ryan authorization.
+
+Previous pushed release state follows for historical routing. Its preservation
+locks apply to release anchor `391a65e`, not to the active workspace provider
+support slice above.
 
 Fixture/snapshot-scoped exact `hasattr(obj, name)` replay selection is
 implemented, accepted after correction, corrected-release-unit-audit-cleared,

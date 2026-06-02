@@ -2,6 +2,69 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-02 -- Hasattr False Default-Local Provider Support Workspace Return
+
+- Completed exact default-local Python subprocess provider support for
+  `oracle_signal_hasattr_false_probe`.
+- Files changed:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_false_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Behavior implemented:
+  - provider fixture map now includes exactly
+    `oracle_signal_hasattr_false_probe`
+  - false provider contract preserves boundary `hasattr(obj, name)`,
+    unsupported unit `unsupported:call:main.py:2:11`,
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:hasattr/2`, replay target `main.probe_attribute`, and
+    snapshot id `oracle_signal_hasattr_false_probe@default-local-python:v1`
+  - false provider stdin/replay fields include
+    `attribute_name=definitely_missing_attribute`, normalized payload
+    `attribute_present=false`, and empty observed replay inputs
+  - existing true `oracle_signal_hasattr_probe` tests continue to prove
+    `attribute_name=bit_length`
+- Full regression initially failed on duplicated fail-closed message
+  expectations and the deterministic Task 3 confidence scalar after
+  `eval_providers.py` source text changed. The correction updated only those
+  test expectations.
+- Validation:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_hasattr_false_probe.py tests/test_eval_signal_hasattr_probe.py -q`
+    passed with `17` tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed with
+    `2,028` tests
+- Release state:
+  - workspace-only implementation return
+  - control-review-accepted with no findings
+  - read-only release-unit-audit-cleared with no findings
+  - post-audit control full-regression-cleared
+  - commit-gating-cleared
+  - not staged, committed, or pushed
+- Control review:
+  - live dirty set matched the exact ten-file unit
+  - no staged files were present
+  - `git diff --check` passed
+  - `git diff -- evals/` was empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`
+    was empty
+  - `git diff -- README.md ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md` was empty
+  - focused provider tests passed with `17` tests
+  - Task 3 preservation test passed after only the deterministic confidence
+    scalar changed
+- Acceptance status: accepted after 1 validation correction; release-unit
+  audit passed; post-audit control full regression passed; commit-gating
+  passed.
+
 ## 2026-06-02 -- Hasattr False Replay Identity Pre-Slice Pushed
 
 - Pushed release:
