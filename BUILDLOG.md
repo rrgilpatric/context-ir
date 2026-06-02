@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-02 -- Hasattr False Replay Identity Pre-Slice Pushed
+
+- Pushed release:
+  - `391a65e Add snapshot-scoped hasattr replay selection`
+- Release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Final gate state before commit/push:
+  - corrected read-only release-unit audit passed with no findings
+  - post-corrected-audit full regression passed with `ruff check src/ tests/`,
+    `ruff format --check src/ tests/`, `mypy --strict src/`, and
+    `pytest tests/ -v` with `2,026` tests
+  - commit-gating passed over the exact seven-file unit with no staged files,
+    clean `git diff --check`, empty `git diff -- evals/`, empty
+    `git diff -- src/context_ir/eval_providers.py`, and empty
+    public/export-sensitive diff checks
+- Push verification:
+  - live `HEAD` and `origin/main` both resolved to
+    `391a65ec74e670ee3219b09bacc2901f27abf05e`
+  - `git status --short --branch -uall` was clean
+- Release state:
+  - pushed and closed with no active gate
+- Next control action:
+  - run a read-only tranche-selection spike to choose the smallest safe
+    post-contract provider-support slice from the pushed state
+  - do not route `391a65e` back to release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or push absent new findings
+  - do not reopen pushed dynamic-import provider contracts, Task 4,
+    public/demo, benchmark, latency, production, API/MCP/export/schema/
+    scoring/compiler/optimizer/winner-selection, or generalized replay support
+    before that spike is accepted
+- Acceptance status: accepted after 1 release-gate correction; corrected
+  release-unit audit, full regression, commit-gating, local commit, and push
+  complete.
+
 ## 2026-06-02 -- Hasattr False Replay Identity Pre-Slice Accepted
 
 - Execution slice completed fixture/snapshot-scoped exact replay selection for

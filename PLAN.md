@@ -40,19 +40,16 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+No workspace release unit is currently active.
+
 Fixture/snapshot-scoped exact `hasattr(obj, name)` replay selection is
-implemented and accepted in the workspace, then corrected after the
-post-audit full-regression gate exposed a generic-snapshot true-replay
-regression. Control review accepted the correction. The corrected unit is not
-staged or pushed in the workspace at the time this continuity entry was
-written. The corrected unit is corrected-release-unit-audit-cleared,
-post-corrected-audit full-regression-cleared, and commit-gating-cleared.
-Ryan authorized staging and local commit creation on 2026-06-02; live local
-commit state must be verified from git.
+implemented, accepted after correction, corrected-release-unit-audit-cleared,
+post-corrected-audit full-regression-cleared, commit-gating-cleared, locally
+committed, and pushed to `origin/main` after explicit Ryan authorization.
 
-Repo-backed base at acceptance: `HEAD=origin/main=044cb3e`.
+Release anchor: `391a65e Add snapshot-scoped hasattr replay selection`.
 
-The active corrected workspace release unit is exactly:
+The pushed release unit was exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -129,10 +126,16 @@ Release gates after correction:
   empty `git diff -- src/context_ir/eval_providers.py`, and empty
   public/export-sensitive diff checks
 
-Next control action: create the local commit if live git shows it has not yet
-been created, then hold for separate Ryan push authorization. Do not add
-provider support for the remaining 10 non-dynamic probes until this runtime
-contract pre-slice is locally committed and, if Ryan authorizes it, pushed.
+This release is closed with no active gate. Do not route `391a65e` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
+
+Next control action: run a read-only tranche-selection spike to choose the
+smallest safe post-contract provider-support slice from the pushed state. Do
+not reopen pushed dynamic-import provider contracts, Task 4, public/demo,
+benchmark, latency, production, API/MCP/export/schema/scoring/compiler/
+optimizer/winner-selection, or generalized replay support before that spike is
+accepted.
 
 ### Historical Pushed Release-State Block
 
