@@ -485,6 +485,39 @@ def test_root_literal_probe_default_local_provider_replays_exact_fixture(
     )
 
 
+def test_root_literal_probe_default_local_provider_supports_budget_100() -> None:
+    """The default local provider keeps the root-literal budget-100 path alive."""
+    result = eval_providers.build_context_ir_default_local_python_subprocess_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=FIXTURE_ROOT,
+            task_id="oracle_signal_dynamic_import_root_literal_probe",
+            query=QUERY,
+            budget=100,
+        )
+    )
+    provenance_record = result.runtime_provenance_records[0]
+    origin_detail = cast(dict[str, object], json.loads(provenance_record.origin_detail))
+
+    assert result.provider_name == (
+        eval_providers.CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER
+    )
+    assert result.task_id == "oracle_signal_dynamic_import_root_literal_probe"
+    assert result.budget == 100
+    assert result.total_tokens <= 100
+    assert result.selected_unit_ids == (
+        UNSUPPORTED_UNIT_ID,
+        "def:main.py:main.load_weather_plugin",
+    )
+    assert result.warnings == ("omitted_uncertainty",)
+    assert origin_detail["normalized_payload"] == {"imported_module": "plugins.weather"}
+    assert origin_detail["replay_target"] == "main.load_weather_plugin"
+    assert origin_detail["replay_selector"] == (
+        "call:main.load_weather_plugin:dynamic_import:"
+        "importlib.import_module/1@main.py:5:13:5:55"
+    )
+    assert "observed_replay_inputs" not in origin_detail
+
+
 def test_root_literal_probe_default_local_provider_rejects_wrong_plan_fields() -> None:
     """The provider fails closed when the planned probe identity drifts."""
     previous_response = eval_providers.tool_facade.compile_repository_context(

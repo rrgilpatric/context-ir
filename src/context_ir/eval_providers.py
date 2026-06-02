@@ -79,58 +79,27 @@ _GETATTR_LITERAL_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_value"),)
 _DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID = (
     "oracle_signal_dynamic_import_root_literal_probe"
 )
-_DYNAMIC_IMPORT_ROOT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
-_DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
 _DYNAMIC_IMPORT_ROOT_PROBE_TASK_ID = "oracle_signal_dynamic_import_root_probe"
-_DYNAMIC_IMPORT_ROOT_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:6:13"
-_DYNAMIC_IMPORT_ROOT_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
-_DYNAMIC_IMPORT_ROOT_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_ROOT_ALIAS_PROBE_TASK_ID = (
     "oracle_signal_dynamic_import_root_alias_probe"
 )
-_DYNAMIC_IMPORT_ROOT_ALIAS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:6:13"
-_DYNAMIC_IMPORT_ROOT_ALIAS_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
-_DYNAMIC_IMPORT_ROOT_ALIAS_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_BUILTIN_PROBE_TASK_ID = "oracle_signal_dynamic_import_builtin_probe"
-_DYNAMIC_IMPORT_BUILTIN_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:6:4"
-_DYNAMIC_IMPORT_BUILTIN_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
-_DYNAMIC_IMPORT_BUILTIN_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_BUILTINS_ATTR_PROBE_TASK_ID = (
     "oracle_signal_dynamic_import_builtins_attr_probe"
 )
-_DYNAMIC_IMPORT_BUILTINS_ATTR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
-_DYNAMIC_IMPORT_BUILTINS_ATTR_RUNTIME_PAYLOAD = (
-    ("imported_module", "plugins.weather"),
-)
-_DYNAMIC_IMPORT_BUILTINS_ATTR_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_BUILTINS_ALIAS_PROBE_TASK_ID = (
     "oracle_signal_dynamic_import_builtins_alias_probe"
 )
-_DYNAMIC_IMPORT_BUILTINS_ALIAS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
-_DYNAMIC_IMPORT_BUILTINS_ALIAS_RUNTIME_PAYLOAD = (
-    ("imported_module", "plugins.weather"),
-)
-_DYNAMIC_IMPORT_BUILTINS_ALIAS_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID = (
     "oracle_signal_dynamic_import_imported_name_probe"
 )
-_DYNAMIC_IMPORT_IMPORTED_NAME_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:6:13"
-_DYNAMIC_IMPORT_IMPORTED_NAME_RUNTIME_PAYLOAD = (
-    ("imported_module", "plugins.weather"),
-)
-_DYNAMIC_IMPORT_IMPORTED_NAME_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_IMPORTED_ALIAS_PROBE_TASK_ID = (
     "oracle_signal_dynamic_import_imported_alias_probe"
 )
-_DYNAMIC_IMPORT_IMPORTED_ALIAS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:6:13"
-_DYNAMIC_IMPORT_IMPORTED_ALIAS_RUNTIME_PAYLOAD = (
-    ("imported_module", "plugins.weather"),
-)
-_DYNAMIC_IMPORT_IMPORTED_ALIAS_CONTEXT_BUDGET = 220
 _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID = "oracle_signal_dynamic_import_probe"
-_DYNAMIC_IMPORT_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:5:13"
-_DYNAMIC_IMPORT_LITERAL_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
-_DYNAMIC_IMPORT_LITERAL_CONTEXT_BUDGET = 180
+_DYNAMIC_IMPORT_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
+_DYNAMIC_IMPORT_REPLAY_TARGET_SEED = "main.load_weather_plugin"
+_DYNAMIC_IMPORT_SOURCE_FILE_PATH = "main.py"
 _SETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_setattr_literal_probe"
 _SETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 _SETATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "returned_none"),)
@@ -406,6 +375,189 @@ class _DefaultLocalPythonSubprocessFixture:
     replay_selector_seed: str | None = None
 
 
+@dataclass(frozen=True)
+class _DynamicImportDefaultLocalFixtureContract:
+    """Exact dynamic-import fixture metadata for the default local provider."""
+
+    task_id: str
+    unsupported_unit_id: str
+    boundary_text: str
+    form_label: str
+    source_site_id: str | None = None
+    source_start_line: int | None = None
+    source_start_column: int | None = None
+    source_end_line: int | None = None
+    source_end_column: int | None = None
+    replay_selector_seed: str | None = None
+    context_budget: int | None = None
+
+
+_DYNAMIC_IMPORT_DEFAULT_LOCAL_FIXTURE_CONTRACTS = (
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:5:13",
+        boundary_text='importlib.import_module("plugins.weather")',
+        form_label="dynamic_import:importlib.import_module/1",
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_ROOT_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:6:13",
+        boundary_text="importlib.import_module(name)",
+        form_label="dynamic_import:importlib.import_module/1",
+        source_site_id="site:call:main.py:6:13",
+        source_start_line=6,
+        source_start_column=13,
+        source_end_line=6,
+        source_end_column=42,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "importlib.import_module/1@main.py:6:13:6:42"
+        ),
+        context_budget=220,
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_ROOT_ALIAS_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:6:13",
+        boundary_text="loader.import_module(name)",
+        form_label="dynamic_import:loader.import_module/1",
+        source_site_id="site:call:main.py:6:13",
+        source_start_line=6,
+        source_start_column=13,
+        source_end_line=6,
+        source_end_column=39,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "loader.import_module/1@main.py:6:13:6:39"
+        ),
+        context_budget=220,
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_BUILTIN_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:6:4",
+        boundary_text="__import__(name)",
+        form_label="dynamic_import:__import__/1",
+        source_site_id="site:call:main.py:6:4",
+        source_start_line=6,
+        source_start_column=4,
+        source_end_line=6,
+        source_end_column=20,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:__import__/1@main.py:6:4:6:20"
+        ),
+        context_budget=220,
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_BUILTINS_ATTR_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:7:4",
+        boundary_text="builtins.__import__(name)",
+        form_label="dynamic_import:builtins.__import__/1",
+        source_site_id="site:call:main.py:7:4",
+        source_start_line=7,
+        source_start_column=4,
+        source_end_line=7,
+        source_end_column=29,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "builtins.__import__/1@main.py:7:4:7:29"
+        ),
+        context_budget=220,
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_BUILTINS_ALIAS_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:7:4",
+        boundary_text="loader.__import__(name)",
+        form_label="dynamic_import:loader.__import__/1",
+        source_site_id="site:call:main.py:7:4",
+        source_start_line=7,
+        source_start_column=4,
+        source_end_line=7,
+        source_end_column=27,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "loader.__import__/1@main.py:7:4:7:27"
+        ),
+        context_budget=220,
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:6:13",
+        boundary_text="import_module(name)",
+        form_label="dynamic_import:import_module/1",
+        source_site_id="site:call:main.py:6:13",
+        source_start_line=6,
+        source_start_column=13,
+        source_end_line=6,
+        source_end_column=32,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "import_module/1@main.py:6:13:6:32"
+        ),
+        context_budget=220,
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_IMPORTED_ALIAS_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:6:13",
+        boundary_text="load_module(name)",
+        form_label="dynamic_import:load_module/1",
+        source_site_id="site:call:main.py:6:13",
+        source_start_line=6,
+        source_start_column=13,
+        source_end_line=6,
+        source_end_column=30,
+        replay_selector_seed=(
+            "call:main.load_weather_plugin:dynamic_import:"
+            "load_module/1@main.py:6:13:6:30"
+        ),
+        context_budget=220,
+    ),
+    _DynamicImportDefaultLocalFixtureContract(
+        task_id=_DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID,
+        unsupported_unit_id="unsupported:call:main.py:5:13",
+        boundary_text='import_module("plugins.weather")',
+        form_label="dynamic_import:import_module/1",
+        context_budget=180,
+    ),
+)
+
+
+def _dynamic_import_default_local_python_subprocess_fixture(
+    contract: _DynamicImportDefaultLocalFixtureContract,
+) -> _DefaultLocalPythonSubprocessFixture:
+    """Return the provider fixture encoded by one dynamic-import contract."""
+    return _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=contract.unsupported_unit_id,
+        miss_evidence_text=contract.boundary_text,
+        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
+        form_label=contract.form_label,
+        boundary_text=contract.boundary_text,
+        replay_target_seed=_DYNAMIC_IMPORT_REPLAY_TARGET_SEED,
+        snapshot_id=f"{contract.task_id}@default-local-python:v1",
+        runtime_payload=_DYNAMIC_IMPORT_RUNTIME_PAYLOAD,
+        source_site_id=contract.source_site_id,
+        source_file_path=(
+            _DYNAMIC_IMPORT_SOURCE_FILE_PATH
+            if contract.source_site_id is not None
+            else None
+        ),
+        source_start_line=contract.source_start_line,
+        source_start_column=contract.source_start_column,
+        source_end_line=contract.source_end_line,
+        source_end_column=contract.source_end_column,
+        replay_selector_seed=contract.replay_selector_seed,
+    )
+
+
+_DYNAMIC_IMPORT_DEFAULT_LOCAL_FIXTURES = {
+    contract.task_id: _dynamic_import_default_local_python_subprocess_fixture(contract)
+    for contract in _DYNAMIC_IMPORT_DEFAULT_LOCAL_FIXTURE_CONTRACTS
+}
+_DYNAMIC_IMPORT_DEFAULT_LOCAL_CONTEXT_BUDGETS = {
+    contract.task_id: contract.context_budget
+    for contract in _DYNAMIC_IMPORT_DEFAULT_LOCAL_FIXTURE_CONTRACTS
+    if contract.context_budget is not None
+}
+
+
 _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
     _LOCALS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_LOCALS_UNSUPPORTED_UNIT_ID,
@@ -477,177 +629,7 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         snapshot_id="oracle_signal_getattr_literal_probe@default-local-python:v1",
         runtime_payload=_GETATTR_LITERAL_RUNTIME_PAYLOAD,
     ),
-    _DYNAMIC_IMPORT_ROOT_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_ROOT_LITERAL_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text='importlib.import_module("plugins.weather")',
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:importlib.import_module/1",
-        boundary_text='importlib.import_module("plugins.weather")',
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id=(
-            "oracle_signal_dynamic_import_root_literal_probe@default-local-python:v1"
-        ),
-        runtime_payload=_DYNAMIC_IMPORT_ROOT_LITERAL_RUNTIME_PAYLOAD,
-    ),
-    _DYNAMIC_IMPORT_ROOT_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_ROOT_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text="importlib.import_module(name)",
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:importlib.import_module/1",
-        boundary_text="importlib.import_module(name)",
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id="oracle_signal_dynamic_import_root_probe@default-local-python:v1",
-        runtime_payload=_DYNAMIC_IMPORT_ROOT_RUNTIME_PAYLOAD,
-        source_site_id="site:call:main.py:6:13",
-        source_file_path="main.py",
-        source_start_line=6,
-        source_start_column=13,
-        source_end_line=6,
-        source_end_column=42,
-        replay_selector_seed=(
-            "call:main.load_weather_plugin:dynamic_import:"
-            "importlib.import_module/1@main.py:6:13:6:42"
-        ),
-    ),
-    _DYNAMIC_IMPORT_ROOT_ALIAS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_ROOT_ALIAS_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text="loader.import_module(name)",
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:loader.import_module/1",
-        boundary_text="loader.import_module(name)",
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id=(
-            "oracle_signal_dynamic_import_root_alias_probe@default-local-python:v1"
-        ),
-        runtime_payload=_DYNAMIC_IMPORT_ROOT_ALIAS_RUNTIME_PAYLOAD,
-        source_site_id="site:call:main.py:6:13",
-        source_file_path="main.py",
-        source_start_line=6,
-        source_start_column=13,
-        source_end_line=6,
-        source_end_column=39,
-        replay_selector_seed=(
-            "call:main.load_weather_plugin:dynamic_import:"
-            "loader.import_module/1@main.py:6:13:6:39"
-        ),
-    ),
-    _DYNAMIC_IMPORT_BUILTIN_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_BUILTIN_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text="__import__(name)",
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:__import__/1",
-        boundary_text="__import__(name)",
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id="oracle_signal_dynamic_import_builtin_probe@default-local-python:v1",
-        runtime_payload=_DYNAMIC_IMPORT_BUILTIN_RUNTIME_PAYLOAD,
-        source_site_id="site:call:main.py:6:4",
-        source_file_path="main.py",
-        source_start_line=6,
-        source_start_column=4,
-        source_end_line=6,
-        source_end_column=20,
-        replay_selector_seed=(
-            "call:main.load_weather_plugin:dynamic_import:__import__/1@main.py:6:4:6:20"
-        ),
-    ),
-    _DYNAMIC_IMPORT_BUILTINS_ATTR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_BUILTINS_ATTR_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text="builtins.__import__(name)",
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:builtins.__import__/1",
-        boundary_text="builtins.__import__(name)",
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id=(
-            "oracle_signal_dynamic_import_builtins_attr_probe@default-local-python:v1"
-        ),
-        runtime_payload=_DYNAMIC_IMPORT_BUILTINS_ATTR_RUNTIME_PAYLOAD,
-        source_site_id="site:call:main.py:7:4",
-        source_file_path="main.py",
-        source_start_line=7,
-        source_start_column=4,
-        source_end_line=7,
-        source_end_column=29,
-        replay_selector_seed=(
-            "call:main.load_weather_plugin:dynamic_import:"
-            "builtins.__import__/1@main.py:7:4:7:29"
-        ),
-    ),
-    _DYNAMIC_IMPORT_BUILTINS_ALIAS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_BUILTINS_ALIAS_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text="loader.__import__(name)",
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:loader.__import__/1",
-        boundary_text="loader.__import__(name)",
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id=(
-            "oracle_signal_dynamic_import_builtins_alias_probe@default-local-python:v1"
-        ),
-        runtime_payload=_DYNAMIC_IMPORT_BUILTINS_ALIAS_RUNTIME_PAYLOAD,
-        source_site_id="site:call:main.py:7:4",
-        source_file_path="main.py",
-        source_start_line=7,
-        source_start_column=4,
-        source_end_line=7,
-        source_end_column=27,
-        replay_selector_seed=(
-            "call:main.load_weather_plugin:dynamic_import:"
-            "loader.__import__/1@main.py:7:4:7:27"
-        ),
-    ),
-    _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_IMPORTED_NAME_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text="import_module(name)",
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:import_module/1",
-        boundary_text="import_module(name)",
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id=(
-            "oracle_signal_dynamic_import_imported_name_probe@default-local-python:v1"
-        ),
-        runtime_payload=_DYNAMIC_IMPORT_IMPORTED_NAME_RUNTIME_PAYLOAD,
-        source_site_id="site:call:main.py:6:13",
-        source_file_path="main.py",
-        source_start_line=6,
-        source_start_column=13,
-        source_end_line=6,
-        source_end_column=32,
-        replay_selector_seed=(
-            "call:main.load_weather_plugin:dynamic_import:"
-            "import_module/1@main.py:6:13:6:32"
-        ),
-    ),
-    _DYNAMIC_IMPORT_IMPORTED_ALIAS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_IMPORTED_ALIAS_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text="load_module(name)",
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:load_module/1",
-        boundary_text="load_module(name)",
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id=(
-            "oracle_signal_dynamic_import_imported_alias_probe@default-local-python:v1"
-        ),
-        runtime_payload=_DYNAMIC_IMPORT_IMPORTED_ALIAS_RUNTIME_PAYLOAD,
-        source_site_id="site:call:main.py:6:13",
-        source_file_path="main.py",
-        source_start_line=6,
-        source_start_column=13,
-        source_end_line=6,
-        source_end_column=30,
-        replay_selector_seed=(
-            "call:main.load_weather_plugin:dynamic_import:"
-            "load_module/1@main.py:6:13:6:30"
-        ),
-    ),
-    _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
-        unsupported_unit_id=_DYNAMIC_IMPORT_LITERAL_UNSUPPORTED_UNIT_ID,
-        miss_evidence_text='import_module("plugins.weather")',
-        family_label=RuntimeProbeFamily.DYNAMIC_IMPORT,
-        form_label="dynamic_import:import_module/1",
-        boundary_text='import_module("plugins.weather")',
-        replay_target_seed="main.load_weather_plugin",
-        snapshot_id="oracle_signal_dynamic_import_probe@default-local-python:v1",
-        runtime_payload=_DYNAMIC_IMPORT_LITERAL_RUNTIME_PAYLOAD,
-    ),
+    **_DYNAMIC_IMPORT_DEFAULT_LOCAL_FIXTURES,
     _SETATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_SETATTR_LITERAL_UNSUPPORTED_UNIT_ID,
         miss_evidence_text='setattr(obj, "flag", value)',
@@ -1574,69 +1556,11 @@ def _default_local_python_subprocess_fixture(
 
 def _default_local_python_context_budget(request: EvalProviderRequest) -> int:
     """Return the honest compile budget for exact subprocess provider fixtures."""
-    if (
-        request.task_id == _DYNAMIC_IMPORT_ROOT_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_ROOT_CONTEXT_BUDGET
-    ):
+    required_budget = _DYNAMIC_IMPORT_DEFAULT_LOCAL_CONTEXT_BUDGETS.get(request.task_id)
+    if required_budget is not None and request.budget != required_budget:
         raise ValueError(
             "context_ir_default_local_python_subprocess only supports "
-            "budget 220 for oracle_signal_dynamic_import_root_probe"
-        )
-    if (
-        request.task_id == _DYNAMIC_IMPORT_ROOT_ALIAS_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_ROOT_ALIAS_CONTEXT_BUDGET
-    ):
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "budget 220 for oracle_signal_dynamic_import_root_alias_probe"
-        )
-    if (
-        request.task_id == _DYNAMIC_IMPORT_BUILTIN_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_BUILTIN_CONTEXT_BUDGET
-    ):
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "budget 220 for oracle_signal_dynamic_import_builtin_probe"
-        )
-    if (
-        request.task_id == _DYNAMIC_IMPORT_BUILTINS_ATTR_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_BUILTINS_ATTR_CONTEXT_BUDGET
-    ):
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "budget 220 for oracle_signal_dynamic_import_builtins_attr_probe"
-        )
-    if (
-        request.task_id == _DYNAMIC_IMPORT_BUILTINS_ALIAS_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_BUILTINS_ALIAS_CONTEXT_BUDGET
-    ):
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "budget 220 for oracle_signal_dynamic_import_builtins_alias_probe"
-        )
-    if (
-        request.task_id == _DYNAMIC_IMPORT_IMPORTED_NAME_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_IMPORTED_NAME_CONTEXT_BUDGET
-    ):
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "budget 220 for oracle_signal_dynamic_import_imported_name_probe"
-        )
-    if (
-        request.task_id == _DYNAMIC_IMPORT_IMPORTED_ALIAS_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_IMPORTED_ALIAS_CONTEXT_BUDGET
-    ):
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "budget 220 for oracle_signal_dynamic_import_imported_alias_probe"
-        )
-    if (
-        request.task_id == _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID
-        and request.budget != _DYNAMIC_IMPORT_LITERAL_CONTEXT_BUDGET
-    ):
-        raise ValueError(
-            "context_ir_default_local_python_subprocess only supports "
-            "budget 180 for oracle_signal_dynamic_import_probe"
+            f"budget {required_budget} for {request.task_id}"
         )
     return request.budget
 

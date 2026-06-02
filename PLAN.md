@@ -40,91 +40,71 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
-
-Builtins-alias dynamic-import default-provider support is implemented, accepted
-after one narrow continuity correction, read-only release-unit-audit-cleared,
-full-regression-cleared, commit-gating-cleared, locally committed, and pushed to
-`origin/main` after explicit Ryan authorization.
-
-Release anchor: `54236c4 Add builtins-alias dynamic import provider`.
+Runtime dynamic-import provider contract cleanup is workspace-only accepted by
+control review, read-only release-unit-audit-cleared, full-regression-cleared,
+and commit-gating-cleared. Ryan authorized local staging and commit creation.
+Push remains pending explicit Ryan authorization.
 
 Repo-backed start state was branch `main` with `HEAD=origin/main` at
-`2a6e04dcc1b48bd4f3118142edfd091694c4dd35` and a clean worktree.
+`1624032d44abc31cf06109e4c4d91ee780a8761f` and a clean worktree. The latest
+pushed release remains `54236c4 Add builtins-alias dynamic import provider`,
+with the docs-only routing sync `1624032 Sync builtins-alias provider push
+routing`.
 
-The slice adds exact `context_ir_default_local_python_subprocess` support for
-only `oracle_signal_dynamic_import_builtins_alias_probe`, with fixture boundary
-`loader.__import__(name)`, unsupported unit `unsupported:call:main.py:7:4`,
-source site `site:call:main.py:7:4`, span `main.py:7:4-7:27`, family/form
-`DYNAMIC_IMPORT` / `dynamic_import:loader.__import__/1`, replay target
-`main.load_weather_plugin`, replay selector
-`call:main.load_weather_plugin:dynamic_import:loader.__import__/1@main.py:7:4:7:27`,
-empty observed replay inputs, and normalized payload exactly
-`imported_module=plugins.weather`.
-
-Provider budget contract: this exact task admits budget `220` only, compiles
-honestly at budget `220`, returns `result.budget == 220`, and fails closed
-before compilation for budget `100`, `180`, `219`, `221`, or any other
-non-`220` budget.
-
-The workspace-only candidate file set is exactly:
+The current workspace release unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
 - `src/context_ir/eval_providers.py`
 - `src/context_ir/runtime_probe_worker.py`
-- `tests/test_eval_signal_delattr_literal_probe.py`
-- `tests/test_eval_signal_dir_zero_probe.py`
-- `tests/test_eval_signal_dynamic_import_builtins_alias_probe.py`
-- `tests/test_eval_signal_dynamic_import_builtins_attr_probe.py`
-- `tests/test_eval_signal_dynamic_import_imported_alias_probe.py`
-- `tests/test_eval_signal_dynamic_import_imported_name_probe.py`
-- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
-- `tests/test_eval_signal_getattr_literal_probe.py`
-- `tests/test_eval_signal_globals_probe.py`
-- `tests/test_eval_signal_hasattr_literal_probe.py`
-- `tests/test_eval_signal_hasattr_probe.py`
-- `tests/test_eval_signal_locals_probe.py`
-- `tests/test_eval_signal_metaclass_behavior_probe.py`
-- `tests/test_eval_signal_setattr_literal_probe.py`
 - `tests/test_eval_signal_smoke_e.py`
-- `tests/test_eval_signal_vars_zero_probe.py`
-- `tests/test_runtime_probe_worker.py`
+- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
 
-Execution-lane validation passed after implementation:
+The cleanup is behavior-preserving. It consolidates dynamic-import
+default-local fixture metadata and budget gates into internal provider contract
+tables/helpers, and consolidates render-card worker exactness metadata into an
+internal worker contract map with shared match, stub, and imported-module
+helpers.
 
-- `ruff check src/ tests/`
-- `ruff format --check src/ tests/`
+Preservation locks: no new provider support, no new runtime acquisition, no
+eval asset change, no `src/context_ir/runtime_probe_execution.py` change, no
+public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection, Task
+4, public/demo/benchmark/latency/production, or generalized dynamic-import
+support change. Existing exact dynamic-import provider siblings remain fixed.
+`oracle_signal_dynamic_import_root_literal_probe` preserves the live budget
+passthrough behavior, including default-local budget `100`; the already-pushed
+budget-gated siblings preserve their exact required budgets.
+
+Control validation passed after workspace acceptance:
+
+- `ruff check` over the changed source, dynamic-import provider tests, and
+  worker tests
+- `ruff format --check` over the same files
 - `mypy --strict src/`
-- focused pytest over builtins-alias provider, runtime worker, and touched
-  support-message tests: `636` passed
-- first full `pytest tests/ -v` exposed only the allowed deterministic Task 3
-  confidence scalar drift after preservation locks remained unchanged;
-  `FULL_REPO_TASK3_CONFIDENCE` is now `0.0017431222537246753`
-- final full `pytest tests/ -v` passed with `2,009` tests
+- focused pytest over the dynamic-import provider tests and worker tests:
+  `711` passed
+- `git diff --check`
+- `git diff -- evals/` empty
+- `git diff -- src/context_ir/runtime_probe_execution.py` empty
+- `git diff --cached --name-status` empty
 
-Preservation locks: primary truth remains unsupported/opaque; runtime
-provenance remains additive only; no selected `plugins/weather.py`, selected
-`plugins.weather` imported-module symbol, static `plugins.weather` dependency
-edge, runtime-backed primary selected unit, observed replay inputs, eval asset,
-runtime probe execution module, generalized runtime-execution behavior,
-schema/API/MCP/export/scoring/compiler/optimizer/winner-selection, Task 4,
-public/demo/benchmark/latency/production, or generalized dynamic-import support
-change is included. Existing supported dynamic-import sibling behavior remains
-intact, and remaining unsupported sibling forms still fail closed.
+Release-unit audit over the initial five-file cleanup unit passed. Full
+regression then exposed only deterministic Task 3 confidence scalar drift after
+preservation locks remained unchanged; the corrected scalar is
+`FULL_REPO_TASK3_CONFIDENCE = 0.001745981656645097`, making
+`tests/test_eval_signal_smoke_e.py` part of the current release unit.
 
-Release state: pushed and closed. Read-only release-unit audit passed with no
-findings. Post-audit full regression passed with `2,009` tests. Commit-gating
-over the exact 21-file set passed: file set matched, no staged files were
-present, `git diff --check` was clean, `git diff -- evals/` was empty, `git diff
--- src/context_ir/runtime_probe_execution.py` was empty, and
-public/export-sensitive diff checks were empty.
+Focused smoke preservation passed with `1` test. Full regression passed with
+`2,010` tests for the exact six-file cleanup unit.
 
-Next control action: run a read-only tranche-selection spike to choose the first
-post-dynamic-import-provider tranche. Do not reopen the pushed dynamic-import
-provider siblings, Task 4, public/demo, benchmark, latency, production,
-API/MCP/export/schema/scoring/compiler/optimizer/winner-selection, or
-generalized dynamic-import support before that spike is accepted.
+Commit-gating passed over the exact six-file cleanup unit: dirty file set
+matched, no staged files were present before staging, `git diff --check` was
+clean, `git diff -- evals/` was empty, `git diff --
+src/context_ir/runtime_probe_execution.py` was empty, and public/export-
+sensitive diff checks were empty.
+
+Next control action: stage and locally commit the exact six-file cleanup unit.
+Push still requires explicit Ryan authorization.
 
 ### Historical Pushed Release-State Block
 

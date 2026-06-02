@@ -2,6 +2,75 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-01 -- Dynamic Import Provider Contract Cleanup Accepted In Workspace
+
+- Execution slice completed a behavior-preserving cleanup of the dynamic-import
+  default-local provider and worker contract metadata.
+- Scope implemented:
+  - consolidated dynamic-import default-local fixture metadata and budget gates
+    into internal provider contract tables/helpers in
+    `src/context_ir/eval_providers.py`
+  - consolidated render-card worker exactness metadata into an internal worker
+    contract map with shared match, stub, and imported-module helpers in
+    `src/context_ir/runtime_probe_worker.py`
+  - added explicit budget-`100` default-local preservation coverage for
+    `oracle_signal_dynamic_import_root_literal_probe`
+- Current workspace release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- Preservation proof:
+  - no new provider support
+  - no new runtime acquisition
+  - no eval asset change
+  - no `src/context_ir/runtime_probe_execution.py` change
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo/benchmark/latency/production, or generalized
+    dynamic-import support change
+  - existing exact dynamic-import provider siblings remain fixed
+  - `oracle_signal_dynamic_import_root_literal_probe` preserves live
+    default-local budget passthrough behavior, including budget `100`
+  - already-pushed budget-gated siblings preserve their exact required budgets
+- Control validation:
+  - `ruff check` over changed source, dynamic-import provider tests, and worker
+    tests passed
+  - `ruff format --check` over the same files passed
+  - `mypy --strict src/` passed
+  - focused pytest over dynamic-import provider tests and worker tests passed
+    with `711` tests
+  - `git diff --check` passed
+  - `git diff -- evals/` was empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
+  - `git diff --cached --name-status` was empty
+- Findings:
+  - release-unit audit over the initial five-file cleanup unit passed
+  - full regression then exposed only deterministic Task 3 confidence scalar
+    drift after selected units/order, document hash, token count, warnings,
+    warning IDs, probe behavior, and warning-call count stayed fixed
+  - the focused correction updated only `FULL_REPO_TASK3_CONFIDENCE` to
+    `0.001745981656645097`
+- Corrected validation:
+  - focused Task 3 preservation test passed with `1` test
+  - `ruff check src/ tests/` passed
+  - `ruff format --check src/ tests/` passed
+  - `mypy --strict src/` passed
+  - full `pytest tests/ -v` passed with `2,010` tests
+- Commit-gating passed over the exact six-file cleanup unit:
+  - dirty file set matched
+  - no staged files were present before staging
+  - `git diff --check` was clean
+  - `git diff -- evals/` was empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
+  - public/export-sensitive diff checks were empty
+- Acceptance status: accepted in workspace; read-only release-unit audit passed
+  for the initial cleanup unit; corrected full regression passed; commit-gating
+  passed; Ryan authorized staging and local commit creation. Push is pending
+  explicit Ryan authorization.
+- Next control action: stage and locally commit the exact six-file cleanup unit.
+
 ## 2026-06-01 -- Builtins-Alias Dynamic Import Default Provider Implemented
 
 - Execution slice implemented exact `context_ir_default_local_python_subprocess`

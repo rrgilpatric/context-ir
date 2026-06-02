@@ -79,179 +79,199 @@ _DYNAMIC_IMPORT_WORKER_IMPORT_MODULE_GLOBAL_NAME = "import_module"
 _DYNAMIC_IMPORT_WORKER_LOAD_MODULE_GLOBAL_NAME = "load_module"
 _DYNAMIC_IMPORT_WORKER_BUILTINS_GLOBAL_NAME = "builtins"
 _DYNAMIC_IMPORT_WORKER_LOADER_GLOBAL_NAME = "loader"
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:5:13"
+
+
+@dataclass(frozen=True)
+class _DynamicImportWorkerRenderCardContract:
+    """Exact worker metadata for one supported render_card fixture."""
+
+    subject_id: str
+    source_site_id: str
+    source_file_path: str
+    source_start_line: int
+    source_start_column: int
+    source_end_line: int
+    source_end_column: int
+    boundary_text: str
+    form_label: str
+    replay_target_seed: str
+    replay_selector_seed: str
+    imported_module: str
+    error_label: str
+
+
+_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
+_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
+_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
+_DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS: Mapping[
+    str,
+    _DynamicImportWorkerRenderCardContract,
+] = MappingProxyType(
+    {
+        "root_literal": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:5:13",
+            source_site_id="site:call:main.py:5:13",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=5,
+            source_start_column=13,
+            source_end_line=5,
+            source_end_column=55,
+            boundary_text='importlib.import_module("plugins.weather")',
+            form_label=_DYNAMIC_IMPORT_WORKER_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "importlib.import_module/1@main.py:5:13:5:55"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="root literal",
+        ),
+        "root_name": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:6:13",
+            source_site_id="site:call:main.py:6:13",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=6,
+            source_start_column=13,
+            source_end_line=6,
+            source_end_column=42,
+            boundary_text="importlib.import_module(name)",
+            form_label=_DYNAMIC_IMPORT_WORKER_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "importlib.import_module/1@main.py:6:13:6:42"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="root name",
+        ),
+        "root_alias": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:6:13",
+            source_site_id="site:call:main.py:6:13",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=6,
+            source_start_column=13,
+            source_end_line=6,
+            source_end_column=39,
+            boundary_text="loader.import_module(name)",
+            form_label=_DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "loader.import_module/1@main.py:6:13:6:39"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="root alias",
+        ),
+        "builtin": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:6:4",
+            source_site_id="site:call:main.py:6:4",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=6,
+            source_start_column=4,
+            source_end_line=6,
+            source_end_column=20,
+            boundary_text="__import__(name)",
+            form_label=_DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "__import__/1@main.py:6:4:6:20"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="builtin",
+        ),
+        "builtins_attr": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:7:4",
+            source_site_id="site:call:main.py:7:4",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=7,
+            source_start_column=4,
+            source_end_line=7,
+            source_end_column=29,
+            boundary_text="builtins.__import__(name)",
+            form_label=_DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "builtins.__import__/1@main.py:7:4:7:29"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="builtins attribute",
+        ),
+        "builtins_alias": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:7:4",
+            source_site_id="site:call:main.py:7:4",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=7,
+            source_start_column=4,
+            source_end_line=7,
+            source_end_column=27,
+            boundary_text="loader.__import__(name)",
+            form_label=_DYNAMIC_IMPORT_WORKER_LOADER_BUILTIN_IMPORT_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "loader.__import__/1@main.py:7:4:7:27"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="builtins alias",
+        ),
+        "imported_name": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:6:13",
+            source_site_id="site:call:main.py:6:13",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=6,
+            source_start_column=13,
+            source_end_line=6,
+            source_end_column=32,
+            boundary_text="import_module(name)",
+            form_label=_DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "import_module/1@main.py:6:13:6:32"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="imported name",
+        ),
+        "imported_alias": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:6:13",
+            source_site_id="site:call:main.py:6:13",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=6,
+            source_start_column=13,
+            source_end_line=6,
+            source_end_column=30,
+            boundary_text="load_module(name)",
+            form_label=_DYNAMIC_IMPORT_WORKER_LOAD_MODULE_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "load_module/1@main.py:6:13:6:30"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="imported alias",
+        ),
+        "imported_literal": _DynamicImportWorkerRenderCardContract(
+            subject_id="unsupported:call:main.py:5:13",
+            source_site_id="site:call:main.py:5:13",
+            source_file_path=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_SOURCE_FILE_PATH,
+            source_start_line=5,
+            source_start_column=13,
+            source_end_line=5,
+            source_end_column=45,
+            boundary_text='import_module("plugins.weather")',
+            form_label=_DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL,
+            replay_target_seed=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_REPLAY_TARGET,
+            replay_selector_seed=(
+                "call:main.load_weather_plugin:dynamic_import:"
+                "import_module/1@main.py:5:13:5:45"
+            ),
+            imported_module=_DYNAMIC_IMPORT_WORKER_RENDER_CARD_IMPORTED_MODULE,
+            error_label="imported literal",
+        ),
+    }
 )
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_SITE_ID = (
-    "site:call:main.py:5:13"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_START_LINE = 5
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_START_COLUMN = 13
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_END_LINE = 5
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_END_COLUMN = 55
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_BOUNDARY_TEXT = (
-    'importlib.import_module("plugins.weather")'
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_REPLAY_TARGET = (
-    "main.load_weather_plugin"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:"
-    "importlib.import_module/1@main.py:5:13:5:55"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:6:13"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:6:13"
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_START_LINE = 6
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_START_COLUMN = 13
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_END_LINE = 6
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_END_COLUMN = 42
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_BOUNDARY_TEXT = (
-    "importlib.import_module(name)"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:"
-    "importlib.import_module/1@main.py:6:13:6:42"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:6:13"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:6:13"
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_LINE = 6
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_COLUMN = 13
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_LINE = 6
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_COLUMN = 39
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_BOUNDARY_TEXT = (
-    "loader.import_module(name)"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:"
-    "loader.import_module/1@main.py:6:13:6:39"
-)
-_DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SUBJECT_ID = "unsupported:call:main.py:6:4"
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_SITE_ID = "site:call:main.py:6:4"
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_LINE = 6
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_COLUMN = 4
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_LINE = 6
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_COLUMN = 20
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_BOUNDARY_TEXT = "__import__(name)"
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_TARGET = "main.load_weather_plugin"
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:__import__/1@main.py:6:4:6:20"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:7:4"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_SITE_ID = (
-    "site:call:main.py:7:4"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_LINE = 7
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_COLUMN = 4
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_LINE = 7
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_COLUMN = 29
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_BOUNDARY_TEXT = (
-    "builtins.__import__(name)"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_TARGET = (
-    "main.load_weather_plugin"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:"
-    "builtins.__import__/1@main.py:7:4:7:29"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:7:4"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_SITE_ID = (
-    "site:call:main.py:7:4"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_START_LINE = 7
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_START_COLUMN = 4
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_END_LINE = 7
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_END_COLUMN = 27
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_BOUNDARY_TEXT = (
-    "loader.__import__(name)"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_REPLAY_TARGET = (
-    "main.load_weather_plugin"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:loader.__import__/1@main.py:7:4:7:27"
-)
-_DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:6:13"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_SITE_ID = (
-    "site:call:main.py:6:13"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_LINE = 6
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_COLUMN = 13
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_LINE = 6
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_COLUMN = 32
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_BOUNDARY_TEXT = "import_module(name)"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_TARGET = (
-    "main.load_weather_plugin"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:import_module/1@main.py:6:13:6:32"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:6:13"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_SITE_ID = (
-    "site:call:main.py:6:13"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_START_LINE = 6
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_START_COLUMN = 13
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_END_LINE = 6
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_END_COLUMN = 30
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_BOUNDARY_TEXT = "load_module(name)"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_REPLAY_TARGET = (
-    "main.load_weather_plugin"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:load_module/1@main.py:6:13:6:30"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SUBJECT_ID = (
-    "unsupported:call:main.py:5:13"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_SITE_ID = (
-    "site:call:main.py:5:13"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_FILE_PATH = "main.py"
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_START_LINE = 5
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_START_COLUMN = 13
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_END_LINE = 5
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_END_COLUMN = 45
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_BOUNDARY_TEXT = (
-    'import_module("plugins.weather")'
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_REPLAY_TARGET = (
-    "main.load_weather_plugin"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_REPLAY_SELECTOR = (
-    "call:main.load_weather_plugin:dynamic_import:import_module/1@main.py:5:13:5:45"
-)
-_DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_IMPORTED_MODULE = "plugins.weather"
 _DYNAMIC_IMPORT_WORKER_SOURCE_GLOBAL_NAMES_BY_FORM_LABEL = MappingProxyType(
     {
         _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL: (
@@ -14933,29 +14953,9 @@ def _is_runtime_probe_dynamic_import_root_literal_render_card_fixture_request(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact root-literal render_card replay."""
-    return (
-        request.subject_id == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_literal"],
     )
 
 
@@ -14963,44 +14963,19 @@ def _runtime_probe_dynamic_import_root_literal_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact dynamic-import fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_literal"],
+    )
 
 
 def _is_runtime_probe_dynamic_import_root_name_render_card_fixture_request(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact root-name render_card replay."""
-    return (
-        request.subject_id == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_name"],
     )
 
 
@@ -15008,44 +14983,19 @@ def _runtime_probe_dynamic_import_root_name_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact root-name dynamic-import fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_name"],
+    )
 
 
 def _is_runtime_probe_dynamic_import_root_alias_render_card_fixture_request(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact root-alias render_card replay."""
-    return (
-        request.subject_id == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_LOADER_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_alias"],
     )
 
 
@@ -15053,44 +15003,19 @@ def _runtime_probe_dynamic_import_root_alias_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact root-alias dynamic-import fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_alias"],
+    )
 
 
 def _is_runtime_probe_dynamic_import_builtin_render_card_fixture_request(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact builtin render_card replay."""
-    return (
-        request.subject_id == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_BUILTIN_IMPORT_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtin"],
     )
 
 
@@ -15098,45 +15023,19 @@ def _runtime_probe_dynamic_import_builtin_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact builtin dynamic-import fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtin"],
+    )
 
 
 def _is_runtime_probe_dynamic_import_builtins_attr_render_card_fixture_request(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact builtins-attribute replay."""
-    return (
-        request.subject_id
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_BUILTINS_IMPORT_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtins_attr"],
     )
 
 
@@ -15144,46 +15043,19 @@ def _runtime_probe_dynamic_import_builtins_attr_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact builtins-attribute fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtins_attr"],
+    )
 
 
 def _is_runtime_probe_dynamic_import_builtins_alias_render_card_fixture_request(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact builtins-alias replay."""
-    return (
-        request.subject_id
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label
-        == _DYNAMIC_IMPORT_WORKER_LOADER_BUILTIN_IMPORT_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtins_alias"],
     )
 
 
@@ -15191,45 +15063,19 @@ def _runtime_probe_dynamic_import_builtins_alias_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact builtins-alias fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtins_alias"],
+    )
 
 
 def _supports_imported_literal_fixture(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact imported-literal replay."""
-    return (
-        request.subject_id
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_literal"],
     )
 
 
@@ -15237,30 +15083,9 @@ def _supports_imported_name_fixture(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact imported-name replay."""
-    return (
-        request.subject_id
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_IMPORTED_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_name"],
     )
 
 
@@ -15268,185 +15093,179 @@ def _supports_imported_alias_fixture(
     request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
 ) -> bool:
     """Return whether the request is the exact imported-alias replay."""
-    return (
-        request.subject_id
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SUBJECT_ID
-        and request.source_site_id
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_SITE_ID
-        and request.source_file_path
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_FILE_PATH
-        and request.source_start_line
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_START_LINE
-        and request.source_start_column
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_START_COLUMN
-        and request.source_end_line
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_END_LINE
-        and request.source_end_column
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_SOURCE_END_COLUMN
-        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
-        and request.boundary_text
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_BOUNDARY_TEXT
-        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
-        and request.form_label == _DYNAMIC_IMPORT_WORKER_LOAD_MODULE_FORM_LABEL
-        and request.replay_target_seed
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_REPLAY_TARGET
-        and request.replay_selector_seed
-        == _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_REPLAY_SELECTOR
+    return _is_runtime_probe_dynamic_import_render_card_fixture_request(
+        request,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_alias"],
     )
+
+
+def _is_runtime_probe_dynamic_import_render_card_fixture_request(
+    request: RuntimeProbeLocalPythonDynamicImportWorkerRequest,
+    contract: _DynamicImportWorkerRenderCardContract,
+) -> bool:
+    """Return whether ``request`` exactly matches one render_card contract."""
+    return (
+        request.subject_id == contract.subject_id
+        and request.source_site_id == contract.source_site_id
+        and request.source_file_path == contract.source_file_path
+        and request.source_start_line == contract.source_start_line
+        and request.source_start_column == contract.source_start_column
+        and request.source_end_line == contract.source_end_line
+        and request.source_end_column == contract.source_end_column
+        and request.reason_code is UnresolvedReasonCode.DYNAMIC_IMPORT
+        and request.boundary_text == contract.boundary_text
+        and request.family_label is RuntimeProbeFamily.DYNAMIC_IMPORT
+        and request.form_label == contract.form_label
+        and request.replay_target_seed == contract.replay_target_seed
+        and request.replay_selector_seed == contract.replay_selector_seed
+    )
+
+
+def _runtime_probe_dynamic_import_render_card_module_stub(
+    name: str,
+    contract: _DynamicImportWorkerRenderCardContract,
+) -> ModuleType | None:
+    """Return a render_card stub for one exact contract, or no stub."""
+    if name != contract.imported_module:
+        return None
+    module = ModuleType(name)
+
+    def render_card() -> str:
+        return "forecast-ready"
+
+    module.__dict__["render_card"] = render_card
+    return module
 
 
 def _runtime_probe_dynamic_import_imported_name_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact imported-name fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_name"],
+    )
 
 
 def _runtime_probe_dynamic_import_imported_alias_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact imported-alias fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_alias"],
+    )
 
 
 def _runtime_probe_dynamic_import_imported_literal_render_card_module_stub(
     name: str,
 ) -> ModuleType | None:
     """Return the one exact imported-literal fixture stub, or no stub."""
-    if name != _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_IMPORTED_MODULE:
-        return None
-    module = ModuleType(name)
-
-    def render_card() -> str:
-        return "forecast-ready"
-
-    module.__dict__["render_card"] = render_card
-    return module
+    return _runtime_probe_dynamic_import_render_card_module_stub(
+        name,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_literal"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_root_literal_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact fixture executions that captured any other module name."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_ROOT_LITERAL_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "root literal fixture"
-        )
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_literal"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_root_name_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact root-name executions that captured another module."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_ROOT_NAME_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "root name fixture"
-        )
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_name"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_root_alias_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact root-alias executions that captured another module."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_ROOT_ALIAS_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "root alias fixture"
-        )
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["root_alias"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_builtin_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact builtin executions that captured another module."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_BUILTIN_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "builtin fixture"
-        )
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtin"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_builtins_attr_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact builtins-attribute executions that captured another module."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_BUILTINS_ATTR_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "builtins attribute fixture"
-        )
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtins_attr"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_builtins_alias_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact builtins-alias executions that captured another module."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_BUILTINS_ALIAS_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "builtins alias fixture"
-        )
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["builtins_alias"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_imported_literal_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact imported-literal executions that captured another module."""
-    expected_module = (
-        _DYNAMIC_IMPORT_WORKER_IMPORTED_LITERAL_RENDER_CARD_IMPORTED_MODULE
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_literal"],
     )
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "imported literal fixture"
-        )
 
 
 def _validate_runtime_probe_dynamic_import_imported_name_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact imported-name executions that captured another module."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_IMPORTED_NAME_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
-        raise ValueError(
-            "runtime probe dynamic import worker imported_module must match exact "
-            "imported name fixture"
-        )
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_name"],
+    )
 
 
 def _validate_runtime_probe_dynamic_import_imported_alias_render_card_imported_module(
     imported_module: str,
 ) -> None:
     """Reject exact imported-alias executions that captured another module."""
-    expected_module = _DYNAMIC_IMPORT_WORKER_IMPORTED_ALIAS_RENDER_CARD_IMPORTED_MODULE
-    if imported_module != expected_module:
+    _validate_runtime_probe_dynamic_import_render_card_imported_module(
+        imported_module,
+        _DYNAMIC_IMPORT_WORKER_RENDER_CARD_CONTRACTS["imported_alias"],
+    )
+
+
+def _validate_runtime_probe_dynamic_import_render_card_imported_module(
+    imported_module: str,
+    contract: _DynamicImportWorkerRenderCardContract,
+) -> None:
+    """Reject exact render_card fixture executions with another module."""
+    if imported_module != contract.imported_module:
         raise ValueError(
             "runtime probe dynamic import worker imported_module must match exact "
-            "imported alias fixture"
+            f"{contract.error_label} fixture"
         )
 
 
