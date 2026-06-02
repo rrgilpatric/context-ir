@@ -109,6 +109,12 @@ _RUNTIME_MUTATION_DELATTR_FORM_LABEL = "runtime_mutation:delattr/2"
 _EXEC_OR_EVAL_EXEC_FORM_LABEL = "exec_or_eval:exec/1"
 _EXEC_OR_EVAL_EVAL_FORM_LABEL = "exec_or_eval:eval/1"
 _METACLASS_KEYWORD_FORM_LABEL = "metaclass_behavior:keyword"
+_HASATTR_TRUE_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_hasattr_probe@default-local-python:v1"
+)
+_HASATTR_FALSE_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_hasattr_false_probe@default-local-python:v1"
+)
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -370,6 +376,13 @@ def _reflective_hasattr_exact_replay_input_request() -> (
             f"{_REFLECTIVE_HASATTR_FORM_LABEL}@main.py:2:11:2:29"
         ),
     )
+
+
+def _reflective_hasattr_false_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the shared-source false hasattr pilot request."""
+    return _reflective_hasattr_exact_replay_input_request()
 
 
 def _reflective_hasattr_literal_exact_replay_input_request() -> (
@@ -725,12 +738,33 @@ def _plan(
     return runtime_probe_requests.build_runtime_probe_request_plan(requests)
 
 
-def _snapshot_basis() -> RepositorySnapshotBasis:
+def _snapshot_basis(
+    *,
+    snapshot_kind: str = "git_commit",
+    snapshot_id: str = "abc123def456",
+    is_dirty_worktree: bool = False,
+) -> RepositorySnapshotBasis:
     """Return stable repository snapshot metadata for replay artifacts."""
     return RepositorySnapshotBasis(
-        snapshot_kind="git_commit",
-        snapshot_id="abc123def456",
-        is_dirty_worktree=False,
+        snapshot_kind=snapshot_kind,
+        snapshot_id=snapshot_id,
+        is_dirty_worktree=is_dirty_worktree,
+    )
+
+
+def _hasattr_true_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact true-branch hasattr fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_HASATTR_TRUE_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _hasattr_false_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact false-branch hasattr fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_HASATTR_FALSE_DEFAULT_LOCAL_SNAPSHOT_ID,
     )
 
 
@@ -766,11 +800,17 @@ def _source_site_identity(
 
 def _materialized_batch(
     plan: runtime_probe_requests.RuntimeProbeRequestPlan,
+    *,
+    repository_snapshot_basis: RepositorySnapshotBasis | None = None,
 ) -> runtime_probe_execution.RuntimeProbeExecutionInputBatch:
     """Return a materialized execution-input batch for validation tests."""
     return runtime_probe_execution.materialize_runtime_probe_execution_input_batch(
         plan,
-        repository_snapshot_basis=_snapshot_basis(),
+        repository_snapshot_basis=(
+            _snapshot_basis()
+            if repository_snapshot_basis is None
+            else repository_snapshot_basis
+        ),
         probe_contract_revision="runtime-probe-contract:test.1",
         runtime_assumptions=_runtime_assumptions(),
     )
@@ -830,12 +870,16 @@ def _local_python_runner_request(
     *,
     timeout_seconds: int = 30,
     request: runtime_probe_requests.RuntimeProbeRequest | None = None,
+    repository_snapshot_basis: RepositorySnapshotBasis | None = None,
 ) -> runtime_probe_execution.RuntimeProbeRunnerRequest:
     """Return one runner request carrying local-Python environment metadata."""
     selected_request = _request() if request is None else request
     runner_batch = (
         runtime_probe_execution.materialize_runtime_probe_runner_request_batch(
-            _materialized_batch(_plan(selected_request)),
+            _materialized_batch(
+                _plan(selected_request),
+                repository_snapshot_basis=repository_snapshot_basis,
+            ),
             runner_contract_revision="runtime-probe-runner:test.1",
             timeout_seconds=timeout_seconds,
             runner_environment=(
@@ -1279,17 +1323,56 @@ def test_materialize_runtime_probe_execution_inputs_preserves_plan_order_and_rep
 
 
 @pytest.mark.parametrize(
-    "source_request",
     (
-        _reflective_hasattr_exact_replay_input_request(),
-        _reflective_hasattr_literal_exact_replay_input_request(),
+        "source_request",
+        "repository_snapshot_basis",
+        "expected_replay_tail",
+    ),
+    (
+        (
+            _reflective_hasattr_exact_replay_input_request(),
+            _snapshot_basis(),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "bit_length"),
+            ),
+        ),
+        (
+            _reflective_hasattr_exact_replay_input_request(),
+            _hasattr_true_snapshot_basis(),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "bit_length"),
+            ),
+        ),
+        (
+            _reflective_hasattr_false_exact_replay_input_request(),
+            _hasattr_false_snapshot_basis(),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "definitely_missing_attribute"),
+            ),
+        ),
+        (
+            _reflective_hasattr_literal_exact_replay_input_request(),
+            _snapshot_basis(),
+            (
+                _field("object_type", "builtins.int"),
+                _field("attribute_name", "bit_length"),
+            ),
+        ),
     ),
 )
 def test_exact_hasattr_probe_appends_request_replay_payload_fields(
     source_request: runtime_probe_requests.RuntimeProbeRequest,
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    expected_replay_tail: tuple[runtime_probe_results.RuntimeProbeReplayField, ...],
 ) -> None:
     """The exact hasattr pilot appends pre-observation replay inputs."""
-    runner_request = _local_python_runner_request(request=source_request)
+    runner_request = _local_python_runner_request(
+        request=source_request,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
     invocation = _local_python_subprocess_invocation(runner_request)
     payload = _local_python_worker_request_payload(invocation)
     transport = _local_python_worker_request_stdin_transport(invocation)
@@ -1303,10 +1386,7 @@ def test_exact_hasattr_probe_appends_request_replay_payload_fields(
         tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
         == expected_replay_inputs
     )
-    assert runner_request.replay_artifact.replay_inputs[-2:] == (
-        _field("object_type", "builtins.int"),
-        _field("attribute_name", "bit_length"),
-    )
+    assert runner_request.replay_artifact.replay_inputs[-2:] == expected_replay_tail
     assert invocation.request_replay_payload_fields is (
         runner_request.replay_artifact.replay_inputs
     )
@@ -1318,6 +1398,36 @@ def test_exact_hasattr_probe_appends_request_replay_payload_fields(
     )
     assert transport.payload.request_replay_payload_fields is (
         invocation.request_replay_payload_fields
+    )
+
+
+@pytest.mark.parametrize(
+    "repository_snapshot_basis",
+    (
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id="oracle_signal_hasattr_literal_probe@default-local-python:v1",
+        ),
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_HASATTR_TRUE_DEFAULT_LOCAL_SNAPSHOT_ID,
+            is_dirty_worktree=True,
+        ),
+    ),
+)
+def test_exact_hasattr_false_probe_fails_closed_for_wrong_fixture_snapshot(
+    repository_snapshot_basis: RepositorySnapshotBasis,
+) -> None:
+    """The false shared-source identity requires its exact clean fixture snapshot."""
+    source_request = _reflective_hasattr_false_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        request=source_request,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+
+    assert (
+        tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
+        == _EXPECTED_REPLAY_INPUT_KEYS
     )
 
 
@@ -4410,6 +4520,100 @@ def test_default_local_python_subprocess_runner_executes_exact_hasattr_replay_in
     assert attempt.durable_artifact_reference is None
     assert attempt.failure_summary is None
     assert attempt.failure_detail_fields == ()
+
+
+def test_default_local_python_subprocess_runner_executes_exact_hasattr_false_replay(
+    tmp_path: Path,
+) -> None:
+    """The default runner observes the exact false-branch hasattr replay."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_attribute(obj: object, name: str) -> bool:
+                assert obj == 1
+                assert name == "definitely_missing_attribute"
+                return hasattr(obj, name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_hasattr_false_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+        repository_snapshot_basis=_hasattr_false_snapshot_basis(),
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (_field("attribute_present", "false"),)
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_default_local_python_subprocess_runner_rejects_false_hasattr_wrong_snapshot(
+    tmp_path: Path,
+) -> None:
+    """The false replay path fails closed for a wrong fixture snapshot."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_attribute(obj: object, name: str) -> bool:
+                assert obj == 1
+                assert name == "definitely_missing_attribute"
+                return hasattr(obj, name)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_hasattr_false_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+        repository_snapshot_basis=_snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id="oracle_signal_hasattr_literal_probe@default-local-python:v1",
+        ),
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference is None
+    assert "returncode" in _attempt_failure_text(attempt)
 
 
 def test_default_local_python_subprocess_runner_executes_exact_literal_hasattr(

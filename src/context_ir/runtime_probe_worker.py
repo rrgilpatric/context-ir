@@ -21,10 +21,12 @@ from typing import NoReturn, TextIO, TypeAlias, cast
 from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
     _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
     _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
     RuntimeProbeLocalPythonWorkerRequestPayload,
+    _runtime_probe_exact_replay_contract_candidates_for_replay_fields,
     _runtime_probe_exact_replay_contract_for_replay_fields,
     _runtime_probe_exact_replay_payload_field_keys,
     _runtime_probe_exact_replay_payload_fields_by_key,
@@ -6873,31 +6875,29 @@ def _runtime_probe_reflective_hasattr_target_args(
 ) -> tuple[object, ...]:
     """Return target arguments for the exact pilot, otherwise zero arguments."""
     _validate_runtime_probe_reflective_hasattr_worker_request(request)
-    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
-        request.request_replay_payload_fields
+    replay_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        request.request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
     )
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
     )
     if contract not in (
         _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
         _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     ):
         return ()
 
-    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
-        request.request_replay_payload_fields,
-        field_name="request_replay_payload_fields",
-    )
     _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(
-        exact_fields_by_key,
+        replay_fields_by_key,
         contract=contract,
     )
     if contract is _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT:
         return (1,)
     return (
         1,
-        exact_fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY],
+        replay_fields_by_key[_REFLECTIVE_BUILTIN_HASATTR_ATTRIBUTE_NAME_REPLAY_KEY],
     )
 
 
@@ -7397,18 +7397,35 @@ def _validate_runtime_probe_reflective_hasattr_exact_replay_inputs_if_needed(
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
     """Reject drifted request replay inputs for the exact hasattr pilot."""
-    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
-        replay_fields_by_key
-    )
-    if contract not in (
-        _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
-        _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
-    ):
-        return
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
         field_name="request_replay_payload_fields",
     )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_fields_by_key
+    )
+    if contract not in (
+        _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
+        _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
+    ):
+        candidates = _runtime_probe_exact_replay_contract_candidates_for_replay_fields(
+            replay_fields_by_key
+        )
+        if any(
+            candidate
+            in (
+                _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+                _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
+                _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
+            )
+            for candidate in candidates
+        ):
+            raise ValueError(
+                "runtime probe reflective builtin hasattr worker exact replay "
+                "inputs must match one accepted exact replay contract"
+            )
+        return
     _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(
         exact_fields_by_key,
         contract=contract,
@@ -7424,6 +7441,7 @@ def _is_runtime_probe_reflective_hasattr_exact_replay_input_pilot(
     )
     return contract in (
         _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
         _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     )
 
@@ -7435,7 +7453,10 @@ def _is_runtime_probe_reflective_hasattr_name_variable_replay_input_pilot(
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
     )
-    return contract is _EXACT_REPLAY_HASATTR_NAME_CONTRACT
+    return contract in (
+        _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
+    )
 
 
 def _is_runtime_probe_reflective_hasattr_literal_bit_length_replay_input_pilot(
@@ -7489,7 +7510,7 @@ def _validate_runtime_probe_reflective_hasattr_exact_replay_inputs(
     ):
         raise ValueError(
             "runtime probe reflective builtin hasattr worker exact replay inputs "
-            "must be object_type=builtins.int and attribute_name=bit_length"
+            "must match one accepted object_type and attribute_name contract"
         )
 
 

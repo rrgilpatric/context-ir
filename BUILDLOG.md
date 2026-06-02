@@ -2,6 +2,80 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-02 -- Hasattr False Replay Identity Pre-Slice Accepted
+
+- Execution slice completed fixture/snapshot-scoped exact replay selection for
+  the shared `hasattr(obj, name)` source identity.
+- Scope implemented:
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Correction added:
+  - `tests/test_eval_signal_smoke_e.py`
+- Continuity sync added:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+- Behavior accepted:
+  - the existing true `oracle_signal_hasattr_probe` fixture keeps
+    `attribute_name=bit_length`
+  - `oracle_signal_hasattr_false_probe@default-local-python:v1` selects
+    `attribute_name=definitely_missing_attribute`
+  - generic non-fixture snapshot metadata keeps the existing true
+    `attribute_name=bit_length` replay path
+  - worker routing resolves exact `hasattr` contracts from copied replay fields
+    and fails closed on missing, wrong, drifted, or wrong-snapshot fields
+  - the false branch observes normalized payload `attribute_present=false`
+  - observed replay inputs remain absent/empty
+- Preservation proof:
+  - no `src/context_ir/eval_providers.py` diff
+  - no `evals/` diff
+  - no provider-map support was added for `oracle_signal_hasattr_false_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo/benchmark/latency/production, or generalized replay
+    framework change
+- Control validation:
+  - live base matched `HEAD=origin/main=044cb3e`
+  - returned implementation dirty set matched the four in-scope files before
+    continuity sync
+  - `git diff --check` passed
+  - `git diff -- evals/` was empty
+  - `git diff -- src/context_ir/eval_providers.py` was empty
+  - `ruff check` over the changed source/test files passed
+  - `ruff format --check` over the changed source/test files passed
+  - `mypy --strict src/` passed
+  - focused pytest over `tests/test_runtime_probe_execution.py` and
+    `tests/test_runtime_probe_worker.py` passed with `979` tests
+  - targeted eval/provider compatibility tests passed with `15` tests and `37`
+    tests
+- Release state:
+  - workspace-only accepted before release gates
+  - release-unit audit passed before full regression, but that audit is stale
+    for the corrected seven-file unit
+  - full regression initially failed on the generic-snapshot true replay
+    regression and deterministic Task 3 confidence scalar drift
+  - correction restored the exact true helper/facade path and updated
+    `FULL_REPO_TASK3_CONFIDENCE` to `0.0017443506897583659` after Task 3
+    selected units/order, document hash, token count, warnings, warning IDs,
+    probe behavior, and warning-call count stayed fixed
+  - control review accepted the correction
+  - corrected focused validation passed with `982` tests
+  - corrected full `pytest tests/ -v` passed with `2,026` tests
+  - corrected read-only release-unit audit passed with no findings
+  - post-corrected-audit full regression passed with `ruff check src/ tests/`,
+    `ruff format --check src/ tests/`, `mypy --strict src/`, and
+    `pytest tests/ -v` with `2,026` tests
+  - commit-gating passed over the exact seven-file unit with no staged files,
+    clean `git diff --check`, empty `git diff -- evals/`, empty
+    `git diff -- src/context_ir/eval_providers.py`, and empty
+    public/export-sensitive diff checks
+  - not staged or pushed at the time this continuity entry was written
+  - Ryan authorized staging and local commit creation on 2026-06-02; live local
+    commit state must be verified from git
+- Acceptance status: first-pass accepted; corrected and control-accepted after
+  1 release-gate regression failure; corrected release-unit audit,
+  post-corrected-audit full regression, and commit-gating passed.
+
 ## 2026-06-01 -- Dynamic Import Provider Contract Cleanup Pushed
 
 - Execution slice completed a behavior-preserving cleanup of the dynamic-import
@@ -15,7 +89,7 @@ Most recent supersession entries override older architectural decisions when the
     `src/context_ir/runtime_probe_worker.py`
   - added explicit budget-`100` default-local preservation coverage for
     `oracle_signal_dynamic_import_root_literal_probe`
-- Current workspace release unit:
+- Pushed release unit:
   - `BUILDLOG.md`
   - `PLAN.md`
   - `src/context_ir/eval_providers.py`

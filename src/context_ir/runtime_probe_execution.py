@@ -93,6 +93,10 @@ _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED = (
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
     "call:main.probe_attribute:reflective_builtin:hasattr/2@main.py:2:11:2:29"
 )
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SNAPSHOT_KIND = "eval_fixture"
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SNAPSHOT_ID = (
+    "oracle_signal_hasattr_probe@default-local-python:v1"
+)
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = 37
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
     "main.probe_literal_attribute"
@@ -102,6 +106,13 @@ _RUNTIME_PROBE_REFLECTIVE_HASATTR_LITERAL_BIT_LENGTH_REPLAY_SELECTOR_SEED = (
 )
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE = "builtins.int"
 _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME = "bit_length"
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_MISSING_ATTRIBUTE_SNAPSHOT_KIND = "eval_fixture"
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_MISSING_ATTRIBUTE_SNAPSHOT_ID = (
+    "oracle_signal_hasattr_false_probe@default-local-python:v1"
+)
+_RUNTIME_PROBE_REFLECTIVE_HASATTR_MISSING_ATTRIBUTE_NAME = (
+    "definitely_missing_attribute"
+)
 _RUNTIME_PROBE_REFLECTIVE_GETATTR_LOCAL_PYTHON_FORM_LABEL = (
     "reflective_builtin:getattr/2"
 )
@@ -313,6 +324,15 @@ class _RuntimeProbeExactReplayContract:
     replay_payload_fields: tuple[_RuntimeProbeExactReplayPayloadField, ...]
 
 
+@dataclass(frozen=True)
+class _RuntimeProbeExactReplayContractSnapshotScope:
+    """Fixture snapshot selector metadata for an exact replay contract."""
+
+    contract: _RuntimeProbeExactReplayContract
+    repository_snapshot_kind: str
+    repository_snapshot_id: str
+
+
 _EXACT_REPLAY_HASATTR_NAME_CONTRACT = _RuntimeProbeExactReplayContract(
     contract_id="reflective_builtin:hasattr/2:name-variable-bit_length",
     family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
@@ -348,6 +368,44 @@ _EXACT_REPLAY_HASATTR_NAME_CONTRACT = _RuntimeProbeExactReplayContract(
         (
             "attribute_name",
             _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_ATTRIBUTE_NAME,
+        ),
+    ),
+)
+_EXACT_REPLAY_HASATTR_FALSE_CONTRACT = _RuntimeProbeExactReplayContract(
+    contract_id="reflective_builtin:hasattr/2:name-variable-missing-attribute",
+    family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+    form_label=_RUNTIME_PROBE_REFLECTIVE_HASATTR_LOCAL_PYTHON_FORM_LABEL,
+    subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+    subject_id=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SUBJECT_ID,
+    reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+    boundary_text=_RUNTIME_PROBE_REFLECTIVE_HASATTR_BOUNDARY_TEXT,
+    source_file_path=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
+    ),
+    source_start_line=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+    ),
+    source_start_column=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+    ),
+    source_end_line=_RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+    source_end_column=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN
+    ),
+    replay_target_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
+    ),
+    replay_selector_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    ),
+    replay_payload_fields=(
+        (
+            "object_type",
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_OBJECT_TYPE,
+        ),
+        (
+            "attribute_name",
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_MISSING_ATTRIBUTE_NAME,
         ),
     ),
 )
@@ -520,10 +578,34 @@ _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS: tuple[
     ...,
 ] = (
     _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+    _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
     _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
+)
+_RUNTIME_PROBE_EXACT_REPLAY_CONTRACT_SNAPSHOT_SCOPES: tuple[
+    _RuntimeProbeExactReplayContractSnapshotScope,
+    ...,
+] = (
+    _RuntimeProbeExactReplayContractSnapshotScope(
+        contract=_EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        repository_snapshot_kind=(
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SNAPSHOT_KIND
+        ),
+        repository_snapshot_id=(
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_INT_BIT_LENGTH_SNAPSHOT_ID
+        ),
+    ),
+    _RuntimeProbeExactReplayContractSnapshotScope(
+        contract=_EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
+        repository_snapshot_kind=(
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_MISSING_ATTRIBUTE_SNAPSHOT_KIND
+        ),
+        repository_snapshot_id=(
+            _RUNTIME_PROBE_REFLECTIVE_HASATTR_MISSING_ATTRIBUTE_SNAPSHOT_ID
+        ),
+    ),
 )
 
 _RUNTIME_PROBE_DEFAULT_LOCAL_PYTHON_HANDLER_KEYS: tuple[
@@ -689,6 +771,7 @@ class RuntimeProbeExecutionInput:
             plan_id=self.plan_id,
             request_id=self.request_id,
             request=self.request,
+            repository_snapshot_basis=replay_artifact.repository_snapshot_basis,
         ):
             raise ValueError(
                 "runtime probe execution input replay_inputs must match planned "
@@ -2541,6 +2624,7 @@ def _materialize_runtime_probe_execution_input(
                 plan_id=plan_id,
                 request_id=request_id,
                 request=request,
+                repository_snapshot_basis=repository_snapshot_basis,
             ),
             runtime_assumptions=runtime_assumptions,
         ),
@@ -4601,6 +4685,7 @@ def _replay_inputs_for_request(
     plan_id: str,
     request_id: str,
     request: RuntimeProbeRequest,
+    repository_snapshot_basis: RepositorySnapshotBasis,
 ) -> tuple[RuntimeProbeReplayField, ...]:
     """Return replay/debug identity fields copied from one planned request."""
     span = request.source_site.span
@@ -4648,15 +4733,23 @@ def _replay_inputs_for_request(
     )
     return (
         *base_replay_inputs,
-        *_request_replay_payload_fields_for_request(request),
+        *_request_replay_payload_fields_for_request(
+            request,
+            repository_snapshot_basis=repository_snapshot_basis,
+        ),
     )
 
 
 def _request_replay_payload_fields_for_request(
     request: RuntimeProbeRequest,
+    *,
+    repository_snapshot_basis: RepositorySnapshotBasis,
 ) -> tuple[RuntimeProbeReplayField, ...]:
     """Return exact pre-observation replay inputs for pushed pilot requests."""
-    contract = _runtime_probe_exact_replay_contract_for_request(request)
+    contract = _runtime_probe_exact_replay_contract_for_request(
+        request,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
     if contract is None:
         return ()
     return _runtime_probe_exact_replay_payload_fields(contract)
@@ -4664,11 +4757,33 @@ def _request_replay_payload_fields_for_request(
 
 def _runtime_probe_exact_replay_contract_for_request(
     request: RuntimeProbeRequest,
+    *,
+    repository_snapshot_basis: RepositorySnapshotBasis | None = None,
 ) -> _RuntimeProbeExactReplayContract | None:
     """Return the accepted exact replay contract for a planned request."""
-    for contract in _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS:
-        if _runtime_probe_request_matches_exact_replay_contract(request, contract):
-            return contract
+    candidates = tuple(
+        contract
+        for contract in _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS
+        if _runtime_probe_request_matches_exact_replay_contract(request, contract)
+    )
+    snapshot_matches = tuple(
+        contract
+        for contract in candidates
+        if _runtime_probe_repository_snapshot_matches_exact_replay_contract(
+            repository_snapshot_basis,
+            contract,
+        )
+    )
+    if len(snapshot_matches) == 1:
+        return snapshot_matches[0]
+    if len(snapshot_matches) > 1:
+        return None
+    default_contract = _runtime_probe_default_exact_replay_contract_for_request(
+        candidates,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+    if default_contract is not None:
+        return default_contract
     return None
 
 
@@ -4696,17 +4811,89 @@ def _runtime_probe_request_matches_exact_replay_contract(
     )
 
 
+def _runtime_probe_default_exact_replay_contract_for_request(
+    candidates: tuple[_RuntimeProbeExactReplayContract, ...],
+    *,
+    repository_snapshot_basis: RepositorySnapshotBasis | None,
+) -> _RuntimeProbeExactReplayContract | None:
+    """Return the historical default contract for non-fixture replay requests."""
+    if (
+        _EXACT_REPLAY_HASATTR_NAME_CONTRACT not in candidates
+        or _EXACT_REPLAY_HASATTR_FALSE_CONTRACT not in candidates
+    ):
+        return None
+    if (
+        repository_snapshot_basis is not None
+        and repository_snapshot_basis.snapshot_kind
+        == _RUNTIME_PROBE_REFLECTIVE_HASATTR_MISSING_ATTRIBUTE_SNAPSHOT_KIND
+    ):
+        return None
+    return _EXACT_REPLAY_HASATTR_NAME_CONTRACT
+
+
+def _runtime_probe_repository_snapshot_matches_exact_replay_contract(
+    repository_snapshot_basis: RepositorySnapshotBasis | None,
+    contract: _RuntimeProbeExactReplayContract,
+) -> bool:
+    """Return whether a snapshot admits one exact replay contract."""
+    snapshot_scope = _runtime_probe_exact_replay_contract_snapshot_scope(contract)
+    if snapshot_scope is None:
+        return True
+    if repository_snapshot_basis is None:
+        return False
+    return (
+        repository_snapshot_basis.snapshot_kind
+        == snapshot_scope.repository_snapshot_kind
+        and repository_snapshot_basis.snapshot_id
+        == snapshot_scope.repository_snapshot_id
+        and not repository_snapshot_basis.is_dirty_worktree
+    )
+
+
+def _runtime_probe_exact_replay_contract_snapshot_scope(
+    contract: _RuntimeProbeExactReplayContract,
+) -> _RuntimeProbeExactReplayContractSnapshotScope | None:
+    """Return fixture snapshot scope metadata for one exact replay contract."""
+    for snapshot_scope in _RUNTIME_PROBE_EXACT_REPLAY_CONTRACT_SNAPSHOT_SCOPES:
+        if snapshot_scope.contract is contract:
+            return snapshot_scope
+    return None
+
+
 def _runtime_probe_exact_replay_contract_for_replay_fields(
     replay_fields_by_key: Mapping[str, str],
 ) -> _RuntimeProbeExactReplayContract | None:
     """Return the accepted exact replay contract for copied replay fields."""
-    for contract in _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS:
+    candidates = _runtime_probe_exact_replay_contract_candidates_for_replay_fields(
+        replay_fields_by_key
+    )
+    if len(candidates) == 1:
+        return candidates[0]
+    payload_matches = tuple(
+        contract
+        for contract in candidates
+        if _runtime_probe_replay_payload_fields_match_exact_replay_contract(
+            replay_fields_by_key,
+            contract,
+        )
+    )
+    if len(payload_matches) == 1:
+        return payload_matches[0]
+    return None
+
+
+def _runtime_probe_exact_replay_contract_candidates_for_replay_fields(
+    replay_fields_by_key: Mapping[str, str],
+) -> tuple[_RuntimeProbeExactReplayContract, ...]:
+    """Return exact replay contracts whose copied request identity matches."""
+    return tuple(
+        contract
+        for contract in _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS
         if _runtime_probe_replay_fields_match_exact_replay_contract(
             replay_fields_by_key,
             contract,
-        ):
-            return contract
-    return None
+        )
+    )
 
 
 def _runtime_probe_replay_fields_match_exact_replay_contract(
@@ -4733,6 +4920,17 @@ def _runtime_probe_replay_fields_match_exact_replay_contract(
         == contract.replay_target_seed
         and replay_fields_by_key.get("replay_selector_seed")
         == contract.replay_selector_seed
+    )
+
+
+def _runtime_probe_replay_payload_fields_match_exact_replay_contract(
+    replay_fields_by_key: Mapping[str, str],
+    contract: _RuntimeProbeExactReplayContract,
+) -> bool:
+    """Return whether copied replay payload fields match one exact contract."""
+    return all(
+        replay_fields_by_key.get(field_key) == expected_value
+        for field_key, expected_value in contract.replay_payload_fields
     )
 
 
@@ -4767,6 +4965,7 @@ def _is_reflective_hasattr_int_bit_length_probe_request(
     contract = _runtime_probe_exact_replay_contract_for_request(request)
     return contract in (
         _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
         _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     )
 

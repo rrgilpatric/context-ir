@@ -40,74 +40,99 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Fixture/snapshot-scoped exact `hasattr(obj, name)` replay selection is
+implemented and accepted in the workspace, then corrected after the
+post-audit full-regression gate exposed a generic-snapshot true-replay
+regression. Control review accepted the correction. The corrected unit is not
+staged or pushed in the workspace at the time this continuity entry was
+written. The corrected unit is corrected-release-unit-audit-cleared,
+post-corrected-audit full-regression-cleared, and commit-gating-cleared.
+Ryan authorized staging and local commit creation on 2026-06-02; live local
+commit state must be verified from git.
 
-Runtime dynamic-import provider contract cleanup is implemented, accepted,
-read-only release-unit-audit-cleared, full-regression-cleared,
-commit-gating-cleared, locally committed, and pushed to `origin/main` after
-explicit Ryan authorization.
+Repo-backed base at acceptance: `HEAD=origin/main=044cb3e`.
 
-Release anchor: `ff3513f Consolidate dynamic import provider contracts`.
-
-The release unit was exactly:
+The active corrected workspace release unit is exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
-- `src/context_ir/eval_providers.py`
 - `src/context_ir/runtime_probe_worker.py`
+- `src/context_ir/runtime_probe_execution.py`
 - `tests/test_eval_signal_smoke_e.py`
-- `tests/test_eval_signal_dynamic_import_root_literal_probe.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
 
-The cleanup is behavior-preserving. It consolidates dynamic-import
-default-local fixture metadata and budget gates into internal provider contract
-tables/helpers, and consolidates render-card worker exactness metadata into an
-internal worker contract map with shared match, stub, and imported-module
-helpers.
+The slice adds fixture/snapshot-scoped exact replay contract selection for the
+shared `hasattr(obj, name)` source identity. The already-supported true fixture
+keeps `attribute_name=bit_length`; the false fixture
+`oracle_signal_hasattr_false_probe@default-local-python:v1` selects
+`attribute_name=definitely_missing_attribute` and proves
+`attribute_present=false`. The correction restores the existing generic
+repository-snapshot path for the true `hasattr(obj, name)` replay without
+allowing the false fixture to collide with it: exact eval-fixture snapshots
+select their scoped contracts, and non-fixture or absent snapshot metadata
+falls back only to the historical true `attribute_name=bit_length` contract.
 
-Preservation locks: no new provider support, no new runtime acquisition, no
-eval asset change, no `src/context_ir/runtime_probe_execution.py` change, no
+Preservation locks: no `src/context_ir/eval_providers.py` change, no eval asset
+change, no provider-map support for `oracle_signal_hasattr_false_probe`, no
 public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection, Task
-4, public/demo/benchmark/latency/production, or generalized dynamic-import
-support change. Existing exact dynamic-import provider siblings remain fixed.
-`oracle_signal_dynamic_import_root_literal_probe` preserves the live budget
-passthrough behavior, including default-local budget `100`; the already-pushed
-budget-gated siblings preserve their exact required budgets.
+4, public/demo/benchmark/latency/production, or generalized replay framework
+change. Existing exact replay contracts remain fixed, and observed replay inputs
+remain absent/empty for this path.
 
-Control validation passed after workspace acceptance:
+Control validation after workspace acceptance:
 
-- `ruff check` over the changed source, dynamic-import provider tests, and
-  worker tests
-- `ruff format --check` over the same files
-- `mypy --strict src/`
-- focused pytest over the dynamic-import provider tests and worker tests:
-  `711` passed
-- `git diff --check`
+- `git status --short --branch -uall` matched the four returned implementation
+  files before continuity sync
+- `git rev-parse HEAD origin/main` returned `044cb3e` for both
+- `git diff --check` passed
 - `git diff -- evals/` empty
-- `git diff -- src/context_ir/runtime_probe_execution.py` empty
-- `git diff --cached --name-status` empty
+- `git diff -- src/context_ir/eval_providers.py` empty
+- `ruff check` over the changed source/test files passed
+- `ruff format --check` over the changed source/test files passed
+- `mypy --strict src/` passed
+- focused pytest over `tests/test_runtime_probe_execution.py` and
+  `tests/test_runtime_probe_worker.py` passed with `979` tests
+- targeted eval/provider compatibility tests passed with `15` tests and `37`
+  tests respectively
 
-Release-unit audit over the initial five-file cleanup unit passed. Full
-regression then exposed only deterministic Task 3 confidence scalar drift after
-preservation locks remained unchanged; the corrected scalar is
-`FULL_REPO_TASK3_CONFIDENCE = 0.001745981656645097`, making
-`tests/test_eval_signal_smoke_e.py` part of the current release unit.
+Release-unit audit passed before full regression, but that audit is stale for
+the corrected seven-file unit. Full regression then exposed the
+generic-snapshot true-replay helper/facade regression and deterministic Task 3
+confidence scalar drift while selected units/order, document hash, token count,
+warnings, warning IDs, probe behavior, and warning-call count stayed fixed. The
+correction updated only the replay contract selection logic, the runtime replay
+tests, and `FULL_REPO_TASK3_CONFIDENCE = 0.0017443506897583659`.
 
-Focused smoke preservation passed with `1` test. Full regression passed with
-`2,010` tests for the exact six-file cleanup unit.
+Correction validation passed:
 
-Commit-gating passed over the exact six-file cleanup unit: dirty file set
-matched, no staged files were present before staging, `git diff --check` was
-clean, `git diff -- evals/` was empty, `git diff --
-src/context_ir/runtime_probe_execution.py` was empty, and public/export-
-sensitive diff checks were empty.
+- `ruff check` over the corrected source/test file set
+- `ruff format --check` over the corrected source/test file set
+- `mypy --strict src/`
+- focused pytest over `tests/test_runtime_probe_execution.py`,
+  `tests/test_runtime_probe_worker.py`, the two exact true helper/facade tests,
+  and the Task 3 smoke lock passed with `982` tests
+- full `pytest tests/ -v` passed with `2,026` tests
+- `git diff --check` passed
+- `git diff -- evals/` empty
+- `git diff -- src/context_ir/eval_providers.py` empty
 
-Release state: pushed and closed.
+Release gates after correction:
 
-Next control action: run a read-only tranche-selection spike for the next
-post-cleanup move. Do not reopen the pushed dynamic-import provider contracts,
-Task 4, public/demo, benchmark, latency, production, API/MCP/export/schema/
-scoring/compiler/optimizer/winner-selection, or generalized dynamic-import
-support before that spike is accepted.
+- corrected read-only release-unit audit passed with no findings over the exact
+  seven-file workspace unit
+- post-corrected-audit full regression passed with `ruff check src/ tests/`,
+  `ruff format --check src/ tests/`, `mypy --strict src/`, and
+  `pytest tests/ -v` with `2,026` tests
+- commit-gating passed over the exact seven-file workspace unit with no staged
+  files before staging, clean `git diff --check`, empty `git diff -- evals/`,
+  empty `git diff -- src/context_ir/eval_providers.py`, and empty
+  public/export-sensitive diff checks
+
+Next control action: create the local commit if live git shows it has not yet
+been created, then hold for separate Ryan push authorization. Do not add
+provider support for the remaining 10 non-dynamic probes until this runtime
+contract pre-slice is locally committed and, if Ryan authorizes it, pushed.
 
 ### Historical Pushed Release-State Block
 
