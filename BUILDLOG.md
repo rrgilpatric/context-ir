@@ -2,7 +2,7 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-01 -- Dynamic Import Provider Contract Cleanup Accepted In Workspace
+## 2026-06-01 -- Dynamic Import Provider Contract Cleanup Pushed
 
 - Execution slice completed a behavior-preserving cleanup of the dynamic-import
   default-local provider and worker contract metadata.
@@ -65,11 +65,18 @@ Most recent supersession entries override older architectural decisions when the
   - `git diff -- evals/` was empty
   - `git diff -- src/context_ir/runtime_probe_execution.py` was empty
   - public/export-sensitive diff checks were empty
-- Acceptance status: accepted in workspace; read-only release-unit audit passed
-  for the initial cleanup unit; corrected full regression passed; commit-gating
-  passed; Ryan authorized staging and local commit creation. Push is pending
-  explicit Ryan authorization.
-- Next control action: stage and locally commit the exact six-file cleanup unit.
+- Release state:
+  - locally committed as `ff3513f Consolidate dynamic import provider contracts`
+  - pushed to `origin/main` after explicit Ryan authorization
+  - release closed
+- Acceptance status: accepted after 1 correction; read-only release-unit audit
+  passed for the initial cleanup unit; corrected full regression passed;
+  commit-gating passed; locally committed and pushed.
+- Next control action: run a read-only tranche-selection spike for the next
+  post-cleanup move. Do not reopen the pushed dynamic-import provider
+  contracts, Task 4, public/demo, benchmark, latency, production,
+  API/MCP/export/schema/scoring/compiler/optimizer/winner-selection, or
+  generalized dynamic-import support before that spike is accepted.
 
 ## 2026-06-01 -- Builtins-Alias Dynamic Import Default Provider Implemented
 

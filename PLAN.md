@@ -40,18 +40,16 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Runtime dynamic-import provider contract cleanup is workspace-only accepted by
-control review, read-only release-unit-audit-cleared, full-regression-cleared,
-and commit-gating-cleared. Ryan authorized local staging and commit creation.
-Push remains pending explicit Ryan authorization.
+No workspace release unit is currently active.
 
-Repo-backed start state was branch `main` with `HEAD=origin/main` at
-`1624032d44abc31cf06109e4c4d91ee780a8761f` and a clean worktree. The latest
-pushed release remains `54236c4 Add builtins-alias dynamic import provider`,
-with the docs-only routing sync `1624032 Sync builtins-alias provider push
-routing`.
+Runtime dynamic-import provider contract cleanup is implemented, accepted,
+read-only release-unit-audit-cleared, full-regression-cleared,
+commit-gating-cleared, locally committed, and pushed to `origin/main` after
+explicit Ryan authorization.
 
-The current workspace release unit is exactly:
+Release anchor: `ff3513f Consolidate dynamic import provider contracts`.
+
+The release unit was exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -103,8 +101,13 @@ clean, `git diff -- evals/` was empty, `git diff --
 src/context_ir/runtime_probe_execution.py` was empty, and public/export-
 sensitive diff checks were empty.
 
-Next control action: stage and locally commit the exact six-file cleanup unit.
-Push still requires explicit Ryan authorization.
+Release state: pushed and closed.
+
+Next control action: run a read-only tranche-selection spike for the next
+post-cleanup move. Do not reopen the pushed dynamic-import provider contracts,
+Task 4, public/demo, benchmark, latency, production, API/MCP/export/schema/
+scoring/compiler/optimizer/winner-selection, or generalized dynamic-import
+support before that spike is accepted.
 
 ### Historical Pushed Release-State Block
 
