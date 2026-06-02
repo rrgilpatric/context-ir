@@ -40,18 +40,17 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Active workspace release unit: exact default-local Python subprocess provider
-support for `oracle_signal_hasattr_false_probe`.
+No workspace release unit is currently active.
 
-Base verified before implementation: `HEAD=origin/main=203d2075071bdddb1751e0da281d4b49e5b9d6f6`.
+Exact default-local Python subprocess provider support for
+`oracle_signal_hasattr_false_probe` is implemented, accepted after one narrow
+validation correction, read-only release-unit-audit-cleared,
+post-audit-control-full-regression-cleared, commit-gating-cleared, locally
+committed, and pushed to `origin/main` after explicit Ryan authorization.
 
-Release state: workspace-only implementation return, control-review-accepted,
-read-only release-unit-audit-cleared, execution-lane full-regression-cleared
-after one narrow validation correction, and post-audit control
-full-regression-cleared. Commit-gating cleared over the exact ten-file unit.
-It is not staged, not locally committed, and not pushed.
+Release anchor: `8e9947c Add false hasattr default-local provider support`.
 
-The active workspace release unit currently includes:
+The pushed release unit was exactly:
 
 - `BUILDLOG.md`
 - `PLAN.md`
@@ -112,8 +111,16 @@ support for any other remaining non-dynamic probe, no public/API/MCP/export/
 schema/scoring/compiler/optimizer/winner-selection, Task 4, public/demo,
 benchmark, latency, production, or generalized replay framework change.
 
-Next control action: stage and locally commit the exact ten-file release unit.
-Push still requires explicit Ryan authorization.
+This release is closed with no active gate. Do not route `8e9947c` back to
+release-unit audit, full regression, commit-gating, staging, local commit
+creation, or push absent new findings.
+
+Next control action: run a read-only tranche-selection spike to choose the
+smallest safe next post-provider-support slice from the pushed state. Do not
+reopen pushed dynamic-import provider contracts, pushed `hasattr(obj, name)`
+true/false replay contracts, Task 4, public/demo, benchmark, latency,
+production, API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+or generalized replay support before that spike is accepted.
 
 Previous pushed release state follows for historical routing. Its preservation
 locks apply to release anchor `391a65e`, not to the active workspace provider

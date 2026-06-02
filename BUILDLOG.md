@@ -2,6 +2,52 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-02 -- Hasattr False Default-Local Provider Support Pushed
+
+- Pushed release:
+  - `8e9947c Add false hasattr default-local provider support`
+- Release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_false_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Final gate state before commit/push:
+  - control review accepted the exact ten-file workspace unit with no findings
+  - read-only release-unit audit passed with no findings
+  - post-audit control full regression passed with `ruff check src/ tests/`,
+    `ruff format --check src/ tests/`, `mypy --strict src/`, and
+    `pytest tests/ -v` with `2,028` tests
+  - commit-gating passed with no staged files, clean `git diff --check`, exact
+    ten-file dirty set, empty `git diff -- evals/`, empty
+    `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`,
+    empty public/API-sensitive diff checks, and only the deterministic Task 3
+    confidence scalar changed in `tests/test_eval_signal_smoke_e.py`
+- Push verification:
+  - live `HEAD` and `origin/main` both resolved to
+    `8e9947c10ac40b7b188606ad35e4fd77830b669a`
+  - `git status --short --branch -uall` was clean
+- Release state:
+  - pushed and closed with no active gate
+- Next control action:
+  - run a read-only tranche-selection spike to choose the smallest safe next
+    post-provider-support slice from the pushed state
+  - do not route `8e9947c` back to release-unit audit, full regression,
+    commit-gating, staging, local commit creation, or push absent new findings
+  - do not reopen pushed dynamic-import provider contracts, pushed
+    `hasattr(obj, name)` true/false replay contracts, Task 4, public/demo,
+    benchmark, latency, production, API/MCP/export/schema/scoring/compiler/
+    optimizer/winner-selection, or generalized replay support before that
+    spike is accepted
+- Acceptance status: accepted after 1 validation correction; release-unit
+  audit, post-audit full regression, commit-gating, local commit, and push
+  complete.
+
 ## 2026-06-02 -- Hasattr False Default-Local Provider Support Workspace Return
 
 - Completed exact default-local Python subprocess provider support for
