@@ -40,17 +40,15 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Active workspace release unit:
+No workspace release unit is currently active.
 
-- exact default-local Python subprocess provider-map support for
-  `oracle_signal_getattr_probe`
-- completion state: workspace-only accepted after findings-first control review,
-  release-unit audit-cleared, full-regression-cleared, and
-  commit-gating-cleared
-- not staged, committed, or pushed
-- files in the workspace unit:
-  - `BUILDLOG.md`
+Latest pushed release:
+
+- `aab32d0 Add getattr default-local provider support`
+- pushed to `origin/main` after explicit Ryan authorization
+- release unit:
   - `PLAN.md`
+  - `BUILDLOG.md`
   - `src/context_ir/eval_providers.py`
   - `tests/test_eval_signal_getattr_probe.py`
   - `tests/test_eval_signal_globals_probe.py`
@@ -60,7 +58,7 @@ Active workspace release unit:
   - `tests/test_eval_signal_smoke_e.py`
   - `tests/test_eval_signal_vars_zero_probe.py`
 
-Workspace behavior:
+Pushed behavior:
 
 - `context_ir_default_local_python_subprocess` now admits exactly
   `oracle_signal_getattr_probe` in addition to previously pushed supported
@@ -78,37 +76,11 @@ Workspace behavior:
 - run-spec dispatch works through a temporary single-provider run spec using
   `context_ir_default_local_python_subprocess`
 
-Execution-lane validation passed:
+Preserved holds:
 
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py -q`
-  passed with `8` tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_signal_metaclass_behavior_probe.py tests/test_eval_signal_vars_zero_probe.py -q -k fails_closed_for_other_tasks`
-  passed with `4` selected tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units -q`
-  passed after updating only `FULL_REPO_TASK3_CONFIDENCE` to
-  `0.0017107796645417438`
-- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
-- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/` passed
-- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
-
-Control review found no findings and reran focused validation:
-
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py -q`
-  passed with `8` tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_signal_metaclass_behavior_probe.py tests/test_eval_signal_vars_zero_probe.py -q -k "default_subprocess_provider_fails_closed"`
-  passed with `5` selected tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units -q`
-  passed
-- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
-- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/` passed
-- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
-- `git diff --check` passed
-
-Preservation locks:
-
-- no eval asset or run-spec diff
-- no `src/context_ir/runtime_probe_execution.py` diff
-- no `src/context_ir/runtime_probe_worker.py` diff
+- no eval asset or run-spec changes
+- no `src/context_ir/runtime_probe_execution.py` change
+- no `src/context_ir/runtime_probe_worker.py` change
 - no dynamic-import, true/false `hasattr`, literal `getattr`, literal
   `hasattr`, `setattr`, `delattr`, `exec`, `eval`, metaclass, `vars`, `dir`,
   `globals`, or `locals` contract reopening
@@ -116,73 +88,15 @@ Preservation locks:
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
 
-Latest pushed routing state remains:
-
-- `95adb9235e09213aeac286e978da4246ad3f7342` on `main` and `origin/main`
-- latest pushed routing commit: `95adb92 Sync exact getattr replay push routing`
-- latest substantive release:
-
-- `026c33b Add exact getattr replay contract`
-- pushed to `origin/main` after explicit Ryan authorization
-- release unit:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/runtime_probe_execution.py`
-  - `src/context_ir/runtime_probe_worker.py`
-  - `tests/test_runtime_probe_execution.py`
-  - `tests/test_runtime_probe_worker.py`
-  - `tests/test_eval_signal_smoke_e.py`
-
-Pushed behavior:
-
-- exact fixture/snapshot-scoped pre-observation replay contract for
-  `oracle_signal_getattr_probe@default-local-python:v1`
-- exact boundary `getattr(obj, name)`, unsupported unit
-  `unsupported:call:main.py:2:11`, source site `main.py:2:11-2:29`,
-  `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
-  `reflective_builtin:getattr/2`, replay target `main.probe_attribute`, and
-  replay selector
-  `call:main.probe_attribute:reflective_builtin:getattr/2@main.py:2:11:2:29`
-- exact replay fields `object_type=builtins.int` and
-  `attribute_name=bit_length`
-- default local worker calls `main.probe_attribute(1, "bit_length")` for this
-  exact contract and emits normalized payload `lookup_outcome=returned_value`
-- `observed_replay_inputs` remains absent/empty
-- wrong snapshot or drifted replay fields fail closed before accepted
-  observation
-
-Pushed-release preservation locks before this workspace slice:
-
-- no `src/context_ir/eval_providers.py` change
-- no provider-map support for `oracle_signal_getattr_probe`
-- no provider support-message expectation updates
-- no eval asset or run-spec changes
-- no dynamic-import contract reopening
-- no pushed true/false `hasattr` contract reopening
-- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
-  Task 4, public/demo, benchmark, latency, production, or generalized replay
-  framework change
-
 Release gates passed before push: control review, release-unit audit, full
 regression, and commit-gating. Full regression passed with `ruff check`,
-`ruff format --check`, `mypy --strict`, and `2043` pytest tests.
+`ruff format --check`, `mypy --strict`, and `2045` pytest tests.
 
-Release-unit audit found no findings and confirmed the exact 10-file boundary,
-no staged files, no eval asset or run-spec diff, no runtime worker/execution
-diff, no public docs or architecture docs diff, no API/MCP/export/schema/
-scoring/compiler/optimizer/winner-selection diff, and the Task 3 scalar-only
-change.
-
-Full regression passed with `ruff check`, `ruff format --check`,
-`mypy --strict`, and `2045` pytest tests. Commit-gating passed with exact
-10-file boundary, no staged files, `HEAD` equal to `origin/main`, no eval asset
-or run-spec diff, no runtime worker/execution diff, no public docs or
-architecture docs diff, no API/MCP/export/schema/scoring/compiler/optimizer/
-winner-selection diff, and the Task 3 scalar-only change.
-
-Next control action: if git shows the exact 10-file unit is not yet locally
-committed, stage and locally commit it. If git shows it is locally committed
-but not pushed, confirm explicit Ryan push authorization before pushing.
+Next control action: choose the next authorized slice from current git state.
+Do not reopen the pushed `getattr(obj, name)` runtime contract or provider-map
+support unless a regression is found. The likely next narrow candidate should
+be selected from the remaining unsupported non-dynamic probes only after a
+fresh tranche-selection check.
 
 Earlier pushed release state follows for historical routing.
 

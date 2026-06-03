@@ -2,6 +2,64 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-03 -- Exact Getattr Default-Local Provider Pushed
+
+- Pushed release:
+  - `aab32d0 Add getattr default-local provider support`
+- Push target:
+  - `origin/main`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Release gates passed before push:
+  - findings-first control review
+  - release-unit audit
+  - full regression
+  - commit-gating
+- Full regression passed with:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`, with `2045`
+    tests passing
+- Pushed behavior:
+  - `context_ir_default_local_python_subprocess` now supports exactly
+    `oracle_signal_getattr_probe` beyond previously pushed supported fixtures
+  - provider fixture uses `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:getattr/2`, boundary and miss evidence
+    `getattr(obj, name)`, unsupported unit `unsupported:call:main.py:2:11`,
+    replay target `main.probe_attribute`, snapshot id
+    `oracle_signal_getattr_probe@default-local-python:v1`, replay fields
+    `object_type=builtins.int` and `attribute_name=bit_length`, and runtime
+    payload `lookup_outcome=returned_value`
+  - provider-owned runtime provenance remains additive; selected-unit primary
+    truth remains `unsupported/opaque`
+  - `observed_replay_inputs` remains empty and absent from provenance detail
+- Preserved holds:
+  - no eval asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` change
+  - no `src/context_ir/runtime_probe_worker.py` change
+  - no dynamic-import, true/false `hasattr`, literal `getattr`, literal
+    `hasattr`, `setattr`, `delattr`, `exec`, `eval`, metaclass, `vars`,
+    `dir`, `globals`, or `locals` contract reopening
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/
+    winner-selection, Task 4, public/demo, benchmark, latency, production, or
+    generalized replay framework change
+- Current routing:
+  - no workspace release unit is active after the push
+  - next control action is to choose the next authorized slice from current git
+    state, likely after a fresh tranche-selection check over the remaining
+    unsupported non-dynamic probes
+- Acceptance status: first-pass pushed.
+
 ## 2026-06-03 -- Exact Getattr Default-Local Provider Commit-Gating Passed
 
 - Ran commit-gating over the exact 10-file unit after full regression
