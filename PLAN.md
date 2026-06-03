@@ -40,79 +40,61 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only exact `getattr(obj, name)` replay-contract pre-slice is
-implemented, control-review accepted, release-unit audit-cleared, and
-full-regression-cleared, and commit-gating-cleared. Live stage, local commit,
-and push state must be verified from git.
+No workspace release unit is currently active.
 
-Release unit currently in the workspace:
+Latest pushed release:
 
-- `PLAN.md`
-- `BUILDLOG.md`
-- `src/context_ir/runtime_probe_execution.py`
-- `src/context_ir/runtime_probe_worker.py`
-- `tests/test_runtime_probe_execution.py`
-- `tests/test_runtime_probe_worker.py`
-- `tests/test_eval_signal_smoke_e.py`
+- `026c33b Add exact getattr replay contract`
+- pushed to `origin/main` after explicit Ryan authorization
+- release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
 
-Implemented behavior:
+Pushed behavior:
 
-- adds an exact fixture/snapshot-scoped pre-observation replay contract for
+- exact fixture/snapshot-scoped pre-observation replay contract for
   `oracle_signal_getattr_probe@default-local-python:v1`
-- the contract is exact to boundary `getattr(obj, name)`, unsupported unit
+- exact boundary `getattr(obj, name)`, unsupported unit
   `unsupported:call:main.py:2:11`, source site `main.py:2:11-2:29`,
   `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
   `reflective_builtin:getattr/2`, replay target `main.probe_attribute`, and
   replay selector
   `call:main.probe_attribute:reflective_builtin:getattr/2@main.py:2:11:2:29`
-- exact replay fields are `object_type=builtins.int` and
+- exact replay fields `object_type=builtins.int` and
   `attribute_name=bit_length`
-- the default local worker calls `main.probe_attribute(1, "bit_length")` for
-  this exact contract and emits normalized payload
-  `lookup_outcome=returned_value`
+- default local worker calls `main.probe_attribute(1, "bit_length")` for this
+  exact contract and emits normalized payload `lookup_outcome=returned_value`
 - `observed_replay_inputs` remains absent/empty
 - wrong snapshot or drifted replay fields fail closed before accepted
   observation
-- existing direct-literal `getattr(obj, "bit_length")` and pushed true/false
-  `hasattr(obj, name)` exact contracts remain covered by focused tests
 
-Validation run for the workspace return:
+Preserved holds:
 
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "getattr and exact"`
-  passed with `31` selected tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "getattr and exact"`
-  passed with `45` selected tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "hasattr and exact"`
-  passed with `22` selected tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "hasattr and exact"`
-  passed with `37` selected tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py tests/test_runtime_probe_worker.py -q -k "direct_literal_runtime_acquisition"`
-  passed with `2` selected tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py -q`
-  passed with `6` tests
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`
-  passed with `1` selected test after updating only the allowed deterministic
-  Task 3 confidence scalar; selected units/order, document hash, total tokens,
-  warnings, warning IDs, probe behavior, and warning-call count remained locked
-- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
-- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/` passed
-- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
+- no `src/context_ir/eval_providers.py` change
+- no provider-map support for `oracle_signal_getattr_probe`
+- no provider support-message expectation updates
+- no eval asset or run-spec changes
+- no dynamic-import contract reopening
+- no pushed true/false `hasattr` contract reopening
+- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+  Task 4, public/demo, benchmark, latency, production, or generalized replay
+  framework change
 
-Preservation locks: no `src/context_ir/eval_providers.py` change, no provider
-map support for `oracle_signal_getattr_probe`, no provider support-message
-expectation updates, no eval asset or run-spec changes, no dynamic-import
-contract reopening, no pushed true/false `hasattr` contract reopening, no
-public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection, Task
-4, public/demo, benchmark, latency, production, or generalized replay framework
-change.
+Release gates passed before push: control review, release-unit audit, full
+regression, and commit-gating. Full regression passed with `ruff check`,
+`ruff format --check`, `mypy --strict`, and `2043` pytest tests.
 
-Control review and release-unit audit found no findings, and full regression
-and commit-gating passed. Next control action: if git shows this exact
-seven-file unit is not yet locally committed, stage and locally commit it. If
-git shows it is locally committed but not pushed, confirm explicit Ryan push
-authorization before pushing.
+Next control action: choose the next authorized slice. The likely next narrow
+candidate is exact default-local provider-map support for
+`oracle_signal_getattr_probe`, but it must be reviewed against current git
+state before issuing any implementation prompt.
 
-Previous pushed release state follows for historical routing.
+Earlier pushed release state follows for historical routing.
 
 Exact default-local Python subprocess provider support for
 `oracle_signal_hasattr_false_probe` is implemented, accepted after one narrow

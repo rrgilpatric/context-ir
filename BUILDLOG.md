@@ -2,6 +2,57 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-02 -- Exact Getattr Replay Contract Pushed
+
+- Pushed release:
+  - `026c33b Add exact getattr replay contract`
+- Push target:
+  - `origin/main`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release gates passed before push:
+  - findings-first control review
+  - release-unit audit
+  - full regression
+  - commit-gating
+- Full regression passed with:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`, with `2043`
+    tests passing
+- Pushed behavior:
+  - exact fixture/snapshot-scoped default-local replay contract for
+    `oracle_signal_getattr_probe@default-local-python:v1`
+  - boundary `getattr(obj, name)`, unsupported unit
+    `unsupported:call:main.py:2:11`, replay target `main.probe_attribute`,
+    selector
+    `call:main.probe_attribute:reflective_builtin:getattr/2@main.py:2:11:2:29`,
+    and replay fields `object_type=builtins.int` and
+    `attribute_name=bit_length`
+  - default local worker calls `main.probe_attribute(1, "bit_length")` and
+    observes `lookup_outcome=returned_value`
+  - wrong snapshot or drifted replay fields fail closed
+- Preserved holds:
+  - no `src/context_ir/eval_providers.py` change
+  - no provider-map support for `oracle_signal_getattr_probe`
+  - no eval asset or run-spec changes
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/
+    winner-selection, Task 4, public/demo, benchmark, latency, production, or
+    generalized replay framework change
+- Current routing:
+  - no workspace release unit is active after the push
+  - next control action is to choose the next authorized slice from current git
+    state; the likely next narrow candidate is exact default-local provider-map
+    support for `oracle_signal_getattr_probe`
+- Acceptance status: first-pass pushed.
+
 ## 2026-06-02 -- Exact Getattr Replay Contract Commit-Gating Passed
 
 - Ran commit-gating over the exact seven-file unit after full regression
