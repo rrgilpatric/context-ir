@@ -138,6 +138,13 @@ _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SNAPSHOT_KIND = "eval_fixture"
 _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SNAPSHOT_ID = (
     "oracle_signal_getattr_probe@default-local-python:v1"
 )
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_MISSING_ATTRIBUTE_SNAPSHOT_KIND = "eval_fixture"
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_MISSING_ATTRIBUTE_SNAPSHOT_ID = (
+    "oracle_signal_getattr_attribute_error_probe@default-local-python:v1"
+)
+_RUNTIME_PROBE_REFLECTIVE_GETATTR_MISSING_ATTRIBUTE_NAME = (
+    "definitely_missing_attribute"
+)
 _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_SOURCE_END_COLUMN = 37
 _RUNTIME_PROBE_REFLECTIVE_GETATTR_LITERAL_BIT_LENGTH_REPLAY_TARGET_SEED = (
     "main.probe_literal_attribute"
@@ -497,6 +504,44 @@ _EXACT_REPLAY_GETATTR_NAME_CONTRACT = _RuntimeProbeExactReplayContract(
         ),
     ),
 )
+_EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT = _RuntimeProbeExactReplayContract(
+    contract_id="reflective_builtin:getattr/2:name-variable-missing-attribute",
+    family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+    form_label=_RUNTIME_PROBE_REFLECTIVE_GETATTR_LOCAL_PYTHON_FORM_LABEL,
+    subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+    subject_id=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SUBJECT_ID,
+    reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+    boundary_text=_RUNTIME_PROBE_REFLECTIVE_GETATTR_BOUNDARY_TEXT,
+    source_file_path=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_FILE_PATH
+    ),
+    source_start_line=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_LINE
+    ),
+    source_start_column=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_START_COLUMN
+    ),
+    source_end_line=_RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_END_LINE,
+    source_end_column=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SOURCE_END_COLUMN
+    ),
+    replay_target_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_TARGET_SEED
+    ),
+    replay_selector_seed=(
+        _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_REPLAY_SELECTOR_SEED
+    ),
+    replay_payload_fields=(
+        (
+            "object_type",
+            _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_OBJECT_TYPE,
+        ),
+        (
+            "attribute_name",
+            _RUNTIME_PROBE_REFLECTIVE_GETATTR_MISSING_ATTRIBUTE_NAME,
+        ),
+    ),
+)
 _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT = _RuntimeProbeExactReplayContract(
     contract_id="reflective_builtin:getattr/2:literal-bit_length",
     family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
@@ -631,6 +676,7 @@ _RUNTIME_PROBE_EXACT_REPLAY_CONTRACTS: tuple[
     _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
     _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
+    _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
     _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
@@ -664,6 +710,15 @@ _RUNTIME_PROBE_EXACT_REPLAY_CONTRACT_SNAPSHOT_SCOPES: tuple[
         ),
         repository_snapshot_id=(
             _RUNTIME_PROBE_REFLECTIVE_GETATTR_INT_BIT_LENGTH_SNAPSHOT_ID
+        ),
+    ),
+    _RuntimeProbeExactReplayContractSnapshotScope(
+        contract=_EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
+        repository_snapshot_kind=(
+            _RUNTIME_PROBE_REFLECTIVE_GETATTR_MISSING_ATTRIBUTE_SNAPSHOT_KIND
+        ),
+        repository_snapshot_id=(
+            _RUNTIME_PROBE_REFLECTIVE_GETATTR_MISSING_ATTRIBUTE_SNAPSHOT_ID
         ),
     ),
 )
@@ -5037,6 +5092,7 @@ def _is_reflective_getattr_int_bit_length_probe_request(
     contract = _runtime_probe_exact_replay_contract_for_request(request)
     return contract in (
         _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
         _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
     )
 

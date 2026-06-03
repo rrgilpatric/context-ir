@@ -40,7 +40,61 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Workspace-only execution-lane return is control-reviewed and accepted.
+
+Current workspace slice:
+
+- Added snapshot-scoped exact default-local replay support for
+  `oracle_signal_getattr_attribute_error_probe@default-local-python:v1` only
+- Proposed release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Contract added:
+  - boundary/source identity: `getattr(obj, name)`
+  - source span: `main.py:2:11-2:29`
+  - unsupported unit: `unsupported:call:main.py:2:11`
+  - family/form: `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:getattr/2`
+  - replay target: `main.probe_attribute`
+  - snapshot id:
+    `oracle_signal_getattr_attribute_error_probe@default-local-python:v1`
+  - replay fields: `object_type=builtins.int` and
+    `attribute_name=definitely_missing_attribute`
+  - normalized payload: `lookup_outcome=raised_attribute_error`
+- The existing pushed `oracle_signal_getattr_probe` returned-value replay still
+  selects `attribute_name=bit_length`
+- Runtime provenance remains additive; selected-unit primary truth remains
+  `unsupported/opaque`; `observed_replay_inputs` remains empty/absent
+
+Release state:
+
+- workspace-only accepted
+- release-unit-audit-cleared
+- full-regression-cleared
+- commit-gating-cleared
+- not staged, committed, or pushed
+
+Current holds:
+
+- no provider-map support
+- no `src/context_ir/eval_providers.py` changes
+- no `evals/` asset or run-spec changes
+- no dynamic-import, true/false `hasattr`, literal `getattr`, literal
+  `hasattr`, `setattr`, `delattr`, `exec`, `eval`, metaclass, `vars`, `dir`,
+  `globals`, or `locals` contract reopening
+- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+  Task 4, public/demo, benchmark, latency, production, or generalized replay
+  framework change
+
+Next control action: stage and locally commit this exact seven-file release
+unit. Push still requires explicit Ryan authorization. Provider-map support for
+`oracle_signal_getattr_attribute_error_probe` remains out of scope until this
+contract slice is committed and pushed.
 
 Latest pushed release:
 
@@ -92,11 +146,9 @@ Release gates passed before push: control review, release-unit audit, full
 regression, and commit-gating. Full regression passed with `ruff check`,
 `ruff format --check`, `mypy --strict`, and `2045` pytest tests.
 
-Next control action: choose the next authorized slice from current git state.
-Do not reopen the pushed `getattr(obj, name)` runtime contract or provider-map
-support unless a regression is found. The likely next narrow candidate should
-be selected from the remaining unsupported non-dynamic probes only after a
-fresh tranche-selection check.
+Next control action from this pushed-release block has been superseded by the
+workspace-only `oracle_signal_getattr_attribute_error_probe` execution-lane
+return recorded in the canonical active release-state block above.
 
 Earlier pushed release state follows for historical routing.
 

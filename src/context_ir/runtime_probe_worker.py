@@ -20,6 +20,7 @@ from typing import NoReturn, TextIO, TypeAlias, cast
 
 from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
     _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
     _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
@@ -7793,21 +7794,19 @@ def _runtime_probe_reflective_getattr_exact_replay_inputs(
 ) -> Mapping[str, str] | None:
     """Return exact replay inputs for accepted getattr pilots, if present."""
     _validate_runtime_probe_reflective_getattr_worker_request(request)
-    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
-        request.request_replay_payload_fields
-    )
-    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
-        replay_fields_by_key
-    )
-    if contract not in (
-        _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
-        _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
-    ):
-        return None
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
         field_name="request_replay_payload_fields",
     )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_fields_by_key
+    )
+    if contract not in (
+        _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
+        _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+    ):
+        return None
     _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
         exact_fields_by_key,
         contract=contract,
@@ -7824,7 +7823,10 @@ def _runtime_probe_reflective_getattr_target_args(
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         exact_replay_inputs
     )
-    if contract is _EXACT_REPLAY_GETATTR_NAME_CONTRACT:
+    if contract in (
+        _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
+    ):
         return (
             1,
             exact_replay_inputs[_REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY],
@@ -7901,13 +7903,39 @@ def _runtime_probe_reflective_getattr_captured_lookup_outcome(
         if target_failure is not None:
             raise source_restore_failure from target_failure
         raise source_restore_failure
-    if target_failure is not None:
+    if (
+        target_failure is not None
+        and not _is_runtime_probe_reflective_getattr_expected_attribute_error(
+            target_failure,
+            capture,
+            exact_replay_inputs=exact_replay_inputs,
+        )
+    ):
         _raise_runtime_probe_reflective_getattr_target_failure(target_failure)
 
     return _runtime_probe_reflective_getattr_capture_lookup_outcome(
         capture,
         exact_replay_inputs=exact_replay_inputs,
     )
+
+
+def _is_runtime_probe_reflective_getattr_expected_attribute_error(
+    error: BaseException,
+    capture: _RuntimeProbeReflectiveGetattrCapture,
+    *,
+    exact_replay_inputs: Mapping[str, str] | None,
+) -> bool:
+    """Return whether an AttributeError is the approved exact replay outcome."""
+    if not isinstance(error, AttributeError):
+        return False
+    if exact_replay_inputs is None:
+        return False
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_replay_inputs
+    )
+    return contract is _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT and tuple(
+        capture.captured_lookup_outcomes
+    ) == (_REFLECTIVE_BUILTIN_GETATTR_WORKER_RAISED_ATTRIBUTE_ERROR,)
 
 
 def _runtime_probe_reflective_getattr_capture_lookup_outcome(
@@ -9913,6 +9941,7 @@ def _validate_runtime_probe_reflective_getattr_exact_replay_inputs_if_needed(
         exact_fields_by_key
     )
     if contract not in (
+        _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
         _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
         _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
     ):
@@ -9922,6 +9951,7 @@ def _validate_runtime_probe_reflective_getattr_exact_replay_inputs_if_needed(
         if any(
             candidate
             in (
+                _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
                 _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
                 _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
             )
@@ -9967,7 +9997,7 @@ def _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
     ):
         raise ValueError(
             "runtime probe reflective builtin getattr worker exact replay inputs "
-            "must be object_type=builtins.int and attribute_name=bit_length"
+            "must match one accepted object_type and attribute_name contract"
         )
 
 

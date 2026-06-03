@@ -368,6 +368,9 @@ _HASATTR_FALSE_DEFAULT_LOCAL_SNAPSHOT_ID = (
 _GETATTR_DEFAULT_LOCAL_SNAPSHOT_ID = (
     "oracle_signal_getattr_probe@default-local-python:v1"
 )
+_GETATTR_ATTRIBUTE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_getattr_attribute_error_probe@default-local-python:v1"
+)
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -437,6 +440,14 @@ def _getattr_snapshot_basis() -> RepositorySnapshotBasis:
     return _snapshot_basis(
         snapshot_kind="eval_fixture",
         snapshot_id=_GETATTR_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _getattr_attribute_error_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact name-variable getattr AttributeError fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_GETATTR_ATTRIBUTE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
     )
 
 
@@ -8514,21 +8525,29 @@ def test_reflective_getattr_worker_request_materializes_replay_contract() -> Non
 
 
 @pytest.mark.parametrize(
-    ("source_request", "repository_snapshot_basis"),
+    ("source_request", "repository_snapshot_basis", "expected_attribute_name"),
     (
         (
             _reflective_getattr_exact_replay_input_request(),
             _getattr_snapshot_basis(),
+            "bit_length",
+        ),
+        (
+            _reflective_getattr_exact_replay_input_request(),
+            _getattr_attribute_error_snapshot_basis(),
+            "definitely_missing_attribute",
         ),
         (
             _reflective_getattr_literal_exact_replay_input_request(),
             _snapshot_basis(),
+            "bit_length",
         ),
     ),
 )
 def test_reflective_getattr_worker_request_materializes_exact_replay_inputs(
     source_request: runtime_probe_requests.RuntimeProbeRequest,
     repository_snapshot_basis: RepositorySnapshotBasis,
+    expected_attribute_name: str,
 ) -> None:
     """The exact getattr pilots keep object and attribute replay inputs."""
     payload = _valid_worker_payload_for_request(
@@ -8550,7 +8569,7 @@ def test_reflective_getattr_worker_request_materializes_exact_replay_inputs(
     assert request.replay_selector_seed == source_request.replay_selector_seed
     assert request.request_replay_payload_fields[-2:] == (
         _field("object_type", "builtins.int"),
-        _field("attribute_name", "bit_length"),
+        _field("attribute_name", expected_attribute_name),
     )
 
 
@@ -8626,6 +8645,25 @@ def test_reflective_getattr_worker_request_rejects_exact_wrong_snapshot() -> Non
         )
 
 
+def test_reflective_getattr_worker_request_rejects_attribute_error_dirty_snapshot() -> (
+    None
+):
+    """The exact AttributeError getattr contract fails closed for dirty snapshots."""
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_exact_replay_input_request(),
+        repository_snapshot_basis=_snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_GETATTR_ATTRIBUTE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
+            is_dirty_worktree=True,
+        ),
+    )
+
+    with pytest.raises(ValueError, match="exact replay inputs"):
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request(
+            payload
+        )
+
+
 @pytest.mark.parametrize(
     ("replay_key", "replay_value", "error_match"),
     (
@@ -8643,6 +8681,10 @@ def test_reflective_getattr_worker_request_rejects_exact_wrong_snapshot() -> Non
         (
             _reflective_getattr_exact_replay_input_request(),
             _getattr_snapshot_basis(),
+        ),
+        (
+            _reflective_getattr_exact_replay_input_request(),
+            _getattr_attribute_error_snapshot_basis(),
         ),
         (
             _reflective_getattr_literal_exact_replay_input_request(),
@@ -8797,6 +8839,56 @@ def test_reflective_getattr_worker_concrete_observer_consumes_exact_replay_input
     success_response = materialize_success_response(observation)
     assert success_response.normalized_payload == (
         _field("lookup_outcome", "returned_value"),
+    )
+    assert success_response.observed_replay_inputs == ()
+    assert builtins.getattr is original_getattr
+
+
+def test_reflective_getattr_worker_concrete_observer_consumes_attribute_error_replay(
+    tmp_path: Path,
+) -> None:
+    """The exact AttributeError pilot calls ``main.probe_attribute`` with the miss."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_attribute(obj: object, name: str) -> object:\n"
+            "    assert obj == 1\n"
+            '    assert name == "definitely_missing_attribute"\n'
+            "    return getattr(obj, name)\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+        repository_snapshot_basis=_getattr_attribute_error_snapshot_basis(),
+    )
+    materialize_request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_getattr_worker_request
+    )
+    request = materialize_request(payload)
+    original_getattr = builtins.getattr
+    sys.modules.pop("main", None)
+
+    try:
+        observation = _observe_reflective_getattr_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+
+    assert observation.lookup_outcome == "raised_attribute_error"
+    assert observation.request_replay_payload_fields[-2:] == (
+        _field("object_type", "builtins.int"),
+        _field("attribute_name", "definitely_missing_attribute"),
+    )
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_GETATTR_SUCCESS_RESPONSE_MATERIALIZER,
+    )
+    success_response = materialize_success_response(observation)
+    assert success_response.normalized_payload == (
+        _field("lookup_outcome", "raised_attribute_error"),
     )
     assert success_response.observed_replay_inputs == ()
     assert builtins.getattr is original_getattr
@@ -12769,6 +12861,54 @@ def test_reflective_getattr_worker_default_subprocess_observes_exact_replay_inpu
             {
                 "key": "lookup_outcome",
                 "value": "returned_value",
+            },
+        ],
+    }
+
+
+def test_reflective_getattr_worker_default_subprocess_observes_attribute_error_replay(
+    tmp_path: Path,
+) -> None:
+    """The real worker consumes the exact missing-attribute getattr replay pair."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_attribute(obj: object, name: str) -> object:\n"
+            "    assert obj == 1\n"
+            '    assert name == "definitely_missing_attribute"\n'
+            "    return getattr(obj, name)\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_getattr_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+        repository_snapshot_basis=_getattr_attribute_error_snapshot_basis(),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    assert json.loads(completed.stdout) == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "lookup_outcome",
+                "value": "raised_attribute_error",
             },
         ],
     }
