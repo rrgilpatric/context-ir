@@ -21,6 +21,7 @@ from typing import NoReturn, TextIO, TypeAlias, cast
 from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
     _EXACT_REPLAY_HASATTR_FALSE_CONTRACT,
     _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
@@ -7790,7 +7791,7 @@ def _validate_runtime_probe_reflective_getattr_target_callable(
 def _runtime_probe_reflective_getattr_exact_replay_inputs(
     request: RuntimeProbeLocalPythonReflectiveGetattrWorkerRequest,
 ) -> Mapping[str, str] | None:
-    """Return exact literal replay inputs for the accepted pilot, if present."""
+    """Return exact replay inputs for accepted getattr pilots, if present."""
     _validate_runtime_probe_reflective_getattr_worker_request(request)
     replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
         request.request_replay_payload_fields
@@ -7798,7 +7799,10 @@ def _runtime_probe_reflective_getattr_exact_replay_inputs(
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
     )
-    if contract is not _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT:
+    if contract not in (
+        _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+    ):
         return None
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
@@ -7814,9 +7818,22 @@ def _runtime_probe_reflective_getattr_exact_replay_inputs(
 def _runtime_probe_reflective_getattr_target_args(
     exact_replay_inputs: Mapping[str, str] | None,
 ) -> tuple[object, ...]:
-    """Return target arguments for the exact literal pilot, otherwise none."""
+    """Return target arguments for exact getattr pilots, otherwise none."""
     if exact_replay_inputs is None:
         return ()
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_replay_inputs
+    )
+    if contract is _EXACT_REPLAY_GETATTR_NAME_CONTRACT:
+        return (
+            1,
+            exact_replay_inputs[_REFLECTIVE_BUILTIN_GETATTR_ATTRIBUTE_NAME_REPLAY_KEY],
+        )
+    if contract is not _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT:
+        raise ValueError(
+            "runtime probe reflective builtin getattr worker exact replay inputs "
+            "are unsupported"
+        )
     return (1,)
 
 
@@ -9887,16 +9904,34 @@ def _validate_runtime_probe_reflective_getattr_exact_replay_inputs_if_needed(
     *,
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject drifted request replay inputs for the exact literal getattr pilot."""
-    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
-        replay_fields_by_key
-    )
-    if contract is not _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT:
-        return
+    """Reject drifted request replay inputs for exact getattr pilots."""
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
         field_name="request_replay_payload_fields",
     )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_fields_by_key
+    )
+    if contract not in (
+        _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+    ):
+        candidates = _runtime_probe_exact_replay_contract_candidates_for_replay_fields(
+            replay_fields_by_key
+        )
+        if any(
+            candidate
+            in (
+                _EXACT_REPLAY_GETATTR_NAME_CONTRACT,
+                _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT,
+            )
+            for candidate in candidates
+        ):
+            raise ValueError(
+                "runtime probe reflective builtin getattr worker exact replay "
+                "inputs must match one accepted exact replay contract"
+            )
+        return
     _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
         exact_fields_by_key,
         contract=contract,
@@ -9920,7 +9955,7 @@ def _validate_runtime_probe_reflective_getattr_exact_replay_inputs(
         _EXACT_REPLAY_GETATTR_LITERAL_CONTRACT
     ),
 ) -> None:
-    """Require the exact literal pilot to carry only the accepted replay pair."""
+    """Require exact getattr pilots to carry only the accepted replay pair."""
     if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
         raise ValueError(
             "runtime probe reflective builtin getattr worker exact replay inputs "
