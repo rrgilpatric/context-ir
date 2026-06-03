@@ -73,6 +73,9 @@ _HASATTR_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
 _HASATTR_FALSE_PROBE_TASK_ID = "oracle_signal_hasattr_false_probe"
 _HASATTR_FALSE_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _HASATTR_FALSE_RUNTIME_PAYLOAD = (("attribute_present", "false"),)
+_GETATTR_PROBE_TASK_ID = "oracle_signal_getattr_probe"
+_GETATTR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_GETATTR_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_value"),)
 _HASATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_hasattr_literal_probe"
 _HASATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _HASATTR_LITERAL_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
@@ -624,6 +627,20 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         runtime_replay_input_tail=(
             ("object_type", "builtins.int"),
             ("attribute_name", "definitely_missing_attribute"),
+        ),
+    ),
+    _GETATTR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_GETATTR_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="getattr(obj, name)",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:getattr/2",
+        boundary_text="getattr(obj, name)",
+        replay_target_seed="main.probe_attribute",
+        snapshot_id="oracle_signal_getattr_probe@default-local-python:v1",
+        runtime_payload=_GETATTR_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(
+            ("object_type", "builtins.int"),
+            ("attribute_name", "bit_length"),
         ),
     ),
     _HASATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
@@ -1554,6 +1571,7 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_false_probe, "
             "oracle_signal_hasattr_literal_probe, "
+            "oracle_signal_getattr_probe, "
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
             "oracle_signal_dynamic_import_root_probe, "
