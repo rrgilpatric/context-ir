@@ -40,13 +40,13 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only execution-lane return is control-reviewed and accepted.
+No workspace release unit is currently active.
 
-Current workspace slice:
+Latest pushed release:
 
-- Added snapshot-scoped exact default-local replay support for
-  `oracle_signal_getattr_attribute_error_probe@default-local-python:v1` only
-- Proposed release-unit files:
+- `64a0fea Add exact getattr AttributeError replay`
+- pushed to `origin/main` after explicit Ryan authorization
+- release unit:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_execution.py`
@@ -54,6 +54,11 @@ Current workspace slice:
   - `tests/test_runtime_probe_execution.py`
   - `tests/test_runtime_probe_worker.py`
   - `tests/test_eval_signal_smoke_e.py`
+
+Pushed behavior:
+
+- Added snapshot-scoped exact default-local replay support for
+  `oracle_signal_getattr_attribute_error_probe@default-local-python:v1` only
 - Contract added:
   - boundary/source identity: `getattr(obj, name)`
   - source span: `main.py:2:11-2:29`
@@ -71,15 +76,11 @@ Current workspace slice:
 - Runtime provenance remains additive; selected-unit primary truth remains
   `unsupported/opaque`; `observed_replay_inputs` remains empty/absent
 
-Release state:
+Release gates passed before push: control review, release-unit audit, full
+regression, and commit-gating. Full regression passed with `ruff check`,
+`ruff format --check`, `mypy --strict`, and `2060` pytest tests.
 
-- workspace-only accepted
-- release-unit-audit-cleared
-- full-regression-cleared
-- commit-gating-cleared
-- not staged, committed, or pushed
-
-Current holds:
+Preserved holds:
 
 - no provider-map support
 - no `src/context_ir/eval_providers.py` changes
@@ -91,12 +92,15 @@ Current holds:
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
 
-Next control action: stage and locally commit this exact seven-file release
-unit. Push still requires explicit Ryan authorization. Provider-map support for
-`oracle_signal_getattr_attribute_error_probe` remains out of scope until this
-contract slice is committed and pushed.
+Next control action: choose the next authorized slice from current git state.
+The likely next narrow candidate is provider-map support for
+`oracle_signal_getattr_attribute_error_probe`, but it must be selected from
+fresh repo reality and should not reopen the pushed exact replay contract
+unless a regression is found.
 
-Latest pushed release:
+Earlier pushed release state follows for historical routing.
+
+Previous pushed release:
 
 - `aab32d0 Add getattr default-local provider support`
 - pushed to `origin/main` after explicit Ryan authorization

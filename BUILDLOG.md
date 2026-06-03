@@ -2,6 +2,66 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-03 -- Exact Getattr AttributeError Replay Pushed
+
+- Pushed release:
+  - `64a0fea Add exact getattr AttributeError replay`
+- Push target:
+  - `origin/main`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release gates passed before push:
+  - findings-first control review
+  - release-unit audit
+  - full regression
+  - commit-gating
+- Full regression passed with:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`, with `2060`
+    tests passing
+- Pushed behavior:
+  - snapshot-scoped exact default-local replay support for
+    `oracle_signal_getattr_attribute_error_probe@default-local-python:v1`
+  - contract uses boundary/source identity `getattr(obj, name)`, source span
+    `main.py:2:11-2:29`, unsupported unit `unsupported:call:main.py:2:11`,
+    family/form `RuntimeProbeFamily.REFLECTIVE_BUILTIN` /
+    `reflective_builtin:getattr/2`, replay target `main.probe_attribute`,
+    replay fields `object_type=builtins.int` and
+    `attribute_name=definitely_missing_attribute`, and normalized payload
+    `lookup_outcome=raised_attribute_error`
+  - existing pushed `oracle_signal_getattr_probe` returned-value replay still
+    uses `attribute_name=bit_length`
+  - runtime provenance remains additive; selected-unit primary truth remains
+    `unsupported/opaque`; `observed_replay_inputs` remains empty/absent
+- Preserved holds:
+  - no provider-map support for
+    `oracle_signal_getattr_attribute_error_probe`
+  - no `src/context_ir/eval_providers.py` change
+  - no `evals/` asset or run-spec change
+  - no dynamic-import, true/false `hasattr`, literal `getattr`, literal
+    `hasattr`, `setattr`, `delattr`, `exec`, `eval`, metaclass, `vars`,
+    `dir`, `globals`, or `locals` contract reopening
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/
+    winner-selection, Task 4, public/demo, benchmark, latency, production, or
+    generalized replay framework change
+- Current routing:
+  - no workspace release unit is active after the push
+  - next control action is to choose the next authorized slice from current git
+    state
+  - likely next narrow candidate is provider-map support for
+    `oracle_signal_getattr_attribute_error_probe`, but it must be selected from
+    fresh repo reality and should not reopen the pushed exact replay contract
+    unless a regression is found
+- Acceptance status: first-pass pushed.
+
 ## 2026-06-03 -- Exact Getattr AttributeError Replay Commit-Gating Passed
 
 - Ran commit-gating over the exact seven-file unit after full regression
