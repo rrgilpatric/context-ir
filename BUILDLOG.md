@@ -2,6 +2,60 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-03 -- Exact Getattr AttributeError Provider Support Pushed
+
+- Pushed the exact default-local provider-support release to `origin/main` after
+  explicit Ryan authorization.
+- Pushed release commit:
+  - `7b71d5c Add getattr AttributeError default provider support`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Release gates passed before push:
+  - control review: no findings
+  - release-unit audit: no findings
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`,
+    and `2063` pytest tests passed
+  - commit-gating: no findings
+- Pushed behavior:
+  - `context_ir_default_local_python_subprocess` now supports exactly
+    `oracle_signal_getattr_attribute_error_probe`
+  - provider fixture uses unsupported unit `unsupported:call:main.py:2:11`,
+    boundary `getattr(obj, name)`, `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+    `reflective_builtin:getattr/2`, replay target `main.probe_attribute`,
+    snapshot id
+    `oracle_signal_getattr_attribute_error_probe@default-local-python:v1`,
+    replay fields `object_type=builtins.int` and
+    `attribute_name=definitely_missing_attribute`, and runtime payload
+    `lookup_outcome=raised_attribute_error`
+  - existing pushed `oracle_signal_getattr_probe` provider support remains
+    locked to `attribute_name=bit_length`
+  - runtime provenance remains additive; selected-unit primary truth remains
+    `unsupported/opaque`; `observed_replay_inputs` remains empty/absent
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` changes
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+  - no provider support for the remaining non-dynamic unsupported probes
+- Current routing:
+  - no workspace release unit is currently active
+  - choose the next authorized slice from current git state
+  - given the north-star checkpoint, prefer one bounded control/planning
+    checkpoint to decide the minimum remaining runtime-evidence sibling set
+    before pivoting to a demo/report artifact
+- Acceptance status: first-pass pushed.
+
 ## 2026-06-03 -- Exact Getattr AttributeError Provider Support Commit-Gating Passed
 
 - Ran commit-gating over the exact 10-file unit after full regression

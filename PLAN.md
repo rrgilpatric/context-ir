@@ -40,20 +40,73 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only execution return is control-reviewed and accepted:
-
-- `PLAN.md`
-- `BUILDLOG.md`
-- `src/context_ir/eval_providers.py`
-- `tests/test_eval_signal_getattr_attribute_error_probe.py`
-- `tests/test_eval_signal_globals_probe.py`
-- `tests/test_eval_signal_hasattr_probe.py`
-- `tests/test_eval_signal_locals_probe.py`
-- `tests/test_eval_signal_metaclass_behavior_probe.py`
-- `tests/test_eval_signal_smoke_e.py`
-- `tests/test_eval_signal_vars_zero_probe.py`
+No workspace release unit is currently active.
 
 Latest pushed release:
+
+- `7b71d5c Add getattr AttributeError default provider support`
+- pushed to `origin/main` after explicit Ryan authorization
+- release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+
+Pushed behavior:
+
+- `context_ir_default_local_python_subprocess` now admits exactly
+  `oracle_signal_getattr_attribute_error_probe` in addition to previously
+  pushed supported fixtures
+- provider fixture requires unsupported unit `unsupported:call:main.py:2:11`,
+  miss evidence and boundary `getattr(obj, name)`,
+  `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+  `reflective_builtin:getattr/2`, replay target `main.probe_attribute`,
+  snapshot id `oracle_signal_getattr_attribute_error_probe@default-local-python:v1`,
+  replay fields `object_type=builtins.int` and
+  `attribute_name=definitely_missing_attribute`, and runtime payload
+  `lookup_outcome=raised_attribute_error`
+- Existing pushed `oracle_signal_getattr_probe` provider support still selects
+  `attribute_name=bit_length`
+- Runtime provenance remains additive; selected-unit primary truth remains
+  `unsupported/opaque`; `observed_replay_inputs` remains empty/absent
+
+Release gates passed before push: control review, release-unit audit, full
+regression, and commit-gating. Full regression passed with `ruff check`,
+`ruff format --check`, `mypy --strict`, and `2063` pytest tests.
+
+Pushed-release preserved holds:
+
+- no `evals/` asset or run-spec changes
+- no `src/context_ir/runtime_probe_execution.py` or
+  `src/context_ir/runtime_probe_worker.py` changes
+- no dynamic-import, true/false `hasattr`, literal `getattr`, literal
+  `hasattr`, `setattr`, `delattr`, `exec`, `eval`, metaclass, `vars`, `dir`,
+  `globals`, or `locals` contract reopening
+- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+  Task 4, public/demo, benchmark, latency, production, or generalized replay
+  framework change
+- no provider support for the remaining non-dynamic unsupported probes
+
+Release state: pushed and closed with no active gate. Do not route `7b71d5c`
+back to release-unit audit, full regression, commit-gating, staging, local
+commit creation, or push absent new findings.
+
+Next control action: choose the next authorized slice from current git state.
+Given the north-star checkpoint, prefer one bounded control/planning checkpoint
+to decide the minimum remaining runtime-evidence sibling set before pivoting to
+a demo/report artifact. Do not reopen pushed dynamic-import provider contracts,
+pushed `hasattr(obj, name)`, pushed `getattr(obj, name)`, or pushed
+`getattr(obj, name)` AttributeError support.
+
+Earlier pushed release state follows for historical routing.
+
+Previous pushed release:
 
 - `64a0fea Add exact getattr AttributeError replay`
 - pushed to `origin/main` after explicit Ryan authorization
@@ -104,21 +157,8 @@ Pushed-release preserved holds before the current provider-map return:
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
 
-Release state:
-
-- workspace-only accepted
-- release-unit-audit-cleared
-- full-regression-cleared
-- commit-gating-cleared
-- not staged, committed, or pushed
-
-Next control action: stage and locally commit the exact 10-file workspace unit.
-Push still requires explicit Ryan authorization. The execution lane, control
-review, release-unit audit, full regression, and commit-gating confirmed no
-staging, commit, push, `evals/` edits, or `runtime_probe_execution.py` /
-`runtime_probe_worker.py` edits before commit sequencing.
-
-Earlier pushed release state follows for historical routing.
+This historical exact-replay release has been superseded by the pushed
+provider-support release above for active routing.
 
 Previous pushed release:
 
