@@ -2,6 +2,203 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-03 -- Exact Getattr AttributeError Provider Support Commit-Gating Passed
+
+- Ran commit-gating over the exact 10-file unit after full regression
+  clearance.
+- Findings: none.
+- Commit-gating checks confirmed:
+  - `HEAD` equals `origin/main` at
+    `55ee9a3216147675337af8d5101b8419fe89e86a`
+  - dirty files are exactly the 10-file release unit
+  - no staged files
+  - `git diff --check` passed
+  - no `evals/` diff
+  - no `src/context_ir/runtime_probe_execution.py` diff
+  - no `src/context_ir/runtime_probe_worker.py` diff
+  - no `README.md`, `ARCHITECTURE.md`, `EVAL.md`, or `PUBLIC_CLAIMS.md`
+    diff
+  - `tests/test_eval_signal_smoke_e.py` changes only the deterministic Task 3
+    confidence scalar
+  - provider diff is limited to the exact
+    `oracle_signal_getattr_attribute_error_probe` fixture entry and support
+    message update
+- Release state:
+  - workspace-only accepted
+  - release-unit-audit-cleared
+  - full-regression-cleared
+  - commit-gating-cleared
+  - not staged, committed, or pushed
+- Next control action:
+  - stage and locally commit the exact 10-file unit
+- Acceptance status: first-pass commit-gating passed.
+
+## 2026-06-03 -- Exact Getattr AttributeError Provider Support Full Regression Passed
+
+- Ran the required full regression after release-unit audit clearance:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed with
+    `2063` tests
+- Findings: none.
+- Release state:
+  - workspace-only accepted
+  - release-unit-audit-cleared
+  - full-regression-cleared
+  - not commit-gating-cleared
+  - not staged, committed, or pushed
+- Next control action:
+  - run commit-gating over the exact 10-file unit
+- Acceptance status: first-pass regression passed.
+
+## 2026-06-03 -- Exact Getattr AttributeError Provider Support Release-Unit Audit Passed
+
+- Ran the required read-only release-unit audit over the exact 10-file
+  workspace unit.
+- Findings: none.
+- Audit checks confirmed:
+  - `HEAD` equals `origin/main` at
+    `55ee9a3216147675337af8d5101b8419fe89e86a`
+  - dirty files are exactly the accepted 10-file release unit
+  - no staged files
+  - `git diff --check` passed
+  - no `evals/` diff
+  - no `src/context_ir/runtime_probe_execution.py` diff
+  - no `src/context_ir/runtime_probe_worker.py` diff
+  - no `README.md`, `ARCHITECTURE.md`, `EVAL.md`, or `PUBLIC_CLAIMS.md`
+    diff
+  - provider fixture supports exactly
+    `oracle_signal_getattr_attribute_error_probe` with unsupported unit
+    `unsupported:call:main.py:2:11`, boundary `getattr(obj, name)`,
+    family/form `RuntimeProbeFamily.REFLECTIVE_BUILTIN` /
+    `reflective_builtin:getattr/2`, replay target `main.probe_attribute`,
+    snapshot id
+    `oracle_signal_getattr_attribute_error_probe@default-local-python:v1`,
+    replay tail `object_type=builtins.int` and
+    `attribute_name=definitely_missing_attribute`, and runtime payload
+    `lookup_outcome=raised_attribute_error`
+  - pushed returned-value `oracle_signal_getattr_probe` provider path remains
+    `attribute_name=bit_length`
+  - `observed_replay_inputs` remains empty/absent
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE`; selected units/order,
+    document hash, total tokens, warnings, warning IDs, probe behavior, and
+    warning-call count remain locked
+- Release state:
+  - workspace-only accepted
+  - release-unit-audit-cleared
+  - not full-regression-cleared or commit-gating-cleared
+  - not staged, committed, or pushed
+- Next control action:
+  - run full regression; if it passes, run commit-gating over the exact
+    10-file unit
+- Acceptance status: first-pass audit passed.
+
+## 2026-06-03 -- Exact Getattr AttributeError Provider Support Control Review Accepted
+
+- Reviewed the workspace-only execution return for exact default-local provider
+  support for `oracle_signal_getattr_attribute_error_probe`.
+- Findings: none.
+- Dirty workspace files are exactly the accepted 10-file release unit:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Control validation rerun:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_attribute_error_probe.py -q`
+    passed with `10` tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py -q`
+    passed with `8` tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_signal_metaclass_behavior_probe.py tests/test_eval_signal_vars_zero_probe.py -q -k "default_subprocess_provider_fails_closed"`
+    passed with `5` selected tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`
+    passed with `1` selected test
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
+  - `git diff --check` passed
+- Preservation checks:
+  - no `evals/` diff
+  - no `src/context_ir/runtime_probe_execution.py` diff
+  - no `src/context_ir/runtime_probe_worker.py` diff
+  - pushed returned-value `oracle_signal_getattr_probe` still uses
+    `attribute_name=bit_length`
+  - `observed_replay_inputs` remains empty/absent
+  - Task 3 selected units/order, document hash, total tokens, warnings,
+    warning IDs, probe behavior, and warning-call count stayed locked; only
+    `FULL_REPO_TASK3_CONFIDENCE` changed to `0.0016941461037225521`
+- Release state:
+  - workspace-only accepted
+  - not release-unit-audit-cleared, full-regression-cleared, or
+    commit-gating-cleared
+  - not staged, committed, or pushed
+- Next control action:
+  - run the required read-only release-unit audit over the exact 10-file
+    workspace unit
+- Acceptance status: first-pass accepted.
+
+## 2026-06-03 -- Exact Getattr AttributeError Provider Support Returned
+
+- Execution-lane return added exact provider-map support for
+  `oracle_signal_getattr_attribute_error_probe`.
+- Workspace-only release unit pending control review:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_attribute_error_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Validation passed:
+  - focused attribute-error provider tests: `10` passed
+  - existing returned-value `getattr` provider tests: `8` passed
+  - duplicated exact support-message tests: `5` passed
+  - Task 3 preservation lock: `1` passed, `7` deselected
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `git diff --check`
+  - empty diffs for `evals/`, `src/context_ir/runtime_probe_execution.py`,
+    and `src/context_ir/runtime_probe_worker.py`
+- Task 3 selected units/order, document hash, total tokens, warnings, warning
+  IDs, probe behavior, and warning-call count remained locked; only
+  `FULL_REPO_TASK3_CONFIDENCE` changed to `0.0016941461037225521`.
+- Acceptance status: execution-lane DONE; awaiting control review.
+
+## 2026-06-03 -- Exact Getattr AttributeError Provider Support Prompt Issued
+
+- Verified current repo state before routing the next slice:
+  - `main` is clean
+  - `HEAD` equals `origin/main` at
+    `55ee9a3216147675337af8d5101b8419fe89e86a`
+  - `git diff --check`, `git diff --name-status`, and
+    `git diff --cached --name-status` are empty
+- Decision:
+  - the next authorized implementation slice is exact default-local provider
+    support for `oracle_signal_getattr_attribute_error_probe`
+  - no new spike is needed because the exact replay contract is pushed and the
+    provider map currently lacks only this fixture support
+- Scope constraints for the issued prompt:
+  - provider-map support only
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for any other remaining non-dynamic probe
+  - preserve pushed returned-value `oracle_signal_getattr_probe`
+    `attribute_name=bit_length` behavior
+- Acceptance status: prompt issued; awaiting execution-lane return.
+
 ## 2026-06-03 -- Exact Getattr AttributeError Replay Pushed
 
 - Pushed release:

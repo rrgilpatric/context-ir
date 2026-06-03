@@ -531,6 +531,7 @@ def test_metaclass_behavior_probe_default_subprocess_provider_fails_closed() -> 
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_false_probe, "
             "oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_probe, "
+            "oracle_signal_getattr_attribute_error_probe, "
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
             "oracle_signal_dynamic_import_root_probe, "

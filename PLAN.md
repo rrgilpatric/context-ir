@@ -40,7 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Workspace-only execution return is control-reviewed and accepted:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_getattr_attribute_error_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
 
 Latest pushed release:
 
@@ -80,10 +91,11 @@ Release gates passed before push: control review, release-unit audit, full
 regression, and commit-gating. Full regression passed with `ruff check`,
 `ruff format --check`, `mypy --strict`, and `2060` pytest tests.
 
-Preserved holds:
+Pushed-release preserved holds before the current provider-map return:
 
-- no provider-map support
-- no `src/context_ir/eval_providers.py` changes
+- no provider-map support in the pushed release before this workspace return
+- no `src/context_ir/eval_providers.py` changes in the pushed release before
+  this workspace return
 - no `evals/` asset or run-spec changes
 - no dynamic-import, true/false `hasattr`, literal `getattr`, literal
   `hasattr`, `setattr`, `delattr`, `exec`, `eval`, metaclass, `vars`, `dir`,
@@ -92,11 +104,19 @@ Preserved holds:
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
 
-Next control action: choose the next authorized slice from current git state.
-The likely next narrow candidate is provider-map support for
-`oracle_signal_getattr_attribute_error_probe`, but it must be selected from
-fresh repo reality and should not reopen the pushed exact replay contract
-unless a regression is found.
+Release state:
+
+- workspace-only accepted
+- release-unit-audit-cleared
+- full-regression-cleared
+- commit-gating-cleared
+- not staged, committed, or pushed
+
+Next control action: stage and locally commit the exact 10-file workspace unit.
+Push still requires explicit Ryan authorization. The execution lane, control
+review, release-unit audit, full regression, and commit-gating confirmed no
+staging, commit, push, `evals/` edits, or `runtime_probe_execution.py` /
+`runtime_probe_worker.py` edits before commit sequencing.
 
 Earlier pushed release state follows for historical routing.
 
