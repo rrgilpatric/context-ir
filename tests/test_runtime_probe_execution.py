@@ -121,6 +121,12 @@ _GETATTR_DEFAULT_LOCAL_SNAPSHOT_ID = (
 _GETATTR_ATTRIBUTE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID = (
     "oracle_signal_getattr_attribute_error_probe@default-local-python:v1"
 )
+_GETATTR_DEFAULT_MISSING_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_getattr_default_probe@default-local-python:v1"
+)
+_GETATTR_DEFAULT_VALUE_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_getattr_default_value_probe@default-local-python:v1"
+)
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -517,6 +523,36 @@ def _reflective_getattr_default_request(
     )
 
 
+def _reflective_getattr_default_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the shared exact defaulted-getattr pilot request."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=38,
+            ),
+            snippet="getattr(obj, name, default)",
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text="getattr(obj, name, default)",
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_GETATTR_THREE_FORM_LABEL,
+        replay_target_seed="main.probe_attribute",
+        replay_selector_seed=(
+            "call:main.probe_attribute:"
+            f"{_REFLECTIVE_GETATTR_THREE_FORM_LABEL}@main.py:2:11:2:38"
+        ),
+    )
+
+
 def _reflective_vars_request(
     start_line: int = 3,
     *,
@@ -817,6 +853,22 @@ def _getattr_attribute_error_snapshot_basis() -> RepositorySnapshotBasis:
     return _snapshot_basis(
         snapshot_kind="eval_fixture",
         snapshot_id=_GETATTR_ATTRIBUTE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _getattr_default_missing_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact defaulted getattr missing-attribute fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_GETATTR_DEFAULT_MISSING_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _getattr_default_value_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact defaulted getattr value-return fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_GETATTR_DEFAULT_VALUE_DEFAULT_LOCAL_SNAPSHOT_ID,
     )
 
 
@@ -1593,6 +1645,90 @@ def test_exact_getattr_attribute_error_probe_fails_closed_for_wrong_snapshot(
 ) -> None:
     """The AttributeError getattr contract requires its exact clean snapshot."""
     source_request = _reflective_getattr_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        request=source_request,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+
+    assert (
+        tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
+        == _EXPECTED_REPLAY_INPUT_KEYS
+    )
+
+
+@pytest.mark.parametrize(
+    ("repository_snapshot_basis", "expected_attribute_name"),
+    (
+        (
+            _getattr_default_missing_snapshot_basis(),
+            "missing_attribute",
+        ),
+        (
+            _getattr_default_value_snapshot_basis(),
+            "bit_length",
+        ),
+    ),
+)
+def test_exact_getattr_default_probe_appends_request_replay_payload_fields(
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    expected_attribute_name: str,
+) -> None:
+    """The exact defaulted getattr pilots append pre-observation replay inputs."""
+    source_request = _reflective_getattr_default_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        request=source_request,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+    invocation = _local_python_subprocess_invocation(runner_request)
+    payload = _local_python_worker_request_payload(invocation)
+    transport = _local_python_worker_request_stdin_transport(invocation)
+    expected_replay_inputs = (
+        *_EXPECTED_REPLAY_INPUT_KEYS,
+        "object_type",
+        "attribute_name",
+    )
+
+    assert (
+        tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
+        == expected_replay_inputs
+    )
+    assert runner_request.replay_artifact.replay_inputs[-2:] == (
+        _field("object_type", "builtins.int"),
+        _field("attribute_name", expected_attribute_name),
+    )
+    assert invocation.request_replay_payload_fields is (
+        runner_request.replay_artifact.replay_inputs
+    )
+    assert payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+
+
+@pytest.mark.parametrize(
+    "repository_snapshot_basis",
+    (
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_GETATTR_DEFAULT_LOCAL_SNAPSHOT_ID,
+        ),
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_GETATTR_DEFAULT_MISSING_DEFAULT_LOCAL_SNAPSHOT_ID,
+            is_dirty_worktree=True,
+        ),
+    ),
+)
+def test_exact_getattr_default_probe_fails_closed_for_wrong_snapshot(
+    repository_snapshot_basis: RepositorySnapshotBasis,
+) -> None:
+    """The defaulted getattr contract requires its exact clean fixture snapshot."""
+    source_request = _reflective_getattr_default_exact_replay_input_request()
     runner_request = _local_python_runner_request(
         request=source_request,
         repository_snapshot_basis=repository_snapshot_basis,
@@ -5375,6 +5511,121 @@ def test_reflective_getattr_default_local_python_runner_executes_getattr_subproc
     assert attempt.durable_artifact_reference is None
     assert attempt.failure_summary is None
     assert attempt.failure_detail_fields == ()
+
+
+@pytest.mark.parametrize(
+    ("repository_snapshot_basis", "expected_attribute_name", "expected_outcome"),
+    (
+        (
+            _getattr_default_missing_snapshot_basis(),
+            "missing_attribute",
+            "returned_default_value",
+        ),
+        (
+            _getattr_default_value_snapshot_basis(),
+            "bit_length",
+            "returned_value",
+        ),
+    ),
+)
+def test_default_local_python_subprocess_runner_executes_exact_getattr_default(
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    expected_attribute_name: str,
+    expected_outcome: str,
+    tmp_path: Path,
+) -> None:
+    """The default runner calls ``main.probe_attribute`` with exact getattr/3 args."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            f"""
+            def probe_attribute(obj: object, name: str, default: object) -> object:
+                assert obj == 1
+                assert name == "{expected_attribute_name}"
+                result = getattr(obj, name, default)
+                if name == "missing_attribute":
+                    assert result is default
+                else:
+                    assert result is not default
+                return result
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_getattr_default_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+    expected_invocation = _local_python_subprocess_invocation(
+        runner_request,
+        python_executable=sys.executable,
+        module_argv=(),
+    )
+
+    attempt = runner(runner_request)
+
+    _assert_attempt_identity(attempt, expected_invocation)
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (_field("lookup_outcome", expected_outcome),)
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+def test_default_local_runner_rejects_exact_getattr_default_snapshot_drift(
+    tmp_path: Path,
+) -> None:
+    """The exact defaulted getattr replay fails closed for a wrong snapshot."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def probe_attribute(obj: object, name: str, default: object) -> object:
+                return getattr(obj, name, default)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    request = _reflective_getattr_default_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+        repository_snapshot_basis=_snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_GETATTR_DEFAULT_LOCAL_SNAPSHOT_ID,
+        ),
+    )
+    runner = make_runtime_probe_default_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference is None
+    assert "returncode" in _attempt_failure_text(attempt)
 
 
 def test_reflective_getattr_default_local_python_runner_rejects_boundary_drift(

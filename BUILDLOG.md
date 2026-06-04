@@ -2,6 +2,197 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-03 -- Defaulted Getattr Exact Replay Contract Commit-Gating Passed
+
+- Ran commit-gating over the exact seven-file unit after full regression
+  clearance.
+- Findings: none.
+- Commit-gating checks confirmed:
+  - `HEAD` equals `origin/main` at
+    `f2901123b1d0a48c5910dee79c22d8525147f0ae`
+  - dirty files are exactly the seven-file release unit
+  - no staged files
+  - `git diff --check` passed
+  - no `evals/` diff
+  - no `src/context_ir/eval_providers.py` diff
+  - no `README.md`, `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, or
+    `AGENTS.md` diff
+  - `tests/test_eval_signal_smoke_e.py` changes only the deterministic Task 3
+    confidence scalar
+- Release state:
+  - workspace-only accepted
+  - release-unit-audit-cleared
+  - full-regression-cleared
+  - commit-gating-cleared
+  - not staged, committed, or pushed
+- Next control action:
+  - stage and locally commit the exact seven-file unit
+- Acceptance status: first-pass commit-gating passed.
+
+## 2026-06-03 -- Defaulted Getattr Exact Replay Contract Full Regression Passed
+
+- Ran the required full regression after release-unit audit clearance:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` passed with
+    `2091` tests
+- Findings: none.
+- Release state:
+  - workspace-only accepted
+  - release-unit-audit-cleared
+  - full-regression-cleared
+  - not commit-gating-cleared
+  - not staged, committed, or pushed
+- Next control action:
+  - run commit-gating over the exact seven-file unit
+- Acceptance status: first-pass regression passed.
+
+## 2026-06-03 -- Defaulted Getattr Exact Replay Contract Release-Unit Audit Passed
+
+- Ran the required read-only release-unit audit over the exact seven-file
+  workspace candidate.
+- Findings: none.
+- Audit checks confirmed:
+  - `HEAD` equals `origin/main` at
+    `f2901123b1d0a48c5910dee79c22d8525147f0ae`
+  - dirty files are exactly the accepted seven-file release candidate
+  - no staged files
+  - `git diff --check` passed
+  - no `evals/` diff
+  - no `src/context_ir/eval_providers.py` diff
+  - no `README.md`, `ARCHITECTURE.md`, `EVAL.md`, `PUBLIC_CLAIMS.md`, or
+    `AGENTS.md` diff
+  - exact defaulted-getattr contracts are snapshot-scoped to
+    `oracle_signal_getattr_default_probe@default-local-python:v1` and
+    `oracle_signal_getattr_default_value_probe@default-local-python:v1`
+  - exact replay fields are limited to `object_type=builtins.int` and the
+    branch-specific `attribute_name`
+  - worker exact replay calls `main.probe_attribute(1, attribute_name, default)`
+    while preserving generic no-arg `getattr(obj, name, default)` observation
+  - wrong/dirty snapshots and malformed exact fields fail closed
+  - `observed_replay_inputs` remains empty/absent
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE`; selected units, document
+    hash, total tokens, warnings, warning IDs, probe behavior, and warning-call
+    count remain locked by `tests/test_eval_signal_smoke_e.py`
+- Release state:
+  - workspace-only accepted
+  - release-unit-audit-cleared
+  - not full-regression-cleared, not commit-gating-cleared, not staged, not
+    committed, not pushed
+- Next control action:
+  - run full regression over `ruff check`, `ruff format --check`,
+    `mypy --strict`, and `pytest tests/ -v`
+- Acceptance status: first-pass audit passed.
+
+## 2026-06-03 -- Defaulted Getattr Exact Replay Contract Control Review Accepted
+
+- Reviewed the workspace-only execution return for exact default-local
+  replay-contract support for both defaulted getattr fixtures:
+  - `oracle_signal_getattr_default_probe@default-local-python:v1`
+  - `oracle_signal_getattr_default_value_probe@default-local-python:v1`
+- Findings: none.
+- Dirty workspace files are exactly the accepted seven-file release candidate:
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Control validation rerun:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "getattr_default"`
+    passed with `15` selected tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "getattr_default"`
+    passed with `46` selected tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_probe.py -q`
+    passed with `6` tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_value_probe.py -q`
+    passed with `6` tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py tests/test_eval_signal_getattr_attribute_error_probe.py -q`
+    passed with `18` tests
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`
+    passed with `1` selected test
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/` passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/` passed
+  - `git diff --check` passed
+- Preservation checks:
+  - no `evals/` diff
+  - no `src/context_ir/eval_providers.py` diff
+  - no provider-map support for either defaulted getattr fixture
+  - `observed_replay_inputs` remains empty/absent
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE`; selected units, token
+    count, warnings, and document hash stayed locked by the smoke test
+- Release state:
+  - workspace-only accepted
+  - not release-unit-audit-cleared, not full-regression-cleared, not
+    commit-gating-cleared, not staged, not committed, not pushed
+- Next control action:
+  - run the required read-only release-unit audit over the exact seven-file
+    release candidate
+- Acceptance status: first-pass control review accepted.
+
+## 2026-06-03 -- Defaulted Getattr Exact Replay Contract Pre-Slice Returned
+
+- Implemented workspace-only exact default-local replay-contract support for both
+  defaulted getattr fixtures:
+  - `oracle_signal_getattr_default_probe@default-local-python:v1`
+  - `oracle_signal_getattr_default_value_probe@default-local-python:v1`
+- Runtime runner behavior added:
+  - clean fixture snapshots append exact replay inputs
+    `object_type=builtins.int` and either
+    `attribute_name=missing_attribute` or `attribute_name=bit_length`
+  - wrong snapshots and dirty snapshots omit exact inputs and fail closed in
+    worker admission for the exact fixture identity
+- Worker behavior added:
+  - exact defaulted-getattr replay calls
+    `main.probe_attribute(1, attribute_name, default_sentinel)`
+  - captured object type and attribute name must match the exact contract
+  - generic `getattr(obj, name, default)` observation remains no-arg and still
+    reports `returned_value` or `returned_default_value`
+  - `observed_replay_inputs` remains empty/absent
+- Tests added or updated in:
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- The Task 3 smoke confidence lock drifted deterministically from
+  `0.0016941461037225521` to `0.001691794661859072`; selected units, token
+  count, warnings, and document hash remained locked, so the slice updated only
+  that permitted scalar.
+- Validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "getattr_default"`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "getattr_default"`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_value_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py tests/test_eval_signal_getattr_attribute_error_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `git diff --check`
+  - `git diff -- evals/`
+  - `git diff -- src/context_ir/eval_providers.py`
+- Preservation locks:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/eval_providers.py` changes
+  - no provider-map support for either defaulted getattr fixture
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection
+    changes
+  - no generalized replay framework
+  - no staging, commit, or push
+- Release state:
+  - workspace-only execution return
+  - pending control-lane review and quality-gate decision
+  - not release-unit-audit-cleared, not commit-gating-cleared, not staged, not
+    committed, not pushed
+- Recommended next control action:
+  - review this workspace-only return findings-first; if clean, decide whether
+    to include it in a release-unit audit tranche
+- Acceptance status: execution returned DONE; control-lane acceptance pending.
+
 ## 2026-06-03 -- Exact Getattr AttributeError Provider Support Pushed
 
 - Pushed the exact default-local provider-support release to `origin/main` after

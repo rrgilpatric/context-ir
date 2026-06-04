@@ -40,7 +40,49 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Workspace-only accepted release candidate active; not staged, committed, or pushed:
+
+- exact default-local replay-contract pre-slice for both defaulted getattr
+  fixtures:
+  - `oracle_signal_getattr_default_probe@default-local-python:v1`
+  - `oracle_signal_getattr_default_value_probe@default-local-python:v1`
+- runtime exact contracts are snapshot-scoped to clean default-local fixture
+  snapshots, fail closed for wrong/dirty snapshots, and append only
+  `object_type=builtins.int` plus the fixture-specific `attribute_name`
+- worker exact replay calls `main.probe_attribute(1, attribute_name, default)`
+  with controlled args while preserving generic `getattr(obj, name, default)`
+  observation behavior and empty/absent `observed_replay_inputs`
+- workspace files in this candidate:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- preservation locks verified: `git diff -- evals/` and
+  `git diff -- src/context_ir/eval_providers.py` are empty
+- validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "getattr_default"`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "getattr_default"`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_value_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py tests/test_eval_signal_getattr_attribute_error_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `git diff --check`
+
+Control review reran the focused validation and accepted the slice with no
+findings. The required read-only release-unit audit over the exact seven-file
+unit passed with no findings. Release state: workspace-only accepted,
+release-unit-audit-cleared, full-regression-cleared, commit-gating-cleared,
+not staged, not committed, and not pushed. Full
+regression passed with `ruff check`, `ruff format --check`, `mypy --strict`,
+and `2091` pytest tests. Commit-gating passed over the exact seven-file unit
+with no findings. Next control action: stage and locally commit the exact
+seven-file unit. Push still requires explicit Ryan authorization.
 
 Latest pushed release:
 
@@ -97,12 +139,11 @@ Release state: pushed and closed with no active gate. Do not route `7b71d5c`
 back to release-unit audit, full regression, commit-gating, staging, local
 commit creation, or push absent new findings.
 
-Next control action: choose the next authorized slice from current git state.
-Given the north-star checkpoint, prefer one bounded control/planning checkpoint
-to decide the minimum remaining runtime-evidence sibling set before pivoting to
-a demo/report artifact. Do not reopen pushed dynamic-import provider contracts,
-pushed `hasattr(obj, name)`, pushed `getattr(obj, name)`, or pushed
-`getattr(obj, name)` AttributeError support.
+Next control action from the pushed-release block has been superseded by the
+workspace-only accepted defaulted-getattr exact replay-contract release candidate
+recorded above. Do not reopen pushed dynamic-import provider contracts, pushed
+`hasattr(obj, name)`, pushed `getattr(obj, name)`, or pushed `getattr(obj, name)`
+AttributeError support.
 
 Earlier pushed release state follows for historical routing.
 
