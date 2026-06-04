@@ -380,6 +380,7 @@ _GETATTR_DEFAULT_MISSING_DEFAULT_LOCAL_SNAPSHOT_ID = (
 _GETATTR_DEFAULT_VALUE_DEFAULT_LOCAL_SNAPSHOT_ID = (
     "oracle_signal_getattr_default_value_probe@default-local-python:v1"
 )
+_DIR_DEFAULT_LOCAL_SNAPSHOT_ID = "oracle_signal_dir_probe@default-local-python:v1"
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -473,6 +474,14 @@ def _getattr_default_value_snapshot_basis() -> RepositorySnapshotBasis:
     return _snapshot_basis(
         snapshot_kind="eval_fixture",
         snapshot_id=_GETATTR_DEFAULT_VALUE_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _dir_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact one-argument dir fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_DIR_DEFAULT_LOCAL_SNAPSHOT_ID,
     )
 
 
@@ -1146,6 +1155,36 @@ def _reflective_dir_request(
         replay_selector_seed=replay_selector_seed,
         form_label=form_label,
         boundary_text=boundary_text,
+    )
+
+
+def _reflective_dir_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact dir pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=19,
+            ),
+            snippet="dir(obj)",
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text="dir(obj)",
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_DIR_ONE_FORM_LABEL,
+        replay_target_seed="main.probe_directory",
+        replay_selector_seed=(
+            "call:main.probe_directory:"
+            f"{_REFLECTIVE_DIR_ONE_FORM_LABEL}@main.py:2:11:2:19"
+        ),
     )
 
 
@@ -10621,6 +10660,34 @@ def test_reflective_dir_worker_request_materializes_replay_contract() -> None:
     )
 
 
+def test_reflective_dir_worker_request_materializes_exact_replay_input() -> None:
+    """The exact dir pilot keeps the int object replay input in the request."""
+    source_request = _reflective_dir_exact_replay_input_request()
+    payload = _valid_worker_payload_for_request(
+        source_request,
+        repository_snapshot_basis=_dir_snapshot_basis(),
+    )
+
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_dir_worker_request(
+            payload
+        )
+    )
+
+    assert request.subject_id == "unsupported:call:main.py:2:11"
+    assert request.source_start_line == 2
+    assert request.source_start_column == 11
+    assert request.source_end_column == source_request.source_site.span.end_column
+    assert request.boundary_text == "dir(obj)"
+    assert request.replay_target_seed == "main.probe_directory"
+    assert request.replay_selector_seed == (
+        f"call:main.probe_directory:{_REFLECTIVE_DIR_ONE_FORM_LABEL}@main.py:2:11:2:19"
+    )
+    assert request.request_replay_payload_fields[-1:] == (
+        _field("object_type", "builtins.int"),
+    )
+
+
 def test_reflective_dir_zero_worker_request_materializes_replay_contract() -> None:
     """The worker derives an exact dir/0 request from the parent payload."""
     payload = _valid_worker_payload_for_request(
@@ -10703,6 +10770,54 @@ def test_reflective_dir_worker_request_rejects_replay_drift(
         replay_value,
         payload=_valid_worker_payload_for_request(_reflective_dir_request()),
     )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_reflective_dir_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("object_type", None, "exact replay inputs"),
+        ("object_type", "builtins.str", "exact replay inputs"),
+        ("object_type", "duplicate", "duplicate keys"),
+        ("unexpected", "value", "exact replay inputs"),
+    ),
+)
+def test_reflective_dir_worker_request_rejects_bad_exact_replay_inputs(
+    replay_key: str,
+    replay_value: str | None,
+    error_match: str,
+) -> None:
+    """The exact dir pilot rejects missing, wrong, duplicate, or extra keys."""
+    payload = _valid_worker_payload_for_request(
+        _reflective_dir_exact_replay_input_request(),
+        repository_snapshot_basis=_dir_snapshot_basis(),
+    )
+    if replay_value is None:
+        fields = tuple(
+            field
+            for field in payload.request_replay_payload_fields
+            if field.key != replay_key
+        )
+    elif replay_value == "duplicate":
+        fields = (
+            *payload.request_replay_payload_fields,
+            _field(replay_key, payload.request_replay_payload_fields[-1].value),
+        )
+    elif replay_key == "unexpected":
+        fields = (
+            *payload.request_replay_payload_fields,
+            _field(replay_key, replay_value),
+        )
+    else:
+        fields = tuple(
+            _field(field.key, replay_value) if field.key == replay_key else field
+            for field in payload.request_replay_payload_fields
+        )
+    object.__setattr__(payload, "request_replay_payload_fields", fields)
 
     with pytest.raises(ValueError, match=error_match):
         runtime_probe_worker.materialize_runtime_probe_reflective_dir_worker_request(
@@ -13926,6 +14041,58 @@ def test_reflective_dir_worker_default_subprocess_observes_dir(
             f"artifact://runtime-probe/dir-listing/{payload.request_id}.json"
         ),
     }
+
+
+def test_reflective_dir_worker_default_subprocess_observes_exact_replay(
+    tmp_path: Path,
+) -> None:
+    """The real worker calls ``main.probe_directory(1)`` for the exact dir pilot."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_directory(obj: object) -> list[str]:\n"
+            "    assert obj == 1\n"
+            "    return dir(obj)\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_dir_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+        repository_snapshot_basis=_dir_snapshot_basis(),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "listing_entry_count",
+                "value": "74",
+            },
+        ],
+        "durable_artifact_reference": (
+            f"artifact://runtime-probe/dir-listing/{payload.request_id}.json"
+        ),
+    }
+    assert "observed_replay_inputs" not in protocol_payload
 
 
 def test_reflective_dir_zero_worker_default_subprocess_observes_dir(

@@ -40,9 +40,80 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Workspace-only gate-cleared release unit is active for exact default-local
+`dir(obj)` replay-contract support. This unit is control-reviewed first-pass,
+release-unit-audit-cleared, full-regression-cleared, and
+commit-gating-cleared with no findings. It is not staged, not committed, and
+not pushed.
 
-Latest pushed release:
+Workspace-only accepted release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
+- `tests/test_eval_signal_smoke_e.py`
+
+Workspace-only accepted behavior:
+
+- Adds snapshot-scoped exact default-local replay support for
+  `oracle_signal_dir_probe@default-local-python:v1`
+- Exact contract uses `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+  `reflective_builtin:dir/1`, boundary `dir(obj)`, unsupported unit
+  `unsupported:call:main.py:2:11`, replay target `main.probe_directory`, and
+  replay input tail `object_type=builtins.int`
+- Worker exact replay calls `main.probe_directory(1)` and observes normalized
+  payload `listing_entry_count=74`
+- Wrong snapshot, dirty snapshot, and malformed exact replay fields fail closed
+- Generic `dir(obj)` and `dir()` worker behavior remains intact
+- `observed_replay_inputs` remains absent/empty for this non-exec/eval path
+- Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+  `0.0016616917680346006` to `0.0016599370888904558`; selected units/order,
+  document hash, total tokens, warnings, warning IDs, probe behavior, and
+  warning-call count remain locked by the smoke test
+
+Workspace-only preserved holds:
+
+- no `evals/` asset or run-spec changes
+- no `src/context_ir/eval_providers.py` changes
+- no provider-map support for `oracle_signal_dir_probe`
+- no provider support for other remaining unsupported probes
+- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+  Task 4, public/demo, benchmark, latency, production, or generalized replay
+  framework change
+- no staging, commit, or push
+
+Validation already run for the accepted workspace slice:
+
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "dir"`: `35` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "dir"`: `61` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_probe.py -q`: `5` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed
+- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+- `git diff --check`: clean
+- `git diff -- evals/`: empty
+- `git diff -- src/context_ir/eval_providers.py`: empty
+
+Release gates cleared after acceptance:
+
+- release-unit audit: passed with no findings over the exact seven-file unit
+- full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
+  `2104` pytest tests passed
+- commit-gating: passed with the dirty file set exactly matching the accepted
+  seven-file release unit, no staged files, clean whitespace, no `evals/` diff,
+  and no `src/context_ir/eval_providers.py` diff
+
+Release state: workspace-only gate-cleared and commit-ready. Do not push
+without explicit Ryan authorization.
+
+Next control action: stage and create the local release commit. Push only after
+explicit Ryan authorization.
+
+Latest pushed release remains:
 
 - `859fd91 Add defaulted getattr provider support`
 - pushed to `origin/main` after explicit Ryan authorization

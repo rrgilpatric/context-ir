@@ -20,6 +20,7 @@ from typing import NoReturn, TextIO, TypeAlias, cast
 
 from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_DIR_INT_DIRECTORY_CONTRACT,
     _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
     _EXACT_REPLAY_GETATTR_DEFAULT_MISSING_CONTRACT,
     _EXACT_REPLAY_GETATTR_DEFAULT_VALUE_CONTRACT,
@@ -389,6 +390,8 @@ _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT_BY_FORM_LABEL = MappingProxyType(
     }
 )
 _REFLECTIVE_BUILTIN_DIR_WORKER_GLOBAL_NAME = "dir"
+_REFLECTIVE_BUILTIN_DIR_OBJECT_TYPE_REPLAY_KEY = "object_type"
+_REFLECTIVE_BUILTIN_DIR_INT_DIRECTORY_OBJECT_TYPE = "builtins.int"
 _REFLECTIVE_BUILTIN_WORKER_FORM_LABELS = (
     _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL,
     _REFLECTIVE_BUILTIN_GETATTR_WORKER_FORM_LABEL,
@@ -1765,7 +1768,7 @@ RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable: TypeAlias = Callable[
     [],
     object,
 ]
-RuntimeProbeLocalPythonReflectiveDirTargetCallable: TypeAlias = Callable[[], object]
+RuntimeProbeLocalPythonReflectiveDirTargetCallable: TypeAlias = Callable[..., object]
 RuntimeProbeLocalPythonRuntimeMutationGlobalsZeroTargetCallable: TypeAlias = Callable[
     [],
     object,
@@ -2163,6 +2166,7 @@ class _RuntimeProbeReflectiveDirCapture:
     expected_form_label: str
     original_dir: Callable[..., list[str]]
     captured_listings: list[tuple[str, ...]] = field(default_factory=list)
+    captured_object_types: list[str] = field(default_factory=list)
     captured_rejections: list[str] = field(default_factory=list)
 
     def dir(self, *args: object, **kwargs: object) -> list[str]:
@@ -2187,6 +2191,7 @@ class _RuntimeProbeReflectiveDirCapture:
         (obj,) = args
         listing = self.original_dir(obj)
         self.captured_listings.append(tuple(listing))
+        self.captured_object_types.append(_runtime_probe_worker_object_type_name(obj))
         return listing
 
     def _capture_zero_arg_dir(
@@ -5170,10 +5175,16 @@ def materialize_runtime_probe_reflective_dir_worker_observation_from_target(
         source_module,
     )
     _validate_runtime_probe_reflective_dir_target_callable(target)
+    exact_replay_inputs = _runtime_probe_reflective_dir_exact_replay_inputs(
+        replay_target.request
+    )
+    target_args = _runtime_probe_reflective_dir_target_args(exact_replay_inputs)
     listing_entry_count = _runtime_probe_reflective_dir_captured_listing_entry_count(
         source_module,
         target,
         form_label=replay_target.request.form_label,
+        target_args=target_args,
+        exact_replay_inputs=exact_replay_inputs,
     )
     return materialize_runtime_probe_reflective_dir_worker_observation(
         replay_target.request,
@@ -8654,6 +8665,8 @@ def _runtime_probe_reflective_dir_captured_listing_entry_count(
     target: RuntimeProbeLocalPythonReflectiveDirTargetCallable,
     *,
     form_label: str,
+    target_args: tuple[object, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> int:
     """Run a target while capturing one exact selected ``dir`` call."""
     _validate_runtime_probe_reflective_dir_source_global_absent(source_module)
@@ -8675,7 +8688,7 @@ def _runtime_probe_reflective_dir_captured_listing_entry_count(
         try:
             sys.stdout = shielded_stdout
             sys.stderr = shielded_stderr
-            target()
+            target(*target_args)
         finally:
             sys.stdout = original_stdout
             sys.stderr = original_stderr
@@ -8700,16 +8713,23 @@ def _runtime_probe_reflective_dir_captured_listing_entry_count(
     if target_failure is not None:
         _raise_runtime_probe_reflective_dir_target_failure(target_failure)
 
-    return _runtime_probe_reflective_dir_capture_listing_entry_count(capture)
+    return _runtime_probe_reflective_dir_capture_listing_entry_count(
+        capture,
+        exact_replay_inputs=exact_replay_inputs,
+    )
 
 
 def _runtime_probe_reflective_dir_capture_listing_entry_count(
     capture: _RuntimeProbeReflectiveDirCapture,
+    *,
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> int:
     """Return the single captured dir listing count after validation."""
     _validate_runtime_probe_reflective_dir_intercepted_calls(
         captured_listings=capture.captured_listings,
+        captured_object_types=tuple(capture.captured_object_types),
         captured_rejections=tuple(capture.captured_rejections),
+        exact_replay_inputs=exact_replay_inputs,
     )
     return len(capture.captured_listings[0])
 
@@ -8717,7 +8737,9 @@ def _runtime_probe_reflective_dir_capture_listing_entry_count(
 def _validate_runtime_probe_reflective_dir_intercepted_calls(
     *,
     captured_listings: list[tuple[str, ...]],
+    captured_object_types: tuple[str, ...],
     captured_rejections: tuple[str, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> None:
     """Reject intercepted dir behavior outside the exact one-argument form."""
     if "arity" in captured_rejections:
@@ -8728,6 +8750,21 @@ def _validate_runtime_probe_reflective_dir_intercepted_calls(
         raise ValueError(
             "runtime probe reflective builtin dir worker target must capture "
             "exactly one dir call"
+        )
+    if exact_replay_inputs is None:
+        return
+    if len(captured_object_types) != 1:
+        raise ValueError(
+            "runtime probe reflective builtin dir worker target must capture "
+            "exactly one dir call"
+        )
+    if (
+        captured_object_types[0]
+        != exact_replay_inputs[_REFLECTIVE_BUILTIN_DIR_OBJECT_TYPE_REPLAY_KEY]
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin dir worker exact replay inputs "
+            "must match captured object_type"
         )
 
 
@@ -11856,6 +11893,10 @@ def _validate_runtime_probe_reflective_dir_worker_payload(
         replay_target_seed=payload.replay_target_seed,
         replay_selector_seed=payload.replay_selector_seed,
     )
+    _validate_runtime_probe_reflective_dir_exact_replay_inputs_if_needed(
+        payload.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
         plan_id=payload.plan_id,
         request_id=payload.request_id,
@@ -11957,6 +11998,10 @@ def _validate_runtime_probe_reflective_dir_worker_request(
         replay_target_seed=request.replay_target_seed,
         replay_selector_seed=request.replay_selector_seed,
     )
+    _validate_runtime_probe_reflective_dir_exact_replay_inputs_if_needed(
+        request.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     for field_key, expected_value in (
         ("subject_kind", request.subject_kind.value),
         ("subject_id", request.subject_id),
@@ -12023,6 +12068,36 @@ def _validate_runtime_probe_reflective_dir_target_callable(target: object) -> No
         raise ValueError(
             "runtime probe reflective builtin dir worker target must be callable"
         )
+
+
+def _runtime_probe_reflective_dir_exact_replay_inputs(
+    request: RuntimeProbeLocalPythonReflectiveDirWorkerRequest,
+) -> Mapping[str, str] | None:
+    """Return exact replay inputs for the accepted int-directory pilot."""
+    _validate_runtime_probe_reflective_dir_worker_request(request)
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        request.request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
+    )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_fields_by_key
+    )
+    if contract is not _EXACT_REPLAY_DIR_INT_DIRECTORY_CONTRACT:
+        return None
+    _validate_runtime_probe_reflective_dir_exact_replay_inputs(
+        exact_fields_by_key,
+    )
+    return exact_fields_by_key
+
+
+def _runtime_probe_reflective_dir_target_args(
+    exact_replay_inputs: Mapping[str, str] | None,
+) -> tuple[object, ...]:
+    """Return target arguments for the exact dir pilot, otherwise none."""
+    if exact_replay_inputs is None:
+        return ()
+    _validate_runtime_probe_reflective_dir_exact_replay_inputs(exact_replay_inputs)
+    return (1,)
 
 
 def _validate_runtime_probe_reflective_dir_replay_target_source_module(
@@ -12336,6 +12411,52 @@ def _validate_runtime_probe_reflective_dir_replay_metadata(
             field_name="source_end_column",
         ),
     )
+
+
+def _validate_runtime_probe_reflective_dir_exact_replay_inputs_if_needed(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    replay_fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject drifted request replay inputs for the exact dir/1 pilot."""
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        fields,
+        field_name="request_replay_payload_fields",
+    )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_fields_by_key
+    )
+    if contract is not _EXACT_REPLAY_DIR_INT_DIRECTORY_CONTRACT:
+        candidates = _runtime_probe_exact_replay_contract_candidates_for_replay_fields(
+            replay_fields_by_key
+        )
+        if _EXACT_REPLAY_DIR_INT_DIRECTORY_CONTRACT in candidates:
+            raise ValueError(
+                "runtime probe reflective builtin dir worker exact replay inputs "
+                "must match the accepted int-directory replay contract"
+            )
+        return
+    _validate_runtime_probe_reflective_dir_exact_replay_inputs(exact_fields_by_key)
+
+
+def _validate_runtime_probe_reflective_dir_exact_replay_inputs(
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Require the exact int-directory pilot to carry only object_type."""
+    contract = _EXACT_REPLAY_DIR_INT_DIRECTORY_CONTRACT
+    if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
+        raise ValueError(
+            "runtime probe reflective builtin dir worker exact replay inputs "
+            "must contain only object_type"
+        )
+    if not _runtime_probe_worker_exact_replay_payload_matches_contract(
+        fields_by_key,
+        contract,
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin dir worker exact replay inputs "
+            "must be object_type=builtins.int"
+        )
 
 
 def _validate_runtime_probe_reflective_dir_replay_field_match(
