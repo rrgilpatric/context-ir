@@ -40,7 +40,68 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is active. Most recent release is pushed and closed:
+Workspace-only accepted release unit is active:
+
+- exact default-local replay-contract support for
+  `oracle_signal_vars_type_error_probe@default-local-python:v1`
+- control-reviewed first-pass with no findings
+- repository snapshot kind `eval_fixture`; dirty snapshots fail closed
+- family `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+  `reflective_builtin:vars/1`, boundary `vars(obj)`, unsupported unit
+  `unsupported:call:main.py:2:11`, source span `main.py:2:11-2:20`
+- replay target `main.probe_namespace`, replay selector
+  `call:main.probe_namespace:reflective_builtin:vars/1@main.py:2:11:2:20`,
+  replay input tail `object_type=builtins.int`
+- worker exact replay calls `main.probe_namespace(1)` and normalizes the
+  captured `TypeError` to `lookup_outcome=raised_type_error`
+- `observed_replay_inputs` remains empty/absent for this non-exec/eval path
+- no provider-map support, no `src/context_ir/eval_providers.py` change, and no
+  `evals/` asset or run-spec change
+- release state: audit-cleared, full-regression-cleared, and
+  commit-gating-cleared; eligible for local commit sequencing; push still
+  requires explicit Ryan authorization
+
+Workspace-only accepted release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
+
+Control-lane validation rerun:
+
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `25` passed, `351` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `34` passed, `651` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `7` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+- `git diff --check`: clean
+- `git diff -- evals/`: empty
+- `git diff -- src/context_ir/eval_providers.py`: empty
+
+Release gates cleared by the control lane:
+
+- release-unit audit: no findings; exact seven-file unit reviewed against the
+  governing control-state artifacts and slice boundaries
+- full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
+  `2122` pytest tests passed
+- commit-gating: no findings; dirty file set exactly matched the accepted
+  seven-file release unit; no staged files; no `evals/` diff; no
+  `src/context_ir/eval_providers.py` diff
+
+Preservation note:
+
+- Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+  `0.0016449302221442346` to `0.0016427314184447848`; selected units/order,
+  document hash, total tokens, warnings, warning IDs, probe behavior, and
+  warning-call count stayed locked for the budget-280 smoke row
+
+Most recent release is pushed and closed:
 
 - `d3dcc06 Add dir default provider support`
 - exact default-local provider-map support for `oracle_signal_dir_probe`
@@ -126,10 +187,11 @@ Preserved holds:
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
 
-Release state: pushed and closed. There is no active workspace release unit.
+Pushed release state: pushed and closed.
 
-Next control action: determine the next single-probe slice or spike from the
-remaining held probes without reopening pushed `dir(obj)` provider support.
+Next control action: stage and create a local commit over the exact seven-file
+unit. Do not push without explicit Ryan authorization for this release unit. Do
+not route to provider-map support for this probe from this slice.
 
 Previous pushed release:
 

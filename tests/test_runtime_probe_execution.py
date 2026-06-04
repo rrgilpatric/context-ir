@@ -128,6 +128,9 @@ _GETATTR_DEFAULT_VALUE_DEFAULT_LOCAL_SNAPSHOT_ID = (
     "oracle_signal_getattr_default_value_probe@default-local-python:v1"
 )
 _DIR_DEFAULT_LOCAL_SNAPSHOT_ID = "oracle_signal_dir_probe@default-local-python:v1"
+_VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_vars_type_error_probe@default-local-python:v1"
+)
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -568,6 +571,36 @@ def _reflective_vars_request(
     )
 
 
+def _reflective_vars_type_error_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact vars TypeError pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=20,
+            ),
+            snippet="vars(obj)",
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text="vars(obj)",
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_VARS_ONE_FORM_LABEL,
+        replay_target_seed="main.probe_namespace",
+        replay_selector_seed=(
+            "call:main.probe_namespace:"
+            f"{_REFLECTIVE_VARS_ONE_FORM_LABEL}@main.py:2:11:2:20"
+        ),
+    )
+
+
 def _reflective_vars_zero_request(
     start_line: int = 3,
     *,
@@ -908,6 +941,14 @@ def _dir_snapshot_basis() -> RepositorySnapshotBasis:
     return _snapshot_basis(
         snapshot_kind="eval_fixture",
         snapshot_id=_DIR_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _vars_type_error_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact vars TypeError fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
     )
 
 
@@ -1812,6 +1853,72 @@ def test_exact_dir_probe_appends_request_replay_payload_fields() -> None:
     )
     assert transport.payload.request_replay_payload_fields is (
         invocation.request_replay_payload_fields
+    )
+
+
+def test_exact_vars_type_error_probe_appends_request_replay_payload_fields() -> None:
+    """The exact vars TypeError pilot appends the deterministic object input."""
+    source_request = _reflective_vars_type_error_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        request=source_request,
+        repository_snapshot_basis=_vars_type_error_snapshot_basis(),
+    )
+    invocation = _local_python_subprocess_invocation(runner_request)
+    payload = _local_python_worker_request_payload(invocation)
+    transport = _local_python_worker_request_stdin_transport(invocation)
+    expected_replay_inputs = (
+        *_EXPECTED_REPLAY_INPUT_KEYS,
+        "object_type",
+    )
+
+    assert (
+        tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
+        == expected_replay_inputs
+    )
+    assert runner_request.replay_artifact.replay_inputs[-1:] == (
+        _field("object_type", "builtins.int"),
+    )
+    assert invocation.request_replay_payload_fields is (
+        runner_request.replay_artifact.replay_inputs
+    )
+    assert payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+    assert transport.payload.request_replay_payload_fields is (
+        invocation.request_replay_payload_fields
+    )
+
+
+@pytest.mark.parametrize(
+    "repository_snapshot_basis",
+    (
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_DIR_DEFAULT_LOCAL_SNAPSHOT_ID,
+        ),
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
+            is_dirty_worktree=True,
+        ),
+    ),
+)
+def test_exact_vars_type_error_probe_fails_closed_for_wrong_snapshot(
+    repository_snapshot_basis: RepositorySnapshotBasis,
+) -> None:
+    """The vars TypeError contract requires its exact clean fixture snapshot."""
+    source_request = _reflective_vars_type_error_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        request=source_request,
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+
+    assert (
+        tuple(field.key for field in runner_request.replay_artifact.replay_inputs)
+        == _EXPECTED_REPLAY_INPUT_KEYS
     )
 
 
@@ -5903,6 +6010,96 @@ def test_reflective_vars_local_python_runner_rejects_boundary_drift(
 
     assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
     assert attempt.normalized_payload == ()
+    assert attempt.failure_detail_fields[0] == _field(
+        "failure_source",
+        "local_python_process_completion",
+    )
+
+
+def test_reflective_vars_exact_local_python_runner_executes_type_error_subprocess(
+    tmp_path: Path,
+) -> None:
+    """The composed helper replays ``main.probe_namespace(1)`` for exact vars."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        ("def probe_namespace(obj: object) -> object:\n    return vars(obj)\n"),
+        encoding="utf-8",
+    )
+    request = _reflective_vars_type_error_exact_replay_input_request()
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=request,
+        repository_snapshot_basis=_vars_type_error_snapshot_basis(),
+    )
+    runner = make_runtime_probe_reflective_vars_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.OBSERVED
+    assert attempt.normalized_payload == (
+        _field("lookup_outcome", "raised_type_error"),
+    )
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference is None
+    assert attempt.failure_summary is None
+    assert attempt.failure_detail_fields == ()
+
+
+@pytest.mark.parametrize(
+    "repository_snapshot_basis",
+    (
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_DIR_DEFAULT_LOCAL_SNAPSHOT_ID,
+        ),
+        _snapshot_basis(
+            snapshot_kind="eval_fixture",
+            snapshot_id=_VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
+            is_dirty_worktree=True,
+        ),
+    ),
+)
+def test_reflective_vars_exact_local_python_runner_fails_closed_for_wrong_snapshot(
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    tmp_path: Path,
+) -> None:
+    """Wrong or dirty vars TypeError snapshots fail before exact replay."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        ("def probe_namespace(obj: object) -> object:\n    return vars(obj)\n"),
+        encoding="utf-8",
+    )
+    runner_request = _local_python_runner_request(
+        (
+            _field("repository_root", str(tmp_path)),
+            _field("working_directory", str(tmp_path)),
+            _field("python_path_entry", project_source_path),
+        ),
+        timeout_seconds=10,
+        request=_reflective_vars_type_error_exact_replay_input_request(),
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+    runner = make_runtime_probe_reflective_vars_local_python_subprocess_runner(
+        python_executable=sys.executable,
+        invocation_contract_revision="runtime-probe-local-python-subprocess:test.1",
+        completion_contract_revision="runtime-probe-local-python-completion:test.1",
+    )
+
+    attempt = runner(runner_request)
+
+    assert attempt.outcome is runtime_probe_results.RuntimeProbeResultOutcome.CRASHED
+    assert attempt.normalized_payload == ()
+    assert attempt.observed_replay_inputs == ()
+    assert attempt.durable_artifact_reference is None
     assert attempt.failure_detail_fields[0] == _field(
         "failure_source",
         "local_python_process_completion",

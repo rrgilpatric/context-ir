@@ -2,6 +2,63 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-04 -- Vars TypeError Exact Replay Contract Accepted
+
+- Accepted the workspace-only exact default-local replay-contract support slice
+  for `oracle_signal_vars_type_error_probe@default-local-python:v1` after
+  findings-first control review.
+- Accepted release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Behavior accepted:
+  - clean `eval_fixture` snapshot appends exact replay input
+    `object_type=builtins.int`
+  - wrong and dirty snapshots fail closed
+  - worker validates malformed exact replay fields before import/execution
+  - worker replays `main.probe_namespace(1)` and normalizes captured
+    `vars(1)` `TypeError` to `lookup_outcome=raised_type_error`
+  - `observed_replay_inputs` remains empty/absent for the non-exec/eval path
+- Preservation:
+  - no provider-map support for `oracle_signal_vars_type_error_probe`
+  - no `src/context_ir/eval_providers.py` diff
+  - no `evals/` asset or run-spec diff
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.0016449302221442346` to `0.0016427314184447848`; selected units/order,
+    document hash, total tokens, warnings, warning IDs, probe behavior, and
+    warning-call count stayed locked
+- Control-lane validation rerun:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `25` passed, `351` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `34` passed, `651` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `7` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+- Release gates:
+  - release-unit audit: no findings; exact seven-file unit reviewed against
+    the governing control-state artifacts and slice boundaries
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
+    `2122` pytest tests passed
+  - commit-gating: no findings; dirty file set exactly matched the accepted
+    seven-file release unit; no staged files; no `evals/` diff; no
+    `src/context_ir/eval_providers.py` diff
+- Release state:
+  - audit-cleared, full-regression-cleared, and commit-gating-cleared
+  - eligible for local commit sequencing
+  - push still requires explicit Ryan authorization
+- Acceptance status: first-pass.
+
 ## 2026-06-04 -- Dir Provider Map Support Pushed
 
 - Pushed the exact default-local `oracle_signal_dir_probe` provider-map support

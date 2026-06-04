@@ -226,6 +226,9 @@ _REFLECTIVE_VARS_REQUEST_MATERIALIZER = (
 _REFLECTIVE_VARS_OBSERVATION_MATERIALIZER = (
     "materialize_runtime_probe_reflective_vars_worker_observation"
 )
+_REFLECTIVE_VARS_SUCCESS_RESPONSE_MATERIALIZER = (
+    "materialize_runtime_probe_reflective_vars_worker_success_response"
+)
 _REFLECTIVE_VARS_ZERO_REQUEST_MATERIALIZER = (
     "materialize_runtime_probe_reflective_vars_zero_worker_request"
 )
@@ -381,6 +384,9 @@ _GETATTR_DEFAULT_VALUE_DEFAULT_LOCAL_SNAPSHOT_ID = (
     "oracle_signal_getattr_default_value_probe@default-local-python:v1"
 )
 _DIR_DEFAULT_LOCAL_SNAPSHOT_ID = "oracle_signal_dir_probe@default-local-python:v1"
+_VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_vars_type_error_probe@default-local-python:v1"
+)
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -482,6 +488,14 @@ def _dir_snapshot_basis() -> RepositorySnapshotBasis:
     return _snapshot_basis(
         snapshot_kind="eval_fixture",
         snapshot_id=_DIR_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _vars_type_error_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact vars TypeError fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
     )
 
 
@@ -1119,6 +1133,36 @@ def _reflective_vars_request(
         replay_selector_seed=replay_selector_seed,
         form_label=form_label,
         boundary_text=boundary_text,
+    )
+
+
+def _reflective_vars_type_error_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact vars TypeError pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:2:11",
+        source_site=SourceSite(
+            site_id="site:main.py:2:11",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=2,
+                start_column=11,
+                end_line=2,
+                end_column=20,
+            ),
+            snippet="vars(obj)",
+        ),
+        reason_code=UnresolvedReasonCode.REFLECTIVE_BUILTIN,
+        boundary_text="vars(obj)",
+        family_label=runtime_probe_requests.RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label=_REFLECTIVE_VARS_ONE_FORM_LABEL,
+        replay_target_seed="main.probe_namespace",
+        replay_selector_seed=(
+            "call:main.probe_namespace:"
+            f"{_REFLECTIVE_VARS_ONE_FORM_LABEL}@main.py:2:11:2:20"
+        ),
     )
 
 
@@ -9980,6 +10024,34 @@ def test_reflective_vars_worker_request_materializes_replay_contract() -> None:
     )
 
 
+def test_reflective_vars_worker_request_materializes_exact_replay_input() -> None:
+    """The exact vars TypeError pilot keeps the int object replay input."""
+    source_request = _reflective_vars_type_error_exact_replay_input_request()
+    payload = _valid_worker_payload_for_request(
+        source_request,
+        repository_snapshot_basis=_vars_type_error_snapshot_basis(),
+    )
+
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_vars_worker_request(
+            payload
+        )
+    )
+
+    assert request.subject_id == "unsupported:call:main.py:2:11"
+    assert request.source_start_line == 2
+    assert request.source_start_column == 11
+    assert request.source_end_column == source_request.source_site.span.end_column
+    assert request.boundary_text == "vars(obj)"
+    assert request.replay_target_seed == "main.probe_namespace"
+    assert request.replay_selector_seed == (
+        f"call:main.probe_namespace:{_REFLECTIVE_VARS_ONE_FORM_LABEL}@main.py:2:11:2:20"
+    )
+    assert request.request_replay_payload_fields[-1:] == (
+        _field("object_type", "builtins.int"),
+    )
+
+
 @pytest.mark.parametrize(
     ("form_label", "boundary_text"),
     (
@@ -10029,6 +10101,90 @@ def test_reflective_vars_worker_request_rejects_replay_drift(
         replay_value,
         payload=_valid_worker_payload_for_request(_reflective_vars_request()),
     )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_reflective_vars_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("repository_snapshot_basis", "error_match"),
+    (
+        (
+            _snapshot_basis(
+                snapshot_kind="eval_fixture",
+                snapshot_id=_DIR_DEFAULT_LOCAL_SNAPSHOT_ID,
+            ),
+            "exact replay inputs",
+        ),
+        (
+            _snapshot_basis(
+                snapshot_kind="eval_fixture",
+                snapshot_id=_VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID,
+                is_dirty_worktree=True,
+            ),
+            "exact replay inputs",
+        ),
+    ),
+)
+def test_reflective_vars_worker_request_rejects_exact_wrong_snapshot(
+    repository_snapshot_basis: RepositorySnapshotBasis,
+    error_match: str,
+) -> None:
+    """Wrong or dirty exact vars TypeError snapshots omit required replay input."""
+    payload = _valid_worker_payload_for_request(
+        _reflective_vars_type_error_exact_replay_input_request(),
+        repository_snapshot_basis=repository_snapshot_basis,
+    )
+
+    with pytest.raises(ValueError, match=error_match):
+        runtime_probe_worker.materialize_runtime_probe_reflective_vars_worker_request(
+            payload
+        )
+
+
+@pytest.mark.parametrize(
+    ("replay_key", "replay_value", "error_match"),
+    (
+        ("object_type", None, "exact replay inputs"),
+        ("object_type", "builtins.str", "exact replay inputs"),
+        ("object_type", "duplicate", "duplicate keys"),
+        ("unexpected", "value", "exact replay inputs"),
+    ),
+)
+def test_reflective_vars_worker_request_rejects_bad_exact_replay_inputs(
+    replay_key: str,
+    replay_value: str | None,
+    error_match: str,
+) -> None:
+    """The exact vars TypeError pilot rejects malformed replay input fields."""
+    payload = _valid_worker_payload_for_request(
+        _reflective_vars_type_error_exact_replay_input_request(),
+        repository_snapshot_basis=_vars_type_error_snapshot_basis(),
+    )
+    if replay_value is None:
+        fields = tuple(
+            field
+            for field in payload.request_replay_payload_fields
+            if field.key != replay_key
+        )
+    elif replay_value == "duplicate":
+        fields = (
+            *payload.request_replay_payload_fields,
+            _field(replay_key, payload.request_replay_payload_fields[-1].value),
+        )
+    elif replay_key == "unexpected":
+        fields = (
+            *payload.request_replay_payload_fields,
+            _field(replay_key, replay_value),
+        )
+    else:
+        fields = tuple(
+            _field(field.key, replay_value) if field.key == replay_key else field
+            for field in payload.request_replay_payload_fields
+        )
+    object.__setattr__(payload, "request_replay_payload_fields", fields)
 
     with pytest.raises(ValueError, match=error_match):
         runtime_probe_worker.materialize_runtime_probe_reflective_vars_worker_request(
@@ -10094,6 +10250,51 @@ def test_reflective_vars_worker_concrete_observer_captures_lookup_outcome(
         ).normalized_payload
         == (_field("lookup_outcome", expected_outcome),)
     )
+
+
+def test_reflective_vars_worker_concrete_observer_captures_exact_type_error(
+    tmp_path: Path,
+) -> None:
+    """The exact vars TypeError pilot calls ``main.probe_namespace(1)``."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_namespace(obj: object) -> object:\n"
+            "    assert obj == 1\n"
+            "    return vars(obj)\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_vars_type_error_exact_replay_input_request(),
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+        repository_snapshot_basis=_vars_type_error_snapshot_basis(),
+    )
+    request = (
+        runtime_probe_worker.materialize_runtime_probe_reflective_vars_worker_request(
+            payload
+        )
+    )
+    original_vars = builtins.vars
+    sys.modules.pop("main", None)
+
+    try:
+        observation = _observe_reflective_vars_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+
+    assert observation.lookup_outcome == "raised_type_error"
+    assert builtins.vars is original_vars
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _REFLECTIVE_VARS_SUCCESS_RESPONSE_MATERIALIZER,
+    )
+    success_response = materialize_success_response(observation)
+    assert success_response.normalized_payload == (
+        _field("lookup_outcome", "raised_type_error"),
+    )
+    assert success_response.observed_replay_inputs == ()
 
 
 @pytest.mark.parametrize(
@@ -13596,6 +13797,55 @@ def test_reflective_vars_worker_default_subprocess_observes_vars(
             },
         ],
     }
+
+
+def test_reflective_vars_worker_default_subprocess_observes_exact_type_error_replay(
+    tmp_path: Path,
+) -> None:
+    """The real worker calls ``main.probe_namespace(1)`` for exact vars replay."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "def probe_namespace(obj: object) -> object:\n"
+            "    assert obj == 1\n"
+            "    return vars(obj)\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _reflective_vars_type_error_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+        repository_snapshot_basis=_vars_type_error_snapshot_basis(),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "lookup_outcome",
+                "value": "raised_type_error",
+            },
+        ],
+    }
+    assert "observed_replay_inputs" not in protocol_payload
 
 
 def test_reflective_vars_zero_worker_default_subprocess_observes_vars(

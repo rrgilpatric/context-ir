@@ -30,6 +30,7 @@ from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
     _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT,
     RuntimeProbeLocalPythonWorkerRequestPayload,
     _runtime_probe_exact_replay_contract_candidates_for_replay_fields,
     _runtime_probe_exact_replay_contract_for_replay_fields,
@@ -375,6 +376,8 @@ _REFLECTIVE_BUILTIN_VARS_ZERO_WORKER_BOUNDARY_TEXT = "vars()"
 _REFLECTIVE_BUILTIN_VARS_WORKER_GLOBAL_NAME = "vars"
 _REFLECTIVE_BUILTIN_VARS_WORKER_RETURNED_NAMESPACE = "returned_namespace"
 _REFLECTIVE_BUILTIN_VARS_WORKER_RAISED_TYPE_ERROR = "raised_type_error"
+_REFLECTIVE_BUILTIN_VARS_OBJECT_TYPE_REPLAY_KEY = "object_type"
+_REFLECTIVE_BUILTIN_VARS_TYPE_ERROR_OBJECT_TYPE = "builtins.int"
 _REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL = "reflective_builtin:dir/1"
 _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT = "dir(obj)"
 _REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_FORM_LABEL = "reflective_builtin:dir/0"
@@ -1761,7 +1764,7 @@ RuntimeProbeLocalPythonReflectiveGetattrDefaultTargetCallable: TypeAlias = Calla
     object,
 ]
 RuntimeProbeLocalPythonReflectiveVarsTargetCallable: TypeAlias = Callable[
-    [],
+    ...,
     object,
 ]
 RuntimeProbeLocalPythonReflectiveVarsZeroTargetCallable: TypeAlias = Callable[
@@ -2113,6 +2116,7 @@ class _RuntimeProbeReflectiveVarsCapture:
 
     original_vars: Callable[[object], object]
     captured_lookup_outcomes: list[str] = field(default_factory=list)
+    captured_object_types: list[str] = field(default_factory=list)
     captured_rejections: list[str] = field(default_factory=list)
 
     def vars(self, *args: object, **kwargs: object) -> object:
@@ -2124,6 +2128,7 @@ class _RuntimeProbeReflectiveVarsCapture:
                 "vars(obj)"
             )
         (obj,) = args
+        self.captured_object_types.append(_runtime_probe_worker_object_type_name(obj))
         try:
             namespace = self.original_vars(obj)
         except TypeError:
@@ -5077,16 +5082,22 @@ def materialize_runtime_probe_reflective_vars_worker_observation_from_target(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonReflectiveVarsTargetCallable,
 ) -> RuntimeProbeLocalPythonReflectiveVarsWorkerObservation:
-    """Observe one zero-argument target under exact ``vars`` interception."""
+    """Observe one target under exact ``vars`` interception."""
     _validate_runtime_probe_reflective_vars_replay_target(replay_target)
     _validate_runtime_probe_reflective_vars_replay_target_source_module(
         replay_target,
         source_module,
     )
     _validate_runtime_probe_reflective_vars_target_callable(target)
+    exact_replay_inputs = _runtime_probe_reflective_vars_exact_replay_inputs(
+        replay_target.request
+    )
+    target_args = _runtime_probe_reflective_vars_target_args(exact_replay_inputs)
     lookup_outcome = _runtime_probe_reflective_vars_captured_lookup_outcome(
         source_module,
         target,
+        target_args=target_args,
+        exact_replay_inputs=exact_replay_inputs,
     )
     return materialize_runtime_probe_reflective_vars_worker_observation(
         replay_target.request,
@@ -8355,6 +8366,9 @@ def _restore_runtime_probe_reflective_getattr_default_builtin(
 def _runtime_probe_reflective_vars_captured_lookup_outcome(
     source_module: ModuleType,
     target: RuntimeProbeLocalPythonReflectiveVarsTargetCallable,
+    *,
+    target_args: tuple[object, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Run a target while capturing one exact ``vars(obj)`` call."""
     _validate_runtime_probe_reflective_vars_source_global_absent(source_module)
@@ -8372,7 +8386,7 @@ def _runtime_probe_reflective_vars_captured_lookup_outcome(
         try:
             sys.stdout = shielded_stdout
             sys.stderr = shielded_stderr
-            target()
+            target(*target_args)
         finally:
             sys.stdout = original_stdout
             sys.stderr = original_stderr
@@ -8394,19 +8408,80 @@ def _runtime_probe_reflective_vars_captured_lookup_outcome(
         if target_failure is not None:
             raise source_restore_failure from target_failure
         raise source_restore_failure
-    if target_failure is not None:
+    if (
+        target_failure is not None
+        and not _is_runtime_probe_reflective_vars_expected_type_error(
+            target_failure,
+            capture,
+            exact_replay_inputs=exact_replay_inputs,
+        )
+    ):
         _raise_runtime_probe_reflective_vars_target_failure(target_failure)
 
-    return _runtime_probe_reflective_vars_capture_lookup_outcome(capture)
+    return _runtime_probe_reflective_vars_capture_lookup_outcome(
+        capture,
+        exact_replay_inputs=exact_replay_inputs,
+    )
+
+
+def _runtime_probe_reflective_vars_exact_replay_inputs(
+    request: RuntimeProbeLocalPythonReflectiveVarsWorkerRequest,
+) -> Mapping[str, str] | None:
+    """Return exact replay inputs for the accepted vars TypeError pilot."""
+    _validate_runtime_probe_reflective_vars_worker_request(request)
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        request.request_replay_payload_fields,
+        field_name="request_replay_payload_fields",
+    )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_fields_by_key
+    )
+    if contract is not _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT:
+        return None
+    _validate_runtime_probe_reflective_vars_exact_replay_inputs(exact_fields_by_key)
+    return exact_fields_by_key
+
+
+def _runtime_probe_reflective_vars_target_args(
+    exact_replay_inputs: Mapping[str, str] | None,
+) -> tuple[object, ...]:
+    """Return target arguments for the exact vars TypeError pilot, otherwise none."""
+    if exact_replay_inputs is None:
+        return ()
+    _validate_runtime_probe_reflective_vars_exact_replay_inputs(exact_replay_inputs)
+    return (1,)
+
+
+def _is_runtime_probe_reflective_vars_expected_type_error(
+    error: BaseException,
+    capture: _RuntimeProbeReflectiveVarsCapture,
+    *,
+    exact_replay_inputs: Mapping[str, str] | None,
+) -> bool:
+    """Return whether a TypeError is the approved exact replay outcome."""
+    if not isinstance(error, TypeError):
+        return False
+    if exact_replay_inputs is None:
+        return False
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_replay_inputs
+    )
+    return contract is _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT and tuple(
+        capture.captured_lookup_outcomes
+    ) == (_REFLECTIVE_BUILTIN_VARS_WORKER_RAISED_TYPE_ERROR,)
 
 
 def _runtime_probe_reflective_vars_capture_lookup_outcome(
     capture: _RuntimeProbeReflectiveVarsCapture,
+    *,
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> str:
     """Return the single captured vars lookup outcome after validation."""
     _validate_runtime_probe_reflective_vars_intercepted_calls(
         captured_lookup_outcomes=capture.captured_lookup_outcomes,
+        captured_object_types=tuple(capture.captured_object_types),
         captured_rejections=tuple(capture.captured_rejections),
+        exact_replay_inputs=exact_replay_inputs,
     )
     return capture.captured_lookup_outcomes[0]
 
@@ -8414,7 +8489,9 @@ def _runtime_probe_reflective_vars_capture_lookup_outcome(
 def _validate_runtime_probe_reflective_vars_intercepted_calls(
     *,
     captured_lookup_outcomes: list[str],
+    captured_object_types: tuple[str, ...],
     captured_rejections: tuple[str, ...],
+    exact_replay_inputs: Mapping[str, str] | None,
 ) -> None:
     """Reject intercepted vars behavior outside the exact one-argument form."""
     if "arity" in captured_rejections:
@@ -8426,6 +8503,21 @@ def _validate_runtime_probe_reflective_vars_intercepted_calls(
         raise ValueError(
             "runtime probe reflective builtin vars worker target must capture "
             "exactly one vars call"
+        )
+    if exact_replay_inputs is None:
+        return
+    if len(captured_object_types) != 1:
+        raise ValueError(
+            "runtime probe reflective builtin vars worker target must capture "
+            "exactly one vars call"
+        )
+    if (
+        captured_object_types[0]
+        != exact_replay_inputs[_REFLECTIVE_BUILTIN_VARS_OBJECT_TYPE_REPLAY_KEY]
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars worker exact replay inputs "
+            "must match captured object_type"
         )
 
 
@@ -10827,6 +10919,10 @@ def _validate_runtime_probe_reflective_vars_worker_payload(
         replay_target_seed=payload.replay_target_seed,
         replay_selector_seed=payload.replay_selector_seed,
     )
+    _validate_runtime_probe_reflective_vars_exact_replay_inputs_if_needed(
+        payload.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
+    )
     expected_identity = _runtime_probe_worker_invocation_identity_from_parts(
         plan_id=payload.plan_id,
         request_id=payload.request_id,
@@ -10926,6 +11022,10 @@ def _validate_runtime_probe_reflective_vars_worker_request(
         form_label=request.form_label,
         replay_target_seed=request.replay_target_seed,
         replay_selector_seed=request.replay_selector_seed,
+    )
+    _validate_runtime_probe_reflective_vars_exact_replay_inputs_if_needed(
+        request.request_replay_payload_fields,
+        replay_fields_by_key=replay_fields_by_key,
     )
     for field_key, expected_value in (
         ("subject_kind", request.subject_kind.value),
@@ -11272,6 +11372,52 @@ def _validate_runtime_probe_reflective_vars_replay_metadata(
             field_name="source_end_column",
         ),
     )
+
+
+def _validate_runtime_probe_reflective_vars_exact_replay_inputs_if_needed(
+    fields: tuple[RuntimeProbeReplayField, ...],
+    *,
+    replay_fields_by_key: Mapping[str, str],
+) -> None:
+    """Reject drifted request replay inputs for the exact vars TypeError pilot."""
+    exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
+        fields,
+        field_name="request_replay_payload_fields",
+    )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_fields_by_key
+    )
+    if contract is not _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT:
+        candidates = _runtime_probe_exact_replay_contract_candidates_for_replay_fields(
+            replay_fields_by_key
+        )
+        if _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT in candidates:
+            raise ValueError(
+                "runtime probe reflective builtin vars worker exact replay inputs "
+                "must match the accepted type-error replay contract"
+            )
+        return
+    _validate_runtime_probe_reflective_vars_exact_replay_inputs(exact_fields_by_key)
+
+
+def _validate_runtime_probe_reflective_vars_exact_replay_inputs(
+    fields_by_key: Mapping[str, str],
+) -> None:
+    """Require the exact vars TypeError pilot to carry only object_type."""
+    contract = _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT
+    if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
+        raise ValueError(
+            "runtime probe reflective builtin vars worker exact replay inputs "
+            "must contain only object_type"
+        )
+    if not _runtime_probe_worker_exact_replay_payload_matches_contract(
+        fields_by_key,
+        contract,
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars worker exact replay inputs "
+            "must be object_type=builtins.int"
+        )
 
 
 def _validate_runtime_probe_reflective_vars_replay_field_match(
