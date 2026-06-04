@@ -40,30 +40,30 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Gate-cleared workspace release unit is active for exact default-local
-provider-map support for both defaulted getattr fixtures. This unit is
-control-reviewed, release-unit-audit-cleared, full-regression-cleared, and
-commit-gating-cleared. It is not staged, committed, or pushed.
+No workspace release unit is currently active.
 
-Gate-cleared release unit files:
+Latest pushed release:
 
-- `PLAN.md`
-- `BUILDLOG.md`
-- `src/context_ir/eval_providers.py`
-- `tests/test_eval_signal_getattr_default_probe.py`
-- `tests/test_eval_signal_getattr_default_value_probe.py`
-- duplicated provider support-message expectation tests:
-  - `tests/test_eval_signal_dir_zero_probe.py`
-  - `tests/test_eval_signal_globals_probe.py`
-  - `tests/test_eval_signal_hasattr_probe.py`
-  - `tests/test_eval_signal_locals_probe.py`
-  - `tests/test_eval_signal_metaclass_behavior_probe.py`
-  - `tests/test_eval_signal_vars_zero_probe.py`
-- `tests/test_eval_signal_smoke_e.py`
+- `859fd91 Add defaulted getattr provider support`
+- pushed to `origin/main` after explicit Ryan authorization
+- release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - duplicated provider support-message expectation tests:
+    - `tests/test_eval_signal_dir_zero_probe.py`
+    - `tests/test_eval_signal_globals_probe.py`
+    - `tests/test_eval_signal_hasattr_probe.py`
+    - `tests/test_eval_signal_locals_probe.py`
+    - `tests/test_eval_signal_metaclass_behavior_probe.py`
+    - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
 
-Gate-cleared behavior:
+Pushed behavior:
 
-- `context_ir_default_local_python_subprocess` now supports exactly both
+- `context_ir_default_local_python_subprocess` supports exactly both
   defaulted getattr task IDs:
   - `oracle_signal_getattr_default_probe`
   - `oracle_signal_getattr_default_value_probe`
@@ -90,7 +90,11 @@ Gate-cleared behavior:
   document hash, total tokens, warnings, warning IDs, probe behavior, and
   warning-call count remain locked by the smoke test
 
-Workspace-only preserved holds:
+Release gates passed before push: control review, release-unit audit, full
+regression, and commit-gating. Full regression passed with `ruff check`,
+`ruff format --check`, `mypy --strict`, and `2095` pytest tests.
+
+Pushed-release preserved holds:
 
 - no `evals/` asset or run-spec changes
 - no `src/context_ir/runtime_probe_execution.py` or
@@ -99,18 +103,16 @@ Workspace-only preserved holds:
 - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
-- no staging, commit, or push
 
-Release state: workspace-only accepted and gate-cleared; ready for local commit
-sequencing. Push still requires explicit Ryan authorization. Do not route this
-unit back to implementation, control review, release-unit audit, full
-regression, or commit-gating unless a new finding appears.
+Release state: pushed and closed with no active gate. Do not route `859fd91`
+back to implementation, control review, release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
-Next control action: stage and locally commit the exact gate-cleared 12-file
-release unit when release sequencing is authorized. Push only after explicit
-Ryan authorization.
+Next control action: choose the next authorized slice from current git state.
+The likely next move is a read-only tranche-selection spike for the remaining
+non-dynamic unsupported probes.
 
-Latest pushed release remains:
+Previous pushed release:
 
 - `43a8d1a Add defaulted getattr exact replay contracts`
 - pushed to `origin/main` after explicit Ryan authorization

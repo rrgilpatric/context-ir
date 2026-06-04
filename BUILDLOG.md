@@ -2,6 +2,64 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-04 -- Defaulted Getattr Provider Map Support Pushed
+
+- Pushed the exact default-local provider-map support release to `origin/main`
+  after explicit Ryan authorization.
+- Pushed release commit:
+  - `859fd91 Add defaulted getattr provider support`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_getattr_default_probe.py`
+  - `tests/test_eval_signal_getattr_default_value_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Release gates passed before push:
+  - control review: no findings
+  - release-unit audit: no findings
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`,
+    and `2095` pytest tests passed
+  - commit-gating: no findings
+- Pushed behavior:
+  - `context_ir_default_local_python_subprocess` now supports exactly
+    `oracle_signal_getattr_default_probe` and
+    `oracle_signal_getattr_default_value_probe`
+  - both use unsupported unit `unsupported:call:main.py:2:11`, miss evidence
+    and boundary `getattr(obj, name, default)`,
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+    `reflective_builtin:getattr/3`, and replay target `main.probe_attribute`
+  - default-return provider support requires snapshot
+    `oracle_signal_getattr_default_probe@default-local-python:v1`, replay tail
+    `object_type=builtins.int` plus `attribute_name=missing_attribute`, and
+    runtime payload `lookup_outcome=returned_default_value`
+  - value-return provider support requires snapshot
+    `oracle_signal_getattr_default_value_probe@default-local-python:v1`,
+    replay tail `object_type=builtins.int` plus `attribute_name=bit_length`,
+    and runtime payload `lookup_outcome=returned_value`
+  - runtime provenance remains additive; selected-unit primary truth remains
+    `unsupported/opaque`; `observed_replay_inputs` remains empty/absent
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for other remaining unsupported probes
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+- Release state:
+  - pushed and closed
+  - no active workspace release unit
+- This entry is the post-push continuity sync that supersedes the live routing
+  state in the preceding gate-cleared entry.
+- Acceptance status: first-pass.
+
 ## 2026-06-04 -- Defaulted Getattr Provider Map Support Gate-Cleared
 
 - Accepted the workspace-only exact default-local provider-map support slice for
