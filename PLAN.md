@@ -40,8 +40,9 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only accepted release unit is active:
+No workspace release unit is active. Most recent release is pushed and closed:
 
+- `6948acb Add vars TypeError exact replay contract`
 - exact default-local replay-contract support for
   `oracle_signal_vars_type_error_probe@default-local-python:v1`
 - control-reviewed first-pass with no findings
@@ -57,11 +58,9 @@ Workspace-only accepted release unit is active:
 - `observed_replay_inputs` remains empty/absent for this non-exec/eval path
 - no provider-map support, no `src/context_ir/eval_providers.py` change, and no
   `evals/` asset or run-spec change
-- release state: audit-cleared, full-regression-cleared, and
-  commit-gating-cleared; eligible for local commit sequencing; push still
-  requires explicit Ryan authorization
+- release state: pushed to `origin/main` after explicit Ryan authorization
 
-Workspace-only accepted release unit files:
+Pushed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -71,7 +70,7 @@ Workspace-only accepted release unit files:
 - `tests/test_runtime_probe_execution.py`
 - `tests/test_runtime_probe_worker.py`
 
-Control-lane validation rerun:
+Validation run before push:
 
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `25` passed, `351` deselected
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `34` passed, `651` deselected
@@ -84,7 +83,7 @@ Control-lane validation rerun:
 - `git diff -- evals/`: empty
 - `git diff -- src/context_ir/eval_providers.py`: empty
 
-Release gates cleared by the control lane:
+Release gates cleared before push:
 
 - release-unit audit: no findings; exact seven-file unit reviewed against the
   governing control-state artifacts and slice boundaries
@@ -101,7 +100,7 @@ Preservation note:
   document hash, total tokens, warnings, warning IDs, probe behavior, and
   warning-call count stayed locked for the budget-280 smoke row
 
-Most recent release is pushed and closed:
+Previous pushed release:
 
 - `d3dcc06 Add dir default provider support`
 - exact default-local provider-map support for `oracle_signal_dir_probe`
@@ -111,7 +110,7 @@ Most recent release is pushed and closed:
 - commit-gating cleared
 - pushed to `origin/main` after explicit Ryan authorization
 
-Most recent substantive release anchor:
+Previous substantive release anchor:
 
 - `d3dcc06 Add dir default provider support`
 
@@ -189,11 +188,12 @@ Preserved holds:
 
 Pushed release state: pushed and closed.
 
-Next control action: stage and create a local commit over the exact seven-file
-unit. Do not push without explicit Ryan authorization for this release unit. Do
-not route to provider-map support for this probe from this slice.
+Next control action: determine the next single-probe slice or spike from the
+remaining held probes without reopening pushed `vars(obj)` TypeError replay
+support. Do not route to provider-map support for this probe from the replay
+contract release.
 
-Previous pushed release:
+Earlier pushed release:
 
 - `859fd91 Add defaulted getattr provider support`
 - pushed to `origin/main` after explicit Ryan authorization

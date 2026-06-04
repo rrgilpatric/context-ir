@@ -2,6 +2,55 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-04 -- Vars TypeError Exact Replay Contract Pushed
+
+- Pushed the exact default-local
+  `oracle_signal_vars_type_error_probe@default-local-python:v1` replay-contract
+  release to `origin/main` after explicit Ryan authorization.
+- Pushed release commit:
+  - `6948acb Add vars TypeError exact replay contract`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Release gates passed before push:
+  - control review: no findings
+  - release-unit audit: no findings
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`,
+    and `2122` pytest tests passed
+  - commit-gating: no findings; dirty file set exactly matched the accepted
+    seven-file release unit; no staged files; no `evals/` diff; no
+    `src/context_ir/eval_providers.py` diff
+- Pushed behavior:
+  - clean `eval_fixture` snapshot appends exact replay input
+    `object_type=builtins.int`
+  - wrong and dirty snapshots fail closed
+  - worker validates malformed exact replay fields before import/execution
+  - worker replays `main.probe_namespace(1)` and normalizes captured
+    `vars(1)` `TypeError` to `lookup_outcome=raised_type_error`
+  - `observed_replay_inputs` remains empty/absent for the non-exec/eval path
+- Preserved holds:
+  - no provider-map support for `oracle_signal_vars_type_error_probe`
+  - no `src/context_ir/eval_providers.py` diff
+  - no `evals/` asset or run-spec diff
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.0016449302221442346` to `0.0016427314184447848`; selected units/order,
+    document hash, total tokens, warnings, warning IDs, probe behavior, and
+    warning-call count stayed locked
+- Release state:
+  - pushed and closed
+  - no active workspace release unit
+- This entry is the post-push continuity sync that supersedes the live routing
+  state in the preceding accepted/gate-cleared entry.
+- Acceptance status: first-pass.
+
 ## 2026-06-04 -- Vars TypeError Exact Replay Contract Accepted
 
 - Accepted the workspace-only exact default-local replay-contract support slice
