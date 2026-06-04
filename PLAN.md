@@ -40,9 +40,77 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Gate-cleared workspace release unit is active for exact default-local
+provider-map support for both defaulted getattr fixtures. This unit is
+control-reviewed, release-unit-audit-cleared, full-regression-cleared, and
+commit-gating-cleared. It is not staged, committed, or pushed.
 
-Latest pushed release:
+Gate-cleared release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_getattr_default_probe.py`
+- `tests/test_eval_signal_getattr_default_value_probe.py`
+- duplicated provider support-message expectation tests:
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+
+Gate-cleared behavior:
+
+- `context_ir_default_local_python_subprocess` now supports exactly both
+  defaulted getattr task IDs:
+  - `oracle_signal_getattr_default_probe`
+  - `oracle_signal_getattr_default_value_probe`
+- Provider fixture metadata for both uses unsupported unit
+  `unsupported:call:main.py:2:11`, miss evidence and boundary
+  `getattr(obj, name, default)`, `RuntimeProbeFamily.REFLECTIVE_BUILTIN`,
+  form `reflective_builtin:getattr/3`, and replay target
+  `main.probe_attribute`
+- Default-return branch maps snapshot
+  `oracle_signal_getattr_default_probe@default-local-python:v1` to replay tail
+  `object_type=builtins.int`, `attribute_name=missing_attribute`, and runtime
+  payload `lookup_outcome=returned_default_value`
+- Value-return branch maps snapshot
+  `oracle_signal_getattr_default_value_probe@default-local-python:v1` to replay
+  tail `object_type=builtins.int`, `attribute_name=bit_length`, and runtime
+  payload `lookup_outcome=returned_value`
+- Direct provider tests and temporary single-provider run-spec tests lock
+  runtime provenance as additive; selected-unit primary truth remains
+  `unsupported/opaque`; `observed_replay_inputs` remains empty/absent
+- Existing pushed `getattr/2` returned-value and AttributeError provider paths
+  still pass
+- Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+  `0.001691794661859072` to `0.0016616917680346006`; selected units/order,
+  document hash, total tokens, warnings, warning IDs, probe behavior, and
+  warning-call count remain locked by the smoke test
+
+Workspace-only preserved holds:
+
+- no `evals/` asset or run-spec changes
+- no `src/context_ir/runtime_probe_execution.py` or
+  `src/context_ir/runtime_probe_worker.py` changes
+- no provider support for other remaining unsupported probes
+- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+  Task 4, public/demo, benchmark, latency, production, or generalized replay
+  framework change
+- no staging, commit, or push
+
+Release state: workspace-only accepted and gate-cleared; ready for local commit
+sequencing. Push still requires explicit Ryan authorization. Do not route this
+unit back to implementation, control review, release-unit audit, full
+regression, or commit-gating unless a new finding appears.
+
+Next control action: stage and locally commit the exact gate-cleared 12-file
+release unit when release sequencing is authorized. Push only after explicit
+Ryan authorization.
+
+Latest pushed release remains:
 
 - `43a8d1a Add defaulted getattr exact replay contracts`
 - pushed to `origin/main` after explicit Ryan authorization
@@ -91,11 +159,6 @@ Pushed-release preserved holds:
 Release state: pushed and closed with no active gate. Do not route `43a8d1a`
 back to release-unit audit, full regression, commit-gating, staging, local
 commit creation, or push absent new findings.
-
-Next control action: choose the next authorized slice from current git state.
-The likely next bounded slice is provider-map support for the two defaulted
-getattr fixtures, but it must start from live repo truth and preserve the holds
-above.
 
 Earlier pushed release state follows for historical routing.
 

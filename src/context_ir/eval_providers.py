@@ -81,6 +81,12 @@ _GETATTR_ATTRIBUTE_ERROR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _GETATTR_ATTRIBUTE_ERROR_RUNTIME_PAYLOAD = (
     ("lookup_outcome", "raised_attribute_error"),
 )
+_GETATTR_DEFAULT_PROBE_TASK_ID = "oracle_signal_getattr_default_probe"
+_GETATTR_DEFAULT_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_GETATTR_DEFAULT_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_default_value"),)
+_GETATTR_DEFAULT_VALUE_PROBE_TASK_ID = "oracle_signal_getattr_default_value_probe"
+_GETATTR_DEFAULT_VALUE_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_GETATTR_DEFAULT_VALUE_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_value"),)
 _HASATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_hasattr_literal_probe"
 _HASATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _HASATTR_LITERAL_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
@@ -662,6 +668,36 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         runtime_replay_input_tail=(
             ("object_type", "builtins.int"),
             ("attribute_name", "definitely_missing_attribute"),
+        ),
+    ),
+    _GETATTR_DEFAULT_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_GETATTR_DEFAULT_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="getattr(obj, name, default)",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:getattr/3",
+        boundary_text="getattr(obj, name, default)",
+        replay_target_seed="main.probe_attribute",
+        snapshot_id="oracle_signal_getattr_default_probe@default-local-python:v1",
+        runtime_payload=_GETATTR_DEFAULT_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(
+            ("object_type", "builtins.int"),
+            ("attribute_name", "missing_attribute"),
+        ),
+    ),
+    _GETATTR_DEFAULT_VALUE_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_GETATTR_DEFAULT_VALUE_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="getattr(obj, name, default)",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:getattr/3",
+        boundary_text="getattr(obj, name, default)",
+        replay_target_seed="main.probe_attribute",
+        snapshot_id=(
+            "oracle_signal_getattr_default_value_probe@default-local-python:v1"
+        ),
+        runtime_payload=_GETATTR_DEFAULT_VALUE_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(
+            ("object_type", "builtins.int"),
+            ("attribute_name", "bit_length"),
         ),
     ),
     _HASATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
@@ -1594,6 +1630,8 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_probe, "
             "oracle_signal_getattr_attribute_error_probe, "
+            "oracle_signal_getattr_default_probe, "
+            "oracle_signal_getattr_default_value_probe, "
             "oracle_signal_getattr_literal_probe, "
             "oracle_signal_dynamic_import_root_literal_probe, "
             "oracle_signal_dynamic_import_root_probe, "

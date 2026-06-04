@@ -2,6 +2,98 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-04 -- Defaulted Getattr Provider Map Support Gate-Cleared
+
+- Accepted the workspace-only exact default-local provider-map support slice for
+  both defaulted getattr fixtures after findings-first control review.
+- Release-unit audit result:
+  - no findings
+  - exact 12-file release unit confirmed
+  - no `evals/` asset or run-spec diff
+  - no `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` diff
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+- Full regression passed:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v` with `2095` passed
+- Commit-gating result:
+  - no findings
+  - dirty file set exactly matches the accepted 12-file release unit
+  - no staged files
+  - `git diff --check` clean
+  - excluded `evals/`, runtime execution, and runtime worker paths remain
+    untouched
+- Release state:
+  - workspace-only accepted and gate-cleared
+  - ready for local commit sequencing
+  - not staged, not committed, not pushed
+- Acceptance status: first-pass.
+
+## 2026-06-04 -- Defaulted Getattr Provider Map Support Pre-Slice Returned
+
+- Implemented workspace-only exact default-local provider-map support for both
+  defaulted getattr fixtures:
+  - `oracle_signal_getattr_default_probe`
+  - `oracle_signal_getattr_default_value_probe`
+- Provider behavior added:
+  - default-return branch uses unsupported unit `unsupported:call:main.py:2:11`,
+    miss evidence and boundary `getattr(obj, name, default)`,
+    `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+    `reflective_builtin:getattr/3`, replay target `main.probe_attribute`,
+    snapshot `oracle_signal_getattr_default_probe@default-local-python:v1`,
+    replay tail `object_type=builtins.int` plus
+    `attribute_name=missing_attribute`, and runtime payload
+    `lookup_outcome=returned_default_value`
+  - value-return branch uses the same unit, family, form, boundary, and replay
+    target, snapshot
+    `oracle_signal_getattr_default_value_probe@default-local-python:v1`,
+    replay tail `object_type=builtins.int` plus `attribute_name=bit_length`,
+    and runtime payload `lookup_outcome=returned_value`
+  - exact provider support remains fixture allowlist based and does not add a
+    generalized replay framework
+- Tests added or updated:
+  - direct provider provenance and temporary single-provider run-spec dispatch
+    coverage in both defaulted getattr fixture tests
+  - duplicated exact support-message expectations in existing provider tests
+  - Task 3 confidence lock updated from `0.001691794661859072` to
+    `0.0016616917680346006` after selected units/order, document hash, total
+    tokens, warnings, warning IDs, probe behavior, and warning-call count stayed
+    locked
+- Validation passed:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_default_value_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_getattr_probe.py tests/test_eval_signal_getattr_attribute_error_probe.py -q`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_signal_metaclass_behavior_probe.py tests/test_eval_signal_vars_zero_probe.py tests/test_eval_signal_dir_zero_probe.py -q -k "default_subprocess_provider_fails_closed"`
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`
+  - `git diff --check`
+  - `git diff -- evals/`
+  - `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for other remaining unsupported probes
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection
+    changes
+  - no generalized replay framework
+  - no staging, commit, or push
+- Release state:
+  - workspace-only execution return
+  - pending control-lane review and quality-gate decision
+  - not release-unit-audit-cleared, not full-regression-cleared, not
+    commit-gating-cleared, not staged, not committed, not pushed
+- Recommended next control action:
+  - review this workspace-only return findings-first; if clean, decide whether
+    to accept it into a release-unit audit tranche
+- Acceptance status: execution returned DONE; control-lane acceptance pending.
+
 ## 2026-06-04 -- Defaulted Getattr Exact Replay Contract Pushed
 
 - Pushed the exact default-local replay-contract release to `origin/main` after
