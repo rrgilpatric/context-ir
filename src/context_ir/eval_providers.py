@@ -67,6 +67,9 @@ _VARS_ZERO_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _DIR_ZERO_PROBE_TASK_ID = "oracle_signal_dir_zero_probe"
 _DIR_ZERO_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _DIR_ZERO_RUNTIME_PAYLOAD = (("listing_entry_count", "0"),)
+_DIR_PROBE_TASK_ID = "oracle_signal_dir_probe"
+_DIR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
+_DIR_RUNTIME_PAYLOAD = (("listing_entry_count", "74"),)
 _HASATTR_PROBE_TASK_ID = "oracle_signal_hasattr_probe"
 _HASATTR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _HASATTR_RUNTIME_PAYLOAD = (("attribute_present", "true"),)
@@ -615,6 +618,17 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         replay_target_seed="main.probe_directory",
         snapshot_id="oracle_signal_dir_zero_probe@default-local-python:v1",
         runtime_payload=_DIR_ZERO_RUNTIME_PAYLOAD,
+    ),
+    _DIR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_DIR_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="dir(obj)",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:dir/1",
+        boundary_text="dir(obj)",
+        replay_target_seed="main.probe_directory",
+        snapshot_id="oracle_signal_dir_probe@default-local-python:v1",
+        runtime_payload=_DIR_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(("object_type", "builtins.int"),),
     ),
     _HASATTR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_HASATTR_UNSUPPORTED_UNIT_ID,
@@ -1626,6 +1640,7 @@ def _default_local_python_subprocess_fixture(
             "context_ir_default_local_python_subprocess only supports "
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
             "oracle_signal_vars_zero_probe, oracle_signal_dir_zero_probe, "
+            "oracle_signal_dir_probe, "
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_false_probe, "
             "oracle_signal_hasattr_literal_probe, "
             "oracle_signal_getattr_probe, "

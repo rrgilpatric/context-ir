@@ -2,6 +2,78 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-04 -- Dir Provider Map Support Gate-Cleared
+
+- Accepted and gate-cleared the exact default-local provider-map support slice
+  for `oracle_signal_dir_probe` after findings-first control review.
+- Accepted release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_dir_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+- Behavior accepted:
+  - `context_ir_default_local_python_subprocess` adds exact fixture support for
+    `oracle_signal_dir_probe`
+  - fixture uses unsupported unit `unsupported:call:main.py:2:11`, miss
+    evidence `dir(obj)`, `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+    `reflective_builtin:dir/1`, boundary `dir(obj)`, replay target
+    `main.probe_directory`, snapshot
+    `oracle_signal_dir_probe@default-local-python:v1`, runtime payload
+    `listing_entry_count=74`, and replay input tail
+    `object_type=builtins.int`
+  - provider-owned runtime provenance remains additive; selected-unit primary
+    truth remains `unsupported/opaque`
+  - `observed_replay_inputs` remains empty/absent
+  - wrong task IDs still fail closed against the enumerated exact support list
+  - existing dir-zero, globals, hasattr, locals, metaclass-behavior, and
+    vars-zero support-message expectation tests were updated only for the added
+    task ID
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.0016599370888904558` to `0.0016449302221442346`; selected units/order,
+    document hash, total tokens, warnings, warning IDs, probe behavior, and
+    warning-call count stayed locked for the budget-280 smoke row
+- Control-lane validation rerun:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_probe.py -q`: `8` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_zero_probe.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_signal_metaclass_behavior_probe.py tests/test_eval_signal_vars_zero_probe.py -q -k "default_subprocess_provider_fails_closed"`: `6` passed, `49` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
+- Release gates:
+  - release-unit audit: no findings; exact eleven-file unit reviewed against
+    the governing control-state artifacts and slice boundaries
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
+    `2107` pytest tests passed
+  - commit-gating: no findings; dirty file set exactly matched the accepted
+    eleven-file release unit; no staged files; no `evals/` diff; no
+    `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` diff
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` changes
+  - no `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for `oracle_signal_vars_probe`,
+    `oracle_signal_vars_type_error_probe`, `oracle_signal_setattr_probe`, or
+    `oracle_signal_delattr_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+- Release state:
+  - audit-cleared, full-regression-cleared, and commit-gating-cleared
+  - eligible for local commit sequencing
+  - push still requires explicit Ryan authorization
+- Acceptance status: first-pass.
+
 ## 2026-06-04 -- Dir Exact Replay Contract Pushed
 
 - Pushed the exact default-local `dir(obj)` replay-contract release to

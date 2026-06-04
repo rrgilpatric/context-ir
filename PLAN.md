@@ -40,67 +40,97 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is currently active.
+Gate-cleared workspace release unit is active:
 
-Latest pushed release:
+- exact default-local provider-map support for `oracle_signal_dir_probe`
+- control-reviewed first-pass with no findings
+- release-unit audit cleared with no findings
+- full regression cleared
+- commit-gating cleared
+- eligible for local commit sequencing
+- push still requires explicit Ryan authorization
 
-- `afbc7e3 Add dir exact replay contract`
-- pushed to `origin/main` after explicit Ryan authorization
-- release unit:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/runtime_probe_execution.py`
-  - `src/context_ir/runtime_probe_worker.py`
-  - `tests/test_runtime_probe_execution.py`
-  - `tests/test_runtime_probe_worker.py`
-  - `tests/test_eval_signal_smoke_e.py`
+Pushed routing anchor at execution intake:
 
-Pushed behavior:
+- `HEAD=origin/main=68605c236fb69f8bfdbb195d731fc6f2e103ec5f`
+- latest pushed routing commit: `68605c2 Sync dir replay push routing`
+- latest pushed substantive release: `afbc7e3 Add dir exact replay contract`
 
-- Added snapshot-scoped exact default-local replay support for
-  `oracle_signal_dir_probe@default-local-python:v1`
-- Exact contract uses `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
-  `reflective_builtin:dir/1`, boundary `dir(obj)`, unsupported unit
-  `unsupported:call:main.py:2:11`, replay target `main.probe_directory`, and
-  replay input tail `object_type=builtins.int`
-- Worker exact replay calls `main.probe_directory(1)` and observes normalized
-  payload `listing_entry_count=74`
-- Wrong snapshot, dirty snapshot, and malformed exact replay fields fail closed
-- Generic `dir(obj)` and `dir()` worker behavior remains intact
-- `observed_replay_inputs` remains absent/empty for this non-exec/eval path
+Workspace-only accepted release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_dir_probe.py`
+- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+
+Workspace-only accepted behavior:
+
+- `context_ir_default_local_python_subprocess` adds exact fixture support for
+  `oracle_signal_dir_probe`
+- fixture metadata is `unsupported:call:main.py:2:11`, miss evidence `dir(obj)`,
+  `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form `reflective_builtin:dir/1`,
+  boundary `dir(obj)`, replay target `main.probe_directory`, snapshot
+  `oracle_signal_dir_probe@default-local-python:v1`, runtime payload
+  `listing_entry_count=74`, and replay input tail `object_type=builtins.int`
+- provider-owned runtime provenance remains additive; selected-unit primary
+  truth remains `unsupported/opaque`
+- `observed_replay_inputs` remains empty/absent for this non-exec/eval path
+- wrong task IDs still fail closed against the enumerated exact support list
+- existing dir-zero, globals, hasattr, locals, metaclass-behavior, and vars-zero
+  provider support-message expectations were updated only for the added task ID
 - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
-  `0.0016616917680346006` to `0.0016599370888904558`; selected units/order,
+  `0.0016599370888904558` to `0.0016449302221442346`; selected units/order,
   document hash, total tokens, warnings, warning IDs, probe behavior, and
-  warning-call count remain locked by the smoke test
+  warning-call count stayed locked for the budget-280 smoke row
 
-Release gates passed before push:
+Validation rerun by the control lane:
 
-- control review: no findings
-- release-unit audit: no findings
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_probe.py -q`: `8` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_zero_probe.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_signal_metaclass_behavior_probe.py tests/test_eval_signal_vars_zero_probe.py -q -k "default_subprocess_provider_fails_closed"`: `6` passed, `49` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+- `git diff --check`: clean
+- `git diff -- evals/`: empty
+- `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
+
+Release gates cleared by the control lane:
+
+- release-unit audit: no findings; exact eleven-file unit reviewed against the
+  governing control-state artifacts and slice boundaries
 - full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
-  `2104` pytest tests passed
+  `2107` pytest tests passed
 - commit-gating: no findings; dirty file set exactly matched the accepted
-  seven-file release unit; no staged files; no `evals/` or
-  `src/context_ir/eval_providers.py` diff
+  eleven-file release unit; no staged files; no `evals/` diff; no
+  `src/context_ir/runtime_probe_execution.py` or
+  `src/context_ir/runtime_probe_worker.py` diff
 
-Pushed-release preserved holds:
+Preserved holds:
 
 - no `evals/` asset or run-spec changes
-- no `src/context_ir/eval_providers.py` changes
-- no provider-map support for `oracle_signal_dir_probe`
-- no provider support for other remaining unsupported probes
+- no `src/context_ir/runtime_probe_execution.py` changes
+- no `src/context_ir/runtime_probe_worker.py` changes
+- no provider support for `oracle_signal_vars_probe`,
+  `oracle_signal_vars_type_error_probe`, `oracle_signal_setattr_probe`, or
+  `oracle_signal_delattr_probe`
 - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
 
-Release state: pushed and closed with no active gate. Do not route `afbc7e3`
-back to implementation, control review, release-unit audit, full regression,
-commit-gating, staging, local commit creation, or push absent new findings.
+Release state: audit-cleared, full-regression-cleared, and
+commit-gating-cleared. Local commit sequencing may proceed over the exact
+eleven-file unit. Push still requires explicit Ryan authorization.
 
-Next control action: choose the next authorized slice from current git state.
-The likely next move is a narrow provider-map support slice for
-`oracle_signal_dir_probe`, after fresh intake confirms the pushed state and
-the exact replay contract remains intact.
+Next control action: stage and create a local commit over the exact eleven-file
+unit. Do not push without explicit Ryan authorization for this release unit.
 
 Previous pushed release:
 

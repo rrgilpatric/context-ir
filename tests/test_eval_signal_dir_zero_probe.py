@@ -658,6 +658,7 @@ def test_dir_zero_probe_default_subprocess_provider_fails_closed_for_other_tasks
     assert "oracle_signal_globals_probe" in message
     assert "oracle_signal_vars_zero_probe" in message
     assert "oracle_signal_dir_zero_probe" in message
+    assert "oracle_signal_dir_probe" in message
     assert "oracle_signal_hasattr_probe" in message
     assert "oracle_signal_hasattr_false_probe" in message
     assert "oracle_signal_hasattr_literal_probe" in message
