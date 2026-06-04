@@ -2,6 +2,51 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-04 -- Defaulted Getattr Exact Replay Contract Pushed
+
+- Pushed the exact default-local replay-contract release to `origin/main` after
+  explicit Ryan authorization.
+- Pushed release commit:
+  - `43a8d1a Add defaulted getattr exact replay contracts`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+- Release gates passed before push:
+  - control review: no findings
+  - release-unit audit: no findings
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`,
+    and `2091` pytest tests passed
+  - commit-gating: no findings
+- Pushed behavior:
+  - added snapshot-scoped exact default-local replay contracts for
+    `oracle_signal_getattr_default_probe@default-local-python:v1` and
+    `oracle_signal_getattr_default_value_probe@default-local-python:v1`
+  - exact replay fields are limited to `object_type=builtins.int` plus
+    branch-specific `attribute_name`
+  - worker exact replay calls
+    `main.probe_attribute(1, attribute_name, default)` while preserving generic
+    no-arg `getattr(obj, name, default)` observation
+  - wrong/dirty snapshots and malformed exact fields fail closed
+  - `observed_replay_inputs` remains empty/absent
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/eval_providers.py` changes
+  - no provider-map support for either defaulted getattr fixture
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+- Current routing:
+  - no workspace release unit is currently active
+  - choose the next authorized slice from current git state
+  - likely next bounded slice is provider-map support for the two defaulted
+    getattr fixtures, subject to live repo review and the holds above
+- Acceptance status: first-pass pushed.
+
 ## 2026-06-03 -- Defaulted Getattr Exact Replay Contract Commit-Gating Passed
 
 - Ran commit-gating over the exact seven-file unit after full regression
