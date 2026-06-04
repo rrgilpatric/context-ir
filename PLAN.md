@@ -40,23 +40,24 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Gate-cleared workspace release unit is active:
+No workspace release unit is active. Most recent release is pushed and closed:
 
+- `d3dcc06 Add dir default provider support`
 - exact default-local provider-map support for `oracle_signal_dir_probe`
 - control-reviewed first-pass with no findings
 - release-unit audit cleared with no findings
 - full regression cleared
 - commit-gating cleared
-- eligible for local commit sequencing
-- push still requires explicit Ryan authorization
+- pushed to `origin/main` after explicit Ryan authorization
 
-Pushed routing anchor at execution intake:
+Most recent substantive release anchor:
 
-- `HEAD=origin/main=68605c236fb69f8bfdbb195d731fc6f2e103ec5f`
-- latest pushed routing commit: `68605c2 Sync dir replay push routing`
-- latest pushed substantive release: `afbc7e3 Add dir exact replay contract`
+- `d3dcc06 Add dir default provider support`
 
-Workspace-only accepted release unit files:
+Live `HEAD` and `origin/main` must be verified from git during control-lane
+intake rather than treated as committed continuity state.
+
+Pushed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -70,7 +71,7 @@ Workspace-only accepted release unit files:
 - `tests/test_eval_signal_smoke_e.py`
 - `tests/test_eval_signal_vars_zero_probe.py`
 
-Workspace-only accepted behavior:
+Pushed behavior:
 
 - `context_ir_default_local_python_subprocess` adds exact fixture support for
   `oracle_signal_dir_probe`
@@ -90,7 +91,7 @@ Workspace-only accepted behavior:
   document hash, total tokens, warnings, warning IDs, probe behavior, and
   warning-call count stayed locked for the budget-280 smoke row
 
-Validation rerun by the control lane:
+Validation run before push:
 
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_probe.py -q`: `8` passed
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_zero_probe.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_locals_probe.py tests/test_eval_signal_metaclass_behavior_probe.py tests/test_eval_signal_vars_zero_probe.py -q -k "default_subprocess_provider_fails_closed"`: `6` passed, `49` deselected
@@ -102,7 +103,7 @@ Validation rerun by the control lane:
 - `git diff -- evals/`: empty
 - `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
 
-Release gates cleared by the control lane:
+Release gates cleared before push:
 
 - release-unit audit: no findings; exact eleven-file unit reviewed against the
   governing control-state artifacts and slice boundaries
@@ -125,12 +126,10 @@ Preserved holds:
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
 
-Release state: audit-cleared, full-regression-cleared, and
-commit-gating-cleared. Local commit sequencing may proceed over the exact
-eleven-file unit. Push still requires explicit Ryan authorization.
+Release state: pushed and closed. There is no active workspace release unit.
 
-Next control action: stage and create a local commit over the exact eleven-file
-unit. Do not push without explicit Ryan authorization for this release unit.
+Next control action: determine the next single-probe slice or spike from the
+remaining held probes without reopening pushed `dir(obj)` provider support.
 
 Previous pushed release:
 
