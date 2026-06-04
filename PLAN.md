@@ -40,25 +40,24 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only gate-cleared release unit is active for exact default-local
-`dir(obj)` replay-contract support. This unit is control-reviewed first-pass,
-release-unit-audit-cleared, full-regression-cleared, and
-commit-gating-cleared with no findings. It is not staged, not committed, and
-not pushed.
+No workspace release unit is currently active.
 
-Workspace-only accepted release unit files:
+Latest pushed release:
 
-- `PLAN.md`
-- `BUILDLOG.md`
-- `src/context_ir/runtime_probe_execution.py`
-- `src/context_ir/runtime_probe_worker.py`
-- `tests/test_runtime_probe_execution.py`
-- `tests/test_runtime_probe_worker.py`
-- `tests/test_eval_signal_smoke_e.py`
+- `afbc7e3 Add dir exact replay contract`
+- pushed to `origin/main` after explicit Ryan authorization
+- release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
 
-Workspace-only accepted behavior:
+Pushed behavior:
 
-- Adds snapshot-scoped exact default-local replay support for
+- Added snapshot-scoped exact default-local replay support for
   `oracle_signal_dir_probe@default-local-python:v1`
 - Exact contract uses `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
   `reflective_builtin:dir/1`, boundary `dir(obj)`, unsupported unit
@@ -74,7 +73,17 @@ Workspace-only accepted behavior:
   document hash, total tokens, warnings, warning IDs, probe behavior, and
   warning-call count remain locked by the smoke test
 
-Workspace-only preserved holds:
+Release gates passed before push:
+
+- control review: no findings
+- release-unit audit: no findings
+- full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
+  `2104` pytest tests passed
+- commit-gating: no findings; dirty file set exactly matched the accepted
+  seven-file release unit; no staged files; no `evals/` or
+  `src/context_ir/eval_providers.py` diff
+
+Pushed-release preserved holds:
 
 - no `evals/` asset or run-spec changes
 - no `src/context_ir/eval_providers.py` changes
@@ -83,37 +92,17 @@ Workspace-only preserved holds:
 - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
   Task 4, public/demo, benchmark, latency, production, or generalized replay
   framework change
-- no staging, commit, or push
 
-Validation already run for the accepted workspace slice:
+Release state: pushed and closed with no active gate. Do not route `afbc7e3`
+back to implementation, control review, release-unit audit, full regression,
+commit-gating, staging, local commit creation, or push absent new findings.
 
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "dir"`: `35` passed
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "dir"`: `61` passed
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_dir_probe.py -q`: `5` passed
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed
-- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
-- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
-- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
-- `git diff --check`: clean
-- `git diff -- evals/`: empty
-- `git diff -- src/context_ir/eval_providers.py`: empty
+Next control action: choose the next authorized slice from current git state.
+The likely next move is a narrow provider-map support slice for
+`oracle_signal_dir_probe`, after fresh intake confirms the pushed state and
+the exact replay contract remains intact.
 
-Release gates cleared after acceptance:
-
-- release-unit audit: passed with no findings over the exact seven-file unit
-- full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
-  `2104` pytest tests passed
-- commit-gating: passed with the dirty file set exactly matching the accepted
-  seven-file release unit, no staged files, clean whitespace, no `evals/` diff,
-  and no `src/context_ir/eval_providers.py` diff
-
-Release state: workspace-only gate-cleared and commit-ready. Do not push
-without explicit Ryan authorization.
-
-Next control action: stage and create the local release commit. Push only after
-explicit Ryan authorization.
-
-Latest pushed release remains:
+Previous pushed release:
 
 - `859fd91 Add defaulted getattr provider support`
 - pushed to `origin/main` after explicit Ryan authorization
