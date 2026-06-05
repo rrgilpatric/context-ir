@@ -40,7 +40,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace release unit is active and control-reviewed:
+Local release commit is created and pending push:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -111,7 +111,8 @@ Release state:
 - release-unit audit cleared with no findings
 - full-regression-cleared
 - commit-gating-cleared
-- not staged, committed, or pushed
+- locally committed as `e6b1981 Add setattr name exact replay contract`
+- not pushed
 
 Full regression:
 
@@ -135,11 +136,10 @@ Commit-gating:
 
 Recommended next control action:
 
-- create the local commit for this audit-cleared, full-regression-cleared, and
-  commit-gating-cleared `oracle_signal_setattr_probe` replay-contract
-  workspace slice
+- push the locally committed `oracle_signal_setattr_probe` replay-contract
+  release after Ryan's explicit push authorization
 - do not route to provider-map support until this replay-contract slice is
-  locally committed and pushed
+  pushed and post-push continuity is synced
 
 Previous pushed release before this workspace unit:
 

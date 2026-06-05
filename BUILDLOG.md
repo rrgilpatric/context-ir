@@ -66,7 +66,8 @@ Most recent supersession entries override older architectural decisions when the
   - release-unit-audit-cleared with no findings
   - full-regression-cleared
   - commit-gating-cleared
-  - not staged, committed, or pushed
+  - locally committed as `e6b1981 Add setattr name exact replay contract`
+  - not pushed
 - Control-lane review:
   - no findings
   - dirty file set exactly matched this workspace release unit
@@ -83,10 +84,10 @@ Most recent supersession entries override older architectural decisions when the
     - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
     - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
 - Recommended next control action:
-  - create the local commit for this audit-cleared, full-regression-cleared,
-    and commit-gating-cleared replay-contract workspace slice
+  - push the locally committed replay-contract release after Ryan's explicit
+    push authorization
   - do not route to provider-map support until this replay-contract slice is
-    locally committed and pushed
+    pushed and post-push continuity is synced
 - Release-unit audit:
   - no findings
   - dirty workspace exactly matched the seven-file release unit
@@ -121,6 +122,8 @@ Most recent supersession entries override older architectural decisions when the
   - `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
   - default-local provider fixture map still reports
     `oracle_signal_vars_probe=False` and `oracle_signal_setattr_probe=False`
+- Local commit:
+  - `e6b1981 Add setattr name exact replay contract`
 - Acceptance status: first-pass.
 
 ## 2026-06-05 -- Delattr Name Provider Map Support Pushed
