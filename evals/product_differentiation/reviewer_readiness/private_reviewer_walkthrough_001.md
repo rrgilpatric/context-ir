@@ -157,24 +157,23 @@ It does not prove the checkpoint includes composite smoke tasks, legacy
 ### 5. Runtime Payload Spot Check
 
 ```bash
-jq -s '[.[] | select(.task_id | test("hasattr|dynamic_import|exec")) | {task_id, budget, provider_name, runtime_records: (.runtime_provenance_records | length), payloads: [.runtime_provenance_records[].normalized_payload]}] | .[:8]' evals/internal_runtime_evidence/default_local_probe_checkpoint_001/ledger.jsonl
+jq -s '[.[] | select(.task_id | IN("oracle_signal_hasattr_probe", "oracle_signal_hasattr_false_probe", "oracle_signal_dynamic_import_root_probe", "oracle_signal_exec_probe")) | {task_id, budget, provider_name, runtime_records: (.runtime_provenance_records | length), payloads: [.runtime_provenance_records[].normalized_payload]}]' evals/internal_runtime_evidence/default_local_probe_checkpoint_001/ledger.jsonl
 ```
 
 Expected output summary:
 
 ```text
-The first eight matching rows include:
+The four matching rows include:
 - oracle_signal_hasattr_probe at budget 100 with attribute_present=true payloads
 - oracle_signal_hasattr_false_probe at budget 100 with attribute_present=false payloads
-- oracle_signal_hasattr_literal_probe at budget 100 with attribute_present=true payloads
-- dynamic-import probe rows at budgets 100 or 220 with imported_module=plugins.weather payloads
+- oracle_signal_dynamic_import_root_probe at budget 220 with imported_module=plugins.weather payloads
+- oracle_signal_exec_probe at budget 100 with execution_outcome=completed and statement_kind=pass payloads
 Each shown row uses provider context_ir_default_local_python_subprocess and has runtime_records=2.
-The filter also matches exec rows, but the current .[:8] slice stops before
-the exec row because the dynamic-import rows appear earlier in ledger order.
 ```
 
 This proves representative committed ledger rows expose normalized runtime
-payloads for reflective builtins and dynamic import from committed artifacts.
+payloads for reflective builtins, dynamic import, and exec from committed
+artifacts.
 
 It does not prove generalized dynamic-Python support, generalized dynamic
 import support, broad hybrid runtime support, or support for unsupported

@@ -110,7 +110,8 @@ collapsing their boundaries:
   - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/ledger.jsonl`
   - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/run_spec.json`
 - Inspect `portfolio_001/manifest.json` for task classifications, budgets,
-  provider list, and artifact inventory.
+  provider names under `provider_results[].provider_name`, and artifact
+  inventory.
 - Inspect `portfolio_001/evidence.md` before raw JSONL to confirm the exact
   query, selected units, baseline failures, and caveats for each task.
 - Inspect `portfolio_001/runs.jsonl` only to verify raw provider records,
