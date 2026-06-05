@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Evidence Packet Pushed
+
+- Pushed the private reviewer evidence packet release to `origin/main` after
+  Ryan authorized proceeding.
+- Pushed release commit:
+  `9b1148c Add private reviewer evidence packet`.
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+- The release remains internal-only and claim-bounded:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- Release gates passed before commit:
+  - release-unit audit: no findings
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `pytest tests/ -v`: `2175` passed
+  - forbidden `README.md`, `PUBLIC_CLAIMS.md`, source, test, eval task,
+    fixture, and source run-spec diffs were empty
+- Recommended next control action: decide the next private-review enablement
+  step before implementation. Current likely candidates are a private
+  demo/readme walkthrough, Task 4 reproducibility evidence, or a composite-smoke
+  strategy spike.
+- Acceptance status: pushed.
+
 ## 2026-06-05 -- Private Reviewer Evidence Packet Returned
 
 - Accepted a docs/evidence-packet execution slice with no findings.

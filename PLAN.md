@@ -42,6 +42,51 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Latest release unit pushed:
 
+- internal-only private reviewer evidence packet 001
+- release state: accepted after first-pass control review with no findings;
+  release-unit audit passed; full regression passed; commit-gating passed;
+  staged, locally committed, and pushed to `origin/main` after Ryan authorized
+  proceeding
+- pushed release commit:
+  `9b1148c Add private reviewer evidence packet`
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+- purpose: provide a private technical reviewer path across `portfolio_001`
+  and `default_local_probe_checkpoint_001` without widening public claims
+- evidence map:
+  - `portfolio_001`: exact-query internal product-differentiation evidence for
+    Tasks 0-3
+  - `default_local_probe_checkpoint_001`: exact runtime-provenance breadth
+    evidence across `31/31` individual non-smoke `oracle_signal_*_probe`
+    fixtures for provider `context_ir_default_local_python_subprocess`
+- preserved boundaries:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- validation:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2175` passed
+  - forbidden `README.md`, `PUBLIC_CLAIMS.md`, source, test, eval task,
+    fixture, and source run-spec diffs were empty
+- recommended next control action: decide the next private-review enablement
+  step. Current likely candidates are a private demo/readme walkthrough,
+  Task 4 reproducibility evidence, or a composite-smoke strategy spike.
+  Do not start implementation until that strategy choice is explicit.
+
+Previous checkpoint evidence release unit remains:
+
 - internal default-local probe checkpoint evidence over exactly all `31/31`
   individual non-smoke `oracle_signal_*_probe` tasks
 - completion state from execution lane: DONE
@@ -169,52 +214,6 @@ Control gate results:
   - forbidden claim/task/fixture/run-spec/provider/runtime surfaces have no
     diff
   - `git diff --check`: clean
-
-Recommended next control action:
-
-- run the next read-only strategy/roadmap decision before any new
-  implementation work
-- push authorization for the checkpoint evidence release has been used
-
-Current workspace-only reviewer packet release unit:
-
-- status: accepted after first-pass control review with no findings; not yet
-  release-unit-audited, full-regression-cleared, commit-gating-cleared,
-  staged, committed, or pushed
-- file in this docs-only release unit:
-  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
-- purpose: provide an internal-only private technical reviewer packet that
-  shows how to inspect `portfolio_001` and
-  `default_local_probe_checkpoint_001` together without broadening claims
-- evidence map:
-  - `portfolio_001`: exact-query internal product-differentiation evidence for
-    Tasks 0-3
-  - `default_local_probe_checkpoint_001`: exact runtime-provenance breadth
-    evidence across `31/31` individual non-smoke `oracle_signal_*_probe`
-    fixtures for provider `context_ir_default_local_python_subprocess`
-- preserved boundaries:
-  - no public benchmark quality claim
-  - no production readiness claim
-  - no SWE-bench claim
-  - no broad product proof claim
-  - no generalized hybrid-runtime support claim
-  - no composite smoke support claim
-  - no Task 4 readiness claim
-  - no latency/token/cost win claim
-  - no public API, MCP, schema, scoring, compiler, optimizer,
-    winner-selection, package-export, product launch, or public demo widening
-- forbidden surfaces remain untouched:
-  - source code
-  - tests
-  - eval tasks
-  - eval fixtures
-  - source run specs
-  - generated evidence artifacts
-  - `README.md`
-  - `PUBLIC_CLAIMS.md`
-- next control action: run release-unit audit, full regression, and
-  commit-gating for this docs-only packet release unit before any new Task 4,
-  composite smoke, or demo strategy work
 
 Current docs/evidence-readiness release anchor:
 
