@@ -176,6 +176,46 @@ Recommended next control action:
   implementation work
 - push authorization for the checkpoint evidence release has been used
 
+Current workspace-only reviewer packet release unit:
+
+- status: accepted after first-pass control review with no findings; not yet
+  release-unit-audited, full-regression-cleared, commit-gating-cleared,
+  staged, committed, or pushed
+- file in this docs-only release unit:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+- purpose: provide an internal-only private technical reviewer packet that
+  shows how to inspect `portfolio_001` and
+  `default_local_probe_checkpoint_001` together without broadening claims
+- evidence map:
+  - `portfolio_001`: exact-query internal product-differentiation evidence for
+    Tasks 0-3
+  - `default_local_probe_checkpoint_001`: exact runtime-provenance breadth
+    evidence across `31/31` individual non-smoke `oracle_signal_*_probe`
+    fixtures for provider `context_ir_default_local_python_subprocess`
+- preserved boundaries:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- forbidden surfaces remain untouched:
+  - source code
+  - tests
+  - eval tasks
+  - eval fixtures
+  - source run specs
+  - generated evidence artifacts
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+- next control action: run release-unit audit, full regression, and
+  commit-gating for this docs-only packet release unit before any new Task 4,
+  composite smoke, or demo strategy work
+
 Current docs/evidence-readiness release anchor:
 
 - files in this docs-only evidence-readiness release:

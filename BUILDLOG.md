@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Evidence Packet Returned
+
+- Accepted a docs/evidence-packet execution slice with no findings.
+- New internal-only reviewer packet:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+- The packet maps:
+  - `portfolio_001` as exact-query internal product-differentiation evidence
+    for Tasks 0-3
+  - `default_local_probe_checkpoint_001` as exact runtime-provenance breadth
+    evidence for `31/31` individual non-smoke `oracle_signal_*_probe`
+    fixtures under provider `context_ir_default_local_python_subprocess`
+- Evidence boundaries remain explicit:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- Validation returned clean from the execution lane:
+  - `git diff --check`
+  - `git diff -- README.md PUBLIC_CLAIMS.md`
+  - `git diff -- src/ tests/ evals/tasks/ evals/fixtures/ evals/run_specs/`
+  - requested evidence/boundary `rg` check
+- Control review verified the workspace contains only the new packet before
+  this continuity entry, with no staged files and no forbidden diffs.
+- Release state: workspace-only accepted; release-unit audit, full regression,
+  commit-gating, staging, commit, and push remain pending.
+- Recommended next control action: run release gates for this docs-only packet
+  release unit before any new strategy, Task 4, composite smoke, or demo work.
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Default-Local Probe Checkpoint Reviewer Readiness Accepted
 
 - Completed a docs/evidence-readiness execution slice for the pushed
