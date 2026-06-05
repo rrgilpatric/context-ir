@@ -62,8 +62,9 @@ Latest release unit pushed:
   - includes exact repo-relative artifact links
   - includes commit-pinned GitHub URLs for existing committed evidence at
     `9f29a7fad0e83ce2ed538b64b4353200e61d2079`
-  - explicitly says not to cite a commit-pinned URL for the send-readiness file
-    itself until a future commit contains it
+  - send-readiness self-citation wording was corrected by pushed commit
+    `afee716 Fix send-readiness artifact pin wording`; cite that commit for the
+    send-readiness file itself
 - control review:
   - verified the execution prompt contained a stale context path for
     `portfolio_001_internal_readiness.md`, but the artifact uses the actual
@@ -100,13 +101,13 @@ Latest release unit pushed:
   files, send outreach, start Task 4, composite smoke support, runnable demo
   implementation, public claim widening, or MCP/API work from this route.
 
-Current correction release unit:
+Latest correction release unit:
 
 - private reviewer send-readiness stale-artifact wording correction
-- release state: correction applied after recipient simulation returned a medium
-  finding; release-unit audit, full regression, and commit-gating are cleared.
-  Commit and push state are verified from live git rather than from this
-  committed continuity block.
+- pushed release commit:
+  `afee716 Fix send-readiness artifact pin wording`
+- release state: correction accepted, release-gated, locally committed, and
+  pushed
 - release files:
   - `PLAN.md`
   - `BUILDLOG.md`
@@ -116,12 +117,13 @@ Current correction release unit:
   already pushed; the correction now distinguishes the older evidence pin
   `9f29a7fad0e83ce2ed538b64b4353200e61d2079` from the final commit that should
   be used when citing the send-readiness note itself
-- recommended next control action: create the local correction commit after
-  exact-file staging. Push requires explicit Ryan authorization. Before sending
-  reviewer outreach, verify the pushed commit that contains this correction and
-  use that commit if citing the send-readiness note itself. Do not start Task 4,
-  composite smoke support, runnable demo implementation, public claim widening,
-  or MCP/API work from this route.
+- recommended next control action: if Ryan sends the private reviewer note, use
+  commit `afee7165dcd0f70d46d974bf0343808f5d2add06` when citing the
+  send-readiness note itself. Keep the older evidence pin
+  `9f29a7fad0e83ce2ed538b64b4353200e61d2079` for the packet, walkthrough, and
+  underlying evidence artifact links already listed in that note. Do not start
+  Task 4, composite smoke support, runnable demo implementation, public claim
+  widening, or MCP/API work from this route.
 
 Previous private reviewer walkthrough checks release unit remains:
 
