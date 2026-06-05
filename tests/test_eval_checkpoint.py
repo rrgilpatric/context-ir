@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 from typing import cast
 
@@ -19,19 +20,95 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_TASK_IDS = (
     "oracle_signal_locals_probe",
     "oracle_signal_globals_probe",
+    "oracle_signal_vars_probe",
+    "oracle_signal_vars_type_error_probe",
     "oracle_signal_vars_zero_probe",
+    "oracle_signal_dir_probe",
     "oracle_signal_dir_zero_probe",
     "oracle_signal_hasattr_probe",
+    "oracle_signal_hasattr_false_probe",
+    "oracle_signal_hasattr_literal_probe",
+    "oracle_signal_getattr_probe",
+    "oracle_signal_getattr_attribute_error_probe",
+    "oracle_signal_getattr_default_probe",
+    "oracle_signal_getattr_default_value_probe",
+    "oracle_signal_getattr_literal_probe",
+    "oracle_signal_dynamic_import_root_literal_probe",
+    "oracle_signal_dynamic_import_root_probe",
+    "oracle_signal_dynamic_import_root_alias_probe",
+    "oracle_signal_dynamic_import_builtin_probe",
+    "oracle_signal_dynamic_import_builtins_attr_probe",
+    "oracle_signal_dynamic_import_builtins_alias_probe",
+    "oracle_signal_dynamic_import_imported_name_probe",
+    "oracle_signal_dynamic_import_imported_alias_probe",
+    "oracle_signal_dynamic_import_probe",
+    "oracle_signal_setattr_probe",
+    "oracle_signal_setattr_literal_probe",
+    "oracle_signal_delattr_probe",
+    "oracle_signal_delattr_literal_probe",
     "oracle_signal_exec_probe",
     "oracle_signal_eval_probe",
     "oracle_signal_metaclass_behavior_probe",
 )
+EXCLUDED_TASK_IDS = (
+    "oracle_signal_smoke",
+    "oracle_signal_smoke_b",
+    "oracle_signal_smoke_c",
+    "oracle_signal_smoke_d",
+    "oracle_signal_smoke_e",
+    "oracle_smoke",
+)
 EXPECTED_PAYLOADS = {
     "oracle_signal_locals_probe": (("lookup_outcome", "returned_namespace"),),
     "oracle_signal_globals_probe": (("lookup_outcome", "returned_namespace"),),
+    "oracle_signal_vars_probe": (("lookup_outcome", "returned_namespace"),),
+    "oracle_signal_vars_type_error_probe": (("lookup_outcome", "raised_type_error"),),
     "oracle_signal_vars_zero_probe": (("lookup_outcome", "returned_namespace"),),
+    "oracle_signal_dir_probe": (("listing_entry_count", "74"),),
     "oracle_signal_dir_zero_probe": (("listing_entry_count", "0"),),
     "oracle_signal_hasattr_probe": (("attribute_present", "true"),),
+    "oracle_signal_hasattr_false_probe": (("attribute_present", "false"),),
+    "oracle_signal_hasattr_literal_probe": (("attribute_present", "true"),),
+    "oracle_signal_getattr_probe": (("lookup_outcome", "returned_value"),),
+    "oracle_signal_getattr_attribute_error_probe": (
+        ("lookup_outcome", "raised_attribute_error"),
+    ),
+    "oracle_signal_getattr_default_probe": (
+        ("lookup_outcome", "returned_default_value"),
+    ),
+    "oracle_signal_getattr_default_value_probe": (
+        ("lookup_outcome", "returned_value"),
+    ),
+    "oracle_signal_getattr_literal_probe": (("lookup_outcome", "returned_value"),),
+    "oracle_signal_dynamic_import_root_literal_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_root_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_root_alias_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_builtin_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_builtins_attr_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_builtins_alias_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_imported_name_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_imported_alias_probe": (
+        ("imported_module", "plugins.weather"),
+    ),
+    "oracle_signal_dynamic_import_probe": (("imported_module", "plugins.weather"),),
+    "oracle_signal_setattr_probe": (("mutation_outcome", "returned_none"),),
+    "oracle_signal_setattr_literal_probe": (("mutation_outcome", "returned_none"),),
+    "oracle_signal_delattr_probe": (("mutation_outcome", "deleted_attribute"),),
+    "oracle_signal_delattr_literal_probe": (("mutation_outcome", "deleted_attribute"),),
     "oracle_signal_exec_probe": (
         ("execution_outcome", "completed"),
         ("statement_kind", "pass"),
@@ -46,6 +123,20 @@ EXPECTED_PAYLOADS = {
         ("selected_metaclass_qualified_name", "main.Meta"),
     ),
 }
+EXPECTED_BUDGETS = {task_id: 100 for task_id in EXPECTED_TASK_IDS}
+EXPECTED_BUDGETS.update(
+    {
+        "oracle_signal_dynamic_import_root_probe": 220,
+        "oracle_signal_dynamic_import_root_alias_probe": 220,
+        "oracle_signal_dynamic_import_builtin_probe": 220,
+        "oracle_signal_dynamic_import_builtins_attr_probe": 220,
+        "oracle_signal_dynamic_import_builtins_alias_probe": 220,
+        "oracle_signal_dynamic_import_imported_name_probe": 220,
+        "oracle_signal_dynamic_import_imported_alias_probe": 220,
+        "oracle_signal_dynamic_import_probe": 180,
+    }
+)
+EXPECTED_BUDGET_DISTRIBUTION = {100: 23, 180: 1, 220: 7}
 
 
 def _json_object(path: Path) -> dict[str, object]:
@@ -73,6 +164,8 @@ def test_execute_eval_checkpoint_writes_internal_runtime_artifacts(
 
     artifact = eval_checkpoint.execute_eval_checkpoint(output_dir)
 
+    assert len(EXPECTED_TASK_IDS) == 31
+    assert set(EXPECTED_TASK_IDS).isdisjoint(EXCLUDED_TASK_IDS)
     assert isinstance(artifact, eval_checkpoint.EvalCheckpointArtifact)
     assert artifact.paths.output_dir == output_dir
     assert artifact.paths.run_spec_path == output_dir / "run_spec.json"
@@ -97,8 +190,11 @@ def test_execute_eval_checkpoint_writes_internal_runtime_artifacts(
         cast(str, case_record["task_path"]) for case_record in case_records
     ) == tuple(f"evals/tasks/{task_id}.json" for task_id in EXPECTED_TASK_IDS)
     assert {
-        tuple(cast(list[int], case_record["budgets"])) for case_record in case_records
-    } == {(100,)}
+        Path(cast(str, case_record["task_path"])).stem: tuple(
+            cast(list[int], case_record["budgets"])
+        )
+        for case_record in case_records
+    } == {task_id: (budget,) for task_id, budget in EXPECTED_BUDGETS.items()}
     assert {
         tuple(cast(list[str], case_record["providers"])) for case_record in case_records
     } == {(CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,)}
@@ -109,10 +205,20 @@ def test_execute_eval_checkpoint_writes_internal_runtime_artifacts(
     assert {record["provider_name"] for record in ledger_records} == {
         CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER
     }
-    assert {record["budget"] for record in ledger_records} == {100}
+    assert {
+        cast(str, record["task_id"]): cast(int, record["budget"])
+        for record in ledger_records
+    } == EXPECTED_BUDGETS
+    assert (
+        Counter(cast(int, record["budget"]) for record in ledger_records)
+        == EXPECTED_BUDGET_DISTRIBUTION
+    )
 
     evidence_by_task_id = {row.task_id: row for row in artifact.evidence_rows}
     assert tuple(evidence_by_task_id) == EXPECTED_TASK_IDS
+    assert {
+        task_id: row.budget for task_id, row in evidence_by_task_id.items()
+    } == EXPECTED_BUDGETS
     assert {
         task_id: row.normalized_payload for task_id, row in evidence_by_task_id.items()
     } == EXPECTED_PAYLOADS
@@ -124,7 +230,7 @@ def test_execute_eval_checkpoint_writes_internal_runtime_artifacts(
     assert manifest["provider_names"] == [
         CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER
     ]
-    assert manifest["budgets"] == [100]
+    assert manifest["budgets"] == [100, 180, 220]
     assert manifest["budget_violation_run_ids"] == []
 
     checkpoint_markdown = artifact.paths.checkpoint_path.read_text(encoding="utf-8")
@@ -141,6 +247,19 @@ def test_execute_eval_checkpoint_writes_internal_runtime_artifacts(
         assert _payload_json(payload) in checkpoint_markdown
     assert "This checkpoint only exercises the exact" in checkpoint_markdown
     assert "does not widen support" in checkpoint_markdown
+
+    artifact_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            artifact.paths.run_spec_path,
+            artifact.paths.ledger_path,
+            artifact.paths.report_path,
+            artifact.paths.manifest_path,
+            artifact.paths.checkpoint_path,
+        )
+    )
+    for excluded_task_id in EXCLUDED_TASK_IDS:
+        assert excluded_task_id not in artifact_text
 
 
 def test_execute_eval_checkpoint_fails_closed_when_artifacts_exist(

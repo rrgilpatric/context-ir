@@ -40,7 +40,141 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Latest release unit has been pushed:
+Latest release unit locally committed:
+
+- internal default-local probe checkpoint evidence over exactly all `31/31`
+  individual non-smoke `oracle_signal_*_probe` tasks
+- completion state from execution lane: DONE
+- release state: workspace-only accepted after first-pass control review with
+  no findings; release-unit audit passed; full regression failed on one
+  deterministic Task 3 confidence scalar; narrow correction returned and
+  accepted; corrected release-unit audit passed; full-regression-cleared;
+  commit-gating-cleared; staged and locally committed; not pushed
+- new internal artifact directory:
+  `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/`
+- generated artifacts:
+  - `run_spec.json`
+  - `ledger.jsonl`
+  - `report.md`
+  - `manifest.json`
+  - `checkpoint.md`
+- artifact truth:
+  - exactly `31` ledger rows
+  - provider set exactly
+    `context_ir_default_local_python_subprocess`
+  - budget distribution: `100` x `23`, `180` x `1`, `220` x `7`
+  - manifest budget violations: none
+  - all `31` rows have runtime provenance and non-empty normalized payload
+    evidence
+  - no conflicting normalized payloads
+  - composite smoke tasks remain excluded:
+    `oracle_signal_smoke`, `oracle_signal_smoke_b`,
+    `oracle_signal_smoke_c`, `oracle_signal_smoke_d`, and
+    `oracle_signal_smoke_e`
+  - legacy `oracle_smoke` remains excluded
+- checkpoint scope remains internal-only: this is not a public benchmark,
+  benchmark result, product claim, or public claim-widening artifact
+
+Workspace release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/eval_checkpoint.py`
+- `tests/test_eval_checkpoint.py`
+- `tests/test_eval_signal_smoke_e.py`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/run_spec.json`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/ledger.jsonl`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/report.md`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/manifest.json`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/checkpoint.md`
+
+Behavior added:
+
+- `context_ir.eval_checkpoint` now enumerates all `31` individual non-smoke
+  `oracle_signal_*_probe` tasks rather than the prior `8` exact fixtures.
+- Generated checkpoint run specs still use only provider
+  `context_ir_default_local_python_subprocess`.
+- Checkpoint budgets are derived from committed source run specs and
+  provider-required dynamic-import context budgets:
+  - default/minimum source budget `100` for `23` tasks
+  - provider-required budget `180` for
+    `oracle_signal_dynamic_import_probe`
+  - provider-required budget `220` for `7` dynamic-import tasks with
+    provider-specific context budgets
+- Checkpoint generation now fails if the generated manifest reports any budget
+  violations before writing `checkpoint.md`.
+- Checkpoint evidence extraction still fails closed for unsupported task IDs,
+  duplicate/missing rows, unexpected providers, missing runtime provenance,
+  empty normalized payloads, or conflicting normalized payloads.
+
+Preserved holds:
+
+- no provider/runtime code changes
+- no eval task, fixture, or committed source run-spec changes
+- no composite smoke support
+- no Task 4 work
+- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection
+  changes
+- no `README.md` or `PUBLIC_CLAIMS.md` changes
+
+Execution-lane validation:
+
+- `PYTHONPATH=src .venv/bin/python -m context_ir.eval_checkpoint --output-dir evals/internal_runtime_evidence/default_local_probe_checkpoint_001`:
+  passed and generated all five artifacts
+- artifact inspection: `31` rows, provider set exactly
+  `context_ir_default_local_python_subprocess`, budget distribution
+  `{100: 23, 180: 1, 220: 7}`, no budget violations, no empty payloads, no
+  conflicting payloads, no composite/legacy smoke IDs
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_checkpoint.py -q`:
+  `3` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_bundle.py tests/test_eval_pipeline.py tests/test_eval_manifest.py tests/test_eval_report.py tests/test_eval_summary.py -q`:
+  `46` passed
+- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
+  `119` files already formatted
+- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`:
+  `Success: no issues found in 39 source files`
+- `git diff --check`: clean
+- `git diff -- PUBLIC_CLAIMS.md README.md`: empty
+- `git diff -- evals/tasks/ evals/fixtures/ evals/run_specs/`: empty
+- `git diff --cached --name-status`: empty
+
+Control gate results:
+
+- initial release-unit audit: passed with no findings over the checkpoint
+  release unit
+- initial full regression failed on one deterministic Task 3 confidence scalar:
+  expected `FULL_REPO_TASK3_CONFIDENCE=0.0016057896061105314` but observed
+  `0.0016052703657165705`
+- preservation locks before that scalar assertion held: selected units/order,
+  document hash, total tokens, warnings, warning IDs, probe behavior, and
+  warning-call count
+- Ryan authorized a narrow correction to update only the Task 3 confidence
+  scalar if preservation locks still held
+- correction result: accepted with no findings; only
+  `tests/test_eval_signal_smoke_e.py` changed, updating
+  `FULL_REPO_TASK3_CONFIDENCE` to `0.0016052703657165705`
+- corrected release-unit audit: passed with no findings over the corrected
+  release unit
+- corrected full regression:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2175` passed
+- commit-gating:
+  - dirty tracked file set matches the corrected release unit
+  - new checkpoint artifact files are present and JSON/JSONL-valid
+  - forbidden claim/task/fixture/run-spec/provider/runtime surfaces have no
+    diff
+  - `git diff --check`: clean
+
+Recommended next control action:
+
+- push the local release commit only after explicit Ryan authorization
+- push still requires explicit Ryan authorization
+
+Previous pushed release unit remains:
 
 - exact default-local provider-map support for `oracle_signal_vars_probe`
 - completion state from execution lane: DONE

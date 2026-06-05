@@ -2,6 +2,149 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Default-Local Probe Checkpoint Release Gates Cleared
+
+- Corrected release-unit audit passed with no findings over the internal
+  default-local probe checkpoint evidence unit plus the Task 3 scalar
+  correction.
+- Corrected full regression passed:
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `pytest tests/ -v`: `2175` passed
+- Commit-gating passed:
+  - dirty tracked file set matches the corrected release unit
+  - new checkpoint artifacts are present and JSON/JSONL-valid
+  - forbidden public-claim, README, eval task, fixture, run-spec, provider,
+    runtime execution, and runtime worker surfaces have no diff
+  - `git diff --check` is clean
+- Release state: workspace-only accepted, release-unit-audited,
+  full-regression-cleared, commit-gating-cleared, staged, and locally
+  committed; not pushed.
+- Recommended next control action: push the local release commit only after
+  explicit Ryan authorization.
+- Acceptance status: first-pass after one scalar correction.
+
+## 2026-06-05 -- Default-Local Probe Checkpoint Scalar Correction Accepted
+
+- Narrow correction returned and was accepted with no findings.
+- Corrected file:
+  - `tests/test_eval_signal_smoke_e.py`
+- Correction changed only `FULL_REPO_TASK3_CONFIDENCE` to
+  `0.0016052703657165705`.
+- Preservation proof from the correction lane:
+  - selected units/order unchanged
+  - document hash unchanged
+  - total tokens unchanged
+  - warnings and warning IDs unchanged
+  - probe behavior unchanged
+  - warning-call count unchanged
+  - budget `400` parent-class/no-noise checks remained preserved
+- Focused correction validation passed:
+  - Task 3 smoke lock
+  - `ruff check` / `ruff format --check` on
+    `tests/test_eval_signal_smoke_e.py`
+  - `git diff --check`
+  - checkpoint artifact diff guard
+- Release state: corrected workspace-only release unit accepted; corrected
+  release-unit audit, full regression, and commit-gating still pending; not
+  staged, not committed, not pushed.
+- Recommended next control action: rerun corrected release-unit audit and
+  release gates.
+- Acceptance status: first-pass correction accepted.
+
+## 2026-06-05 -- Default-Local Probe Checkpoint Gate Correction Authorized
+
+- Release-unit audit passed with no findings over the workspace-only internal
+  default-local probe checkpoint evidence unit.
+- Full regression then failed with one P3 deterministic scalar lock:
+  `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`.
+- Regression details:
+  - expected `FULL_REPO_TASK3_CONFIDENCE=0.0016057896061105314`
+  - observed `0.0016052703657165705`
+  - all preservation locks before the scalar assertion held: selected
+    units/order, document hash, total tokens, warnings, warning IDs, probe
+    behavior, and warning-call count
+- Ryan authorized a narrow correction to update only the Task 3 confidence
+  scalar if preservation locks still hold.
+- Release state: workspace-only accepted and release-unit-audited; not
+  full-regression-cleared, not commit-gating-cleared, not staged, not
+  committed, not pushed.
+- Recommended next control action: issue the narrow correction prompt, then
+  rerun the focused smoke lock and release gates.
+- Acceptance status: held pending correction.
+
+## 2026-06-05 -- Default-Local Probe Checkpoint Workspace Slice Returned
+
+- Completed a workspace-only execution slice converting the completed `31/31`
+  individual non-smoke `oracle_signal_*_probe` default-local provider support
+  into durable internal eval evidence.
+- Completion state: DONE.
+- Release state: workspace-only accepted after first-pass control review with
+  no findings; not release-unit-audited, not full-regression-cleared, not
+  commit-gating-cleared, not staged, not committed, not pushed.
+- New internal artifact directory:
+  `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/`.
+- Generated artifacts:
+  - `run_spec.json`
+  - `ledger.jsonl`
+  - `report.md`
+  - `manifest.json`
+  - `checkpoint.md`
+- Artifact truth:
+  - exactly `31` ledger rows
+  - provider set exactly
+    `context_ir_default_local_python_subprocess`
+  - budget distribution: `100` x `23`, `180` x `1`, `220` x `7`
+  - manifest budget violations: none
+  - all `31` rows have runtime provenance and non-empty normalized payload
+    evidence
+  - no conflicting normalized payloads
+  - composite smoke tasks and legacy `oracle_smoke` remain excluded
+- Behavior changed:
+  - `context_ir.eval_checkpoint` now enumerates all `31` individual non-smoke
+    `oracle_signal_*_probe` tasks rather than the previous `8` exact
+    checkpoint fixtures.
+  - generated checkpoint run specs still use only provider
+    `context_ir_default_local_python_subprocess`.
+  - checkpoint budgets are derived from committed source run specs and
+    provider-required dynamic-import context budgets, avoiding blanket budget
+    `100` for dynamic-import tasks that require provider-specific budgets.
+  - checkpoint generation now fails if the generated manifest reports budget
+    violations before writing `checkpoint.md`.
+- Preserved holds:
+  - no provider/runtime code changes
+  - no eval task, fixture, or committed source run-spec changes
+  - no composite smoke support
+  - no Task 4 work
+  - no public claim widening
+  - no `README.md` or `PUBLIC_CLAIMS.md` changes
+- Execution-lane validation:
+  - `PYTHONPATH=src .venv/bin/python -m context_ir.eval_checkpoint --output-dir evals/internal_runtime_evidence/default_local_probe_checkpoint_001`:
+    passed and generated all five artifacts
+  - artifact inspection: `31` rows, provider set exactly
+    `context_ir_default_local_python_subprocess`, budget distribution
+    `{100: 23, 180: 1, 220: 7}`, no budget violations, no empty payloads, no
+    conflicting payloads, no composite/legacy smoke IDs
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_checkpoint.py -q`:
+    `3` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_bundle.py tests/test_eval_pipeline.py tests/test_eval_manifest.py tests/test_eval_report.py tests/test_eval_summary.py -q`:
+    `46` passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
+    `119` files already formatted
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`:
+    `Success: no issues found in 39 source files`
+  - `git diff --check`: clean
+  - `git diff -- PUBLIC_CLAIMS.md README.md`: empty
+  - `git diff -- evals/tasks/ evals/fixtures/ evals/run_specs/`: empty
+  - `git diff --cached --name-status`: empty
+- Recommended next control action:
+  - run release-unit audit, full regression, and commit-gating before any
+    staging or commit
+  - push still requires explicit Ryan authorization
+- Acceptance status: first-pass control review accepted.
+
 ## 2026-06-05 -- Individual Probe Provider Queue Complete
 
 - Continuity-only routing sync after completion of exact default-local provider

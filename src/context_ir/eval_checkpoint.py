@@ -14,6 +14,7 @@ from typing import cast
 from context_ir import __version__
 from context_ir.eval_bundle import EvalBundleArtifact, execute_eval_bundle
 from context_ir.eval_providers import (
+    _DYNAMIC_IMPORT_DEFAULT_LOCAL_CONTEXT_BUDGETS,
     CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,
 )
 from context_ir.eval_runs import EvalRunCase, load_eval_run_spec
@@ -27,14 +28,90 @@ _REPORT_FILENAME = "report.md"
 _MANIFEST_FILENAME = "manifest.json"
 _CHECKPOINT_FILENAME = "checkpoint.md"
 _CHECKPOINT_PLAN_ID = "internal_runtime_evidence_checkpoint"
-_CHECKPOINT_BUDGET = 100
 
 _SUPPORTED_PROBE_SPECS: tuple[tuple[str, str], ...] = (
     ("oracle_signal_locals_probe", "oracle_signal_locals_probe_matrix.json"),
     ("oracle_signal_globals_probe", "oracle_signal_globals_probe_matrix.json"),
+    ("oracle_signal_vars_probe", "oracle_signal_vars_probe_matrix.json"),
+    (
+        "oracle_signal_vars_type_error_probe",
+        "oracle_signal_vars_type_error_probe_matrix.json",
+    ),
     ("oracle_signal_vars_zero_probe", "oracle_signal_vars_zero_probe_matrix.json"),
+    ("oracle_signal_dir_probe", "oracle_signal_dir_probe_matrix.json"),
     ("oracle_signal_dir_zero_probe", "oracle_signal_dir_zero_probe_matrix.json"),
     ("oracle_signal_hasattr_probe", "oracle_signal_hasattr_probe_matrix.json"),
+    (
+        "oracle_signal_hasattr_false_probe",
+        "oracle_signal_hasattr_false_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_hasattr_literal_probe",
+        "oracle_signal_hasattr_literal_probe_matrix.json",
+    ),
+    ("oracle_signal_getattr_probe", "oracle_signal_getattr_probe_matrix.json"),
+    (
+        "oracle_signal_getattr_attribute_error_probe",
+        "oracle_signal_getattr_attribute_error_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_getattr_default_probe",
+        "oracle_signal_getattr_default_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_getattr_default_value_probe",
+        "oracle_signal_getattr_default_value_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_getattr_literal_probe",
+        "oracle_signal_getattr_literal_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_root_literal_probe",
+        "oracle_signal_dynamic_import_root_literal_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_root_probe",
+        "oracle_signal_dynamic_import_root_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_root_alias_probe",
+        "oracle_signal_dynamic_import_root_alias_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_builtin_probe",
+        "oracle_signal_dynamic_import_builtin_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_builtins_attr_probe",
+        "oracle_signal_dynamic_import_builtins_attr_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_builtins_alias_probe",
+        "oracle_signal_dynamic_import_builtins_alias_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_imported_name_probe",
+        "oracle_signal_dynamic_import_imported_name_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_imported_alias_probe",
+        "oracle_signal_dynamic_import_imported_alias_probe_matrix.json",
+    ),
+    (
+        "oracle_signal_dynamic_import_probe",
+        "oracle_signal_dynamic_import_probe_matrix.json",
+    ),
+    ("oracle_signal_setattr_probe", "oracle_signal_setattr_probe_matrix.json"),
+    (
+        "oracle_signal_setattr_literal_probe",
+        "oracle_signal_setattr_literal_probe_matrix.json",
+    ),
+    ("oracle_signal_delattr_probe", "oracle_signal_delattr_probe_matrix.json"),
+    (
+        "oracle_signal_delattr_literal_probe",
+        "oracle_signal_delattr_literal_probe_matrix.json",
+    ),
     ("oracle_signal_exec_probe", "oracle_signal_exec_probe_matrix.json"),
     ("oracle_signal_eval_probe", "oracle_signal_eval_probe_matrix.json"),
     (
@@ -94,6 +171,7 @@ def execute_eval_checkpoint(output_dir: Path | str) -> EvalCheckpointArtifact:
         python_version=platform.python_version(),
         package_version=__version__,
     )
+    _require_no_budget_violations(bundle)
     evidence_rows = _build_checkpoint_evidence_rows(paths.ledger_path)
     checkpoint_markdown = _render_checkpoint_markdown(paths, evidence_rows)
     _write_checkpoint_markdown(paths.checkpoint_path, checkpoint_markdown)
@@ -179,13 +257,33 @@ def _checkpoint_case_from_source_spec(
             "checkpoint source spec task_path mismatch for "
             f"{expected_task_id}: {source_case.task_path}"
         )
+    checkpoint_budget = _checkpoint_budget_from_source_case(
+        expected_task_id,
+        source_case,
+    )
     return EvalRunCase(
         case_id=source_case.case_id,
         task_path=source_case.task_path,
         query=source_case.query,
-        budgets=(_CHECKPOINT_BUDGET,),
+        budgets=(checkpoint_budget,),
         providers=(CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER,),
     )
+
+
+def _checkpoint_budget_from_source_case(
+    task_id: str,
+    source_case: EvalRunCase,
+) -> int:
+    """Return the single provider-valid budget for one checkpoint case."""
+    required_budget = _DYNAMIC_IMPORT_DEFAULT_LOCAL_CONTEXT_BUDGETS.get(task_id)
+    if required_budget is not None:
+        if required_budget not in source_case.budgets:
+            raise EvalCheckpointError(
+                "checkpoint source spec omits provider-required budget "
+                f"{required_budget} for {task_id}"
+            )
+        return required_budget
+    return min(source_case.budgets)
 
 
 def _case_to_json(case: EvalRunCase) -> dict[str, object]:
@@ -225,6 +323,15 @@ def _current_git_commit() -> str:
         text=True,
     )
     return completed.stdout.strip()
+
+
+def _require_no_budget_violations(bundle: EvalBundleArtifact) -> None:
+    """Fail the checkpoint if the generated manifest reports budget drift."""
+    if bundle.manifest.budget_violation_run_ids:
+        rendered_run_ids = ", ".join(bundle.manifest.budget_violation_run_ids)
+        raise EvalCheckpointError(
+            f"checkpoint manifest contains budget violations: {rendered_run_ids}"
+        )
 
 
 def _build_checkpoint_evidence_rows(
@@ -276,7 +383,8 @@ def _evidence_row_from_record(record: EvalLedgerRecord) -> EvalCheckpointEvidenc
         raise EvalCheckpointError(
             f"checkpoint ledger used unexpected provider: {record.provider_name}"
         )
-    if record.budget != _CHECKPOINT_BUDGET:
+    expected_budget = _expected_checkpoint_budget(record.task_id)
+    if record.budget != expected_budget:
         raise EvalCheckpointError(
             f"checkpoint ledger used unexpected budget: {record.budget}"
         )
@@ -308,6 +416,16 @@ def _evidence_row_from_record(record: EvalLedgerRecord) -> EvalCheckpointEvidenc
         budget=record.budget,
         normalized_payload=normalized_payload,
     )
+
+
+def _expected_checkpoint_budget(task_id: str) -> int:
+    """Return the expected generated checkpoint budget for one supported task."""
+    for supported_task_id, source_spec_filename in _SUPPORTED_PROBE_SPECS:
+        if supported_task_id == task_id:
+            source_spec = load_eval_run_spec(_RUN_SPEC_DIR / source_spec_filename)
+            source_case = source_spec.cases[0]
+            return _checkpoint_budget_from_source_case(task_id, source_case)
+    raise EvalCheckpointError(f"unsupported checkpoint task_id: {task_id}")
 
 
 def _render_checkpoint_markdown(
@@ -357,12 +475,12 @@ def _render_checkpoint_markdown(
             (
                 "This checkpoint only exercises the exact "
                 "`context_ir_default_local_python_subprocess` fixtures listed "
-                "above at budget 100. It does not widen support for generalized "
-                "runtime/provider behavior, additional runtime-probe forms, "
-                "compiler semantics, scoring, MCP contracts, schema/config "
-                "contracts, dynamic imports, runtime mutation, exec/eval, "
-                "metaclass behavior, or reflective builtins beyond these exact "
-                "supported probes."
+                "above at their provider-valid budgets. It does not widen "
+                "support for generalized runtime/provider behavior, additional "
+                "runtime-probe forms, compiler semantics, scoring, MCP "
+                "contracts, schema/config contracts, composite smoke tasks, "
+                "legacy smoke tasks, or any public benchmark/product claim "
+                "beyond these exact supported probes."
             ),
         )
     )
