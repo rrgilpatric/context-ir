@@ -2,6 +2,76 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Delattr Name Provider Map Support Pushed
+
+- Pushed the exact default-local provider-map support release for
+  `oracle_signal_delattr_probe` to `origin/main` after explicit Ryan
+  authorization.
+- Pushed release commit:
+  - `6163471 Add delattr default provider support`
+- Pushed local routing sync:
+  - `b150d6d Sync delattr provider commit routing`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_delattr_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_vars_type_error_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release gates passed before push:
+  - control review: no findings
+  - release-unit audit: no findings
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`,
+    and `2139` pytest tests passed
+  - commit-gating: no findings; dirty file set exactly matched the accepted
+    twelve-file release unit; no staged files before staging; no `evals/`
+    diff; no `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` diff; no
+    `ARCHITECTURE.md`/`EVAL.md`/`PUBLIC_CLAIMS.md`/`README.md` diff
+- Pushed behavior:
+  - `context_ir_default_local_python_subprocess` admits exactly
+    `oracle_signal_delattr_probe` on top of previously supported exact
+    fixtures.
+  - provider fixture uses unsupported unit `unsupported:call:main.py:7:4`,
+    miss evidence `delattr(obj, name)`,
+    `RuntimeProbeFamily.RUNTIME_MUTATION`, form
+    `runtime_mutation:delattr/2`, boundary `delattr(obj, name)`, replay target
+    `main.probe_delete_attribute`, snapshot
+    `oracle_signal_delattr_probe@default-local-python:v1`, replay tail
+    `object_type=main.ProbeTarget` and `attribute_name=flag`, and payload
+    `mutation_outcome=deleted_attribute`.
+  - provider-owned runtime provenance remains additive; unsupported-boundary
+    primary truth remains `unsupported/opaque`, and selected units are not
+    promoted to `runtime_backed`.
+  - `observed_replay_inputs` remains empty on the attempt and absent from
+    provider provenance detail.
+  - wrong task IDs still fail closed.
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` changes
+  - no `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for `oracle_signal_vars_probe` or
+    `oracle_signal_setattr_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized
+    runtime-mutation framework change
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.0016344349786511512` to `0.0016272807220776822`; selected units/order,
+    document hash, total tokens, warnings, warning IDs, probe behavior, and
+    warning-call count stayed locked
+- Release state:
+  - pushed and closed
+  - no active workspace release unit
+- This entry is the post-push continuity sync that supersedes the live routing
+  state in the preceding local-commit entry.
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Delattr Name Provider Map Support Locally Committed
 
 - Locally committed the exact default-local provider-map support release for

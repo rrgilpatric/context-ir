@@ -40,8 +40,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is active. Local release is committed and
-push-pending:
+No workspace release unit is active. Most recent release is pushed and closed:
 
 - `6163471 Add delattr default provider support`
 - exact default-local provider-map support for `oracle_signal_delattr_probe`
@@ -49,17 +48,12 @@ push-pending:
 - release-unit audit cleared with no findings
 - full regression cleared
 - commit-gating cleared
-- locally committed on `main`
-- not pushed to `origin/main`
-- push requires explicit Ryan authorization
+- pushed to `origin/main` after explicit Ryan authorization
 
-Most recent pushed routing anchor remains
-`c8435c7 Sync delattr replay push routing`, which closed the pushed
-`eac74fa Add delattr name exact replay contract` release. This provider-map
-release is local-only and must not be confused with that pushed replay
-contract release.
+The pushed provider-map release builds on the previously pushed
+`eac74fa Add delattr name exact replay contract` replay-contract release.
 
-Committed release unit files:
+Pushed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -74,7 +68,7 @@ Committed release unit files:
 - `tests/test_eval_signal_vars_type_error_probe.py`
 - `tests/test_eval_signal_smoke_e.py`
 
-Committed behavior:
+Pushed behavior:
 
 - `context_ir_default_local_python_subprocess` admits exactly
   `oracle_signal_delattr_probe` in addition to previously supported exact
@@ -137,7 +131,8 @@ Full regression:
 
 Recommended next control action:
 
-- push only after explicit Ryan authorization
+- determine the next single-probe slice or spike from the remaining held probes
+  without reopening pushed `oracle_signal_delattr_probe` provider support
 
 Earlier pushed release:
 
