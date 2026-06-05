@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Walkthrough Returned
+
+- Accepted a docs-only private reviewer walkthrough slice with no findings.
+- New internal-only walkthrough:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+- The walkthrough provides a 5-10 minute private technical reviewer path
+  through:
+  - `private_reviewer_packet_001.md`
+  - `portfolio_001_internal_readiness.md`
+  - `default_local_probe_checkpoint_001/reviewer_readiness.md`
+  - five read-only `jq` checks over committed evidence artifacts
+- Control review reran all embedded commands and verified the expected outputs
+  or summaries are faithful to the committed artifact schemas.
+- Evidence boundaries remain explicit:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime or dynamic-Python support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- Execution-lane holds were preserved:
+  - no source, test, eval task, fixture, source run-spec, generated evidence
+    artifact, `README.md`, `PUBLIC_CLAIMS.md`, or `EVAL.md` changes
+  - no scripts, Task 4 execution, MCP implementation, staging, commit, or push
+- Release gates completed in the control lane:
+  - release-unit audit: pass
+  - embedded transcript checks: pass
+  - `ruff check src/ tests/`: pass
+  - `ruff format --check src/ tests/`: pass
+  - `mypy --strict src/`: pass
+  - `pytest tests/ -v`: `2175 passed`
+  - commit-gating over the exact docs-only release unit: pass
+- Recommended next control action: push only with explicit Ryan authorization;
+  after push, choose the next private-review enablement route before any new
+  Task 4, composite smoke, or runnable demo implementation work.
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Private Reviewer Evidence Packet Pushed
 
 - Pushed the private reviewer evidence packet release to `origin/main` after

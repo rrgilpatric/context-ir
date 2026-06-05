@@ -85,6 +85,47 @@ Latest release unit pushed:
   Task 4 reproducibility evidence, or a composite-smoke strategy spike.
   Do not start implementation until that strategy choice is explicit.
 
+Current private reviewer walkthrough release unit:
+
+- status: accepted after first-pass control review with no findings;
+  release-unit audit, full regression, and commit-gating passed in the control
+  lane
+- file in this docs-only release unit:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+- purpose: provide a 5-10 minute internal-only private reviewer walkthrough
+  over the pushed evidence packet, `portfolio_001`, and
+  `default_local_probe_checkpoint_001`
+- walkthrough shape:
+  - boundaries first
+  - reading path through existing reviewer-readiness docs
+  - five read-only `jq` commands over committed evidence artifacts
+  - optional high-level tool-facade orientation without centering MCP or
+    requiring an MCP server
+- preserved boundaries:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime or dynamic-Python support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- forbidden surfaces remain untouched:
+  - source code
+  - tests
+  - eval tasks
+  - eval fixtures
+  - source run specs
+  - generated evidence artifacts
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `EVAL.md`
+- next control action: push only with explicit Ryan authorization; after push,
+  choose the next private-review enablement route before any new Task 4,
+  composite smoke, or runnable demo implementation work
+
 Previous checkpoint evidence release unit remains:
 
 - internal default-local probe checkpoint evidence over exactly all `31/31`
