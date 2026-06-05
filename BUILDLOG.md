@@ -2,6 +2,45 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Delattr Name Provider Map Support Locally Committed
+
+- Locally committed the exact default-local provider-map support release for
+  `oracle_signal_delattr_probe` after control review, release-unit audit, full
+  regression, and commit-gating all cleared with no findings.
+- Local release commit:
+  - `6163471 Add delattr default provider support`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_delattr_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_vars_type_error_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release gates passed before local commit:
+  - control review: no findings
+  - release-unit audit: no findings
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`,
+    and `2139` pytest tests passed
+  - commit-gating: no findings; dirty file set exactly matched the accepted
+    twelve-file release unit; no staged files before staging; no `evals/`
+    diff; no `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` diff; no
+    `ARCHITECTURE.md`/`EVAL.md`/`PUBLIC_CLAIMS.md`/`README.md` diff
+- Release state:
+  - locally committed on `main`
+  - not pushed to `origin/main`
+  - push requires explicit Ryan authorization
+  - no active workspace release unit
+- This entry supersedes the live routing state in the preceding workspace
+  entry. Older workspace acceptance and gate details remain below as history.
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Delattr Name Provider Map Support Workspace Slice
 
 - Completed a workspace-only execution slice adding exact default-local
