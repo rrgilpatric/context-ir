@@ -2,6 +2,46 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Default-Local Probe Checkpoint Reviewer Readiness Accepted
+
+- Completed a docs/evidence-readiness execution slice for the pushed
+  `default_local_probe_checkpoint_001` internal evidence checkpoint.
+- Files changed:
+  - `EVAL.md`
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/reviewer_readiness.md`
+- The readiness docs record that the checkpoint covers exactly `31/31`
+  individual non-smoke `oracle_signal_*_probe` tasks.
+- Cited checkpoint artifact paths:
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/run_spec.json`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/ledger.jsonl`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/report.md`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/manifest.json`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/checkpoint.md`
+- Recorded artifact truth:
+  - provider set exactly `context_ir_default_local_python_subprocess`
+  - budget distribution: `100` x `23`, `180` x `1`, `220` x `7`
+  - no budget violations
+  - no composite smoke tasks
+  - no legacy `oracle_smoke`
+- Evidence boundary:
+  - proves exact internal runtime-provenance evidence for individual probe
+    fixtures
+  - does not prove public benchmark quality, production readiness, broad
+    product proof, generalized runtime support, composite smoke support,
+    Task 4 readiness, or latency/token/cost wins
+  - `portfolio_001` remains separate STRONG exact-query internal
+    product-differentiation evidence
+  - public-safe comparative claims remain bounded to the existing quad matrix
+- Preserved holds:
+  - no public claim widening
+  - no composite smoke provider support
+  - no Task 4 work
+  - no generated artifact, source, test, eval task, fixture, source run-spec,
+    README, or PUBLIC_CLAIMS edits
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Default-Local Probe Checkpoint Evidence Pushed
 
 - Pushed the internal default-local probe checkpoint evidence release to

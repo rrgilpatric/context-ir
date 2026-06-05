@@ -176,6 +176,45 @@ Recommended next control action:
   implementation work
 - push authorization for the checkpoint evidence release has been used
 
+Current docs/evidence-readiness release anchor:
+
+- files in this docs-only evidence-readiness release:
+  - `EVAL.md`
+  - `BUILDLOG.md`
+  - `PLAN.md`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/reviewer_readiness.md`
+- purpose: make the pushed
+  `default_local_probe_checkpoint_001` evidence discoverable and
+  reviewer-readable as internal-only evidence
+- recorded checkpoint scope:
+  - covers exactly `31/31` individual non-smoke `oracle_signal_*_probe` tasks
+  - cites:
+    - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/run_spec.json`
+    - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/ledger.jsonl`
+    - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/report.md`
+    - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/manifest.json`
+    - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/checkpoint.md`
+  - provider set exactly `context_ir_default_local_python_subprocess`
+  - budget distribution: `100` x `23`, `180` x `1`, `220` x `7`
+  - no budget violations
+  - no composite smoke and no legacy `oracle_smoke`
+- evidence boundary:
+  - proves exact internal runtime-provenance evidence for individual probe
+    fixtures
+  - is not a public benchmark and does not prove public benchmark quality,
+    production readiness, broad product proof, generalized runtime support,
+    composite smoke support, Task 4 readiness, or latency/token/cost wins
+  - preserves `portfolio_001` as separate STRONG exact-query internal
+    product-differentiation evidence
+  - preserves public-safe comparative claims as bounded to the existing quad
+    matrix
+- preserved holds:
+  - no public claim widening
+  - no composite smoke provider support
+  - no Task 4
+  - no generated artifact, source, test, eval task, fixture, source run-spec,
+    README, or PUBLIC_CLAIMS edits
+
 Previous pushed release unit remains:
 
 - exact default-local provider-map support for `oracle_signal_vars_probe`

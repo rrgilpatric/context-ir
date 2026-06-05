@@ -10,6 +10,41 @@ The current semantic-first baseline is supported by repo-local tests and
 accepted BUILDLOG entries through the deterministic internal eval harness and
 the current four-asset signal quad matrix.
 
+`default_local_probe_checkpoint_001` is the pushed internal default-local
+runtime evidence checkpoint at
+`evals/internal_runtime_evidence/default_local_probe_checkpoint_001/`. It is
+not a public benchmark, public benchmark result, public product proof, or
+public claim-widening artifact. It covers exactly `31/31` individual non-smoke
+`oracle_signal_*_probe` tasks and excludes composite smoke tasks
+(`oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`,
+`oracle_signal_smoke_d`, and `oracle_signal_smoke_e`) plus legacy
+`oracle_smoke`.
+
+Checkpoint artifact paths:
+
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/run_spec.json`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/ledger.jsonl`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/report.md`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/manifest.json`
+- `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/checkpoint.md`
+
+Checkpoint truth:
+
+- provider set exactly `context_ir_default_local_python_subprocess`
+- budget distribution: `100` x `23`, `180` x `1`, `220` x `7`
+- no budget violations
+- no composite smoke tasks and no legacy `oracle_smoke`
+
+This proves exact internal runtime-provenance evidence for the individual probe
+fixtures: at provider-valid budgets, the default-local subprocess provider has
+durable runtime-provenance and normalized payload evidence for each exact
+individual non-smoke probe fixture in the current queue. It does not prove
+public benchmark quality, production readiness, broad product proof,
+generalized runtime support, composite smoke support, Task 4 readiness, or
+latency/token/cost wins. `portfolio_001` remains separate STRONG exact-query
+internal product-differentiation evidence, and public-safe comparative claims
+remain bounded to the existing quad matrix.
+
 Evidence authority is split by artifact type. The `oracle_signal_vars_probe`
 evidence described below is a narrow internal `vars(obj)` pilot, and the
 `oracle_signal_vars_zero_probe` evidence described below is a narrow internal
