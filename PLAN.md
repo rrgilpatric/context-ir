@@ -40,18 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-A workspace-only accepted release unit is active. It is audit-cleared,
-full-regression-cleared, and commit-gating-cleared. It is eligible for local
-commit sequencing; push still requires explicit Ryan authorization.
+No workspace release unit is active. Most recent release is pushed and closed:
 
-Workspace slice:
-
+- `eac74fa Add delattr name exact replay contract`
 - exact default-local replay-contract support for
   `oracle_signal_delattr_probe@default-local-python:v1`
-- scoped to `runtime_probe_execution`, `runtime_probe_worker`, focused runtime
-  tests, Task 3 scalar preservation, and continuity docs
+- control-reviewed first-pass with no findings
+- release-unit audit cleared with no findings
+- full regression cleared
+- commit-gating cleared
+- pushed to `origin/main` after explicit Ryan authorization
 
-Workspace file set:
+Pushed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -61,7 +61,7 @@ Workspace file set:
 - `tests/test_runtime_probe_worker.py`
 - `tests/test_eval_signal_smoke_e.py`
 
-Workspace behavior:
+Pushed behavior:
 
 - clean `eval_fixture` snapshot
   `oracle_signal_delattr_probe@default-local-python:v1` appends exact replay
@@ -113,9 +113,10 @@ Task 3 preservation:
 
 Recommended next control action:
 
-- local commit sequencing, then push only after explicit Ryan authorization
+- determine the next single-probe slice or spike from the remaining held probes
+  without reopening pushed `delattr(obj, name)` replay support
 
-Control-lane validation rerun:
+Validation run before push:
 
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "delattr and exact"`: `14` passed, `366` deselected
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "delattr and exact"`: `26` passed, `668` deselected
@@ -141,7 +142,7 @@ Release-gate results:
   `src/context_ir/eval_providers.py` diff; no
   `ARCHITECTURE.md`/`EVAL.md`/`PUBLIC_CLAIMS.md`/`README.md` diff
 
-Most recent pushed release remains pushed and closed:
+Previous pushed release:
 
 - `cfb1405 Add vars TypeError default provider support`
 - exact default-local provider-map support for
