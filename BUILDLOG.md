@@ -2,6 +2,127 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Setattr Name Exact Replay Contract Workspace Slice
+
+- Completed a workspace-only execution slice adding exact default-local
+  replay-contract support for
+  `oracle_signal_setattr_probe@default-local-python:v1`.
+- Workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior added:
+  - clean `eval_fixture` snapshot
+    `oracle_signal_setattr_probe@default-local-python:v1` appends exact replay
+    inputs `object_type=main.ProbeTarget`, `attribute_name=flag`,
+    `assigned_value_type=builtins.str`, and `assigned_value_literal=ready`.
+  - exact request identity is unsupported unit `unsupported:call:main.py:7:4`,
+    `RuntimeProbeFamily.RUNTIME_MUTATION`, form
+    `runtime_mutation:setattr/3`, boundary `setattr(obj, name, value)`,
+    source span `main.py:7:4-7:29`, replay target
+    `main.probe_set_attribute`, and replay selector
+    `call:main.probe_set_attribute:runtime_mutation:setattr/3@main.py:7:4:7:29`.
+  - worker replays
+    `main.probe_set_attribute(main.ProbeTarget(), "flag", "ready")`.
+  - normalized payload remains `mutation_outcome=returned_none`.
+  - durable artifact reference preserves
+    `artifact://runtime-probe/setattr-value/{request_id}.json`.
+  - `observed_replay_inputs` remains empty/absent for this non-exec/eval path.
+  - wrong or dirty snapshots fail closed without appended exact replay inputs.
+  - malformed exact replay fields fail closed before replay execution.
+  - existing direct-literal `setattr(obj, "flag", value)` replay remains
+    unchanged.
+- Preserved holds:
+  - no provider-map support and no `src/context_ir/eval_providers.py` changes
+  - no `evals/` asset or run-spec changes
+  - no provider support for `oracle_signal_vars_probe` or
+    `oracle_signal_setattr_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized
+    runtime-mutation framework change
+- Task 3 preservation:
+  - changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.0016272807220776822` to `0.0016251808735714796`
+  - selected units/order, document hash, total tokens, warnings, warning IDs,
+    probe behavior, and warning-call count stayed locked
+- Execution-lane validation:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "setattr and exact"`: `16` passed, `368` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "setattr and exact"`: `34` passed, `673` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_probe.py -q`: `6` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_literal_probe.py -q`: `9` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+- Release state:
+  - workspace-only accepted after first-pass control review with no findings
+  - release-unit-audit-cleared with no findings
+  - full-regression-cleared
+  - commit-gating-cleared
+  - not staged, committed, or pushed
+- Control-lane review:
+  - no findings
+  - dirty file set exactly matched this workspace release unit
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+  - no staged changes
+  - focused validation rerun passed:
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "setattr and exact"`: `16` passed, `368` deselected
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "setattr and exact"`: `34` passed, `673` deselected
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_probe.py tests/test_eval_signal_setattr_literal_probe.py -q`: `15` passed
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+    - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+    - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+    - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+- Recommended next control action:
+  - create the local commit for this audit-cleared, full-regression-cleared,
+    and commit-gating-cleared replay-contract workspace slice
+  - do not route to provider-map support until this replay-contract slice is
+    locally committed and pushed
+- Release-unit audit:
+  - no findings
+  - dirty workspace exactly matched the seven-file release unit
+  - no staged changes
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+  - no provider-map support and no provider support for
+    `oracle_signal_vars_probe` or `oracle_signal_setattr_probe`
+  - Task 3 diff changes only `FULL_REPO_TASK3_CONFIDENCE`
+  - focused audit validation passed:
+    - runtime execution exact setattr: `16` passed, `368` deselected
+    - runtime worker exact setattr: `34` passed, `673` deselected
+    - Task 3 smoke: `1` passed, `7` deselected
+    - `tests/test_eval_signal_setattr_probe.py`: `6` passed
+    - `tests/test_eval_signal_setattr_literal_probe.py`: `9` passed
+- Full regression:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: `Success: no issues found in 39 source files`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2156` passed
+- Commit-gating:
+  - `git status --short --branch -uall`: exact seven-file release unit dirty,
+    no staged changes
+  - `git rev-parse HEAD origin/main`: both
+    `b134cdf1a3a99eb65c1c6401ac5444ca49164f48`
+  - `git diff --check`: clean
+  - `git diff --name-status`: exact seven-file release unit
+  - `git diff --cached --name-status`: empty
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+  - `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
+  - default-local provider fixture map still reports
+    `oracle_signal_vars_probe=False` and `oracle_signal_setattr_probe=False`
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Delattr Name Provider Map Support Pushed
 
 - Pushed the exact default-local provider-map support release for

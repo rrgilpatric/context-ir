@@ -31,6 +31,7 @@ from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_HASATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
     _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_SETATTR_NAME_CONTRACT,
     _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT,
     RuntimeProbeLocalPythonWorkerRequestPayload,
     _runtime_probe_exact_replay_contract_candidates_for_replay_fields,
@@ -509,7 +510,7 @@ _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE = "main.ProbeTarget"
 _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ATTRIBUTE_NAME = "flag"
 _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_TYPE = "builtins.str"
 _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_ASSIGNED_VALUE_LITERAL = "ready"
-_RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_CLASS_NAME = "ProbeTarget"
+_RUNTIME_MUTATION_SETATTR_NAME_FLAG_CLASS_NAME = "ProbeTarget"
 _RUNTIME_MUTATION_SETATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
     "runtime probe runtime mutation setattr worker target execution failed"
 )
@@ -5343,6 +5344,7 @@ def materialize_runtime_probe_runtime_mutation_setattr_observation_from_target(
     )
     target_args = _runtime_probe_runtime_mutation_setattr_target_args(
         source_module,
+        replay_target.request,
         exact_replay_inputs,
     )
     mutation_outcome = _runtime_probe_runtime_mutation_setattr_captured_outcome(
@@ -13975,15 +13977,10 @@ def _validate_runtime_probe_runtime_mutation_setattr_target_callable(
 def _runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
     request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
 ) -> Mapping[str, str] | None:
-    """Return exact literal setattr replay inputs for the accepted pilot."""
+    """Return exact setattr replay inputs for accepted pilots."""
     _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
-    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
-        request.request_replay_payload_fields
-    )
-    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
-        replay_fields_by_key
-    )
-    if contract is not _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT:
+    contract = _runtime_probe_runtime_mutation_setattr_exact_replay_contract(request)
+    if contract is None:
         return None
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
@@ -13996,40 +13993,81 @@ def _runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
     return exact_fields_by_key
 
 
+def _runtime_probe_runtime_mutation_setattr_exact_replay_contract(
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
+) -> _RuntimeProbeExactReplayContract | None:
+    """Return the exact setattr replay contract for accepted worker requests."""
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        replay_fields_by_key
+    )
+    if contract not in (
+        _EXACT_REPLAY_SETATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
+    ):
+        return None
+    return contract
+
+
 def _runtime_probe_runtime_mutation_setattr_target_args(
     source_module: ModuleType,
+    request: RuntimeProbeLocalPythonRuntimeMutationSetattrWorkerRequest,
     exact_replay_inputs: Mapping[str, str] | None,
 ) -> tuple[object, ...]:
-    """Return target args for the exact literal setattr pilot, otherwise none."""
+    """Return target args for exact setattr pilots, otherwise none."""
     if exact_replay_inputs is None:
         return ()
+    _validate_runtime_probe_runtime_mutation_setattr_worker_request(request)
+    contract = _runtime_probe_runtime_mutation_setattr_exact_replay_contract(request)
     _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs(
-        exact_replay_inputs
+        exact_replay_inputs,
+        contract=contract
+        if contract is not None
+        else _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
     )
-    return (
-        _runtime_probe_runtime_mutation_setattr_literal_probe_target(source_module),
-        exact_replay_inputs[
-            _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY
-        ],
+    probe_target = _runtime_probe_runtime_mutation_setattr_exact_probe_target(
+        source_module
+    )
+    if contract is _EXACT_REPLAY_SETATTR_NAME_CONTRACT:
+        return (
+            probe_target,
+            exact_replay_inputs[_RUNTIME_MUTATION_SETATTR_ATTRIBUTE_NAME_REPLAY_KEY],
+            exact_replay_inputs[
+                _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY
+            ],
+        )
+    if contract is _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT:
+        return (
+            probe_target,
+            exact_replay_inputs[
+                _RUNTIME_MUTATION_SETATTR_ASSIGNED_VALUE_LITERAL_REPLAY_KEY
+            ],
+        )
+    raise ValueError(
+        "runtime probe runtime mutation setattr worker exact replay contract "
+        "is unsupported"
     )
 
 
-def _runtime_probe_runtime_mutation_setattr_literal_probe_target(
+def _runtime_probe_runtime_mutation_setattr_exact_probe_target(
     source_module: ModuleType,
 ) -> object:
-    """Instantiate the single accepted literal-setattr replay object."""
+    """Instantiate the accepted setattr replay object."""
     if source_module.__name__ != "main":
         raise ValueError(
-            "runtime probe runtime mutation setattr worker literal replay source "
+            "runtime probe runtime mutation setattr worker exact replay source "
             "module is unsupported"
         )
     probe_target_class = source_module.__dict__.get(
-        _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_CLASS_NAME,
+        _RUNTIME_MUTATION_SETATTR_NAME_FLAG_CLASS_NAME,
         _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
     )
     if not isinstance(probe_target_class, type):
         raise ValueError(
-            "runtime probe runtime mutation setattr worker literal replay target "
+            "runtime probe runtime mutation setattr worker exact replay target "
             "class is unsupported"
         )
     probe_target = probe_target_class()
@@ -14038,7 +14076,7 @@ def _runtime_probe_runtime_mutation_setattr_literal_probe_target(
         != _RUNTIME_MUTATION_SETATTR_LITERAL_FLAG_OBJECT_TYPE
     ):
         raise ValueError(
-            "runtime probe runtime mutation setattr worker literal replay target "
+            "runtime probe runtime mutation setattr worker exact replay target "
             "object type is unsupported"
         )
     return probe_target
@@ -14344,11 +14382,14 @@ def _validate_runtime_probe_runtime_mutation_setattr_exact_replay_inputs_if_need
     *,
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject drifted replay inputs for the exact literal setattr pilot."""
+    """Reject drifted replay inputs for exact setattr pilots."""
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
     )
-    if contract is not _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT:
+    if contract not in (
+        _EXACT_REPLAY_SETATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
+    ):
         return
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,

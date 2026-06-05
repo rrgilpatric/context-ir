@@ -390,6 +390,9 @@ _VARS_TYPE_ERROR_DEFAULT_LOCAL_SNAPSHOT_ID = (
 _DELATTR_DEFAULT_LOCAL_SNAPSHOT_ID = (
     "oracle_signal_delattr_probe@default-local-python:v1"
 )
+_SETATTR_DEFAULT_LOCAL_SNAPSHOT_ID = (
+    "oracle_signal_setattr_probe@default-local-python:v1"
+)
 _EXEC_PASS_SOURCE_SHA256 = (
     "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
 )
@@ -507,6 +510,14 @@ def _delattr_snapshot_basis() -> RepositorySnapshotBasis:
     return _snapshot_basis(
         snapshot_kind="eval_fixture",
         snapshot_id=_DELATTR_DEFAULT_LOCAL_SNAPSHOT_ID,
+    )
+
+
+def _setattr_snapshot_basis() -> RepositorySnapshotBasis:
+    """Return the exact name-variable setattr fixture snapshot."""
+    return _snapshot_basis(
+        snapshot_kind="eval_fixture",
+        snapshot_id=_SETATTR_DEFAULT_LOCAL_SNAPSHOT_ID,
     )
 
 
@@ -1440,6 +1451,36 @@ def _runtime_mutation_setattr_literal_exact_replay_input_request() -> (
         replay_selector_seed=(
             "call:main.probe_set_literal_attribute:"
             f"{_RUNTIME_MUTATION_SETATTR_FORM_LABEL}@main.py:7:4:7:31"
+        ),
+    )
+
+
+def _runtime_mutation_setattr_name_exact_replay_input_request() -> (
+    runtime_probe_requests.RuntimeProbeRequest
+):
+    """Return the exact name-setattr pilot request that carries replay inputs."""
+    return runtime_probe_requests.RuntimeProbeRequest(
+        subject_kind=SemanticSubjectKind.UNSUPPORTED_FINDING,
+        subject_id="unsupported:call:main.py:7:4",
+        source_site=SourceSite(
+            site_id="site:main.py:7:4",
+            file_path="main.py",
+            span=SourceSpan(
+                start_line=7,
+                start_column=4,
+                end_line=7,
+                end_column=29,
+            ),
+            snippet="setattr(obj, name, value)",
+        ),
+        reason_code=UnresolvedReasonCode.RUNTIME_MUTATION,
+        boundary_text="setattr(obj, name, value)",
+        family_label=runtime_probe_requests.RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label=_RUNTIME_MUTATION_SETATTR_FORM_LABEL,
+        replay_target_seed="main.probe_set_attribute",
+        replay_selector_seed=(
+            "call:main.probe_set_attribute:"
+            f"{_RUNTIME_MUTATION_SETATTR_FORM_LABEL}@main.py:7:4:7:29"
         ),
     )
 
@@ -12199,6 +12240,37 @@ def test_runtime_mutation_setattr_worker_request_materializes_literal_inputs() -
     )
 
 
+def test_runtime_mutation_setattr_worker_request_materializes_exact_name_inputs() -> (
+    None
+):
+    """The exact name-setattr pilot keeps object, attribute, and value inputs."""
+    source_request = _runtime_mutation_setattr_name_exact_replay_input_request()
+    payload = _valid_worker_payload_for_request(
+        source_request,
+        repository_snapshot_basis=_setattr_snapshot_basis(),
+    )
+
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_SETATTR_REQUEST_MATERIALIZER,
+    )
+    request = materialize_request(payload)
+
+    assert request.subject_id == "unsupported:call:main.py:7:4"
+    assert request.source_start_line == 7
+    assert request.source_start_column == 4
+    assert request.source_end_column == source_request.source_site.span.end_column
+    assert request.boundary_text == source_request.boundary_text
+    assert request.replay_target_seed == source_request.replay_target_seed
+    assert request.replay_selector_seed == source_request.replay_selector_seed
+    assert request.request_replay_payload_fields[-4:] == (
+        _field("object_type", "main.ProbeTarget"),
+        _field("attribute_name", "flag"),
+        _field("assigned_value_type", "builtins.str"),
+        _field("assigned_value_literal", "ready"),
+    )
+
+
 @pytest.mark.parametrize(
     ("family_label", "form_label", "boundary_text"),
     (
@@ -12291,14 +12363,30 @@ def test_runtime_mutation_setattr_worker_request_rejects_replay_drift(
         ("unexpected", "value", "exact replay inputs"),
     ),
 )
-def test_runtime_mutation_setattr_worker_request_rejects_bad_literal_replay_inputs(
+@pytest.mark.parametrize(
+    ("source_request", "repository_snapshot_basis"),
+    (
+        (
+            _runtime_mutation_setattr_literal_exact_replay_input_request(),
+            _snapshot_basis(),
+        ),
+        (
+            _runtime_mutation_setattr_name_exact_replay_input_request(),
+            _setattr_snapshot_basis(),
+        ),
+    ),
+)
+def test_runtime_mutation_setattr_worker_request_rejects_bad_exact_replay_inputs(
+    source_request: runtime_probe_requests.RuntimeProbeRequest,
+    repository_snapshot_basis: RepositorySnapshotBasis,
     replay_key: str,
     replay_value: str | None,
     error_match: str,
 ) -> None:
-    """The exact literal-setattr pilot rejects malformed replay input fields."""
+    """Exact setattr pilots reject malformed replay input fields."""
     payload = _valid_worker_payload_for_request(
-        _runtime_mutation_setattr_literal_exact_replay_input_request()
+        source_request,
+        repository_snapshot_basis=repository_snapshot_basis,
     )
     if replay_value is None:
         fields = tuple(
@@ -12426,6 +12514,64 @@ def test_runtime_mutation_setattr_worker_observer_consumes_literal_inputs(
         python_executable=sys.executable,
         working_directory=str(tmp_path),
         python_path_entries=(project_source_path,),
+    )
+    materialize_request = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_SETATTR_REQUEST_MATERIALIZER,
+    )
+    request = materialize_request(payload)
+    original_setattr = builtins.setattr
+    sys.modules.pop("main", None)
+
+    try:
+        observation = _observe_runtime_mutation_setattr_worker_request(request)
+    finally:
+        sys.modules.pop("main", None)
+
+    expected_artifact_reference = (
+        f"artifact://runtime-probe/setattr-value/{request.request_id}.json"
+    )
+    assert observation.mutation_outcome == "returned_none"
+    assert observation.request_replay_payload_fields[-4:] == (
+        _field("object_type", "main.ProbeTarget"),
+        _field("attribute_name", "flag"),
+        _field("assigned_value_type", "builtins.str"),
+        _field("assigned_value_literal", "ready"),
+    )
+    materialize_success_response = getattr(
+        runtime_probe_worker,
+        _RUNTIME_MUTATION_SETATTR_SUCCESS_RESPONSE_MATERIALIZER,
+    )
+    success_response = materialize_success_response(observation)
+    assert success_response.normalized_payload == (
+        _field("mutation_outcome", "returned_none"),
+    )
+    assert success_response.durable_artifact_reference == expected_artifact_reference
+    assert success_response.observed_replay_inputs == ()
+    assert builtins.setattr is original_setattr
+
+
+def test_runtime_mutation_setattr_worker_observer_consumes_exact_name_inputs(
+    tmp_path: Path,
+) -> None:
+    """The exact name pilot calls ``main.probe_set_attribute``."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "class ProbeTarget:\n"
+            "    def __init__(self) -> None:\n"
+            "        pass\n\n\n"
+            "def probe_set_attribute(obj: object, name: str, value: str) -> None:\n"
+            "    setattr(obj, name, value)\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _runtime_mutation_setattr_name_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+        repository_snapshot_basis=_setattr_snapshot_basis(),
     )
     materialize_request = getattr(
         runtime_probe_worker,
@@ -14233,6 +14379,59 @@ def test_runtime_mutation_setattr_worker_default_subprocess_observes_literal_set
         python_executable=sys.executable,
         working_directory=str(tmp_path),
         python_path_entries=(project_source_path,),
+    )
+
+    completed = subprocess.run(
+        (sys.executable, "-m", "context_ir.runtime_probe_worker"),
+        input=serialize_runtime_probe_local_python_worker_request_payload(payload),
+        text=True,
+        capture_output=True,
+        cwd=str(tmp_path),
+        env={**os.environ, "PYTHONPATH": project_source_path},
+        timeout=10,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    protocol_payload = json.loads(completed.stdout)
+    assert protocol_payload == {
+        "runtime_probe_stdout_protocol_revision": (
+            "runtime_probe_local_python_stdout_protocol:v1"
+        ),
+        "normalized_payload": [
+            {
+                "key": "mutation_outcome",
+                "value": "returned_none",
+            },
+        ],
+        "durable_artifact_reference": (
+            f"artifact://runtime-probe/setattr-value/{payload.request_id}.json"
+        ),
+    }
+
+
+def test_runtime_mutation_setattr_worker_default_subprocess_observes_exact_name_setattr(
+    tmp_path: Path,
+) -> None:
+    """The real worker observes only the exact name-variable setattr replay."""
+    project_source_path = str(Path(__file__).resolve().parents[1] / "src")
+    (tmp_path / "main.py").write_text(
+        (
+            "class ProbeTarget:\n"
+            "    def __init__(self) -> None:\n"
+            "        pass\n\n\n"
+            "def probe_set_attribute(obj: object, name: str, value: str) -> None:\n"
+            "    setattr(obj, name, value)\n"
+        ),
+        encoding="utf-8",
+    )
+    payload = _valid_worker_payload_for_request(
+        _runtime_mutation_setattr_name_exact_replay_input_request(),
+        python_executable=sys.executable,
+        working_directory=str(tmp_path),
+        python_path_entries=(project_source_path,),
+        repository_snapshot_basis=_setattr_snapshot_basis(),
     )
 
     completed = subprocess.run(
