@@ -2,6 +2,70 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-04 -- Vars TypeError Provider Map Support Pushed
+
+- Pushed the exact default-local provider-map support release for
+  `oracle_signal_vars_type_error_probe` to `origin/main` after explicit Ryan
+  authorization.
+- Pushed release commit:
+  - `cfb1405 Add vars TypeError default provider support`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_vars_type_error_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release gates passed before push:
+  - control review: no findings
+  - release-unit audit: no findings
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`,
+    and `2124` pytest tests passed
+  - commit-gating: no findings; dirty file set exactly matched the accepted
+    ten-file release unit; no staged files; no `evals/` diff; no
+    `src/context_ir/runtime_probe_execution.py` or
+    `src/context_ir/runtime_probe_worker.py` diff
+- Pushed behavior:
+  - `context_ir_default_local_python_subprocess` admits exactly
+    `oracle_signal_vars_type_error_probe` on top of previously supported exact
+    fixtures
+  - provider fixture uses unsupported unit `unsupported:call:main.py:2:11`,
+    miss evidence `vars(obj)`, `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+    `reflective_builtin:vars/1`, boundary `vars(obj)`, replay target
+    `main.probe_namespace`, snapshot
+    `oracle_signal_vars_type_error_probe@default-local-python:v1`, replay tail
+    `object_type=builtins.int`, and payload
+    `lookup_outcome=raised_type_error`
+  - provider-owned runtime provenance remains additive; the unsupported
+    boundary primary truth remains `unsupported/opaque`, and selected units are
+    not promoted to `runtime_backed`
+  - `observed_replay_inputs` remains empty on the attempt and absent from
+    provider provenance detail
+  - wrong task IDs still fail closed
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` changes
+  - no `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for `oracle_signal_vars_probe`,
+    `oracle_signal_setattr_probe`, or `oracle_signal_delattr_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+  - Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.0016427314184447848` to `0.001636508409725952`; selected units/order,
+    document hash, total tokens, warnings, warning IDs, probe behavior, and
+    warning-call count stayed locked
+- Release state:
+  - pushed and closed
+  - no active workspace release unit
+- This entry is the post-push continuity sync that supersedes the live routing
+  state in the preceding workspace/gate-cleared entry.
+- Acceptance status: first-pass.
+
 ## 2026-06-04 -- Vars TypeError Provider Map Support Workspace Slice
 
 - Completed a workspace-only execution slice adding exact default-local

@@ -40,10 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace-only release unit is active for exact default-local provider-map
-support for `oracle_signal_vars_type_error_probe`.
+No workspace release unit is active. Most recent release is pushed and closed:
 
-Workspace release unit files:
+- `cfb1405 Add vars TypeError default provider support`
+- exact default-local provider-map support for
+  `oracle_signal_vars_type_error_probe`
+- control-reviewed first-pass with no findings
+- release-unit audit cleared with no findings
+- full regression cleared
+- commit-gating cleared
+- pushed to `origin/main` after explicit Ryan authorization
+
+Pushed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -56,7 +64,7 @@ Workspace release unit files:
 - `tests/test_eval_signal_vars_zero_probe.py`
 - `tests/test_eval_signal_smoke_e.py`
 
-Workspace behavior:
+Pushed behavior:
 
 - `context_ir_default_local_python_subprocess` now admits exactly
   `oracle_signal_vars_type_error_probe` in addition to previously supported
@@ -106,15 +114,10 @@ Execution-lane validation:
 
 Release state:
 
-- workspace-only execution slice completed
-- control-reviewed first-pass with no findings
-- release-unit-audit-cleared with no findings
-- full-regression-cleared
-- commit-gating-cleared
-- eligible for local commit sequencing
-- push still requires explicit Ryan authorization
+- pushed and closed
+- no active workspace release unit
 
-Control-lane validation rerun:
+Validation run before push:
 
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `9` passed
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_vars_zero_probe.py tests/test_eval_signal_metaclass_behavior_probe.py -q -k "default_subprocess_provider_fails_closed"`: `5` passed, `40` deselected
