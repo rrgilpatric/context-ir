@@ -41,8 +41,8 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ### Canonical Active Release-State Block
 
 Workspace release unit is active and accepted after first-pass control review.
-It is release-unit-audit-cleared and full-regression-cleared. It is not
-staged, committed, or pushed. It is commit-gating-cleared.
+It is release-unit-audit-cleared, full-regression-cleared,
+commit-gating-cleared, and locally committed. It is not pushed.
 
 Baseline pushed state before this workspace unit:
 
@@ -135,7 +135,8 @@ Release state:
 - release-unit audit cleared with no findings
 - full-regression-cleared
 - commit-gating-cleared
-- not staged, committed, or pushed
+- locally committed as `fa2fadf Add setattr default provider support`
+- not pushed
 
 Control-lane review:
 
@@ -204,8 +205,8 @@ Commit-gating:
 
 Recommended next control action:
 
-- create the local commit for this audit-cleared, full-regression-cleared, and
-  commit-gating-cleared provider-map release unit
+- await explicit Ryan push authorization for the locally committed provider-map
+  release
 - push only after explicit Ryan authorization
 - do not reopen pushed `oracle_signal_setattr_probe` replay-contract behavior
 

@@ -70,7 +70,8 @@ Most recent supersession entries override older architectural decisions when the
   - release-unit audit cleared with no findings
   - full-regression-cleared
   - commit-gating-cleared
-  - not staged, committed, or pushed
+  - locally committed as `fa2fadf Add setattr default provider support`
+  - not pushed
 - Control-lane review:
   - no findings
   - dirty file set exactly matched this workspace release unit
@@ -131,10 +132,12 @@ Most recent supersession entries override older architectural decisions when the
     `oracle_signal_vars_probe=False`; `oracle_signal_setattr_probe` metadata
     and replay tail match the release contract
 - Recommended next control action:
-  - create the local commit for this audit-cleared, full-regression-cleared,
-    and commit-gating-cleared provider-map release unit
+  - await explicit Ryan push authorization for the locally committed
+    provider-map release
   - push only after explicit Ryan authorization
   - do not reopen pushed `oracle_signal_setattr_probe` replay-contract behavior
+- Local commit:
+  - `fa2fadf Add setattr default provider support`
 - Acceptance status: first-pass.
 
 ## 2026-06-05 -- Setattr Name Exact Replay Contract Pushed
