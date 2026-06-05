@@ -100,6 +100,29 @@ Latest release unit pushed:
   files, send outreach, start Task 4, composite smoke support, runnable demo
   implementation, public claim widening, or MCP/API work from this route.
 
+Current correction release unit:
+
+- private reviewer send-readiness stale-artifact wording correction
+- release state: correction applied after recipient simulation returned a medium
+  finding; release-unit audit, full regression, and commit-gating are cleared.
+  Commit and push state are verified from live git rather than from this
+  committed continuity block.
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
+- finding addressed: line 120 of the send-readiness note still described the
+  note as a workspace artifact pending acceptance/commit even though it was
+  already pushed; the correction now distinguishes the older evidence pin
+  `9f29a7fad0e83ce2ed538b64b4353200e61d2079` from the final commit that should
+  be used when citing the send-readiness note itself
+- recommended next control action: create the local correction commit after
+  exact-file staging. Push requires explicit Ryan authorization. Before sending
+  reviewer outreach, verify the pushed commit that contains this correction and
+  use that commit if citing the send-readiness note itself. Do not start Task 4,
+  composite smoke support, runnable demo implementation, public claim widening,
+  or MCP/API work from this route.
+
 Previous private reviewer walkthrough checks release unit remains:
 
 - private reviewer walkthrough checks correction

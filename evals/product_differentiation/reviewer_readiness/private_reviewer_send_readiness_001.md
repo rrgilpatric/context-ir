@@ -117,9 +117,10 @@ Commit-pinned GitHub URLs for the current committed evidence at
 - Project status boundary:
   https://github.com/rrgilpatric/context-ir/blob/9f29a7fad0e83ce2ed538b64b4353200e61d2079/README.md
 
-This send-readiness file is a workspace artifact until it is accepted and
-committed by the control lane. Do not cite a commit-pinned URL for it until a
-future commit contains it.
+The evidence links above intentionally pin the packet, walkthrough, and
+underlying evidence artifacts at `9f29a7fad0e83ce2ed538b64b4353200e61d2079`.
+If citing this send-readiness note itself, use a commit-pinned URL for the
+final commit that contains this file rather than the older evidence pin.
 
 ## What This Evidence Does Prove
 

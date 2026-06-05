@@ -2,6 +2,33 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Recipient Simulation Correction Returned
+
+- Recipient simulation returned one medium finding:
+  `private_reviewer_send_readiness_001.md` still described itself as a
+  workspace artifact pending acceptance/commit even though the file had already
+  been pushed.
+- Ryan authorized a narrow correction.
+- Workspace-only correction applied to:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- The corrected note now states that the evidence links intentionally pin the
+  packet, walkthrough, and evidence artifacts at
+  `9f29a7fad0e83ce2ed538b64b4353200e61d2079`, and that any citation of the
+  send-readiness note itself should use the final commit that contains that
+  note rather than the older evidence pin.
+- Release gates cleared: read-only release-unit audit, full regression, and
+  commit-gating over the exact three-file correction unit.
+- Next control action: create the local correction commit after exact-file
+  staging. Push requires explicit Ryan authorization. Before sending reviewer
+  outreach, verify the pushed commit that contains this correction and use that
+  commit if citing the send-readiness note itself. Do not start Task 4,
+  composite smoke support, runnable demo implementation, public claim widening,
+  or MCP/API work from this route.
+- Acceptance status: correction accepted and release-gated; commit and push
+  state are verified from live git.
+
 ## 2026-06-05 -- Private Reviewer Send Readiness Pushed
 
 - Pushed the private reviewer send-readiness release to `origin/main` after
