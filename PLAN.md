@@ -42,26 +42,20 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Latest release unit pushed:
 
-- internal-only private reviewer walkthrough 001
-- release state: accepted after first-pass control review with no findings;
-  release-unit audit passed; full regression passed; commit-gating passed;
-  staged, locally committed, and pushed to `origin/main` after Ryan authorized
-  proceeding
+- private reviewer walkthrough checks correction
+- release state: accepted after private-review dry run found two P3
+  reviewer-friction issues; correction passed full gates; staged, locally
+  committed, and pushed to `origin/main` after Ryan authorized proceeding
 - pushed release commit:
-  `9634239 Add private reviewer walkthrough`
+  `d823f15 Tighten private reviewer walkthrough checks`
 - release files:
-  - `PLAN.md`
-  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
   - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
-- purpose: provide a 5-10 minute internal-only private reviewer walkthrough
-  over the pushed evidence packet, `portfolio_001`, and
-  `default_local_probe_checkpoint_001`
-- walkthrough shape:
-  - boundaries first
-  - reading path through existing reviewer-readiness docs
-  - five read-only `jq` commands over committed evidence artifacts
-  - optional high-level tool-facade orientation without centering MCP or
-    requiring an MCP server
+- purpose: resolve the read-only private-review dry-run findings:
+  - the runtime payload spot check now visibly includes `hasattr`, false
+    `hasattr`, dynamic import, and `exec` rows
+  - the reviewer packet now points to provider names under
+    `provider_results[].provider_name`
 - preserved boundaries:
   - no public benchmark quality claim
   - no production readiness claim
@@ -79,13 +73,31 @@ Latest release unit pushed:
     passed
   - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
   - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2175` passed
+  - corrected `jq` spot-check command: passed and visibly includes `exec`
   - forbidden `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`, source, test, eval
-    task, fixture, and source run-spec diffs were empty
-- recommended next control action: run a read-only private-review dry run.
-  Follow the walkthrough exactly as a skeptical technical reviewer and identify
-  weak points, missing links, unclear claims, and whether the packet is ready
-  to send privately. Do not start Task 4, composite smoke support, runnable
-  demo implementation, public claim widening, or MCP/API work from this route.
+    task, fixture, source run-spec, `PLAN.md`, and `BUILDLOG.md` diffs were
+    empty during the correction release
+- private-review status: packet and walkthrough are ready for private
+  technical review under the documented internal-only boundaries.
+- recommended next control action: choose whether to prepare a private reviewer
+  send-readiness artifact, such as a short private note plus exact artifact
+  link list and reviewer ask. This is content/positioning work and needs Ryan's
+  explicit approval before implementation. Do not start Task 4, composite smoke
+  support, runnable demo implementation, public claim widening, or MCP/API work
+  from this route.
+
+Previous private reviewer walkthrough release unit remains:
+
+- internal-only private reviewer walkthrough 001
+- pushed release commit:
+  `9634239 Add private reviewer walkthrough`
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+- purpose: provide a 5-10 minute internal-only private reviewer walkthrough
+  over the pushed evidence packet, `portfolio_001`, and
+  `default_local_probe_checkpoint_001`
 
 Previous private reviewer evidence packet release unit remains:
 

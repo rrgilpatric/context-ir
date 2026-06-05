@@ -2,6 +2,50 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Walkthrough Checks Pushed
+
+- Pushed the private reviewer walkthrough checks correction to `origin/main`
+  after Ryan authorized proceeding.
+- Pushed release commit:
+  `d823f15 Tighten private reviewer walkthrough checks`.
+- Release files:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+- The correction resolved the read-only private-review dry-run findings:
+  - the runtime payload spot check now visibly includes `hasattr`, false
+    `hasattr`, dynamic import, and `exec` rows
+  - the reviewer packet now points to provider names under
+    `provider_results[].provider_name`
+- The release remains internal-only and claim-bounded:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime or dynamic-Python support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- Release gates passed before commit:
+  - corrected `jq` spot-check command
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `pytest tests/ -v`: `2175 passed`
+  - forbidden `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`, source, test, eval
+    task, fixture, source run-spec, `PLAN.md`, and `BUILDLOG.md` diffs were
+    empty during the correction release
+- Private-review status: packet and walkthrough are ready for private
+  technical review under the documented internal-only boundaries.
+- Recommended next control action: choose whether to prepare a private reviewer
+  send-readiness artifact, such as a short private note plus exact artifact
+  link list and reviewer ask. This is content/positioning work and needs Ryan's
+  explicit approval before implementation. Do not start Task 4, composite smoke
+  support, runnable demo implementation, public claim widening, or MCP/API work
+  from this route.
+- Acceptance status: pushed.
+
 ## 2026-06-05 -- Private Reviewer Walkthrough Pushed
 
 - Pushed the private reviewer walkthrough release to `origin/main` after Ryan
