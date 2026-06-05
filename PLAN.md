@@ -55,6 +55,26 @@ Latest release unit has been pushed:
 - pushed after explicit Ryan authorization
 - no active workspace release unit remains after post-push continuity sync
 
+Current continuity routing supersedes older individual-probe provider-support
+routes in this file:
+
+- individual non-smoke `oracle_signal_*_probe` default-local provider-support
+  queue is complete: `31/31`
+- remaining unsupported current signal task IDs are composite smoke tasks:
+  `oracle_signal_smoke`, `oracle_signal_smoke_b`,
+  `oracle_signal_smoke_c`, `oracle_signal_smoke_d`, and
+  `oracle_signal_smoke_e`
+- older `oracle_smoke` is legacy/non-current signal-probe queue context only,
+  not part of the current individual `oracle_signal_*_probe` provider-support
+  queue
+- composite smoke default-local support is not a mechanical follow-on from
+  individual probe fixtures and requires a separate strategy decision
+- next control action: run a read-only strategy spike over default-local
+  evidence/reporting surface versus composite-smoke strategy versus
+  Task 4/product evidence gating
+- do not route to another individual probe provider-support slice unless a
+  fresh repo-backed audit proves the `31/31` queue-complete state wrong
+
 Pushed release unit files:
 
 - `PLAN.md`
@@ -200,7 +220,9 @@ Commit-gating:
 
 Recommended next control action:
 
-- determine the next single-probe slice
+- run the read-only strategy spike named in the current continuity routing
+  block above; do not route to another individual probe provider-support slice
+  from this pushed release section
 
 Latest pushed release unit remains:
 
@@ -340,11 +362,10 @@ Commit-gating:
 
 Recommended next control action:
 
-- determine the next single-probe slice
-- keep `oracle_signal_vars_probe` provider-map support as a later separate
-  slice only after this exact replay contract is accepted and released
-- do not reopen pushed `oracle_signal_setattr_probe` replay-contract or
-  provider-map behavior
+- this older replay-contract route is superseded by the current `31/31`
+  provider-support queue-complete route in the canonical active block
+- do not route to another individual probe provider-support slice from this
+  historical section
 
 Earlier pushed release:
 
@@ -553,10 +574,10 @@ Preserved holds:
 
 Pushed release state: pushed and closed.
 
-Next control action: determine the next single-probe slice or spike from the
-remaining held probes without reopening pushed `vars(obj)` TypeError replay
-support. Do not route to provider-map support for this probe from the replay
-contract release.
+Superseded routing note: this older TypeError replay-contract route is
+superseded by the current `31/31` provider-support queue-complete route in the
+canonical active block. Do not route to another individual probe
+provider-support slice from this historical section.
 
 Earlier pushed release:
 

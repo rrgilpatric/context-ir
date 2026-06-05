@@ -2,6 +2,35 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Individual Probe Provider Queue Complete
+
+- Continuity-only routing sync after completion of exact default-local provider
+  fixture support for the individual non-smoke `oracle_signal_*_probe` queue.
+- Current provider-support queue state: `31/31` individual non-smoke
+  `oracle_signal_*_probe` tasks have exact default-local provider fixture
+  support.
+- Remaining unsupported current signal task IDs are composite smoke tasks:
+  `oracle_signal_smoke`, `oracle_signal_smoke_b`,
+  `oracle_signal_smoke_c`, `oracle_signal_smoke_d`, and
+  `oracle_signal_smoke_e`.
+- Older `oracle_smoke` is legacy/non-current signal-probe queue context only;
+  it is not part of the current individual `oracle_signal_*_probe`
+  provider-support queue.
+- Composite smoke default-local support is not a mechanical follow-on from the
+  individual probe fixtures and requires a separate strategy decision.
+- Next routing:
+  - run a read-only strategy spike over default-local evidence/reporting
+    surface versus composite-smoke strategy versus Task 4/product evidence
+    gating
+  - do not route to another individual probe provider-support slice unless a
+    fresh repo-backed audit proves the `31/31` queue-complete state wrong
+- Preserved holds:
+  - no public claim widening
+  - no eval asset changes
+  - no run spec changes
+  - no code or test changes
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Vars Namespace Provider Map Pushed
 
 - Pushed exact default-local provider-map support for
