@@ -42,66 +42,35 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Latest release unit pushed:
 
-- private reviewer walkthrough checks correction
-- release state: accepted after private-review dry run found two P3
-  reviewer-friction issues; correction passed full gates; staged, locally
-  committed, and pushed to `origin/main` after Ryan authorized proceeding
-- pushed release commit:
-  `d823f15 Tighten private reviewer walkthrough checks`
-- release files:
-  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
-  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
-- purpose: resolve the read-only private-review dry-run findings:
-  - the runtime payload spot check now visibly includes `hasattr`, false
-    `hasattr`, dynamic import, and `exec` rows
-  - the reviewer packet now points to provider names under
-    `provider_results[].provider_name`
-- preserved boundaries:
-  - no public benchmark quality claim
-  - no production readiness claim
-  - no SWE-bench claim
-  - no broad product proof claim
-  - no generalized hybrid-runtime or dynamic-Python support claim
-  - no composite smoke support claim
-  - no Task 4 readiness claim
-  - no latency/token/cost win claim
-  - no public API, MCP, schema, scoring, compiler, optimizer,
-    winner-selection, package-export, product launch, or public demo widening
-- validation:
-  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
-  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
-    passed
-  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2175` passed
-  - corrected `jq` spot-check command: passed and visibly includes `exec`
-  - forbidden `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`, source, test, eval
-    task, fixture, source run-spec, `PLAN.md`, and `BUILDLOG.md` diffs were
-    empty during the correction release
-- private-review status: packet and walkthrough are ready for private
-  technical review under the documented internal-only boundaries.
-- prior recommended next control action was to choose whether to prepare a
-  private reviewer send-readiness artifact. Ryan authorized that work, and the
-  resulting workspace-only accepted candidate is recorded below.
-
-Current workspace-only accepted release candidate:
-
 - internal-only private reviewer send-readiness artifact 001
-- release state: workspace-only accepted after first-pass control review with
-  no findings; read-only release-unit audit passed with no findings; full
-  regression passed; commit-gating passed; push requires explicit Ryan
-  authorization
-- workspace file:
+- release state: accepted after first-pass control review with no findings;
+  release-unit audit passed; full regression passed; commit-gating passed;
+  staged, locally committed, and pushed to `origin/main` after Ryan authorized
+  proceeding
+- pushed release commit:
+  `e5a0cf1 Add private reviewer send-readiness note`
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
   - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
 - purpose: give Ryan a private, technical, caveated send note plus exact
   artifact link list and reviewer ask
+- artifact truth:
+  - internal-only/private-review scoped
+  - includes a concise Ryan-sendable draft note
+  - includes a 5-10 minute skim path plus optional deeper checks
+  - includes exact repo-relative artifact links
+  - includes commit-pinned GitHub URLs for existing committed evidence at
+    `9f29a7fad0e83ce2ed538b64b4353200e61d2079`
+  - explicitly says not to cite a commit-pinned URL for the send-readiness file
+    itself until a future commit contains it
 - control review:
   - verified the execution prompt contained a stale context path for
     `portfolio_001_internal_readiness.md`, but the artifact uses the actual
     committed path:
     `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
   - verified the artifact stays internal-only and private-review scoped
-  - verified commit-pinned links resolve for existing committed evidence at
-    `9f29a7fad0e83ce2ed538b64b4353200e61d2079`
+  - verified commit-pinned links resolve for existing committed evidence
   - verified no public claim, generated evidence, source, test, eval task,
     fixture, or run-spec surface changed
 - preserved boundaries:
@@ -115,10 +84,32 @@ Current workspace-only accepted release candidate:
   - no latency/token/cost win claim
   - no public API, MCP, schema, scoring, compiler, optimizer,
     winner-selection, package-export, product launch, or public demo widening
-- recommended next control action: after local commit creation, push only with
-  explicit Ryan authorization. Do not start Task 4, composite smoke support,
-  runnable demo implementation, public claim widening, or MCP/API work from
-  this route.
+- validation:
+  - read-only release-unit audit: PASS with no findings
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2175` passed
+  - commit-gating over the exact three-file release unit: passed
+- recommended next control action: run one read-only recipient simulation pass
+  before Ryan sends the private reviewer note. The simulation should follow the
+  send-readiness artifact, packet, walkthrough, and evidence links as a
+  skeptical technical reviewer; report confusing claims, missing context, bad
+  links, overclaim risk, and whether the packet is ready to send. Do not edit
+  files, send outreach, start Task 4, composite smoke support, runnable demo
+  implementation, public claim widening, or MCP/API work from this route.
+
+Previous private reviewer walkthrough checks release unit remains:
+
+- private reviewer walkthrough checks correction
+- pushed release commit:
+  `d823f15 Tighten private reviewer walkthrough checks`
+- release files:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+- purpose: resolve the read-only private-review dry-run findings in the packet
+  and walkthrough
 
 Previous private reviewer walkthrough release unit remains:
 

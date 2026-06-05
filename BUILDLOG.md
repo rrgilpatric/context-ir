@@ -2,6 +2,51 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Send Readiness Pushed
+
+- Pushed the private reviewer send-readiness release to `origin/main` after
+  Ryan authorized proceeding.
+- Pushed release commit:
+  `e5a0cf1 Add private reviewer send-readiness note`.
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
+- The artifact provides:
+  - an internal-only/private-review framing
+  - a concise Ryan-sendable draft note
+  - a 5-10 minute skim path plus optional deeper checks
+  - exact repo-relative artifact links
+  - commit-pinned GitHub URLs for existing committed evidence at
+    `9f29a7fad0e83ce2ed538b64b4353200e61d2079`
+  - explicit disallowed claims and a focused reviewer feedback checklist
+- Release gates passed before commit:
+  - read-only release-unit audit: PASS with no findings
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `pytest tests/ -v`: `2175 passed`
+  - commit-gating over the exact three-file release unit
+- The release remains internal-only and claim-bounded:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime or dynamic-Python support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- Recommended next control action: run one read-only recipient simulation pass
+  before Ryan sends the private reviewer note. The simulation should follow the
+  send-readiness artifact, packet, walkthrough, and evidence links as a
+  skeptical technical reviewer; report confusing claims, missing context, bad
+  links, overclaim risk, and whether the packet is ready to send. Do not edit
+  files, send outreach, start Task 4, composite smoke support, runnable demo
+  implementation, public claim widening, or MCP/API work from this route.
+- Acceptance status: pushed.
+
 ## 2026-06-05 -- Private Reviewer Send Readiness Returned
 
 - Accepted the private reviewer send-readiness artifact workspace-only after
