@@ -9,12 +9,16 @@ from pathlib import Path
 from types import ModuleType
 from typing import cast
 
+import pytest
+
 import context_ir
 import context_ir.eval_providers as eval_providers
 import context_ir.eval_report as eval_report
 import context_ir.eval_runs as eval_runs
 import context_ir.eval_summary as eval_summary
+import context_ir.runtime_probe_results as runtime_probe_results
 import context_ir.semantic_types as semantic_types
+import context_ir.tool_facade as tool_facade
 from context_ir.eval_oracles import (
     SymbolOracleSelector,
     UnsupportedOracleSelector,
@@ -188,6 +192,149 @@ def test_vars_type_error_probe_assets_stay_internal() -> None:
     assert tuple(context_ir.__all__) == tuple(semantic_types.__all__)
     assert "oracle_signal_vars_type_error_probe" not in context_ir.__all__
     assert not hasattr(context_ir, "oracle_signal_vars_type_error_probe")
+
+
+def test_vars_type_error_probe_default_local_provider_replays_exact_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The exact provider replays only the raised-TypeError ``vars(obj)`` case."""
+    captured_responses: list[
+        tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse
+    ] = []
+    original_recompile = (
+        tool_facade.recompile_repository_context_with_default_local_python_subprocess
+    )
+
+    def capturing_recompile(
+        request: tool_facade.SemanticDefaultLocalPythonSubprocessRecompileRequest,
+    ) -> tool_facade.SemanticDefaultLocalPythonSubprocessRecompileResponse:
+        response = original_recompile(request)
+        captured_responses.append(response)
+        return response
+
+    monkeypatch.setattr(
+        tool_facade,
+        "recompile_repository_context_with_default_local_python_subprocess",
+        capturing_recompile,
+    )
+
+    result = eval_providers.build_context_ir_default_local_python_subprocess_pack(
+        eval_providers.EvalProviderRequest(
+            repo_root=FIXTURE_ROOT,
+            task_id="oracle_signal_vars_type_error_probe",
+            query=QUERY,
+            budget=100,
+        )
+    )
+
+    assert len(captured_responses) == 1
+    response = captured_responses[0]
+    attempt = response.runner_attempt_collection.attempts[0]
+    observed_result = response.runner_attempt_collection.result_batch.results[0]
+    planned_request = attempt.request
+    static_units = tuple(
+        unit
+        for unit in result.metadata.selected_units
+        if unit.unit_id != UNSUPPORTED_UNIT_ID
+    )
+    boundary = next(
+        candidate
+        for candidate in response.diagnostic.boundary_classifications
+        if candidate.unit_id == UNSUPPORTED_UNIT_ID
+    )
+    boundary_trace = boundary.trace_summary
+    provenance_record = result.runtime_provenance_records[0]
+    origin_detail = cast(dict[str, object], json.loads(provenance_record.origin_detail))
+
+    assert result.provider_name == (
+        eval_providers.CONTEXT_IR_DEFAULT_LOCAL_PYTHON_SUBPROCESS_PROVIDER
+    )
+    assert result.task_id == "oracle_signal_vars_type_error_probe"
+    assert result.budget == 100
+    assert result.selected_files == ()
+    assert result.warnings == ()
+    assert planned_request.subject_id == UNSUPPORTED_UNIT_ID
+    assert planned_request.boundary_text == "vars(obj)"
+    assert (
+        planned_request.family_label
+        is eval_providers.RuntimeProbeFamily.REFLECTIVE_BUILTIN
+    )
+    assert planned_request.form_label == "reflective_builtin:vars/1"
+    assert planned_request.replay_target_seed == "main.probe_namespace"
+    assert attempt.normalized_payload == (
+        runtime_probe_results.RuntimeProbeReplayField(
+            key="lookup_outcome",
+            value="raised_type_error",
+        ),
+    )
+    assert attempt.observed_replay_inputs == ()
+    assert isinstance(observed_result, runtime_probe_results.RuntimeProbeObservedResult)
+    assert observed_result.normalized_payload == attempt.normalized_payload
+    assert tuple(
+        (field.key, field.value)
+        for field in observed_result.replay_artifact.replay_inputs[-1:]
+    ) == (("object_type", "builtins.int"),)
+    assert len(result.runtime_provenance_records) == 1
+    assert result.runtime_provenance_records == tuple(
+        response.program.provenance_records
+    )
+    assert origin_detail["normalized_payload"] == {
+        "lookup_outcome": "raised_type_error",
+    }
+    assert "observed_replay_inputs" not in origin_detail
+    assert provenance_record.subject_kind is (
+        semantic_types.SemanticSubjectKind.UNSUPPORTED_FINDING
+    )
+    assert provenance_record.capability_tier is CapabilityTier.RUNTIME_BACKED
+    assert boundary.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert boundary.has_attached_runtime_provenance is True
+    assert boundary_trace is not None
+    assert boundary_trace.primary_capability_tier is CapabilityTier.UNSUPPORTED_OPAQUE
+    assert (
+        boundary_trace.primary_evidence_origin
+        is EvidenceOriginKind.UNSUPPORTED_REASON_CODE
+    )
+    assert boundary_trace.primary_replay_status is ReplayStatus.OPAQUE_BOUNDARY
+    assert boundary_trace.has_attached_runtime_provenance is True
+    assert boundary_trace.attached_runtime_provenance_record_ids == (
+        provenance_record.record_id,
+    )
+    assert all(
+        unit.primary_capability_tier is CapabilityTier.STATICALLY_PROVED
+        for unit in static_units
+    )
+    assert all(unit.has_attached_runtime_provenance is False for unit in static_units)
+    assert all(
+        unit.primary_capability_tier is not CapabilityTier.RUNTIME_BACKED
+        for unit in result.metadata.selected_units
+    )
+    assert UNSUPPORTED_UNIT_ID not in result.selected_unit_ids
+    assert all(
+        marker not in unit.detail
+        for marker in FAILED_LOOKUP_MARKERS
+        for unit in result.metadata.selected_units
+    )
+
+
+def test_vars_type_error_probe_default_local_provider_fails_closed() -> None:
+    """Wrong task IDs remain unsupported by the exact subprocess provider."""
+    with pytest.raises(ValueError) as exc_info:
+        eval_providers.build_context_ir_default_local_python_subprocess_pack(
+            eval_providers.EvalProviderRequest(
+                repo_root=FIXTURE_ROOT,
+                task_id="oracle_signal_vars_type_error_probe_typo",
+                query=QUERY,
+                budget=100,
+            )
+        )
+
+    message = str(exc_info.value)
+    assert "context_ir_default_local_python_subprocess only supports" in message
+    assert "oracle_signal_vars_type_error_probe" in message
+    assert "oracle_signal_vars_type_error_probe_typo" not in message
+    assert "oracle_signal_vars_probe" not in message
+    assert "oracle_signal_setattr_probe" not in message
+    assert "oracle_signal_delattr_probe" not in message
 
 
 def test_vars_type_error_probe_run_preserves_additive_runtime_fields(

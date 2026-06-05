@@ -40,27 +40,113 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is active. Most recent release is pushed and closed:
+Workspace-only release unit is active for exact default-local provider-map
+support for `oracle_signal_vars_type_error_probe`.
+
+Workspace release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_vars_type_error_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
+
+Workspace behavior:
+
+- `context_ir_default_local_python_subprocess` now admits exactly
+  `oracle_signal_vars_type_error_probe` in addition to previously supported
+  exact default-local fixtures.
+- fixture metadata is `unsupported:call:main.py:2:11`, miss evidence
+  `vars(obj)`, `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+  `reflective_builtin:vars/1`, boundary `vars(obj)`, replay target
+  `main.probe_namespace`, snapshot
+  `oracle_signal_vars_type_error_probe@default-local-python:v1`, runtime
+  payload `lookup_outcome=raised_type_error`, and replay input tail
+  `object_type=builtins.int`.
+- provider-owned runtime provenance remains additive; the unsupported boundary
+  primary truth remains `unsupported/opaque` with attached runtime support, and
+  selected units are not promoted to `runtime_backed`.
+- `observed_replay_inputs` remains empty on the attempt and absent from
+  provider provenance detail.
+- wrong task IDs still fail closed against the enumerated exact support list.
+- provider support-message expectations were updated only where exact duplicated
+  assertions required the added task ID.
+- Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
+  `0.0016427314184447848` to `0.001636508409725952`; selected units/order,
+  document hash, total tokens, warnings, warning IDs, probe behavior, and
+  warning-call count stayed locked for the budget-280 smoke row.
+
+Preserved holds:
+
+- no `evals/` asset or run-spec changes
+- no `src/context_ir/runtime_probe_execution.py` changes
+- no `src/context_ir/runtime_probe_worker.py` changes
+- no provider support for `oracle_signal_vars_probe`,
+  `oracle_signal_setattr_probe`, or `oracle_signal_delattr_probe`
+- no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+  Task 4, public/demo, benchmark, latency, production, or generalized replay
+  framework change
+
+Execution-lane validation:
+
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `9` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_vars_zero_probe.py tests/test_eval_signal_metaclass_behavior_probe.py -q -k "default_subprocess_provider_fails_closed"`: `5` passed, `40` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+- `git diff --check`: clean
+- `git diff -- evals/`: empty
+- `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
+
+Release state:
+
+- workspace-only execution slice completed
+- control-reviewed first-pass with no findings
+- release-unit-audit-cleared with no findings
+- full-regression-cleared
+- commit-gating-cleared
+- eligible for local commit sequencing
+- push still requires explicit Ryan authorization
+
+Control-lane validation rerun:
+
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `9` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_locals_probe.py tests/test_eval_signal_globals_probe.py tests/test_eval_signal_hasattr_probe.py tests/test_eval_signal_vars_zero_probe.py tests/test_eval_signal_metaclass_behavior_probe.py -q -k "default_subprocess_provider_fails_closed"`: `5` passed, `40` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+- `git diff --check`: clean
+- `git diff -- evals/`: empty
+- `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
+
+Release-gate results:
+
+- release-unit audit: no findings; exact ten-file unit reviewed against
+  `AGENTS.md`, `PLAN.md`, `BUILDLOG.md`, `ARCHITECTURE.md`, `EVAL.md`,
+  `PUBLIC_CLAIMS.md`, and `README.md` boundaries
+- full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
+  `2124` pytest tests passed
+- commit-gating: no findings; dirty file set exactly matched the accepted
+  ten-file release unit; no staged files; no `evals/` diff; no
+  `src/context_ir/runtime_probe_execution.py` or
+  `src/context_ir/runtime_probe_worker.py` diff; no
+  `ARCHITECTURE.md`/`EVAL.md`/`PUBLIC_CLAIMS.md`/`README.md` diff
+
+Previous pushed release:
 
 - `6948acb Add vars TypeError exact replay contract`
 - exact default-local replay-contract support for
   `oracle_signal_vars_type_error_probe@default-local-python:v1`
-- control-reviewed first-pass with no findings
-- repository snapshot kind `eval_fixture`; dirty snapshots fail closed
-- family `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
-  `reflective_builtin:vars/1`, boundary `vars(obj)`, unsupported unit
-  `unsupported:call:main.py:2:11`, source span `main.py:2:11-2:20`
-- replay target `main.probe_namespace`, replay selector
-  `call:main.probe_namespace:reflective_builtin:vars/1@main.py:2:11:2:20`,
-  replay input tail `object_type=builtins.int`
-- worker exact replay calls `main.probe_namespace(1)` and normalizes the
-  captured `TypeError` to `lookup_outcome=raised_type_error`
-- `observed_replay_inputs` remains empty/absent for this non-exec/eval path
-- no provider-map support, no `src/context_ir/eval_providers.py` change, and no
-  `evals/` asset or run-spec change
 - release state: pushed to `origin/main` after explicit Ryan authorization
 
-Pushed release unit files:
+Previous pushed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -70,37 +156,7 @@ Pushed release unit files:
 - `tests/test_runtime_probe_execution.py`
 - `tests/test_runtime_probe_worker.py`
 
-Validation run before push:
-
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `25` passed, `351` deselected
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `34` passed, `651` deselected
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `7` passed
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
-- `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
-- `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
-- `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
-- `git diff --check`: clean
-- `git diff -- evals/`: empty
-- `git diff -- src/context_ir/eval_providers.py`: empty
-
-Release gates cleared before push:
-
-- release-unit audit: no findings; exact seven-file unit reviewed against the
-  governing control-state artifacts and slice boundaries
-- full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
-  `2122` pytest tests passed
-- commit-gating: no findings; dirty file set exactly matched the accepted
-  seven-file release unit; no staged files; no `evals/` diff; no
-  `src/context_ir/eval_providers.py` diff
-
-Preservation note:
-
-- Task 3 changed only `FULL_REPO_TASK3_CONFIDENCE` from
-  `0.0016449302221442346` to `0.0016427314184447848`; selected units/order,
-  document hash, total tokens, warnings, warning IDs, probe behavior, and
-  warning-call count stayed locked for the budget-280 smoke row
-
-Previous pushed release:
+Earlier pushed release:
 
 - `d3dcc06 Add dir default provider support`
 - exact default-local provider-map support for `oracle_signal_dir_probe`
