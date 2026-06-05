@@ -2,6 +2,48 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Setattr Name Provider Map Support Pushed
+
+- Pushed exact default-local provider-map support for
+  `oracle_signal_setattr_probe` to `origin/main` after explicit Ryan
+  authorization.
+- Pushed release commits:
+  - `fa2fadf Add setattr default provider support`
+  - `026f1e3 Sync setattr provider commit routing`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/eval_providers.py`
+  - `tests/test_eval_signal_setattr_probe.py`
+  - `tests/test_eval_signal_delattr_probe.py`
+  - `tests/test_eval_signal_dir_probe.py`
+  - `tests/test_eval_signal_dir_zero_probe.py`
+  - `tests/test_eval_signal_globals_probe.py`
+  - `tests/test_eval_signal_hasattr_probe.py`
+  - `tests/test_eval_signal_locals_probe.py`
+  - `tests/test_eval_signal_metaclass_behavior_probe.py`
+  - `tests/test_eval_signal_vars_type_error_probe.py`
+  - `tests/test_eval_signal_vars_zero_probe.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release gates:
+  - control review: first-pass, no findings
+  - release-unit audit: first-pass, no findings
+  - full regression: `2158` passed
+  - commit-gating: first-pass, no findings
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` changes
+  - no `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for `oracle_signal_vars_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection
+    changes
+- Next routing:
+  - no active workspace release unit remains after this push
+  - do not reopen pushed `oracle_signal_setattr_probe` replay-contract behavior
+  - do not reopen pushed `oracle_signal_setattr_probe` provider-map behavior
+  - determine the next single-probe slice from the remaining held probes
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Setattr Name Provider Map Support Workspace Slice
 
 - Completed a workspace-only execution slice adding exact default-local

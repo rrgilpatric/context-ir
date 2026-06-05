@@ -40,42 +40,18 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace release unit is active and accepted after first-pass control review.
-It is release-unit-audit-cleared, full-regression-cleared,
-commit-gating-cleared, and locally committed. It is not pushed.
+No workspace release unit is active. Most recent release is pushed and closed:
 
-Baseline pushed state before this workspace unit:
-
-- substantive release `e6b1981 Add setattr name exact replay contract`
-- latest pushed routing sync `2e45fdb Sync setattr replay push routing`
+- substantive release `fa2fadf Add setattr default provider support`
+- local routing sync `026f1e3 Sync setattr provider commit routing`
 - pushed to `origin/main` after explicit Ryan authorization
+- post-push continuity sync records the closed state in this routing update
+- pushed provider-map support builds on the previously pushed
+  `e6b1981 Add setattr name exact replay contract` replay-contract release
 - pushed replay-contract behavior for `oracle_signal_setattr_probe` must not be
-  reopened by this provider-map slice
+  reopened
 
-Workspace objective:
-
-- add exact `context_ir_default_local_python_subprocess` provider support for
-  `oracle_signal_setattr_probe`
-- keep the slice provider-map-only
-
-Workspace release unit files:
-
-- `PLAN.md`
-- `BUILDLOG.md`
-- `src/context_ir/eval_providers.py`
-- `tests/test_eval_signal_setattr_probe.py`
-- `tests/test_eval_signal_delattr_probe.py`
-- `tests/test_eval_signal_dir_probe.py`
-- `tests/test_eval_signal_dir_zero_probe.py`
-- `tests/test_eval_signal_globals_probe.py`
-- `tests/test_eval_signal_hasattr_probe.py`
-- `tests/test_eval_signal_locals_probe.py`
-- `tests/test_eval_signal_metaclass_behavior_probe.py`
-- `tests/test_eval_signal_vars_type_error_probe.py`
-- `tests/test_eval_signal_vars_zero_probe.py`
-- `tests/test_eval_signal_smoke_e.py`
-
-Workspace behavior added:
+Pushed behavior:
 
 - `context_ir_default_local_python_subprocess` now admits exactly
   `oracle_signal_setattr_probe` in addition to previously pushed exact
@@ -96,6 +72,23 @@ Workspace behavior added:
   promoted to `runtime_backed`.
 - wrong task IDs still fail closed against the enumerated exact support list.
 - existing `oracle_signal_setattr_literal_probe` behavior remains unchanged.
+
+Pushed release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/eval_providers.py`
+- `tests/test_eval_signal_setattr_probe.py`
+- `tests/test_eval_signal_delattr_probe.py`
+- `tests/test_eval_signal_dir_probe.py`
+- `tests/test_eval_signal_dir_zero_probe.py`
+- `tests/test_eval_signal_globals_probe.py`
+- `tests/test_eval_signal_hasattr_probe.py`
+- `tests/test_eval_signal_locals_probe.py`
+- `tests/test_eval_signal_metaclass_behavior_probe.py`
+- `tests/test_eval_signal_vars_type_error_probe.py`
+- `tests/test_eval_signal_vars_zero_probe.py`
+- `tests/test_eval_signal_smoke_e.py`
 
 Preserved holds:
 
@@ -136,7 +129,7 @@ Release state:
 - full-regression-cleared
 - commit-gating-cleared
 - locally committed as `fa2fadf Add setattr default provider support`
-- not pushed
+- pushed to `origin/main`
 
 Control-lane review:
 
@@ -205,10 +198,9 @@ Commit-gating:
 
 Recommended next control action:
 
-- await explicit Ryan push authorization for the locally committed provider-map
-  release
-- push only after explicit Ryan authorization
+- determine the next single-probe slice from the remaining held probes
 - do not reopen pushed `oracle_signal_setattr_probe` replay-contract behavior
+- do not reopen pushed `oracle_signal_setattr_probe` provider-map behavior
 
 Previous pushed release before this workspace unit:
 
