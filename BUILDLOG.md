@@ -2,6 +2,92 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Delattr Name Exact Replay Contract Workspace Slice
+
+- Completed a workspace-only execution slice adding exact default-local
+  replay-contract support for
+  `oracle_signal_delattr_probe@default-local-python:v1`.
+- Workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior added:
+  - clean `eval_fixture` snapshot
+    `oracle_signal_delattr_probe@default-local-python:v1` appends exact replay
+    inputs `object_type=main.ProbeTarget` and `attribute_name=flag`
+  - exact request identity is unsupported unit `unsupported:call:main.py:7:4`,
+    `RuntimeProbeFamily.RUNTIME_MUTATION`, form `runtime_mutation:delattr/2`,
+    boundary `delattr(obj, name)`, source span `main.py:7:4-7:22`, replay
+    target `main.probe_delete_attribute`, and replay selector
+    `call:main.probe_delete_attribute:runtime_mutation:delattr/2@main.py:7:4:7:22`
+  - worker replays
+    `main.probe_delete_attribute(main.ProbeTarget(), "flag")` and normalizes
+    `mutation_outcome=deleted_attribute`
+  - wrong and dirty snapshots fail closed without appended exact replay inputs
+  - malformed exact replay fields fail closed before replay execution
+  - existing literal `delattr(obj, "flag")` exact replay remains unchanged
+  - `observed_replay_inputs` remains empty/absent for this non-exec/eval path
+- Preserved holds:
+  - no provider-map support and no `src/context_ir/eval_providers.py` changes
+  - no `evals/` asset or run-spec changes
+  - no provider support for `oracle_signal_vars_probe`,
+    `oracle_signal_setattr_probe`, or `oracle_signal_delattr_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
+    Task 4, public/demo, benchmark, latency, production, or generalized replay
+    framework change
+- Task 3 preservation:
+  - changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.001636508409725952` to `0.0016344349786511512`
+  - selected units/order, document hash, total tokens, warnings, warning IDs,
+    probe behavior, and warning-call count stayed locked
+- Execution-lane validation:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "delattr and exact"`: `14` passed, `366` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "delattr and exact"`: `26` passed, `668` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_delattr_probe.py -q`: `6` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_delattr_literal_probe.py -q`: `8` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+- Release state:
+  - workspace-only accepted after first-pass control review with no findings
+  - release-unit-audit-cleared with no findings
+  - full-regression-cleared
+  - commit-gating-cleared
+  - eligible for local commit sequencing
+  - push still requires explicit Ryan authorization
+- Control-lane validation rerun:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "delattr and exact"`: `14` passed, `366` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "delattr and exact"`: `26` passed, `668` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_delattr_probe.py -q`: `6` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_delattr_literal_probe.py -q`: `8` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+- Recommended next control action:
+  - local commit sequencing, then push only after explicit Ryan authorization
+- Release-gate results:
+  - release-unit audit: no findings; exact seven-file unit reviewed against the
+    governing control-state artifacts and preserved holds
+  - full regression: `ruff check`, `ruff format --check`, `mypy --strict`, and
+    `2137` pytest tests passed
+  - commit-gating: no findings; dirty file set exactly matched the accepted
+    seven-file release unit; no staged files; no `evals/` diff; no
+    `src/context_ir/eval_providers.py` diff; no
+    `ARCHITECTURE.md`/`EVAL.md`/`PUBLIC_CLAIMS.md`/`README.md` diff
+- Acceptance status: first-pass.
+
 ## 2026-06-04 -- Vars TypeError Provider Map Support Pushed
 
 - Pushed the exact default-local provider-map support release for

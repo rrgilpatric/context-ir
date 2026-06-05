@@ -20,6 +20,7 @@ from typing import NoReturn, TextIO, TypeAlias, cast
 
 from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
+    _EXACT_REPLAY_DELATTR_NAME_CONTRACT,
     _EXACT_REPLAY_DIR_INT_DIRECTORY_CONTRACT,
     _EXACT_REPLAY_GETATTR_ATTRIBUTE_ERROR_CONTRACT,
     _EXACT_REPLAY_GETATTR_DEFAULT_MISSING_CONTRACT,
@@ -546,7 +547,7 @@ _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_REPLAY_SELECTOR_SEED = (
 )
 _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE = "main.ProbeTarget"
 _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_ATTRIBUTE_NAME = "flag"
-_RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_CLASS_NAME = "ProbeTarget"
+_RUNTIME_MUTATION_DELATTR_PROBE_TARGET_CLASS_NAME = "ProbeTarget"
 _RUNTIME_MUTATION_DELATTR_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
     "runtime probe runtime mutation delattr worker target execution failed"
 )
@@ -5400,6 +5401,7 @@ def materialize_runtime_probe_runtime_mutation_delattr_observation_from_target(
     )
     target_args = _runtime_probe_runtime_mutation_delattr_target_args(
         source_module,
+        replay_target.request,
         exact_replay_inputs,
     )
     mutation_outcome = _runtime_probe_runtime_mutation_delattr_captured_outcome(
@@ -14672,15 +14674,10 @@ def _validate_runtime_probe_runtime_mutation_delattr_target_callable(
 def _runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
     request: RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest,
 ) -> Mapping[str, str] | None:
-    """Return exact literal delattr replay inputs for the accepted pilot."""
+    """Return exact delattr replay inputs for accepted pilots."""
     _validate_runtime_probe_runtime_mutation_delattr_worker_request(request)
-    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
-        request.request_replay_payload_fields
-    )
-    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
-        replay_fields_by_key
-    )
-    if contract is not _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT:
+    contract = _runtime_probe_runtime_mutation_delattr_exact_replay_contract(request)
+    if contract is None:
         return None
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
@@ -14693,37 +14690,73 @@ def _runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
     return exact_fields_by_key
 
 
+def _runtime_probe_runtime_mutation_delattr_exact_replay_contract(
+    request: RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest,
+) -> _RuntimeProbeExactReplayContract | None:
+    """Return the exact delattr replay contract for accepted worker requests."""
+    _validate_runtime_probe_runtime_mutation_delattr_worker_request(request)
+    replay_fields_by_key = _runtime_probe_worker_required_replay_fields_by_key(
+        request.request_replay_payload_fields
+    )
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        replay_fields_by_key
+    )
+    if contract not in (
+        _EXACT_REPLAY_DELATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
+    ):
+        return None
+    return contract
+
+
 def _runtime_probe_runtime_mutation_delattr_target_args(
     source_module: ModuleType,
+    request: RuntimeProbeLocalPythonRuntimeMutationDelattrWorkerRequest,
     exact_replay_inputs: Mapping[str, str] | None,
 ) -> tuple[object, ...]:
-    """Return target args for the exact literal delattr pilot, otherwise none."""
+    """Return target args for exact delattr pilots, otherwise none."""
     if exact_replay_inputs is None:
         return ()
+    _validate_runtime_probe_runtime_mutation_delattr_worker_request(request)
+    contract = _runtime_probe_runtime_mutation_delattr_exact_replay_contract(request)
     _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
-        exact_replay_inputs
+        exact_replay_inputs,
+        contract=contract
+        if contract is not None
+        else _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
     )
-    return (
-        _runtime_probe_runtime_mutation_delattr_literal_probe_target(source_module),
+    probe_target = _runtime_probe_runtime_mutation_delattr_exact_probe_target(
+        source_module
+    )
+    if contract is _EXACT_REPLAY_DELATTR_NAME_CONTRACT:
+        return (
+            probe_target,
+            exact_replay_inputs[_RUNTIME_MUTATION_DELATTR_ATTRIBUTE_NAME_REPLAY_KEY],
+        )
+    if contract is _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT:
+        return (probe_target,)
+    raise ValueError(
+        "runtime probe runtime mutation delattr worker exact replay contract "
+        "is unsupported"
     )
 
 
-def _runtime_probe_runtime_mutation_delattr_literal_probe_target(
+def _runtime_probe_runtime_mutation_delattr_exact_probe_target(
     source_module: ModuleType,
 ) -> object:
-    """Instantiate the single accepted literal-delattr replay object."""
+    """Instantiate the accepted delattr replay object."""
     if source_module.__name__ != "main":
         raise ValueError(
-            "runtime probe runtime mutation delattr worker literal replay source "
+            "runtime probe runtime mutation delattr worker exact replay source "
             "module is unsupported"
         )
     probe_target_class = source_module.__dict__.get(
-        _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_CLASS_NAME,
+        _RUNTIME_MUTATION_DELATTR_PROBE_TARGET_CLASS_NAME,
         _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
     )
     if not isinstance(probe_target_class, type):
         raise ValueError(
-            "runtime probe runtime mutation delattr worker literal replay target "
+            "runtime probe runtime mutation delattr worker exact replay target "
             "class is unsupported"
         )
     probe_target = probe_target_class()
@@ -14732,7 +14765,7 @@ def _runtime_probe_runtime_mutation_delattr_literal_probe_target(
         != _RUNTIME_MUTATION_DELATTR_LITERAL_FLAG_OBJECT_TYPE
     ):
         raise ValueError(
-            "runtime probe runtime mutation delattr worker literal replay target "
+            "runtime probe runtime mutation delattr worker exact replay target "
             "object type is unsupported"
         )
     return probe_target
@@ -15028,11 +15061,14 @@ def _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs_if_need
     *,
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject drifted replay inputs for the exact literal delattr pilot."""
+    """Reject drifted replay inputs for exact delattr pilots."""
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         replay_fields_by_key
     )
-    if contract is not _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT:
+    if contract not in (
+        _EXACT_REPLAY_DELATTR_NAME_CONTRACT,
+        _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT,
+    ):
         return
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
@@ -15061,7 +15097,7 @@ def _validate_runtime_probe_runtime_mutation_delattr_exact_replay_inputs(
         _EXACT_REPLAY_DELATTR_LITERAL_CONTRACT
     ),
 ) -> None:
-    """Require the exact literal pilot to carry only the accepted replay pair."""
+    """Require exact delattr pilots to carry only the accepted replay pair."""
     if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
         raise ValueError(
             "runtime probe runtime mutation delattr worker exact replay inputs "
