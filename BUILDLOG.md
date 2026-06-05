@@ -2,6 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Vars Namespace Provider Map Locally Committed
+
+- Locally committed the audit-cleared, full-regression-cleared, and
+  commit-gating-cleared exact default-local provider-map support slice for
+  `oracle_signal_vars_probe`.
+- Local implementation commit:
+  - `e6b4619 Add vars namespace default provider support`
+- Release state:
+  - accepted after first-pass control review with no findings
+  - release-unit audit cleared with no findings
+  - full regression cleared: `2175` passed
+  - commit-gating cleared with no findings
+  - locally committed
+  - not pushed
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/runtime_probe_execution.py` changes
+  - no `src/context_ir/runtime_probe_worker.py` changes
+  - no provider support for any other probe
+  - pushed `oracle_signal_setattr_probe` replay/provider behavior remains
+    closed
+  - pushed `oracle_signal_vars_type_error_probe` replay/provider behavior
+    remains closed
+- Next routing:
+  - await explicit Ryan push authorization before pushing local commits
+  - after an authorized push succeeds, sync continuity to pushed state
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Vars Namespace Provider Map Workspace Slice Returned
 
 - Completed a workspace-only execution slice adding exact default-local

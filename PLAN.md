@@ -40,16 +40,19 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Workspace release unit is active and accepted after first-pass control review:
+Latest release unit is locally committed and pending push authorization:
 
 - exact default-local provider-map support for `oracle_signal_vars_probe`
 - completion state from execution lane: DONE
 - release state: workspace-only accepted after first-pass control review with
-  no findings and release-unit audit cleared with no findings
-- audit-cleared, full-regression-cleared, and commit-gating-cleared
-- not staged, not committed, not pushed
+  no findings, release-unit audit cleared with no findings,
+  full-regression-cleared, commit-gating-cleared, and locally committed
+- local implementation commit:
+  `e6b4619 Add vars namespace default provider support`
+- not pushed
+- push requires explicit Ryan authorization
 
-Workspace release unit files:
+Locally committed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -194,9 +197,8 @@ Commit-gating:
 
 Recommended next control action:
 
-- create a local commit for this exact thirteen-file release unit
-- after local commit creation, sync continuity to locally committed state
-- push requires explicit Ryan authorization
+- await explicit Ryan push authorization before pushing local commits
+- after an authorized push succeeds, sync continuity to pushed state
 
 Latest pushed release unit remains:
 
