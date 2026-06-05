@@ -453,6 +453,7 @@ def test_globals_probe_default_subprocess_provider_fails_closed_for_other_tasks(
             "oracle_signal_dynamic_import_imported_name_probe, "
             "oracle_signal_dynamic_import_imported_alias_probe, "
             "oracle_signal_dynamic_import_probe, "
+            "oracle_signal_setattr_probe, "
             "oracle_signal_setattr_literal_probe, "
             "oracle_signal_delattr_probe, oracle_signal_delattr_literal_probe, "
             "oracle_signal_exec_probe, oracle_signal_eval_probe, or "

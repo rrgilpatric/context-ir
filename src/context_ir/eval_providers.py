@@ -123,6 +123,9 @@ _DYNAMIC_IMPORT_LITERAL_PROBE_TASK_ID = "oracle_signal_dynamic_import_probe"
 _DYNAMIC_IMPORT_RUNTIME_PAYLOAD = (("imported_module", "plugins.weather"),)
 _DYNAMIC_IMPORT_REPLAY_TARGET_SEED = "main.load_weather_plugin"
 _DYNAMIC_IMPORT_SOURCE_FILE_PATH = "main.py"
+_SETATTR_PROBE_TASK_ID = "oracle_signal_setattr_probe"
+_SETATTR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
+_SETATTR_RUNTIME_PAYLOAD = (("mutation_outcome", "returned_none"),)
 _SETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_setattr_literal_probe"
 _SETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 _SETATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "returned_none"),)
@@ -752,6 +755,22 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         runtime_payload=_GETATTR_LITERAL_RUNTIME_PAYLOAD,
     ),
     **_DYNAMIC_IMPORT_DEFAULT_LOCAL_FIXTURES,
+    _SETATTR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_SETATTR_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="setattr(obj, name, value)",
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label="runtime_mutation:setattr/3",
+        boundary_text="setattr(obj, name, value)",
+        replay_target_seed="main.probe_set_attribute",
+        snapshot_id="oracle_signal_setattr_probe@default-local-python:v1",
+        runtime_payload=_SETATTR_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(
+            ("object_type", "main.ProbeTarget"),
+            ("attribute_name", "flag"),
+            ("assigned_value_type", "builtins.str"),
+            ("assigned_value_literal", "ready"),
+        ),
+    ),
     _SETATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_SETATTR_LITERAL_UNSUPPORTED_UNIT_ID,
         miss_evidence_text='setattr(obj, "flag", value)',
@@ -1689,6 +1708,7 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_dynamic_import_imported_name_probe, "
             "oracle_signal_dynamic_import_imported_alias_probe, "
             "oracle_signal_dynamic_import_probe, "
+            "oracle_signal_setattr_probe, "
             "oracle_signal_setattr_literal_probe, "
             "oracle_signal_delattr_probe, oracle_signal_delattr_literal_probe, "
             "oracle_signal_exec_probe, oracle_signal_eval_probe, or "

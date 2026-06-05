@@ -675,6 +675,7 @@ def test_dir_zero_probe_default_subprocess_provider_fails_closed_for_other_tasks
     assert "oracle_signal_dynamic_import_builtins_alias_probe" in message
     assert "oracle_signal_dynamic_import_imported_name_probe" in message
     assert "oracle_signal_dynamic_import_imported_alias_probe" in message
+    assert "oracle_signal_setattr_probe" in message
     assert "oracle_signal_exec_probe" in message
     assert "oracle_signal_eval_probe" in message
     assert "oracle_signal_delattr_probe" in message

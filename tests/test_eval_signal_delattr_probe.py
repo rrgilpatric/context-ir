@@ -328,7 +328,7 @@ def test_delattr_probe_default_local_provider_fails_closed() -> None:
     assert "oracle_signal_delattr_probe" in message
     assert "oracle_signal_delattr_probe_typo" not in message
     assert "oracle_signal_vars_probe" not in message
-    assert "oracle_signal_setattr_probe" not in message
+    assert "oracle_signal_setattr_probe" in message
 
 
 def test_delattr_probe_run_executes_with_additive_runtime_provenance(
