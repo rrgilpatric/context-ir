@@ -2,6 +2,128 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Vars Namespace Exact Replay Contract Workspace Slice
+
+- Completed a workspace-only execution slice adding exact replay-contract
+  support for `oracle_signal_vars_probe@default-local-python:v1`.
+- Completion state: DONE.
+- Workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior added:
+  - parent replay materialization now appends a clean-snapshot-scoped exact
+    replay tail for `oracle_signal_vars_probe@default-local-python:v1`
+  - contract identity is `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+    `reflective_builtin:vars/1`, boundary `vars(obj)`, unsupported unit
+    `unsupported:call:main.py:7:11`, source span `main.py:7:11-7:20`,
+    replay target `main.probe_namespace`, selector
+    `call:main.probe_namespace:reflective_builtin:vars/1@main.py:7:11:7:20`,
+    and replay tail `object_type=main.ProbeRecord`
+  - worker exact replay deterministically calls `main.probe_namespace` with a
+    `main.ProbeRecord` instance and observes
+    `lookup_outcome=returned_namespace`
+  - `observed_replay_inputs` remains empty on attempts and absent from worker
+    stdout protocol payloads
+- Preserved holds:
+  - no provider-map support for `oracle_signal_vars_probe`
+  - no `src/context_ir/eval_providers.py` changes
+  - no `evals/` asset or run-spec changes
+  - existing `oracle_signal_vars_type_error_probe` exact replay still uses
+    `object_type=builtins.int` and `lookup_outcome=raised_type_error`
+  - generic `vars(obj)` worker behavior remains intact
+  - wrong/dirty snapshots and malformed exact fields fail closed
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection
+    changes
+- Task 3 preservation:
+  - changed only `FULL_REPO_TASK3_CONFIDENCE` from
+    `0.0016179126547905965` to `0.0016141128770466183`
+  - selected units/order, document hash, total tokens, warnings, warning IDs,
+    probe behavior, and warning-call count stayed locked
+- Execution-lane validation:
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `31` passed, `359` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `42` passed, `674` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_probe.py -q`: `6` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `9` passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: `Success: no issues found in 39 source files`
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+- Release state:
+  - workspace-only accepted after first-pass control review with no findings
+  - release-unit audit cleared with no findings
+  - full regression cleared
+  - commit-gating cleared with no findings
+  - not staged, not committed, not pushed
+- Control-lane review:
+  - no findings
+  - dirty file set exactly matched this seven-file workspace release unit
+  - no staged changes
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+  - `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
+  - provider map reports `oracle_signal_vars_probe=False` and
+    `oracle_signal_vars_type_error_probe=True`
+  - focused validation rerun passed:
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `31` passed, `359` deselected
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `42` passed, `674` deselected
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_probe.py tests/test_eval_signal_vars_type_error_probe.py -q`: `15` passed
+    - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+    - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+    - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
+    - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: `Success: no issues found in 39 source files`
+- Release-unit audit:
+  - pass with no findings
+  - dirty file set exactly matched this seven-file workspace release unit
+  - no staged changes
+  - `git diff --check`: clean
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+  - `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
+  - exact contract, clean snapshot scoping, deterministic worker replay,
+    TypeError contract preservation, generic `vars(obj)` preservation, and
+    wrong/dirty/malformed fail-closed behavior were checked
+  - Task 3 diff changes only `FULL_REPO_TASK3_CONFIDENCE`
+  - provider map still reports `oracle_signal_vars_probe=False` and
+    `oracle_signal_vars_type_error_probe=True`
+  - audit validation rerun passed:
+    - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `31` passed, `359` deselected
+    - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `42` passed, `674` deselected
+    - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_eval_signal_vars_probe.py tests/test_eval_signal_vars_type_error_probe.py -q`: `15` passed
+    - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
+- Full regression:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: `Success: no issues found in 39 source files`
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2173` passed
+- Commit-gating:
+  - pass with no findings
+  - dirty file set exactly matched this seven-file release unit
+  - no staged changes
+  - `HEAD` matched `origin/main` at gate time
+  - `git diff --check`: clean
+  - `git diff --name-status`: exact seven-file release unit
+  - `git diff --cached --name-status`: empty
+  - `git diff -- evals/`: empty
+  - `git diff -- src/context_ir/eval_providers.py`: empty
+  - `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
+  - provider map still reports `oracle_signal_vars_probe=False` and
+    `oracle_signal_vars_type_error_probe=True`
+- Recommended next control action:
+  - create a local commit for this exact seven-file release unit
+  - after local commit creation, sync continuity to locally committed state
+  - keep `oracle_signal_vars_probe` provider-map support as a later separate
+    slice only after this exact replay contract is accepted and released
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Setattr Name Provider Map Support Pushed
 
 - Pushed exact default-local provider-map support for

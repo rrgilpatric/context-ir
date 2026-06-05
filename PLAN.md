@@ -40,112 +40,93 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-No workspace release unit is active. Most recent release is pushed and closed:
+Workspace release unit is active and accepted after first-pass control review:
 
-- substantive release `fa2fadf Add setattr default provider support`
-- local routing sync `026f1e3 Sync setattr provider commit routing`
-- pushed to `origin/main` after explicit Ryan authorization
-- post-push continuity sync records the closed state in this routing update
-- pushed provider-map support builds on the previously pushed
-  `e6b1981 Add setattr name exact replay contract` replay-contract release
-- pushed replay-contract behavior for `oracle_signal_setattr_probe` must not be
-  reopened
+- exact replay-contract pre-slice for
+  `oracle_signal_vars_probe@default-local-python:v1`
+- completion state from execution lane: DONE
+- release state: workspace-only accepted after first-pass control review and
+  release-unit audit cleared with no findings
+- audit-cleared, full-regression-cleared, and commit-gating-cleared
+- not staged, not committed, not pushed
+- latest pushed release remains `0d1a169 Sync setattr provider push routing`
+  on `origin/main`
 
-Pushed behavior:
-
-- `context_ir_default_local_python_subprocess` now admits exactly
-  `oracle_signal_setattr_probe` in addition to previously pushed exact
-  default-local fixtures.
-- provider fixture metadata is unsupported unit
-  `unsupported:call:main.py:7:4`, miss evidence and boundary
-  `setattr(obj, name, value)`, `RuntimeProbeFamily.RUNTIME_MUTATION`, form
-  `runtime_mutation:setattr/3`, replay target `main.probe_set_attribute`,
-  snapshot `oracle_signal_setattr_probe@default-local-python:v1`, runtime
-  payload `mutation_outcome=returned_none`, and replay tail
-  `object_type=main.ProbeTarget`, `attribute_name=flag`,
-  `assigned_value_type=builtins.str`, and `assigned_value_literal=ready`.
-- observed result remains a runtime-observed replay with empty
-  `observed_replay_inputs`; provider provenance omits
-  `observed_replay_inputs`.
-- runtime provenance remains additive; selected-unit primary truth for
-  `unsupported:call:main.py:7:4` remains `unsupported/opaque` and is not
-  promoted to `runtime_backed`.
-- wrong task IDs still fail closed against the enumerated exact support list.
-- existing `oracle_signal_setattr_literal_probe` behavior remains unchanged.
-
-Pushed release unit files:
+Workspace release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
-- `src/context_ir/eval_providers.py`
-- `tests/test_eval_signal_setattr_probe.py`
-- `tests/test_eval_signal_delattr_probe.py`
-- `tests/test_eval_signal_dir_probe.py`
-- `tests/test_eval_signal_dir_zero_probe.py`
-- `tests/test_eval_signal_globals_probe.py`
-- `tests/test_eval_signal_hasattr_probe.py`
-- `tests/test_eval_signal_locals_probe.py`
-- `tests/test_eval_signal_metaclass_behavior_probe.py`
-- `tests/test_eval_signal_vars_type_error_probe.py`
-- `tests/test_eval_signal_vars_zero_probe.py`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
 - `tests/test_eval_signal_smoke_e.py`
+
+Behavior added:
+
+- adds snapshot-scoped exact replay support for
+  `oracle_signal_vars_probe@default-local-python:v1`
+- contract identity is `RuntimeProbeFamily.REFLECTIVE_BUILTIN`, form
+  `reflective_builtin:vars/1`, boundary `vars(obj)`, unsupported unit
+  `unsupported:call:main.py:7:11`, source span `main.py:7:11-7:20`,
+  replay target `main.probe_namespace`, and exact source-site replay selector
+  `call:main.probe_namespace:reflective_builtin:vars/1@main.py:7:11:7:20`
+- replay tail remains exactly `object_type=main.ProbeRecord`
+- worker exact replay deterministically calls `main.probe_namespace` with a
+  `main.ProbeRecord` instance
+- normalized payload remains `lookup_outcome=returned_namespace`
+- `observed_replay_inputs` remains empty/absent
 
 Preserved holds:
 
+- no provider-map support for `oracle_signal_vars_probe`
+- no `src/context_ir/eval_providers.py` changes
 - no `evals/` asset or run-spec changes
-- no `src/context_ir/runtime_probe_execution.py` changes
-- no `src/context_ir/runtime_probe_worker.py` changes
-- no provider support for `oracle_signal_vars_probe`
-- no generalized runtime-mutation framework
+- existing `oracle_signal_vars_type_error_probe` exact replay still uses
+  `object_type=builtins.int` and `lookup_outcome=raised_type_error`
+- generic `vars(obj)` worker behavior remains intact
+- wrong/dirty snapshots and malformed exact fields fail closed
 - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection,
-  Task 4, public/demo, benchmark, latency, or production changes
+  Task 4, public/demo, benchmark, latency, production, or generalized replay
+  framework changes
 
 Task 3 preservation:
 
 - changed only `FULL_REPO_TASK3_CONFIDENCE` from
-  `0.0016251808735714796` to `0.0016179126547905965`
+  `0.0016179126547905965` to `0.0016141128770466183`
 - selected units/order, document hash, total tokens, warnings, warning IDs,
   probe behavior, and warning-call count stayed locked for the budget-280
   smoke row
 
 Execution-lane validation:
 
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_probe.py -q`: `8` passed
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_literal_probe.py -q`: `9` passed
-- focused duplicated fail-closed support-message tests: `9` passed,
-  `71` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `31` passed, `359` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `42` passed, `674` deselected
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_probe.py -q`: `6` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_type_error_probe.py -q`: `9` passed
 - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
 - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
 - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
 - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: `Success: no issues found in 39 source files`
 - `git diff --check`: clean
 - `git diff -- evals/`: empty
-- `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
-
-Release state:
-
-- workspace-only accepted after first-pass control review with no findings
-- release-unit audit cleared with no findings
-- full-regression-cleared
-- commit-gating-cleared
-- locally committed as `fa2fadf Add setattr default provider support`
-- pushed to `origin/main`
+- `git diff -- src/context_ir/eval_providers.py`: empty
 
 Control-lane review:
 
 - no findings
-- dirty file set exactly matched this workspace release unit
+- dirty file set exactly matched this seven-file workspace release unit
+- no staged changes
 - `git diff --check`: clean
 - `git diff -- evals/`: empty
-- `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
+- `git diff -- src/context_ir/eval_providers.py`: empty
 - `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
-- provider map reports `oracle_signal_setattr_probe=True` and
-  `oracle_signal_vars_probe=False`
+- provider map reports `oracle_signal_vars_probe=False` and
+  `oracle_signal_vars_type_error_probe=True`
 - focused validation rerun passed:
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_probe.py -q`: `8` passed
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_literal_probe.py -q`: `9` passed
-  - focused duplicated fail-closed support-message tests: `9` passed,
-    `71` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `31` passed, `359` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `42` passed, `674` deselected
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_vars_probe.py tests/test_eval_signal_vars_type_error_probe.py -q`: `15` passed
   - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
   - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
   - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
@@ -153,61 +134,55 @@ Control-lane review:
 
 Release-unit audit:
 
-- no findings
-- dirty files exactly matched the 14-file release unit
+- pass with no findings
+- dirty file set exactly matched this seven-file release unit
 - no staged changes
 - `git diff --check`: clean
 - `git diff -- evals/`: empty
-- `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
-- `src/context_ir/eval_providers.py` adds only exact
-  `oracle_signal_setattr_probe` fixture support with the required unsupported
-  ID, boundary, family, form, replay target, snapshot, payload, and replay
-  tail
-- bare `oracle_signal_vars_probe` remains unsupported
-- runtime provenance remains additive; selected-unit primary truth remains
-  `unsupported/opaque`, not `runtime_backed`
-- `observed_replay_inputs` remains empty/absent
-- literal `setattr` behavior is unchanged
+- `git diff -- src/context_ir/eval_providers.py`: empty
+- `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
+- exact contract, clean snapshot scoping, worker replay dispatch, TypeError
+  contract preservation, generic `vars(obj)` preservation, and fail-closed
+  coverage were checked
 - Task 3 diff changes only `FULL_REPO_TASK3_CONFIDENCE`
-- audit validation passed:
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/test_eval_signal_setattr_probe.py tests/test_eval_signal_setattr_literal_probe.py -q`: `17` passed
-  - touched fail-closed tests with `-k "fails_closed"`: `9` passed,
-    `71` deselected
-  - Task 3 smoke lock: `1` passed, `7` deselected
+- provider map still reports `oracle_signal_vars_probe=False` and
+  `oracle_signal_vars_type_error_probe=True`
+- audit validation rerun passed:
+  - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_runtime_probe_execution.py -q -k "vars and exact"`: `31` passed, `359` deselected
+  - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_runtime_probe_worker.py -q -k "vars and exact"`: `42` passed, `674` deselected
+  - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_eval_signal_vars_probe.py tests/test_eval_signal_vars_type_error_probe.py -q`: `15` passed
+  - `PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' .venv/bin/python -m pytest tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`: `1` passed, `7` deselected
 
 Full regression:
 
 - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
 - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`: `119` files already formatted
 - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: `Success: no issues found in 39 source files`
-- `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2158` passed
+- `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2173` passed
 
 Commit-gating:
 
-- `git status --short --branch -uall`: exact 14-file release unit dirty, no staged changes
-- `git rev-parse HEAD origin/main`: both `2e45fdb3d4ba42ab1553c4c693b78bc7653fb693`
+- pass with no findings
+- dirty file set exactly matched this seven-file release unit
+- no staged changes
+- `HEAD` matched `origin/main` at gate time
 - `git diff --check`: clean
-- `git diff --name-status`: exact 14-file release unit
+- `git diff --name-status`: exact seven-file release unit
 - `git diff --cached --name-status`: empty
 - `git diff -- evals/`: empty
-- `git diff -- src/context_ir/runtime_probe_execution.py src/context_ir/runtime_probe_worker.py`: empty
+- `git diff -- src/context_ir/eval_providers.py`: empty
 - `git diff -- ARCHITECTURE.md EVAL.md PUBLIC_CLAIMS.md README.md`: empty
-- provider map reports `oracle_signal_setattr_probe=True` and
-  `oracle_signal_vars_probe=False`; `oracle_signal_setattr_probe` metadata and
-  replay tail match the release contract
+- provider map still reports `oracle_signal_vars_probe=False` and
+  `oracle_signal_vars_type_error_probe=True`
 
 Recommended next control action:
 
-- determine the next single-probe slice from the remaining held probes
-- do not reopen pushed `oracle_signal_setattr_probe` replay-contract behavior
-- do not reopen pushed `oracle_signal_setattr_probe` provider-map behavior
-
-Previous pushed release before this workspace unit:
-
-- substantive release `e6b1981 Add setattr name exact replay contract`
-- latest pushed routing sync `2e45fdb Sync setattr replay push routing`
-- pushed and closed; no active workspace release unit existed before this
-  `oracle_signal_setattr_probe` provider-map slice
+- create a local commit for the exact seven-file release unit
+- after local commit creation, sync continuity to locally committed state
+- keep `oracle_signal_vars_probe` provider-map support as a later separate
+  slice only after this exact replay contract is accepted and released
+- do not reopen pushed `oracle_signal_setattr_probe` replay-contract or
+  provider-map behavior
 
 Earlier pushed release:
 

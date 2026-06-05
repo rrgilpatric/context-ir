@@ -32,6 +32,7 @@ from context_ir.runtime_probe_execution import (
     _EXACT_REPLAY_HASATTR_NAME_CONTRACT,
     _EXACT_REPLAY_SETATTR_LITERAL_CONTRACT,
     _EXACT_REPLAY_SETATTR_NAME_CONTRACT,
+    _EXACT_REPLAY_VARS_RETURNED_NAMESPACE_CONTRACT,
     _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT,
     RuntimeProbeLocalPythonWorkerRequestPayload,
     _runtime_probe_exact_replay_contract_candidates_for_replay_fields,
@@ -380,6 +381,9 @@ _REFLECTIVE_BUILTIN_VARS_WORKER_RETURNED_NAMESPACE = "returned_namespace"
 _REFLECTIVE_BUILTIN_VARS_WORKER_RAISED_TYPE_ERROR = "raised_type_error"
 _REFLECTIVE_BUILTIN_VARS_OBJECT_TYPE_REPLAY_KEY = "object_type"
 _REFLECTIVE_BUILTIN_VARS_TYPE_ERROR_OBJECT_TYPE = "builtins.int"
+_REFLECTIVE_BUILTIN_VARS_RETURNED_NAMESPACE_OBJECT_TYPE = "main.ProbeRecord"
+_REFLECTIVE_BUILTIN_VARS_PROBE_RECORD_CLASS_NAME = "ProbeRecord"
+_REFLECTIVE_BUILTIN_VARS_PROBE_RECORD_LABEL = "ready"
 _REFLECTIVE_BUILTIN_DIR_WORKER_FORM_LABEL = "reflective_builtin:dir/1"
 _REFLECTIVE_BUILTIN_DIR_WORKER_BOUNDARY_TEXT = "dir(obj)"
 _REFLECTIVE_BUILTIN_DIR_ZERO_WORKER_FORM_LABEL = "reflective_builtin:dir/0"
@@ -5094,7 +5098,10 @@ def materialize_runtime_probe_reflective_vars_worker_observation_from_target(
     exact_replay_inputs = _runtime_probe_reflective_vars_exact_replay_inputs(
         replay_target.request
     )
-    target_args = _runtime_probe_reflective_vars_target_args(exact_replay_inputs)
+    target_args = _runtime_probe_reflective_vars_target_args(
+        source_module,
+        exact_replay_inputs,
+    )
     lookup_outcome = _runtime_probe_reflective_vars_captured_lookup_outcome(
         source_module,
         target,
@@ -8431,7 +8438,7 @@ def _runtime_probe_reflective_vars_captured_lookup_outcome(
 def _runtime_probe_reflective_vars_exact_replay_inputs(
     request: RuntimeProbeLocalPythonReflectiveVarsWorkerRequest,
 ) -> Mapping[str, str] | None:
-    """Return exact replay inputs for the accepted vars TypeError pilot."""
+    """Return exact replay inputs for accepted vars pilots, if present."""
     _validate_runtime_probe_reflective_vars_worker_request(request)
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         request.request_replay_payload_fields,
@@ -8440,20 +8447,80 @@ def _runtime_probe_reflective_vars_exact_replay_inputs(
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         exact_fields_by_key
     )
-    if contract is not _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT:
+    if contract not in (
+        _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT,
+        _EXACT_REPLAY_VARS_RETURNED_NAMESPACE_CONTRACT,
+    ):
         return None
-    _validate_runtime_probe_reflective_vars_exact_replay_inputs(exact_fields_by_key)
+    _validate_runtime_probe_reflective_vars_exact_replay_inputs(
+        exact_fields_by_key,
+        contract=contract,
+    )
     return exact_fields_by_key
 
 
 def _runtime_probe_reflective_vars_target_args(
+    source_module: ModuleType,
     exact_replay_inputs: Mapping[str, str] | None,
 ) -> tuple[object, ...]:
-    """Return target arguments for the exact vars TypeError pilot, otherwise none."""
+    """Return target arguments for exact vars pilots, otherwise none."""
     if exact_replay_inputs is None:
         return ()
-    _validate_runtime_probe_reflective_vars_exact_replay_inputs(exact_replay_inputs)
-    return (1,)
+    contract = _runtime_probe_exact_replay_contract_for_replay_fields(
+        exact_replay_inputs
+    )
+    if contract is _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT:
+        _validate_runtime_probe_reflective_vars_exact_replay_inputs(
+            exact_replay_inputs,
+            contract=contract,
+        )
+        return (1,)
+    if contract is _EXACT_REPLAY_VARS_RETURNED_NAMESPACE_CONTRACT:
+        _validate_runtime_probe_reflective_vars_exact_replay_inputs(
+            exact_replay_inputs,
+            contract=contract,
+        )
+        return (_runtime_probe_reflective_vars_exact_probe_record(source_module),)
+    raise ValueError(
+        "runtime probe reflective builtin vars worker exact replay inputs are "
+        "unsupported"
+    )
+
+
+def _runtime_probe_reflective_vars_exact_probe_record(
+    source_module: ModuleType,
+) -> object:
+    """Instantiate the accepted vars returned-namespace replay object."""
+    if source_module.__name__ != "main":
+        raise ValueError(
+            "runtime probe reflective builtin vars worker exact replay source "
+            "module is unsupported"
+        )
+    probe_record_class = source_module.__dict__.get(
+        _REFLECTIVE_BUILTIN_VARS_PROBE_RECORD_CLASS_NAME,
+        _DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL,
+    )
+    if not isinstance(probe_record_class, type):
+        raise ValueError(
+            "runtime probe reflective builtin vars worker exact replay target "
+            "class is unsupported"
+        )
+    try:
+        probe_record = probe_record_class(_REFLECTIVE_BUILTIN_VARS_PROBE_RECORD_LABEL)
+    except Exception as error:
+        raise ValueError(
+            "runtime probe reflective builtin vars worker exact replay target "
+            "construction failed"
+        ) from error
+    if (
+        _runtime_probe_worker_object_type_name(probe_record)
+        != _REFLECTIVE_BUILTIN_VARS_RETURNED_NAMESPACE_OBJECT_TYPE
+    ):
+        raise ValueError(
+            "runtime probe reflective builtin vars worker exact replay target "
+            "object type is unsupported"
+        )
+    return probe_record
 
 
 def _is_runtime_probe_reflective_vars_expected_type_error(
@@ -11383,7 +11450,7 @@ def _validate_runtime_probe_reflective_vars_exact_replay_inputs_if_needed(
     *,
     replay_fields_by_key: Mapping[str, str],
 ) -> None:
-    """Reject drifted request replay inputs for the exact vars TypeError pilot."""
+    """Reject drifted request replay inputs for exact vars pilots."""
     exact_fields_by_key = _runtime_probe_worker_replay_fields_by_key(
         fields,
         field_name="request_replay_payload_fields",
@@ -11391,24 +11458,40 @@ def _validate_runtime_probe_reflective_vars_exact_replay_inputs_if_needed(
     contract = _runtime_probe_exact_replay_contract_for_replay_fields(
         exact_fields_by_key
     )
-    if contract is not _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT:
+    if contract not in (
+        _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT,
+        _EXACT_REPLAY_VARS_RETURNED_NAMESPACE_CONTRACT,
+    ):
         candidates = _runtime_probe_exact_replay_contract_candidates_for_replay_fields(
             replay_fields_by_key
         )
-        if _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT in candidates:
+        if any(
+            candidate
+            in (
+                _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT,
+                _EXACT_REPLAY_VARS_RETURNED_NAMESPACE_CONTRACT,
+            )
+            for candidate in candidates
+        ):
             raise ValueError(
                 "runtime probe reflective builtin vars worker exact replay inputs "
-                "must match the accepted type-error replay contract"
+                "must match one accepted exact replay contract"
             )
         return
-    _validate_runtime_probe_reflective_vars_exact_replay_inputs(exact_fields_by_key)
+    _validate_runtime_probe_reflective_vars_exact_replay_inputs(
+        exact_fields_by_key,
+        contract=contract,
+    )
 
 
 def _validate_runtime_probe_reflective_vars_exact_replay_inputs(
     fields_by_key: Mapping[str, str],
+    *,
+    contract: _RuntimeProbeExactReplayContract = (
+        _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT
+    ),
 ) -> None:
-    """Require the exact vars TypeError pilot to carry only object_type."""
-    contract = _EXACT_REPLAY_VARS_TYPE_ERROR_CONTRACT
+    """Require exact vars pilots to carry only accepted object_type input."""
     if set(fields_by_key) != _runtime_probe_worker_exact_replay_input_keys(contract):
         raise ValueError(
             "runtime probe reflective builtin vars worker exact replay inputs "
@@ -11420,7 +11503,7 @@ def _validate_runtime_probe_reflective_vars_exact_replay_inputs(
     ):
         raise ValueError(
             "runtime probe reflective builtin vars worker exact replay inputs "
-            "must be object_type=builtins.int"
+            "must match one accepted object_type contract"
         )
 
 
