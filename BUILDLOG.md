@@ -2,6 +2,34 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Vars Namespace Exact Replay Contract Pushed
+
+- Pushed exact replay-contract support for
+  `oracle_signal_vars_probe@default-local-python:v1` to `origin/main` after
+  explicit Ryan authorization.
+- Pushed release commits:
+  - `1c6c7c7 Add vars namespace exact replay contract`
+  - `d4c536d Sync vars replay commit routing`
+- Release gates:
+  - control review: first-pass, no findings
+  - release-unit audit: first-pass, no findings
+  - full regression: `2173` passed
+  - commit-gating: first-pass, no findings
+- Preserved holds:
+  - no provider-map support for `oracle_signal_vars_probe`
+  - no `src/context_ir/eval_providers.py` changes
+  - no `evals/` asset or run-spec changes
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection
+    changes
+  - pushed `oracle_signal_setattr_probe` replay/provider behavior remains
+    closed
+- Next routing:
+  - no active workspace release unit remains after post-push continuity sync
+  - determine the next single-probe slice
+  - keep `oracle_signal_vars_probe` provider-map support as a later separate
+    slice
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Vars Namespace Exact Replay Contract Locally Committed
 
 - Locally committed the audit-cleared, full-regression-cleared, and

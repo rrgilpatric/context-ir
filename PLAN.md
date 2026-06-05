@@ -40,20 +40,20 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Latest release unit is locally committed and pending push authorization:
+Latest release unit has been pushed:
 
 - exact replay-contract pre-slice for
   `oracle_signal_vars_probe@default-local-python:v1`
 - completion state from execution lane: DONE
 - release state: accepted after first-pass control review, audit-cleared,
-  full-regression-cleared, commit-gating-cleared, and locally committed
+  full-regression-cleared, commit-gating-cleared, locally committed, and
+  pushed to `origin/main`
 - local implementation commit: `1c6c7c7 Add vars namespace exact replay contract`
-- not pushed
-- push requires explicit Ryan authorization
-- latest pushed release remains `0d1a169 Sync setattr provider push routing`
-  on `origin/main`
+- local commit-routing sync: `d4c536d Sync vars replay commit routing`
+- pushed after explicit Ryan authorization
+- no active workspace release unit remains after post-push continuity sync
 
-Locally committed release unit files:
+Pushed release unit files:
 
 - `PLAN.md`
 - `BUILDLOG.md`
@@ -178,8 +178,7 @@ Commit-gating:
 
 Recommended next control action:
 
-- await explicit Ryan push authorization before pushing local commits
-- after an authorized push succeeds, sync continuity to pushed state
+- determine the next single-probe slice
 - keep `oracle_signal_vars_probe` provider-map support as a later separate
   slice only after this exact replay contract is accepted and released
 - do not reopen pushed `oracle_signal_setattr_probe` replay-contract or
