@@ -67,6 +67,9 @@ _VARS_ZERO_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _VARS_TYPE_ERROR_PROBE_TASK_ID = "oracle_signal_vars_type_error_probe"
 _VARS_TYPE_ERROR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _VARS_TYPE_ERROR_RUNTIME_PAYLOAD = (("lookup_outcome", "raised_type_error"),)
+_VARS_PROBE_TASK_ID = "oracle_signal_vars_probe"
+_VARS_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:11"
+_VARS_RUNTIME_PAYLOAD = (("lookup_outcome", "returned_namespace"),)
 _DIR_ZERO_PROBE_TASK_ID = "oracle_signal_dir_zero_probe"
 _DIR_ZERO_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:2:11"
 _DIR_ZERO_RUNTIME_PAYLOAD = (("listing_entry_count", "0"),)
@@ -628,6 +631,17 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
         snapshot_id="oracle_signal_vars_type_error_probe@default-local-python:v1",
         runtime_payload=_VARS_TYPE_ERROR_RUNTIME_PAYLOAD,
         runtime_replay_input_tail=(("object_type", "builtins.int"),),
+    ),
+    _VARS_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_VARS_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="vars(obj)",
+        family_label=RuntimeProbeFamily.REFLECTIVE_BUILTIN,
+        form_label="reflective_builtin:vars/1",
+        boundary_text="vars(obj)",
+        replay_target_seed="main.probe_namespace",
+        snapshot_id="oracle_signal_vars_probe@default-local-python:v1",
+        runtime_payload=_VARS_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(("object_type", "main.ProbeRecord"),),
     ),
     _DIR_ZERO_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
         unsupported_unit_id=_DIR_ZERO_UNSUPPORTED_UNIT_ID,
@@ -1691,6 +1705,7 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
             "oracle_signal_vars_zero_probe, "
             "oracle_signal_vars_type_error_probe, "
+            "oracle_signal_vars_probe, "
             "oracle_signal_dir_zero_probe, oracle_signal_dir_probe, "
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_false_probe, "
             "oracle_signal_hasattr_literal_probe, "

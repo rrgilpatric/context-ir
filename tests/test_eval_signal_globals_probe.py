@@ -436,6 +436,7 @@ def test_globals_probe_default_subprocess_provider_fails_closed_for_other_tasks(
             "oracle_signal_locals_probe, oracle_signal_globals_probe, "
             "oracle_signal_vars_zero_probe, "
             "oracle_signal_vars_type_error_probe, "
+            "oracle_signal_vars_probe, "
             "oracle_signal_dir_zero_probe, oracle_signal_dir_probe, "
             "oracle_signal_hasattr_probe, oracle_signal_hasattr_false_probe, "
             "oracle_signal_hasattr_literal_probe, "

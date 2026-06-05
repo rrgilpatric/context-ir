@@ -327,7 +327,7 @@ def test_setattr_probe_default_local_provider_fails_closed() -> None:
     assert "context_ir_default_local_python_subprocess only supports" in message
     assert "oracle_signal_setattr_probe" in message
     assert "oracle_signal_setattr_probe_typo" not in message
-    assert "oracle_signal_vars_probe" not in message
+    assert "oracle_signal_vars_probe" in message
 
 
 def test_setattr_probe_assets_stay_internal() -> None:
