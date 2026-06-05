@@ -42,55 +42,16 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 Latest release unit pushed:
 
-- internal-only private reviewer evidence packet 001
+- internal-only private reviewer walkthrough 001
 - release state: accepted after first-pass control review with no findings;
   release-unit audit passed; full regression passed; commit-gating passed;
   staged, locally committed, and pushed to `origin/main` after Ryan authorized
   proceeding
 - pushed release commit:
-  `9b1148c Add private reviewer evidence packet`
+  `9634239 Add private reviewer walkthrough`
 - release files:
   - `PLAN.md`
   - `BUILDLOG.md`
-  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
-- purpose: provide a private technical reviewer path across `portfolio_001`
-  and `default_local_probe_checkpoint_001` without widening public claims
-- evidence map:
-  - `portfolio_001`: exact-query internal product-differentiation evidence for
-    Tasks 0-3
-  - `default_local_probe_checkpoint_001`: exact runtime-provenance breadth
-    evidence across `31/31` individual non-smoke `oracle_signal_*_probe`
-    fixtures for provider `context_ir_default_local_python_subprocess`
-- preserved boundaries:
-  - no public benchmark quality claim
-  - no production readiness claim
-  - no SWE-bench claim
-  - no broad product proof claim
-  - no generalized hybrid-runtime support claim
-  - no composite smoke support claim
-  - no Task 4 readiness claim
-  - no latency/token/cost win claim
-  - no public API, MCP, schema, scoring, compiler, optimizer,
-    winner-selection, package-export, product launch, or public demo widening
-- validation:
-  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
-  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
-    passed
-  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2175` passed
-  - forbidden `README.md`, `PUBLIC_CLAIMS.md`, source, test, eval task,
-    fixture, and source run-spec diffs were empty
-- recommended next control action: decide the next private-review enablement
-  step. Current likely candidates are a private demo/readme walkthrough,
-  Task 4 reproducibility evidence, or a composite-smoke strategy spike.
-  Do not start implementation until that strategy choice is explicit.
-
-Current private reviewer walkthrough release unit:
-
-- status: accepted after first-pass control review with no findings;
-  release-unit audit, full regression, and commit-gating passed in the control
-  lane
-- file in this docs-only release unit:
   - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
 - purpose: provide a 5-10 minute internal-only private reviewer walkthrough
   over the pushed evidence packet, `portfolio_001`, and
@@ -112,19 +73,31 @@ Current private reviewer walkthrough release unit:
   - no latency/token/cost win claim
   - no public API, MCP, schema, scoring, compiler, optimizer,
     winner-selection, package-export, product launch, or public demo widening
-- forbidden surfaces remain untouched:
-  - source code
-  - tests
-  - eval tasks
-  - eval fixtures
-  - source run specs
-  - generated evidence artifacts
-  - `README.md`
-  - `PUBLIC_CLAIMS.md`
-  - `EVAL.md`
-- next control action: push only with explicit Ryan authorization; after push,
-  choose the next private-review enablement route before any new Task 4,
-  composite smoke, or runnable demo implementation work
+- validation:
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2175` passed
+  - forbidden `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`, source, test, eval
+    task, fixture, and source run-spec diffs were empty
+- recommended next control action: run a read-only private-review dry run.
+  Follow the walkthrough exactly as a skeptical technical reviewer and identify
+  weak points, missing links, unclear claims, and whether the packet is ready
+  to send privately. Do not start Task 4, composite smoke support, runnable
+  demo implementation, public claim widening, or MCP/API work from this route.
+
+Previous private reviewer evidence packet release unit remains:
+
+- internal-only private reviewer evidence packet 001
+- pushed release commit:
+  `9b1148c Add private reviewer evidence packet`
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+- purpose: provide a private technical reviewer path across `portfolio_001`
+  and `default_local_probe_checkpoint_001` without widening public claims
 
 Previous checkpoint evidence release unit remains:
 

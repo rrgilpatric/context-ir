@@ -2,6 +2,43 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Walkthrough Pushed
+
+- Pushed the private reviewer walkthrough release to `origin/main` after Ryan
+  authorized proceeding.
+- Pushed release commit:
+  `9634239 Add private reviewer walkthrough`.
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+- The release remains internal-only and claim-bounded:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime or dynamic-Python support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- Release gates passed before commit:
+  - release-unit audit: no findings
+  - embedded transcript checks
+  - `ruff check src/ tests/`
+  - `ruff format --check src/ tests/`
+  - `mypy --strict src/`
+  - `pytest tests/ -v`: `2175 passed`
+  - forbidden `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`, source, test, eval
+    task, fixture, and source run-spec diffs were empty
+- Recommended next control action: run a read-only private-review dry run.
+  Follow the walkthrough exactly as a skeptical technical reviewer and identify
+  weak points, missing links, unclear claims, and whether the packet is ready
+  to send privately. Do not start Task 4, composite smoke support, runnable
+  demo implementation, public claim widening, or MCP/API work from this route.
+- Acceptance status: pushed.
+
 ## 2026-06-05 -- Private Reviewer Walkthrough Returned
 
 - Accepted a docs-only private reviewer walkthrough slice with no findings.
