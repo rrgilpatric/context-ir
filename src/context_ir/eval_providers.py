@@ -126,6 +126,9 @@ _DYNAMIC_IMPORT_SOURCE_FILE_PATH = "main.py"
 _SETATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_setattr_literal_probe"
 _SETATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 _SETATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "returned_none"),)
+_DELATTR_PROBE_TASK_ID = "oracle_signal_delattr_probe"
+_DELATTR_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
+_DELATTR_RUNTIME_PAYLOAD = (("mutation_outcome", "deleted_attribute"),)
 _DELATTR_LITERAL_PROBE_TASK_ID = "oracle_signal_delattr_literal_probe"
 _DELATTR_LITERAL_UNSUPPORTED_UNIT_ID = "unsupported:call:main.py:7:4"
 _DELATTR_LITERAL_RUNTIME_PAYLOAD = (("mutation_outcome", "deleted_attribute"),)
@@ -763,6 +766,20 @@ _DEFAULT_LOCAL_PYTHON_SUBPROCESS_FIXTURES = {
             ("attribute_name", "flag"),
             ("assigned_value_type", "builtins.str"),
             ("assigned_value_literal", "ready"),
+        ),
+    ),
+    _DELATTR_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
+        unsupported_unit_id=_DELATTR_UNSUPPORTED_UNIT_ID,
+        miss_evidence_text="delattr(obj, name)",
+        family_label=RuntimeProbeFamily.RUNTIME_MUTATION,
+        form_label="runtime_mutation:delattr/2",
+        boundary_text="delattr(obj, name)",
+        replay_target_seed="main.probe_delete_attribute",
+        snapshot_id="oracle_signal_delattr_probe@default-local-python:v1",
+        runtime_payload=_DELATTR_RUNTIME_PAYLOAD,
+        runtime_replay_input_tail=(
+            ("object_type", "main.ProbeTarget"),
+            ("attribute_name", "flag"),
         ),
     ),
     _DELATTR_LITERAL_PROBE_TASK_ID: _DefaultLocalPythonSubprocessFixture(
@@ -1673,8 +1690,8 @@ def _default_local_python_subprocess_fixture(
             "oracle_signal_dynamic_import_imported_alias_probe, "
             "oracle_signal_dynamic_import_probe, "
             "oracle_signal_setattr_literal_probe, "
-            "oracle_signal_delattr_literal_probe, oracle_signal_exec_probe, "
-            "oracle_signal_eval_probe, or "
+            "oracle_signal_delattr_probe, oracle_signal_delattr_literal_probe, "
+            "oracle_signal_exec_probe, oracle_signal_eval_probe, or "
             "oracle_signal_metaclass_behavior_probe"
         )
     return fixture
