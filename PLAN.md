@@ -40,17 +40,14 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Local release commit is created and pending push:
+No workspace release unit is active. Most recent release is pushed and closed:
 
-- `PLAN.md`
-- `BUILDLOG.md`
-- `src/context_ir/runtime_probe_execution.py`
-- `src/context_ir/runtime_probe_worker.py`
-- `tests/test_runtime_probe_execution.py`
-- `tests/test_runtime_probe_worker.py`
-- `tests/test_eval_signal_smoke_e.py`
+- substantive release `e6b1981 Add setattr name exact replay contract`
+- local routing sync `43ee324 Sync setattr replay commit routing`
+- pushed to `origin/main` after explicit Ryan authorization
+- post-push continuity sync records the closed state in this routing update
 
-Workspace behavior:
+Pushed behavior:
 
 - clean `eval_fixture` snapshot
   `oracle_signal_setattr_probe@default-local-python:v1` appends exact replay
@@ -72,6 +69,16 @@ Workspace behavior:
 - malformed exact replay fields fail closed before replay execution
 - existing direct-literal `setattr(obj, "flag", value)` replay remains
   unchanged
+
+Pushed release unit files:
+
+- `PLAN.md`
+- `BUILDLOG.md`
+- `src/context_ir/runtime_probe_execution.py`
+- `src/context_ir/runtime_probe_worker.py`
+- `tests/test_runtime_probe_execution.py`
+- `tests/test_runtime_probe_worker.py`
+- `tests/test_eval_signal_smoke_e.py`
 
 Preserved holds:
 
@@ -111,8 +118,8 @@ Release state:
 - release-unit audit cleared with no findings
 - full-regression-cleared
 - commit-gating-cleared
-- locally committed as `e6b1981 Add setattr name exact replay contract`
-- not pushed
+- locally committed
+- pushed to `origin/main`
 
 Full regression:
 
@@ -136,10 +143,10 @@ Commit-gating:
 
 Recommended next control action:
 
-- push the locally committed `oracle_signal_setattr_probe` replay-contract
-  release after Ryan's explicit push authorization
-- do not route to provider-map support until this replay-contract slice is
-  pushed and post-push continuity is synced
+- determine the next single-probe slice from the remaining held probes without
+  reopening pushed `oracle_signal_setattr_probe` replay-contract behavior
+- `oracle_signal_setattr_probe` provider-map support may now be considered as
+  its own narrow slice because its exact replay contract is pushed
 
 Previous pushed release before this workspace unit:
 

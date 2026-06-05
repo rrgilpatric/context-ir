@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Setattr Name Exact Replay Contract Pushed
+
+- Pushed the exact default-local replay-contract support release for
+  `oracle_signal_setattr_probe@default-local-python:v1` to `origin/main` after
+  explicit Ryan authorization.
+- Pushed release commits:
+  - `e6b1981 Add setattr name exact replay contract`
+  - `43ee324 Sync setattr replay commit routing`
+- Release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_execution.py`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `tests/test_runtime_probe_execution.py`
+  - `tests/test_runtime_probe_worker.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release gates:
+  - control review: first-pass, no findings
+  - release-unit audit: first-pass, no findings
+  - full regression: `2156` passed
+  - commit-gating: first-pass, no findings
+- Preserved holds:
+  - no `evals/` asset or run-spec changes
+  - no `src/context_ir/eval_providers.py` changes
+  - no provider-map support for `oracle_signal_vars_probe` or
+    `oracle_signal_setattr_probe`
+  - no public/API/MCP/export/schema/scoring/compiler/optimizer/winner-selection
+    changes
+- Next routing:
+  - no active workspace release unit remains after this push
+  - do not reopen pushed `oracle_signal_setattr_probe` replay-contract behavior
+  - `oracle_signal_setattr_probe` provider-map support may now be considered
+    as its own narrow slice because its exact replay contract is pushed
+- Acceptance status: first-pass.
+
 ## 2026-06-05 -- Setattr Name Exact Replay Contract Workspace Slice
 
 - Completed a workspace-only execution slice adding exact default-local
