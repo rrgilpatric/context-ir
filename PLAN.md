@@ -40,7 +40,7 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
-Latest release unit locally committed:
+Latest release unit pushed:
 
 - internal default-local probe checkpoint evidence over exactly all `31/31`
   individual non-smoke `oracle_signal_*_probe` tasks
@@ -49,7 +49,8 @@ Latest release unit locally committed:
   no findings; release-unit audit passed; full regression failed on one
   deterministic Task 3 confidence scalar; narrow correction returned and
   accepted; corrected release-unit audit passed; full-regression-cleared;
-  commit-gating-cleared; staged and locally committed; not pushed
+  commit-gating-cleared; staged, locally committed, and pushed to
+  `origin/main`
 - new internal artifact directory:
   `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/`
 - generated artifacts:
@@ -171,8 +172,9 @@ Control gate results:
 
 Recommended next control action:
 
-- push the local release commit only after explicit Ryan authorization
-- push still requires explicit Ryan authorization
+- run the next read-only strategy/roadmap decision before any new
+  implementation work
+- push authorization for the checkpoint evidence release has been used
 
 Previous pushed release unit remains:
 

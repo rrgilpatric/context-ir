@@ -2,6 +2,20 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Default-Local Probe Checkpoint Evidence Pushed
+
+- Pushed the internal default-local probe checkpoint evidence release to
+  `origin/main` after explicit Ryan authorization.
+- Pushed release commit:
+  `2fdada7 Add default-local probe checkpoint evidence`.
+- Repo-backed release state after push: `HEAD` equals `origin/main`.
+- The release remains internal evidence only: no public claim, README, eval
+  task, fixture, source run-spec, provider, runtime execution, or runtime
+  worker surfaces were widened.
+- Recommended next control action: run the next read-only strategy/roadmap
+  decision before any new implementation work.
+- Acceptance status: pushed.
+
 ## 2026-06-05 -- Default-Local Probe Checkpoint Release Gates Cleared
 
 - Corrected release-unit audit passed with no findings over the internal
@@ -20,9 +34,8 @@ Most recent supersession entries override older architectural decisions when the
   - `git diff --check` is clean
 - Release state: workspace-only accepted, release-unit-audited,
   full-regression-cleared, commit-gating-cleared, staged, and locally
-  committed; not pushed.
-- Recommended next control action: push the local release commit only after
-  explicit Ryan authorization.
+  committed; superseded by the pushed-state entry above.
+- Recommended next control action: superseded by the pushed-state entry above.
 - Acceptance status: first-pass after one scalar correction.
 
 ## 2026-06-05 -- Default-Local Probe Checkpoint Scalar Correction Accepted
