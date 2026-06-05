@@ -2,6 +2,60 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-05 -- Private Reviewer Send Readiness Returned
+
+- Accepted the private reviewer send-readiness artifact workspace-only after
+  first-pass control review with no findings.
+- New workspace file:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
+- The artifact provides:
+  - an internal-only/private-review framing
+  - a concise Ryan-sendable draft note
+  - a 5-10 minute skim path plus optional deeper checks
+  - exact repo-relative artifact links
+  - commit-pinned GitHub URLs for existing committed evidence at
+    `9f29a7fad0e83ce2ed538b64b4353200e61d2079`
+  - explicit disallowed claims and a focused reviewer feedback checklist
+- Control review verified the execution prompt had one stale context path for
+  `portfolio_001_internal_readiness.md`, but the artifact uses the actual
+  committed path:
+  `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`.
+- Control review also verified:
+  - the artifact stays internal-only and private-review scoped
+  - linked committed artifact paths resolve at the pinned commit
+  - no public claim, generated evidence, source, test, eval task, fixture, or
+    run-spec surface changed
+- Preserved boundaries:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime or dynamic-Python support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- Validation run during control review:
+  - `git diff --check`
+  - untracked-file whitespace check for the new send-readiness artifact
+  - forbidden-surface diff guard over `README.md`, `PUBLIC_CLAIMS.md`,
+    `EVAL.md`, source, tests, eval tasks, fixtures, run specs, `portfolio_001`,
+    and `default_local_probe_checkpoint_001`
+  - required boundary phrase search
+  - commit-pinned path resolution for all existing linked artifacts
+- Release gates passed:
+  - read-only release-unit audit: PASS with no findings
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: `2175 passed`
+  - commit-gating over the exact three-file release unit: passed
+- Next control action: after local commit creation, push only with explicit
+  Ryan authorization. Do not start Task 4, composite smoke support, runnable
+  demo implementation, public claim widening, or MCP/API work from this route.
+- Acceptance status: release-gate-cleared.
+
 ## 2026-06-05 -- Private Reviewer Walkthrough Checks Pushed
 
 - Pushed the private reviewer walkthrough checks correction to `origin/main`

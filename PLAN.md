@@ -79,12 +79,46 @@ Latest release unit pushed:
     empty during the correction release
 - private-review status: packet and walkthrough are ready for private
   technical review under the documented internal-only boundaries.
-- recommended next control action: choose whether to prepare a private reviewer
-  send-readiness artifact, such as a short private note plus exact artifact
-  link list and reviewer ask. This is content/positioning work and needs Ryan's
-  explicit approval before implementation. Do not start Task 4, composite smoke
-  support, runnable demo implementation, public claim widening, or MCP/API work
-  from this route.
+- prior recommended next control action was to choose whether to prepare a
+  private reviewer send-readiness artifact. Ryan authorized that work, and the
+  resulting workspace-only accepted candidate is recorded below.
+
+Current workspace-only accepted release candidate:
+
+- internal-only private reviewer send-readiness artifact 001
+- release state: workspace-only accepted after first-pass control review with
+  no findings; read-only release-unit audit passed with no findings; full
+  regression passed; commit-gating passed; push requires explicit Ryan
+  authorization
+- workspace file:
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
+- purpose: give Ryan a private, technical, caveated send note plus exact
+  artifact link list and reviewer ask
+- control review:
+  - verified the execution prompt contained a stale context path for
+    `portfolio_001_internal_readiness.md`, but the artifact uses the actual
+    committed path:
+    `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - verified the artifact stays internal-only and private-review scoped
+  - verified commit-pinned links resolve for existing committed evidence at
+    `9f29a7fad0e83ce2ed538b64b4353200e61d2079`
+  - verified no public claim, generated evidence, source, test, eval task,
+    fixture, or run-spec surface changed
+- preserved boundaries:
+  - no public benchmark quality claim
+  - no production readiness claim
+  - no SWE-bench claim
+  - no broad product proof claim
+  - no generalized hybrid-runtime or dynamic-Python support claim
+  - no composite smoke support claim
+  - no Task 4 readiness claim
+  - no latency/token/cost win claim
+  - no public API, MCP, schema, scoring, compiler, optimizer,
+    winner-selection, package-export, product launch, or public demo widening
+- recommended next control action: after local commit creation, push only with
+  explicit Ryan authorization. Do not start Task 4, composite smoke support,
+  runnable demo implementation, public claim widening, or MCP/API work from
+  this route.
 
 Previous private reviewer walkthrough release unit remains:
 
