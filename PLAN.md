@@ -103,17 +103,15 @@ Current active program:
      commit `31f485e Codify real-OSS evidence discipline`
   7. recompile no-op coverage is pushed in commit
      `774ec3a Lock zero-delta recompile no-op behavior`
-  8. active ledger was reconciled after the no-op coverage push; next route is
-     the low-risk docs/evidence tranche before higher-risk design/refactor work
-- current workspace release unit: docs-only adversarial repair ledger
-  reconciliation (`PLAN.md`, `BUILDLOG.md`)
+  8. adversarial repair ledger routing is pushed in commit
+     `f11347c Sync adversarial repair ledger routing`
+- current workspace release unit: none
 - current release state: recompile no-op coverage repair is pushed in commit
-  `774ec3a Lock zero-delta recompile no-op behavior`. The active ledger
-  reconciliation is workspace-only accepted with no source, test, eval task,
-  fixture, run-spec, README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, or AGENTS diff.
-  It has passed `git diff --check` and protected-surface diff guards, but it is
-  not staged, locally committed, or pushed. Live git remains the source of truth
-  for current `HEAD` and `origin/main`.
+  `774ec3a Lock zero-delta recompile no-op behavior`. The active adversarial
+  repair ledger routing sync is pushed in commit
+  `f11347c Sync adversarial repair ledger routing`. The next route is the
+  low-risk docs/evidence tranche before higher-risk design/refactor work. Live
+  git remains the source of truth for current `HEAD` and `origin/main`.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -124,12 +122,11 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: finish release sequencing for the docs-only adversarial
-  repair ledger reconciliation, then run one bounded docs/evidence repair slice
-  covering baseline uncertainty readability, replay-vs-default-local evidence
-  separation, portfolio narrative weight, Python-version sensitivity, and
-  public-surface wording. Do not start the real-OSS pre-registered experiment
-  until the accepted repair ledger is closed or Ryan explicitly redirects.
+- next control action: run one bounded docs/evidence repair slice covering
+  baseline uncertainty readability, replay-vs-default-local evidence separation,
+  portfolio narrative weight, Python-version sensitivity, and public-surface
+  wording. Do not start the real-OSS pre-registered experiment until the
+  accepted repair ledger is closed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 

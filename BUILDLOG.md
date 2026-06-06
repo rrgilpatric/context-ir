@@ -2,6 +2,19 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Adversarial Repair Ledger Routing Pushed
+
+- Pushed the adversarial repair ledger routing sync to `origin/main`.
+- Pushed continuity commit:
+  `f11347c Sync adversarial repair ledger routing`.
+- Release state: pushed. No active workspace release unit remains.
+- Current route: run one bounded docs/evidence repair slice covering baseline
+  uncertainty readability, replay-vs-default-local evidence separation,
+  portfolio narrative weight, Python-version sensitivity, and public-surface
+  wording before higher-risk runtime worker complexity or duplicate `site_id`
+  design work.
+- Acceptance status: pushed first-pass.
+
 ## 2026-06-06 -- Adversarial Repair Ledger Reconciled
 
 - Reconciled the active adversarial repair ledger after the recompile no-op
