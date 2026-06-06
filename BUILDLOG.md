@@ -2,6 +2,121 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- AGENTS/WoW Evidence Discipline Commit-Gating Passed
+
+- Ran commit-gating over the exact three-file AGENTS/WoW evidence-discipline
+  docs/process release unit.
+- Checks:
+  - dirty file set exactly matched `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - protected-surface diff guard: no source, tests, eval task, fixture,
+    run-spec, README, PUBLIC_CLAIMS, EVAL, or ARCHITECTURE diffs
+  - exact stale eval-layer phrase absent from `AGENTS.md`, `PLAN.md`, and
+    `BUILDLOG.md`
+  - AGENTS.md evidence-discipline wording remains present and bounded
+- Release state: release-unit audit, full regression, and commit-gating are
+  cleared. Staging, local commit, and push remain pending.
+- Recommended next control action: stage and locally commit the exact
+  three-file docs/process release unit.
+- Acceptance status: commit-gating-cleared.
+
+## 2026-06-06 -- AGENTS/WoW Evidence Discipline Full Regression Passed
+
+- Ran full regression for the AGENTS/WoW evidence-discipline docs/process repair
+  after audit clearance.
+- Validation:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `pytest tests/ -v`: 2192 passed
+- Release state: release-unit audit and full regression are cleared.
+  Commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run commit-gating over the exact three-file
+  docs/process release unit.
+- Acceptance status: regression-cleared first-pass.
+
+## 2026-06-06 -- AGENTS/WoW Evidence Discipline Audit Passed
+
+- Ran a read-only release-unit audit over the exact three-file AGENTS/WoW
+  evidence-discipline docs/process repair.
+- Audit result: PASS with no findings after removing one active-log reference
+  to the stale eval-layer phrase.
+- Audit checks:
+  - dirty file set exactly matched `AGENTS.md`, `PLAN.md`, and `BUILDLOG.md`
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - protected-surface diff guard: no source, tests, eval task, fixture,
+    run-spec, README, PUBLIC_CLAIMS, EVAL, or ARCHITECTURE diffs
+  - exact stale eval-layer phrase no longer appears in `AGENTS.md`, `PLAN.md`,
+    or `BUILDLOG.md`
+  - AGENTS.md contains durable evidence-discipline guidance for
+    pre-registered real-OSS experiments, independent repo/PR-derived oracle
+    facts, fair lexical/BM25 and embedding baselines, equal budgets,
+    wasted-token/edit-relevant recall metrics, and a written kill/reevaluate
+    criterion
+- Release state: release-unit audit cleared. Full regression, commit-gating,
+  staging, local commit, and push remain pending.
+- Recommended next control action: run the full regression gate.
+- Acceptance status: audit-cleared after one active-log wording correction.
+
+## 2026-06-06 -- AGENTS/WoW Evidence Discipline Repair Accepted Workspace-Only
+
+- Reviewed and accepted the AGENTS/WoW evidence-discipline docs/process repair
+  workspace-only.
+- Findings: none.
+- Accepted release-unit files:
+  - `AGENTS.md`
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- Acceptance checks:
+  - dirty file set exactly matched the authorized three docs
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - protected-surface diff guard: no source, tests, eval task, fixture,
+    run-spec, README, PUBLIC_CLAIMS, EVAL, or ARCHITECTURE diffs
+  - stale eval-layer wording is removed from `AGENTS.md`
+  - real-OSS evidence discipline is durable in `AGENTS.md`
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run a read-only release-unit audit over the
+  exact three-file docs/process release unit.
+- Acceptance status: workspace-only accepted first-pass.
+
+## 2026-06-06 -- AGENTS/WoW Evidence Discipline Repair Prepared
+
+- Prepared the workspace-only docs/process repair for the accepted stale
+  AGENTS/WoW finding from the adversarial review.
+- Changed `AGENTS.md` to replace stale eval-layer framing with neutral external
+  eval methodology, baselines, metrics, and evidence-boundary wording.
+- Memorialized the company-level evidence discipline in `AGENTS.md`: decisive
+  north-star/company proof must not reuse self-authored synthetic fixtures,
+  oracle probe matrices, or Context IR analyzer-derived oracles as the deciding
+  evidence.
+- Added durable WoW guidance that real-OSS thesis experiments must be
+  pre-registered, use independent repo/PR-derived oracle facts, compare fair
+  lexical/BM25 and embedding baselines at equal token budgets, record
+  wasted-token and edit-relevant recall metrics, and define a written
+  kill/reevaluate criterion before results are known.
+- Preserved the bounded-slice repair discipline while clarifying that
+  company-level progress is judged by real-repo capability and externally
+  credible evidence, not micro-slice throughput.
+- Updated `PLAN.md` only enough to record the three-file workspace-only release
+  unit and route control back to the adversarial repair ledger after review.
+- Preserved boundaries: no source, tests, eval tasks, fixtures, run specs,
+  generated eval artifacts, README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, Task 4,
+  composite smoke, demo, MCP/API, package export, scoring, compiler, optimizer,
+  runtime, staging, commit, or push changes.
+- Release state: workspace-only, pending control review.
+- Recommended next control action: review this docs/process slice, then continue
+  the adversarial repair ledger with the next bounded accepted finding.
+- Acceptance status: workspace-only execution slice returned for control
+  review.
+
 ## 2026-06-06 -- MCP Error Semantics Pushed
 
 - Pushed the MCP error-semantics repair to `origin/main`.

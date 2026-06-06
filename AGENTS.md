@@ -286,10 +286,31 @@ For any non-trivial change, the responsible lane must explicitly consider impact
 - **Budget optimizer** -- greedy with dependency closure
 - **Compiler contracts** -- compile, diagnose, recompile
 - **MCP server** -- tool definitions, protocol compliance
-- **Eval harness** -- SWE-bench setup, baselines, metrics
+- **Eval harness** -- external eval methodology, baselines, metrics, and
+  evidence boundaries
 - **Observability** -- compile traces, warnings, diagnostics
 
 This does not mean every slice changes every layer. It means every slice checks whether those layers are affected before claiming completeness.
+
+---
+
+## Evidence Discipline
+
+Bounded execution slices remain the default repair discipline. They keep
+implementation reviewable and reduce accidental regressions. They are not the
+company scoreboard: company-level progress is judged by real-repo capability
+and externally credible evidence, not by micro-slice throughput.
+
+Decisive north-star or company evidence must not reuse self-authored synthetic
+fixtures, oracle probe matrices, or Context IR analyzer-derived oracles as the
+deciding proof. Those artifacts are useful for engineering regression, fixture
+coverage, and internal debugging, but they do not establish external market or
+thesis credibility by themselves.
+
+Real-OSS thesis experiments must be pre-registered before execution. They must
+use independent repo/PR-derived oracle facts, fair lexical/BM25 and embedding
+baselines at equal token budgets, wasted-token and edit-relevant recall metrics,
+and a written kill/reevaluate criterion before results are known.
 
 ---
 
