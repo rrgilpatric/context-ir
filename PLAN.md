@@ -71,7 +71,7 @@ Current active program:
   nonblocking for the prior private packet
 - highest-priority accepted findings:
   - remaining nonblocking/partial issues: `src/` layout test gaps,
-    project-specific scorer floors, MCP in-band error semantics, baseline
+    MCP in-band error semantics, baseline
     uncertainty ceiling/readability, replay-vs-default-local evidence separation
     clarity, runtime worker complexity, sync-commit optics, portfolio narrative
     weight, Python-version sensitivity, duplicate `site_id` risk, recompile
@@ -90,18 +90,29 @@ Current active program:
      release-unit audit, full regression, commit-gating, local commit, and push
      are complete in commit
      `7b1cfc4 Improve compiler feasible probe selection`
-  4. proceed through the remaining nonblocking/partial/process findings as
+  4. project-specific scorer floors are removed and accepted workspace-only;
+     release-unit audit, full regression, and commit-gating passed; release
+     sequencing is pending live git state and Ryan push authorization
+  5. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit: none; `main` is clean after the compiler
-  budget-utilization repair push
-- current release state: compiler budget-utilization repair is pushed in commit
-  `7b1cfc4 Improve compiler feasible probe selection`. It changed
-  `_compile_budget_honest_artifact(...)` to choose the best semantically useful
-  feasible probed document rather than the latest/highest feasible unit-budget
-  probe. Feasible probes rank first by semantic utility; equal-utility probes
-  prefer selected frontier/unsupported uncertainty surfaces before compactness.
-  The release passed corrected audit, full regression with `2187` tests,
-  commit-gating, local commit, and push after Ryan authorized proceeding.
+- current workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: project-specific scorer-floor repair is accepted
+  workspace-only. The scorer no longer hardcodes
+  `runtime_observation_admission.py` or `runtime_probe_results.py`; runtime
+  probe result-flow floors now use generic query, symbol/name, kind, and path
+  terms for admission/attachment and result-contract surfaces. The regression
+  test proves the behavior on non-Context-IR package/module names. Smoke E Task
+  3 confidence drifted from `0.0016306030935493503` to
+  `0.0016304451376726974` with selected units, warnings, token count, and
+  document hash locked. Release-unit audit passed with no findings. The unit is
+  full-regression-cleared with `2187` tests. Commit-gating passed over the exact
+  five-file unit. Live git determines whether local commit/push sequencing has
+  already occurred; push requires explicit Ryan authorization.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -112,10 +123,11 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: continue the adversarial repair ledger with the next
-  bounded accepted Claude-review finding. Do not start the real-OSS
-  pre-registered experiment until the accepted repair ledger is closed or Ryan
-  explicitly redirects.
+- next control action: finish release sequencing for the project-specific
+  scorer-floor repair unit according to live git state. Do not push without
+  explicit Ryan authorization. Do not start the real-OSS pre-registered
+  experiment until the accepted repair ledger is closed or Ryan explicitly
+  redirects.
 
 Latest release unit pushed:
 

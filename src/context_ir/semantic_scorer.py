@@ -93,11 +93,26 @@ _PUBLIC_API_CONTRACT_EDIT_FLOOR = 0.36
 _SEMANTIC_RENDERER_EDIT_FLOOR = 0.41
 _RUNTIME_PROBE_ADMISSION_EDIT_FLOOR = 0.36
 _RUNTIME_PROBE_RESULT_CONTRACT_EDIT_FLOOR = 0.34
+_RUNTIME_PROBE_RESULT_TERMS = ("result", "results")
+_RUNTIME_PROBE_OBSERVED_TERMS = ("observation", "observations", "observed")
+_RUNTIME_PROBE_ADMISSION_TERMS = (
+    "admission",
+    "admit",
+    "attach",
+    "attached",
+    "attachment",
+)
+_RUNTIME_PROBE_CONTRACT_TERMS = ("contract", "contracts")
 _RUNTIME_PROBE_PROOF_FLOW_TERMS = frozenset(
     {
         "additive",
+        "admission",
+        "admit",
         "attach",
         "attached",
+        "attachment",
+        "contract",
+        "contracts",
         "evidence",
         "eval",
         "exec",
@@ -1266,12 +1281,25 @@ def _runtime_probe_result_flow_edit_score(
     )
     if not {"runtime", "probe"}.issubset(surface_terms):
         return 0.0
-    if not _has_any_term(surface_terms, ("result", "results")):
+    if not _has_any_term(surface_terms, _RUNTIME_PROBE_RESULT_TERMS):
         return 0.0
 
-    if _is_runtime_probe_admission_surface(candidate, surface_terms):
+    primary_terms = lexical_cache.term_set(candidate.primary_text)
+    path_terms = lexical_cache.term_set(candidate.file_path)
+    query_term_set = frozenset(query_terms)
+    if _is_runtime_probe_admission_surface(
+        candidate=candidate,
+        primary_terms=primary_terms,
+        path_terms=path_terms,
+        query_term_set=query_term_set,
+    ):
         return _RUNTIME_PROBE_ADMISSION_EDIT_FLOOR
-    if _is_runtime_probe_result_contract_surface(candidate, surface_terms):
+    if _is_runtime_probe_result_contract_surface(
+        candidate=candidate,
+        primary_terms=primary_terms,
+        path_terms=path_terms,
+        query_term_set=query_term_set,
+    ):
         return _RUNTIME_PROBE_RESULT_CONTRACT_EDIT_FLOOR
     return 0.0
 
@@ -1279,16 +1307,28 @@ def _runtime_probe_result_flow_edit_score(
 def _mentions_runtime_probe_result_flow(query_terms: tuple[str, ...]) -> bool:
     """Return whether a query names runtime-probe results and proof-flow semantics."""
     query_term_set = frozenset(query_terms)
-    return (
-        {"runtime", "probe"}.issubset(query_term_set)
-        and _has_any_term(query_term_set, ("result", "results"))
-        and bool(query_term_set & _RUNTIME_PROBE_PROOF_FLOW_TERMS)
+    mentions_result = _has_any_term(query_term_set, _RUNTIME_PROBE_RESULT_TERMS)
+    mentions_observed_result = mentions_result and _has_any_term(
+        query_term_set, _RUNTIME_PROBE_OBSERVED_TERMS
     )
+    mentions_result_contract = mentions_result and _has_any_term(
+        query_term_set, _RUNTIME_PROBE_CONTRACT_TERMS
+    )
+    mentions_runtime_probe_flow = {"runtime", "probe"}.issubset(query_term_set) and (
+        mentions_result or bool(query_term_set & _RUNTIME_PROBE_PROOF_FLOW_TERMS)
+    )
+    mentions_observed_or_contract_flow = (
+        mentions_observed_result or mentions_result_contract
+    ) and bool(query_term_set & _RUNTIME_PROBE_PROOF_FLOW_TERMS)
+    return mentions_runtime_probe_flow or mentions_observed_or_contract_flow
 
 
 def _is_runtime_probe_admission_surface(
+    *,
     candidate: _CandidateProfile,
-    surface_terms: frozenset[str],
+    primary_terms: frozenset[str],
+    path_terms: frozenset[str],
+    query_term_set: frozenset[str],
 ) -> bool:
     """Return whether ``candidate`` converts observed probe results into evidence."""
     if candidate.symbol_kind not in {
@@ -1297,25 +1337,41 @@ def _is_runtime_probe_admission_surface(
         ResolvedSymbolKind.METHOD,
     }:
         return False
-    if "runtime_observation_admission.py" not in candidate.file_path:
+    surface_terms = primary_terms | path_terms
+    if not (
+        _has_any_term(surface_terms, _RUNTIME_PROBE_OBSERVED_TERMS)
+        and _has_any_term(surface_terms, _RUNTIME_PROBE_RESULT_TERMS)
+    ):
         return False
+    if _has_any_term(surface_terms, _RUNTIME_PROBE_ADMISSION_TERMS):
+        return True
     return (
-        "observation" in surface_terms
-        and _has_any_term(surface_terms, ("admission", "admit", "attach"))
-        or {"observation", "observed"}.issubset(surface_terms)
+        _has_any_term(query_term_set, _RUNTIME_PROBE_ADMISSION_TERMS)
+        and "observation" in surface_terms
+        and "observed" in surface_terms
     )
 
 
 def _is_runtime_probe_result_contract_surface(
+    *,
     candidate: _CandidateProfile,
-    surface_terms: frozenset[str],
+    primary_terms: frozenset[str],
+    path_terms: frozenset[str],
+    query_term_set: frozenset[str],
 ) -> bool:
     """Return whether ``candidate`` is a runtime-probe result contract surface."""
     if candidate.symbol_kind is not ResolvedSymbolKind.CLASS:
         return False
-    if "runtime_probe_results.py" not in candidate.file_path:
-        return False
-    return {"observed", "result"}.issubset(surface_terms)
+    surface_terms = primary_terms | path_terms
+    names_observed_result = _has_any_term(
+        surface_terms, _RUNTIME_PROBE_OBSERVED_TERMS
+    ) and _has_any_term(surface_terms, _RUNTIME_PROBE_RESULT_TERMS)
+    names_result_contract = (
+        _has_any_term(surface_terms, _RUNTIME_PROBE_RESULT_TERMS)
+        and _has_any_term(surface_terms, _RUNTIME_PROBE_CONTRACT_TERMS)
+        and _has_any_term(query_term_set, _RUNTIME_PROBE_CONTRACT_TERMS)
+    )
+    return names_observed_result or names_result_contract
 
 
 def _has_any_term(

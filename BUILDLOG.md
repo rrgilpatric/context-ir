@@ -2,6 +2,103 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Project-Specific Scorer Floors Commit-Gating Passed
+
+- Ran commit-gating over the exact five-file project-specific scorer-floor
+  repair unit after release-unit audit and full regression passed.
+- Commit-gating checks:
+  - dirty file set exactly matched the release unit
+  - no staged files before staging
+  - `git diff --check`: clean
+  - forbidden public/eval/evidence surfaces had no diff
+  - scorer source and focused scorer test have no
+    `runtime_observation_admission.py` or `runtime_probe_results.py` filename
+    gates
+  - scorer source has no `oracle_signal`, `portfolio_001`, `benchmark`, or
+    `smoke` scorer terms
+  - source/test diff matched the accepted generic runtime probe result-flow
+    scoring behavior and Smoke E confidence-only drift
+- Release state: commit-gating cleared. Local commit and push sequencing depend
+  on live git state. Push requires explicit Ryan authorization.
+- Recommended next control action: finish release sequencing for the
+  project-specific scorer-floor repair unit according to live git state.
+- Acceptance status: commit-gating cleared.
+
+## 2026-06-06 -- Project-Specific Scorer Floors Full Regression Passed
+
+- Ran full regression for the five-file project-specific scorer-floor repair
+  unit after release-unit audit passed.
+- Full regression:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2187 passed
+- Release state: release-unit audit and full regression are cleared.
+  Commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run commit-gating over the exact five-file
+  release unit.
+- Acceptance status: audit and full regression cleared first-pass.
+
+## 2026-06-06 -- Project-Specific Scorer Floors Audit Passed
+
+- Ran a read-only release-unit audit over the exact five-file
+  project-specific scorer-floor repair unit.
+- Audit result: PASS with no findings.
+- Audit checks:
+  - dirty file set exactly matched the release unit
+  - no staged files
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, portfolio evidence, or default-local checkpoint diffs
+  - `src/context_ir/semantic_scorer.py` and `tests/test_semantic_scorer.py`
+    contain no `runtime_observation_admission.py` or
+    `runtime_probe_results.py` filename gates
+  - scorer source contains no `oracle_signal`, `portfolio_001`, `benchmark`, or
+    `smoke` scorer terms
+  - active PLAN routing accurately marks the repair as workspace-only accepted
+    and audit pending before this audit
+- Release state: release-unit audit cleared. Full regression, commit-gating,
+  staging, local commit, and push remain pending.
+- Recommended next control action: run the full regression gate.
+- Acceptance status: audit-cleared first-pass.
+
+## 2026-06-06 -- Project-Specific Scorer Floors Accepted Workspace-Only
+
+- Accepted the project-specific scorer-floor repair workspace-only.
+- Release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior accepted:
+  - removed hardcoded scorer checks for `runtime_observation_admission.py` and
+    `runtime_probe_results.py`
+  - runtime probe result-flow floors now use generic query, symbol/name, kind,
+    and path terms for admission/attachment and result-contract surfaces
+  - scorer coverage now proves the behavior through non-Context-IR package and
+    module names
+  - Smoke E Task 3 confidence changed from `0.0016306030935493503` to
+    `0.0016304451376726974` with selected units, warnings, token count, and
+    document hash locked
+- Control validation:
+  - `tests/test_semantic_scorer.py -q`: 30 passed
+  - `tests/test_eval_signal_smoke.py tests/test_eval_signal_smoke_b.py tests/test_eval_signal_smoke_c.py tests/test_eval_signal_smoke_d.py tests/test_eval_signal_smoke_e.py -q`:
+    36 passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: passed
+- Preserved boundaries: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, default-local
+  checkpoint, MCP/API, Task 4, composite smoke, demo, or real-OSS experiment
+  changes.
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run a read-only release-unit audit over the
+  exact five-file project-specific scorer-floor repair unit.
+- Acceptance status: workspace-only accepted first-pass.
+
 ## 2026-06-06 -- Compiler Budget-Utilization Repair Pushed
 
 - Pushed the compiler budget-utilization repair to `origin/main`.
