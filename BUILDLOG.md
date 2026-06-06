@@ -2,6 +2,36 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Project-Specific Scorer Floors Pushed
+
+- Pushed the project-specific scorer-floor repair to `origin/main`.
+- Pushed release commit:
+  `a0b2f36 Remove project-specific scorer floors`.
+- Release gates cleared before push:
+  - read-only release-unit audit: PASS with no findings
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2187 passed
+  - commit-gating over the exact five-file unit: passed
+- Release behavior shipped:
+  - removed hardcoded scorer checks for `runtime_observation_admission.py` and
+    `runtime_probe_results.py`
+  - runtime probe result-flow floors now use generic query, symbol/name, kind,
+    and path terms for admission/attachment and result-contract surfaces
+  - scorer coverage proves the behavior through non-Context-IR package and
+    module names
+- Boundaries preserved: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, default-local
+  checkpoint, MCP/API, Task 4, composite smoke, demo, or real-OSS experiment
+  changes.
+- Release state: pushed. No active workspace release unit remains for this
+  repair. Live git remains the source of truth for current `HEAD` and
+  `origin/main`.
+- Recommended next control action: continue the adversarial repair ledger with
+  the next bounded accepted Claude-review finding.
+- Acceptance status: pushed first-pass.
+
 ## 2026-06-06 -- Project-Specific Scorer Floors Commit-Gating Passed
 
 - Ran commit-gating over the exact five-file project-specific scorer-floor

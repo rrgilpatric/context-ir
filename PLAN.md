@@ -91,28 +91,21 @@ Current active program:
      are complete in commit
      `7b1cfc4 Improve compiler feasible probe selection`
   4. project-specific scorer floors are removed and accepted workspace-only;
-     release-unit audit, full regression, and commit-gating passed; release
-     sequencing is pending live git state and Ryan push authorization
+     release-unit audit, full regression, commit-gating, local commit, and push
+     are complete in commit
+     `a0b2f36 Remove project-specific scorer floors`
   5. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/semantic_scorer.py`
-  - `tests/test_semantic_scorer.py`
-  - `tests/test_eval_signal_smoke_e.py`
-- current release state: project-specific scorer-floor repair is accepted
-  workspace-only. The scorer no longer hardcodes
-  `runtime_observation_admission.py` or `runtime_probe_results.py`; runtime
-  probe result-flow floors now use generic query, symbol/name, kind, and path
-  terms for admission/attachment and result-contract surfaces. The regression
-  test proves the behavior on non-Context-IR package/module names. Smoke E Task
-  3 confidence drifted from `0.0016306030935493503` to
-  `0.0016304451376726974` with selected units, warnings, token count, and
-  document hash locked. Release-unit audit passed with no findings. The unit is
-  full-regression-cleared with `2187` tests. Commit-gating passed over the exact
-  five-file unit. Live git determines whether local commit/push sequencing has
-  already occurred; push requires explicit Ryan authorization.
+- current workspace release unit: none; `main` is clean after the
+  project-specific scorer-floor repair push
+- current release state: project-specific scorer-floor repair is pushed in
+  commit `a0b2f36 Remove project-specific scorer floors`. It removed hardcoded
+  scorer checks for `runtime_observation_admission.py` and
+  `runtime_probe_results.py`; runtime probe result-flow floors now use generic
+  query, symbol/name, kind, and path terms for admission/attachment and
+  result-contract surfaces. The release passed audit, full regression with
+  `2187` tests, commit-gating, local commit, and push after Ryan authorized
+  proceeding.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -123,13 +116,27 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: finish release sequencing for the project-specific
-  scorer-floor repair unit according to live git state. Do not push without
-  explicit Ryan authorization. Do not start the real-OSS pre-registered
-  experiment until the accepted repair ledger is closed or Ryan explicitly
-  redirects.
+- next control action: continue the adversarial repair ledger with the next
+  bounded accepted Claude-review finding. Do not start the real-OSS
+  pre-registered experiment until the accepted repair ledger is closed or Ryan
+  explicitly redirects.
 
 Latest release unit pushed:
+
+- project-specific scorer-floor repair
+- pushed release commit:
+  `a0b2f36 Remove project-specific scorer floors`
+- release state: accepted first-pass; read-only audit passed; full regression
+  passed with `2187` tests; commit-gating passed; staged, locally committed, and
+  pushed to `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - compiler budget-utilization repair
 - pushed release commit:
@@ -146,7 +153,7 @@ Latest release unit pushed:
   - `tests/test_eval_signal_smoke_d.py`
   - `tests/test_eval_signal_smoke_e.py`
 
-Previous release unit pushed:
+Earlier release unit pushed:
 
 - invalid `repo_root` repair across analyzer, facade, and MCP
 - pushed release commit:
