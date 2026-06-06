@@ -2,6 +2,37 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Recompile No-Op Coverage Pushed
+
+- Pushed the recompile no-op coverage test-only repair to `origin/main`.
+- Pushed release commit:
+  `774ec3a Lock zero-delta recompile no-op behavior`.
+- Release behavior shipped:
+  - added zero-delta semantic recompile no-op coverage
+  - added empty runtime-probe plan zero-delta no-op coverage
+  - added empty runtime-observation zero-delta no-op coverage
+  - added facade mirror coverage for the empty-observation no-op shape
+  - corrected only `FULL_REPO_TASK3_CONFIDENCE` after the Smoke E preservation
+    locks held
+  - made no source behavior changes
+- Release gates cleared before push:
+  - read-only release-unit audit: PASS
+  - focused Smoke E scalar correction: 1 passed, 7 deselected
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2196 passed
+  - commit-gating over the exact six-file unit: passed
+- Boundaries preserved: no source, eval task, fixture, run-spec, README,
+  PUBLIC_CLAIMS, EVAL, ARCHITECTURE, AGENTS, Task 4, composite smoke, demo,
+  MCP/API, package export, scoring, compiler, optimizer, or runtime worker
+  changes.
+- Release state: pushed. No active workspace release unit remains for this
+  repair.
+- Recommended next control action: continue the adversarial repair ledger with
+  the next bounded accepted Claude-review finding.
+- Acceptance status: pushed after one full-regression scalar correction.
+
 ## 2026-06-06 -- Recompile No-Op Coverage Full Regression Passed
 
 - Corrected the deterministic Smoke E confidence scalar that held the first

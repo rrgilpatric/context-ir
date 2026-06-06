@@ -97,31 +97,17 @@ Current active program:
      `5655d7b Return MCP tool failures as protocol errors`
   6. AGENTS/WoW evidence-discipline docs repair is corrected and pushed in
      commit `31f485e Codify real-OSS evidence discipline`
-  7. recompile no-op coverage is accepted workspace-only; release-unit audit
-     passed; a deterministic Smoke E confidence-scalar correction was applied;
-     full regression passed; no source behavior changed
+  7. recompile no-op coverage is pushed in commit
+     `774ec3a Lock zero-delta recompile no-op behavior`
   8. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit: recompile no-op coverage test-only repair
-  (`PLAN.md`, `BUILDLOG.md`, `tests/test_semantic_diagnostics.py`,
-  `tests/test_runtime_observation_recompile.py`, `tests/test_tool_facade.py`,
-  `tests/test_eval_signal_smoke_e.py`) accepted workspace-only
-- current release state: recompile no-op coverage repair is accepted
-  workspace-only. It adds focused tests for zero-delta semantic recompile,
-  empty runtime-probe plans, empty runtime observations, and facade mirror
-  behavior. No source files changed. Release-unit audit passed with no findings.
-  Full regression initially held on deterministic Smoke E confidence scalar
-  drift; the scalar was corrected from `0.0016277052486463341` to
-  `0.0016260086561405564` after the budget-280 locks for total tokens, document
-  hash, selected units/order, resolver detail, warnings, warning IDs,
-  probe-budget threshold, and warning-call count held. Corrected release gates
-  passed: focused Smoke E lock, `ruff check src/ tests/`,
-  `ruff format --check src/ tests/`, `mypy --strict src/`, `git diff --check`,
-  and `pytest tests/ -v` with 2196 passed. Corrected release-unit audit and
-  commit-gating passed for the six-file unit. Staging and local commit are next;
-  push remains pending explicit Ryan authorization.
-  AGENTS/WoW
-  evidence-discipline repair remains pushed in commit
+- current workspace release unit: none
+- current release state: recompile no-op coverage repair is pushed in commit
+  `774ec3a Lock zero-delta recompile no-op behavior`. It added focused tests for
+  zero-delta semantic recompile, empty runtime-probe plans, empty runtime
+  observations, and facade mirror behavior without source behavior changes.
+  Release-unit audit, full regression, commit-gating, local commit, and push are
+  complete. AGENTS/WoW evidence-discipline repair remains pushed in commit
   `31f485e Codify real-OSS evidence discipline`. Live git remains the source of
   truth for current `HEAD` and `origin/main`.
 - active holds:
@@ -134,24 +120,27 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: stage and locally commit the exact six-file recompile
-  no-op coverage release unit. Push requires explicit Ryan authorization. Do
-  not start the real-OSS pre-registered experiment until the accepted repair
-  ledger is closed or Ryan explicitly redirects.
+- next control action: continue the adversarial repair ledger with the next
+  bounded accepted Claude-review finding. Do not start the real-OSS
+  pre-registered experiment until the accepted repair ledger is closed or Ryan
+  explicitly redirects.
 
 Latest release unit pushed:
 
-- project-specific scorer-floor repair
+- recompile no-op coverage test-only repair
 - pushed release commit:
-  `a0b2f36 Remove project-specific scorer floors`
+  `774ec3a Lock zero-delta recompile no-op behavior`
 - release state: accepted first-pass; read-only audit passed; full regression
-  passed with `2187` tests; commit-gating passed; staged, locally committed, and
-  pushed to `origin/main` after Ryan authorized proceeding
+  initially held on deterministic Smoke E confidence drift, then passed with
+  `2196` tests after a scalar-only correction; commit-gating passed; staged,
+  locally committed, and pushed to `origin/main` after Ryan authorized
+  proceeding
 - release files:
   - `PLAN.md`
   - `BUILDLOG.md`
-  - `src/context_ir/semantic_scorer.py`
-  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_diagnostics.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_tool_facade.py`
   - `tests/test_eval_signal_smoke_e.py`
 
 Previous release unit pushed:
