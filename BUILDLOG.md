@@ -2,6 +2,38 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- MCP Error Semantics Pushed
+
+- Pushed the MCP error-semantics repair to `origin/main`.
+- Pushed release commit:
+  `5655d7b Return MCP tool failures as protocol errors`.
+- Release behavior shipped:
+  - direct local MCP helper calls still return JSON dictionaries
+  - SDK tool calls return `CallToolResult(isError=True)` for validation errors
+    and facade failures
+  - structured error payloads preserve `ok: false`, `error_code`, and a
+    non-empty JSON-safe `error`
+  - SDK success calls preserve the existing structured success payload shape
+- Release gates cleared before push:
+  - read-only release-unit audit: PASS with no findings
+  - first full regression held on one deterministic Smoke E confidence scalar
+    drift after preservation locks passed
+  - focused Smoke E scalar correction: passed
+  - corrected `ruff check src/ tests/`: passed
+  - corrected `ruff format --check src/ tests/`: passed
+  - corrected `mypy --strict src/`: passed
+  - corrected `pytest tests/ -v`: 2192 passed
+  - commit-gating over the exact five-file unit: passed
+- Boundaries preserved: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, default-local
+  checkpoint, Task 4, composite smoke, demo, or real-OSS experiment changes.
+- Release state: pushed. No active workspace release unit remains for this
+  repair. Live git remains the source of truth for current `HEAD` and
+  `origin/main`.
+- Recommended next control action: continue the adversarial repair ledger with
+  the next bounded accepted Claude-review finding.
+- Acceptance status: pushed after one scalar correction.
+
 ## 2026-06-06 -- MCP Error Semantics Commit-Gating Passed
 
 - Ran commit-gating over the corrected five-file MCP error-semantics release

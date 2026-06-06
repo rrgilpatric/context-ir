@@ -93,29 +93,19 @@ Current active program:
      release-unit audit, full regression, commit-gating, local commit, and push
      are complete in commit
      `a0b2f36 Remove project-specific scorer floors`
-  5. MCP in-band error semantics are corrected and accepted workspace-only;
-     release-unit audit passed; a full-regression confidence-only Smoke E Task 3
-     scalar drift has been corrected; corrected full regression and
-     commit-gating passed
+  5. MCP in-band error semantics are corrected and pushed in commit
+     `5655d7b Return MCP tool failures as protocol errors`
   6. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/mcp_server.py`
-  - `tests/test_eval_signal_smoke_e.py`
-  - `tests/test_mcp_server.py`
-- current release state: MCP error-semantics repair is accepted workspace-only.
-  Direct local calls still return JSON dictionaries. SDK tool calls now return
+- current workspace release unit: none
+- current release state: MCP error-semantics repair is pushed. Direct local MCP
+  helper calls still return JSON dictionaries. SDK tool calls now return
   `CallToolResult(isError=True)` for validation errors and facade failures while
   preserving structured error payloads with `ok: false`, `error_code`, and a
   non-empty JSON-safe `error`. Success SDK calls preserve the existing structured
-  success payload shape. Release-unit audit passed with no findings. Initial
-  full pytest failed only on a deterministic Smoke E Task 3 confidence scalar
-  drift; the scalar is corrected to `0.0016277052486463341`, and the focused
-  Task 3 Smoke E preservation lock now passes. Corrected full regression passed
-  with `2192 passed`. Commit-gating over the exact five-file unit passed. The
-  corrected unit is not staged, locally committed, or pushed.
+  success payload shape. Release-unit audit, full regression, commit-gating,
+  local commit, and push are complete. Live git remains the source of truth for
+  current `HEAD` and `origin/main`.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -126,9 +116,9 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: stage and locally commit the exact corrected five-file
-  MCP error-semantics repair unit. Do not start the real-OSS pre-registered
-  experiment until the accepted repair ledger is closed or Ryan explicitly
+- next control action: continue the adversarial repair ledger with the next
+  bounded accepted Claude-review finding. Do not start the real-OSS
+  pre-registered experiment until the accepted repair ledger is closed or Ryan explicitly
   redirects.
 
 Latest release unit pushed:
