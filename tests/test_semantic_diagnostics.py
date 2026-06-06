@@ -1330,3 +1330,34 @@ def test_recompile_semantic_context_keeps_ungrounded_trace_evidence_honest(
     assert result.upgraded_unit_ids == ()
     assert result.compile_result.optimization.selections == ()
     assert "Could not ground" in result.diagnostic.reason
+
+
+def test_recompile_semantic_context_zero_delta_preserves_budget_without_actionable_miss(
+    tmp_path: Path,
+) -> None:
+    """Zero-delta ungrounded recompile preserves budget and selection shape."""
+    _write_sample_program(tmp_path)
+    program = _semantic_program(tmp_path)
+    previous_result = compile_semantic_context(program, "run", budget=160)
+
+    result = recompile_semantic_context(
+        previous_result,
+        SemanticMissEvidence(
+            kind=SemanticMissKind.ABSENT_SYMBOL,
+            evidence="does_not_exist_anywhere",
+        ),
+        delta_budget=0,
+        program=program,
+    )
+
+    assert result.budget_delta == 0
+    assert result.compile_result.budget == previous_result.budget
+    assert result.diagnostic.grounded_unit_ids == ()
+    assert result.diagnostic.recommended_expansions == ()
+    assert result.newly_selected_unit_ids == ()
+    assert result.upgraded_unit_ids == ()
+    assert (
+        result.compile_result.optimization.selections
+        == previous_result.optimization.selections
+    )
+    assert "Could not ground" in result.diagnostic.reason

@@ -2531,6 +2531,66 @@ def test_runtime_probe_runner_callable_recompile_supports_empty_plan(
     )
 
 
+def test_runtime_probe_runner_callable_recompile_empty_plan_zero_delta_is_noop(
+    tmp_path: Path,
+) -> None:
+    """Zero-delta empty request plans never run probes or report new units."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        _observation,
+        _unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+    empty_plan = runtime_probe_requests.build_runtime_probe_request_plan(())
+    empty_diagnostic = replace(
+        diagnostic,
+        planned_runtime_probe_requests=(),
+        planned_runtime_probe_request_plan=empty_plan,
+    )
+    calls: list[runtime_probe_execution.RuntimeProbeRunnerRequest] = []
+
+    def runner(
+        runner_request: runtime_probe_execution.RuntimeProbeRunnerRequest,
+    ) -> runtime_probe_execution.RuntimeProbeExecutionAttempt:
+        calls.append(runner_request)
+        raise AssertionError("empty plans must not invoke the runner")
+
+    result = apply_runtime_probe_runner_for_diagnostic_and_recompile(
+        program,
+        empty_diagnostic,
+        previous_result,
+        miss_evidence,
+        delta_budget=0,
+        repository_snapshot_basis=_snapshot_basis(),
+        probe_contract_revision="runtime-probe-contract:test.1",
+        runtime_assumptions=_runner_runtime_assumptions(),
+        runner_contract_revision="runtime-probe-runner:test.1",
+        timeout_seconds=30,
+        runner_environment=_runner_environment(),
+        runner_assumptions=_runner_assumptions(),
+        runner=runner,
+    )
+    recompile_application = result.result_batch_recompile_application
+
+    assert calls == []
+    assert result.runner_request_preparation.diagnostic is empty_diagnostic
+    assert result.runner_request_preparation.request_plan is empty_plan
+    assert result.runner_attempt_collection.attempts == ()
+    assert result.runner_attempt_collection.result_batch.results == ()
+    assert recompile_application.observation_application.admissions == ()
+    assert recompile_application.observation_application.updated_program is program
+    assert recompile_application.recompile_result.budget_delta == 0
+    assert recompile_application.recompile_result.compile_result.budget == (
+        previous_result.budget
+    )
+    assert recompile_application.recompile_result.newly_selected_unit_ids == ()
+    assert recompile_application.recompile_result.upgraded_unit_ids == ()
+
+
 def test_runtime_probe_runner_callable_recompile_propagates_runner_exceptions(
     tmp_path: Path,
 ) -> None:
@@ -2750,6 +2810,43 @@ def test_runtime_observation_recompile_empty_observations_recompile_original_pro
     assert boundary.boundary_kind is (
         SemanticDiagnosticBoundaryKind.UNSUPPORTED_OPAQUE_MISSING_RUNTIME_SUPPORT
     )
+    assert result.recompile_result.diagnostic.planned_runtime_probe_requests == (
+        diagnostic.planned_runtime_probe_requests
+    )
+    assert program.provenance_records == []
+
+
+def test_runtime_observation_recompile_empty_observations_zero_delta_is_noop(
+    tmp_path: Path,
+) -> None:
+    """Zero-delta empty observations preserve program identity and unit shape."""
+    (
+        program,
+        previous_result,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        _observation,
+        _unsupported_id,
+    ) = _runtime_recompile_fixture(tmp_path)
+
+    result = apply_runtime_observations_for_diagnostic_and_recompile(
+        program,
+        diagnostic,
+        (),
+        previous_result,
+        miss_evidence,
+        delta_budget=0,
+    )
+
+    assert result.observation_application.diagnostic is diagnostic
+    assert result.observation_application.admissions == ()
+    assert result.observation_application.updated_program is program
+    assert result.recompile_result.budget_delta == 0
+    assert result.recompile_result.compile_result.budget == previous_result.budget
+    assert result.recompile_result.newly_selected_unit_ids == ()
+    assert result.recompile_result.upgraded_unit_ids == ()
     assert result.recompile_result.diagnostic.planned_runtime_probe_requests == (
         diagnostic.planned_runtime_probe_requests
     )

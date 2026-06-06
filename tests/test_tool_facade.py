@@ -1532,6 +1532,47 @@ def test_recompile_repository_context_with_empty_observations_preserves_program(
     assert previous_response.program.provenance_records == []
 
 
+def test_recompile_repository_context_with_empty_observations_zero_delta_is_noop(
+    tmp_path: Path,
+) -> None:
+    """The facade mirrors zero-delta empty observation no-op recompiles."""
+    (
+        previous_response,
+        miss_evidence,
+        diagnostic,
+        _plan,
+        _request,
+        _observation,
+        _unsupported_id,
+    ) = _runtime_observation_recompile_facade_fixture(tmp_path)
+
+    response = recompile_repository_context_with_runtime_observations(
+        SemanticRuntimeObservationRecompileRequest(
+            previous_response=previous_response,
+            diagnostic=diagnostic,
+            runtime_observations=(),
+            miss_evidence=miss_evidence,
+            delta_budget=0,
+        )
+    )
+
+    assert response.observation_application.admissions == ()
+    assert response.observation_application.updated_program is previous_response.program
+    assert response.program is previous_response.program
+    assert response.budget_delta == 0
+    assert response.compile_budget == previous_response.compile_budget
+    assert response.newly_selected_unit_ids == ()
+    assert response.upgraded_unit_ids == ()
+    assert response.newly_selected_unit_ids == (
+        response.recompile_result.newly_selected_unit_ids
+    )
+    assert response.upgraded_unit_ids == response.recompile_result.upgraded_unit_ids
+    assert response.diagnostic.planned_runtime_probe_requests == (
+        diagnostic.planned_runtime_probe_requests
+    )
+    assert previous_response.program.provenance_records == []
+
+
 def test_recompile_repository_context_delegates_and_forwards_embed_fn(
     tmp_path: Path,
     monkeypatch,

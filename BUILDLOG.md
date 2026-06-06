@@ -2,6 +2,124 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Recompile No-Op Coverage Full Regression Passed
+
+- Corrected the deterministic Smoke E confidence scalar that held the first
+  full-regression run.
+- Correction:
+  - updated `FULL_REPO_TASK3_CONFIDENCE` from `0.0016277052486463341` to
+    `0.0016260086561405564`
+  - no source files changed
+  - the release unit is now six files: `PLAN.md`, `BUILDLOG.md`,
+    `tests/test_semantic_diagnostics.py`,
+    `tests/test_runtime_observation_recompile.py`, `tests/test_tool_facade.py`,
+    and `tests/test_eval_signal_smoke_e.py`
+- Preservation proof: the Smoke E budget-280 locks for total tokens, document
+  hash, selected units/order, resolver detail, warnings, warning IDs,
+  probe-budget threshold, and warning-call count held before the scalar
+  correction.
+- Corrected release gates:
+  - corrected six-file release-unit audit: passed
+  - focused Smoke E lock: 1 passed, 7 deselected
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `pytest tests/ -v`: 2196 passed
+- Commit-gating:
+  - exact dirty set: six release-unit files only
+  - no staged files before staging
+  - `HEAD` equaled `origin/main`
+  - protected-surface diff guard: no source, eval task, fixture, run-spec,
+    README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, or AGENTS diffs
+  - reviewed test diffs and continuity diffs; no findings after correcting the
+    stale next-control-action wording in `PLAN.md`
+- Release state: corrected audit, full regression, and commit-gating are
+  cleared. Staging and local commit are next; push remains pending explicit Ryan
+  authorization.
+- Acceptance status: release-gate-cleared after one correction.
+
+## 2026-06-06 -- Recompile No-Op Coverage Full Regression Held
+
+- Ran the full regression gate for the exact five-file recompile no-op coverage
+  test-only repair after release-unit audit clearance.
+- Result: HOLD.
+- `pytest tests/ -v` passed 2195 tests and failed one assertion:
+  `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`.
+- Failure details:
+  - expected `FULL_REPO_TASK3_CONFIDENCE`: `0.0016277052486463341`
+  - observed confidence: `0.0016260086561405564`
+  - budget-280 locks for total tokens, document hash, selected units/order,
+    resolver detail, warnings, warning IDs, probe-budget threshold, and
+    warning-call count passed before the confidence assertion
+- Static gates had already passed before full pytest:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+- Release state: full-regression held. Commit-gating, staging, local commit,
+  and push remain blocked pending a narrow Smoke E confidence-scalar correction
+  and rerun of the release gates.
+- Acceptance status: held.
+
+## 2026-06-06 -- Recompile No-Op Coverage Audit Passed
+
+- Ran a read-only release-unit audit over the exact five-file recompile no-op
+  coverage test-only repair.
+- Audit result: PASS with no findings.
+- Audit checks:
+  - dirty file set exactly matched `PLAN.md`, `BUILDLOG.md`,
+    `tests/test_semantic_diagnostics.py`,
+    `tests/test_runtime_observation_recompile.py`, and
+    `tests/test_tool_facade.py`
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - protected-surface diff guard: no source, eval task, fixture, run-spec,
+    README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, or AGENTS diffs
+  - tests cover zero-delta semantic recompile, empty runtime-probe plans, empty
+    runtime observations, and facade mirror behavior without production-code
+    changes
+- Release state: release-unit audit cleared. Full regression, commit-gating,
+  staging, local commit, and push remain pending.
+- Recommended next control action: run the full regression gate.
+- Acceptance status: audit-cleared first-pass.
+
+## 2026-06-06 -- Recompile No-Op Coverage Accepted Workspace-Only
+
+- Reviewed and accepted the recompile no-op coverage repair workspace-only.
+- Findings: none.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `tests/test_semantic_diagnostics.py`
+  - `tests/test_runtime_observation_recompile.py`
+  - `tests/test_tool_facade.py`
+- Behavior covered:
+  - zero-delta ungrounded semantic recompile preserves prior budget,
+    selections, and reports no new/upgraded units
+  - empty runtime-probe plans with zero delta do not invoke the runner and
+    report no new/upgraded units
+  - empty runtime observations with zero delta preserve the original program
+    object and empty admissions
+  - facade runtime-observation recompile mirrors the zero-delta empty-observation
+    no-op shape
+- Control validation:
+  - `tests/test_semantic_diagnostics.py tests/test_runtime_observation_recompile.py tests/test_tool_facade.py -q`:
+    98 passed
+  - `ruff check` on the touched tests: passed
+  - `ruff format --check` on the touched tests: passed
+  - `git diff --check`: clean
+- Preserved boundaries: no source, eval task, fixture, run-spec, README,
+  PUBLIC_CLAIMS, EVAL, ARCHITECTURE, Task 4, composite smoke, demo, MCP/API,
+  package export, scoring, compiler, optimizer, runtime worker, staging, commit,
+  or push changes.
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run a read-only release-unit audit over the
+  exact five-file test-only release unit.
+- Acceptance status: workspace-only accepted first-pass.
+
 ## 2026-06-06 -- AGENTS/WoW Evidence Discipline Pushed
 
 - Pushed the AGENTS/WoW evidence-discipline docs/process repair to
