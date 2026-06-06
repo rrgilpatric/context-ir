@@ -2,6 +2,228 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Commit-Gating Passed
+
+- Ran commit-gating over the exact corrected 10-file duplicate `site_id` parser
+  collision repair release unit after corrected audit and full regression
+  clearance.
+- Commit-gating result: PASS with no findings.
+- Commit-gating checks:
+  - dirty file set exactly matched the corrected 10-file release unit
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, generated checkpoint, or generated portfolio evidence
+    diff
+  - chained call/attribute collision reproduction remained fixed
+  - nested runtime `getattr(obj, name)()` reproduction remained fixed with one
+    runtime probe request and MCP `ok: true`
+- Release state: commit-gating cleared. Staging, local commit, and push remain
+  pending.
+- Recommended next control action: stage and locally commit the exact 10-file
+  release unit. Push remains Ryan-gated.
+- Acceptance status: commit-gating-cleared first-pass.
+
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Full Regression Passed
+
+- Reran the full regression gate for the corrected, audit-cleared duplicate
+  `site_id` parser collision repair release unit.
+- Full regression passed:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `pytest tests/ -v`: 2201 passed
+- Release state: full-regression cleared. Commit-gating, staging, local commit,
+  and push remain pending.
+- Recommended next control action: run commit-gating over the exact 10-file
+  release unit.
+- Acceptance status: full-regression-cleared after one Smoke D expectation
+  correction.
+
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Corrected Audit Passed
+
+- Reran the read-only release-unit audit over the expanded 10-file duplicate
+  `site_id` parser collision repair unit after the Smoke D expectation
+  correction.
+- Audit result: PASS with no findings.
+- Audit checks:
+  - dirty file set exactly matched the corrected release unit
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, generated checkpoint, or generated portfolio evidence
+    diff
+  - chained `self.factory().make().value` has unique call and attribute raw
+    IDs, preserves the inner resolved dependency, and surfaces the outer
+    unsupported call/attribute records
+  - nested `getattr(obj, name)()` has unique unsupported construct IDs, one
+    runtime probe request for the inner reflective call, and MCP returns
+    `ok: true`
+  - Smoke D focused tests passed: 7 passed
+  - Smoke E focused tests passed: 8 passed
+  - targeted parser/frontier/runtime-request/facade/MCP tests passed:
+    174 passed
+- Release state: corrected release-unit audit cleared. Full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run the full regression gate.
+- Acceptance status: corrected audit-cleared first-pass.
+
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Smoke D Correction Accepted
+
+- Reviewed and accepted the narrow Smoke D expectation correction for the
+  duplicate `site_id` parser collision repair.
+- Findings: none.
+- Correction changed only `tests/test_eval_signal_smoke_d.py`.
+- Corrected expectations:
+  - budget 200 now expects
+    `def:pkg/base.py:pkg.base.LayoutBase.format_digest`
+  - budget 200 now expects suffixed
+    `frontier:call:pkg/service.py:12:17:12:24`
+  - budget 240 now expects suffixed
+    `frontier:call:pkg/service.py:12:17:12:24`
+  - budget 240 now expects suffixed
+    `unsupported:call:pkg/service.py:12:17:12:48`
+- Preservation proof from the correction lane:
+  - budget 200 remained budget-compliant at 192/200 tokens
+  - budget 200 retained edit coverage 1.0, support coverage 1.0, uncertainty
+    honesty 1.0, and `omitted_uncertainty`
+  - budget 240 remained budget-compliant at 234/240 tokens
+  - budget 240 retained edit coverage 1.0, support coverage 1.0, uncertainty
+    honesty 1.0, and no warnings
+  - no eval asset, public asset, or generated artifact diff
+- Control validation:
+  - Smoke D focused tests: 7 passed
+  - Smoke E focused tests: 8 passed
+  - `ruff check tests/test_eval_signal_smoke_d.py`: passed
+  - `ruff format --check tests/test_eval_signal_smoke_d.py`: passed
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, generated checkpoint, or generated portfolio evidence
+    diff
+- Release state: corrected workspace-only accepted. Corrected release-unit
+  audit, full regression, commit-gating, staging, local commit, and push remain
+  pending.
+- Recommended next control action: rerun the corrected release-unit audit over
+  the expanded 10-file release unit.
+- Acceptance status: corrected workspace-only accepted first-pass.
+
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Full Regression Held
+
+- Ran the full regression gate for the audit-cleared duplicate `site_id`
+  parser collision repair release unit.
+- Static gates passed:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+- Full pytest failed with one failure:
+  - `tests/test_eval_signal_smoke_d.py::test_signal_quad_bundle_preserves_provider_lead_and_smoke_b_budget_pressure`
+- Failure classification:
+  - deterministic Smoke D selected-unit expectation drift after intentional
+    collision-only call/attribute ID suffixing
+  - actual budget-200 `context_ir` row remains budget-compliant and preserves
+    edit coverage 1.0, support coverage 1.0, uncertainty honesty 1.0, no
+    warnings, and total tokens 192/200
+  - actual budget-200 selected units are:
+    - `def:pkg/service.py:pkg.service.EnvelopeCompiler.compile_digest`
+    - `def:pkg/models.py:pkg.models.ReviewEnvelope`
+    - `def:pkg/base.py:pkg.base.LayoutBase`
+    - `def:pkg/base.py:pkg.base.LayoutBase.format_digest`
+    - `frontier:call:pkg/service.py:13:8`
+    - `frontier:call:pkg/service.py:12:17:12:24`
+  - actual budget-240 selected units use the suffixed frontier and unsupported
+    IDs:
+    - `frontier:call:pkg/service.py:12:17:12:24`
+    - `unsupported:call:pkg/service.py:12:17:12:48`
+- Release state: full regression is held. Commit-gating, staging, local commit,
+  and push remain blocked pending a narrow Smoke D expectation correction and
+  rerun of the corrected full regression gate.
+- Recommended next control action: with Ryan go-ahead, issue a narrow
+  correction for the Smoke D deterministic selected-unit expectation drift.
+- Acceptance status: held.
+
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Audit Passed
+
+- Ran a read-only release-unit audit over the exact nine-file duplicate
+  `site_id` parser collision repair release unit.
+- Audit result: PASS with no findings.
+- Audit checks:
+  - dirty file set exactly matched the accepted release unit
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, generated checkpoint, or generated portfolio evidence
+    diff
+  - collision-only parser suffixing preserves non-colliding IDs while suffixing
+    colliding nested call/attribute start-position IDs
+  - `SourceSite.site_id` stays aligned to the final call/attribute fact ID
+  - dependency-frontier attribute IDs do not double-append end-span suffixes
+  - chained `self.factory().make().value` preserves the inner resolved
+    dependency and surfaces the outer unsupported call/attribute
+  - nested `getattr(obj, name)()` produces unique unsupported IDs, exactly one
+    runtime probe request for the inner reflective call, and an MCP
+    `ok: true` response instead of `compile_failed`
+- Release state: release-unit audit cleared. Full regression, commit-gating,
+  staging, local commit, and push remain pending.
+- Recommended next control action: run the full regression gate.
+- Acceptance status: audit-cleared first-pass.
+
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Accepted Workspace-Only
+
+- Reviewed and accepted the duplicate `site_id` parser collision repair
+  workspace-only.
+- Findings: none.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/parser.py`
+  - `src/context_ir/dependency_frontier.py`
+  - `tests/test_parser.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_runtime_probe_requests.py`
+  - `tests/test_mcp_server.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior changed:
+  - parser precomputes colliding `ast.Call` and `ast.Attribute`
+    start-position IDs and appends `end_line:end_column` only for those
+    collisions
+  - non-colliding call and attribute IDs preserve the legacy
+    `prefix:file:start_line:start_column` shape
+  - `SourceSite.site_id` stays aligned with the final raw fact ID
+  - attribute frontier ID rendering avoids double-appending end-span suffixes
+    when the parser ID already carries the collision suffix
+  - nested call/attribute surfaces now keep the resolved inner dependency and
+    still surface outer unsupported/uncertain truth
+  - nested reflective `getattr(obj, name)()` surfaces now produce unique
+    unsupported IDs and one runtime probe request for the inner reflective call
+  - MCP compilation for the reproduced nested runtime case no longer fails from
+    duplicate selected unit IDs
+  - `FULL_REPO_TASK3_CONFIDENCE` changed only after Smoke E preservation locks
+    held
+- Control validation:
+  - `git status --short --branch -uall`: exact expected seven dirty files
+    before continuity acceptance update; no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - targeted parser/frontier/runtime-request/facade/MCP tests: 174 passed
+  - Smoke E: 8 passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+- Boundaries preserved: no runtime worker refactor, broad ID rewrite, eval task,
+  fixture, run-spec, generated evidence, reviewer packet, README, EVAL,
+  PUBLIC_CLAIMS, Task 4, composite smoke, real-OSS experiment, demo, public/API
+  expansion, staging, commit, or push changes.
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run a read-only release-unit audit over the
+  accepted duplicate `site_id` parser collision repair.
+- Acceptance status: workspace-only accepted first-pass.
+
 ## 2026-06-06 -- Low-Risk Docs/Evidence Boundary Repair Pushed
 
 - Pushed the accepted, audit-cleared, full-regression-cleared, and

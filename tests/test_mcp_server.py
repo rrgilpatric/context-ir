@@ -213,6 +213,49 @@ def test_unresolved_frontier_and_unsupported_constructs_remain_explicit(
     )
 
 
+def test_mcp_compile_handles_nested_runtime_sites_without_duplicate_unit_ids(
+    tmp_path: Path,
+) -> None:
+    """Nested runtime surfaces compile instead of collapsing to compile_failed."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object, name: str) -> object:
+                return getattr(obj, name)()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    result = mcp_server.compile_repository_context(
+        repo_root=str(tmp_path),
+        query="getattr runtime call",
+        budget=1000,
+        include_document=False,
+    )
+
+    assert result["ok"] is True
+    selected_units = result["selected_units"]
+    omitted_unit_ids = result["omitted_unit_ids"]
+    unsupported_constructs = result["unsupported_constructs"]
+    assert isinstance(selected_units, list)
+    assert isinstance(omitted_unit_ids, list)
+    assert isinstance(unsupported_constructs, list)
+    selected_unit_ids = [
+        unit["unit_id"] for unit in selected_units if isinstance(unit, dict)
+    ]
+    nested_construct_ids = [
+        construct["construct_id"]
+        for construct in unsupported_constructs
+        if isinstance(construct, dict)
+        and construct["construct_text"] == "getattr(obj, name)"
+    ]
+    assert len(selected_unit_ids) == len(set(selected_unit_ids))
+    assert len(omitted_unit_ids) == len(set(omitted_unit_ids))
+    assert len(nested_construct_ids) == 2
+    assert len(nested_construct_ids) == len(set(nested_construct_ids))
+
+
 def test_parse_error_diagnostics_remain_visible(tmp_path: Path) -> None:
     """Syntax parse errors are preserved in MCP output."""
     (tmp_path / "good.py").write_text("VALUE = 1\n", encoding="utf-8")

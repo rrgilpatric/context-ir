@@ -851,6 +851,52 @@ def test_derive_diagnostic_runtime_probe_requests_ignores_non_attachable_boundar
     )
 
 
+def test_derive_runtime_probe_requests_preserves_nested_reflective_call_ids(
+    tmp_path: Path,
+) -> None:
+    """Nested reflective calls keep unique unsupported IDs and one inner request."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            def run(obj: object, name: str) -> object:
+                return getattr(obj, name)()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _derived_program(tmp_path)
+    constructs = [
+        construct
+        for construct in program.unsupported_constructs
+        if construct.construct_text == "getattr(obj, name)"
+    ]
+    reflective_constructs = [
+        construct
+        for construct in constructs
+        if construct.reason_code is UnresolvedReasonCode.REFLECTIVE_BUILTIN
+    ]
+    outer_constructs = [
+        construct
+        for construct in constructs
+        if construct.reason_code is UnresolvedReasonCode.UNSUPPORTED_CALL_TARGET
+    ]
+
+    requests = runtime_probe_requests.derive_runtime_probe_requests(program)
+
+    assert len(constructs) == 2
+    assert len({construct.construct_id for construct in constructs}) == 2
+    assert len(reflective_constructs) == 1
+    assert len(outer_constructs) == 1
+    assert len(requests) == 1
+    assert requests[0].subject_id == reflective_constructs[0].construct_id
+    assert requests[0].source_site == reflective_constructs[0].site
+    assert (
+        requests[0].source_site.span.end_column
+        < outer_constructs[0].site.span.end_column
+    )
+
+
 def test_derive_diagnostic_runtime_probe_requests_is_deterministic_and_pure(
     tmp_path: Path,
 ) -> None:

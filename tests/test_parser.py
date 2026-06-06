@@ -63,6 +63,109 @@ def test_extract_syntax_returns_syntax_program() -> None:
     }
 
 
+def test_extract_syntax_suffixes_colliding_call_and_attribute_sites(
+    tmp_path: Path,
+) -> None:
+    """Nested calls/attributes sharing a start position receive unique IDs."""
+    module_file = tmp_path / "main.py"
+    module_file.write_text(
+        textwrap.dedent(
+            """
+            class Example:
+                def run(self) -> object:
+                    return self.factory().make().value
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    syntax = extract_syntax_file(module_file, tmp_path)
+    chained_call_sites = [
+        call_site
+        for call_site in syntax.call_sites
+        if call_site.callee_text in {"self.factory", "self.factory().make"}
+    ]
+    chained_attribute_sites = [
+        attribute_site
+        for attribute_site in syntax.attribute_sites
+        if attribute_site.base_text.startswith("self")
+    ]
+    source_sites = [
+        *(call_site.site for call_site in chained_call_sites),
+        *(attribute_site.site for attribute_site in chained_attribute_sites),
+    ]
+    spans_by_site_id: dict[str, set[SourceSpan]] = {}
+    for site in source_sites:
+        spans_by_site_id.setdefault(site.site_id, set()).add(site.span)
+
+    assert {call_site.callee_text for call_site in chained_call_sites} == {
+        "self.factory",
+        "self.factory().make",
+    }
+    assert len({call_site.call_site_id for call_site in chained_call_sites}) == len(
+        chained_call_sites
+    )
+    assert len(
+        {attribute_site.attribute_site_id for attribute_site in chained_attribute_sites}
+    ) == len(chained_attribute_sites)
+    assert all(len(spans) == 1 for spans in spans_by_site_id.values())
+    for call_site in chained_call_sites:
+        span = call_site.site.span
+        assert call_site.call_site_id.endswith(f":{span.end_line}:{span.end_column}")
+        assert call_site.site.site_id == f"site:{call_site.call_site_id}"
+    for attribute_site in chained_attribute_sites:
+        span = attribute_site.site.span
+        assert attribute_site.attribute_site_id.endswith(
+            f":{span.end_line}:{span.end_column}"
+        )
+        assert attribute_site.site.site_id == f"site:{attribute_site.attribute_site_id}"
+
+
+def test_extract_syntax_preserves_non_colliding_call_and_attribute_ids(
+    tmp_path: Path,
+) -> None:
+    """Ordinary call and attribute sites keep the legacy start-position ID shape."""
+    module_file = tmp_path / "main.py"
+    module_file.write_text(
+        textwrap.dedent(
+            """
+            def helper(value: object) -> object:
+                return value
+
+            def run(obj: object) -> object:
+                value = obj.value
+                return helper(value)
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    syntax = extract_syntax_file(module_file, tmp_path)
+    helper_call = next(
+        call_site
+        for call_site in syntax.call_sites
+        if call_site.callee_text == "helper"
+    )
+    value_attribute = next(
+        attribute_site
+        for attribute_site in syntax.attribute_sites
+        if attribute_site.base_text == "obj"
+        and attribute_site.attribute_name == "value"
+    )
+
+    assert helper_call.call_site_id == (
+        "call:main.py:"
+        f"{helper_call.site.span.start_line}:{helper_call.site.span.start_column}"
+    )
+    assert helper_call.site.site_id == f"site:{helper_call.call_site_id}"
+    assert value_attribute.attribute_site_id == (
+        "attribute:main.py:"
+        f"{value_attribute.site.span.start_line}:"
+        f"{value_attribute.site.span.start_column}"
+    )
+    assert value_attribute.site.site_id == f"site:{value_attribute.attribute_site_id}"
+
+
 def test_repository_source_discovery_skips_dependency_and_cache_dirs(
     tmp_path: Path,
 ) -> None:

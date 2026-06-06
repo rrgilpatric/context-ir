@@ -370,9 +370,12 @@ class _SyntaxCollector(ast.NodeVisitor):
             )
         ]
         self._definition_id_counts: dict[str, int] = {}
+        self._colliding_call_fact_ids: frozenset[str] = frozenset()
+        self._colliding_attribute_fact_ids: frozenset[str] = frozenset()
 
     def collect(self, tree: ast.Module) -> None:
         """Walk the parsed module and append facts to the owning program."""
+        self._prepare_call_and_attribute_collision_ids(tree)
         for statement in tree.body:
             self.visit(statement)
 
@@ -514,7 +517,7 @@ class _SyntaxCollector(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> None:
         """Record call sites without attempting semantic resolution."""
-        call_site_id = self._fact_id(prefix="call", node=node)
+        call_site_id = self._call_site_id(node)
         self._program.call_sites.append(
             CallSiteFact(
                 call_site_id=call_site_id,
@@ -528,7 +531,7 @@ class _SyntaxCollector(ast.NodeVisitor):
 
     def visit_Attribute(self, node: ast.Attribute) -> None:
         """Record raw attribute access sites for later semantic interpretation."""
-        attribute_site_id = self._fact_id(prefix="attribute", node=node)
+        attribute_site_id = self._attribute_site_id(node)
         self._program.attribute_sites.append(
             AttributeSiteFact(
                 attribute_site_id=attribute_site_id,
@@ -830,6 +833,55 @@ class _SyntaxCollector(ast.NodeVisitor):
         if suffix is None:
             return base_id
         return f"{base_id}:{suffix}"
+
+    def _prepare_call_and_attribute_collision_ids(self, tree: ast.Module) -> None:
+        """Precompute start-position call and attribute IDs that need span suffixes."""
+        call_counts: dict[str, int] = {}
+        attribute_counts: dict[str, int] = {}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                call_id = self._fact_id(prefix="call", node=node)
+                call_counts[call_id] = call_counts.get(call_id, 0) + 1
+            elif isinstance(node, ast.Attribute):
+                attribute_id = self._fact_id(prefix="attribute", node=node)
+                attribute_counts[attribute_id] = (
+                    attribute_counts.get(attribute_id, 0) + 1
+                )
+        self._colliding_call_fact_ids = frozenset(
+            fact_id for fact_id, count in call_counts.items() if count > 1
+        )
+        self._colliding_attribute_fact_ids = frozenset(
+            fact_id for fact_id, count in attribute_counts.items() if count > 1
+        )
+
+    def _call_site_id(self, node: ast.Call) -> str:
+        """Return a call-site ID, suffixing only colliding start-position IDs."""
+        return self._colliding_fact_id(
+            prefix="call",
+            node=node,
+            colliding_fact_ids=self._colliding_call_fact_ids,
+        )
+
+    def _attribute_site_id(self, node: ast.Attribute) -> str:
+        """Return an attribute-site ID, suffixing only colliding start-position IDs."""
+        return self._colliding_fact_id(
+            prefix="attribute",
+            node=node,
+            colliding_fact_ids=self._colliding_attribute_fact_ids,
+        )
+
+    def _colliding_fact_id(
+        self,
+        *,
+        prefix: str,
+        node: ast.Call | ast.Attribute,
+        colliding_fact_ids: frozenset[str],
+    ) -> str:
+        """Append the end span only when a call/attribute start ID collides."""
+        base_id = self._fact_id(prefix=prefix, node=node)
+        if base_id not in colliding_fact_ids:
+            return base_id
+        return f"{base_id}:{_node_end_line(node)}:{_node_end_column(node)}"
 
     def _current_definition(self) -> _DefinitionContext:
         """Return the current enclosing raw definition context."""

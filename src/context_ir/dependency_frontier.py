@@ -954,7 +954,10 @@ def _format_attribute_site(attribute_site: AttributeSiteFact) -> str:
 def _attribute_frontier_fact_id(attribute_site: AttributeSiteFact) -> str:
     """Return a stable frontier/unsupported fact id for one attribute site."""
     span = attribute_site.site.span
-    return f"{attribute_site.attribute_site_id}:{span.end_line}:{span.end_column}"
+    end_span_suffix = f":{span.end_line}:{span.end_column}"
+    if attribute_site.attribute_site_id.endswith(end_span_suffix):
+        return attribute_site.attribute_site_id
+    return f"{attribute_site.attribute_site_id}{end_span_suffix}"
 
 
 def _unresolved_reason_code_for_expression(

@@ -78,8 +78,11 @@ Current active program:
     control review; covers baseline uncertainty ceiling/readability,
     replay-vs-default-local evidence separation clarity, portfolio narrative
     weight, Python-version sensitivity, and public-surface drift wording
-  - later higher-risk design/refactor tranche: runtime worker complexity and
-    duplicate `site_id` risk
+  - duplicate `site_id` parser collision repair: accepted workspace-only after
+    one deterministic Smoke D expectation correction; corrected release-unit
+    audit passed; full regression passed; commit-gating passed; local commit
+    and push remain pending
+  - later higher-risk design/refactor tranche: runtime worker complexity
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -107,8 +110,16 @@ Current active program:
      `f11347c Sync adversarial repair ledger routing`
   9. low-risk docs/evidence boundary repair tranche is pushed in commit
      `c9a5fef Clarify internal evidence boundaries`
-- current workspace release unit: none; worktree should be clean after the
-  post-push continuity sync
+  10. duplicate `site_id` parser collision repair is accepted workspace-only
+      after one deterministic Smoke D expectation correction; corrected
+      release-unit audit passed; full regression passed; commit-gating passed;
+      local commit and push remain pending
+- current workspace release unit: duplicate `site_id` parser collision repair
+  (`PLAN.md`, `BUILDLOG.md`, `src/context_ir/parser.py`,
+  `src/context_ir/dependency_frontier.py`, `tests/test_parser.py`,
+  `tests/test_dependency_frontier.py`, `tests/test_runtime_probe_requests.py`,
+  `tests/test_mcp_server.py`, `tests/test_eval_signal_smoke_d.py`,
+  `tests/test_eval_signal_smoke_e.py`)
 - current release state: recompile no-op coverage repair is pushed in commit
   `774ec3a Lock zero-delta recompile no-op behavior`. The active adversarial
   repair ledger routing sync is pushed in commit
@@ -122,7 +133,21 @@ Current active program:
   findings; full regression included `ruff check src/ tests/`, `ruff format
   --check src/ tests/`, `mypy --strict src/`, `git diff --check`, and `pytest
   tests/ -v` with 2196 passed. Staging, local commit, and push are complete.
-  Live git remains the source of truth for current `HEAD` and `origin/main`.
+  The duplicate `site_id` parser collision repair is accepted workspace-only.
+  It uses collision-only full-span suffixing for colliding call/attribute raw
+  fact IDs, preserves non-colliding IDs, prevents nested call/attribute
+  surfaces from dropping or colliding downstream, and updates only the Smoke E
+  confidence scalar after preservation locks held. Release-unit audit passed
+  with no findings, then full regression held on deterministic Smoke D
+  selected-unit expectation drift. That drift is corrected workspace-only:
+  Smoke D now expects the suffixed nested call IDs and the budget-200
+  `LayoutBase.format_digest` support unit. Corrected release-unit audit passed
+  with no findings. Full regression passed with `ruff check src/ tests/`,
+  `ruff format --check src/ tests/`, `mypy --strict src/`, `git diff --check`,
+  and `pytest tests/ -v` reporting 2201 passed. Commit-gating passed with no
+  findings over the exact 10-file release unit. Local commit and push remain
+  pending for this active workspace unit. Live git remains the source of truth
+  for current `HEAD` and `origin/main`.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -133,8 +158,9 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: continue the adversarial repair ledger with the next
-  bounded accepted finding. Do not start the real-OSS pre-registered experiment
+- next control action: stage and locally commit the corrected audit-cleared,
+  full-regression-cleared, and commit-gating-cleared duplicate `site_id` parser
+  collision repair unit. Do not start the real-OSS pre-registered experiment
   until the accepted repair ledger is closed or Ryan explicitly redirects.
 
 Latest release unit pushed:

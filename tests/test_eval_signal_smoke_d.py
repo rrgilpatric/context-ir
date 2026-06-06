@@ -322,8 +322,9 @@ def test_signal_quad_bundle_preserves_provider_lead_and_smoke_b_budget_pressure(
             "def:pkg/service.py:pkg.service.EnvelopeCompiler.compile_digest",
             "def:pkg/models.py:pkg.models.ReviewEnvelope",
             "def:pkg/base.py:pkg.base.LayoutBase",
+            "def:pkg/base.py:pkg.base.LayoutBase.format_digest",
             "frontier:call:pkg/service.py:13:8",
-            "frontier:call:pkg/service.py:12:17",
+            "frontier:call:pkg/service.py:12:17:12:24",
         },
         240: {
             "def:pkg/service.py:pkg.service.EnvelopeCompiler.compile_digest",
@@ -331,8 +332,8 @@ def test_signal_quad_bundle_preserves_provider_lead_and_smoke_b_budget_pressure(
             "def:pkg/base.py:pkg.base.LayoutBase",
             "def:pkg/base.py:pkg.base.LayoutBase.format_digest",
             "frontier:call:pkg/service.py:13:8",
-            "unsupported:call:pkg/service.py:12:17",
-            "frontier:call:pkg/service.py:12:17",
+            "unsupported:call:pkg/service.py:12:17:12:48",
+            "frontier:call:pkg/service.py:12:17:12:24",
         },
     }
     smoke_d_expected_support_coverage = {

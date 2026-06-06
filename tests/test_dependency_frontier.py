@@ -3405,6 +3405,57 @@ def test_derive_dependency_frontier_surfaces_non_call_attribute_reads_and_stores
     )
 
 
+def test_derive_dependency_frontier_preserves_nested_call_and_attribute_collisions(
+    tmp_path: Path,
+) -> None:
+    """Nested start-position collisions keep inner proof and outer uncertainty."""
+    (tmp_path / "main.py").write_text(
+        textwrap.dedent(
+            """
+            class Example:
+                def factory(self) -> "Example":
+                    return self
+
+                def run(self) -> object:
+                    return self.factory().make().value
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    run_id = _definition_id_for(derived_program, "main.Example.run")
+    factory_id = _definition_id_for(derived_program, "main.Example.factory")
+    unsupported_by_text = {
+        construct.construct_text: construct
+        for construct in derived_program.unsupported_constructs
+    }
+
+    assert any(
+        dependency.source_symbol_id == run_id
+        and dependency.target_symbol_id == factory_id
+        for dependency in derived_program.proven_dependencies
+    )
+    assert (
+        unsupported_by_text["self.factory().make"].reason_code
+        is UnresolvedReasonCode.UNSUPPORTED_CALL_TARGET
+    )
+    assert (
+        unsupported_by_text["self.factory().make().value"].reason_code
+        is UnresolvedReasonCode.UNSUPPORTED_ATTRIBUTE_ACCESS
+    )
+    assert len(
+        {construct.construct_id for construct in derived_program.unsupported_constructs}
+    ) == len(derived_program.unsupported_constructs)
+    attribute_construct = unsupported_by_text["self.factory().make().value"]
+    attribute_span = attribute_construct.site.span
+    assert attribute_construct.construct_id == (
+        "unsupported:attribute:main.py:"
+        f"{attribute_span.start_line}:{attribute_span.start_column}:"
+        f"{attribute_span.end_line}:{attribute_span.end_column}"
+    )
+
+
 def test_derive_dependency_frontier_classifies_hooked_self_attributes_as_unsupported(
     tmp_path: Path,
 ) -> None:
