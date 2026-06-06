@@ -2,6 +2,155 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Runtime Worker Contract Extraction Commit-Gating Passed
+
+- Ran commit-gating over the exact corrected five-file runtime worker
+  dynamic-import contract extraction release unit after audit and full
+  regression clearance.
+- Commit-gating result: PASS with no findings.
+- Commit-gating checks:
+  - dirty file set matched the corrected five-file release unit, including the
+    untracked helper file visible via `git status --short --branch -uall`
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, generated checkpoint, generated portfolio evidence,
+    package-root export, runtime probe execution, runtime probe requests, or
+    runtime probe results diff
+  - 19 moved private dynamic-import names preserve worker/helper identity
+  - `runtime_probe_worker.py` remains the subprocess module and owns the
+    entrypoint
+- Release state: commit-gating cleared. Staging, local commit, and push remain
+  pending.
+- Recommended next control action: stage and locally commit the exact corrected
+  five-file release unit. Push remains Ryan-gated.
+- Acceptance status: commit-gating-cleared first-pass.
+
+## 2026-06-06 -- Runtime Worker Contract Extraction Full Regression Passed
+
+- Applied the narrow Smoke E confidence-only correction after Ryan go-ahead.
+- Correction changed only `tests/test_eval_signal_smoke_e.py`:
+  - `FULL_REPO_TASK3_CONFIDENCE` changed from
+    `0.0016189821558800508` to `0.0016186029611415067`
+- Preservation proof:
+  - pre-edit focused Smoke E failed only at the confidence assertion
+  - budget-280 total tokens stayed `274`
+  - document hash stayed unchanged
+  - warnings and warning IDs stayed unchanged
+  - selected unit order stayed unchanged
+  - resolver detail stayed `source`
+  - probe threshold and warning-call count stayed locked
+- Focused correction validation:
+  - `pytest tests/test_eval_signal_smoke_e.py -q -k
+    "task3_query_selects_full_repo_exact_units"`: 1 passed, 7 deselected
+  - `ruff check tests/test_eval_signal_smoke_e.py`: passed
+  - `ruff format --check tests/test_eval_signal_smoke_e.py`: passed
+  - `git diff --check`: clean
+- Corrected full regression passed:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2201 passed
+- Corrected release unit now includes:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_dynamic_import_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Release state: full-regression cleared. Commit-gating, staging, local commit,
+  and push remain pending.
+- Recommended next control action: run commit-gating over the exact corrected
+  five-file release unit.
+- Acceptance status: full-regression-cleared after one confidence-only
+  correction.
+
+## 2026-06-06 -- Runtime Worker Contract Extraction Full Regression Held
+
+- Ran the read-only release-unit audit and then the full regression gate for
+  the runtime worker dynamic-import contract extraction release unit.
+- Release-unit audit result: PASS with no findings.
+- Audit checks:
+  - dirty file set matched the expected unit, including the untracked helper
+    file visible via `git status --short --branch -uall`
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, generated checkpoint, or generated portfolio evidence
+    diff
+  - package-root exports had no diff
+  - `runtime_probe_worker.py` still owns the subprocess entrypoint
+  - moved private dynamic-import names remain bound in `runtime_probe_worker.py`
+    and are only referenced through the helper plus worker bindings
+- Static full-regression gates passed:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+- Full pytest held with one deterministic confidence-only failure:
+  - `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+  - expected `FULL_REPO_TASK3_CONFIDENCE`:
+    `0.0016189821558800508`
+  - observed confidence:
+    `0.0016186029611415067`
+- Preservation evidence before the failing assertion:
+  - budget-280 total tokens stayed `274`
+  - document hash stayed unchanged
+  - warnings and warning IDs stayed unchanged
+  - selected unit order stayed unchanged
+  - resolver detail stayed `source`
+  - probe threshold and warning-call count stayed locked
+- Release state: full regression is held. Commit-gating, staging, local commit,
+  and push remain blocked pending a narrow Smoke E confidence scalar
+  correction and rerun of the full regression gate.
+- Recommended next control action: with Ryan go-ahead, issue a narrow
+  correction for the Smoke E confidence-only drift.
+- Acceptance status: held.
+
+## 2026-06-06 -- Runtime Worker Dynamic Import Contract Extraction Accepted
+
+- Reviewed and accepted the first runtime worker complexity refactor slice.
+- Findings: none.
+- Accepted workspace-only release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_dynamic_import_contracts.py`
+- Behavior and compatibility:
+  - dynamic-import worker form labels, render-card fixture contract dataclass,
+    render-card fixture contracts, and form/global-name mappings moved into a
+    private helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - 19 moved private names preserve object identity between the worker module
+    and helper module
+  - `main`, dispatch, response serialization, handler registration, observer
+    code, validators, exact replay logic, tests, subprocess module path,
+    stdout/stderr protocol, exit codes, and package-root exports were not moved
+  - `_DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL`, runtime sentinels, and
+    dynamic-import error-message constants stayed in `runtime_probe_worker.py`
+    because they are shared broadly or outside the contract/fixture extraction
+- Control validation:
+  - `ruff check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_dynamic_import_contracts.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_dynamic_import_contracts.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `mypy --strict src/`: passed
+  - 19-name worker/helper identity check: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - `git diff --check`: clean
+- Boundaries preserved: no test split, eval task, fixture, run-spec, generated
+  evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
+  smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, staging,
+  commit, or push changes.
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run the read-only release-unit audit over
+  this exact four-file release unit.
+- Acceptance status: first-pass.
+
 ## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Pushed
 
 - Pushed the corrected duplicate `site_id` parser collision repair release unit

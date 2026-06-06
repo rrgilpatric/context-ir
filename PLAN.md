@@ -84,7 +84,11 @@ Current active program:
     `910b6c7 Disambiguate colliding call source sites` after one
     deterministic Smoke D expectation correction, corrected release-unit audit,
     full regression, and commit-gating
-  - later higher-risk design/refactor tranche: runtime worker complexity
+  - runtime worker complexity tranche: first conservative dynamic-import
+    contract extraction is accepted workspace-only after one deterministic
+    Smoke E confidence-only correction; release-unit audit and full regression
+    passed; commit-gating passed; staging, local commit, and push remain
+    pending
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -114,9 +118,15 @@ Current active program:
      `c9a5fef Clarify internal evidence boundaries`
   10. duplicate `site_id` parser collision repair is pushed in commit
       `910b6c7 Disambiguate colliding call source sites`
-- current workspace release unit: none after this post-push continuity sync;
-  live git remains the source of truth for current `HEAD`, `origin/main`, and
-  worktree state
+  11. runtime worker dynamic-import contract extraction is accepted
+      workspace-only after first-pass control review; read-only release-unit
+      audit passed; full regression passed after one deterministic Smoke E
+      confidence-only correction; commit-gating passed
+- current workspace release unit: runtime worker dynamic-import contract
+  extraction (`PLAN.md`, `BUILDLOG.md`,
+  `src/context_ir/runtime_probe_worker.py`,
+  `src/context_ir/runtime_probe_worker_dynamic_import_contracts.py`,
+  `tests/test_eval_signal_smoke_e.py`)
 - current release state: duplicate `site_id` parser collision repair is pushed
   in commit `910b6c7 Disambiguate colliding call source sites`. It uses
   collision-only full-span suffixing for colliding call/attribute raw fact IDs,
@@ -127,7 +137,31 @@ Current active program:
   tests/`, `ruff format --check src/ tests/`, `mypy --strict src/`, `git diff
   --check`, and `pytest tests/ -v` reporting 2201 passed. Commit-gating passed
   with no findings over the exact 10-file release unit. Staging, local commit,
-  and push are complete.
+  and push are complete. The runtime worker complexity tranche has one
+  accepted workspace-only refactor: dynamic-import worker form labels,
+  render-card fixture contracts, and form/global-name mappings moved into a
+  private helper module and are imported back into `runtime_probe_worker.py`
+  under the same private names. `main`, dispatch, response serialization,
+  handler registration, validators, exact replay logic, tests, subprocess
+  module path, stdout/stderr protocol, and package-root exports were not moved.
+  Control validation passed with focused ruff checks, focused format check,
+  `mypy --strict src/`, a 19-name identity check, `pytest
+  tests/test_runtime_probe_worker.py -q` reporting 716 passed, and `git diff
+  --check`. Read-only release-unit audit passed with no findings. The first
+  full regression held on deterministic Smoke E confidence-only drift:
+  budget-280 token count, document hash, warnings, warning IDs, selected unit
+  order, resolver detail, probe threshold, and warning-call count held, but
+  confidence changed from `0.0016189821558800508` to
+  `0.0016186029611415067`. The correction updated only
+  `FULL_REPO_TASK3_CONFIDENCE`, and focused Smoke E validation passed. Corrected
+  full regression passed with `ruff check src/ tests/`, `ruff format --check
+  src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` reporting 2201
+  passed. Commit-gating passed with no findings over the exact corrected
+  five-file release unit, including the untracked helper visible via
+  `git status --short --branch -uall`, no staged files, clean protected-surface
+  guards, and a 19-name worker/helper identity check. Staging, local commit,
+  and push remain pending for this workspace unit. Live git remains the source
+  of truth for current `HEAD` and `origin/main`.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -138,10 +172,11 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: continue the adversarial repair ledger with the
-  remaining higher-risk runtime worker complexity design/refactor tranche. Do
-  not start the real-OSS pre-registered experiment until the accepted repair
-  ledger is closed or Ryan explicitly redirects.
+- next control action: stage and locally commit the corrected audit-cleared,
+  full-regression-cleared, and commit-gating-cleared runtime worker
+  dynamic-import contract extraction unit. Push remains Ryan-gated. Do not
+  start the real-OSS pre-registered experiment until the accepted repair ledger
+  is closed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 
