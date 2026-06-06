@@ -70,7 +70,6 @@ Current active program:
   optics finding be fixed; do not discard issues merely because they are
   nonblocking for the prior private packet
 - highest-priority accepted findings:
-  - compiler budget utilization can miss feasible better packs
   - remaining nonblocking/partial issues: `src/` layout test gaps,
     project-specific scorer floors, MCP in-band error semantics, baseline
     uncertainty ceiling/readability, replay-vs-default-local evidence separation
@@ -86,25 +85,35 @@ Current active program:
      correction; corrected release-unit audit, full regression, commit-gating,
      local commit, and push are complete in commit
      `fa9b2ae Reject invalid repository roots`
-  3. fix compiler budget-utilization fallback behavior
+  3. compiler budget-utilization fallback behavior is corrected and accepted
+     workspace-only after a full-regression smoke-matrix correction; corrected
+     release-unit audit, full regression, and commit-gating have passed; release
+     sequencing is pending live git state and Ryan push authorization
   4. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit: none; `main` is clean after the invalid
-  `repo_root` repair push
-- current release state: invalid `repo_root` repair is pushed in commit
-  `fa9b2ae Reject invalid repository roots`. It added invalid-root rejection
-  after a P2 audit correction added MCP coverage for facade-raised
-  `InvalidRepositoryRootError` and a confidence-only correction updated
-  `FULL_REPO_TASK3_CONFIDENCE` from `0.0016393397346055746` to
-  `0.0016385604521468801`. The prior seven-file unit was
-  release-unit-audit-cleared, then full regression failed on
-  `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
-  because only that scalar drifted; correction-lane and control validation
-  confirmed preservation locks for token count, document hash, warnings, warning
-  IDs, selected-unit order, resolver detail, probe-budget threshold,
-  warning-call count, and budget-400 parent/no-noise checks. The corrected
-  eight-file unit passed corrected release-unit audit, full regression, and
-  commit-gating before local commit and push.
+- current workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_d.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: compiler budget-utilization repair is corrected and
+  accepted workspace-only after the full-regression smoke-matrix correction.
+  `_compile_budget_honest_artifact(...)` now chooses the best semantically useful
+  feasible probed document rather than the latest/highest feasible unit-budget
+  probe. Feasible probes rank first by semantic utility; equal-utility probes
+  prefer selected frontier/unsupported uncertainty surfaces before compactness.
+  Smoke D budget 200 keeps the requested `LayoutBase` support pack under budget
+  and reaches support coverage `1.0`. Smoke D emits an honest
+  `omitted_uncertainty` warning for the omitted duplicate unsupported unit.
+  Smoke E Task 3 confidence drifted from `0.0016385604521468801` to
+  `0.0016306030935493503` across the repair/correction, with selection,
+  document, probe-count, warning-call, and preservation locks held. Corrected
+  release-unit audit passed. Full regression passed with `2187` tests.
+  Commit-gating passed over the exact six-file unit. Live git determines
+  whether local commit/push sequencing has already occurred; push requires
+  explicit Ryan authorization.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -115,10 +124,11 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: fix the accepted compiler budget-utilization finding as
-  the next bounded Claude-review repair slice. Do not start the real-OSS
-  pre-registered experiment until the accepted repair ledger is closed or Ryan
-  explicitly redirects.
+- next control action: finish release sequencing for the compiler
+  budget-utilization repair unit according to live git state. Do not push
+  without explicit Ryan authorization. Do not start the real-OSS pre-registered
+  experiment until the accepted repair ledger is closed or Ryan explicitly
+  redirects.
 
 Latest release unit pushed:
 

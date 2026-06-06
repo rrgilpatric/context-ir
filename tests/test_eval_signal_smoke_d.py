@@ -321,8 +321,8 @@ def test_signal_quad_bundle_preserves_provider_lead_and_smoke_b_budget_pressure(
         200: {
             "def:pkg/service.py:pkg.service.EnvelopeCompiler.compile_digest",
             "def:pkg/models.py:pkg.models.ReviewEnvelope",
+            "def:pkg/base.py:pkg.base.LayoutBase",
             "frontier:call:pkg/service.py:13:8",
-            "unsupported:call:pkg/service.py:12:17",
             "frontier:call:pkg/service.py:12:17",
         },
         240: {
@@ -336,11 +336,11 @@ def test_signal_quad_bundle_preserves_provider_lead_and_smoke_b_budget_pressure(
         },
     }
     smoke_d_expected_support_coverage = {
-        200: 0.5,
+        200: 1.0,
         240: 1.0,
     }
     smoke_d_expected_warnings = {
-        200: [],
+        200: ["omitted_uncertainty"],
         240: [],
     }
 
@@ -373,9 +373,7 @@ def test_signal_quad_bundle_preserves_provider_lead_and_smoke_b_budget_pressure(
         assert cast(int, smoke_d_record["total_tokens"]) <= budget
         assert smoke_d_metrics["budget_compliant"] is True
         assert smoke_d_metrics["adequate_edit_selectors"] == 1
-        assert cast(int, smoke_d_metrics["adequate_support_selectors"]) == (
-            1 if budget == 200 else 2
-        )
+        assert cast(int, smoke_d_metrics["adequate_support_selectors"]) == 2
         assert smoke_d_metrics["edit_coverage"] == 1.0
         assert (
             cast(float, smoke_d_metrics["support_coverage"])

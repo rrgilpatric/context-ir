@@ -812,6 +812,263 @@ def test_compile_semantic_context_finds_largest_fitting_selection_under_budget(
     ]
 
 
+def test_compile_budget_honest_artifact_prefers_semantic_utility_over_latest_fit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Budget probing keeps the strongest fitting probe, not the latest fit."""
+
+    def selection(unit_id: str, token_count: int) -> SemanticSelectionRecord:
+        return SemanticSelectionRecord(
+            unit_id=unit_id,
+            detail=RenderDetail.IDENTITY.value,
+            token_count=token_count,
+            basis=SelectionBasis.HEURISTIC_CANDIDATE,
+            reason=f"selected {unit_id}",
+            edit_score=0.1,
+            support_score=0.1,
+        )
+
+    strong_probe = semantic_optimizer._SemanticOptimizationProbe(
+        selections=(selection("unit:strong", 4),),
+        omitted_unit_ids=("unit:weak",),
+        total_tokens=4,
+        budget=4,
+        focus_unit_ids=frozenset(),
+        suppressed_uncertainty_unit_ids=frozenset(),
+    )
+    weak_probe = semantic_optimizer._SemanticOptimizationProbe(
+        selections=(selection("unit:weak", 6),),
+        omitted_unit_ids=("unit:strong",),
+        total_tokens=6,
+        budget=6,
+        focus_unit_ids=frozenset(),
+        suppressed_uncertainty_unit_ids=frozenset(),
+        certified_same_result_interval=(6, 8, 6),
+    )
+    probe_budgets: list[int] = []
+    finalized_probe_budgets: list[int] = []
+
+    class FakeOptimizerSession:
+        """Optimizer session with non-monotonic utility across fitting probes."""
+
+        def probe(self, budget: int) -> semantic_optimizer._SemanticOptimizationProbe:
+            probe_budgets.append(budget)
+            if budget == 4:
+                return strong_probe
+            return weak_probe
+
+        def render_selected_units(
+            self,
+            optimization: (
+                SemanticOptimizationResult
+                | semantic_optimizer._SemanticOptimizationProbe
+            ),
+        ) -> dict[str, RenderedUnit]:
+            del optimization
+            return {}
+
+        def finalize_probe(
+            self,
+            probe: semantic_optimizer._SemanticOptimizationProbe,
+            *,
+            budget: int | None = None,
+        ) -> SemanticOptimizationResult:
+            finalized_probe_budgets.append(probe.budget)
+            result_budget = probe.budget if budget is None else budget
+            return SemanticOptimizationResult(
+                selections=probe.selections,
+                omitted_unit_ids=probe.omitted_unit_ids,
+                warnings=(),
+                total_tokens=probe.total_tokens,
+                budget=result_budget,
+                confidence=0.5,
+            )
+
+    fake_session = FakeOptimizerSession()
+
+    monkeypatch.setattr(
+        semantic_compiler._SemanticOptimizerSession,
+        "build",
+        classmethod(lambda cls, program_arg, scoring_arg: fake_session),
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_initial_unit_budget",
+        lambda *, query, scoring, budget: 8,
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_assemble_document",
+        lambda *, query, optimization, rendered_units: f"probe:{optimization.budget}",
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_estimate_document_tokens",
+        lambda document: 80 if document == "probe:4" else 90,
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_semantic_probe_utility",
+        lambda optimizer_session, probe: (
+            10.0 if probe.selections[0].unit_id == "unit:strong" else 4.0
+        ),
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_selected_uncertainty_surface_count",
+        lambda optimizer_session, probe: 0,
+    )
+
+    optimization, _rendered_units, document = (
+        semantic_compiler._compile_budget_honest_artifact(
+            program=object(),
+            scoring=SemanticScoringResult(query="query", scores={}),
+            query="query",
+            budget=100,
+        )
+    )
+
+    assert probe_budgets == [4, 6]
+    assert finalized_probe_budgets == [4]
+    assert document == "probe:4"
+    assert [record.unit_id for record in optimization.selections] == ["unit:strong"]
+    assert optimization.budget == 100
+
+
+def test_compile_budget_honest_artifact_prefers_uncertainty_surface_on_utility_tie(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Budget probing preserves honest uncertainty when semantic utility ties."""
+
+    def selection(unit_id: str, token_count: int) -> SemanticSelectionRecord:
+        return SemanticSelectionRecord(
+            unit_id=unit_id,
+            detail=RenderDetail.IDENTITY.value,
+            token_count=token_count,
+            basis=SelectionBasis.HEURISTIC_CANDIDATE,
+            reason=f"selected {unit_id}",
+            edit_score=0.1,
+            support_score=0.1,
+        )
+
+    compact_probe = semantic_optimizer._SemanticOptimizationProbe(
+        selections=(selection("unit:anchor", 4),),
+        omitted_unit_ids=("unit:uncertainty",),
+        total_tokens=4,
+        budget=4,
+        focus_unit_ids=frozenset(),
+        suppressed_uncertainty_unit_ids=frozenset(),
+    )
+    honest_probe = semantic_optimizer._SemanticOptimizationProbe(
+        selections=(
+            selection("unit:anchor", 4),
+            selection("unit:uncertainty", 2),
+        ),
+        omitted_unit_ids=(),
+        total_tokens=6,
+        budget=6,
+        focus_unit_ids=frozenset(),
+        suppressed_uncertainty_unit_ids=frozenset(),
+        certified_same_result_interval=(6, 8, 6),
+    )
+    probe_budgets: list[int] = []
+    finalized_probe_budgets: list[int] = []
+
+    class FakeOptimizerSession:
+        """Optimizer session with equal-utility fitting probes."""
+
+        def probe(self, budget: int) -> semantic_optimizer._SemanticOptimizationProbe:
+            probe_budgets.append(budget)
+            if budget == 4:
+                return compact_probe
+            return honest_probe
+
+        def render_selected_units(
+            self,
+            optimization: (
+                SemanticOptimizationResult
+                | semantic_optimizer._SemanticOptimizationProbe
+            ),
+        ) -> dict[str, RenderedUnit]:
+            del optimization
+            return {}
+
+        def finalize_probe(
+            self,
+            probe: semantic_optimizer._SemanticOptimizationProbe,
+            *,
+            budget: int | None = None,
+        ) -> SemanticOptimizationResult:
+            finalized_probe_budgets.append(probe.budget)
+            result_budget = probe.budget if budget is None else budget
+            return SemanticOptimizationResult(
+                selections=probe.selections,
+                omitted_unit_ids=probe.omitted_unit_ids,
+                warnings=(),
+                total_tokens=probe.total_tokens,
+                budget=result_budget,
+                confidence=0.5,
+            )
+
+    fake_session = FakeOptimizerSession()
+
+    monkeypatch.setattr(
+        semantic_compiler._SemanticOptimizerSession,
+        "build",
+        classmethod(lambda cls, program_arg, scoring_arg: fake_session),
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_initial_unit_budget",
+        lambda *, query, scoring, budget: 8,
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_assemble_document",
+        lambda *, query, optimization, rendered_units: f"probe:{optimization.budget}",
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_estimate_document_tokens",
+        lambda document: 80 if document == "probe:4" else 90,
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_semantic_probe_utility",
+        lambda optimizer_session, probe: 10.0,
+    )
+    monkeypatch.setattr(
+        semantic_compiler,
+        "_selected_uncertainty_surface_count",
+        lambda optimizer_session, probe: (
+            1
+            if any(
+                selection.unit_id == "unit:uncertainty"
+                for selection in probe.selections
+            )
+            else 0
+        ),
+    )
+
+    optimization, _rendered_units, document = (
+        semantic_compiler._compile_budget_honest_artifact(
+            program=object(),
+            scoring=SemanticScoringResult(query="query", scores={}),
+            query="query",
+            budget=100,
+        )
+    )
+
+    assert probe_budgets == [4, 6]
+    assert finalized_probe_budgets == [6]
+    assert document == "probe:6"
+    assert [record.unit_id for record in optimization.selections] == [
+        "unit:anchor",
+        "unit:uncertainty",
+    ]
+    assert optimization.budget == 100
+
+
 def test_compile_semantic_context_reuses_optimizer_materialization_across_budget_probes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

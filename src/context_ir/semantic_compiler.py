@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from context_ir.eval_evidence import discover_semantic_eval_runtime_evidence
 from context_ir.semantic_optimizer import (
     _SemanticOptimizationProbe,
     _SemanticOptimizerSession,
+    _utility,
 )
-from context_ir.semantic_renderer import RenderedUnit
+from context_ir.semantic_renderer import RenderDetail, RenderedUnit, RenderedUnitKind
 from context_ir.semantic_scorer import SemanticScoringResult, score_semantic_units
 from context_ir.semantic_types import (
     SemanticCompileContext,
@@ -22,6 +23,18 @@ from context_ir.semantic_types import (
 )
 
 EmbeddingFunction = Callable[[list[str]], list[list[float]]]
+
+
+@dataclass(frozen=True)
+class _FeasibleOptimizationProbe:
+    """One document-budget-feasible optimizer probe considered for compilation."""
+
+    probe: _SemanticOptimizationProbe
+    rendered_units: dict[str, RenderedUnit]
+    document: str
+    document_tokens: int
+    semantic_utility: float
+    selected_uncertainty_surfaces: int
 
 
 def compile_semantic_context(
@@ -89,9 +102,7 @@ def _compile_budget_honest_artifact(
 ) -> tuple[SemanticOptimizationResult, dict[str, RenderedUnit], str]:
     """Reserve document-assembly overhead before returning a compiled artifact."""
     max_unit_budget = _initial_unit_budget(query=query, scoring=scoring, budget=budget)
-    best_fit: tuple[_SemanticOptimizationProbe, dict[str, RenderedUnit], str] | None = (
-        None
-    )
+    best_fit: _FeasibleOptimizationProbe | None = None
     optimizer_session = _SemanticOptimizerSession.build(program, scoring)
     certified_probes: list[_SemanticOptimizationProbe] = []
     low = 0
@@ -121,16 +132,99 @@ def _compile_budget_honest_artifact(
         )
         document_tokens = _estimate_document_tokens(document)
         if document_tokens <= budget:
-            best_fit = (probe, rendered_units, document)
+            feasible_probe = _FeasibleOptimizationProbe(
+                probe=probe,
+                rendered_units=rendered_units,
+                document=document,
+                document_tokens=document_tokens,
+                semantic_utility=_semantic_probe_utility(
+                    optimizer_session,
+                    probe,
+                ),
+                selected_uncertainty_surfaces=_selected_uncertainty_surface_count(
+                    optimizer_session,
+                    probe,
+                ),
+            )
+            if best_fit is None or _is_better_feasible_probe(
+                feasible_probe,
+                best_fit,
+            ):
+                best_fit = feasible_probe
             low = unit_budget + 1
             continue
         high = unit_budget - 1
 
     if best_fit is not None:
-        probe, rendered_units, document = best_fit
+        probe = best_fit.probe
         optimization = optimizer_session.finalize_probe(probe, budget=budget)
-        return optimization, rendered_units, document
+        return optimization, best_fit.rendered_units, best_fit.document
     raise ValueError("budget is too small for the compiled document envelope")
+
+
+def _semantic_probe_utility(
+    optimizer_session: _SemanticOptimizerSession,
+    probe: _SemanticOptimizationProbe,
+) -> float:
+    """Return deterministic semantic utility for the probe's selected details."""
+    return sum(
+        _utility(
+            optimizer_session.candidate_by_id[selection.unit_id],
+            RenderDetail(selection.detail),
+        )
+        for selection in probe.selections
+    )
+
+
+def _is_better_feasible_probe(
+    candidate: _FeasibleOptimizationProbe,
+    incumbent: _FeasibleOptimizationProbe,
+) -> bool:
+    """Return whether ``candidate`` is the better compiled-context probe."""
+    if candidate.semantic_utility != incumbent.semantic_utility:
+        return candidate.semantic_utility > incumbent.semantic_utility
+    if candidate.selected_uncertainty_surfaces != (
+        incumbent.selected_uncertainty_surfaces
+    ):
+        return (
+            candidate.selected_uncertainty_surfaces
+            > incumbent.selected_uncertainty_surfaces
+        )
+    if candidate.document_tokens != incumbent.document_tokens:
+        return candidate.document_tokens < incumbent.document_tokens
+    if candidate.probe.total_tokens != incumbent.probe.total_tokens:
+        return candidate.probe.total_tokens < incumbent.probe.total_tokens
+    if len(candidate.probe.selections) != len(incumbent.probe.selections):
+        return len(candidate.probe.selections) < len(incumbent.probe.selections)
+    if candidate.probe.budget != incumbent.probe.budget:
+        return candidate.probe.budget < incumbent.probe.budget
+    return _selection_signature(candidate.probe) < _selection_signature(incumbent.probe)
+
+
+def _selected_uncertainty_surface_count(
+    optimizer_session: _SemanticOptimizerSession,
+    probe: _SemanticOptimizationProbe,
+) -> int:
+    """Return selected frontier or unsupported surfaces for equal-utility probes."""
+    uncertainty_kinds = {
+        RenderedUnitKind.UNRESOLVED_FRONTIER,
+        RenderedUnitKind.UNSUPPORTED_CONSTRUCT,
+    }
+    return sum(
+        1
+        for selection in probe.selections
+        if optimizer_session.candidate_by_id[selection.unit_id].kind
+        in uncertainty_kinds
+    )
+
+
+def _selection_signature(
+    probe: _SemanticOptimizationProbe,
+) -> tuple[tuple[str, str], ...]:
+    """Return a stable signature for final feasible-probe tie-breaking."""
+    return tuple(
+        (selection.unit_id, selection.detail) for selection in probe.selections
+    )
 
 
 def _initial_unit_budget(

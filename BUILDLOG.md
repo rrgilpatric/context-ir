@@ -2,6 +2,149 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Compiler Budget-Utilization Commit-Gating Passed
+
+- Ran commit-gating over the exact six-file compiler budget-utilization repair
+  unit after corrected audit and full regression passed.
+- Commit-gating checks:
+  - dirty file set exactly matched the release unit
+  - no staged files before staging
+  - `git diff --check`: clean
+  - forbidden public/eval/evidence surfaces had no diff
+  - source/test diff matched the accepted feasible-probe ranking behavior,
+    Smoke D budget 200 expectation update, Smoke E confidence-only drift, and
+    focused compiler coverage
+- Release state: commit-gating cleared. Local commit and push sequencing depend
+  on live git state. Push requires explicit Ryan authorization.
+- Recommended next control action: finish release sequencing for the compiler
+  budget-utilization repair unit according to live git state.
+- Acceptance status: commit-gating cleared.
+
+## 2026-06-06 -- Compiler Budget-Utilization Full Regression Passed
+
+- Ran corrected release-unit gates for the six-file compiler budget-utilization
+  repair unit after accepting the smoke-matrix correction.
+- Corrected release-unit audit: PASS with no findings.
+- Full regression:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2187 passed
+- Release state: corrected release-unit audit and full regression are cleared.
+  Commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run commit-gating over the exact six-file
+  release unit.
+- Acceptance status: corrected audit and full regression cleared after 1
+  correction.
+
+## 2026-06-06 -- Compiler Budget-Utilization Correction Accepted Workspace-Only
+
+- Accepted the compiler budget-utilization correction workspace-only after the
+  full-regression smoke-matrix hold.
+- Release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_d.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Correction accepted:
+  - feasible probes still rank first by semantic utility
+  - equal-utility probes prefer selected frontier/unsupported uncertainty
+    surfaces before compactness
+  - finalization still runs only once on the selected probe
+  - Smoke D budget 200 keeps the `LayoutBase` support pack under budget and
+    support coverage `1.0`
+  - prior Smoke and Smoke C full-regression locks are restored without changing
+    their test expectations
+  - Smoke E Task 3 confidence changed from `0.0016385604521468801` to
+    `0.0016306030935493503` across the repair/correction with selection,
+    document, probe-count, warning-call, and preservation locks held
+- Control validation:
+  - `tests/test_semantic_compiler.py tests/test_eval_signal_smoke.py tests/test_eval_signal_smoke_c.py tests/test_eval_signal_smoke_d.py tests/test_eval_signal_smoke_e.py -q`:
+    47 passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: passed
+- Preserved boundaries: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, default-local
+  checkpoint, MCP/API, Task 4, composite smoke, demo, or real-OSS experiment
+  changes.
+- Release state: corrected workspace-only accepted. Corrected release-unit
+  audit, full regression, commit-gating, staging, local commit, and push remain
+  pending.
+- Recommended next control action: run a corrected read-only release-unit audit
+  over the exact six-file compiler budget-utilization repair unit.
+- Acceptance status: workspace-only accepted after 1 correction.
+
+## 2026-06-06 -- Compiler Budget-Utilization Full-Regression Hold
+
+- Reviewed the read-only release-unit audit result for the six-file compiler
+  budget-utilization repair unit.
+- Audit result: PASS with no findings.
+- Full regression gate:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: failed with 2 failed, 2184 passed
+- Failures:
+  - `tests/test_eval_signal_smoke.py::test_signal_smoke_bundle_closes_context_ir_competitive_gap_across_budgets`
+    - `uncertainty_honesty` was `0.625`, expected `1.0`
+  - `tests/test_eval_signal_smoke_c.py::test_signal_triple_bundle_recovers_context_ir_on_smoke_c_without_regressions`
+    - `context_ir` provider aggregate was `0.9689752833652405`, expected at
+      least `0.972`
+- Interpretation: the narrow compiler feasible-probe comparator fixed the Smoke
+  D under-utilization target, but it also changed earlier smoke matrix behavior
+  enough to reduce accepted uncertainty-honesty/aggregate locks. This is a
+  full-regression finding, not a release-ready expectation update.
+- Release state: release-unit-audit-cleared but full-regression-held. The unit
+  is not commit-gating-cleared, staged, locally committed, or pushed.
+- Recommended next control action: issue a narrow correction for the smoke
+  matrix regressions before rerunning corrected audit and full regression.
+- Acceptance status: held on full-regression findings.
+
+## 2026-06-06 -- Compiler Budget-Utilization Repair Accepted Workspace-Only
+
+- Accepted the compiler budget-utilization repair workspace-only.
+- Release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_d.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior accepted:
+  - `_compile_budget_honest_artifact(...)` compares feasible probed documents by
+    deterministic semantic utility instead of keeping the latest/highest
+    feasible unit-budget probe
+  - document-budget honesty, certified interval reuse, and single selected-probe
+    finalization are preserved
+  - Smoke D budget 200 now selects the `LayoutBase` support pack at 172/200
+    tokens and improves support coverage to `1.0`
+  - Smoke D budget 200 now emits `omitted_uncertainty` for the omitted duplicate
+    unsupported unit; this is accepted as an honest warning consequence, not a
+    blocker
+  - Smoke E Task 3 confidence changed from `0.0016385604521468801` to
+    `0.001634484415916724` with selection, document, probe-count,
+    warning-call, and preservation locks held
+- Control validation:
+  - `tests/test_semantic_compiler.py tests/test_eval_signal_smoke_d.py tests/test_eval_signal_smoke_e.py -q`:
+    32 passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: passed
+- Preserved boundaries: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, default-local
+  checkpoint, MCP/API, Task 4, composite smoke, demo, or real-OSS experiment
+  changes.
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run a read-only release-unit audit over the
+  exact six-file compiler budget-utilization repair unit.
+- Acceptance status: workspace-only accepted first-pass.
+
 ## 2026-06-06 -- Invalid Repo Root Repair Pushed
 
 - Pushed the invalid `repo_root` repair to `origin/main`.
