@@ -49,6 +49,7 @@ _CALLABLE_SYMBOL_KINDS = frozenset(
         ResolvedSymbolKind.METHOD,
     }
 )
+_SOURCE_ROOT_MODULE_PREFIXES = frozenset({"src"})
 
 
 @dataclass(frozen=True)
@@ -152,17 +153,15 @@ def _build_repository_index(program: SemanticProgram) -> _RepositoryIndex:
         definitions_by_qualified_name.setdefault(definition.qualified_name, []).append(
             definition
         )
-    unique_definitions_by_qualified_name = {
-        qualified_name: definitions[0]
-        for qualified_name, definitions in definitions_by_qualified_name.items()
-        if len(definitions) == 1
-    }
-    module_symbol_ids_by_name = {
-        definition.qualified_name: definition.definition_id
-        for definition in definitions_by_id.values()
-        if definition.kind is DefinitionKind.MODULE
-        and definition.definition_id in program.resolved_symbols
-    }
+    unique_definitions_by_qualified_name = (
+        _unique_definitions_by_qualified_name_with_source_root_aliases(
+            definitions_by_qualified_name
+        )
+    )
+    module_symbol_ids_by_name = _module_symbol_ids_by_name_with_source_root_aliases(
+        definitions_by_id=definitions_by_id,
+        resolved_symbols=program.resolved_symbols,
+    )
     binding_by_symbol_id = {binding.symbol_id: binding for binding in program.bindings}
     bindings_by_scope: dict[str, list[BindingFact]] = {}
     for binding in program.bindings:
@@ -259,6 +258,93 @@ def _build_repository_index(program: SemanticProgram) -> _RepositoryIndex:
     )
 
 
+def _unique_definitions_by_qualified_name_with_source_root_aliases(
+    definitions_by_qualified_name: dict[str, list[RawDefinitionFact]],
+) -> dict[str, RawDefinitionFact]:
+    """Return unique definition lookup names with unambiguous source-root aliases."""
+    unique_definitions = {
+        qualified_name: definitions[0]
+        for qualified_name, definitions in definitions_by_qualified_name.items()
+        if len(definitions) == 1
+    }
+    alias_definitions_by_qualified_name: dict[str, list[RawDefinitionFact]] = {}
+    for qualified_name, definitions in definitions_by_qualified_name.items():
+        alias_qualified_name = _source_root_alias_qualified_name(qualified_name)
+        if alias_qualified_name is None:
+            continue
+        alias_definitions_by_qualified_name.setdefault(
+            alias_qualified_name,
+            [],
+        ).extend(definitions)
+
+    for (
+        alias_qualified_name,
+        definitions,
+    ) in alias_definitions_by_qualified_name.items():
+        if (
+            alias_qualified_name in definitions_by_qualified_name
+            or len(definitions) != 1
+        ):
+            continue
+        unique_definitions[alias_qualified_name] = definitions[0]
+    return unique_definitions
+
+
+def _module_symbol_ids_by_name_with_source_root_aliases(
+    *,
+    definitions_by_id: dict[str, RawDefinitionFact],
+    resolved_symbols: dict[str, ResolvedSymbol],
+) -> dict[str, str]:
+    """Return module lookup names, including unambiguous source-root aliases."""
+    module_symbol_ids_by_name = {
+        definition.qualified_name: definition.definition_id
+        for definition in definitions_by_id.values()
+        if definition.kind is DefinitionKind.MODULE
+        and definition.definition_id in resolved_symbols
+    }
+    alias_symbol_ids_by_name: dict[str, list[str]] = {}
+    for definition in definitions_by_id.values():
+        if (
+            definition.kind is not DefinitionKind.MODULE
+            or definition.definition_id not in resolved_symbols
+        ):
+            continue
+        alias_qualified_name = _source_root_alias_qualified_name(
+            definition.qualified_name
+        )
+        if alias_qualified_name is None:
+            continue
+        alias_symbol_ids_by_name.setdefault(alias_qualified_name, []).append(
+            definition.definition_id
+        )
+
+    for alias_qualified_name, symbol_ids in alias_symbol_ids_by_name.items():
+        if alias_qualified_name in module_symbol_ids_by_name or len(symbol_ids) != 1:
+            continue
+        module_symbol_ids_by_name[alias_qualified_name] = symbol_ids[0]
+    return module_symbol_ids_by_name
+
+
+def _source_root_alias_qualified_name(qualified_name: str) -> str | None:
+    """Return the import-facing name for a known source-root qualified name."""
+    module_parts = qualified_name.split(".")
+    if len(module_parts) < 2 or module_parts[0] not in _SOURCE_ROOT_MODULE_PREFIXES:
+        return None
+    return ".".join(module_parts[1:])
+
+
+def _module_qualified_name_for_symbol_id(
+    *,
+    target_symbol_id: str,
+    index: _RepositoryIndex,
+) -> str | None:
+    """Return the durable module qualified name for a resolved module symbol."""
+    target_definition = index.definitions_by_id.get(target_symbol_id)
+    if target_definition is None or target_definition.kind is not DefinitionKind.MODULE:
+        return None
+    return target_definition.qualified_name
+
+
 def _resolve_imports(
     program: SemanticProgram,
     index: _RepositoryIndex,
@@ -321,6 +407,12 @@ def _resolve_import_target(
         target_symbol_id = index.module_symbol_ids_by_name.get(target_module_name)
         if target_symbol_id is None:
             return None
+        target_qualified_name = _module_qualified_name_for_symbol_id(
+            target_symbol_id=target_symbol_id,
+            index=index,
+        )
+        if target_qualified_name is None:
+            return None
         return ResolvedImport(
             import_id=import_fact.import_id,
             binding_symbol_id=binding.symbol_id,
@@ -328,7 +420,7 @@ def _resolve_import_target(
             scope_id=import_fact.scope_id,
             site=import_fact.site,
             target_kind=ImportTargetKind.MODULE,
-            target_qualified_name=target_module_name,
+            target_qualified_name=target_qualified_name,
             target_symbol_id=target_symbol_id,
         )
 
@@ -359,7 +451,7 @@ def _resolve_import_target(
                 scope_id=import_fact.scope_id,
                 site=import_fact.site,
                 target_kind=ImportTargetKind.MODULE,
-                target_qualified_name=target_qualified_name,
+                target_qualified_name=target_definition.qualified_name,
                 target_symbol_id=target_definition.definition_id,
             )
         return ResolvedImport(
@@ -369,12 +461,18 @@ def _resolve_import_target(
             scope_id=import_fact.scope_id,
             site=import_fact.site,
             target_kind=ImportTargetKind.DEFINITION,
-            target_qualified_name=target_qualified_name,
+            target_qualified_name=target_definition.qualified_name,
             target_symbol_id=target_definition.definition_id,
         )
 
     target_symbol_id = index.module_symbol_ids_by_name.get(target_qualified_name)
     if target_symbol_id is None:
+        return None
+    target_module_qualified_name = _module_qualified_name_for_symbol_id(
+        target_symbol_id=target_symbol_id,
+        index=index,
+    )
+    if target_module_qualified_name is None:
         return None
     return ResolvedImport(
         import_id=import_fact.import_id,
@@ -383,7 +481,7 @@ def _resolve_import_target(
         scope_id=import_fact.scope_id,
         site=import_fact.site,
         target_kind=ImportTargetKind.MODULE,
-        target_qualified_name=target_qualified_name,
+        target_qualified_name=target_module_qualified_name,
         target_symbol_id=target_symbol_id,
     )
 

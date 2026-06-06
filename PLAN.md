@@ -22,6 +22,26 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 - The new post-milestone program targets broad Python repo coverage through hybrid static + runtime analysis
 - The phase 0 foundation remains closed and authoritative for current claims, regression anchors, and reviewer-facing artifacts
+- The company-level thesis is not "semantic code graphs exist"; that field is
+  mature. The defensible wedge is proof-first, budget-aware context compilation
+  for LLM coding agents, with explicit typed uncertainty, tested against real
+  coding tasks under fixed token budgets.
+- Synthetic fixtures, oracle probe matrices, and internal runtime checkpoints
+  are engineering/regression evidence only. They must not be treated as
+  external market proof or as decisive evidence that the north-star thesis
+  matters.
+- The next north-star credibility proof, after the accepted repair findings are
+  fixed, must be a pre-registered real-OSS experiment with an independent
+  oracle derived from merged PRs or equivalent repo facts, not from Context IR's
+  analyzer IDs or existing eval harness.
+- That experiment must compare Context IR against fair lexical/BM25 and
+  embedding retrieval baselines at equal token budgets, record wasted tokens and
+  edit-relevant recall, and define a written kill/reevaluate criterion before
+  results are seen.
+- Bounded execution slices remain the delivery discipline for correctness
+  repairs, but company-level progress must be judged by real-repo capability
+  and credible external-style evidence, not by accumulating more probe-only
+  matrices or continuity churn.
 - Each capability tier must stay separate from representation tiers:
   - capability tier describes how a fact or unit is justified
   - representation tiers describe how densely a selected unit is rendered
@@ -39,6 +59,62 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 ## Current Phase
 
 ### Canonical Active Release-State Block
+
+Current active program:
+
+- adversarial review repair program authorized by Ryan after outside Claude Code
+  audit triage
+- reviewer send-readiness state: held until the accepted adversarial findings
+  are fixed or explicitly disclosed by Ryan
+- repair standard: Ryan requested every real, partial, nonblocking, process, and
+  optics finding be fixed; do not discard issues merely because they are
+  nonblocking for the prior private packet
+- highest-priority accepted findings:
+  - `src/` layout import/inheritance proof drops on the public analyzer path
+  - invalid `repo_root` inputs return successful facade/MCP responses
+  - compiler budget utilization can miss feasible better packs
+  - remaining nonblocking/partial issues: `src/` layout test gaps,
+    project-specific scorer floors, MCP in-band error semantics, baseline
+    uncertainty ceiling/readability, replay-vs-default-local evidence separation
+    clarity, runtime worker complexity, sync-commit optics, portfolio narrative
+    weight, Python-version sensitivity, duplicate `site_id` risk, recompile
+    no-op coverage, public-surface drift wording, and stale AGENTS SWE-bench
+    wording
+- repair sequencing:
+  1. `src/` layout dependency repair plus optimizer-focus correction is
+     audit-cleared and full-regression-cleared after one audit correction and
+     one full-regression correction; commit-gating remains pending
+  2. fix invalid `repo_root` handling across analyzer/facade/MCP boundaries
+  3. fix compiler budget-utilization fallback behavior
+  4. proceed through the remaining nonblocking/partial/process findings as
+     bounded slices until the adversarial ledger is closed
+- current workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/resolver.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_parser.py`
+  - `tests/test_resolver.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_analyzer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: audit-cleared and full-regression-cleared. The
+  optimizer correction restored the nine full-regression failures while
+  preserving the source-root resolver repair. Control full regression passed
+  with `2180` tests. The unit is not commit-gating-cleared, staged, locally
+  committed, or pushed.
+- active holds:
+  - do not send the private reviewer note from the current packet until the
+    repair program is completed or Ryan explicitly authorizes a caveated send
+  - do not start Task 4, composite smoke support, runnable demo implementation,
+    public claim widening, or MCP/API expansion while this repair program is
+    active
+  - do not route new proof work through the existing synthetic eval harness as a
+    decisive market/north-star experiment
+  - do not add more probe-only matrices unless they directly improve real
+    selected context or close a concrete accepted repair finding
+- next control action: run commit-gating over the exact nine-file source-root
+  and optimizer repair unit, then stage and commit only if commit-gating passes.
 
 Latest release unit pushed:
 

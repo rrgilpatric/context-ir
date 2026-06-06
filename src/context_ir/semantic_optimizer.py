@@ -428,13 +428,16 @@ def _probe_prepared_semantic_units(
                 ):
                     pending_focus_id = candidate.unit_id
                     continue
+                inherits_uncertainty_surface = current_focus_has_uncertainty_surface
                 current_focus_id = candidate.unit_id
                 focus_unit_ids.add(current_focus_id)
                 current_focus_support_count = 0
                 current_focus_has_uncertainty_surface = False
                 current_focus_has_eval_evidence_surface = False
                 current_focus_has_eval_summary_surface = False
-                current_focus_inherited_uncertainty_surface = False
+                current_focus_inherited_uncertainty_surface = (
+                    inherits_uncertainty_surface
+                )
                 pending_focus_id = None
                 continue
             if _is_child_edit_anchor_of_focus(
@@ -945,8 +948,15 @@ def _initial_direct_anchor_priority(candidate: _SemanticCandidate) -> float:
 
 def _initial_relevance_score(candidate: _SemanticCandidate) -> float:
     """Return relevance for the initial anchor search before focus is known."""
+    if candidate.kind is RenderedUnitKind.PROVEN_SYMBOL:
+        if (
+            candidate.symbol_kind is ResolvedSymbolKind.CLASS
+            and _top_level_path_part(candidate.provenance.file_path)
+            not in _EXTERNAL_FOCUS_NOISE_TOP_LEVELS
+        ):
+            return max(candidate.score.p_edit, candidate.score.p_support)
+        return candidate.score.p_edit
     if candidate.kind in {
-        RenderedUnitKind.PROVEN_SYMBOL,
         RenderedUnitKind.UNRESOLVED_FRONTIER,
         RenderedUnitKind.EVAL_RUNTIME_EVIDENCE,
     }:
@@ -966,18 +976,31 @@ def _scope_priority(
 ) -> int:
     """Prefer direct callers, then one honest uncertainty, then support packing."""
     if _is_direct_caller_of_focus(candidate, focus_unit_id=current_focus_id):
-        return 0
+        same_top_level = current_focus_file_path is not None and _top_level_path_part(
+            candidate.provenance.file_path
+        ) == _top_level_path_part(current_focus_file_path)
+        non_query_test = (
+            candidate.provenance.file_path.startswith("tests/")
+            and not candidate.query_named
+            and candidate.score.p_edit < _EXTERNAL_FOCUS_STRONG_DIRECT_THRESHOLD
+        )
+        if (
+            candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
+            and candidate.score.p_edit >= _DIRECT_SOURCE_THRESHOLD
+            and (
+                candidate.query_named
+                or (same_top_level and not non_query_test)
+                or (current_focus_has_uncertainty_surface and not non_query_test)
+            )
+        ):
+            return 0
+        return 4
     if _is_eval_summary_runtime_accounting_candidate(candidate):
         return 1
     if _is_eval_summary_accounting_candidate(candidate):
         return 2
     if _is_eval_runtime_evidence_support_candidate(candidate):
         return 5 if current_focus_has_eval_evidence_surface else 1
-    if _is_same_source_group_direct_candidate(
-        candidate,
-        current_focus_file_path=current_focus_file_path,
-    ):
-        return 2
     if (
         current_focus_has_uncertainty_surface
         and _is_same_top_level_direct_source_candidate(
@@ -1004,7 +1027,16 @@ def _scope_priority(
             return 4 if current_focus_has_support else 3
         if current_focus_has_support:
             return 5
+        if candidate.kind is RenderedUnitKind.PROVEN_SYMBOL and (
+            candidate.query_named or candidate.score.p_edit >= _DIRECT_SOURCE_THRESHOLD
+        ):
+            return 2
         return 4
+    if _is_same_source_group_direct_candidate(
+        candidate,
+        current_focus_file_path=current_focus_file_path,
+    ):
+        return 3
     return 6
 
 
@@ -1166,11 +1198,22 @@ def _is_focus_selection(
     chosen_detail: RenderDetail,
 ) -> bool:
     """Return whether ``candidate`` should guide later support packing."""
-    return (
-        candidate.kind is RenderedUnitKind.PROVEN_SYMBOL
-        and chosen_detail is not RenderDetail.IDENTITY
-        and candidate.score.p_edit >= _DIRECT_SUMMARY_THRESHOLD
-        and candidate.score.p_edit >= candidate.score.p_support
+    if candidate.kind is not RenderedUnitKind.PROVEN_SYMBOL:
+        return False
+    if chosen_detail is RenderDetail.IDENTITY:
+        return False
+    if (
+        candidate.provenance.file_path.startswith("tests/")
+        and not candidate.query_named
+        and candidate.score.p_edit < _EXTERNAL_FOCUS_STRONG_DIRECT_THRESHOLD
+    ):
+        return False
+    direct_source_anchor = (
+        candidate.provenance.file_path.startswith("src/")
+        and candidate.score.p_edit >= _DIRECT_SOURCE_THRESHOLD
+    )
+    return candidate.score.p_edit >= _DIRECT_SUMMARY_THRESHOLD and (
+        candidate.score.p_edit >= candidate.score.p_support or direct_source_anchor
     )
 
 

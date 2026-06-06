@@ -61,6 +61,36 @@ def _resolved_symbol_id_for(
     return matching_symbol_ids[0]
 
 
+def _write_import_inheritance_call_fixture(
+    *,
+    package_dir: Path,
+) -> None:
+    """Write a package fixture with imported base and helper call surfaces."""
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "base.py").write_text(
+        "class Base:\n    pass\n",
+        encoding="utf-8",
+    )
+    (package_dir / "helpers.py").write_text(
+        "def helper() -> str:\n    return 'ok'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.base import Base
+            from pkg.helpers import helper
+
+            class Child(Base):
+                def run(self) -> str:
+                    return helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
 def test_derive_dependency_frontier_preserves_lower_layer_outputs(
     tmp_path: Path,
 ) -> None:
@@ -187,59 +217,70 @@ def test_derive_dependency_frontier_emits_import_dependencies_by_owning_scope(
     }
 
 
-def test_derive_dependency_frontier_closes_source_root_imported_call_dependencies(
+def test_derive_dependency_frontier_proves_flat_and_source_root_dependencies(
     tmp_path: Path,
 ) -> None:
-    """Source-root imports can still prove repository helper call dependencies."""
-    package_dir = tmp_path / "src" / "context_ir"
-    package_dir.mkdir(parents=True)
-    (package_dir / "__init__.py").write_text("", encoding="utf-8")
-    (package_dir / "helpers.py").write_text(
-        "def helper() -> str:\n    return 'ok'\n",
-        encoding="utf-8",
+    """Import, inheritance, and call proof match for flat and src layouts."""
+    cases = (
+        (tmp_path / "flat", tmp_path / "flat" / "pkg", "pkg"),
+        (tmp_path / "src-layout", tmp_path / "src-layout" / "src" / "pkg", "src.pkg"),
     )
-    (package_dir / "facade.py").write_text(
-        textwrap.dedent(
-            """
-            from context_ir.helpers import helper
+    for _, package_dir, _ in cases:
+        _write_import_inheritance_call_fixture(package_dir=package_dir)
 
-            def run_facade() -> str:
-                return helper()
-            """
-        ).lstrip(),
-        encoding="utf-8",
-    )
+    for repo_root, _, qualified_prefix in cases:
+        derived_program = _derived_program(repo_root)
+        facade_id = _definition_id_for(derived_program, f"{qualified_prefix}.facade")
+        child_id = _definition_id_for(
+            derived_program,
+            f"{qualified_prefix}.facade.Child",
+        )
+        run_id = _definition_id_for(
+            derived_program,
+            f"{qualified_prefix}.facade.Child.run",
+        )
+        base_id = _definition_id_for(derived_program, f"{qualified_prefix}.base.Base")
+        helper_id = _definition_id_for(
+            derived_program,
+            f"{qualified_prefix}.helpers.helper",
+        )
 
-    derived_program = _derived_program(tmp_path)
-    facade_id = _definition_id_for(
-        derived_program,
-        "src.context_ir.facade.run_facade",
-    )
-    helper_id = _definition_id_for(
-        derived_program,
-        "src.context_ir.helpers.helper",
-    )
+        assert {
+            dependency.target_symbol_id
+            for dependency in derived_program.proven_dependencies
+            if dependency.kind is SemanticDependencyKind.IMPORT
+            and dependency.proof_kind is DependencyProofKind.IMPORT_RESOLUTION
+            and dependency.source_symbol_id == facade_id
+        } == {base_id, helper_id}
+        assert any(
+            dependency.kind is SemanticDependencyKind.INHERITANCE
+            and dependency.proof_kind is DependencyProofKind.BASE_CLASS_RESOLUTION
+            and dependency.source_symbol_id == child_id
+            and dependency.target_symbol_id == base_id
+            for dependency in derived_program.proven_dependencies
+        )
+        assert any(
+            dependency.kind is SemanticDependencyKind.CALL
+            and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
+            and dependency.source_symbol_id == run_id
+            and dependency.target_symbol_id == helper_id
+            and dependency.evidence_reference_id is not None
+            for dependency in derived_program.proven_dependencies
+        )
+        assert all(
+            not (
+                access.access_text in {"Base", "helper"}
+                and access.context
+                in {ReferenceContext.BASE_CLASS, ReferenceContext.CALL}
+            )
+            for access in derived_program.unresolved_frontier
+        )
 
-    assert any(
-        dependency.kind is SemanticDependencyKind.CALL
-        and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
-        and dependency.source_symbol_id == facade_id
-        and dependency.target_symbol_id == helper_id
-        for dependency in derived_program.proven_dependencies
-    )
-    assert all(
-        access.access_text != "helper" for access in derived_program.unresolved_frontier
-    )
-    assert all(
-        construct.construct_text != "helper"
-        for construct in derived_program.unsupported_constructs
-    )
 
-
-def test_derive_dependency_frontier_skips_module_scope_imported_calls(
+def test_derive_dependency_frontier_resolves_module_scope_source_root_imported_calls(
     tmp_path: Path,
 ) -> None:
-    """Imported-call closure stays inside public function-like source scopes."""
+    """Source-root imported calls now follow normal resolver-owned call proof."""
     package_dir = tmp_path / "src" / "context_ir"
     package_dir.mkdir(parents=True)
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
@@ -265,23 +306,26 @@ def test_derive_dependency_frontier_skips_module_scope_imported_calls(
         "src.context_ir.helpers.helper",
     )
 
-    assert not any(
+    assert any(
         dependency.kind is SemanticDependencyKind.CALL
         and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
         and dependency.source_symbol_id == facade_module_id
         and dependency.target_symbol_id == helper_id
         for dependency in derived_program.proven_dependencies
     )
-    assert any(
-        access.access_text == "helper" and access.enclosing_scope_id == facade_module_id
+    assert all(
+        not (
+            access.access_text == "helper"
+            and access.enclosing_scope_id == facade_module_id
+        )
         for access in derived_program.unresolved_frontier
     )
 
 
-def test_derive_dependency_frontier_skips_private_imported_call_wrappers(
+def test_derive_dependency_frontier_resolves_private_source_root_imported_calls(
     tmp_path: Path,
 ) -> None:
-    """Private wrapper functions and methods do not close imported-call targets."""
+    """Private source-root wrappers now match flat imported-call proof."""
     package_dir = tmp_path / "src" / "context_ir"
     package_dir.mkdir(parents=True)
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
@@ -315,18 +359,70 @@ def test_derive_dependency_frontier_skips_private_imported_call_wrappers(
         "src.context_ir.helpers.helper",
     )
 
+    assert {
+        dependency.source_symbol_id
+        for dependency in derived_program.proven_dependencies
+        if dependency.kind is SemanticDependencyKind.CALL
+        and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
+        and dependency.target_symbol_id == helper_id
+    } >= private_source_ids
+    assert all(
+        not (
+            access.access_text == "helper"
+            and access.enclosing_scope_id in private_source_ids
+        )
+        for access in derived_program.unresolved_frontier
+    )
+
+
+def test_derive_dependency_frontier_keeps_ambiguous_source_root_imports_unresolved(
+    tmp_path: Path,
+) -> None:
+    """Ambiguous source-root module/package targets remain fail-closed."""
+    package_dir = tmp_path / "src" / "pkg"
+    module_package_dir = package_dir / "target"
+    module_package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "target.py").write_text(
+        "def helper() -> str:\n    return 'module'\n",
+        encoding="utf-8",
+    )
+    (module_package_dir / "__init__.py").write_text(
+        "def helper() -> str:\n    return 'package'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.target import helper
+
+            def run() -> str:
+                return helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    derived_program = _derived_program(tmp_path)
+    run_id = _definition_id_for(derived_program, "src.pkg.facade.run")
+    candidate_helper_ids = {
+        definition.definition_id
+        for definition in derived_program.syntax.definitions
+        if definition.qualified_name == "src.pkg.target.helper"
+    }
+
+    assert len(candidate_helper_ids) == 2
     assert not any(
         dependency.kind is SemanticDependencyKind.CALL
         and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
-        and dependency.source_symbol_id in private_source_ids
-        and dependency.target_symbol_id == helper_id
+        and dependency.source_symbol_id == run_id
+        and dependency.target_symbol_id in candidate_helper_ids
         for dependency in derived_program.proven_dependencies
     )
-    assert {
-        access.enclosing_scope_id
+    assert any(
+        access.access_text == "helper" and access.enclosing_scope_id == run_id
         for access in derived_program.unresolved_frontier
-        if access.access_text == "helper"
-    } >= private_source_ids
+    )
 
 
 def test_derive_dependency_frontier_skips_external_import_suffix_collisions(

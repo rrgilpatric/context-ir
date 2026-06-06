@@ -2,6 +2,102 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Source-Root Optimizer Correction Accepted Workspace-Only
+
+- The narrow optimizer correction returned after full regression had found nine
+  selection/tier-accounting regressions in smoke C and runtime-probe eval tests.
+- Correction summary: `semantic_optimizer.py` now lets non-test direct callers
+  regain priority after uncertainty has surfaced, carries inherited uncertainty
+  across that focus transfer, and keeps local fixture class support ordered
+  ahead of low-value uncertainty without reopening `src/` or tests/
+  support-heavy hubs.
+- The source-root resolver repair remains in the same release unit and still
+  keeps source-root aliases internal while public resolved imports report
+  durable matched definition/module qualified names.
+- `tests/test_eval_signal_smoke_e.py` changed only the allowed
+  `FULL_REPO_TASK3_CONFIDENCE` scalar after preservation locks held.
+- Execution-lane validation reported:
+  - original nine failing tests: 9 passed
+  - Task 1/2 guard: 2 passed
+  - parser/resolver/dependency_frontier/analyzer guard: 136 passed
+  - Smoke E: 8 passed
+  - full pytest: 2180 passed
+  - ruff check, ruff format --check, mypy --strict, and git diff --check:
+    passed
+- Control reran the original nine failing tests, Task 1/2 guard,
+  parser/resolver/dependency_frontier/analyzer guard, and Smoke E guard; all
+  passed.
+- Release gates cleared after correction:
+  - fresh read-only release-unit audit: PASS with no findings
+  - full regression: `2180` passed
+  - static gates: ruff check, ruff format --check, and mypy --strict passed
+- Release state: audit-cleared and full-regression-cleared. Commit-gating,
+  staging, local commit, and push remain pending.
+- Acceptance status: accepted after correction; commit-gating pending.
+
+## 2026-06-06 -- North-Star Evidence Reframe Recorded
+
+- Ryan accepted the adversarial framing correction: Context IR's company-level
+  north star remains legitimate, but the defensible wedge is narrower than
+  "semantic code graphs." The active thesis is proof-first, budget-aware context
+  compilation for LLM coding agents, with explicit typed uncertainty.
+- Strategic correction recorded: synthetic fixtures, oracle probe matrices, and
+  internal runtime checkpoints are engineering/regression evidence. They are
+  not market proof, public benchmark evidence, or decisive evidence that the
+  north-star thesis matters.
+- Next credibility proof after accepted repairs: a pre-registered real-OSS
+  experiment with an independent oracle derived from merged PRs or equivalent
+  repo facts, equal token budgets, fair lexical/BM25 and embedding baselines,
+  edit-relevant recall plus wasted-token accounting, and a written
+  kill/reevaluate criterion before results are known.
+- The existing eval harness remains useful for regression and fixture proof,
+  but must not be reused as the decisive real-OSS north-star experiment because
+  that would preserve circularity.
+- WoW refinement recorded for future process/docs work: bounded slices remain
+  appropriate for correctness repairs, but company-level progress must be
+  judged by real-repo capability and credible external-style evidence, not by
+  accumulating probe-only matrices or continuity churn.
+- Current release sequencing state: the nine-file `src/` layout dependency and
+  optimizer-focus repair unit passed audit, but full regression failed with
+  nine selection/tier-accounting regressions. Release sequencing is held
+  pending a narrow optimizer correction; no staging, commit, or push is
+  authorized from the current state.
+- Acceptance status: held; strategic routing accepted by Ryan, source repair
+  release remains blocked on correction and full regression.
+
+## 2026-06-05 -- Adversarial Review Repair Program Authorized
+
+- Ryan supplied the purified Claude Code adversarial audit triage and explicitly
+  requested that every real, partial, nonblocking, process, and optics finding
+  be fixed.
+- Current reviewer send-readiness is held. The private reviewer note should not
+  be sent from the current packet until the repair program is completed or Ryan
+  explicitly authorizes a caveated send.
+- Accepted highest-priority repair findings:
+  - `src/` layout import/inheritance proof drops on the public analyzer path
+  - invalid `repo_root` inputs return successful facade/MCP responses
+  - compiler budget utilization can miss feasible better packs
+- Remaining accepted nonblocking/partial/process findings stay in scope and
+  must be closed in later bounded slices; they are not dropped merely because
+  they were not blockers for the prior packet.
+- First repair slice status: accepted workspace-only after one audit correction
+  and one full-regression correction. The implementation fixes `src/` layout
+  import, inheritance, and helper-call dependency proof while preserving durable
+  `src.pkg...` IDs. The audit found a P1 leak where internal source-root aliases
+  appeared in public `ResolvedImport.target_qualified_name`; the correction now
+  reports the durable matched definition/module qualified name instead.
+- Full regression then found semantic compiler selection drift. The optimizer
+  correction keeps support-heavy proven symbols from stealing direct edit-anchor
+  focus while preserving the `src/` dependency repair.
+- Sequencing decision: rerun the read-only release-unit audit over the exact
+  nine-file `src/` layout dependency and optimizer-focus repair unit before
+  full regression or commit sequencing.
+- Explicit holds: do not send outreach, start Task 4, composite smoke support,
+  runnable demo implementation, public claim widening, or MCP/API expansion
+  while this repair program is active.
+- Acceptance status: first repair slice workspace-only accepted after
+  correction; release-unit audit rerun pending.
+
 ## 2026-06-05 -- Private Reviewer Recipient Simulation Correction Pushed
 
 - Recipient simulation returned one medium finding:

@@ -54,6 +54,37 @@ def _resolved_symbol_id_for(
     return matching_symbol_ids[0]
 
 
+def _write_import_inheritance_call_fixture(
+    *,
+    package_dir: Path,
+) -> None:
+    """Write a package fixture with imported base and helper call surfaces."""
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "base.py").write_text(
+        "class Base:\n    pass\n",
+        encoding="utf-8",
+    )
+    (package_dir / "helpers.py").write_text(
+        "def helper() -> str:\n    return 'ok'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            import pkg.base
+            from pkg.base import Base
+            from pkg.helpers import helper
+
+            class Child(Base):
+                def run(self) -> str:
+                    return helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+
 def test_resolve_semantics_preserves_binder_owned_data(tmp_path: Path) -> None:
     """Resolver output keeps the accepted binder substrate intact."""
     (tmp_path / "example.py").write_text(
@@ -137,6 +168,114 @@ def test_resolve_semantics_resolves_supported_import_targets(tmp_path: Path) -> 
     assert all(
         resolved_import.import_id != star_import.import_id
         for resolved_import in resolved_program.resolved_imports
+    )
+
+
+def test_resolve_semantics_proves_flat_and_source_root_imports_bases_and_calls(
+    tmp_path: Path,
+) -> None:
+    """Flat and src-layout imports resolve to the same repository proof surfaces."""
+    cases = (
+        (tmp_path / "flat", tmp_path / "flat" / "pkg", "pkg"),
+        (tmp_path / "src-layout", tmp_path / "src-layout" / "src" / "pkg", "src.pkg"),
+    )
+    for _, package_dir, _ in cases:
+        _write_import_inheritance_call_fixture(package_dir=package_dir)
+
+    for repo_root, _, qualified_prefix in cases:
+        resolved_program = resolve_semantics(bind_syntax(extract_syntax(repo_root)))
+        base_id = _definition_id_for(resolved_program, f"{qualified_prefix}.base.Base")
+        helper_id = _definition_id_for(
+            resolved_program,
+            f"{qualified_prefix}.helpers.helper",
+        )
+        package_id = _definition_id_for(resolved_program, qualified_prefix)
+        resolved_imports_by_bound_name = {
+            resolved_import.bound_name: resolved_import
+            for resolved_import in resolved_program.resolved_imports
+        }
+        references_by_context_and_name = {
+            (resolved_reference.context, resolved_reference.name): resolved_reference
+            for resolved_reference in resolved_program.resolved_references
+        }
+
+        assert {
+            resolved_import.target_symbol_id
+            for resolved_import in resolved_program.resolved_imports
+            if resolved_import.bound_name in {"Base", "helper"}
+        } == {base_id, helper_id}
+        assert resolved_imports_by_bound_name["Base"].target_symbol_id == base_id
+        assert (
+            resolved_imports_by_bound_name["Base"].target_qualified_name
+            == f"{qualified_prefix}.base.Base"
+        )
+        assert resolved_imports_by_bound_name["helper"].target_symbol_id == helper_id
+        assert (
+            resolved_imports_by_bound_name["helper"].target_qualified_name
+            == f"{qualified_prefix}.helpers.helper"
+        )
+        assert (
+            resolved_imports_by_bound_name["pkg"].target_kind is ImportTargetKind.MODULE
+        )
+        assert resolved_imports_by_bound_name["pkg"].target_symbol_id == package_id
+        assert (
+            resolved_imports_by_bound_name["pkg"].target_qualified_name
+            == qualified_prefix
+        )
+        assert (
+            references_by_context_and_name[
+                (ReferenceContext.BASE_CLASS, "Base")
+            ].resolved_symbol_id
+            == base_id
+        )
+        assert (
+            references_by_context_and_name[
+                (ReferenceContext.CALL, "helper")
+            ].resolved_symbol_id
+            == helper_id
+        )
+
+
+def test_resolve_semantics_keeps_ambiguous_source_root_imports_unresolved(
+    tmp_path: Path,
+) -> None:
+    """Source-root aliases resolve only when the target definition is unique."""
+    package_dir = tmp_path / "src" / "pkg"
+    module_package_dir = package_dir / "target"
+    module_package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "target.py").write_text(
+        "def helper() -> str:\n    return 'module'\n",
+        encoding="utf-8",
+    )
+    (module_package_dir / "__init__.py").write_text(
+        "def helper() -> str:\n    return 'package'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.target import helper
+
+            def run() -> str:
+                return helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    resolved_program = resolve_semantics(bind_syntax(extract_syntax(tmp_path)))
+
+    assert all(
+        resolved_import.bound_name != "helper"
+        for resolved_import in resolved_program.resolved_imports
+    )
+    assert all(
+        not (
+            resolved_reference.context is ReferenceContext.CALL
+            and resolved_reference.name == "helper"
+        )
+        for resolved_reference in resolved_program.resolved_references
     )
 
 

@@ -15,6 +15,7 @@ from context_ir.dependency_frontier import derive_dependency_frontier
 from context_ir.parser import extract_syntax
 from context_ir.resolver import resolve_semantics
 from context_ir.semantic_types import (
+    DependencyProofKind,
     ReferenceContext,
     SemanticDependencyKind,
     SemanticProgram,
@@ -38,6 +39,36 @@ def _definition_id_for(program: SemanticProgram, qualified_name: str) -> str:
         definition.definition_id
         for definition in program.syntax.definitions
         if definition.qualified_name == qualified_name
+    )
+
+
+def _write_import_inheritance_call_fixture(
+    *,
+    package_dir: Path,
+) -> None:
+    """Write a package fixture with imported base and helper call surfaces."""
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "base.py").write_text(
+        "class Base:\n    pass\n",
+        encoding="utf-8",
+    )
+    (package_dir / "helpers.py").write_text(
+        "def helper() -> str:\n    return 'ok'\n",
+        encoding="utf-8",
+    )
+    (package_dir / "facade.py").write_text(
+        textwrap.dedent(
+            """
+            from pkg.base import Base
+            from pkg.helpers import helper
+
+            class Child(Base):
+                def run(self) -> str:
+                    return helper()
+            """
+        ).lstrip(),
+        encoding="utf-8",
     )
 
 
@@ -622,6 +653,84 @@ def test_analyze_repository_returns_derived_semantic_outputs(
         for access in program.unresolved_frontier
     )
     assert program.provenance_records == []
+
+
+def test_analyze_repository_proves_flat_and_source_root_import_dependencies(
+    tmp_path: Path,
+) -> None:
+    """Public analysis preserves import, base, and call proof for src layouts."""
+    cases = (
+        (tmp_path / "flat", tmp_path / "flat" / "pkg", "pkg"),
+        (tmp_path / "src-layout", tmp_path / "src-layout" / "src" / "pkg", "src.pkg"),
+    )
+    for _, package_dir, _ in cases:
+        _write_import_inheritance_call_fixture(package_dir=package_dir)
+
+    for repo_root, _, qualified_prefix in cases:
+        program = analyzer_module.analyze_repository(repo_root)
+        facade_id = _definition_id_for(program, f"{qualified_prefix}.facade")
+        child_id = _definition_id_for(program, f"{qualified_prefix}.facade.Child")
+        run_id = _definition_id_for(program, f"{qualified_prefix}.facade.Child.run")
+        base_id = _definition_id_for(program, f"{qualified_prefix}.base.Base")
+        helper_id = _definition_id_for(program, f"{qualified_prefix}.helpers.helper")
+        definitions_by_id = {
+            definition.definition_id: definition
+            for definition in program.syntax.definitions
+        }
+        resolved_imports_by_bound_name = {
+            resolved_import.bound_name: resolved_import
+            for resolved_import in program.resolved_imports
+        }
+
+        for resolved_import in program.resolved_imports:
+            if resolved_import.target_symbol_id is None:
+                continue
+            assert (
+                resolved_import.target_qualified_name
+                == definitions_by_id[resolved_import.target_symbol_id].qualified_name
+            )
+
+        assert resolved_imports_by_bound_name["Base"].target_symbol_id == base_id
+        assert (
+            resolved_imports_by_bound_name["Base"].target_qualified_name
+            == f"{qualified_prefix}.base.Base"
+        )
+        assert resolved_imports_by_bound_name["helper"].target_symbol_id == helper_id
+        assert (
+            resolved_imports_by_bound_name["helper"].target_qualified_name
+            == f"{qualified_prefix}.helpers.helper"
+        )
+
+        assert {
+            dependency.target_symbol_id
+            for dependency in program.proven_dependencies
+            if dependency.kind is SemanticDependencyKind.IMPORT
+            and dependency.proof_kind is DependencyProofKind.IMPORT_RESOLUTION
+            and dependency.source_symbol_id == facade_id
+        } == {base_id, helper_id}
+        assert any(
+            dependency.kind is SemanticDependencyKind.INHERITANCE
+            and dependency.proof_kind is DependencyProofKind.BASE_CLASS_RESOLUTION
+            and dependency.source_symbol_id == child_id
+            and dependency.target_symbol_id == base_id
+            for dependency in program.proven_dependencies
+        )
+        assert any(
+            dependency.kind is SemanticDependencyKind.CALL
+            and dependency.proof_kind is DependencyProofKind.CALL_RESOLUTION
+            and dependency.source_symbol_id == run_id
+            and dependency.target_symbol_id == helper_id
+            and dependency.evidence_reference_id is not None
+            for dependency in program.proven_dependencies
+        )
+        assert all(
+            not (
+                access.access_text in {"Base", "helper"}
+                and access.context
+                in {ReferenceContext.BASE_CLASS, ReferenceContext.CALL}
+            )
+            for access in program.unresolved_frontier
+        )
 
 
 def test_analyze_repository_only_orchestrates_lower_layers(

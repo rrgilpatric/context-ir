@@ -95,6 +95,69 @@ def test_repository_source_discovery_skips_dependency_and_cache_dirs(
     } == {"file:app.py"}
 
 
+def test_extract_syntax_keeps_source_root_ids_and_import_surfaces(
+    tmp_path: Path,
+) -> None:
+    """Flat and src layouts keep durable module names plus raw import text."""
+    flat_root = tmp_path / "flat"
+    flat_package = flat_root / "pkg"
+    src_root = tmp_path / "src-layout"
+    src_package = src_root / "src" / "pkg"
+    for package_dir in (flat_package, src_package):
+        package_dir.mkdir(parents=True)
+        (package_dir / "__init__.py").write_text("", encoding="utf-8")
+        (package_dir / "base.py").write_text(
+            "class Base:\n    pass\n",
+            encoding="utf-8",
+        )
+        (package_dir / "helpers.py").write_text(
+            "def helper() -> str:\n    return 'ok'\n",
+            encoding="utf-8",
+        )
+        (package_dir / "facade.py").write_text(
+            textwrap.dedent(
+                """
+                from pkg.base import Base
+                from pkg.helpers import helper
+
+                class Child(Base):
+                    def run(self) -> str:
+                        return helper()
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+
+    flat_syntax = extract_syntax(flat_root)
+    src_syntax = extract_syntax(src_root)
+
+    flat_definition_names = {
+        definition.qualified_name
+        for definition in flat_syntax.definitions
+        if definition.file_id == "file:pkg/facade.py"
+    }
+    src_definition_names = {
+        definition.qualified_name
+        for definition in src_syntax.definitions
+        if definition.file_id == "file:src/pkg/facade.py"
+    }
+    src_import_modules = {
+        import_fact.module_name
+        for import_fact in src_syntax.imports
+        if import_fact.file_id == "file:src/pkg/facade.py"
+    }
+
+    assert {"pkg.facade", "pkg.facade.Child", "pkg.facade.Child.run"}.issubset(
+        flat_definition_names
+    )
+    assert {
+        "src.pkg.facade",
+        "src.pkg.facade.Child",
+        "src.pkg.facade.Child.run",
+    }.issubset(src_definition_names)
+    assert src_import_modules == {"pkg.base", "pkg.helpers"}
+
+
 def test_explicit_single_file_parsing_keeps_skipped_dir_behavior(
     tmp_path: Path,
 ) -> None:
