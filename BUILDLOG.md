@@ -2,6 +2,35 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Invalid Repo Root Repair Pushed
+
+- Pushed the invalid `repo_root` repair to `origin/main`.
+- Pushed release commit:
+  `fa9b2ae Reject invalid repository roots`.
+- Release gates cleared before push:
+  - corrected read-only release-unit audit: PASS with no findings
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2185 passed
+  - commit-gating over the exact eight-file unit: passed
+- Release behavior shipped:
+  - analyzer rejects nonexistent paths and file paths with
+    `InvalidRepositoryRootError`
+  - facade propagates invalid-root failures without compiling successful empty
+    context
+  - MCP rejects invalid roots before facade delegation and maps facade-raised
+    `InvalidRepositoryRootError` to `invalid_repo_root`, not `compile_failed`
+  - valid empty directories remain valid
+- Preserved boundaries: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, or default-local
+  checkpoint changes; no public claim widening; no Task 4, composite smoke,
+  runnable demo, MCP/API expansion, or real-OSS experiment execution.
+- Post-push continuity sync updates active routing so fresh controllers do not
+  route `fa9b2ae` back to commit creation or push.
+- Next accepted repair: compiler budget-utilization fallback behavior.
+- Acceptance status: pushed after Ryan authorized proceeding.
+
 ## 2026-06-06 -- Invalid Repo Root Repair Commit-Gating Cleared
 
 - Performed commit-gating review for the corrected eight-file invalid

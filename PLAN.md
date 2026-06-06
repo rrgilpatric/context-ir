@@ -83,20 +83,16 @@ Current active program:
      pushed in commit `de5d221 Fix source-root dependency proof`
   2. invalid `repo_root` handling across analyzer/facade/MCP boundaries is
      accepted workspace-only after one audit correction and one confidence-scalar
-     correction; corrected release-unit audit and full regression are cleared
+     correction; corrected release-unit audit, full regression, commit-gating,
+     local commit, and push are complete in commit
+     `fa9b2ae Reject invalid repository roots`
   3. fix compiler budget-utilization fallback behavior
   4. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/analyzer.py`
-  - `src/context_ir/mcp_server.py`
-  - `tests/test_analyzer.py`
-  - `tests/test_tool_facade.py`
-  - `tests/test_mcp_server.py`
-  - `tests/test_eval_signal_smoke_e.py`
-- current release state: invalid `repo_root` repair is accepted workspace-only
+- current workspace release unit: none; `main` is clean after the invalid
+  `repo_root` repair push
+- current release state: invalid `repo_root` repair is pushed in commit
+  `fa9b2ae Reject invalid repository roots`. It added invalid-root rejection
   after a P2 audit correction added MCP coverage for facade-raised
   `InvalidRepositoryRootError` and a confidence-only correction updated
   `FULL_REPO_TASK3_CONFIDENCE` from `0.0016393397346055746` to
@@ -107,9 +103,8 @@ Current active program:
   confirmed preservation locks for token count, document hash, warnings, warning
   IDs, selected-unit order, resolver detail, probe-budget threshold,
   warning-call count, and budget-400 parent/no-noise checks. The corrected
-  eight-file unit is corrected-release-unit-audit-cleared,
-  full-regression-cleared, and commit-gating-cleared. It is not staged, locally
-  committed, or pushed.
+  eight-file unit passed corrected release-unit audit, full regression, and
+  commit-gating before local commit and push.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -120,55 +115,55 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: create the local release commit for the exact eight-file
-  corrected invalid `repo_root` repair unit. Push still requires explicit Ryan
-  authorization.
+- next control action: fix the accepted compiler budget-utilization finding as
+  the next bounded Claude-review repair slice. Do not start the real-OSS
+  pre-registered experiment until the accepted repair ledger is closed or Ryan
+  explicitly redirects.
 
 Latest release unit pushed:
 
-- source-root dependency repair and optimizer-focus correction
+- invalid `repo_root` repair across analyzer, facade, and MCP
 - pushed release commit:
-  `de5d221 Fix source-root dependency proof`
-- release state: accepted after correction; fresh read-only audit passed; full
-  regression passed with `2180` tests; commit-gating passed; staged, locally
-  committed, and pushed to `origin/main` after Ryan authorized proceeding
+  `fa9b2ae Reject invalid repository roots`
+- release state: accepted after one audit correction and one confidence-scalar
+  correction; corrected read-only audit passed; full regression passed with
+  `2185` tests; commit-gating passed; staged, locally committed, and pushed to
+  `origin/main` after Ryan authorized proceeding
 - release files:
   - `PLAN.md`
   - `BUILDLOG.md`
-  - `src/context_ir/resolver.py`
-  - `src/context_ir/semantic_optimizer.py`
-  - `tests/test_parser.py`
-  - `tests/test_resolver.py`
-  - `tests/test_dependency_frontier.py`
+  - `src/context_ir/analyzer.py`
+  - `src/context_ir/mcp_server.py`
   - `tests/test_analyzer.py`
+  - `tests/test_tool_facade.py`
+  - `tests/test_mcp_server.py`
   - `tests/test_eval_signal_smoke_e.py`
 - behavior:
-  - `src/` layout imports written as `pkg...` resolve through lookup-only
-    aliases to durable `src.pkg...` definitions/modules
-  - public `ResolvedImport.target_qualified_name` reports the durable matched
-    definition/module qualified name, not the import-facing alias
-  - ambiguous source-root alias targets fail closed
-  - flat and `src/` layouts both prove import, inherited-base, and helper-call
-    dependencies when the targets are uniquely known
-  - optimizer focus ordering preserves direct anchors, caller uncertainty, and
-    runtime-probe tier accounting after newly proven dependencies expose more
-    support
+  - `analyze_repository(...)` raises `InvalidRepositoryRootError` for
+    nonexistent paths and file paths
+  - facade compilation propagates invalid-root failures and does not compile an
+    empty successful context for invalid roots
+  - MCP rejects shape-invalid, missing, and file-path roots with JSON-safe
+    `error_code: "invalid_repo_root"`
+  - MCP maps facade-raised `InvalidRepositoryRootError` to `invalid_repo_root`,
+    not generic `compile_failed`
+  - valid empty directories remain valid
 - validation:
-  - read-only release-unit audit: PASS with no findings
+  - corrected read-only release-unit audit: PASS with no findings
   - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
   - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
     passed
   - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
-  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2180` passed
-  - commit-gating over the exact nine-file release unit: passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2185` passed
+  - commit-gating over the exact eight-file release unit: passed
 - preserved boundaries:
   - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
     reviewer-readiness, portfolio evidence, or default-local checkpoint changes
   - no public claim widening
   - no Task 4, composite smoke, runnable demo, MCP/API expansion, or real-OSS
     experiment execution
-- recommended next control action: fix invalid `repo_root` handling across
-  analyzer, facade, and MCP boundaries.
+- recommended next control action: fix the accepted compiler budget-utilization
+  finding as the next bounded Claude-review repair slice.
 
 Prior release unit pushed:
 
