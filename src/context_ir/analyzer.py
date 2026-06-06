@@ -38,6 +38,10 @@ from context_ir.runtime_acquisition import (
 from context_ir.semantic_types import SemanticProgram
 
 
+class InvalidRepositoryRootError(ValueError):
+    """Raised when a repository root cannot be analyzed."""
+
+
 def analyze_repository(
     repo_root: Path | str,
     *,
@@ -57,7 +61,8 @@ def analyze_repository(
     ) = (),
 ) -> SemanticProgram:
     """Analyze ``repo_root`` into the fully derived semantic program."""
-    syntax = extract_syntax(repo_root)
+    root = _validate_repo_root(repo_root)
+    syntax = extract_syntax(root)
     bound_program = bind_syntax(syntax)
     resolved_program = resolve_semantics(bound_program)
     derived_program = derive_dependency_frontier(resolved_program)
@@ -139,6 +144,16 @@ def analyze_repository(
             metaclass_behavior_runtime_observations,
         )
     return program
+
+
+def _validate_repo_root(repo_root: Path | str) -> Path:
+    """Return ``repo_root`` as a path when it exists as a directory."""
+    root = Path(repo_root)
+    if not root.exists():
+        raise InvalidRepositoryRootError(f"repo_root does not exist: {root}")
+    if not root.is_dir():
+        raise InvalidRepositoryRootError(f"repo_root must be a directory: {root}")
+    return root
 
 
 __all__ = ["analyze_repository"]

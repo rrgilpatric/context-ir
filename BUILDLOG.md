@@ -2,6 +2,165 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Invalid Repo Root Repair Commit-Gating Cleared
+
+- Performed commit-gating review for the corrected eight-file invalid
+  `repo_root` repair unit after corrected audit and full regression passed.
+- Gating checks:
+  - dirty set is exactly the eight expected files
+  - no staged files before commit sequencing
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, portfolio evidence, or default-local checkpoint diff
+  - `git diff --check`: passed
+- Reviewed release-unit behavior and validation basis:
+  - invalid roots fail at analyzer, facade, and MCP boundaries
+  - MCP maps facade-raised `InvalidRepositoryRootError` to
+    `invalid_repo_root`, not `compile_failed`
+  - valid empty directories remain valid
+  - Task 3 smoke scalar is confidence-only with preservation locks held
+  - corrected audit passed and full regression passed with 2185 tests
+- Release state: corrected-release-unit-audit-cleared,
+  full-regression-cleared, and commit-gating-cleared. The unit is not staged,
+  locally committed, or pushed.
+- Recommended next control action: create the local release commit for the exact
+  eight-file unit. Push still requires explicit Ryan authorization.
+- Acceptance status: commit-gating accepted first-pass after full regression
+  clearance.
+
+## 2026-06-06 -- Invalid Repo Root Repair Full Regression Cleared
+
+- Accepted the corrected read-only release-unit audit result for the eight-file
+  invalid `repo_root` repair unit.
+- Corrected audit result: PASS with no findings.
+- Full regression passed:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2185 passed
+- The previously failing Task 3 smoke confidence check passed during the full
+  suite after the scalar-only correction.
+- Release state: corrected-release-unit-audit-cleared and
+  full-regression-cleared. The unit is not commit-gating-cleared, staged,
+  locally committed, or pushed.
+- Recommended next control action: run commit-gating over the exact eight-file
+  corrected invalid `repo_root` repair unit.
+- Acceptance status: full-regression gate accepted first-pass after scalar
+  correction.
+
+## 2026-06-06 -- Invalid Repo Root Smoke Scalar Correction Accepted Workspace-Only
+
+- Accepted the Task 3 smoke scalar correction workspace-only after the
+  invalid `repo_root` full-regression hold.
+- Corrected release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/analyzer.py`
+  - `src/context_ir/mcp_server.py`
+  - `tests/test_analyzer.py`
+  - `tests/test_tool_facade.py`
+  - `tests/test_mcp_server.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Correction accepted:
+  - `FULL_REPO_TASK3_CONFIDENCE` changed from `0.0016393397346055746` to
+    `0.0016385604521468801`
+  - no source, public docs, eval assets, run specs, reviewer-readiness files, or
+    evidence artifacts changed for the scalar correction
+- Preservation proof:
+  - budget-280 total tokens stayed `274`
+  - document hash stayed
+    `78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2`
+  - selected units/order, resolver detail, warnings, warning IDs, probe
+    threshold, and warning-call count stayed locked
+  - budget-400 parent/no-noise checks stayed locked
+- Control validation after correction:
+  - focused Task 3 smoke check: 1 passed, 7 deselected
+  - focused MCP invalid-root tests: 3 passed, 8 deselected
+  - combined analyzer/facade/MCP tests: 78 passed
+  - targeted ruff check and ruff format --check for touched source/test files:
+    passed
+  - `git diff --check`: passed
+- Release state: corrected workspace-only accepted. The corrected eight-file
+  unit is not corrected-release-unit-audit-cleared, full-regression-cleared,
+  commit-gating-cleared, staged, locally committed, or pushed.
+- Recommended next control action: rerun a read-only release-unit audit over the
+  exact corrected eight-file invalid `repo_root` repair unit.
+- Acceptance status: workspace-only accepted after scalar correction.
+
+## 2026-06-06 -- Invalid Repo Root Repair Full-Regression Hold
+
+- Reviewed the corrected read-only release-unit audit result for the seven-file
+  invalid `repo_root` repair unit.
+- Audit result: PASS with no findings.
+- Full regression gate:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: failed with 1 failed, 2184 passed
+- Failure:
+  - `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+  - focused rerun failed the same assertion
+  - actual confidence: `0.0016385604521468801`
+  - current expected confidence: `0.0016393397346055746`
+- Preservation evidence from the failing test: token count, document hash,
+  warnings, warning IDs, selected-unit order, resolver detail, probe-budget
+  threshold, and warning-call count all passed before the confidence assertion.
+- Release state: audit-cleared but full-regression-held. The unit is not
+  full-regression-cleared, commit-gating-cleared, staged, locally committed, or
+  pushed.
+- Recommended next control action: issue a narrow correction for
+  `FULL_REPO_TASK3_CONFIDENCE` only if a correction lane confirms the
+  preservation locks still hold, then rerun corrected release-unit audit and full
+  regression.
+- Acceptance status: held on full-regression finding.
+
+## 2026-06-06 -- Invalid Repo Root Repair Accepted Workspace-Only
+
+- Accepted the invalid `repo_root` repair workspace-only after one audit
+  correction.
+- Release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/analyzer.py`
+  - `src/context_ir/mcp_server.py`
+  - `tests/test_analyzer.py`
+  - `tests/test_tool_facade.py`
+  - `tests/test_mcp_server.py`
+- Behavior accepted:
+  - `analyze_repository(...)` raises `InvalidRepositoryRootError` for
+    nonexistent paths and paths that exist but are not directories
+  - facade compilation propagates that invalid-root failure and does not call
+    `compile_semantic_context` for invalid roots
+  - MCP rejects shape-invalid, nonexistent, and file-path `repo_root` inputs
+    before facade delegation, returning JSON-safe `ok: false` with
+    `error_code: "invalid_repo_root"`
+  - MCP maps facade-raised `InvalidRepositoryRootError` to
+    `error_code: "invalid_repo_root"`, not generic `compile_failed`
+  - valid empty directories remain valid and still compile to empty context
+- Audit correction:
+  - first audit found missing MCP coverage for the facade-raised
+    `InvalidRepositoryRootError` branch
+  - `tests/test_mcp_server.py` now covers that branch using a valid existing
+    directory, a monkeypatched facade exception, JSON-safe output, and an
+    explicit `invalid_repo_root` / not-`compile_failed` assertion
+- Control validation:
+  - focused analyzer invalid-root tests: 2 passed
+  - focused facade invalid-root test: 1 passed
+  - focused MCP invalid-root tests after correction: 3 passed
+  - combined analyzer/facade/MCP tests after correction: 78 passed
+  - reproduction confirmed invalid roots fail at analyzer, facade, and MCP while
+    an empty directory remains valid
+  - ruff check, ruff format --check, mypy --strict, and git diff --check:
+    passed
+- Preserved boundaries: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval
+  task, fixture, run-spec, reviewer-readiness, portfolio evidence, or
+  default-local checkpoint changes; no public claim widening; no Task 4,
+  composite smoke, runnable demo, MCP/API expansion, or real-OSS experiment
+  execution.
+- Release state: workspace-only accepted after correction. Release-unit audit
+  rerun, full regression, commit-gating, staging, local commit, and push remain
+  pending.
+- Acceptance status: workspace-only accepted after one audit correction.
+
 ## 2026-06-06 -- Source-Root Dependency Repair Pushed
 
 - Pushed the source-root dependency repair and optimizer-focus correction to

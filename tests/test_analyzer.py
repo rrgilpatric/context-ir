@@ -6,6 +6,8 @@ import hashlib
 import textwrap
 from pathlib import Path
 
+import pytest
+
 import context_ir
 import context_ir.analyzer as analyzer_module
 import context_ir.runtime_acquisition as runtime_acquisition
@@ -523,6 +525,30 @@ def test_analyze_repository_import_paths_accept_path_and_str(
     assert package_program == semantic_types_program
     assert package_program.provenance_records == []
     assert semantic_types_program.provenance_records == []
+
+
+def test_analyze_repository_rejects_invalid_repo_root(tmp_path: Path) -> None:
+    """Invalid public analyzer roots fail instead of yielding empty context."""
+    file_path = tmp_path / "not_a_repo.py"
+    file_path.write_text("VALUE = 1\n", encoding="utf-8")
+
+    invalid_roots = (tmp_path / "missing", file_path)
+
+    for repo_root in invalid_roots:
+        with pytest.raises(
+            analyzer_module.InvalidRepositoryRootError,
+            match="repo_root",
+        ):
+            analyzer_module.analyze_repository(repo_root)
+
+
+def test_analyze_repository_accepts_valid_empty_repo_root(tmp_path: Path) -> None:
+    """A real directory with no Python files remains a valid repository input."""
+    program = analyzer_module.analyze_repository(tmp_path)
+
+    assert isinstance(program, SemanticProgram)
+    assert program.repo_root == tmp_path
+    assert program.syntax.source_files == {}
 
 
 def test_analyze_repository_preserves_parse_error_truthfulness(

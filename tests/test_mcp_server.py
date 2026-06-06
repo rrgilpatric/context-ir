@@ -14,6 +14,7 @@ import context_ir.parser as legacy_parser
 import context_ir.renderer as legacy_renderer
 import context_ir.scorer as legacy_scorer
 import context_ir.semantic_types as semantic_types
+from context_ir.analyzer import InvalidRepositoryRootError
 from context_ir.semantic_types import (
     DiagnosticSeverity,
     ReferenceContext,
@@ -264,6 +265,80 @@ def test_invalid_budget_returns_json_safe_error(
         "error_code": "invalid_budget",
     }
     assert calls == 0
+    _assert_json_safe(result)
+
+
+def test_invalid_repo_root_returns_json_safe_error_before_facade(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Shape-invalid, missing, and file-path roots are rejected before facade use."""
+    file_path = tmp_path / "not_a_repo.py"
+    file_path.write_text("VALUE = 1\n", encoding="utf-8")
+    calls = 0
+
+    def fail_if_called(request: SemanticContextRequest) -> SemanticContextResponse:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("facade should not be called for invalid repo_root")
+
+    monkeypatch.setattr(
+        mcp_server.tool_facade,
+        "compile_repository_context",
+        fail_if_called,
+    )
+
+    invalid_roots: tuple[object, ...] = (
+        "",
+        tmp_path,
+        str(tmp_path / "missing"),
+        str(file_path),
+    )
+
+    for repo_root in invalid_roots:
+        result = mcp_server.compile_repository_context(
+            repo_root=repo_root,
+            query="query",
+            budget=64,
+        )
+
+        assert result["ok"] is False
+        assert result["error_code"] == "invalid_repo_root"
+        assert isinstance(result["error"], str)
+        assert result["error"]
+        _assert_json_safe(result)
+
+    assert calls == 0
+
+
+def test_facade_invalid_repo_root_returns_invalid_repo_root_error(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Facade repo-root failures keep the MCP invalid-root error code."""
+
+    def raise_invalid_repo_root(
+        request: SemanticContextRequest,
+    ) -> SemanticContextResponse:
+        raise InvalidRepositoryRootError("repo_root escaped workspace")
+
+    monkeypatch.setattr(
+        mcp_server.tool_facade,
+        "compile_repository_context",
+        raise_invalid_repo_root,
+    )
+
+    result = mcp_server.compile_repository_context(
+        repo_root=str(tmp_path),
+        query="query",
+        budget=64,
+    )
+
+    assert result["ok"] is False
+    assert result["error_code"] == "invalid_repo_root"
+    assert result["error_code"] != "compile_failed"
+    assert isinstance(result["error"], str)
+    assert result["error"]
     _assert_json_safe(result)
 
 

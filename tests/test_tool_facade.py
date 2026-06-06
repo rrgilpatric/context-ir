@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 import context_ir
+import context_ir.analyzer as analyzer_module
 import context_ir.compiler as legacy_compiler
 import context_ir.mcp_server as mcp_server
 import context_ir.optimizer as legacy_optimizer
@@ -3101,6 +3102,40 @@ def test_compile_repository_context_returns_typed_response_for_simple_repo(
     )
     assert response.compile_budget == 1000
     assert response.compile_total_tokens == response.compile_result.total_tokens
+
+
+def test_compile_repository_context_propagates_invalid_repo_root(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """The facade cannot compile a successful empty context for invalid roots."""
+    file_path = tmp_path / "not_a_repo.py"
+    file_path.write_text("VALUE = 1\n", encoding="utf-8")
+    compile_calls = 0
+
+    def fail_if_compiled(*args: object, **kwargs: object) -> SemanticCompileResult:
+        nonlocal compile_calls
+        compile_calls += 1
+        raise AssertionError("compile_semantic_context should not be called")
+
+    monkeypatch.setattr(tool_facade, "compile_semantic_context", fail_if_compiled)
+
+    invalid_roots = (tmp_path / "missing", file_path)
+
+    for repo_root in invalid_roots:
+        with pytest.raises(
+            analyzer_module.InvalidRepositoryRootError,
+            match="repo_root",
+        ):
+            compile_repository_context(
+                SemanticContextRequest(
+                    repo_root=repo_root,
+                    query="query",
+                    budget=64,
+                )
+            )
+
+    assert compile_calls == 0
 
 
 def test_compile_repository_context_uses_analyzer_and_semantic_compiler(

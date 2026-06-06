@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TypeAlias
 
 from mcp.server.fastmcp import FastMCP
 
 import context_ir.tool_facade as tool_facade
+from context_ir.analyzer import InvalidRepositoryRootError
 from context_ir.semantic_types import (
     ResolverDiagnostic,
     SemanticOptimizationWarning,
@@ -52,6 +54,8 @@ def compile_repository_context(
     )
     try:
         response = tool_facade.compile_repository_context(request)
+    except InvalidRepositoryRootError as exc:
+        return _error("invalid_repo_root", str(exc))
     except Exception as exc:
         return _error("compile_failed", str(exc))
 
@@ -73,6 +77,11 @@ def _validate_inputs(
     """Return a JSON-safe validation error or ``None`` for valid inputs."""
     if type(repo_root) is not str or not repo_root:
         return _error("invalid_repo_root", "repo_root must be a non-empty string")
+    root = Path(repo_root)
+    if not root.exists():
+        return _error("invalid_repo_root", f"repo_root does not exist: {root}")
+    if not root.is_dir():
+        return _error("invalid_repo_root", f"repo_root must be a directory: {root}")
     if type(query) is not str:
         return _error("invalid_query", "query must be a string")
     if type(budget) is not int or budget <= 0:

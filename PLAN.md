@@ -70,7 +70,6 @@ Current active program:
   optics finding be fixed; do not discard issues merely because they are
   nonblocking for the prior private packet
 - highest-priority accepted findings:
-  - invalid `repo_root` inputs return successful facade/MCP responses
   - compiler budget utilization can miss feasible better packs
   - remaining nonblocking/partial issues: `src/` layout test gaps,
     project-specific scorer floors, MCP in-band error semantics, baseline
@@ -82,16 +81,35 @@ Current active program:
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
-  2. fix invalid `repo_root` handling across analyzer/facade/MCP boundaries
+  2. invalid `repo_root` handling across analyzer/facade/MCP boundaries is
+     accepted workspace-only after one audit correction and one confidence-scalar
+     correction; corrected release-unit audit and full regression are cleared
   3. fix compiler budget-utilization fallback behavior
   4. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit: none; `main` is clean after the source-root
-  repair push
-- current release state: source-root dependency repair is pushed. The next
-  active repair is invalid `repo_root` handling; no files are currently
-  accepted in workspace, audit-cleared, commit-gating-cleared, staged, locally
-  committed, or pending push for that next repair.
+- current workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/analyzer.py`
+  - `src/context_ir/mcp_server.py`
+  - `tests/test_analyzer.py`
+  - `tests/test_tool_facade.py`
+  - `tests/test_mcp_server.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: invalid `repo_root` repair is accepted workspace-only
+  after a P2 audit correction added MCP coverage for facade-raised
+  `InvalidRepositoryRootError` and a confidence-only correction updated
+  `FULL_REPO_TASK3_CONFIDENCE` from `0.0016393397346055746` to
+  `0.0016385604521468801`. The prior seven-file unit was
+  release-unit-audit-cleared, then full regression failed on
+  `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+  because only that scalar drifted; correction-lane and control validation
+  confirmed preservation locks for token count, document hash, warnings, warning
+  IDs, selected-unit order, resolver detail, probe-budget threshold,
+  warning-call count, and budget-400 parent/no-noise checks. The corrected
+  eight-file unit is corrected-release-unit-audit-cleared,
+  full-regression-cleared, and commit-gating-cleared. It is not staged, locally
+  committed, or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -102,10 +120,9 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: issue a narrow implementation prompt for invalid
-  `repo_root` handling across analyzer, facade, and MCP boundaries. The slice
-  should make nonexistent paths and file paths fail cleanly instead of returning
-  successful empty context.
+- next control action: create the local release commit for the exact eight-file
+  corrected invalid `repo_root` repair unit. Push still requires explicit Ryan
+  authorization.
 
 Latest release unit pushed:
 
