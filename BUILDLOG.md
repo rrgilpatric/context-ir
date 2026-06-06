@@ -2,6 +2,35 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Adversarial Repair Ledger Reconciled
+
+- Reconciled the active adversarial repair ledger after the recompile no-op
+  coverage push.
+- Completed/pushed repair findings now explicitly include:
+  - `src/` layout dependency/test coverage
+  - invalid `repo_root`
+  - compiler budget utilization
+  - project-specific scorer floors
+  - MCP in-band error semantics
+  - AGENTS/WoW evidence discipline
+  - sync commit optics
+  - recompile no-op coverage
+- Remaining work is now split into two tranches:
+  - next low-risk docs/evidence tranche: baseline uncertainty
+    ceiling/readability, replay-vs-default-local evidence separation clarity,
+    portfolio narrative weight, Python-version sensitivity, and public-surface
+    drift wording
+  - later higher-risk design/refactor tranche: runtime worker complexity and
+    duplicate `site_id` risk
+- Route decision: proceed next with one bounded docs/evidence repair slice.
+  Keep the real-OSS pre-registered experiment held until the accepted repair
+  ledger is closed or Ryan explicitly redirects.
+- Boundaries preserved: no source, tests, eval task, fixture, run-spec, README,
+  PUBLIC_CLAIMS, EVAL, ARCHITECTURE, AGENTS, Task 4, composite smoke, demo,
+  MCP/API, package export, scoring, compiler, optimizer, runtime worker,
+  staging, commit, or push changes.
+- Acceptance status: workspace-only continuity accepted first-pass.
+
 ## 2026-06-06 -- Recompile No-Op Coverage Pushed
 
 - Pushed the recompile no-op coverage test-only repair to `origin/main`.
