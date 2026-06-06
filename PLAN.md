@@ -71,12 +71,11 @@ Current active program:
   nonblocking for the prior private packet
 - highest-priority accepted findings:
   - remaining nonblocking/partial issues: `src/` layout test gaps,
-    MCP in-band error semantics, baseline
-    uncertainty ceiling/readability, replay-vs-default-local evidence separation
-    clarity, runtime worker complexity, sync-commit optics, portfolio narrative
-    weight, Python-version sensitivity, duplicate `site_id` risk, recompile
-    no-op coverage, public-surface drift wording, and stale AGENTS SWE-bench
-    wording
+    baseline uncertainty ceiling/readability, replay-vs-default-local evidence
+    separation clarity, runtime worker complexity, sync-commit optics, portfolio
+    narrative weight, Python-version sensitivity, duplicate `site_id` risk,
+    recompile no-op coverage, public-surface drift wording, and stale AGENTS
+    SWE-bench wording
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -94,18 +93,29 @@ Current active program:
      release-unit audit, full regression, commit-gating, local commit, and push
      are complete in commit
      `a0b2f36 Remove project-specific scorer floors`
-  5. proceed through the remaining nonblocking/partial/process findings as
+  5. MCP in-band error semantics are corrected and accepted workspace-only;
+     release-unit audit passed; a full-regression confidence-only Smoke E Task 3
+     scalar drift has been corrected; corrected full regression and
+     commit-gating passed
+  6. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit: none; `main` is clean after the
-  project-specific scorer-floor repair push
-- current release state: project-specific scorer-floor repair is pushed in
-  commit `a0b2f36 Remove project-specific scorer floors`. It removed hardcoded
-  scorer checks for `runtime_observation_admission.py` and
-  `runtime_probe_results.py`; runtime probe result-flow floors now use generic
-  query, symbol/name, kind, and path terms for admission/attachment and
-  result-contract surfaces. The release passed audit, full regression with
-  `2187` tests, commit-gating, local commit, and push after Ryan authorized
-  proceeding.
+- current workspace release unit:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/mcp_server.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_mcp_server.py`
+- current release state: MCP error-semantics repair is accepted workspace-only.
+  Direct local calls still return JSON dictionaries. SDK tool calls now return
+  `CallToolResult(isError=True)` for validation errors and facade failures while
+  preserving structured error payloads with `ok: false`, `error_code`, and a
+  non-empty JSON-safe `error`. Success SDK calls preserve the existing structured
+  success payload shape. Release-unit audit passed with no findings. Initial
+  full pytest failed only on a deterministic Smoke E Task 3 confidence scalar
+  drift; the scalar is corrected to `0.0016277052486463341`, and the focused
+  Task 3 Smoke E preservation lock now passes. Corrected full regression passed
+  with `2192 passed`. Commit-gating over the exact five-file unit passed. The
+  corrected unit is not staged, locally committed, or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -116,10 +126,10 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: continue the adversarial repair ledger with the next
-  bounded accepted Claude-review finding. Do not start the real-OSS
-  pre-registered experiment until the accepted repair ledger is closed or Ryan
-  explicitly redirects.
+- next control action: stage and locally commit the exact corrected five-file
+  MCP error-semantics repair unit. Do not start the real-OSS pre-registered
+  experiment until the accepted repair ledger is closed or Ryan explicitly
+  redirects.
 
 Latest release unit pushed:
 

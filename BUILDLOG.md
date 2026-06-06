@@ -2,6 +2,148 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- MCP Error Semantics Commit-Gating Passed
+
+- Ran commit-gating over the corrected five-file MCP error-semantics release
+  unit.
+- Checks:
+  - dirty file set exactly matched the corrected release unit
+  - no staged files
+  - `HEAD` equaled `origin/main` at intake
+  - `git diff --check`: clean
+  - protected-surface diff guard: no README, PUBLIC_CLAIMS, EVAL,
+    ARCHITECTURE, eval task, fixture, run-spec, reviewer-readiness, portfolio
+    evidence, or default-local checkpoint diffs
+  - source/test diff review confirmed SDK tool errors return
+    `CallToolResult(isError=True)` while direct local JSON calls and SDK success
+    structured payload behavior are preserved
+- Release state: release-unit audit, full regression, and commit-gating are
+  cleared. Staging, local commit, and push remain pending.
+- Recommended next control action: stage and locally commit the exact five-file
+  release unit.
+- Acceptance status: commit-gating-cleared.
+
+## 2026-06-06 -- MCP Error Semantics Full Regression Passed
+
+- Reran full regression after the Smoke E scalar correction.
+- Validation:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `pytest tests/ -v`: 2192 passed
+- Corrected release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/mcp_server.py`
+  - `tests/test_eval_signal_smoke_e.py`
+  - `tests/test_mcp_server.py`
+- Release state: release-unit audit and full regression are cleared.
+  Commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run commit-gating over the exact five-file
+  corrected release unit.
+- Acceptance status: regression-cleared after one scalar correction.
+
+## 2026-06-06 -- MCP Error Semantics Smoke E Scalar Corrected
+
+- Corrected the deterministic Smoke E Task 3 confidence scalar that held the
+  first full-regression run for the MCP error-semantics release unit.
+- Changed only `tests/test_eval_signal_smoke_e.py` for the scalar correction.
+- Corrected scalar:
+  - `FULL_REPO_TASK3_CONFIDENCE = 0.0016277052486463341`
+- Focused validation:
+  - `tests/test_eval_signal_smoke_e.py -q -k "task3_query_selects_full_repo_exact_units"`:
+    1 passed, 7 deselected
+  - `ruff check tests/test_eval_signal_smoke_e.py`: passed
+  - `ruff format --check tests/test_eval_signal_smoke_e.py`: passed
+  - `git diff --check`: clean
+- Preservation proof: the focused Smoke E guard rechecked budget, document hash,
+  selected unit order, resolver detail, warnings, warning IDs, probe-count
+  discipline, warning-call count, and the budget-400 parent/no-noise guard.
+- Release state: corrected workspace-only five-file unit. Corrected full
+  regression, commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: rerun full regression.
+- Acceptance status: correction accepted.
+
+## 2026-06-06 -- MCP Error Semantics Full Regression Held
+
+- Ran full regression for the exact four-file MCP error-semantics repair unit
+  after audit clearance.
+- Static gates passed:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+- Full pytest result: HELD.
+  - `pytest tests/ -v`: 1 failed, 2191 passed
+  - failing test:
+    `tests/test_eval_signal_smoke_e.py::test_signal_smoke_e_task3_query_selects_full_repo_exact_units`
+  - failure shape: confidence-only deterministic drift at budget 280; expected
+    `0.0016304451376726974`, observed `0.0016277052486463341`
+  - preservation locks that ran before the failure passed for total tokens,
+    document hash, warnings, warning IDs, selected unit order, resolver detail,
+    probe-count threshold, and warning-call count
+- Release state: full regression is not cleared. Commit-gating, staging, local
+  commit, and push remain blocked.
+- Recommended next control action: run a narrow Smoke E scalar correction after
+  explicitly confirming the full preservation locks, then rerun full regression.
+- Acceptance status: held.
+
+## 2026-06-06 -- MCP Error Semantics Audit Passed
+
+- Ran a read-only release-unit audit over the exact four-file MCP
+  error-semantics repair unit.
+- Audit result: PASS with no findings.
+- Audit checks:
+  - dirty file set exactly matched the release unit
+  - no staged files
+  - `git diff --check`: clean
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, portfolio evidence, or default-local checkpoint diffs
+  - SDK tool error path returns `CallToolResult(isError=True)` with structured
+    `ok: false` payloads for invalid input, invalid roots, and facade failures
+  - direct local-call JSON behavior and SDK success structured payload behavior
+    are preserved by focused tests
+- Release state: release-unit audit cleared. Full regression, commit-gating,
+  staging, local commit, and push remain pending.
+- Recommended next control action: run the full regression gate.
+- Acceptance status: audit-cleared first-pass.
+
+## 2026-06-06 -- MCP Error Semantics Accepted Workspace-Only
+
+- Accepted the MCP error-semantics repair workspace-only.
+- Release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/mcp_server.py`
+  - `tests/test_mcp_server.py`
+- Behavior accepted:
+  - direct local calls still return JSON dictionaries
+  - SDK tool calls now return `CallToolResult(isError=True)` for validation
+    errors and facade failures
+  - structured error payloads preserve `ok: false`, the existing `error_code`,
+    and a non-empty JSON-safe `error`
+  - success SDK calls preserve the existing structured success payload shape
+  - protocol-level tests cover invalid budget, invalid repo root, invalid query,
+    invalid `include_document`, facade-raised `InvalidRepositoryRootError`, and
+    generic facade exception mapped to `compile_failed`
+- Control validation:
+  - `tests/test_mcp_server.py -q`: 16 passed
+  - `tests/test_tool_facade.py tests/test_analyzer.py tests/test_mcp_server.py -q`:
+    83 passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: passed
+- Preserved boundaries: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, default-local
+  checkpoint, Task 4, composite smoke, demo, or real-OSS experiment changes.
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run a read-only release-unit audit over the
+  exact four-file MCP error-semantics repair unit.
+- Acceptance status: workspace-only accepted first-pass.
+
 ## 2026-06-06 -- Project-Specific Scorer Floors Pushed
 
 - Pushed the project-specific scorer-floor repair to `origin/main`.

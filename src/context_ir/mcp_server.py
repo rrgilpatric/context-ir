@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TypeAlias
+from typing import Annotated, TypeAlias, cast
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import CallToolResult, TextContent
+from pydantic import WithJsonSchema
 
 import context_ir.tool_facade as tool_facade
 from context_ir.analyzer import InvalidRepositoryRootError
@@ -22,15 +24,13 @@ from context_ir.semantic_types import (
 from context_ir.tool_facade import SemanticContextRequest, SemanticContextResponse
 
 JsonObject: TypeAlias = dict[str, object]
+McpBooleanInput: TypeAlias = Annotated[object, WithJsonSchema({"type": "boolean"})]
+McpIntegerInput: TypeAlias = Annotated[object, WithJsonSchema({"type": "integer"})]
+McpStringInput: TypeAlias = Annotated[object, WithJsonSchema({"type": "string"})]
 
 MCP_SERVER = FastMCP("context-ir")
 
 
-@MCP_SERVER.tool(
-    name="compile_repository_context",
-    description="Compile a budgeted semantic context artifact for a repository.",
-    structured_output=True,
-)
 def compile_repository_context(
     repo_root: str,
     query: str,
@@ -38,6 +38,21 @@ def compile_repository_context(
     include_document: bool = True,
 ) -> JsonObject:
     """Compile repository context through the accepted facade for MCP clients."""
+    return _compile_repository_context_json(
+        repo_root=repo_root,
+        query=query,
+        budget=budget,
+        include_document=include_document,
+    )
+
+
+def _compile_repository_context_json(
+    repo_root: object,
+    query: object,
+    budget: object,
+    include_document: object,
+) -> JsonObject:
+    """Compile repository context from raw MCP inputs into JSON-safe output."""
     validation_error = _validate_inputs(
         repo_root=repo_root,
         query=query,
@@ -47,10 +62,14 @@ def compile_repository_context(
     if validation_error is not None:
         return validation_error
 
+    checked_repo_root = cast(str, repo_root)
+    checked_query = cast(str, query)
+    checked_budget = cast(int, budget)
+    checked_include_document = cast(bool, include_document)
     request = SemanticContextRequest(
-        repo_root=repo_root,
-        query=query,
-        budget=budget,
+        repo_root=checked_repo_root,
+        query=checked_query,
+        budget=checked_budget,
     )
     try:
         response = tool_facade.compile_repository_context(request)
@@ -59,7 +78,30 @@ def compile_repository_context(
     except Exception as exc:
         return _error("compile_failed", str(exc))
 
-    return _response_to_json(response, include_document=include_document)
+    return _response_to_json(response, include_document=checked_include_document)
+
+
+@MCP_SERVER.tool(
+    name="compile_repository_context",
+    description="Compile a budgeted semantic context artifact for a repository.",
+    structured_output=True,
+)
+def _compile_repository_context_mcp(
+    repo_root: McpStringInput,
+    query: McpStringInput,
+    budget: McpIntegerInput,
+    include_document: McpBooleanInput = True,
+) -> Annotated[CallToolResult, JsonObject]:
+    """Compile repository context for SDK callers with protocol-level errors."""
+    result = _compile_repository_context_json(
+        repo_root=repo_root,
+        query=query,
+        budget=budget,
+        include_document=include_document,
+    )
+    if _is_error_payload(result):
+        return _error_result(result)
+    return _sdk_success_result(result)
 
 
 def run_stdio_server() -> None:
@@ -69,10 +111,10 @@ def run_stdio_server() -> None:
 
 def _validate_inputs(
     *,
-    repo_root: str,
-    query: str,
-    budget: int,
-    include_document: bool,
+    repo_root: object,
+    query: object,
+    budget: object,
+    include_document: object,
 ) -> JsonObject | None:
     """Return a JSON-safe validation error or ``None`` for valid inputs."""
     if type(repo_root) is not str or not repo_root:
@@ -225,11 +267,34 @@ def _source_span_to_json(span: SourceSpan) -> JsonObject:
 
 def _error(code: str, message: str) -> JsonObject:
     """Return a JSON-safe error response."""
+    safe_message = message or code
     return {
         "ok": False,
-        "error": message,
+        "error": safe_message,
         "error_code": code,
     }
+
+
+def _is_error_payload(result: JsonObject) -> bool:
+    """Return whether a JSON result represents an MCP tool error."""
+    return result.get("ok") is False
+
+
+def _error_result(error_payload: JsonObject) -> CallToolResult:
+    """Wrap a JSON error payload as a protocol-level MCP tool error."""
+    error_message = error_payload.get("error")
+    if not isinstance(error_message, str) or not error_message:
+        error_message = str(error_payload.get("error_code") or "compile_failed")
+    return CallToolResult(
+        content=[TextContent(type="text", text=error_message)],
+        structuredContent=error_payload,
+        isError=True,
+    )
+
+
+def _sdk_success_result(result: JsonObject) -> Annotated[CallToolResult, JsonObject]:
+    """Return JSON for FastMCP's structured conversion while satisfying mypy."""
+    return cast(Annotated[CallToolResult, JsonObject], result)
 
 
 if __name__ == "__main__":

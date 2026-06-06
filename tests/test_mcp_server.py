@@ -6,6 +6,8 @@ import asyncio
 import textwrap
 from pathlib import Path
 
+from mcp.types import CallToolResult
+
 import context_ir
 import context_ir.compiler as legacy_compiler
 import context_ir.mcp_server as mcp_server
@@ -268,6 +270,37 @@ def test_invalid_budget_returns_json_safe_error(
     _assert_json_safe(result)
 
 
+def test_mcp_server_invalid_budget_returns_protocol_error_before_facade(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """SDK callers receive protocol-level errors for invalid budgets."""
+    calls = 0
+
+    def fail_if_called(request: SemanticContextRequest) -> SemanticContextResponse:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("facade should not be called for invalid budget")
+
+    monkeypatch.setattr(
+        mcp_server.tool_facade,
+        "compile_repository_context",
+        fail_if_called,
+    )
+
+    result = _call_mcp_compile_tool(
+        {
+            "repo_root": str(tmp_path),
+            "query": "query",
+            "budget": 0,
+        }
+    )
+
+    payload = _assert_protocol_error(result, "invalid_budget")
+    assert payload["error"] == "budget must be a positive integer"
+    assert calls == 0
+
+
 def test_invalid_repo_root_returns_json_safe_error_before_facade(
     tmp_path: Path,
     monkeypatch,
@@ -311,6 +344,75 @@ def test_invalid_repo_root_returns_json_safe_error_before_facade(
     assert calls == 0
 
 
+def test_mcp_server_invalid_repo_root_returns_protocol_error_before_facade(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """SDK callers receive protocol-level errors for invalid repo roots."""
+    calls = 0
+
+    def fail_if_called(request: SemanticContextRequest) -> SemanticContextResponse:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("facade should not be called for invalid repo_root")
+
+    monkeypatch.setattr(
+        mcp_server.tool_facade,
+        "compile_repository_context",
+        fail_if_called,
+    )
+
+    result = _call_mcp_compile_tool(
+        {
+            "repo_root": str(tmp_path / "missing"),
+            "query": "query",
+            "budget": 64,
+        }
+    )
+
+    _assert_protocol_error(result, "invalid_repo_root")
+    assert calls == 0
+
+
+def test_mcp_server_invalid_query_and_include_document_return_protocol_errors(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """SDK callers receive existing protocol errors for malformed inputs."""
+    calls = 0
+
+    def fail_if_called(request: SemanticContextRequest) -> SemanticContextResponse:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("facade should not be called for invalid inputs")
+
+    monkeypatch.setattr(
+        mcp_server.tool_facade,
+        "compile_repository_context",
+        fail_if_called,
+    )
+
+    query_result = _call_mcp_compile_tool(
+        {
+            "repo_root": str(tmp_path),
+            "query": 123,
+            "budget": 64,
+        }
+    )
+    include_document_result = _call_mcp_compile_tool(
+        {
+            "repo_root": str(tmp_path),
+            "query": "query",
+            "budget": 64,
+            "include_document": "bad",
+        }
+    )
+
+    _assert_protocol_error(query_result, "invalid_query")
+    _assert_protocol_error(include_document_result, "invalid_include_document")
+    assert calls == 0
+
+
 def test_facade_invalid_repo_root_returns_invalid_repo_root_error(
     tmp_path: Path,
     monkeypatch,
@@ -340,6 +442,64 @@ def test_facade_invalid_repo_root_returns_invalid_repo_root_error(
     assert isinstance(result["error"], str)
     assert result["error"]
     _assert_json_safe(result)
+
+
+def test_mcp_server_facade_invalid_repo_root_returns_protocol_error(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """SDK callers receive protocol-level errors for facade root failures."""
+
+    def raise_invalid_repo_root(
+        request: SemanticContextRequest,
+    ) -> SemanticContextResponse:
+        raise InvalidRepositoryRootError("repo_root escaped workspace")
+
+    monkeypatch.setattr(
+        mcp_server.tool_facade,
+        "compile_repository_context",
+        raise_invalid_repo_root,
+    )
+
+    result = _call_mcp_compile_tool(
+        {
+            "repo_root": str(tmp_path),
+            "query": "query",
+            "budget": 64,
+        }
+    )
+
+    payload = _assert_protocol_error(result, "invalid_repo_root")
+    assert payload["error_code"] != "compile_failed"
+
+
+def test_mcp_server_facade_exception_returns_compile_failed_protocol_error(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Generic facade failures become protocol-level compile_failed errors."""
+
+    def raise_compile_failure(
+        request: SemanticContextRequest,
+    ) -> SemanticContextResponse:
+        raise RuntimeError("compiler unavailable")
+
+    monkeypatch.setattr(
+        mcp_server.tool_facade,
+        "compile_repository_context",
+        raise_compile_failure,
+    )
+
+    result = _call_mcp_compile_tool(
+        {
+            "repo_root": str(tmp_path),
+            "query": "query",
+            "budget": 64,
+        }
+    )
+
+    payload = _assert_protocol_error(result, "compile_failed")
+    assert payload["error"] == "compiler unavailable"
 
 
 def test_mcp_tool_does_not_call_retired_graph_first_apis(
@@ -530,3 +690,28 @@ def _assert_json_safe(value: object) -> None:
             _assert_json_safe(item)
         return
     raise AssertionError(f"non JSON-safe value: {value!r}")
+
+
+def _call_mcp_compile_tool(arguments: dict[str, object]) -> CallToolResult:
+    """Call the registered MCP compile tool and return the protocol result."""
+    result = asyncio.run(
+        mcp_server.MCP_SERVER.call_tool("compile_repository_context", arguments)
+    )
+    assert isinstance(result, CallToolResult)
+    return result
+
+
+def _assert_protocol_error(
+    result: CallToolResult,
+    error_code: str,
+) -> dict[str, object]:
+    """Assert protocol-level MCP error semantics and return structured payload."""
+    assert result.isError is True
+    payload = result.structuredContent
+    assert isinstance(payload, dict)
+    assert payload["ok"] is False
+    assert payload["error_code"] == error_code
+    assert isinstance(payload["error"], str)
+    assert payload["error"]
+    _assert_json_safe(payload)
+    return payload
