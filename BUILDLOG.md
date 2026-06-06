@@ -2,6 +2,31 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Low-Risk Docs/Evidence Boundary Repair Pushed
+
+- Pushed the accepted, audit-cleared, full-regression-cleared, and
+  commit-gating-cleared low-risk docs/evidence boundary repair release unit.
+- Pushed release commit:
+  `c9a5fef Clarify internal evidence boundaries`
+- Release facts:
+  - release-unit audit passed first-pass
+  - full regression passed with `ruff check src/ tests/`, `ruff format
+    --check src/ tests/`, `mypy --strict src/`, `git diff --check`, and
+    `pytest tests/ -v` reporting 2196 passed
+  - commit-gating passed first-pass
+  - staged file set matched the exact 11-file release unit
+  - Ryan authorized proceeding to push
+- Post-push continuity correction:
+  - `PLAN.md` now records the docs/evidence boundary repair as pushed rather
+    than workspace-only
+  - current routing returns to the adversarial repair ledger instead of
+    staging or committing the already-pushed release
+- Recommended next control action: continue the adversarial repair ledger with
+  the next bounded accepted finding. Do not start the real-OSS
+  pre-registered experiment until the accepted repair ledger is closed or Ryan
+  explicitly redirects.
+- Acceptance status: pushed first-pass; post-push continuity synced.
+
 ## 2026-06-06 -- Low-Risk Docs/Evidence Boundary Repair Commit-Gating Passed
 
 - Ran commit-gating over the exact 11-file low-risk docs/evidence boundary

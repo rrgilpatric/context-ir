@@ -105,29 +105,23 @@ Current active program:
      `774ec3a Lock zero-delta recompile no-op behavior`
   8. adversarial repair ledger routing is pushed in commit
      `f11347c Sync adversarial repair ledger routing`
-  9. low-risk docs/evidence boundary repair tranche is accepted workspace-only;
-     no source, test, eval task, fixture, run-spec, generated JSON/JSONL
-     evidence, composite smoke, Task 4, demo, or API/MCP changes
-- current workspace release unit: low-risk docs/evidence boundary repair
-  (`PLAN.md`, `BUILDLOG.md`, `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`,
-  `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/reviewer_readiness.md`,
-  `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`,
-  `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`,
-  `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`,
-  `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`,
-  `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`)
+  9. low-risk docs/evidence boundary repair tranche is pushed in commit
+     `c9a5fef Clarify internal evidence boundaries`
+- current workspace release unit: none; worktree should be clean after the
+  post-push continuity sync
 - current release state: recompile no-op coverage repair is pushed in commit
   `774ec3a Lock zero-delta recompile no-op behavior`. The active adversarial
   repair ledger routing sync is pushed in commit
   `f11347c Sync adversarial repair ledger routing`. The low-risk docs/evidence
-  boundary repair is accepted workspace-only after first-pass control review.
+  boundary repair is pushed in commit
+  `c9a5fef Clarify internal evidence boundaries`.
   It clarifies internal-only evidence boundaries, replay/comparative versus
   default-local checkpoint separation, Python-version caveats, fixed 8-row
   matrix wording, and internal rubric wording without widening public claims.
   Release-unit audit, full regression, and commit-gating passed with no
   findings; full regression included `ruff check src/ tests/`, `ruff format
   --check src/ tests/`, `mypy --strict src/`, `git diff --check`, and `pytest
-  tests/ -v` with 2196 passed. Staging, local commit, and push remain pending.
+  tests/ -v` with 2196 passed. Staging, local commit, and push are complete.
   Live git remains the source of truth for current `HEAD` and `origin/main`.
 - active holds:
   - do not send the private reviewer note from the current packet until the
@@ -139,44 +133,46 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: stage and locally commit the accepted, audit-cleared,
-  full-regression-cleared, and commit-gating-cleared low-risk docs/evidence
-  boundary repair tranche. Do not start the real-OSS pre-registered experiment
+- next control action: continue the adversarial repair ledger with the next
+  bounded accepted finding. Do not start the real-OSS pre-registered experiment
   until the accepted repair ledger is closed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 
+- low-risk docs/evidence boundary repair
+- pushed release commit:
+  `c9a5fef Clarify internal evidence boundaries`
+- release state: accepted first-pass; read-only audit passed; full regression
+  passed with `2196` tests; commit-gating passed; staged, locally committed,
+  and pushed to `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `EVAL.md`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/reviewer_readiness.md`
+  - `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+  - `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+
+Previous release unit pushed:
+
 - recompile no-op coverage test-only repair
 - pushed release commit:
   `774ec3a Lock zero-delta recompile no-op behavior`
-- release state: accepted first-pass; read-only audit passed; full regression
-  initially held on deterministic Smoke E confidence drift, then passed with
-  `2196` tests after a scalar-only correction; commit-gating passed; staged,
-  locally committed, and pushed to `origin/main` after Ryan authorized
-  proceeding
+- release state: accepted after one full-regression correction; corrected
+  read-only audit passed; full regression passed with `2196` tests;
+  commit-gating passed; staged, locally committed, and pushed to `origin/main`
+  after Ryan authorized proceeding
 - release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `tests/test_semantic_diagnostics.py`
   - `tests/test_runtime_observation_recompile.py`
   - `tests/test_tool_facade.py`
-  - `tests/test_eval_signal_smoke_e.py`
-
-Previous release unit pushed:
-
-- compiler budget-utilization repair
-- pushed release commit:
-  `7b1cfc4 Improve compiler feasible probe selection`
-- release state: accepted after one full-regression correction; corrected
-  read-only audit passed; full regression passed with `2187` tests;
-  commit-gating passed; staged, locally committed, and pushed to `origin/main`
-  after Ryan authorized proceeding
-- release files:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/semantic_compiler.py`
-  - `tests/test_semantic_compiler.py`
-  - `tests/test_eval_signal_smoke_d.py`
   - `tests/test_eval_signal_smoke_e.py`
 
 Earlier release unit pushed:
