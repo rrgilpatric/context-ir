@@ -2,6 +2,39 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Compiler Budget-Utilization Repair Pushed
+
+- Pushed the compiler budget-utilization repair to `origin/main`.
+- Pushed release commit:
+  `7b1cfc4 Improve compiler feasible probe selection`.
+- Release gates cleared before push:
+  - corrected read-only release-unit audit: PASS with no findings
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2187 passed
+  - commit-gating over the exact six-file unit: passed
+- Release behavior shipped:
+  - `_compile_budget_honest_artifact(...)` chooses the best semantically useful
+    feasible probed document rather than the latest/highest feasible unit-budget
+    probe
+  - feasible probes rank first by semantic utility; equal-utility probes prefer
+    selected frontier/unsupported uncertainty surfaces before compactness
+  - Smoke D budget 200 keeps the `LayoutBase` support pack under budget and
+    support coverage `1.0`
+  - Smoke D emits an honest `omitted_uncertainty` warning for the omitted
+    duplicate unsupported unit
+- Boundaries preserved: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task,
+  fixture, run-spec, reviewer-readiness, portfolio evidence, default-local
+  checkpoint, MCP/API, Task 4, composite smoke, demo, or real-OSS experiment
+  changes.
+- Release state: pushed. No active workspace release unit remains for this
+  repair. Live git remains the source of truth for current `HEAD` and
+  `origin/main`.
+- Recommended next control action: continue the adversarial repair ledger with
+  the next bounded accepted Claude-review finding.
+- Acceptance status: pushed after 1 correction.
+
 ## 2026-06-06 -- Compiler Budget-Utilization Commit-Gating Passed
 
 - Ran commit-gating over the exact six-file compiler budget-utilization repair

@@ -87,33 +87,21 @@ Current active program:
      `fa9b2ae Reject invalid repository roots`
   3. compiler budget-utilization fallback behavior is corrected and accepted
      workspace-only after a full-regression smoke-matrix correction; corrected
-     release-unit audit, full regression, and commit-gating have passed; release
-     sequencing is pending live git state and Ryan push authorization
+     release-unit audit, full regression, commit-gating, local commit, and push
+     are complete in commit
+     `7b1cfc4 Improve compiler feasible probe selection`
   4. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/semantic_compiler.py`
-  - `tests/test_semantic_compiler.py`
-  - `tests/test_eval_signal_smoke_d.py`
-  - `tests/test_eval_signal_smoke_e.py`
-- current release state: compiler budget-utilization repair is corrected and
-  accepted workspace-only after the full-regression smoke-matrix correction.
-  `_compile_budget_honest_artifact(...)` now chooses the best semantically useful
+- current workspace release unit: none; `main` is clean after the compiler
+  budget-utilization repair push
+- current release state: compiler budget-utilization repair is pushed in commit
+  `7b1cfc4 Improve compiler feasible probe selection`. It changed
+  `_compile_budget_honest_artifact(...)` to choose the best semantically useful
   feasible probed document rather than the latest/highest feasible unit-budget
   probe. Feasible probes rank first by semantic utility; equal-utility probes
   prefer selected frontier/unsupported uncertainty surfaces before compactness.
-  Smoke D budget 200 keeps the requested `LayoutBase` support pack under budget
-  and reaches support coverage `1.0`. Smoke D emits an honest
-  `omitted_uncertainty` warning for the omitted duplicate unsupported unit.
-  Smoke E Task 3 confidence drifted from `0.0016385604521468801` to
-  `0.0016306030935493503` across the repair/correction, with selection,
-  document, probe-count, warning-call, and preservation locks held. Corrected
-  release-unit audit passed. Full regression passed with `2187` tests.
-  Commit-gating passed over the exact six-file unit. Live git determines
-  whether local commit/push sequencing has already occurred; push requires
-  explicit Ryan authorization.
+  The release passed corrected audit, full regression with `2187` tests,
+  commit-gating, local commit, and push after Ryan authorized proceeding.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -124,13 +112,29 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: finish release sequencing for the compiler
-  budget-utilization repair unit according to live git state. Do not push
-  without explicit Ryan authorization. Do not start the real-OSS pre-registered
-  experiment until the accepted repair ledger is closed or Ryan explicitly
-  redirects.
+- next control action: continue the adversarial repair ledger with the next
+  bounded accepted Claude-review finding. Do not start the real-OSS
+  pre-registered experiment until the accepted repair ledger is closed or Ryan
+  explicitly redirects.
 
 Latest release unit pushed:
+
+- compiler budget-utilization repair
+- pushed release commit:
+  `7b1cfc4 Improve compiler feasible probe selection`
+- release state: accepted after one full-regression correction; corrected
+  read-only audit passed; full regression passed with `2187` tests;
+  commit-gating passed; staged, locally committed, and pushed to `origin/main`
+  after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/semantic_compiler.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_d.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - invalid `repo_root` repair across analyzer, facade, and MCP
 - pushed release commit:
