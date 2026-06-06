@@ -70,7 +70,6 @@ Current active program:
   optics finding be fixed; do not discard issues merely because they are
   nonblocking for the prior private packet
 - highest-priority accepted findings:
-  - `src/` layout import/inheritance proof drops on the public analyzer path
   - invalid `repo_root` inputs return successful facade/MCP responses
   - compiler budget utilization can miss feasible better packs
   - remaining nonblocking/partial issues: `src/` layout test gaps,
@@ -82,27 +81,17 @@ Current active program:
     wording
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
-     audit-cleared and full-regression-cleared after one audit correction and
-     one full-regression correction; commit-gating remains pending
+     pushed in commit `de5d221 Fix source-root dependency proof`
   2. fix invalid `repo_root` handling across analyzer/facade/MCP boundaries
   3. fix compiler budget-utilization fallback behavior
   4. proceed through the remaining nonblocking/partial/process findings as
      bounded slices until the adversarial ledger is closed
-- current workspace release unit:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/resolver.py`
-  - `src/context_ir/semantic_optimizer.py`
-  - `tests/test_parser.py`
-  - `tests/test_resolver.py`
-  - `tests/test_dependency_frontier.py`
-  - `tests/test_analyzer.py`
-  - `tests/test_eval_signal_smoke_e.py`
-- current release state: audit-cleared and full-regression-cleared. The
-  optimizer correction restored the nine full-regression failures while
-  preserving the source-root resolver repair. Control full regression passed
-  with `2180` tests. The unit is not commit-gating-cleared, staged, locally
-  committed, or pushed.
+- current workspace release unit: none; `main` is clean after the source-root
+  repair push
+- current release state: source-root dependency repair is pushed. The next
+  active repair is invalid `repo_root` handling; no files are currently
+  accepted in workspace, audit-cleared, commit-gating-cleared, staged, locally
+  committed, or pending push for that next repair.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -113,10 +102,58 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: run commit-gating over the exact nine-file source-root
-  and optimizer repair unit, then stage and commit only if commit-gating passes.
+- next control action: issue a narrow implementation prompt for invalid
+  `repo_root` handling across analyzer, facade, and MCP boundaries. The slice
+  should make nonexistent paths and file paths fail cleanly instead of returning
+  successful empty context.
 
 Latest release unit pushed:
+
+- source-root dependency repair and optimizer-focus correction
+- pushed release commit:
+  `de5d221 Fix source-root dependency proof`
+- release state: accepted after correction; fresh read-only audit passed; full
+  regression passed with `2180` tests; commit-gating passed; staged, locally
+  committed, and pushed to `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/resolver.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_parser.py`
+  - `tests/test_resolver.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_analyzer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- behavior:
+  - `src/` layout imports written as `pkg...` resolve through lookup-only
+    aliases to durable `src.pkg...` definitions/modules
+  - public `ResolvedImport.target_qualified_name` reports the durable matched
+    definition/module qualified name, not the import-facing alias
+  - ambiguous source-root alias targets fail closed
+  - flat and `src/` layouts both prove import, inherited-base, and helper-call
+    dependencies when the targets are uniquely known
+  - optimizer focus ordering preserves direct anchors, caller uncertainty, and
+    runtime-probe tier accounting after newly proven dependencies expose more
+    support
+- validation:
+  - read-only release-unit audit: PASS with no findings
+  - `PYTHONPATH=src .venv/bin/python -m ruff check src/ tests/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m ruff format --check src/ tests/`:
+    passed
+  - `PYTHONPATH=src .venv/bin/python -m mypy --strict src/`: passed
+  - `PYTHONPATH=src .venv/bin/python -m pytest tests/ -v`: `2180` passed
+  - commit-gating over the exact nine-file release unit: passed
+- preserved boundaries:
+  - no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval task, fixture, run-spec,
+    reviewer-readiness, portfolio evidence, or default-local checkpoint changes
+  - no public claim widening
+  - no Task 4, composite smoke, runnable demo, MCP/API expansion, or real-OSS
+    experiment execution
+- recommended next control action: fix invalid `repo_root` handling across
+  analyzer, facade, and MCP boundaries.
+
+Prior release unit pushed:
 
 - internal-only private reviewer send-readiness artifact 001
 - release state: accepted after first-pass control review with no findings;

@@ -2,6 +2,47 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Source-Root Dependency Repair Pushed
+
+- Pushed the source-root dependency repair and optimizer-focus correction to
+  `origin/main`.
+- Pushed release commit:
+  `de5d221 Fix source-root dependency proof`.
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/resolver.py`
+  - `src/context_ir/semantic_optimizer.py`
+  - `tests/test_parser.py`
+  - `tests/test_resolver.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_analyzer.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior shipped:
+  - `src/` layout imports written as `pkg...` resolve through lookup-only
+    source-root aliases to durable `src.pkg...` definitions/modules
+  - public `ResolvedImport.target_qualified_name` reports the durable matched
+    definition/module qualified name, not the import-facing alias
+  - ambiguous source-root alias targets fail closed
+  - flat and `src/` layouts both prove import, inherited-base, and helper-call
+    dependencies when the targets are uniquely known
+  - optimizer focus ordering preserves direct anchors, caller uncertainty, and
+    runtime-probe tier accounting after newly proven dependencies expose more
+    support
+- Release gates cleared:
+  - fresh read-only release-unit audit: PASS with no findings
+  - static gates: ruff check, ruff format --check, and mypy --strict passed
+  - full regression: `2180` passed
+  - commit-gating over the exact nine-file release unit: passed
+- Preserved boundaries: no README, PUBLIC_CLAIMS, EVAL, ARCHITECTURE, eval
+  task, fixture, run-spec, reviewer-readiness, portfolio evidence, or
+  default-local checkpoint changes; no public claim widening; no Task 4,
+  composite smoke, runnable demo, MCP/API expansion, or real-OSS experiment
+  execution.
+- Next active repair: invalid `repo_root` handling across analyzer, facade, and
+  MCP boundaries.
+- Acceptance status: pushed.
+
 ## 2026-06-06 -- Source-Root Optimizer Correction Accepted Workspace-Only
 
 - The narrow optimizer correction returned after full regression had found nine
