@@ -2,6 +2,44 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Pushed
+
+- Pushed the corrected duplicate `site_id` parser collision repair release unit
+  to `origin/main`.
+- Pushed release commit:
+  `910b6c7 Disambiguate colliding call source sites`
+- Release gates completed before push:
+  - corrected read-only release-unit audit: PASS with no findings
+  - full regression: `ruff check src/ tests/`, `ruff format --check src/
+    tests/`, `mypy --strict src/`, `git diff --check`, and `pytest tests/ -v`
+    with 2201 passed
+  - commit-gating: PASS with no findings over the exact 10-file release unit
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/parser.py`
+  - `src/context_ir/dependency_frontier.py`
+  - `tests/test_parser.py`
+  - `tests/test_dependency_frontier.py`
+  - `tests/test_runtime_probe_requests.py`
+  - `tests/test_mcp_server.py`
+  - `tests/test_eval_signal_smoke_d.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior shipped:
+  - collision-only full-span suffixing for colliding call/attribute raw fact IDs
+  - non-colliding call/attribute ID preservation
+  - nested call/attribute collision repairs that keep inner resolved
+    dependencies while preserving outer unsupported/uncertain surfaces
+  - nested `getattr(obj, name)()` duplicate unsupported ID repair, with one
+    runtime probe request and MCP `ok: true`
+- Ryan authorized push. This post-push continuity entry supersedes the older
+  pending-state entries below; historical entries remain as audit trail.
+- Recommended next control action: continue the accepted adversarial repair
+  ledger with the remaining higher-risk runtime worker complexity
+  design/refactor tranche. Do not start the real-OSS pre-registered experiment
+  until the accepted repair ledger is closed or Ryan explicitly redirects.
+- Acceptance status: pushed after one Smoke D expectation correction.
+
 ## 2026-06-06 -- Duplicate Site ID Parser Collision Repair Commit-Gating Passed
 
 - Ran commit-gating over the exact corrected 10-file duplicate `site_id` parser
