@@ -2,6 +2,117 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Low-Risk Docs/Evidence Boundary Repair Commit-Gating Passed
+
+- Ran commit-gating over the exact 11-file low-risk docs/evidence boundary
+  repair release unit after release-unit audit and full regression clearance.
+- Commit-gating result: PASS with no findings.
+- Commit-gating checks:
+  - dirty file set exactly matched the accepted docs/evidence tranche plus
+    `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - no source, test, eval task, fixture, or run-spec diff
+  - no generated checkpoint or portfolio evidence artifact diff
+  - old high-risk phrases remained absent from the reviewed docs
+  - new caveat/separation wording remained present for replay/comparative
+    versus default-local evidence, Python-version boundaries, internal rubric
+    language, fixed 8-row matrix wording, public benchmark proof, broad product
+    proof, and cross-version proof
+- Release state: commit-gating cleared. Staging, local commit, and push remain
+  pending.
+- Recommended next control action: stage and locally commit the exact 11-file
+  release unit. Push remains Ryan-gated.
+- Acceptance status: commit-gating-cleared first-pass.
+
+## 2026-06-06 -- Low-Risk Docs/Evidence Boundary Repair Full Regression Passed
+
+- Ran the full regression gate for the accepted low-risk docs/evidence boundary
+  repair tranche after release-unit audit clearance.
+- Full regression passed:
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `git diff --check`: clean
+  - `pytest tests/ -v`: 2196 passed
+- Release state: full-regression cleared. Commit-gating, staging, local commit,
+  and push remain pending.
+- Recommended next control action: run commit-gating over the exact 11-file
+  docs/evidence release unit.
+- Acceptance status: full-regression-cleared first-pass.
+
+## 2026-06-06 -- Low-Risk Docs/Evidence Boundary Repair Audit Passed
+
+- Ran a read-only release-unit audit over the exact 11-file low-risk
+  docs/evidence boundary repair tranche.
+- Audit result: PASS with no findings.
+- Audit checks:
+  - dirty file set exactly matched the accepted docs/evidence tranche plus
+    `PLAN.md` and `BUILDLOG.md`
+  - no staged files
+  - `HEAD` equaled `origin/main`
+  - `git diff --check`: clean
+  - no source, test, eval task, fixture, or run-spec diff
+  - no generated checkpoint or portfolio evidence artifact diff
+  - old high-risk phrases (`wins all 8/8`, `STRONG internal evidence`,
+    `serious internal`, `What This Proves`) were absent from the reviewed
+    docs
+  - new caveat/separation wording was present for replay/comparative versus
+    default-local evidence, Python 3.14.3/Python 3.11+ boundaries, internal
+    rubric language, fixed 8-row matrix wording, public benchmark proof, broad
+    product proof, and cross-version proof
+- Release state: release-unit audit cleared. Full regression, commit-gating,
+  staging, local commit, and push remain pending.
+- Recommended next control action: run the full regression gate.
+- Acceptance status: audit-cleared first-pass.
+
+## 2026-06-06 -- Low-Risk Docs/Evidence Boundary Repair Accepted Workspace-Only
+
+- Reviewed and accepted the low-risk docs/evidence boundary repair tranche
+  workspace-only.
+- Findings: none.
+- Accepted release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `README.md`
+  - `PUBLIC_CLAIMS.md`
+  - `EVAL.md`
+  - `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/reviewer_readiness.md`
+  - `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`
+  - `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`
+  - `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`
+- Behavior changed:
+  - clarified replay/comparative matrix evidence versus default-local
+    subprocess checkpoint evidence
+  - added Python 3.14.3 evidence-generation caveats while preserving Python
+    3.11+ project support wording
+  - softened fixed `8`-row and `STRONG` language into internal matrix/rubric
+    language
+  - reiterated that portfolio/checkpoint evidence is internal
+    review/regression evidence, not public benchmark proof, broad product
+    proof, runtime-support proof, production readiness, or cross-version proof
+- Control validation:
+  - `git diff --check`: clean
+  - `git diff -- src/ tests/ evals/tasks/ evals/fixtures/ evals/run_specs/`:
+    empty
+  - generated checkpoint artifact guard for `checkpoint.md`, `report.md`,
+    `manifest.json`, `ledger.jsonl`, and `run_spec.json`: empty
+  - positive caveat/separation wording search: matched expected boundaries
+  - high-risk phrase search found only caveat/disallowed-claim wording, not
+    positive claim widening
+- Boundaries preserved: no source, tests, eval tasks, fixtures, run specs,
+  generated JSON/JSONL evidence, generated checkpoint/report artifacts, Task 4,
+  composite smoke, demo, MCP/API, package export, scoring, compiler, optimizer,
+  runtime worker, staging, commit, or push changes.
+- Release state: workspace-only accepted. Release-unit audit, full regression,
+  commit-gating, staging, local commit, and push remain pending.
+- Recommended next control action: run a read-only release-unit audit over the
+  accepted docs/evidence release unit.
+- Acceptance status: workspace-only accepted first-pass.
+
 ## 2026-06-06 -- Adversarial Repair Ledger Routing Pushed
 
 - Pushed the adversarial repair ledger routing sync to `origin/main`.

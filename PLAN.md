@@ -74,10 +74,10 @@ Current active program:
     invalid `repo_root`, compiler budget utilization, project-specific scorer
     floors, MCP in-band error semantics, AGENTS/WoW evidence discipline, sync
     commit optics, and recompile no-op coverage
-  - next low-risk docs/evidence tranche: baseline uncertainty
-    ceiling/readability, replay-vs-default-local evidence separation clarity,
-    portfolio narrative weight, Python-version sensitivity, and public-surface
-    drift wording
+  - low-risk docs/evidence tranche: accepted workspace-only after first-pass
+    control review; covers baseline uncertainty ceiling/readability,
+    replay-vs-default-local evidence separation clarity, portfolio narrative
+    weight, Python-version sensitivity, and public-surface drift wording
   - later higher-risk design/refactor tranche: runtime worker complexity and
     duplicate `site_id` risk
 - repair sequencing:
@@ -105,13 +105,30 @@ Current active program:
      `774ec3a Lock zero-delta recompile no-op behavior`
   8. adversarial repair ledger routing is pushed in commit
      `f11347c Sync adversarial repair ledger routing`
-- current workspace release unit: none
+  9. low-risk docs/evidence boundary repair tranche is accepted workspace-only;
+     no source, test, eval task, fixture, run-spec, generated JSON/JSONL
+     evidence, composite smoke, Task 4, demo, or API/MCP changes
+- current workspace release unit: low-risk docs/evidence boundary repair
+  (`PLAN.md`, `BUILDLOG.md`, `README.md`, `PUBLIC_CLAIMS.md`, `EVAL.md`,
+  `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/reviewer_readiness.md`,
+  `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`,
+  `evals/product_differentiation/reviewer_readiness/private_reviewer_packet_001.md`,
+  `evals/product_differentiation/reviewer_readiness/private_reviewer_send_readiness_001.md`,
+  `evals/product_differentiation/reviewer_readiness/private_reviewer_walkthrough_001.md`,
+  `evals/product_differentiation/reviewer_readiness/public_safe_wording_crosswalk.md`)
 - current release state: recompile no-op coverage repair is pushed in commit
   `774ec3a Lock zero-delta recompile no-op behavior`. The active adversarial
   repair ledger routing sync is pushed in commit
-  `f11347c Sync adversarial repair ledger routing`. The next route is the
-  low-risk docs/evidence tranche before higher-risk design/refactor work. Live
-  git remains the source of truth for current `HEAD` and `origin/main`.
+  `f11347c Sync adversarial repair ledger routing`. The low-risk docs/evidence
+  boundary repair is accepted workspace-only after first-pass control review.
+  It clarifies internal-only evidence boundaries, replay/comparative versus
+  default-local checkpoint separation, Python-version caveats, fixed 8-row
+  matrix wording, and internal rubric wording without widening public claims.
+  Release-unit audit, full regression, and commit-gating passed with no
+  findings; full regression included `ruff check src/ tests/`, `ruff format
+  --check src/ tests/`, `mypy --strict src/`, `git diff --check`, and `pytest
+  tests/ -v` with 2196 passed. Staging, local commit, and push remain pending.
+  Live git remains the source of truth for current `HEAD` and `origin/main`.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -122,11 +139,10 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: run one bounded docs/evidence repair slice covering
-  baseline uncertainty readability, replay-vs-default-local evidence separation,
-  portfolio narrative weight, Python-version sensitivity, and public-surface
-  wording. Do not start the real-OSS pre-registered experiment until the
-  accepted repair ledger is closed or Ryan explicitly redirects.
+- next control action: stage and locally commit the accepted, audit-cleared,
+  full-regression-cleared, and commit-gating-cleared low-risk docs/evidence
+  boundary repair tranche. Do not start the real-OSS pre-registered experiment
+  until the accepted repair ledger is closed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 

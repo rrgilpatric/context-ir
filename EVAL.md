@@ -35,15 +35,31 @@ Checkpoint truth:
 - no budget violations
 - no composite smoke tasks and no legacy `oracle_smoke`
 
-This proves exact internal runtime-provenance evidence for the individual probe
-fixtures: at provider-valid budgets, the default-local subprocess provider has
-durable runtime-provenance and normalized payload evidence for each exact
-individual non-smoke probe fixture in the current queue. It does not prove
-public benchmark quality, production readiness, broad product proof,
-generalized runtime support, composite smoke support, Task 4 readiness, or
-latency/token/cost wins. `portfolio_001` remains separate STRONG exact-query
-internal product-differentiation evidence, and public-safe comparative claims
-remain bounded to the existing quad matrix.
+Evidence authority is intentionally split. Replay/comparative matrix artifacts
+record fixed provider/budget comparisons from fixed run specs. The
+`default_local_probe_checkpoint_001` artifacts record default-local subprocess
+runtime-provenance acquisition for individual non-smoke probes. The committed
+`portfolio_001` packet is separate exact-query internal product-differentiation
+evidence. These evidence families are internal review/regression evidence and
+must not be merged into a public benchmark, broad product proof, public
+runtime-support proof, or public claim-widening artifact.
+
+The committed `portfolio_001` manifest and default-local checkpoint ledger
+record Python 3.14.3 as the evidence-generation environment. Project support
+remains Python 3.11+. Treat those committed rows as environment-specific
+internal evidence; cross-version claims require fresh runs under the target
+Python versions.
+
+This checkpoint provides exact internal runtime-provenance evidence for the
+individual probe fixtures: at provider-valid budgets, the default-local
+subprocess provider has durable runtime-provenance and normalized payload
+evidence for each exact individual non-smoke probe fixture in the current
+queue. It does not prove public benchmark quality, production readiness, broad
+product proof, generalized runtime support, composite smoke support, Task 4
+readiness, or latency/token/cost wins. `portfolio_001` remains separate
+exact-query internal product-differentiation evidence with internal rubric
+classifications, and public-safe comparative claims remain bounded to the
+existing quad matrix.
 
 Evidence authority is split by artifact type. The `oracle_signal_vars_probe`
 evidence described below is a narrow internal `vars(obj)` pilot, and the
@@ -523,12 +539,14 @@ Proven by current unit and integration tests:
   `oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`, and
   `oracle_signal_smoke_d`.
 - The accepted current broader evidence surface is a quad matrix over 4 tasks x
-  2 budgets x 3 providers. Within that fixed internal matrix, `context_ir`
-  wins all 8/8 task-budget rows.
+  2 budgets x 3 providers. Within that fixed internal matrix, `context_ir` is
+  recorded as the row winner for each of the 8 fixed task-budget rows.
 - Provider-average aggregate scores for the accepted quad matrix are:
   `context_ir = 0.9599139230003012`,
   `import_neighborhood_files = 0.6228480543023547`, and
   `lexical_top_k_files = 0.6065653086866415`.
+- The 8-row quad-matrix result is not broad product proof, public benchmark
+  proof, or external validation.
 - The earlier accepted triple matrix over `oracle_signal_smoke`,
   `oracle_signal_smoke_b`, and `oracle_signal_smoke_c` remains historical prior
   internal evidence, but it is not the current top surface.
@@ -1457,8 +1475,10 @@ The following claims are allowed because current repo artifacts support them:
 - The current public-safe comparative internal surface is the four-asset
   signal quad matrix over `oracle_signal_smoke`, `oracle_signal_smoke_b`,
   `oracle_signal_smoke_c`, and `oracle_signal_smoke_d`.
-- Within that fixed quad matrix only, `context_ir` is the sole winner on all
-  8/8 task-budget rows and has the top provider-average aggregate score.
+- Within that fixed quad matrix only, `context_ir` is recorded as the row
+  winner for each of the 8 fixed task-budget rows and has the top
+  provider-average aggregate score. This is internal matrix evidence, not
+  broad product proof or public benchmark proof.
 - The current internal evidence surface includes an explicit tight-budget
   blemish: `oracle_signal_smoke_b / 200` still records `budget_pressure`, and
   `def:pkg/digest.py:pkg.digest.render_assignment_digest` can remain omitted.

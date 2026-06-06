@@ -20,6 +20,12 @@ collapsing their boundaries:
 - `default_local_probe_checkpoint_001`: exact runtime-provenance breadth
   evidence across the current individual non-smoke probe checkpoint.
 
+These two evidence bodies are not interchangeable. `portfolio_001` uses
+fixed-task product-differentiation replay/comparison evidence; the
+default-local checkpoint uses the `context_ir_default_local_python_subprocess`
+provider to acquire runtime-provenance evidence for individual probes. Both are
+internal review/regression evidence, not public benchmark proof.
+
 ## One-Page Reading Order
 
 1. Project thesis and boundaries:
@@ -60,12 +66,13 @@ collapsing their boundaries:
 
 - Location: `evals/product_differentiation/portfolio_001/`.
 - Scope: internal exact-query evidence for Tasks 0-3.
-- Classification: `STRONG` for Task 0 at budget `220`, Task 1 at budget
-  `260`, Task 2 at budget `320`, and Task 3 at budget `280`.
+- Internal rubric classification: `STRONG` for Task 0 at budget `220`, Task 1
+  at budget `260`, Task 2 at budget `320`, and Task 3 at budget `280`. Treat
+  `STRONG` as the packet's internal rubric label, not as broad product proof.
 - Evidence shape: `context_ir` selected the required semantic evidence paths
   for each exact query and budget, while file-level baselines failed under the
   same budgets or required materially larger whole-file context.
-- What it proves: serious internal product-differentiation evidence for exact
+- What it supports: bounded internal product-differentiation evidence for exact
   semantic context assembly tasks, including preservation of
   `unsupported/opaque` primary truth and additive runtime evidence where the
   task requires it.
@@ -74,7 +81,9 @@ collapsing their boundaries:
   runtime support, or public/demo readiness.
 - Reviewer caveat: `context_ir` is materially slower than file-level baselines
   on the recorded full-repo portfolio runs, and selected support may be
-  summary-level under budget pressure.
+  summary-level under budget pressure. The committed portfolio manifest records
+  Python 3.14.3; project support remains Python 3.11+, so the packet is not
+  cross-version proof.
 
 ### default_local_probe_checkpoint_001
 
@@ -89,12 +98,15 @@ collapsing their boundaries:
   `oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`,
   `oracle_signal_smoke_d`, and `oracle_signal_smoke_e`; legacy
   `oracle_smoke`.
-- What it proves: exact internal runtime-provenance and normalized payload
+- What it supports: exact internal runtime-provenance and normalized payload
   evidence exists for every individual non-smoke probe fixture at its
   provider-valid budget.
 - What it does not prove: generalized hybrid-runtime support, composite smoke
   support, broad dynamic-Python support, production readiness, public benchmark
   quality, Task 4 readiness, or latency/token/cost wins.
+- Python-version caveat: the committed checkpoint ledger records Python
+  3.14.3; project support remains Python 3.11+, so cross-version runtime
+  evidence needs fresh target-version runs.
 
 ## Reviewer Checklist
 
@@ -145,6 +157,8 @@ collapsing their boundaries:
 - No composite smoke support claim.
 - No Task 4 readiness claim.
 - No latency/token/cost win claim.
+- No Python-version generalization claim from Python 3.14.3-generated internal
+  artifacts.
 - No public API, MCP, schema, scoring, compiler, optimizer, winner-selection,
   package-export, product launch, or public demo widening.
 - No claim that `portfolio_001` and `default_local_probe_checkpoint_001`
@@ -152,11 +166,12 @@ collapsing their boundaries:
 
 ## Recommended Reviewer Takeaway
 
-The combined evidence is serious internal evidence of semantic context assembly
+The combined evidence is bounded internal evidence of semantic context assembly
 plus exact runtime-provenance acquisition. It shows that Context IR can assemble
 reviewable semantic evidence for exact product-differentiation tasks and can
 acquire exact runtime-provenance evidence across the current individual
-non-smoke probe checkpoint.
+non-smoke probe checkpoint. It does not merge those evidence families into a
+single public validation story.
 
 It is not yet a public benchmark, packaged product launch claim, production
 readiness claim, SWE-bench claim, generalized hybrid-runtime support claim, or

@@ -29,6 +29,13 @@ product-differentiation evidence for Tasks 0-3, and
 evidence for `31/31` individual non-smoke probe fixtures under the committed
 provider `context_ir_default_local_python_subprocess`.
 
+Keep the evidence families separate: `portfolio_001` is fixed-task
+replay/comparison evidence, while `default_local_probe_checkpoint_001` is
+default-local subprocess runtime-provenance checkpoint evidence. Both are
+internal review/regression evidence, not public benchmark proof. Some committed
+rows record Python 3.14.3 as the generation environment while project support
+remains Python 3.11+; do not treat this walkthrough as cross-version proof.
+
 ## Reading Path
 
 1. Read
@@ -65,11 +72,13 @@ Task 2: STRONG, budget=320
 Task 3: STRONG, budget=280
 ```
 
-This proves the committed manifest classifies Tasks 0-3 as internal-only
-STRONG evidence at fixed budgets.
+This confirms the committed manifest records internal-only STRONG rubric labels
+for Tasks 0-3 at fixed budgets. Treat STRONG as an internal rubric label, not
+as broad product proof.
 
 It does not prove broad product proof, public benchmark quality, production
-readiness, SWE-bench relevance, Task 4 readiness, or any public claim widening.
+readiness, SWE-bench relevance, Task 4 readiness, cross-version behavior, or
+any public claim widening.
 
 ### 2. Portfolio Context IR Rows
 
@@ -91,7 +100,7 @@ Warnings are present on the full-repo rows. They are part of the evidence and
 must not be hidden; they preserve budget-pressure and omitted-uncertainty
 caveats.
 
-This proves the committed raw portfolio records contain context-ir rows with
+This confirms the committed raw portfolio records contain context-ir rows with
 fixed budgets, token totals, selected semantic unit counts, and warnings.
 
 It does not prove that every selected unit is full source, that warnings are
@@ -122,12 +131,14 @@ Expected output:
 }
 ```
 
-This proves the checkpoint manifest records 31 cases, one provider, three
-provider-valid budgets, and no budget violations.
+This confirms the checkpoint manifest records 31 cases, one provider, three
+provider-valid budgets, and no budget violations. It is default-local
+subprocess checkpoint evidence, not replay/comparative matrix evidence.
 
 It does not prove composite smoke support, generalized hybrid-runtime support,
 dynamic-Python support, Task 4 readiness, production readiness, or public
-benchmark quality.
+benchmark quality. It also does not prove Python-version generality beyond the
+Python 3.14.3-generated committed checkpoint rows.
 
 ### 4. Runtime Checkpoint Ledger Count
 
@@ -147,7 +158,7 @@ Expected output:
 }
 ```
 
-This proves every committed checkpoint ledger row has at least one runtime
+This confirms every committed checkpoint ledger row has at least one runtime
 provenance record and that the provider set is exactly the default-local
 subprocess provider.
 
@@ -171,7 +182,7 @@ The four matching rows include:
 Each shown row uses provider context_ir_default_local_python_subprocess and has runtime_records=2.
 ```
 
-This proves representative committed ledger rows expose normalized runtime
+This confirms representative committed ledger rows expose normalized runtime
 payloads for reflective builtins, dynamic import, and exec from committed
 artifacts.
 

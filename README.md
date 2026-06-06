@@ -28,6 +28,13 @@ tool-facing facade, and the minimal MCP compile tool. They are covered by local
 tests and quality gates. The repo also includes deterministic internal eval
 infrastructure and a current four-asset signal evidence surface documented in
 `EVAL.md`; those artifacts are internal evidence, not external benchmark proof.
+Committed portfolio/checkpoint evidence is also internal regression and review
+evidence only. Replay/comparative matrix artifacts and default-local subprocess
+checkpoint artifacts answer different questions: matrices compare fixed
+providers and budgets from fixed run specs, while
+`default_local_probe_checkpoint_001` records default-local runtime-provenance
+acquisition for individual non-smoke probes. Neither evidence family widens
+public benchmark, product, API, or Python-runtime claims.
 `EVAL.md` also records narrow internal runtime-backed pilots for
 `DYNAMIC_IMPORT` and narrow `REFLECTIVE_BUILTIN` selectors exercised via
 `hasattr(obj, name)`, the current internal eval-only false branch of
@@ -704,6 +711,11 @@ registration and local invocation of this one compile tool.
 
 Requires Python 3.11+.
 
+Some committed internal evidence artifacts record generation under Python
+3.14.3. Treat those rows as environment-specific internal regression evidence;
+project support remains Python 3.11+, and cross-version evidence requires
+fresh runs under the target Python versions.
+
 ```bash
 pip install -e ".[dev]"
 .venv/bin/python -m ruff check src/ tests/
@@ -1047,11 +1059,13 @@ Current evidence includes:
   `plugins/weather.py` selected unit, dependency edge, selected symbol, or
   source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public
   benchmark widening is introduced
-- within the fixed quad matrix, `context_ir` wins all 8/8 task-budget
-  rows; provider-average aggregate scores are
+- within the fixed internal quad matrix, `context_ir` is recorded as the row
+  winner for each of the 8 fixed task-budget rows; provider-average aggregate
+  scores are
   `0.9599139230003012` for `context_ir`,
   `0.6228480543023547` for `import_neighborhood_files`, and
-  `0.6065653086866415` for `lexical_top_k_files`
+  `0.6065653086866415` for `lexical_top_k_files`; this is fixed-matrix
+  internal evidence, not broad product proof or public benchmark proof
 
 Earlier signal pair/triple matrices remain historical internal evidence. The
 current public-safe comparative surface is the four-asset quad matrix

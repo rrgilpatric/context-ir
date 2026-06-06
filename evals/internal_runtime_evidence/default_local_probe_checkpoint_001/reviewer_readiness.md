@@ -7,6 +7,12 @@ default-local probe checkpoint. It is not a public benchmark, public benchmark
 result, public product proof, production-readiness claim, or public
 claim-widening artifact.
 
+This checkpoint is default-local subprocess runtime-provenance evidence. It is
+separate from replay/comparative matrix evidence such as the quad matrix and
+the product-differentiation `portfolio_001` packet. Do not combine these
+evidence families into a public benchmark, broad product proof, or generalized
+runtime-support claim.
+
 ## Artifact Index
 
 - Generated run spec:
@@ -32,14 +38,19 @@ the exact task/provider/budget execution plan.
 - Budget violations: none.
 - Composite smoke tasks: none.
 - Legacy `oracle_smoke`: none.
+- Python version recorded in committed ledger rows: Python 3.14.3.
 
 The checkpoint excludes `oracle_signal_smoke`, `oracle_signal_smoke_b`,
 `oracle_signal_smoke_c`, `oracle_signal_smoke_d`,
 `oracle_signal_smoke_e`, and legacy `oracle_smoke`.
 
-## What This Proves
+Project support remains Python 3.11+. Treat the Python 3.14.3 checkpoint rows
+as environment-specific internal regression evidence; cross-version claims
+require fresh runs under the target Python versions.
 
-This checkpoint proves exact internal runtime-provenance evidence for
+## What This Provides
+
+This checkpoint provides exact internal runtime-provenance evidence for
 individual probe fixtures. For each listed individual non-smoke probe fixture,
 the `context_ir_default_local_python_subprocess` provider produced durable
 runtime-provenance evidence and normalized payload evidence at a provider-valid
@@ -63,9 +74,9 @@ changes, or PUBLIC_CLAIMS changes.
 
 ## Evidence Boundaries
 
-`portfolio_001` remains separate STRONG exact-query internal
-product-differentiation evidence. This checkpoint does not replace it, widen
-it, or convert it into public proof.
+`portfolio_001` remains separate exact-query internal product-differentiation
+evidence with internal rubric classifications. This checkpoint does not replace
+it, widen it, or convert it into public proof.
 
 Public-safe comparative claims remain bounded to the existing quad matrix.
 This checkpoint is internal runtime-provenance evidence only.

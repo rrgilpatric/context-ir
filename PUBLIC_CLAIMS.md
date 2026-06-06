@@ -4,6 +4,13 @@ This file is the conservative public-claim envelope for frontier-lab-facing
 copy. It is a source constraint, not portfolio prose. Every allowed claim below
 stays scoped to repo-local evidence only.
 
+Committed portfolio and checkpoint artifacts are internal review/regression
+evidence, not public benchmark proof. Keep replay/comparative matrix evidence
+separate from default-local subprocess checkpoint evidence: matrices describe
+fixed provider/budget comparisons from fixed run specs, while
+`default_local_probe_checkpoint_001` describes default-local runtime-provenance
+acquisition for individual non-smoke probes only.
+
 ## Allowed Claims
 
 - Safe top-line descriptor: Context IR is an in-progress semantic-first Python
@@ -572,8 +579,10 @@ stays scoped to repo-local evidence only.
 - Safe comparative descriptor: Within the fixed internal quad matrix only
   (`oracle_signal_smoke`, `oracle_signal_smoke_b`, `oracle_signal_smoke_c`,
   and `oracle_signal_smoke_d` at budgets `200` and `240` against
-  `lexical_top_k_files` and `import_neighborhood_files`), `context_ir` wins
-  all `8/8` task-budget rows and has the top provider-average aggregate score.
+  `lexical_top_k_files` and `import_neighborhood_files`), `context_ir` is
+  recorded as the row winner for each of the 8 fixed task-budget rows and has
+  the top provider-average aggregate score. This is fixed internal matrix
+  evidence, not broad product proof or public benchmark proof.
   Evidence: [EVAL.md](EVAL.md#supported-claims-today),
   [BUILDLOG.md](BUILDLOG.md),
   [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json).
@@ -587,6 +596,12 @@ stays scoped to repo-local evidence only.
 - Always frame the current evidence as deterministic internal evidence from
   repo-local tests, quality gates, and the internal eval harness. Do not
   restate it as external benchmark proof.
+- Always distinguish replay/comparative matrix evidence from default-local
+  subprocess checkpoint evidence. Do not combine them into a single public
+  benchmark, product-readiness, or runtime-support proof.
+- Some committed internal evidence artifacts record Python 3.14.3 as the
+  generation environment. Project support remains Python 3.11+, so do not use
+  those artifacts as cross-version proof without fresh target-version runs.
 - Preserve the accepted current limitation: `oracle_signal_smoke_b / 200`
   still records `budget_pressure`, and
   `def:pkg/digest.py:pkg.digest.render_assignment_digest` can remain omitted
@@ -1036,8 +1051,8 @@ stays scoped to repo-local evidence only.
   runtime provenance remains additive only, and no static dependency or
   selected symbol is created from `plugins.weather`.
 - Any comparative sentence must stay explicitly scoped to the accepted internal
-  quad matrix. Do not generalize the current `8/8` result beyond that fixed
-  four-task, two-budget, three-provider surface.
+  quad matrix. Do not generalize the fixed 8-row result beyond that four-task,
+  two-budget, three-provider internal surface.
 
 ## Disallowed Phrasings
 
@@ -1117,4 +1132,4 @@ stays scoped to repo-local evidence only.
 | AC3f | The current internal `oracle_signal_dir_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `dir(obj)` evidence as 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with unchanged fixture, task, query, and runtime payload across both budget rows; runtime payload remains `listing_entry_count=74`, durable listing proof is carried by `durable_payload_reference`, selector and selected-unit primary truth remain `unsupported/opaque`, runtime provenance remains additive only, and baseline providers remain empty at both budgets; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_dir_probe_matrix.json](evals/run_specs/oracle_signal_dir_probe_matrix.json) |
 | AC3h | The current internal `oracle_signal_hasattr_false_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `hasattr(obj, name)` false-branch evidence as 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture call boundary exactly `hasattr(obj, name)`, runtime payload exactly `attribute_present=false`, deterministic fixture digest `hasattr_false:missing`, selector and selected-unit primary truth `unsupported/opaque`, additive runtime provenance only, and empty baselines at both budgets. The missing-attribute no-edge/no-symbol/no-unit boundary introduces no missing-attribute dependency edge, selected symbol, or selected unit; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_hasattr_false_probe_matrix.json](evals/run_specs/oracle_signal_hasattr_false_probe_matrix.json) |
 | AC3i | The current internal `oracle_signal_vars_type_error_probe_matrix` covers only narrow eval-only `REFLECTIVE_BUILTIN` / `vars(obj)` raised-`TypeError` branch evidence as 1 task x 2 budgets x 3 providers at budgets `[220, 100]`, against providers `context_ir`, `lexical_top_k_files`, and `import_neighborhood_files`, with fixture boundary exactly `vars(obj)`, runtime payload exactly `lookup_outcome=raised_type_error`, deterministic fixture digest `vars_type_error:raised_type_error`, selector primary truth `unsupported/opaque`, additive runtime provenance only, and empty baselines at both budgets. The failed-namespace no-edge/no-symbol/no-unit boundary introduces no namespace dependency edge, selected symbol, or selected unit from the failed `vars()` lookup; dependency guard uses `site:call:main.py:2:11`; public comparative claims remain bounded to the existing quad matrix, and it does not widen source/runtime/API/MCP/package-export/schema/scoring/optimizer/compiler/winner-selection/product/public benchmark claims or generalized reflective-builtin support. | [EVAL.md](EVAL.md#current-evidence-status), [EVAL.md](EVAL.md#evidence-categories), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_vars_type_error_probe_matrix.json](evals/run_specs/oracle_signal_vars_type_error_probe_matrix.json) |
-| AC4 | The only allowed comparative claim is the fixed-scope quad-matrix claim: within that matrix only, `context_ir` wins all `8/8` task-budget rows and leads the provider-average aggregate. | [EVAL.md](EVAL.md#supported-claims-today), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |
+| AC4 | The only allowed comparative claim is the fixed-scope quad-matrix claim: within that matrix only, `context_ir` is recorded as the row winner for each of the 8 fixed task-budget rows and leads the provider-average aggregate. This is internal matrix evidence, not broad product proof or public benchmark proof. | [EVAL.md](EVAL.md#supported-claims-today), [BUILDLOG.md](BUILDLOG.md), [evals/run_specs/oracle_signal_quad_matrix.json](evals/run_specs/oracle_signal_quad_matrix.json) |

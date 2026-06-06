@@ -10,9 +10,10 @@ portfolio/demo script, and not authorization to widen public claims.
 
 ## Bottom Line
 
-portfolio_001 is STRONG internal evidence that, for four exact maintenance
-queries at fixed budgets, `context_ir` selected the required semantic evidence
-paths while the file-level baselines failed under the same budgets or needed
+portfolio_001 carries internal rubric classifications of STRONG for four exact
+maintenance queries at fixed budgets. Read that as a bounded rubric label: for
+those exact rows, `context_ir` selected the required semantic evidence paths
+while the file-level baselines failed under the same budgets or needed
 materially larger whole-file context.
 
 The evidence does not prove generalized product quality, production readiness,
@@ -21,7 +22,11 @@ dynamic-Python handling, or public/demo readiness. The primary truth for the
 runtime-backed and uncertainty surfaces remains `unsupported/opaque`; runtime
 provenance is additive only.
 
-## What Portfolio 001 Proves
+The committed portfolio manifest records Python 3.14.3 as the generation
+environment. Project support remains Python 3.11+, so this memo must not be
+used as cross-version proof without fresh target-version runs.
+
+## What Portfolio 001 Supports
 
 | Task | Exact query scope | Fixed budget | Internal classification | Evidence to cite |
 | --- | --- | ---: | --- | --- |
@@ -31,7 +36,9 @@ provenance is additive only.
 | Task 3 | Transitive sole-provider self-call resolution for `MemberSignalCompiler.compile_member_digest` while preserving the alias-chain frontier on `pkg_alias.labels.build_member_label`. | `280` | STRONG | [README](../portfolio_001/README.md), [evidence.md](../portfolio_001/evidence.md#task-3-query-and-budget), [manifest.json](../portfolio_001/manifest.json), [runs.jsonl](../portfolio_001/runs.jsonl) |
 
 Task 1's ceiling budget `360`, Task 2's ceiling budget, and Task 3's ceiling
-budget were not run because their primary budgets already reached STRONG.
+budget were not run because their primary budgets already reached the internal
+STRONG rubric label. Do not infer ceiling-budget robustness, broader baseline
+coverage, or cross-budget product performance from those unrun ceiling rows.
 
 Task 4 is not needed before this artifact, unless a later control decision
 needs eval-bundle/pipeline/report reproducibility evidence.
@@ -54,6 +61,8 @@ and [EVAL.md](../../../EVAL.md).
 - `unsupported/opaque` remains primary truth.
 - Runtime provenance is additive only; it does not turn unsupported or frontier
   behavior into static proof.
+- Ceiling-budget rows for Task 1, Task 2, and Task 3 were not run; the primary
+  budget rows are readable evidence, not proof of unused budget headroom.
 - `context_ir` has a real latency caveat on full-repo portfolio runs: Task 0
   took `108.846s`, Task 1 took `118.783s`, Task 2 took about `129.702s`, and
   Task 3 full-repo took `122.718s`, while full-repo baselines took about
@@ -94,7 +103,7 @@ Use repo-wide boundary files to avoid overclaiming:
 | Context IR is an in-progress semantic-first Python context compiler for coding agents over a supported static Python subset. | public-safe | [README.md](../../../README.md), [PUBLIC_CLAIMS.md](../../../PUBLIC_CLAIMS.md), [EVAL.md](../../../EVAL.md) | Safe as a descriptor when kept scoped to the current supported surface. |
 | The current public surface is limited to `analyze_repository(...)`, `compile_repository_context(...)`, and a minimal tested MCP compile wrapper. | public-safe | [README.md](../../../README.md), [PUBLIC_CLAIMS.md](../../../PUBLIC_CLAIMS.md), [EVAL.md](../../../EVAL.md) | Do not turn this into a complete product integration claim. |
 | The repo contains deterministic internal eval infrastructure and internal evidence artifacts over fixed run specs and ledgers. | public-safe | [README.md](../../../README.md), [PUBLIC_CLAIMS.md](../../../PUBLIC_CLAIMS.md), [EVAL.md](../../../EVAL.md) | Keep the public-safe comparative surface bounded to the existing claim envelope. |
-| portfolio_001 is internal-only STRONG evidence for Task 0 at budget `220`, Task 1 at budget `260`, Task 2 at budget `320`, and Task 3 at budget `280`. | internal-only | [portfolio_001/README.md](../portfolio_001/README.md), [portfolio_001/evidence.md](../portfolio_001/evidence.md), [portfolio_001/manifest.json](../portfolio_001/manifest.json), [portfolio_001/runs.jsonl](../portfolio_001/runs.jsonl) | This is the main internal reviewer summary. |
+| The portfolio_001 internal rubric records STRONG classifications for Task 0 at budget `220`, Task 1 at budget `260`, Task 2 at budget `320`, and Task 3 at budget `280`. | internal-only | [portfolio_001/README.md](../portfolio_001/README.md), [portfolio_001/evidence.md](../portfolio_001/evidence.md), [portfolio_001/manifest.json](../portfolio_001/manifest.json), [portfolio_001/runs.jsonl](../portfolio_001/runs.jsonl) | This is a bounded internal rubric summary, not product proof. |
 | For the exact portfolio_001 queries and budgets, `context_ir` selected required semantic evidence paths while file-level baselines failed under the same budgets or required materially larger whole-file context. | internal-only | [portfolio_001/evidence.md](../portfolio_001/evidence.md), [portfolio_001/manifest.json](../portfolio_001/manifest.json), [portfolio_001/runs.jsonl](../portfolio_001/runs.jsonl) | Cite per-task selected units and baseline failure sections. |
 | Task 0 preserved `unsupported/opaque` as primary truth while rendering `oracle_signal_hasattr_probe` runtime provenance as additive evidence. | internal-only | [portfolio_001/evidence.md](../portfolio_001/evidence.md#task-0-selected-context_ir-units), [portfolio_001/runs.jsonl](../portfolio_001/runs.jsonl) | Safe only as internal evidence for this exact query and budget. |
 | Task 1 showed compact `oracle_signal_hasattr_probe` evidence rendering and package-root non-export evidence for `discover_semantic_eval_runtime_evidence`. | internal-only | [portfolio_001/evidence.md](../portfolio_001/evidence.md#task-1-selected-context_ir-units), [portfolio_001/manifest.json](../portfolio_001/manifest.json), [portfolio_001/runs.jsonl](../portfolio_001/runs.jsonl) | Not a public API claim. |

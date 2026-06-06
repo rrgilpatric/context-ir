@@ -19,6 +19,13 @@ any `portfolio_001` artifact.
   production-readiness claims, latency claims, token-savings claims,
   generalized runtime claims, broad product superiority claims, or
   demo-readiness claims.
+- Keep replay/comparative matrix evidence separate from default-local
+  subprocess checkpoint evidence. Do not combine them into public benchmark,
+  public product, or generalized runtime-support wording.
+- Some committed internal evidence artifacts record Python 3.14.3 as the
+  generation environment while project support remains Python 3.11+. Do not
+  use those artifacts for cross-version public wording without fresh
+  target-version runs.
 - Keep Task 4 held. Task 4 is only relevant if a later control decision targets
   eval-bundle, report, or pipeline reproducibility claims.
 
@@ -49,6 +56,7 @@ any `portfolio_001` artifact.
 | `portfolio_001` is internal-only exact-query evidence for Tasks 0-3 at their recorded budgets. | internal-only context | `evals/product_differentiation/portfolio_001/README.md`; `evals/product_differentiation/portfolio_001/evidence.md`; `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md` | Not public proof and not a public claim source. |
 | The reviewer readiness memo is suitable as the starting point for trusted internal reviewers before raw `runs.jsonl`. | internal-only context | `evals/product_differentiation/reviewer_readiness/portfolio_001_internal_readiness.md`; `evals/product_differentiation/portfolio_001/evidence.md` | Preserves the P3 raw-ledger readability risk. |
 | The portfolio baseline comparisons are useful only as exact-query, fixed-budget internal evidence with latency caveats. | internal-only context | `evals/product_differentiation/portfolio_001/README.md`; `evals/product_differentiation/portfolio_001/evidence.md`; reviewer readiness memo | Must not become broad benchmark, latency, or performance wording. |
+| `default_local_probe_checkpoint_001` is internal default-local subprocess runtime-provenance checkpoint evidence for individual non-smoke probes. | internal-only context | `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/reviewer_readiness.md`; `evals/internal_runtime_evidence/default_local_probe_checkpoint_001/checkpoint.md`; `EVAL.md` | Separate from replay/comparative matrices; not public benchmark or cross-version proof. |
 | Task 4 remains held for now. | internal-only context | `PLAN.md`; `BUILDLOG.md` | Only relevant if eval-bundle/report/pipeline reproducibility claims become the target. |
 
 ## Disallowed Or Held Wording
@@ -60,6 +68,7 @@ any `portfolio_001` artifact.
 | Context IR reduces latency, improves latency, or is faster than baselines. | disallowed/held | `PUBLIC_CLAIMS.md`; `README.md`; `EVAL.md`; internal-only `portfolio_001` context | `portfolio_001` records a latency caveat, not a latency win, and public latency claims are not authorized. |
 | Context IR provides token-savings, cost savings, or generalized efficiency gains. | disallowed/held | `PUBLIC_CLAIMS.md`; `README.md`; `EVAL.md` | Token-savings and cost-reduction wording is outside the current public claim envelope. |
 | Context IR has generalized runtime, hybrid-runtime, dynamic-import, reflection, `exec`, `eval`, monkey-patching, metaclass, or runtime-mutation support. | disallowed/held | `PUBLIC_CLAIMS.md`; `README.md`; `EVAL.md` | Runtime-backed evidence is narrow, internal, and additive; it does not widen the public supported subset. |
+| Python 3.14.3-generated committed evidence proves Python-version-general behavior. | disallowed/held | `PUBLIC_CLAIMS.md`; `README.md`; `EVAL.md`; internal-only evidence artifacts | Project support remains Python 3.11+, but cross-version evidence needs fresh target-version runs. |
 | `portfolio_001` proves broad product superiority or broad product proof. | disallowed/held | `PUBLIC_CLAIMS.md`; `README.md`; `EVAL.md`; internal-only `portfolio_001` context | `portfolio_001` is exact-query internal evidence and not public proof. |
 | `portfolio_001` is a public demo, polished demo script, or demo-readiness proof. | disallowed/held | `PUBLIC_CLAIMS.md`; `README.md`; `EVAL.md`; internal-only `portfolio_001` context | Public/demo claims remain held. |
 | Task 4 must run before this crosswalk can exist. | disallowed/held | `PLAN.md`; `BUILDLOG.md` | Current control routing keeps Task 4 held unless eval-bundle/report/pipeline reproducibility claims become the target. |

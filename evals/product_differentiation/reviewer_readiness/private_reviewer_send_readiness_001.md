@@ -21,6 +21,11 @@ The fastest path is a 5-10 minute skim of the packet and walkthrough linked
 below. Optional deeper checks are included if you want to inspect the committed
 JSON/JSONL evidence directly.
 
+The packet keeps two evidence bodies separate: `portfolio_001` is exact-query
+replay/comparison evidence, while `default_local_probe_checkpoint_001` is
+default-local subprocess runtime-provenance checkpoint evidence for individual
+non-smoke probes. Both are internal evidence only.
+
 What I would value most:
 
 - Does the evidence look technically credible for the exact claims it makes?
@@ -33,7 +38,9 @@ benchmark quality, production readiness, SWE-bench relevance, broad product
 proof, generalized hybrid-runtime/dynamic-Python support, composite smoke
 support, Task 4 readiness, latency/token/cost wins, or any public
 API/MCP/schema/scoring/compiler/optimizer/winner-selection/package-export/
-product launch/public demo widening.
+product launch/public demo widening. Some committed evidence rows were
+generated under Python 3.14.3 while project support remains Python 3.11+, so
+the packet also does not claim cross-version proof.
 
 ## Recommended Reading Order
 
@@ -122,13 +129,14 @@ underlying evidence artifacts at `9f29a7fad0e83ce2ed538b64b4353200e61d2079`.
 If citing this send-readiness note itself, use a commit-pinned URL for the
 final commit that contains this file rather than the older evidence pin.
 
-## What This Evidence Does Prove
+## What This Evidence Supports
 
 - `portfolio_001` is exact-query internal product-differentiation evidence for
   Tasks 0-3 at the recorded fixed budgets. It supports the narrow internal
   statement that `context_ir` selected required semantic evidence paths for
   those exact tasks while file-level baselines failed under the same budgets or
-  needed materially larger whole-file context.
+  needed materially larger whole-file context. Its STRONG labels are internal
+  rubric classifications, not broad product proof.
 - `default_local_probe_checkpoint_001` is a `31/31` individual non-smoke
   runtime-provenance checkpoint for the current `oracle_signal_*_probe` queue
   under provider `context_ir_default_local_python_subprocess`, with durable
@@ -148,6 +156,8 @@ Do not claim or imply:
 - latency/token/cost wins
 - public API/MCP/schema/scoring/compiler/optimizer/winner-selection/
   package-export/product launch/public demo widening
+- Python-version generalization from Python 3.14.3-generated committed
+  evidence
 - public evidence, external validation, packaged product readiness, or a
   runnable demo
 
