@@ -2,6 +2,40 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- AGENTS/WoW Evidence Discipline Pushed
+
+- Pushed the AGENTS/WoW evidence-discipline docs/process repair to
+  `origin/main`.
+- Pushed release commit:
+  `31f485e Codify real-OSS evidence discipline`.
+- Release behavior shipped:
+  - replaced stale eval-layer framing in `AGENTS.md`
+  - added durable WoW guidance that decisive north-star/company evidence must
+    not use self-authored synthetic fixtures, oracle probe matrices, or Context
+    IR analyzer-derived oracles as the deciding proof
+  - added durable real-OSS experiment rules: pre-registration, independent
+    repo/PR-derived oracle facts, fair lexical/BM25 and embedding baselines at
+    equal budgets, wasted-token/edit-relevant recall metrics, and a written
+    kill/reevaluate criterion before results are known
+  - preserved bounded execution slices as the repair discipline while separating
+    company-level progress from micro-slice throughput
+- Release gates cleared before push:
+  - read-only release-unit audit: PASS after one active-log wording correction
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/ -v`: 2192 passed
+  - commit-gating over the exact three-file unit: passed
+- Boundaries preserved: no source, tests, eval task, fixture, run-spec, README,
+  PUBLIC_CLAIMS, EVAL, ARCHITECTURE, Task 4, composite smoke, demo, MCP/API,
+  package export, scoring, compiler, optimizer, or runtime changes.
+- Release state: pushed. No active workspace release unit remains for this
+  repair. Live git remains the source of truth for current `HEAD` and
+  `origin/main`.
+- Recommended next control action: continue the adversarial repair ledger with
+  the next bounded accepted Claude-review finding.
+- Acceptance status: pushed after one active-log wording correction.
+
 ## 2026-06-06 -- AGENTS/WoW Evidence Discipline Commit-Gating Passed
 
 - Ran commit-gating over the exact three-file AGENTS/WoW evidence-discipline
