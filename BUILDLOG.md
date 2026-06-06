@@ -2,6 +2,45 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-06 -- Runtime Worker Contract Extraction Pushed
+
+- Pushed the runtime worker dynamic-import contract extraction release unit to
+  `origin/main`.
+- Pushed release commit:
+  `1a31f67 Extract dynamic import worker contracts`
+- Release gates completed before push:
+  - read-only release-unit audit: PASS with no findings
+  - corrected full regression: `ruff check src/ tests/`, `ruff format --check
+    src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with 2201
+    passed
+  - commit-gating: PASS with no findings over the exact five-file release unit
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_dynamic_import_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior shipped:
+  - dynamic-import worker form labels, render-card fixture contracts, and
+    form/global-name mappings moved into a private helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - 19 moved private names preserve worker/helper object identity
+  - `main`, dispatch, response serialization, handler registration, validators,
+    exact replay logic, tests, subprocess module path, stdout/stderr protocol,
+    and package-root exports were not moved
+  - `_DYNAMIC_IMPORT_WORKER_MISSING_GLOBAL`, runtime sentinels, and
+    dynamic-import error-message constants stayed in `runtime_probe_worker.py`
+    because they are shared broadly or outside the contract/fixture extraction
+- Ryan authorized push. This post-push continuity entry supersedes the older
+  pending-state entries below; historical entries remain as audit trail.
+- Recommended next control action: continue runtime worker complexity with a
+  fresh read-only decomposition spike for the next conservative extraction
+  candidate, or explicitly hold if Ryan wants to pause refactoring. Do not
+  start the real-OSS pre-registered experiment until the accepted repair ledger
+  is closed or Ryan explicitly redirects.
+- Acceptance status: pushed after one Smoke E confidence-only correction.
+
 ## 2026-06-06 -- Runtime Worker Contract Extraction Commit-Gating Passed
 
 - Ran commit-gating over the exact corrected five-file runtime worker
