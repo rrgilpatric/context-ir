@@ -2,12 +2,13 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-07 -- Runtime Worker Dispatch Extraction Accepted
+## 2026-06-07 -- Runtime Worker Dispatch Extraction Pushed
 
-- Accepted the private dispatch/handler-entry extraction slice as
-  workspace-only.
+- Pushed the private dispatch/handler-entry extraction slice to `origin/main`.
+- Pushed release commit:
+  `070e8c4 Extract worker dispatch contracts`
 - Findings: none.
-- Workspace release files:
+- Release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
@@ -48,15 +49,20 @@ Most recent supersession entries override older architectural decisions when the
     preservation locks passed
   - Ryan authorized the narrow scalar correction
   - corrected Smoke E focused Task 3 test: 1 passed, 7 deselected
+  - corrected full regression: 2201 passed
+  - commit-gating: exact five-file staged set, protected-surface guard empty,
+    14-name identity check passed, no unstaged or staged drift after commit
 - Boundaries preserved: no test split, eval task, fixture, run-spec, generated
   evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
   smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, package
   export, response-protocol, family-validator, or subprocess behavior changes.
-- Release state: workspace-only accepted after one deterministic Smoke E
-  confidence-only correction. Corrected full regression, commit-gating, local
-  commit, and push remain pending.
-- Recommended next control action: rerun corrected full regression over the
-  exact five-file workspace unit, then commit-gating if clean.
+- Release state: accepted after one deterministic Smoke E confidence-only
+  correction; corrected full regression, commit-gating, local commit, and
+  Ryan-authorized push are complete.
+- Recommended next control action: run a read-only runtime-worker decomposition
+  spike over the post-dispatch state to choose the next safe extraction
+  boundary. Do not start the next runtime-worker implementation until that
+  spike is accepted.
 - Acceptance status: accepted after one Smoke E confidence-only correction.
 
 ## 2026-06-07 -- Runtime Worker Dispatch Boundary Spike Accepted

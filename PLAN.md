@@ -115,9 +115,11 @@ Current active program:
     `28ff5a7 Extract worker response protocol`. A follow-up read-only design
     spike found dispatch/handler-entry extraction to be the next safe
     runtime-worker boundary; family-by-family request/dataclass/validator
-    modules remain deferred until the dispatch seam is split out. The
-    dispatch/handler-entry extraction is workspace-only accepted after focused
-    validation and awaits release gates.
+    modules were deferred until the dispatch seam was split out. The
+    dispatch/handler-entry extraction is pushed in commit
+    `070e8c4 Extract worker dispatch contracts` after one deterministic Smoke
+    E confidence-only correction, corrected full regression, commit-gating,
+    local commit, and push.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -159,20 +161,13 @@ Current active program:
       `901f176 Extract metaclass worker contracts`
   16. runtime worker response-protocol extraction is pushed in commit
       `28ff5a7 Extract worker response protocol`
-  17. runtime worker dispatch/handler-entry extraction is workspace-only
-      accepted after focused validation and one deterministic Smoke E
-      confidence-only correction; release-unit audit, full regression,
-      commit-gating, local commit, and push remain pending
-- current workspace release unit: runtime worker dispatch/handler-entry
-  extraction plus continuity:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/runtime_probe_worker.py`
-  - `src/context_ir/runtime_probe_worker_dispatch.py`
-  - `tests/test_eval_signal_smoke_e.py`
-- current release state: dispatch/handler-entry extraction is workspace-only
-  accepted after clean control review and focused validation. It moved the
-  worker handler key alias, worker callable alias, handler entry dataclass,
+  17. runtime worker dispatch/handler-entry extraction is pushed in commit
+      `070e8c4 Extract worker dispatch contracts` after focused validation,
+      one deterministic Smoke E confidence-only correction, corrected full
+      regression, commit-gating, local commit, and Ryan-authorized push
+- current workspace release unit: none; pushed `main` is clean
+- current release state: dispatch/handler-entry extraction is pushed. It moved
+  the worker handler key alias, worker callable alias, handler entry dataclass,
   dispatching worker, duplicate/dispatch errors, handler indexing/key helpers,
   payload key helper, handler-entry validation, and sanitized dispatch message
   constants required by the helper into a private dispatch helper and imported
@@ -183,15 +178,8 @@ Current active program:
   family validators, source importers, target resolvers, response protocol,
   stdout serialization, exit codes, subprocess module name,
   `runtime_probe_execution.py`, package-root exports, docs, eval fixtures, and
-  Smoke E expectations were not moved or edited. Focused validation passed:
-  `ruff check`, `ruff format --check`, `mypy --strict src/`,
-  `pytest tests/test_runtime_probe_worker.py -q` with 716 passed, and the
-  14-name worker/helper identity check. Initial full regression held on a
-  Smoke E confidence-only drift after the selection, document SHA, token,
-  warning, warning ID, probe-count, and warning-call locks held. Ryan
-  authorized the narrow scalar correction, and the focused Smoke E Task 3 check
-  passed. This unit is not corrected-full-regression-cleared,
-  commit-gating-cleared, staged, committed, or pushed.
+  public/API surfaces were not moved or edited. Full regression passed with
+  `2201` tests before commit and push.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -202,12 +190,28 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: rerun the corrected full regression gate over the
-  current five-file workspace unit, then commit-gating if clean. Do not start
-  the next runtime-worker extraction, real-OSS experiment, or broader product
-  evidence work until this release unit is pushed or Ryan explicitly redirects.
+- next control action: run a read-only runtime-worker decomposition spike over
+  the post-dispatch state to choose the next safe extraction boundary. Do not
+  start the next runtime-worker implementation, real-OSS experiment, or broader
+  product evidence work until that spike is accepted.
 
 Latest release unit pushed:
+
+- runtime worker dispatch/handler-entry extraction
+- pushed release commit:
+  `070e8c4 Extract worker dispatch contracts`
+- release state: accepted after one deterministic Smoke E confidence-only
+  correction; corrected full regression passed with `2201` tests;
+  commit-gating passed; staged, locally committed, and pushed to `origin/main`
+  after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_dispatch.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - runtime worker response-protocol extraction
 - pushed release commit:
@@ -221,22 +225,6 @@ Latest release unit pushed:
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_response_protocol.py`
-  - `tests/test_eval_signal_smoke_e.py`
-
-Previous release unit pushed:
-
-- runtime worker metaclass constants extraction
-- pushed release commit:
-  `901f176 Extract metaclass worker contracts`
-- release state: accepted after one deterministic Smoke E confidence-only
-  correction; corrected read-only audit passed; full regression passed with
-  `2201` tests; commit-gating passed; staged, locally committed, and pushed to
-  `origin/main` after Ryan authorized proceeding
-- release files:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/runtime_probe_worker.py`
-  - `src/context_ir/runtime_probe_worker_metaclass_contracts.py`
   - `tests/test_eval_signal_smoke_e.py`
 
 Prior release unit pushed:
