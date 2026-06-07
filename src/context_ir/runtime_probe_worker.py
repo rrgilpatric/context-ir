@@ -22,6 +22,9 @@ from context_ir import (
     runtime_probe_worker_dynamic_import_contracts as _dynamic_import_contracts,
 )
 from context_ir import (
+    runtime_probe_worker_exec_or_eval_contracts as _exec_or_eval_contracts,
+)
+from context_ir import (
     runtime_probe_worker_reflective_builtin_contracts as _rbc,
 )
 from context_ir import (
@@ -538,48 +541,62 @@ _RUNTIME_MUTATION_DELATTR_WORKER_DELETION_FAILED_MESSAGE = (
 _RUNTIME_MUTATION_DELATTR_WORKER_SHAPE_ERROR_MESSAGES = (
     _rmc._RUNTIME_MUTATION_DELATTR_WORKER_SHAPE_ERROR_MESSAGES
 )
-_EXEC_OR_EVAL_EXEC_WORKER_FORM_LABEL = "exec_or_eval:exec/1"
-_EXEC_OR_EVAL_EXEC_WORKER_BOUNDARY_TEXT = "exec(source)"
-_EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME = "exec"
-_EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHAPE = "literal_statement"
+_EXEC_OR_EVAL_EXEC_WORKER_FORM_LABEL = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_FORM_LABEL
+)
+_EXEC_OR_EVAL_EXEC_WORKER_BOUNDARY_TEXT = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_BOUNDARY_TEXT
+)
+_EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_GLOBAL_NAME
+)
+_EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHAPE = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHAPE
+)
 _EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHA256 = (
-    "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_SOURCE_SHA256
 )
-_EXEC_OR_EVAL_EXEC_WORKER_EXECUTION_OUTCOME = "completed"
-_EXEC_OR_EVAL_EXEC_WORKER_STATEMENT_KIND = "pass"
+_EXEC_OR_EVAL_EXEC_WORKER_EXECUTION_OUTCOME = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_EXECUTION_OUTCOME
+)
+_EXEC_OR_EVAL_EXEC_WORKER_STATEMENT_KIND = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_STATEMENT_KIND
+)
 _EXEC_OR_EVAL_EXEC_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
-    "runtime probe exec worker target execution failed"
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
 )
-_EXEC_OR_EVAL_EXEC_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
-    (
-        "runtime probe exec worker form must be exactly exec(source)",
-        "runtime probe exec worker source must be a string",
-        "runtime probe exec worker source must be exactly pass",
-        "runtime probe exec worker source must parse as exactly one pass statement",
-    )
+_EXEC_OR_EVAL_EXEC_WORKER_SHAPE_ERROR_MESSAGES = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EXEC_WORKER_SHAPE_ERROR_MESSAGES
 )
-_EXEC_OR_EVAL_EVAL_WORKER_FORM_LABEL = "exec_or_eval:eval/1"
-_EXEC_OR_EVAL_EVAL_WORKER_BOUNDARY_TEXT = "eval(source)"
-_EXEC_OR_EVAL_EVAL_WORKER_GLOBAL_NAME = "eval"
-_EXEC_OR_EVAL_EVAL_WORKER_SOURCE_TEXT = '"eval-probe-value"'
-_EXEC_OR_EVAL_EVAL_WORKER_SOURCE_SHAPE = "literal_expression"
+_EXEC_OR_EVAL_EVAL_WORKER_FORM_LABEL = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_FORM_LABEL
+)
+_EXEC_OR_EVAL_EVAL_WORKER_BOUNDARY_TEXT = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_BOUNDARY_TEXT
+)
+_EXEC_OR_EVAL_EVAL_WORKER_GLOBAL_NAME = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_GLOBAL_NAME
+)
+_EXEC_OR_EVAL_EVAL_WORKER_SOURCE_TEXT = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_SOURCE_TEXT
+)
+_EXEC_OR_EVAL_EVAL_WORKER_SOURCE_SHAPE = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_SOURCE_SHAPE
+)
 _EXEC_OR_EVAL_EVAL_WORKER_SOURCE_SHA256 = (
-    "c40df915dac30fcea0f6f3394139e5608eb1e7af6f94838bd401ce1370856199"
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_SOURCE_SHA256
 )
-_EXEC_OR_EVAL_EVAL_WORKER_EVALUATION_OUTCOME = "returned_value"
-_EXEC_OR_EVAL_EVAL_WORKER_RESULT_TYPE = "builtins.str"
+_EXEC_OR_EVAL_EVAL_WORKER_EVALUATION_OUTCOME = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_EVALUATION_OUTCOME
+)
+_EXEC_OR_EVAL_EVAL_WORKER_RESULT_TYPE = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_RESULT_TYPE
+)
 _EXEC_OR_EVAL_EVAL_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
-    "runtime probe eval worker target execution failed"
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_TARGET_EXECUTION_FAILED_MESSAGE
 )
-_EXEC_OR_EVAL_EVAL_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
-    (
-        "runtime probe eval worker form must be exactly eval(source)",
-        "runtime probe eval worker source must be a string",
-        'runtime probe eval worker source must be exactly "eval-probe-value"',
-        "runtime probe eval worker source must parse as exactly one string "
-        "literal expression",
-        "runtime probe eval worker result must be a string",
-    )
+_EXEC_OR_EVAL_EVAL_WORKER_SHAPE_ERROR_MESSAGES = (
+    _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_SHAPE_ERROR_MESSAGES
 )
 _METACLASS_BEHAVIOR_KEYWORD_WORKER_FORM_LABEL = "metaclass_behavior:keyword"
 _METACLASS_BEHAVIOR_KEYWORD_WORKER_BOUNDARY_TEXT = "metaclass=Meta"
