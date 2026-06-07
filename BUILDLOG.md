@@ -2,6 +2,41 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Dispatch Boundary Spike Accepted
+
+- Accepted the read-only runtime-worker refactor boundary spike.
+- Findings: none.
+- Decision:
+  - next safe implementation slice is private dispatch/handler-entry extraction
+  - family-by-family request/dataclass/validator modules are deferred because
+    they are more entangled with validators, exact replay contracts, observers,
+    captures, response protocol, and target import/resolution logic
+- Evidence checked:
+  - repo was clean at intake
+  - dispatch seam is compact and cross-family: handler key/callable aliases,
+    `RuntimeProbeLocalPythonWorkerHandlerEntry`,
+    `RuntimeProbeLocalPythonDispatchingWorker`, duplicate/dispatch errors,
+    handler indexing/key helpers, payload key helper, and handler-entry
+    validation
+  - `runtime_probe_execution.py` invokes the worker by module name and does not
+    import worker internals
+  - package-root exports intentionally exclude worker symbols and existing
+    tests lock that boundary
+- Next implementation scope:
+  - add `src/context_ir/runtime_probe_worker_dispatch.py`
+  - update `src/context_ir/runtime_probe_worker.py` to import back the moved
+    private names
+  - touch `tests/test_runtime_probe_worker.py` only if needed for import/identity
+    coverage
+- Non-goals: no movement of `main`, default handler marker/table, default
+  handler factories, `_dispatch_runtime_probe_local_python_worker_payload`,
+  family request/observation/replay dataclasses, materializers, observers,
+  captures, source importers, target resolvers, family validators, exact replay
+  logic, response protocol, stdout serialization, exit codes, subprocess module
+  name, `runtime_probe_execution.py`, package-root exports, docs, eval fixtures,
+  or Smoke E expectations.
+- Acceptance status: first-pass read-only spike acceptance.
+
 ## 2026-06-07 -- Runtime Worker Response Protocol Extraction Pushed
 
 - Pushed the shared worker stdout/response protocol refactor slice to

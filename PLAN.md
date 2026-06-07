@@ -112,7 +112,10 @@ Current active program:
     regression exposed one deterministic Smoke E confidence-only drift, Ryan
     authorized the scalar correction, and corrected full regression passed.
     Commit-gating, local commit, and push are complete in commit
-    `28ff5a7 Extract worker response protocol`.
+    `28ff5a7 Extract worker response protocol`. A follow-up read-only design
+    spike found dispatch/handler-entry extraction to be the next safe
+    runtime-worker boundary; family-by-family request/dataclass/validator
+    modules remain deferred until the dispatch seam is split out.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -156,7 +159,8 @@ Current active program:
       `28ff5a7 Extract worker response protocol`
 - current workspace release unit: none. `main` is clean after the
   response-protocol extraction push.
-- current release state: response-protocol extraction pushed to `origin/main`.
+- current release state: response-protocol extraction pushed to `origin/main`;
+  dispatch-boundary design spike accepted as routing evidence.
   Release files:
   - `PLAN.md`
   - `BUILDLOG.md`
@@ -192,13 +196,21 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: run a read-only design spike for the next
-  runtime-worker refactor boundary. Decide whether the next safe slice should
-  extract dispatch/handler-entry contracts or start a family-by-family
-  request/dataclass/validator module. Do not implement either path before that
-  spike. Do not start the real-OSS experiment or broader product evidence work
-  until the accepted adversarial repair findings are closed or Ryan explicitly
-  redirects.
+- next control action: implement one bounded private dispatch/handler-entry
+  extraction for `runtime_probe_worker.py`. Move only the worker handler key,
+  handler callable alias, handler entry, dispatching worker, duplicate/dispatch
+  errors, handler indexing/key helpers, handler-entry validation, and the
+  sanitized dispatch message constants required by that helper into a new
+  private helper module, then import them back under the same names. Keep
+  `main`, default handler marker/table, default handler factories,
+  `_dispatch_runtime_probe_local_python_worker_payload`, family
+  request/observation/replay dataclasses, materializers, observers, captures,
+  family validators, source importers, target resolvers, response protocol,
+  stdout serialization, exit codes, subprocess module name,
+  `runtime_probe_execution.py`, package-root exports, docs, eval fixtures, and
+  Smoke E expectations out of scope. Do not start the real-OSS experiment or
+  broader product evidence work until the accepted adversarial repair findings
+  are closed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 
