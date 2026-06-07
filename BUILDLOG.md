@@ -2,6 +2,55 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Metadata Protocol Extraction Accepted
+
+- Accepted the shared metadata/replay validator extraction as workspace-only
+  after independent audit.
+- Findings: none after the premature `PLAN.md` continuity edit was removed.
+- Workspace release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_metadata_protocol.py`
+- Behavior and compatibility:
+  - dynamic-import required replay-field keys, local-Python invocation identity
+    prefix, required replay-field map helper, replay-field match validator,
+    subject-kind replay parser, source-span parser/validator,
+    metadata/path/argv/python-path/timeout/invocation validators, invocation
+    identity materializer, and absolute-path metadata helper moved into a
+    private metadata helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - moved names preserve object identity between the worker module and helper
+    module
+  - dynamic-import reason-code validation, family request/observation/replay
+    dataclasses, materializers, observers, captures, family validators, handler
+    entries, dispatch, response protocol, `main`, subprocess module name,
+    `runtime_probe_execution.py`, package-root exports, tests, eval fixtures,
+    public/API surfaces, and test monkeypatch targets were not moved or
+    reopened
+- Validation:
+  - `git diff --check`: clean
+  - protected-surface diff guard for runtime execution, package-root exports,
+    tests, eval tasks, fixtures, run specs, README, PUBLIC_CLAIMS, EVAL,
+    ARCHITECTURE, PLAN, and BUILDLOG was empty before continuity was added
+  - `ruff check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_metadata_protocol.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_metadata_protocol.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - 15-name worker/helper identity check: passed
+  - independent audit confirmed no helper-to-worker import cycle and no protocol
+    or package-root drift
+- Release state: workspace-only accepted. Full regression, commit-gating, local
+  commit, and push remain pending.
+- Recommended next control action: run full regression and commit-gating over
+  the exact four-file release unit if clean.
+- Acceptance status: accepted after one process correction.
+
 ## 2026-06-07 -- Runtime Worker Dispatch Extraction Pushed
 
 - Pushed the private dispatch/handler-entry extraction slice to `origin/main`.

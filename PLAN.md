@@ -119,7 +119,8 @@ Current active program:
     dispatch/handler-entry extraction is pushed in commit
     `070e8c4 Extract worker dispatch contracts` after one deterministic Smoke
     E confidence-only correction, corrected full regression, commit-gating,
-    local commit, and push.
+    local commit, and push. The shared metadata/replay validator extraction is
+    workspace-only accepted after independent audit and awaits release gates.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -165,21 +166,33 @@ Current active program:
       `070e8c4 Extract worker dispatch contracts` after focused validation,
       one deterministic Smoke E confidence-only correction, corrected full
       regression, commit-gating, local commit, and Ryan-authorized push
-- current workspace release unit: none; pushed `main` is clean
-- current release state: dispatch/handler-entry extraction is pushed. It moved
-  the worker handler key alias, worker callable alias, handler entry dataclass,
-  dispatching worker, duplicate/dispatch errors, handler indexing/key helpers,
-  payload key helper, handler-entry validation, and sanitized dispatch message
-  constants required by the helper into a private dispatch helper and imported
-  them back into `runtime_probe_worker.py` under the same names. `main`, default
-  handler marker/table, default handler factories,
-  `_dispatch_runtime_probe_local_python_worker_payload`, family
-  request/observation/replay dataclasses, materializers, observers, captures,
-  family validators, source importers, target resolvers, response protocol,
-  stdout serialization, exit codes, subprocess module name,
-  `runtime_probe_execution.py`, package-root exports, docs, eval fixtures, and
-  public/API surfaces were not moved or edited. Full regression passed with
-  `2201` tests before commit and push.
+  18. runtime worker shared metadata/replay validator extraction is
+      workspace-only accepted after focused validation and independent audit;
+      full regression, commit-gating, local commit, and push remain pending
+- current workspace release unit: runtime worker metadata/replay validator
+  extraction plus continuity:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_metadata_protocol.py`
+- current release state: shared metadata/replay validation extraction is
+  workspace-only accepted after clean independent audit and focused validation.
+  It moved the dynamic-import required replay-field keys, local-Python
+  invocation identity prefix, required replay-field map helper, replay-field
+  match validator, subject-kind replay parser, source-span parser/validator,
+  metadata/path/argv/python-path/timeout/invocation validators, invocation
+  identity materializer, and absolute-path metadata helper into a private
+  metadata helper and imported them back into `runtime_probe_worker.py` under
+  the same private names. Dynamic-import reason-code validation, family
+  dataclasses, materializers, observers, captures, family validators, handler
+  entries, dispatch, response protocol, `main`, subprocess module name,
+  package-root exports, tests, eval fixtures, public/API surfaces, and test
+  monkeypatch targets were not moved or reopened. Focused validation passed:
+  `ruff check`, `ruff format --check`, `mypy --strict src/`,
+  `pytest tests/test_runtime_probe_worker.py -q` with 716 passed, and the
+  15-name worker/helper identity check. The independent audit found no issues
+  and confirmed no helper-to-worker import cycle. This unit is not
+  full-regression-cleared, commit-gating-cleared, staged, committed, or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -190,10 +203,10 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: run a read-only runtime-worker decomposition spike over
-  the post-dispatch state to choose the next safe extraction boundary. Do not
-  start the next runtime-worker implementation, real-OSS experiment, or broader
-  product evidence work until that spike is accepted.
+- next control action: run full regression and commit-gating over the current
+  four-file workspace unit. Do not start the next runtime-worker
+  implementation, real-OSS experiment, or broader product evidence work until
+  this release unit is pushed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 
