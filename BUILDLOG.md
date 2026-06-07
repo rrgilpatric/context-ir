@@ -2,6 +2,42 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Reflective Builtin Extraction Pushed
+
+- Pushed the runtime worker reflective-builtin constants extraction release unit
+  to `origin/main`.
+- Pushed release commit:
+  `e042e04 Extract reflective builtin worker contracts`
+- Release gates completed before push:
+  - read-only release-unit audit: PASS with no findings
+  - corrected full regression: `ruff check src/ tests/`, `ruff format --check
+    src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with 2201
+    passed
+  - commit-gating: PASS with no findings over the exact five-file release unit
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_reflective_builtin_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior shipped:
+  - 73 private `_REFLECTIVE_BUILTIN_*` worker constants moved into a private
+    helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - 73 moved private names preserve worker/helper object identity
+  - `main`, dispatch, response serialization, handler registration, validators,
+    exact replay logic, tests, subprocess module path, stdout/stderr protocol,
+    and package-root exports were not moved
+- Ryan authorized proceeding. This post-push continuity entry supersedes the
+  older pending-state entries below; historical entries remain as audit trail.
+- Recommended next control action: continue runtime worker complexity with a
+  fresh read-only decomposition spike for the next conservative extraction
+  candidate, or explicitly hold if Ryan wants to pause refactoring. Do not
+  start the real-OSS pre-registered experiment until the accepted repair ledger
+  is closed or Ryan explicitly redirects.
+- Acceptance status: pushed after one Smoke E confidence-only correction.
+
 ## 2026-06-07 -- Runtime Worker Reflective Builtin Commit-Gating Passed
 
 - Ran commit-gating over the exact corrected five-file runtime worker

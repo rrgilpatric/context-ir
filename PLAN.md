@@ -91,8 +91,10 @@ Current active program:
     Smoke E confidence-only correction, release-unit audit, full regression,
     and commit-gating; broader runtime worker complexity remains open for
     further decomposition. The second conservative reflective-builtin constants
-    extraction is full-regression-cleared after one deterministic Smoke E
-    confidence-only correction and commit-gating-cleared
+    extraction is pushed in commit
+    `e042e04 Extract reflective builtin worker contracts` after one
+    deterministic Smoke E confidence-only correction, release-unit audit, full
+    regression, and commit-gating
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -124,28 +126,27 @@ Current active program:
       `910b6c7 Disambiguate colliding call source sites`
   11. runtime worker dynamic-import contract extraction is pushed in commit
       `1a31f67 Extract dynamic import worker contracts`
-- current workspace release unit: reflective-builtin worker constants
-  extraction, commit-gating-cleared after one confidence-only correction. Files:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/runtime_probe_worker.py`
-  - `src/context_ir/runtime_probe_worker_reflective_builtin_contracts.py`
-  - `tests/test_eval_signal_smoke_e.py`
-- current release state: reflective-builtin worker constants extraction is
-  commit-gating-cleared. It moves 73 private `_REFLECTIVE_BUILTIN_*`
-  constants into a private helper module and imports them back into
-  `runtime_probe_worker.py` under the same private names. `main`, dispatch,
-  response serialization, handler registration, validators, exact replay logic,
-  tests, subprocess module path, stdout/stderr protocol, package-root exports,
-  eval assets, public claims, and reviewer evidence were not moved or edited.
-  Read-only release-unit audit passed with no findings. The first full
-  regression held on deterministic Smoke E confidence-only drift after all
-  preservation locks held; the correction updated only
-  `FULL_REPO_TASK3_CONFIDENCE`. Corrected full regression passed with `ruff
-  check src/ tests/`, `ruff format --check src/ tests/`, `mypy --strict src/`,
-  and `pytest tests/ -v` reporting 2201 passed. Commit-gating passed with no
-  findings over the exact five-file release unit, including protected-boundary
-  and 73-name identity checks. Staging, local commit, and push remain pending.
+  12. runtime worker reflective-builtin constants extraction is pushed in
+      commit `e042e04 Extract reflective builtin worker contracts`
+- current workspace release unit: none after this post-push continuity sync;
+  live git remains the source of truth for current `HEAD`, `origin/main`, and
+  worktree state
+- current release state: runtime worker reflective-builtin constants extraction
+  is pushed in commit `e042e04 Extract reflective builtin worker contracts`.
+  It moves 73 private `_REFLECTIVE_BUILTIN_*` constants into a private helper
+  module and imports them back into `runtime_probe_worker.py` under the same
+  private names. `main`, dispatch, response serialization, handler
+  registration, validators, exact replay logic, tests, subprocess module path,
+  stdout/stderr protocol, package-root exports, eval assets, public claims, and
+  reviewer evidence were not moved or edited. Read-only release-unit audit
+  passed with no findings. The first full regression held on deterministic
+  Smoke E confidence-only drift after all preservation locks held; the
+  correction updated only `FULL_REPO_TASK3_CONFIDENCE`. Corrected full
+  regression passed with `ruff check src/ tests/`, `ruff format --check src/
+  tests/`, `mypy --strict src/`, and `pytest tests/ -v` reporting 2201 passed.
+  Commit-gating passed with no findings over the exact five-file release unit,
+  including protected-boundary and 73-name identity checks. Staging, local
+  commit, and push are complete.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -156,12 +157,29 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: stage and locally commit the exact five-file
-  reflective-builtin worker constants extraction release unit. Push remains
-  Ryan-gated. Do not start the real-OSS pre-registered experiment until the
-  accepted repair ledger is closed or Ryan explicitly redirects.
+- next control action: continue runtime worker complexity with a fresh
+  read-only decomposition spike for the next conservative extraction candidate,
+  or explicitly hold if Ryan wants to pause refactoring. Do not start the
+  real-OSS pre-registered experiment until the accepted repair ledger is closed
+  or Ryan explicitly redirects.
 
 Latest release unit pushed:
+
+- runtime worker reflective-builtin constants extraction
+- pushed release commit:
+  `e042e04 Extract reflective builtin worker contracts`
+- release state: accepted first-pass; read-only audit passed; full regression
+  passed after one deterministic Smoke E confidence-only correction with
+  `2201` tests; commit-gating passed; staged, locally committed, and pushed to
+  `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_reflective_builtin_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - runtime worker dynamic-import contract extraction
 - pushed release commit:
