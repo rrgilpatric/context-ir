@@ -2,14 +2,16 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-07 -- Runtime Worker Runtime Mutation Contract Extraction Accepted
+## 2026-06-07 -- Runtime Worker Runtime Mutation Contract Extraction Pushed
 
-- Reviewed and accepted the third conservative runtime worker complexity
-  refactor slice. Full regression later exposed deterministic Smoke E
-  confidence-only drift; all preservation locks held, and Ryan authorized the
-  narrow scalar correction.
+- Pushed the third conservative runtime worker complexity refactor slice to
+  `origin/main`.
+- Pushed release commit:
+  `132c5ea Extract runtime mutation worker contracts`
+- Full regression exposed deterministic Smoke E confidence-only drift; all
+  preservation locks held, and Ryan authorized the narrow scalar correction.
 - Findings: none.
-- Accepted workspace-only release-unit files:
+- Release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
@@ -47,15 +49,17 @@ Most recent supersession entries override older architectural decisions when the
   - `git diff --check`: clean
 - Boundaries preserved: no test split, eval task, fixture, run-spec, generated
   evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
-  smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, staging,
-  commit, or push changes.
-- Release state: workspace-only accepted after one deterministic Smoke E
-  confidence-only correction. Corrected release-unit audit and full regression
-  are cleared. Commit-gating is cleared. The release unit is commit-ready; push
-  remains Ryan-gated.
-- Recommended next control action: create the local release commit if it does
-  not already exist, then request Ryan authorization before pushing.
-- Acceptance status: accepted after one confidence-only correction.
+  smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, or package
+  export changes.
+- Release state: pushed to `origin/main` after Ryan authorized proceeding. This
+  post-push continuity entry supersedes the older pending-state wording for
+  this release unit.
+- Recommended next control action: continue runtime worker complexity with a
+  fresh read-only decomposition spike for the next conservative extraction
+  candidate, or explicitly hold if Ryan wants to pause refactoring. Do not
+  start the real-OSS pre-registered experiment until the accepted repair ledger
+  is closed or Ryan explicitly redirects.
+- Acceptance status: pushed after one Smoke E confidence-only correction.
 
 ## 2026-06-07 -- Runtime Worker Reflective Builtin Extraction Pushed
 
