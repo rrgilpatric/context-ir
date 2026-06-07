@@ -75,7 +75,8 @@ Current active program:
     floors, MCP in-band error semantics, AGENTS/WoW evidence discipline, sync
     commit optics, recompile no-op coverage, low-risk docs/evidence boundary
     repairs, duplicate `site_id` parser collision repair, and the first five
-    conservative runtime worker contract extractions
+    conservative runtime worker contract extractions; the response-protocol
+    extraction is workspace-only accepted and pending release gates
   - low-risk docs/evidence tranche: pushed in commit
     `c9a5fef Clarify internal evidence boundaries`; covers baseline
     uncertainty ceiling/readability, replay-vs-default-local evidence
@@ -106,7 +107,11 @@ Current active program:
     extraction is pushed in commit
     `901f176 Extract metaclass worker contracts` after one deterministic Smoke
     E confidence-only correction, corrected release-unit audit, full
-    regression, and commit-gating.
+    regression, and commit-gating. The shared worker stdout/response protocol
+    extraction is workspace-only accepted after focused validation; full
+    regression exposed one deterministic Smoke E confidence-only drift, Ryan
+    authorized the scalar correction, and corrected full regression passed.
+    Commit-gating, local commit, and push remain pending.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -146,19 +151,37 @@ Current active program:
       `e7a9558 Extract exec eval worker contracts`
   15. runtime worker metaclass constants extraction is pushed in commit
       `901f176 Extract metaclass worker contracts`
-- current workspace release unit: none after the metaclass worker constants
-  extraction push.
-- current release state: clean post-push continuity sync. The metaclass
-  constants extraction moved 8 private `_METACLASS_BEHAVIOR_KEYWORD_*`
-  constants into a private helper module and imported them back into
-  `runtime_probe_worker.py` under the same private names. Dataclasses,
-  validators, observers, request parsing, response serialization, handler
-  registry, dispatch, `main`, subprocess module path, stdout/stderr protocol,
-  exit codes, shared dynamic-import sentinels, package-root exports, eval
-  assets, public claims, and reviewer evidence were not moved or edited.
-  Release gates completed before push: focused validation, corrected
-  release-unit audit, full regression with `2201` tests, and commit-gating.
-  Ryan authorized push, and the release commit is on `origin/main`.
+  16. runtime worker response-protocol extraction is workspace-only accepted
+      after one deterministic Smoke E confidence-only correction; corrected
+      full regression passed, and commit-gating, local commit, and push remain
+      pending
+- current workspace release unit: runtime worker response-protocol extraction
+  plus continuity:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_response_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: workspace-only accepted after clean control review.
+  The response-protocol extraction moved the worker stdout protocol revision
+  constants, response dataclasses, handler response alias, success serializer,
+  replay-field validators, durable-artifact validation,
+  observed-replay-input validation, replay-field JSON helpers, and control
+  character helper into a private helper module and imported them back into
+  `runtime_probe_worker.py` under the same names. `main`, dispatch, handler
+  registry, handler entries, request parsing, family request/observation/replay
+  dataclasses, observers, captures, materializers, family validators, subprocess
+  module path, exit codes, stderr strings, package-root exports, eval assets,
+  public claims, and reviewer evidence were not moved or edited. Focused
+  validation passed: `ruff check`, `ruff format --check`, `mypy --strict
+  src/`, `pytest tests/test_runtime_probe_worker.py -q` with 716 passed,
+  focused response/package-root tests with 9 passed, and the 15-name
+  worker/helper identity check. Full regression then held on a Smoke E
+  confidence-only drift after the selection, document SHA, token, warning,
+  warning ID, probe-count, and warning-call locks held. Ryan authorized the
+  narrow correction; the focused Smoke E Task 3 check passed, and corrected
+  full regression passed with `2201` tests. This unit is not
+  commit-gating-cleared, staged, committed, or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -169,30 +192,13 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: run a fresh read-only design spike for the next
-  runtime-worker refactor boundary. The constants-only phase is effectively
-  complete; do not move dataclasses, validators, handler registry, dispatch, or
-  `main` without that spike. Do not start the real-OSS pre-registered
-  experiment until the accepted repair ledger is closed or Ryan explicitly
-  redirects.
+- next control action: run commit-gating over the current five-file workspace
+  unit, then stage, commit, and wait for Ryan push authorization if clean. Do
+  not start the next dispatch/handler-entry or family-dataclass extraction
+  design spike, real-OSS experiment, or any broader runtime-worker refactor
+  until this release unit is pushed or Ryan explicitly redirects.
 
 Latest release unit pushed:
-
-- runtime worker exec/eval constants extraction
-- pushed release commit:
-  `e7a9558 Extract exec eval worker contracts`
-- release state: accepted after one deterministic Smoke E confidence-only
-  correction; corrected read-only audit passed; full regression passed with
-  `2201` tests; commit-gating passed; staged, locally committed, and pushed to
-  `origin/main` after Ryan authorized proceeding
-- release files:
-  - `PLAN.md`
-  - `BUILDLOG.md`
-  - `src/context_ir/runtime_probe_worker.py`
-  - `src/context_ir/runtime_probe_worker_exec_or_eval_contracts.py`
-  - `tests/test_eval_signal_smoke_e.py`
-
-Previous release unit pushed:
 
 - runtime worker metaclass constants extraction
 - pushed release commit:
@@ -206,6 +212,22 @@ Previous release unit pushed:
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_metaclass_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
+
+- runtime worker exec/eval constants extraction
+- pushed release commit:
+  `e7a9558 Extract exec eval worker contracts`
+- release state: accepted after one deterministic Smoke E confidence-only
+  correction; corrected read-only audit passed; full regression passed with
+  `2201` tests; commit-gating passed; staged, locally committed, and pushed to
+  `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_exec_or_eval_contracts.py`
   - `tests/test_eval_signal_smoke_e.py`
 
 Prior release unit pushed:

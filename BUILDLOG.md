@@ -2,6 +2,62 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Response Protocol Extraction Accepted
+
+- Accepted the shared worker stdout/response protocol refactor slice as
+  workspace-only.
+- Findings: none.
+- Workspace release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_response_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and compatibility:
+  - worker stdout protocol revision constants, response dataclasses, handler
+    response alias, success serializer, replay-field validators,
+    durable-artifact validation, observed-replay-input validation,
+    replay-field JSON helpers, and control-character helper moved into a
+    private helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    names
+  - moved names preserve object identity between the worker module and helper
+    module
+  - `main`, dispatch, handler registry, handler entries, request parsing,
+    family request/observation/replay dataclasses, observers, captures,
+    materializers, family validators, subprocess module path, exit codes,
+    stderr strings, and package-root exports were not moved
+- Control validation:
+  - `git diff --check`: clean
+  - protected-surface diff guard for README, PUBLIC_CLAIMS, EVAL,
+    ARCHITECTURE, package-root exports, runtime execution, tests, eval tasks,
+    fixtures, and run specs: empty
+  - `ruff check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_response_protocol.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_response_protocol.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - focused response/package-root tests: 9 passed, 707 deselected
+  - 15-name worker/helper identity check: passed
+  - initial full regression: held on Smoke E confidence-only drift after all
+    preservation locks passed
+  - Ryan authorized the narrow scalar correction
+  - corrected Smoke E focused Task 3 test: 1 passed, 7 deselected
+  - corrected full regression: `pytest tests/ -v` with 2201 passed
+- Boundaries preserved: no test split, eval task, fixture, run-spec, generated
+  evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
+  smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, or package
+  export changes.
+- Release state: workspace-only accepted after one deterministic Smoke E
+  confidence-only correction. Commit-gating, local commit, and push remain
+  pending.
+- Recommended next control action: run commit-gating over the exact five-file
+  workspace unit, then stage and commit if clean. Push remains Ryan-gated.
+- Acceptance status: accepted after one Smoke E confidence-only correction.
+
 ## 2026-06-07 -- Runtime Worker Metaclass Contract Extraction Pushed
 
 - Pushed the fifth conservative runtime worker complexity refactor slice to
