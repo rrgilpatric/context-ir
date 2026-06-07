@@ -2,14 +2,16 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-07 -- Runtime Worker Artifact Protocol Extraction Accepted
+## 2026-06-07 -- Runtime Worker Artifact Protocol Extraction Pushed
 
-- Accepted the durable artifact reference helper extraction as workspace-only
-  after focused control review, read-only release-unit audit, one deterministic
-  Smoke E confidence-only correction, corrected full regression, and
-  commit-gating over the three-file implementation/test unit.
+- Pushed the durable artifact reference helper extraction to `origin/main`.
+- Pushed release commit:
+  `520776d Extract worker artifact protocol`
+- Accepted the durable artifact reference helper extraction after focused
+  control review, read-only release-unit audit, one deterministic Smoke E
+  confidence-only correction, corrected full regression, and commit-gating.
 - Findings: none.
-- Workspace release files:
+- Release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
@@ -49,18 +51,18 @@ Most recent supersession entries override older architectural decisions when the
     ordering, selected details, probe count, and warning-call-count locks held
   - Ryan authorized the narrow scalar correction to
     `FULL_REPO_TASK3_CONFIDENCE = 0.001614350829892547`
+  - Smoke E changed only `FULL_REPO_TASK3_CONFIDENCE` to
+    `0.001614350829892547` after preservation locks held
   - corrected full regression: 2201 passed
-  - commit-gating over the three-file implementation/test unit: expected dirty
-    files only, no staged files, protected-surface diff guard empty,
-    import-cycle probe passed, helper identity probe passed, and URI-shape
-    probe passed
-- Release state: workspace-only accepted after one deterministic Smoke E
-  confidence-only correction. This continuity sync adds `PLAN.md` and
-  `BUILDLOG.md`; the combined five-file release unit is not staged, committed,
-  or pushed.
-- Recommended next control action: run a docs-aware read-only review over the
-  combined five-file release unit, then commit and push only after explicit
-  Ryan authorization.
+  - commit-gating: passed
+- Release state: accepted after one deterministic Smoke E confidence-only
+  correction. Corrected full regression, commit-gating, local commit, and
+  Ryan-authorized push are complete.
+- Recommended next control action: do not route directly to implementation.
+  Either run a read-only decomposition spike over the post-`520776d`
+  runtime-worker state to choose the next complexity boundary, or make an
+  explicit control decision on whether to pause runtime-worker cleanup and move
+  toward pre-registered real-OSS experiment design.
 - Acceptance status: accepted after one Smoke E confidence-only correction.
 
 ## 2026-06-07 -- Runtime Worker Replay Target Protocol Extraction Pushed

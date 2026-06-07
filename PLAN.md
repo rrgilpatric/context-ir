@@ -130,12 +130,13 @@ Current active program:
     confidence-only full-regression correction, corrected full regression,
     commit-gating, local commit, and Ryan-authorized push. A follow-up
     read-only decomposition spike selected durable artifact reference helper
-    extraction as the next safe shared seam, and that extraction is
-    workspace-only accepted after read-only release-unit audit, one
-    deterministic Smoke E confidence-only correction, corrected full
-    regression, and commit-gating over the three-file implementation unit. The
-    combined release unit now includes continuity and still needs docs-aware
-    release review before commit/push.
+    extraction as the next safe shared seam, and that extraction is pushed in
+    commit `520776d Extract worker artifact protocol` after read-only
+    release-unit audit, one deterministic Smoke E confidence-only correction,
+    corrected full regression with `2201` tests, commit-gating, local commit,
+    and Ryan-authorized push. Smoke E changed only
+    `FULL_REPO_TASK3_CONFIDENCE` to `0.001614350829892547` after preservation
+    locks held.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -191,21 +192,23 @@ Current active program:
       control review, release-unit audit, one deterministic Smoke E
       confidence-only full-regression correction, corrected full regression,
       commit-gating, local commit, and Ryan-authorized push
-  20. runtime worker durable artifact reference helper extraction is
-      workspace-only accepted after focused validation, read-only release-unit
-      audit, one deterministic Smoke E confidence-only correction, corrected
-      full regression, and commit-gating over the three-file implementation
-      unit; docs-aware review, local commit, and push remain pending for the
-      combined release unit
-- current workspace release unit: runtime worker durable artifact protocol
-  extraction plus continuity:
+  20. runtime worker durable artifact reference helper extraction is pushed in
+      commit `520776d Extract worker artifact protocol` after focused
+      validation, read-only release-unit audit, one deterministic Smoke E
+      confidence-only correction, corrected full regression with `2201` tests,
+      commit-gating, local commit, and Ryan-authorized push
+- current workspace unit: post-push continuity sync only:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+- pushed durable artifact protocol release unit:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
 - current release state: durable artifact reference helper extraction is
-  workspace-only accepted. It moved
+  pushed to `origin/main` in commit
+  `520776d Extract worker artifact protocol`. It moved
   `_runtime_probe_dir_listing_artifact_reference`,
   `_runtime_probe_setattr_value_artifact_reference`,
   `_runtime_probe_exec_source_artifact_reference`,
@@ -225,10 +228,11 @@ Current active program:
   selected details, probe count, and warning-call-count locks held; Ryan
   authorized the narrow scalar correction to
   `FULL_REPO_TASK3_CONFIDENCE = 0.001614350829892547`. Corrected full
-  regression passed with `2201` tests, and commit-gating passed over the
-  three-file implementation/test unit. This continuity sync adds `PLAN.md` and
-  `BUILDLOG.md`; the combined five-file release unit is not staged, committed,
-  or pushed.
+  regression passed with `2201` tests. Smoke E changed only
+  `FULL_REPO_TASK3_CONFIDENCE` to `0.001614350829892547` after preservation
+  locks held. Commit-gating passed, local commit is complete, and the commit is
+  pushed. This continuity sync changes only `PLAN.md` and `BUILDLOG.md` and is
+  not staged, committed, or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -239,13 +243,31 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: run a docs-aware read-only review of the combined
-  five-file durable artifact protocol release unit, then commit and push only
-  after explicit Ryan authorization. Do not start the next runtime-worker
-  implementation, real-OSS experiment, or broader product evidence work until
-  this release unit is pushed or Ryan explicitly redirects.
+- next control action: do not route directly to implementation. Either run a
+  read-only decomposition spike over the post-`520776d` runtime-worker state to
+  choose the next complexity boundary, or make an explicit control decision on
+  whether to pause runtime-worker cleanup and move toward pre-registered
+  real-OSS experiment design.
 
 Latest release unit pushed:
+
+- runtime worker durable artifact protocol extraction
+- pushed release commit:
+  `520776d Extract worker artifact protocol`
+- release state: accepted after one deterministic Smoke E confidence-only
+  correction that changed only `FULL_REPO_TASK3_CONFIDENCE` to
+  `0.001614350829892547` after preservation locks held; read-only
+  release-unit audit passed; corrected full regression passed with `2201`
+  tests; commit-gating passed; staged, locally committed, and pushed to
+  `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - runtime worker replay-target protocol extraction
 - pushed release commit:
@@ -262,7 +284,7 @@ Latest release unit pushed:
   - `src/context_ir/runtime_probe_worker_replay_target_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
 
-Previous release unit pushed:
+Prior release unit pushed:
 
 - runtime worker shared metadata/replay protocol extraction
 - pushed release commit:
