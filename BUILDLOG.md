@@ -2,12 +2,14 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-07 -- Runtime Worker Response Protocol Extraction Accepted
+## 2026-06-07 -- Runtime Worker Response Protocol Extraction Pushed
 
-- Accepted the shared worker stdout/response protocol refactor slice as
-  workspace-only.
+- Pushed the shared worker stdout/response protocol refactor slice to
+  `origin/main`.
+- Pushed release commit:
+  `28ff5a7 Extract worker response protocol`
 - Findings: none.
-- Workspace release files:
+- Release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
@@ -51,12 +53,14 @@ Most recent supersession entries override older architectural decisions when the
   evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
   smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, or package
   export changes.
-- Release state: workspace-only accepted after one deterministic Smoke E
-  confidence-only correction. Commit-gating, local commit, and push remain
-  pending.
-- Recommended next control action: run commit-gating over the exact five-file
-  workspace unit, then stage and commit if clean. Push remains Ryan-gated.
-- Acceptance status: accepted after one Smoke E confidence-only correction.
+- Release state: pushed to `origin/main` after Ryan authorized proceeding. This
+  post-push continuity entry supersedes the older pending-state wording for
+  this release unit.
+- Recommended next control action: run a read-only design spike for the next
+  runtime-worker refactor boundary. Decide whether the next safe slice should
+  extract dispatch/handler-entry contracts or start a family-by-family
+  request/dataclass/validator module before any implementation.
+- Acceptance status: pushed after one Smoke E confidence-only correction.
 
 ## 2026-06-07 -- Runtime Worker Metaclass Contract Extraction Pushed
 
