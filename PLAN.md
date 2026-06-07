@@ -94,7 +94,9 @@ Current active program:
     extraction is pushed in commit
     `e042e04 Extract reflective builtin worker contracts` after one
     deterministic Smoke E confidence-only correction, release-unit audit, full
-    regression, and commit-gating
+    regression, and commit-gating. The third conservative runtime-mutation
+    constants extraction is accepted workspace-only and pending release-unit
+    audit
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -128,25 +130,33 @@ Current active program:
       `1a31f67 Extract dynamic import worker contracts`
   12. runtime worker reflective-builtin constants extraction is pushed in
       commit `e042e04 Extract reflective builtin worker contracts`
-- current workspace release unit: none after this post-push continuity sync;
-  live git remains the source of truth for current `HEAD`, `origin/main`, and
-  worktree state
-- current release state: runtime worker reflective-builtin constants extraction
-  is pushed in commit `e042e04 Extract reflective builtin worker contracts`.
-  It moves 73 private `_REFLECTIVE_BUILTIN_*` constants into a private helper
-  module and imports them back into `runtime_probe_worker.py` under the same
-  private names. `main`, dispatch, response serialization, handler
-  registration, validators, exact replay logic, tests, subprocess module path,
-  stdout/stderr protocol, package-root exports, eval assets, public claims, and
-  reviewer evidence were not moved or edited. Read-only release-unit audit
-  passed with no findings. The first full regression held on deterministic
-  Smoke E confidence-only drift after all preservation locks held; the
-  correction updated only `FULL_REPO_TASK3_CONFIDENCE`. Corrected full
-  regression passed with `ruff check src/ tests/`, `ruff format --check src/
-  tests/`, `mypy --strict src/`, and `pytest tests/ -v` reporting 2201 passed.
-  Commit-gating passed with no findings over the exact five-file release unit,
-  including protected-boundary and 73-name identity checks. Staging, local
-  commit, and push are complete.
+- current workspace release unit: runtime-mutation worker constants extraction,
+  workspace-only accepted after one deterministic Smoke E confidence-only
+  correction. Files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_runtime_mutation_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: runtime-mutation worker constants extraction is
+  accepted workspace-only. It moves 58 private `_RUNTIME_MUTATION_*` constants
+  into a private helper module and imports them back into
+  `runtime_probe_worker.py` under the same private names. `main`, dispatch,
+  response serialization, handler registration, validators, exact replay logic,
+  tests, subprocess module path, stdout/stderr protocol, package-root exports,
+  eval assets, public claims, and reviewer evidence were not moved or edited.
+  Focused validation passed: `ruff check` and `ruff format --check` for the
+  touched worker/helper/test files, `mypy --strict src/`, `pytest
+  tests/test_runtime_probe_worker.py -q` with 716 passed, `git diff --check`,
+  and a 58-name worker/helper identity check. The initial release-unit audit
+  passed over the four-file unit, then full regression exposed deterministic
+  Smoke E confidence-only drift; all preservation locks held and only
+  `FULL_REPO_TASK3_CONFIDENCE` was updated. The focused Smoke E correction
+  passed. Corrected release-unit audit passed with no findings. Full
+  regression passed: `ruff check src/ tests/`, `ruff format --check src/
+  tests/`, `mypy --strict src/`, and `pytest tests/ -v` with 2201 passed.
+  Commit-gating passed with no findings. The release unit is commit-ready; push
+  remains pending Ryan authorization.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -157,9 +167,8 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: continue runtime worker complexity with a fresh
-  read-only decomposition spike for the next conservative extraction candidate,
-  or explicitly hold if Ryan wants to pause refactoring. Do not start the
+- next control action: create the local release commit if it does not already
+  exist, then request Ryan authorization before pushing. Do not start the
   real-OSS pre-registered experiment until the accepted repair ledger is closed
   or Ryan explicitly redirects.
 

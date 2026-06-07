@@ -2,6 +2,61 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Runtime Mutation Contract Extraction Accepted
+
+- Reviewed and accepted the third conservative runtime worker complexity
+  refactor slice. Full regression later exposed deterministic Smoke E
+  confidence-only drift; all preservation locks held, and Ryan authorized the
+  narrow scalar correction.
+- Findings: none.
+- Accepted workspace-only release-unit files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_runtime_mutation_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and compatibility:
+  - 58 private `_RUNTIME_MUTATION_*` worker constants moved into a private
+    helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - moved private names preserve object identity between the worker module and
+    helper module, including dependent message constants inside frozensets
+  - `main`, dispatch, response serialization, handler registration, validators,
+    exact replay logic, tests, subprocess module path, stdout/stderr protocol,
+    exit codes, and package-root exports were not moved
+- Control validation:
+  - `ruff check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_runtime_mutation_contracts.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_runtime_mutation_contracts.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - 58-name worker/helper identity check: passed
+  - initial full regression: held on Smoke E confidence-only drift after all
+    preservation locks passed
+  - corrected Smoke E focused test: 8 passed
+  - corrected release-unit audit: passed with no findings
+  - corrected full regression: `ruff check src/ tests/`, `ruff format --check
+    src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with 2201
+    passed
+  - commit-gating: passed with no findings over the exact five-file release
+    unit
+  - `git diff --check`: clean
+- Boundaries preserved: no test split, eval task, fixture, run-spec, generated
+  evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
+  smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, staging,
+  commit, or push changes.
+- Release state: workspace-only accepted after one deterministic Smoke E
+  confidence-only correction. Corrected release-unit audit and full regression
+  are cleared. Commit-gating is cleared. The release unit is commit-ready; push
+  remains Ryan-gated.
+- Recommended next control action: create the local release commit if it does
+  not already exist, then request Ryan authorization before pushing.
+- Acceptance status: accepted after one confidence-only correction.
+
 ## 2026-06-07 -- Runtime Worker Reflective Builtin Extraction Pushed
 
 - Pushed the runtime worker reflective-builtin constants extraction release unit
