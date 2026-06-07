@@ -75,7 +75,9 @@ Current active program:
     floors, MCP in-band error semantics, AGENTS/WoW evidence discipline, sync
     commit optics, recompile no-op coverage, low-risk docs/evidence boundary
     repairs, duplicate `site_id` parser collision repair, and the first four
-    conservative runtime worker contract extractions
+    conservative runtime worker contract extractions; the fifth conservative
+    metaclass constants extraction is workspace-only accepted and pending
+    release gates
   - low-risk docs/evidence tranche: pushed in commit
     `c9a5fef Clarify internal evidence boundaries`; covers baseline
     uncertainty ceiling/readability, replay-vs-default-local evidence
@@ -102,7 +104,9 @@ Current active program:
     exec/eval constants extraction is pushed in commit
     `e7a9558 Extract exec eval worker contracts` after one deterministic Smoke
     E confidence-only correction, corrected release-unit audit, full
-    regression, and commit-gating.
+    regression, and commit-gating. The fifth conservative metaclass constants
+    extraction is workspace-only accepted after focused validation and awaits
+    release-unit audit, full regression, and commit-gating.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -140,19 +144,34 @@ Current active program:
       `132c5ea Extract runtime mutation worker contracts`
   14. runtime worker exec/eval constants extraction is pushed in commit
       `e7a9558 Extract exec eval worker contracts`
-- current workspace release unit: none after the exec/eval worker constants
-  extraction push.
-- current release state: clean post-push continuity sync. The exec/eval worker
-  constants extraction moved 19 private `_EXEC_OR_EVAL_*` constants into a
-  private helper module and imported them back into `runtime_probe_worker.py`
-  under the same private names. Metaclass constants, dataclasses, validators,
-  observers, request parsing, response serialization, handler registry,
-  dispatch, `main`, subprocess module path, stdout/stderr protocol, exit codes,
+  15. runtime worker metaclass constants extraction is workspace-only accepted;
+      release-unit audit, full regression, commit-gating, local commit, and push
+      remain pending
+- current workspace release unit: runtime worker metaclass constants extraction
+  plus continuity:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_metaclass_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: workspace-only accepted after clean control review.
+  The metaclass constants extraction moved 8 private
+  `_METACLASS_BEHAVIOR_KEYWORD_*` constants into a private helper module and
+  imported them back into `runtime_probe_worker.py` under the same private
+  names. Dataclasses, validators, observers, request parsing, response
+  serialization, handler registry, dispatch, `main`, subprocess module path,
+  stdout/stderr protocol, exit codes, shared dynamic-import sentinels,
   package-root exports, eval assets, public claims, and reviewer evidence were
-  not moved or edited. Release gates completed before push: focused
-  validation, corrected release-unit audit, full regression with `2201` tests,
-  and commit-gating. Ryan authorized push, and the release commit is on
-  `origin/main`.
+  not moved or edited. Initial full regression exposed deterministic Smoke E
+  confidence-only drift after selected units, document hash, token count,
+  warnings, warning IDs, probe-count, and warning-call locks held; Ryan
+  authorized the narrow scalar correction. Focused validation passed: `ruff
+  check`, `ruff format --check`, `mypy --strict src/`,
+  `pytest tests/test_runtime_probe_worker.py -q` with 716 passed, the 8-name
+  worker/helper identity check, and focused Smoke E Task 3 after the scalar
+  correction. This unit is not corrected-release-unit-audit-cleared,
+  corrected-full-regression-cleared, commit-gating-cleared, staged, committed,
+  or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -163,11 +182,11 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: continue the runtime worker complexity repair with a
-  fresh read-only decomposition spike for the next conservative extraction
-  candidate, or explicitly hold if Ryan wants to pause refactoring. Do not
-  start the real-OSS pre-registered experiment until the accepted repair ledger
-  is closed or Ryan explicitly redirects.
+- next control action: rerun release-unit audit over the corrected five-file
+  workspace unit, then full regression and commit-gating if clean. Do not start
+  the next dataclass/validator extraction design spike, real-OSS experiment, or
+  any broader runtime-worker refactor until this release unit is pushed or Ryan
+  explicitly redirects.
 
 Latest release unit pushed:
 

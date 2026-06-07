@@ -2,6 +2,57 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Metaclass Contract Extraction Accepted
+
+- Accepted the fifth conservative runtime worker complexity refactor slice as
+  workspace-only.
+- Findings: none.
+- Workspace release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_metaclass_contracts.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and compatibility:
+  - 8 private `_METACLASS_BEHAVIOR_KEYWORD_*` worker constants moved into a
+    private helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - moved private names preserve object identity between the worker module and
+    helper module
+  - dataclasses, validators, observers, request parsing, response
+    serialization, handler registry, dispatch, `main`, subprocess module path,
+    stdout/stderr protocol, exit codes, shared dynamic-import sentinels, and
+    package-root exports were not moved
+- Control validation:
+  - `git diff --check`: clean
+  - protected-surface diff guard for README, PUBLIC_CLAIMS, EVAL,
+    ARCHITECTURE, package-root exports, runtime execution, tests, eval tasks,
+    fixtures, and run specs: empty
+  - `ruff check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_metaclass_contracts.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_metaclass_contracts.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - 8-name worker/helper identity check: passed
+  - initial full regression: held on Smoke E confidence-only drift after all
+    preservation locks passed
+  - Ryan authorized the narrow scalar correction
+  - corrected Smoke E focused Task 3 test: 1 passed, 7 deselected
+- Boundaries preserved: no test split, eval task, fixture, run-spec, generated
+  evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
+  smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, or package
+  export changes.
+- Release state: workspace-only accepted after one deterministic Smoke E
+  confidence-only correction. Corrected release-unit audit, corrected full
+  regression, commit-gating, local commit, and push remain pending.
+- Recommended next control action: rerun release-unit audit over the corrected
+  five-file workspace unit, then full regression and commit-gating if clean.
+- Acceptance status: accepted after one Smoke E confidence-only correction.
+
 ## 2026-06-07 -- Runtime Worker Exec/Eval Contract Extraction Pushed
 
 - Pushed the fourth conservative runtime worker complexity refactor slice to

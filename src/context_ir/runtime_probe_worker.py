@@ -25,6 +25,9 @@ from context_ir import (
     runtime_probe_worker_exec_or_eval_contracts as _exec_or_eval_contracts,
 )
 from context_ir import (
+    runtime_probe_worker_metaclass_contracts as _metaclass_contracts,
+)
+from context_ir import (
     runtime_probe_worker_reflective_builtin_contracts as _rbc,
 )
 from context_ir import (
@@ -598,26 +601,29 @@ _EXEC_OR_EVAL_EVAL_WORKER_TARGET_EXECUTION_FAILED_MESSAGE = (
 _EXEC_OR_EVAL_EVAL_WORKER_SHAPE_ERROR_MESSAGES = (
     _exec_or_eval_contracts._EXEC_OR_EVAL_EVAL_WORKER_SHAPE_ERROR_MESSAGES
 )
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_FORM_LABEL = "metaclass_behavior:keyword"
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_BOUNDARY_TEXT = "metaclass=Meta"
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_BUILD_CLASS_GLOBAL_NAME = "__build_class__"
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_TARGET_CLASS_NAME = "Example"
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_SELECTED_METACLASS_NAME = "Meta"
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_CLASS_CREATION_OUTCOME = "created_class"
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_TARGET_IMPORT_FAILED_MESSAGE = (
-    "runtime probe metaclass behavior worker source module import failed"
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_FORM_LABEL = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_FORM_LABEL
 )
-_METACLASS_BEHAVIOR_KEYWORD_WORKER_SHAPE_ERROR_MESSAGES = frozenset(
-    (
-        "runtime probe metaclass behavior worker target must capture exactly one "
-        "class creation",
-        "runtime probe metaclass behavior worker target class must be top-level "
-        "Example",
-        "runtime probe metaclass behavior worker target class must use exact "
-        "metaclass keyword",
-        "runtime probe metaclass behavior worker selected metaclass is unsupported",
-        "runtime probe metaclass behavior worker created class is unsupported",
-    )
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_BOUNDARY_TEXT = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_BOUNDARY_TEXT
+)
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_BUILD_CLASS_GLOBAL_NAME = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_BUILD_CLASS_GLOBAL_NAME
+)
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_TARGET_CLASS_NAME = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_TARGET_CLASS_NAME
+)
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_SELECTED_METACLASS_NAME = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_SELECTED_METACLASS_NAME
+)
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_CLASS_CREATION_OUTCOME = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_CLASS_CREATION_OUTCOME
+)
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_TARGET_IMPORT_FAILED_MESSAGE = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_TARGET_IMPORT_FAILED_MESSAGE
+)
+_METACLASS_BEHAVIOR_KEYWORD_WORKER_SHAPE_ERROR_MESSAGES = (
+    _metaclass_contracts._METACLASS_BEHAVIOR_KEYWORD_WORKER_SHAPE_ERROR_MESSAGES
 )
 _DYNAMIC_IMPORT_REQUIRED_REPLAY_FIELD_KEYS = (
     "plan_id",
