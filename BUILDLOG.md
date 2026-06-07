@@ -2,12 +2,14 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-07 -- Runtime Worker Metaclass Contract Extraction Accepted
+## 2026-06-07 -- Runtime Worker Metaclass Contract Extraction Pushed
 
-- Accepted the fifth conservative runtime worker complexity refactor slice as
-  workspace-only.
+- Pushed the fifth conservative runtime worker complexity refactor slice to
+  `origin/main`.
+- Pushed release commit:
+  `901f176 Extract metaclass worker contracts`
 - Findings: none.
-- Workspace release files:
+- Release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
@@ -42,16 +44,24 @@ Most recent supersession entries override older architectural decisions when the
     preservation locks passed
   - Ryan authorized the narrow scalar correction
   - corrected Smoke E focused Task 3 test: 1 passed, 7 deselected
+  - corrected release-unit audit: passed with no findings
+  - corrected full regression: `ruff check src/ tests/`, `ruff format --check
+    src/ tests/`, `mypy --strict src/`, and `pytest tests/ -v` with 2201
+    passed
+  - commit-gating: passed with no findings over the exact five-file release
+    unit
 - Boundaries preserved: no test split, eval task, fixture, run-spec, generated
   evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
   smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, or package
   export changes.
-- Release state: workspace-only accepted after one deterministic Smoke E
-  confidence-only correction. Corrected release-unit audit, corrected full
-  regression, commit-gating, local commit, and push remain pending.
-- Recommended next control action: rerun release-unit audit over the corrected
-  five-file workspace unit, then full regression and commit-gating if clean.
-- Acceptance status: accepted after one Smoke E confidence-only correction.
+- Release state: pushed to `origin/main` after Ryan authorized proceeding. This
+  post-push continuity entry supersedes the older pending-state wording for
+  this release unit.
+- Recommended next control action: run a fresh read-only design spike for the
+  next runtime-worker refactor boundary. The constants-only phase is
+  effectively complete; do not move dataclasses, validators, handler registry,
+  dispatch, or `main` without that spike.
+- Acceptance status: pushed after one Smoke E confidence-only correction.
 
 ## 2026-06-07 -- Runtime Worker Exec/Eval Contract Extraction Pushed
 
