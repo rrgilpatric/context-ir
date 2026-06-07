@@ -2,16 +2,79 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-07 -- Runtime Worker Metadata Protocol Extraction Accepted
+## 2026-06-07 -- Runtime Worker Replay Target Protocol Extraction Accepted
 
-- Accepted the shared metadata/replay validator extraction as workspace-only
-  after independent audit.
-- Findings: none after the premature `PLAN.md` continuity edit was removed.
+- Accepted the replay-target path helper extraction as workspace-only after
+  focused control review, read-only release-unit audit, one deterministic Smoke
+  E confidence-only full-regression correction, and corrected full regression.
+- Findings: none.
 - Workspace release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_replay_target_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and compatibility:
+  - `_runtime_probe_dynamic_import_source_module_name_from_path`,
+    `_runtime_probe_dynamic_import_replay_target_attribute_path`, and
+    `_validate_runtime_probe_dynamic_import_dotted_identifier_segments` moved
+    into a private replay-target helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - moved names preserve object identity between the worker module and helper
+    module
+  - `main`, dispatch, handler registry, response protocol, source-module import
+    helpers, target callable resolution helpers, family dataclasses,
+    materializers, observers, captures, adapters, family validators, exact
+    replay logic, `runtime_probe_execution.py`, package-root exports, tests,
+    eval fixtures, public docs, public/API surfaces, and test monkeypatch
+    targets were not moved or reopened
+- Validation:
+  - `ruff check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_replay_target_protocol.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_replay_target_protocol.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - three-name worker/helper identity check: passed
+  - helper import-cycle probe: helper import did not load
+    `context_ir.runtime_probe_worker`
+  - `git diff --check`: clean
+  - protected-surface diff guard for public docs, eval assets, runtime
+    execution, package-root exports, and `tests/test_runtime_probe_worker.py`:
+    empty
+  - read-only release-unit audit over the extraction unit: passed
+  - initial full regression: held on Smoke E Task 3 confidence-only drift after
+    token count, document hash, selected units/order, warnings, warning IDs,
+    probe count, and warning-call-count locks held
+  - Ryan authorized the narrow scalar correction to
+    `FULL_REPO_TASK3_CONFIDENCE = 0.001614352050073505`
+  - corrected focused Smoke E Task 3 check: 1 passed, 7 deselected
+  - corrected full regression: 2201 passed
+  - commit-gating: expected five-file workspace unit, no staged files,
+    protected-surface diff guard empty, three-name worker/helper identity check
+    passed, and helper import-cycle probe passed
+- Release state: workspace-only accepted after one deterministic Smoke E
+  confidence-only correction. Corrected full regression and commit-gating are
+  cleared; local commit and push remain pending.
+- Recommended next control action: create a local commit and push only after
+  explicit Ryan authorization.
+- Acceptance status: accepted after one Smoke E confidence-only correction.
+
+## 2026-06-07 -- Runtime Worker Metadata Protocol Extraction Pushed
+
+- Pushed the shared metadata/replay protocol extraction slice to `origin/main`.
+- Pushed release commit:
+  `98b0248 Extract worker metadata protocol`
+- Findings: none after the premature `PLAN.md` continuity edit was removed.
+- Release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_metadata_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
 - Behavior and compatibility:
   - dynamic-import required replay-field keys, local-Python invocation identity
     prefix, required replay-field map helper, replay-field match validator,
@@ -45,11 +108,21 @@ Most recent supersession entries override older architectural decisions when the
   - 15-name worker/helper identity check: passed
   - independent audit confirmed no helper-to-worker import cycle and no protocol
     or package-root drift
-- Release state: workspace-only accepted. Full regression, commit-gating, local
-  commit, and push remain pending.
-- Recommended next control action: run full regression and commit-gating over
-  the exact four-file release unit if clean.
-- Acceptance status: accepted after one process correction.
+  - initial full regression: held on Smoke E confidence-only drift after all
+    preservation locks passed
+  - Ryan authorized the narrow scalar correction
+  - corrected Smoke E focused Task 3 test: 1 passed, 7 deselected
+  - corrected full regression: 2201 passed
+  - commit-gating: exact five-file staged set, protected-surface guard empty,
+    15-name identity check passed, no unstaged or staged drift after commit
+- Release state: accepted after one process correction and one deterministic
+  Smoke E confidence-only correction; corrected full regression,
+  commit-gating, local commit, and Ryan-authorized push are complete.
+- Recommended next control action: run a read-only runtime-worker decomposition
+  spike over the post-metadata state to choose the next safe extraction
+  boundary. Do not start implementation until that spike is accepted.
+- Acceptance status: accepted after one process correction and one Smoke E
+  confidence-only correction.
 
 ## 2026-06-07 -- Runtime Worker Dispatch Extraction Pushed
 

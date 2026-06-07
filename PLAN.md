@@ -74,9 +74,8 @@ Current active program:
     invalid `repo_root`, compiler budget utilization, project-specific scorer
     floors, MCP in-band error semantics, AGENTS/WoW evidence discipline, sync
     commit optics, recompile no-op coverage, low-risk docs/evidence boundary
-    repairs, duplicate `site_id` parser collision repair, the first five
-    conservative runtime worker contract extractions, and the shared
-    response-protocol extraction
+    repairs, duplicate `site_id` parser collision repair, and the conservative
+    runtime worker extractions through the shared metadata/replay protocol
   - low-risk docs/evidence tranche: pushed in commit
     `c9a5fef Clarify internal evidence boundaries`; covers baseline
     uncertainty ceiling/readability, replay-vs-default-local evidence
@@ -108,19 +107,26 @@ Current active program:
     `901f176 Extract metaclass worker contracts` after one deterministic Smoke
     E confidence-only correction, corrected release-unit audit, full
     regression, and commit-gating. The shared worker stdout/response protocol
-    extraction is workspace-only accepted after focused validation; full
-    regression exposed one deterministic Smoke E confidence-only drift, Ryan
-    authorized the scalar correction, and corrected full regression passed.
-    Commit-gating, local commit, and push are complete in commit
-    `28ff5a7 Extract worker response protocol`. A follow-up read-only design
-    spike found dispatch/handler-entry extraction to be the next safe
-    runtime-worker boundary; family-by-family request/dataclass/validator
-    modules were deferred until the dispatch seam was split out. The
-    dispatch/handler-entry extraction is pushed in commit
+    extraction is pushed in commit
+    `28ff5a7 Extract worker response protocol` after one deterministic Smoke E
+    confidence-only correction, corrected full regression, commit-gating, local
+    commit, and Ryan-authorized push. A follow-up read-only design spike found
+    dispatch/handler-entry extraction to be the next safe runtime-worker
+    boundary; family-by-family request/dataclass/validator modules were
+    deferred until the dispatch seam was split out. The dispatch/handler-entry
+    extraction is pushed in commit
     `070e8c4 Extract worker dispatch contracts` after one deterministic Smoke
     E confidence-only correction, corrected full regression, commit-gating,
-    local commit, and push. The shared metadata/replay validator extraction is
-    workspace-only accepted after independent audit and awaits release gates.
+    local commit, and Ryan-authorized push. The shared metadata/replay
+    protocol extraction is pushed in commit
+    `98b0248 Extract worker metadata protocol` after one process correction,
+    one deterministic Smoke E confidence-only correction, independent audit,
+    corrected full regression, commit-gating, local commit, and
+    Ryan-authorized push. A follow-up read-only decomposition spike selected
+    replay-target path helper extraction as the next safe shared seam, and that
+    extraction is workspace-only accepted after focused control review,
+    read-only release-unit audit, one deterministic Smoke E confidence-only
+    full-regression correction, and corrected full regression.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -166,33 +172,50 @@ Current active program:
       `070e8c4 Extract worker dispatch contracts` after focused validation,
       one deterministic Smoke E confidence-only correction, corrected full
       regression, commit-gating, local commit, and Ryan-authorized push
-  18. runtime worker shared metadata/replay validator extraction is
-      workspace-only accepted after focused validation and independent audit;
-      full regression, commit-gating, local commit, and push remain pending
-- current workspace release unit: runtime worker metadata/replay validator
+  18. runtime worker shared metadata/replay protocol extraction is pushed in
+      commit `98b0248 Extract worker metadata protocol` after focused
+      validation, one process correction, independent audit, one deterministic
+      Smoke E confidence-only correction, corrected full regression,
+      commit-gating, local commit, and Ryan-authorized push
+  19. runtime worker replay-target path helper extraction is workspace-only
+      accepted after focused validation, control review, release-unit audit,
+      one deterministic Smoke E confidence-only full-regression correction,
+      corrected full regression, and commit-gating; local commit and push
+      remain pending
+- current workspace release unit: runtime worker replay-target protocol
   extraction plus continuity:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
-  - `src/context_ir/runtime_probe_worker_metadata_protocol.py`
-- current release state: shared metadata/replay validation extraction is
-  workspace-only accepted after clean independent audit and focused validation.
-  It moved the dynamic-import required replay-field keys, local-Python
-  invocation identity prefix, required replay-field map helper, replay-field
-  match validator, subject-kind replay parser, source-span parser/validator,
-  metadata/path/argv/python-path/timeout/invocation validators, invocation
-  identity materializer, and absolute-path metadata helper into a private
-  metadata helper and imported them back into `runtime_probe_worker.py` under
-  the same private names. Dynamic-import reason-code validation, family
-  dataclasses, materializers, observers, captures, family validators, handler
-  entries, dispatch, response protocol, `main`, subprocess module name,
-  package-root exports, tests, eval fixtures, public/API surfaces, and test
-  monkeypatch targets were not moved or reopened. Focused validation passed:
-  `ruff check`, `ruff format --check`, `mypy --strict src/`,
-  `pytest tests/test_runtime_probe_worker.py -q` with 716 passed, and the
-  15-name worker/helper identity check. The independent audit found no issues
-  and confirmed no helper-to-worker import cycle. This unit is not
-  full-regression-cleared, commit-gating-cleared, staged, committed, or pushed.
+  - `src/context_ir/runtime_probe_worker_replay_target_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- current release state: replay-target path helper extraction is
+  workspace-only accepted. It moved
+  `_runtime_probe_dynamic_import_source_module_name_from_path`,
+  `_runtime_probe_dynamic_import_replay_target_attribute_path`, and
+  `_validate_runtime_probe_dynamic_import_dotted_identifier_segments` into a
+  private replay-target helper and imported them back into
+  `runtime_probe_worker.py` under the same private names. `main`, dispatch,
+  handler registry, response protocol, source-module import helpers, target
+  callable resolution helpers, family dataclasses, materializers, observers,
+  captures, adapters, family validators, exact replay logic,
+  `runtime_probe_execution.py`, package-root exports, tests, eval fixtures,
+  public docs, and public/API surfaces were not moved or reopened. Focused
+  validation passed: `ruff check`, `ruff format --check`, `mypy --strict src/`,
+  `pytest tests/test_runtime_probe_worker.py -q` with 716 passed, `git diff
+  --check`, protected-surface diff guard, and the three-name
+  worker/helper identity plus helper import-cycle probe. Read-only
+  release-unit audit passed on the extraction unit. Full regression initially
+  held on a deterministic Smoke E Task 3 confidence-only drift after token
+  count, document hash, selected units/order, warnings, warning IDs, probe
+  count, and warning-call-count locks held; Ryan authorized the narrow scalar
+  correction to `FULL_REPO_TASK3_CONFIDENCE = 0.001614352050073505`.
+  Corrected focused Smoke E and corrected full regression passed. Commit-gating
+  passed over the five-file workspace unit: status matched the expected files,
+  no staged files were present, `git diff --check` was clean, protected-surface
+  diff guard was empty, the only untracked file was the new replay-target
+  helper, and the three-name worker/helper identity plus helper import-cycle
+  probe passed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -203,12 +226,28 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: run full regression and commit-gating over the current
-  four-file workspace unit. Do not start the next runtime-worker
-  implementation, real-OSS experiment, or broader product evidence work until
-  this release unit is pushed or Ryan explicitly redirects.
+- next control action: create a local commit and push only after explicit Ryan
+  authorization. Do not start the next runtime-worker implementation, real-OSS
+  experiment, or broader product evidence work until this release unit is
+  pushed or Ryan explicitly redirects.
 
 Latest release unit pushed:
+
+- runtime worker shared metadata/replay protocol extraction
+- pushed release commit:
+  `98b0248 Extract worker metadata protocol`
+- release state: accepted after one process correction and one deterministic
+  Smoke E confidence-only correction; independent audit passed; corrected full
+  regression passed with `2201` tests; commit-gating passed; staged, locally
+  committed, and pushed to `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_metadata_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - runtime worker dispatch/handler-entry extraction
 - pushed release commit:
@@ -224,7 +263,7 @@ Latest release unit pushed:
   - `src/context_ir/runtime_probe_worker_dispatch.py`
   - `tests/test_eval_signal_smoke_e.py`
 
-Previous release unit pushed:
+Prior release unit pushed:
 
 - runtime worker response-protocol extraction
 - pushed release commit:
