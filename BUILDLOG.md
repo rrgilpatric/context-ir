@@ -2,6 +2,63 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Dispatch Extraction Accepted
+
+- Accepted the private dispatch/handler-entry extraction slice as
+  workspace-only.
+- Findings: none.
+- Workspace release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_dispatch.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and compatibility:
+  - worker handler key alias, worker callable alias, handler entry dataclass,
+    dispatching worker, duplicate/dispatch errors, handler indexing/key helpers,
+    payload key helper, handler-entry validation, and sanitized dispatch
+    message constants required by the helper moved into a private dispatch
+    helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - moved names preserve object identity between the worker module and helper
+    module
+  - `main`, default handler marker/table, default handler factories,
+    `_dispatch_runtime_probe_local_python_worker_payload`, family
+    request/observation/replay dataclasses, materializers, observers, captures,
+    family validators, source importers, target resolvers, response protocol,
+    stdout serialization, exit codes, subprocess module name,
+    `runtime_probe_execution.py`, package-root exports, tests, docs, eval
+    fixtures, and Smoke E expectations were not moved or edited
+- Control validation:
+  - `git diff --check`: clean
+  - protected-surface diff guard for runtime execution, package-root exports,
+    tests, eval tasks, fixtures, run specs, README, PUBLIC_CLAIMS, EVAL, and
+    ARCHITECTURE: empty
+  - `ruff check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_dispatch.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `ruff format --check src/context_ir/runtime_probe_worker.py
+    src/context_ir/runtime_probe_worker_dispatch.py
+    tests/test_runtime_probe_worker.py`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - 14-name worker/helper identity check: passed
+  - initial full regression: held on Smoke E confidence-only drift after all
+    preservation locks passed
+  - Ryan authorized the narrow scalar correction
+  - corrected Smoke E focused Task 3 test: 1 passed, 7 deselected
+- Boundaries preserved: no test split, eval task, fixture, run-spec, generated
+  evidence, reviewer packet, README, EVAL, PUBLIC_CLAIMS, Task 4, composite
+  smoke, real-OSS experiment, demo, public/API/MCP/schema expansion, package
+  export, response-protocol, family-validator, or subprocess behavior changes.
+- Release state: workspace-only accepted after one deterministic Smoke E
+  confidence-only correction. Corrected full regression, commit-gating, local
+  commit, and push remain pending.
+- Recommended next control action: rerun corrected full regression over the
+  exact five-file workspace unit, then commit-gating if clean.
+- Acceptance status: accepted after one Smoke E confidence-only correction.
+
 ## 2026-06-07 -- Runtime Worker Dispatch Boundary Spike Accepted
 
 - Accepted the read-only runtime-worker refactor boundary spike.

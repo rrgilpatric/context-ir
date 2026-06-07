@@ -115,7 +115,9 @@ Current active program:
     `28ff5a7 Extract worker response protocol`. A follow-up read-only design
     spike found dispatch/handler-entry extraction to be the next safe
     runtime-worker boundary; family-by-family request/dataclass/validator
-    modules remain deferred until the dispatch seam is split out.
+    modules remain deferred until the dispatch seam is split out. The
+    dispatch/handler-entry extraction is workspace-only accepted after focused
+    validation and awaits release gates.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -157,35 +159,39 @@ Current active program:
       `901f176 Extract metaclass worker contracts`
   16. runtime worker response-protocol extraction is pushed in commit
       `28ff5a7 Extract worker response protocol`
-- current workspace release unit: none. `main` is clean after the
-  response-protocol extraction push.
-- current release state: response-protocol extraction pushed to `origin/main`;
-  dispatch-boundary design spike accepted as routing evidence.
-  Release files:
+  17. runtime worker dispatch/handler-entry extraction is workspace-only
+      accepted after focused validation and one deterministic Smoke E
+      confidence-only correction; release-unit audit, full regression,
+      commit-gating, local commit, and push remain pending
+- current workspace release unit: runtime worker dispatch/handler-entry
+  extraction plus continuity:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
-  - `src/context_ir/runtime_probe_worker_response_protocol.py`
+  - `src/context_ir/runtime_probe_worker_dispatch.py`
   - `tests/test_eval_signal_smoke_e.py`
-- response-protocol release summary: the slice moved the worker stdout protocol revision
-  constants, response dataclasses, handler response alias, success serializer,
-  replay-field validators, durable-artifact validation,
-  observed-replay-input validation, replay-field JSON helpers, and control
-  character helper into a private helper module and imported them back into
-  `runtime_probe_worker.py` under the same names. `main`, dispatch, handler
-  registry, handler entries, request parsing, family request/observation/replay
-  dataclasses, observers, captures, materializers, family validators, subprocess
-  module path, exit codes, stderr strings, package-root exports, eval assets,
-  public claims, and reviewer evidence were not moved or edited. Focused
-  validation passed: `ruff check`, `ruff format --check`, `mypy --strict
-  src/`, `pytest tests/test_runtime_probe_worker.py -q` with 716 passed,
-  focused response/package-root tests with 9 passed, and the 15-name
-  worker/helper identity check. Full regression then held on a Smoke E
-  confidence-only drift after the selection, document SHA, token, warning,
-  warning ID, probe-count, and warning-call locks held. Ryan authorized the
-  narrow correction; the focused Smoke E Task 3 check passed, and corrected
-  full regression passed with `2201` tests. Commit-gating passed; the release
-  was staged, committed, and pushed to `origin/main` as `28ff5a7`.
+- current release state: dispatch/handler-entry extraction is workspace-only
+  accepted after clean control review and focused validation. It moved the
+  worker handler key alias, worker callable alias, handler entry dataclass,
+  dispatching worker, duplicate/dispatch errors, handler indexing/key helpers,
+  payload key helper, handler-entry validation, and sanitized dispatch message
+  constants required by the helper into a private dispatch helper and imported
+  them back into `runtime_probe_worker.py` under the same names. `main`, default
+  handler marker/table, default handler factories,
+  `_dispatch_runtime_probe_local_python_worker_payload`, family
+  request/observation/replay dataclasses, materializers, observers, captures,
+  family validators, source importers, target resolvers, response protocol,
+  stdout serialization, exit codes, subprocess module name,
+  `runtime_probe_execution.py`, package-root exports, docs, eval fixtures, and
+  Smoke E expectations were not moved or edited. Focused validation passed:
+  `ruff check`, `ruff format --check`, `mypy --strict src/`,
+  `pytest tests/test_runtime_probe_worker.py -q` with 716 passed, and the
+  14-name worker/helper identity check. Initial full regression held on a
+  Smoke E confidence-only drift after the selection, document SHA, token,
+  warning, warning ID, probe-count, and warning-call locks held. Ryan
+  authorized the narrow scalar correction, and the focused Smoke E Task 3 check
+  passed. This unit is not corrected-full-regression-cleared,
+  commit-gating-cleared, staged, committed, or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -196,21 +202,10 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: implement one bounded private dispatch/handler-entry
-  extraction for `runtime_probe_worker.py`. Move only the worker handler key,
-  handler callable alias, handler entry, dispatching worker, duplicate/dispatch
-  errors, handler indexing/key helpers, handler-entry validation, and the
-  sanitized dispatch message constants required by that helper into a new
-  private helper module, then import them back under the same names. Keep
-  `main`, default handler marker/table, default handler factories,
-  `_dispatch_runtime_probe_local_python_worker_payload`, family
-  request/observation/replay dataclasses, materializers, observers, captures,
-  family validators, source importers, target resolvers, response protocol,
-  stdout serialization, exit codes, subprocess module name,
-  `runtime_probe_execution.py`, package-root exports, docs, eval fixtures, and
-  Smoke E expectations out of scope. Do not start the real-OSS experiment or
-  broader product evidence work until the accepted adversarial repair findings
-  are closed or Ryan explicitly redirects.
+- next control action: rerun the corrected full regression gate over the
+  current five-file workspace unit, then commit-gating if clean. Do not start
+  the next runtime-worker extraction, real-OSS experiment, or broader product
+  evidence work until this release unit is pushed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 
