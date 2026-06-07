@@ -75,7 +75,7 @@ Current active program:
     floors, MCP in-band error semantics, AGENTS/WoW evidence discipline, sync
     commit optics, recompile no-op coverage, low-risk docs/evidence boundary
     repairs, duplicate `site_id` parser collision repair, and the conservative
-    runtime worker extractions through the shared metadata/replay protocol
+    runtime worker extractions through the replay-target protocol
   - low-risk docs/evidence tranche: pushed in commit
     `c9a5fef Clarify internal evidence boundaries`; covers baseline
     uncertainty ceiling/readability, replay-vs-default-local evidence
@@ -124,9 +124,13 @@ Current active program:
     corrected full regression, commit-gating, local commit, and
     Ryan-authorized push. A follow-up read-only decomposition spike selected
     replay-target path helper extraction as the next safe shared seam, and that
-    extraction is workspace-only accepted after focused control review,
-    read-only release-unit audit, one deterministic Smoke E confidence-only
-    full-regression correction, and corrected full regression.
+    extraction is pushed in commit
+    `12fcf49 Extract worker replay target protocol` after focused control
+    review, read-only release-unit audit, one deterministic Smoke E
+    confidence-only full-regression correction, corrected full regression,
+    commit-gating, local commit, and Ryan-authorized push. The next
+    runtime-worker complexity boundary is not implementation-authorized yet and
+    must be selected by a read-only decomposition spike.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -177,20 +181,23 @@ Current active program:
       validation, one process correction, independent audit, one deterministic
       Smoke E confidence-only correction, corrected full regression,
       commit-gating, local commit, and Ryan-authorized push
-  19. runtime worker replay-target path helper extraction is workspace-only
-      accepted after focused validation, control review, release-unit audit,
-      one deterministic Smoke E confidence-only full-regression correction,
-      corrected full regression, and commit-gating; local commit and push
-      remain pending
-- current workspace release unit: runtime worker replay-target protocol
-  extraction plus continuity:
+  19. runtime worker replay-target path helper extraction is pushed in commit
+      `12fcf49 Extract worker replay target protocol` after focused validation,
+      control review, release-unit audit, one deterministic Smoke E
+      confidence-only full-regression correction, corrected full regression,
+      commit-gating, local commit, and Ryan-authorized push
+- current workspace release unit: none for implementation; the replay-target
+  protocol extraction is pushed and closed in commit
+  `12fcf49 Extract worker replay target protocol`
+- latest pushed release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_replay_target_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
 - current release state: replay-target path helper extraction is
-  workspace-only accepted. It moved
+  pushed to `origin/main` in commit
+  `12fcf49 Extract worker replay target protocol`. It moved
   `_runtime_probe_dynamic_import_source_module_name_from_path`,
   `_runtime_probe_dynamic_import_replay_target_attribute_path`, and
   `_validate_runtime_probe_dynamic_import_dotted_identifier_segments` into a
@@ -210,12 +217,15 @@ Current active program:
   count, document hash, selected units/order, warnings, warning IDs, probe
   count, and warning-call-count locks held; Ryan authorized the narrow scalar
   correction to `FULL_REPO_TASK3_CONFIDENCE = 0.001614352050073505`.
-  Corrected focused Smoke E and corrected full regression passed. Commit-gating
-  passed over the five-file workspace unit: status matched the expected files,
-  no staged files were present, `git diff --check` was clean, protected-surface
-  diff guard was empty, the only untracked file was the new replay-target
-  helper, and the three-name worker/helper identity plus helper import-cycle
-  probe passed.
+  The deterministic Smoke E correction changed only
+  `FULL_REPO_TASK3_CONFIDENCE` after those preservation locks held. Corrected
+  focused Smoke E passed, and corrected full regression passed with `2201`
+  tests. Commit-gating passed over the five-file workspace unit: status matched
+  the expected files, no staged files were present, `git diff --check` was
+  clean, protected-surface diff guard was empty, the only untracked file was
+  the new replay-target helper, and the three-name worker/helper identity plus
+  helper import-cycle probe passed. Local commit and Ryan-authorized push are
+  complete.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -226,12 +236,30 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: create a local commit and push only after explicit Ryan
-  authorization. Do not start the next runtime-worker implementation, real-OSS
-  experiment, or broader product evidence work until this release unit is
-  pushed or Ryan explicitly redirects.
+- next control action: issue a read-only decomposition spike over the
+  post-replay-target runtime-worker state to choose the next safe complexity
+  boundary. Do not start the next runtime-worker implementation, real-OSS
+  experiment, or broader product evidence work until that spike is accepted or
+  Ryan explicitly redirects.
 
 Latest release unit pushed:
+
+- runtime worker replay-target protocol extraction
+- pushed release commit:
+  `12fcf49 Extract worker replay target protocol`
+- release state: accepted after one deterministic Smoke E confidence-only
+  correction that changed only `FULL_REPO_TASK3_CONFIDENCE` after preservation
+  locks held; read-only release-unit audit passed; corrected full regression
+  passed with `2201` tests; commit-gating passed; staged, locally committed,
+  and pushed to `origin/main` after Ryan authorized proceeding
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_replay_target_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - runtime worker shared metadata/replay protocol extraction
 - pushed release commit:
@@ -247,7 +275,7 @@ Latest release unit pushed:
   - `src/context_ir/runtime_probe_worker_metadata_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
 
-Previous release unit pushed:
+Prior release unit pushed:
 
 - runtime worker dispatch/handler-entry extraction
 - pushed release commit:

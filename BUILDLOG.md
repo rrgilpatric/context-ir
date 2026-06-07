@@ -2,13 +2,16 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
-## 2026-06-07 -- Runtime Worker Replay Target Protocol Extraction Accepted
+## 2026-06-07 -- Runtime Worker Replay Target Protocol Extraction Pushed
 
-- Accepted the replay-target path helper extraction as workspace-only after
+- Pushed the replay-target path helper extraction to `origin/main`.
+- Pushed release commit:
+  `12fcf49 Extract worker replay target protocol`
+- Accepted the replay-target path helper extraction after
   focused control review, read-only release-unit audit, one deterministic Smoke
   E confidence-only full-regression correction, and corrected full regression.
 - Findings: none.
-- Workspace release files:
+- Release files:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
@@ -51,16 +54,20 @@ Most recent supersession entries override older architectural decisions when the
     probe count, and warning-call-count locks held
   - Ryan authorized the narrow scalar correction to
     `FULL_REPO_TASK3_CONFIDENCE = 0.001614352050073505`
+  - Smoke E changed only `FULL_REPO_TASK3_CONFIDENCE` after those preservation
+    locks held
   - corrected focused Smoke E Task 3 check: 1 passed, 7 deselected
   - corrected full regression: 2201 passed
   - commit-gating: expected five-file workspace unit, no staged files,
     protected-surface diff guard empty, three-name worker/helper identity check
     passed, and helper import-cycle probe passed
-- Release state: workspace-only accepted after one deterministic Smoke E
-  confidence-only correction. Corrected full regression and commit-gating are
-  cleared; local commit and push remain pending.
-- Recommended next control action: create a local commit and push only after
-  explicit Ryan authorization.
+- Release state: accepted after one deterministic Smoke E confidence-only
+  correction. Corrected full regression, commit-gating, local commit, and
+  Ryan-authorized push are complete.
+- Recommended next control action: run a read-only runtime-worker
+  decomposition spike over the post-replay-target state to choose the next safe
+  complexity boundary. Do not start implementation until that spike is
+  accepted.
 - Acceptance status: accepted after one Smoke E confidence-only correction.
 
 ## 2026-06-07 -- Runtime Worker Metadata Protocol Extraction Pushed
