@@ -128,9 +128,14 @@ Current active program:
     `12fcf49 Extract worker replay target protocol` after focused control
     review, read-only release-unit audit, one deterministic Smoke E
     confidence-only full-regression correction, corrected full regression,
-    commit-gating, local commit, and Ryan-authorized push. The next
-    runtime-worker complexity boundary is not implementation-authorized yet and
-    must be selected by a read-only decomposition spike.
+    commit-gating, local commit, and Ryan-authorized push. A follow-up
+    read-only decomposition spike selected durable artifact reference helper
+    extraction as the next safe shared seam, and that extraction is
+    workspace-only accepted after read-only release-unit audit, one
+    deterministic Smoke E confidence-only correction, corrected full
+    regression, and commit-gating over the three-file implementation unit. The
+    combined release unit now includes continuity and still needs docs-aware
+    release review before commit/push.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -186,46 +191,44 @@ Current active program:
       control review, release-unit audit, one deterministic Smoke E
       confidence-only full-regression correction, corrected full regression,
       commit-gating, local commit, and Ryan-authorized push
-- current workspace release unit: none for implementation; the replay-target
-  protocol extraction is pushed and closed in commit
-  `12fcf49 Extract worker replay target protocol`
-- latest pushed release files:
+  20. runtime worker durable artifact reference helper extraction is
+      workspace-only accepted after focused validation, read-only release-unit
+      audit, one deterministic Smoke E confidence-only correction, corrected
+      full regression, and commit-gating over the three-file implementation
+      unit; docs-aware review, local commit, and push remain pending for the
+      combined release unit
+- current workspace release unit: runtime worker durable artifact protocol
+  extraction plus continuity:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
-  - `src/context_ir/runtime_probe_worker_replay_target_protocol.py`
+  - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: replay-target path helper extraction is
-  pushed to `origin/main` in commit
-  `12fcf49 Extract worker replay target protocol`. It moved
-  `_runtime_probe_dynamic_import_source_module_name_from_path`,
-  `_runtime_probe_dynamic_import_replay_target_attribute_path`, and
-  `_validate_runtime_probe_dynamic_import_dotted_identifier_segments` into a
-  private replay-target helper and imported them back into
-  `runtime_probe_worker.py` under the same private names. `main`, dispatch,
-  handler registry, response protocol, source-module import helpers, target
-  callable resolution helpers, family dataclasses, materializers, observers,
-  captures, adapters, family validators, exact replay logic,
-  `runtime_probe_execution.py`, package-root exports, tests, eval fixtures,
-  public docs, and public/API surfaces were not moved or reopened. Focused
-  validation passed: `ruff check`, `ruff format --check`, `mypy --strict src/`,
-  `pytest tests/test_runtime_probe_worker.py -q` with 716 passed, `git diff
-  --check`, protected-surface diff guard, and the three-name
-  worker/helper identity plus helper import-cycle probe. Read-only
-  release-unit audit passed on the extraction unit. Full regression initially
-  held on a deterministic Smoke E Task 3 confidence-only drift after token
-  count, document hash, selected units/order, warnings, warning IDs, probe
-  count, and warning-call-count locks held; Ryan authorized the narrow scalar
-  correction to `FULL_REPO_TASK3_CONFIDENCE = 0.001614352050073505`.
-  The deterministic Smoke E correction changed only
-  `FULL_REPO_TASK3_CONFIDENCE` after those preservation locks held. Corrected
-  focused Smoke E passed, and corrected full regression passed with `2201`
-  tests. Commit-gating passed over the five-file workspace unit: status matched
-  the expected files, no staged files were present, `git diff --check` was
-  clean, protected-surface diff guard was empty, the only untracked file was
-  the new replay-target helper, and the three-name worker/helper identity plus
-  helper import-cycle probe passed. Local commit and Ryan-authorized push are
-  complete.
+- current release state: durable artifact reference helper extraction is
+  workspace-only accepted. It moved
+  `_runtime_probe_dir_listing_artifact_reference`,
+  `_runtime_probe_setattr_value_artifact_reference`,
+  `_runtime_probe_exec_source_artifact_reference`,
+  `_runtime_probe_eval_source_artifact_reference`, and
+  `_runtime_probe_metaclass_selection_artifact_reference` into a private
+  artifact helper module and imported them back into `runtime_probe_worker.py`
+  under the same private names, while preserving the existing longer
+  worker-local aliases for dir listing and setattr value call sites. Artifact
+  URI shapes are unchanged for dir-listing, setattr-value, exec-source,
+  eval-source, and metaclass-selection references. `main`, dispatch, handler
+  registry, response protocol, dataclasses, validators, handlers, observers,
+  captures, exact replay logic, `runtime_probe_execution.py`, package-root
+  exports, tests, eval fixtures, public docs, and public/API surfaces were not
+  moved or reopened. Read-only release-unit audit passed. Full regression
+  initially held on a deterministic Smoke E Task 3 confidence-only drift after
+  token count, document hash, warning tuple, warning IDs, selected unit order,
+  selected details, probe count, and warning-call-count locks held; Ryan
+  authorized the narrow scalar correction to
+  `FULL_REPO_TASK3_CONFIDENCE = 0.001614350829892547`. Corrected full
+  regression passed with `2201` tests, and commit-gating passed over the
+  three-file implementation/test unit. This continuity sync adds `PLAN.md` and
+  `BUILDLOG.md`; the combined five-file release unit is not staged, committed,
+  or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -236,11 +239,11 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: issue a read-only decomposition spike over the
-  post-replay-target runtime-worker state to choose the next safe complexity
-  boundary. Do not start the next runtime-worker implementation, real-OSS
-  experiment, or broader product evidence work until that spike is accepted or
-  Ryan explicitly redirects.
+- next control action: run a docs-aware read-only review of the combined
+  five-file durable artifact protocol release unit, then commit and push only
+  after explicit Ryan authorization. Do not start the next runtime-worker
+  implementation, real-OSS experiment, or broader product evidence work until
+  this release unit is pushed or Ryan explicitly redirects.
 
 Latest release unit pushed:
 

@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from types import ModuleType
 from typing import NoReturn, TextIO, TypeAlias, cast
 
+from context_ir import runtime_probe_worker_artifact_protocol as _artifact_protocol
 from context_ir import runtime_probe_worker_dispatch as _worker_dispatch
 from context_ir import (
     runtime_probe_worker_dynamic_import_contracts as _dynamic_import_contracts,
@@ -162,6 +163,27 @@ _runtime_probe_dynamic_import_replay_target_attribute_path = (
 )
 _validate_runtime_probe_dynamic_import_dotted_identifier_segments = (
     _replay_target._validate_runtime_probe_dynamic_import_dotted_identifier_segments
+)
+_runtime_probe_dir_listing_artifact_reference = (
+    _artifact_protocol._runtime_probe_dir_listing_artifact_reference
+)
+_runtime_probe_setattr_value_artifact_reference = (
+    _artifact_protocol._runtime_probe_setattr_value_artifact_reference
+)
+_runtime_probe_exec_source_artifact_reference = (
+    _artifact_protocol._runtime_probe_exec_source_artifact_reference
+)
+_runtime_probe_eval_source_artifact_reference = (
+    _artifact_protocol._runtime_probe_eval_source_artifact_reference
+)
+_runtime_probe_metaclass_selection_artifact_reference = (
+    _artifact_protocol._runtime_probe_metaclass_selection_artifact_reference
+)
+_runtime_probe_reflective_dir_listing_artifact_reference = (
+    _runtime_probe_dir_listing_artifact_reference
+)
+_runtime_probe_runtime_mutation_setattr_value_artifact_reference = (
+    _runtime_probe_setattr_value_artifact_reference
 )
 _REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL = (
     _rbc._REFLECTIVE_BUILTIN_HASATTR_WORKER_FORM_LABEL
@@ -12589,12 +12611,6 @@ def _runtime_probe_worker_reflective_dir_reason_code_from_replay_field(
     return reason_code
 
 
-def _runtime_probe_reflective_dir_listing_artifact_reference(request_id: str) -> str:
-    """Return the deterministic durable reference for a captured dir listing."""
-    _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
-    return f"artifact://runtime-probe/dir-listing/{request_id}.json"
-
-
 def _validate_runtime_probe_runtime_mutation_globals_zero_worker_payload(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
 ) -> None:
@@ -14414,14 +14430,6 @@ def _runtime_probe_worker_runtime_mutation_setattr_reason_code_from_replay_field
             "runtime probe runtime mutation setattr worker reason_code is unsupported"
         )
     return reason_code
-
-
-def _runtime_probe_runtime_mutation_setattr_value_artifact_reference(
-    request_id: str,
-) -> str:
-    """Return the deterministic durable reference for the assigned value argument."""
-    _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
-    return f"artifact://runtime-probe/setattr-value/{request_id}.json"
 
 
 def _validate_runtime_probe_runtime_mutation_delattr_worker_payload(
@@ -17351,12 +17359,6 @@ def _runtime_probe_worker_exec_reason_code_from_replay_field(
     return reason_code
 
 
-def _runtime_probe_exec_source_artifact_reference(request_id: str) -> str:
-    """Return the deterministic durable artifact reference for exec source proof."""
-    _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
-    return f"artifact://runtime-probe/exec-source/{request_id}.json"
-
-
 def _validate_runtime_probe_eval_worker_payload(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
 ) -> None:
@@ -18041,12 +18043,6 @@ def _runtime_probe_worker_eval_reason_code_from_replay_field(
     return reason_code
 
 
-def _runtime_probe_eval_source_artifact_reference(request_id: str) -> str:
-    """Return the deterministic durable artifact reference for eval source proof."""
-    _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
-    return f"artifact://runtime-probe/eval-source/{request_id}.json"
-
-
 def _validate_runtime_probe_metaclass_keyword_worker_payload(
     payload: RuntimeProbeLocalPythonWorkerRequestPayload,
 ) -> None:
@@ -18709,12 +18705,6 @@ def _runtime_probe_worker_metaclass_reason_code_from_replay_field(
             "runtime probe metaclass behavior worker reason_code is unsupported"
         )
     return reason_code
-
-
-def _runtime_probe_metaclass_selection_artifact_reference(request_id: str) -> str:
-    """Return the deterministic durable artifact reference for metaclass proof."""
-    _validate_runtime_probe_worker_metadata_text(request_id, field_name="request_id")
-    return f"artifact://runtime-probe/metaclass-selection/{request_id}.json"
 
 
 def _runtime_probe_metaclass_keyword_target_class_name(

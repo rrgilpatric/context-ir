@@ -2,6 +2,67 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Runtime Worker Artifact Protocol Extraction Accepted
+
+- Accepted the durable artifact reference helper extraction as workspace-only
+  after focused control review, read-only release-unit audit, one deterministic
+  Smoke E confidence-only correction, corrected full regression, and
+  commit-gating over the three-file implementation/test unit.
+- Findings: none.
+- Workspace release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+  - `src/context_ir/runtime_probe_worker.py`
+  - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and compatibility:
+  - `_runtime_probe_dir_listing_artifact_reference`,
+    `_runtime_probe_setattr_value_artifact_reference`,
+    `_runtime_probe_exec_source_artifact_reference`,
+    `_runtime_probe_eval_source_artifact_reference`, and
+    `_runtime_probe_metaclass_selection_artifact_reference` moved into a
+    private durable artifact helper module
+  - `runtime_probe_worker.py` imports the moved objects back under the same
+    private names
+  - existing longer worker-local aliases for dir listing and setattr value
+    call sites are preserved
+  - artifact URI shapes are unchanged for dir-listing, setattr-value,
+    exec-source, eval-source, and metaclass-selection references
+  - `main`, dispatch, handler registry, response protocol, dataclasses,
+    validators, handlers, observers, captures, exact replay logic,
+    `runtime_probe_execution.py`, package-root exports, tests, eval fixtures,
+    public docs, public/API surfaces, and test monkeypatch targets were not
+    moved or reopened
+- Validation:
+  - focused `ruff check`: passed
+  - focused `ruff format --check`: passed
+  - `mypy --strict src/`: passed
+  - `pytest tests/test_runtime_probe_worker.py -q`: 716 passed
+  - helper import-cycle probe: helper import did not load
+    `context_ir.runtime_probe_worker`
+  - helper identity probe: passed for the five helper names plus the two legacy
+    aliases
+  - URI-shape probe: passed for all five artifact references
+  - read-only release-unit audit over the extraction unit: passed
+  - initial full regression: held on Smoke E Task 3 confidence-only drift after
+    token count, document hash, warning tuple, warning IDs, selected unit
+    ordering, selected details, probe count, and warning-call-count locks held
+  - Ryan authorized the narrow scalar correction to
+    `FULL_REPO_TASK3_CONFIDENCE = 0.001614350829892547`
+  - corrected full regression: 2201 passed
+  - commit-gating over the three-file implementation/test unit: expected dirty
+    files only, no staged files, protected-surface diff guard empty,
+    import-cycle probe passed, helper identity probe passed, and URI-shape
+    probe passed
+- Release state: workspace-only accepted after one deterministic Smoke E
+  confidence-only correction. This continuity sync adds `PLAN.md` and
+  `BUILDLOG.md`; the combined five-file release unit is not staged, committed,
+  or pushed.
+- Recommended next control action: run a docs-aware read-only review over the
+  combined five-file release unit, then commit and push only after explicit
+  Ryan authorization.
+- Acceptance status: accepted after one Smoke E confidence-only correction.
+
 ## 2026-06-07 -- Runtime Worker Replay Target Protocol Extraction Pushed
 
 - Pushed the replay-target path helper extraction to `origin/main`.
