@@ -2,6 +2,24 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-07 -- Real OSS Thesis Pre-Registration Pushed
+
+- Pushed the real-OSS thesis pre-registration artifact to `origin/main`.
+- Pushed release commit:
+  `9644b13 Add real OSS thesis pre-registration`
+- Release files:
+  - `evals/real_oss_thesis/PRE_REGISTRATION.md`
+- Evidence boundary: `evals/real_oss_thesis/PRE_REGISTRATION.md` is
+  pre-result internal thesis evidence. It is not results and is not a public
+  claim.
+- Next gate: Ryan must explicitly accept or revise the frozen repo list and
+  kill/reevaluate criterion before implementation.
+- Recommended next control action: route to Ryan's gate decision, not
+  implementation.
+- Current continuity sync: update only `PLAN.md` and `BUILDLOG.md`; do not
+  stage, commit, or push.
+- Acceptance status: held for Ryan's gate decision before implementation.
+
 ## 2026-06-07 -- Runtime Worker Artifact Protocol Extraction Pushed
 
 - Pushed the durable artifact reference helper extraction to `origin/main`.

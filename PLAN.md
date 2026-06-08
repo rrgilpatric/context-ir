@@ -74,8 +74,9 @@ Current active program:
     invalid `repo_root`, compiler budget utilization, project-specific scorer
     floors, MCP in-band error semantics, AGENTS/WoW evidence discipline, sync
     commit optics, recompile no-op coverage, low-risk docs/evidence boundary
-    repairs, duplicate `site_id` parser collision repair, and the conservative
-    runtime worker extractions through the replay-target protocol
+    repairs, duplicate `site_id` parser collision repair, and the
+    conservative runtime worker extractions through the durable artifact
+    protocol
   - low-risk docs/evidence tranche: pushed in commit
     `c9a5fef Clarify internal evidence boundaries`; covers baseline
     uncertainty ceiling/readability, replay-vs-default-local evidence
@@ -137,6 +138,12 @@ Current active program:
     and Ryan-authorized push. Smoke E changed only
     `FULL_REPO_TASK3_CONFIDENCE` to `0.001614350829892547` after preservation
     locks held.
+  - real-OSS thesis pre-registration: pushed in commit
+    `9644b13 Add real OSS thesis pre-registration`. The artifact
+    `evals/real_oss_thesis/PRE_REGISTRATION.md` is pre-result internal thesis
+    evidence only; it is not results and is not a public claim. The next gate
+    is Ryan's explicit decision to accept or revise the frozen repo list and
+    kill/reevaluate criterion before any implementation starts.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -197,42 +204,26 @@ Current active program:
       validation, read-only release-unit audit, one deterministic Smoke E
       confidence-only correction, corrected full regression with `2201` tests,
       commit-gating, local commit, and Ryan-authorized push
+  21. real-OSS thesis pre-registration is pushed in commit
+      `9644b13 Add real OSS thesis pre-registration`
 - current workspace unit: post-push continuity sync only:
   - `PLAN.md`
   - `BUILDLOG.md`
-- pushed durable artifact protocol release unit:
+- pushed real-OSS thesis pre-registration release unit:
+  - `evals/real_oss_thesis/PRE_REGISTRATION.md`
+- previous durable artifact protocol release unit:
   - `PLAN.md`
   - `BUILDLOG.md`
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: durable artifact reference helper extraction is
-  pushed to `origin/main` in commit
-  `520776d Extract worker artifact protocol`. It moved
-  `_runtime_probe_dir_listing_artifact_reference`,
-  `_runtime_probe_setattr_value_artifact_reference`,
-  `_runtime_probe_exec_source_artifact_reference`,
-  `_runtime_probe_eval_source_artifact_reference`, and
-  `_runtime_probe_metaclass_selection_artifact_reference` into a private
-  artifact helper module and imported them back into `runtime_probe_worker.py`
-  under the same private names, while preserving the existing longer
-  worker-local aliases for dir listing and setattr value call sites. Artifact
-  URI shapes are unchanged for dir-listing, setattr-value, exec-source,
-  eval-source, and metaclass-selection references. `main`, dispatch, handler
-  registry, response protocol, dataclasses, validators, handlers, observers,
-  captures, exact replay logic, `runtime_probe_execution.py`, package-root
-  exports, tests, eval fixtures, public docs, and public/API surfaces were not
-  moved or reopened. Read-only release-unit audit passed. Full regression
-  initially held on a deterministic Smoke E Task 3 confidence-only drift after
-  token count, document hash, warning tuple, warning IDs, selected unit order,
-  selected details, probe count, and warning-call-count locks held; Ryan
-  authorized the narrow scalar correction to
-  `FULL_REPO_TASK3_CONFIDENCE = 0.001614350829892547`. Corrected full
-  regression passed with `2201` tests. Smoke E changed only
-  `FULL_REPO_TASK3_CONFIDENCE` to `0.001614350829892547` after preservation
-  locks held. Commit-gating passed, local commit is complete, and the commit is
-  pushed. This continuity sync changes only `PLAN.md` and `BUILDLOG.md` and is
-  not staged, committed, or pushed.
+- current release state: real-OSS thesis pre-registration is pushed to
+  `origin/main` in commit
+  `9644b13 Add real OSS thesis pre-registration`. The pushed artifact
+  `evals/real_oss_thesis/PRE_REGISTRATION.md` is pre-result internal thesis
+  evidence only; it is not results and is not a public claim. This continuity
+  sync changes only `PLAN.md` and `BUILDLOG.md` and is not staged, committed,
+  or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -243,13 +234,22 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: do not route directly to implementation. Either run a
-  read-only decomposition spike over the post-`520776d` runtime-worker state to
-  choose the next complexity boundary, or make an explicit control decision on
-  whether to pause runtime-worker cleanup and move toward pre-registered
-  real-OSS experiment design.
+- next control action: route to Ryan's explicit decision on the real-OSS thesis
+  pre-registration gate. Ryan must accept or revise the frozen repo list and
+  kill/reevaluate criterion before implementation. Do not route to
+  implementation until that decision is recorded.
 
 Latest release unit pushed:
+
+- real-OSS thesis pre-registration
+- pushed release commit:
+  `9644b13 Add real OSS thesis pre-registration`
+- release state: pushed to `origin/main`; artifact is pre-result internal
+  thesis evidence only, not results or public claims
+- release files:
+  - `evals/real_oss_thesis/PRE_REGISTRATION.md`
+
+Previous release unit pushed:
 
 - runtime worker durable artifact protocol extraction
 - pushed release commit:
