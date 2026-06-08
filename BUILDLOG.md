@@ -2,6 +2,52 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-08 -- Real OSS Scorer Gate Correction Pushed
+
+- Pushed the residual project-shaped scorer-floor removal and real-OSS
+  pre-registration hardening to `origin/main`.
+- Pushed release commit:
+  `4866225 Remove project-shaped scorer floors`
+- Release files:
+  - `evals/real_oss_thesis/PRE_REGISTRATION.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and evidence boundary:
+  - removed the remaining semantic-renderer, package-root public API, and eval
+    ledger/summary direct-edit scorer floors before any real-OSS provider
+    outputs
+  - added scorer tests that lock the absence of those floors
+  - updated the compiler guard so it no longer requires project-specific
+    renderer or package-root anchors
+  - replaced subjective PR-size filtering in
+    `evals/real_oss_thesis/PRE_REGISTRATION.md` with mechanical thresholds
+  - froze the embedding baseline to Voyage `voyage-code-3`
+  - preserved the boundary that the pre-registration is pre-result internal
+    thesis evidence only; it is not results and is not a public claim
+- Validation:
+  - release-unit audit: passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed under the repo venv
+  - focused scorer/optimizer/compiler/smoke guard: 114 passed
+  - full regression: 2203 passed
+  - commit-gating: passed
+  - Smoke E changed only `FULL_REPO_TASK3_CONFIDENCE` to
+    `0.001614353475085192` after token count, document hash, warnings,
+    warning IDs, selected unit ordering, selected details, probe count, and
+    warning-call-count locks held
+- Known follow-up: Claude's tiny-budget compiler valley remains a non-gating
+  follow-up; it does not block the real-OSS retrieval experiment.
+- Next gate: Ryan must explicitly accept or revise the revised real-OSS
+  pre-registration decisions before implementation, including repo list,
+  kill/reevaluate criterion, mechanical PR-size thresholds, frozen embedding
+  baseline, and any `voyage-code-3` network/API-cost credential approval.
+- Current continuity sync: update only `PLAN.md` and `BUILDLOG.md`; do not
+  stage, commit, or push.
+- Acceptance status: accepted after one Smoke E confidence-only correction.
+
 ## 2026-06-07 -- Real OSS Thesis Pre-Registration Pushed
 
 - Pushed the real-OSS thesis pre-registration artifact to `origin/main`.

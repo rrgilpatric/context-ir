@@ -72,8 +72,9 @@ Current active program:
 - adversarial repair ledger:
   - completed/pushed repairs: `src/` layout dependency/test coverage,
     invalid `repo_root`, compiler budget utilization, project-specific scorer
-    floors, MCP in-band error semantics, AGENTS/WoW evidence discipline, sync
-    commit optics, recompile no-op coverage, low-risk docs/evidence boundary
+    floors including the residual pre-experiment scorer-floor gate, MCP
+    in-band error semantics, AGENTS/WoW evidence discipline, sync commit
+    optics, recompile no-op coverage, low-risk docs/evidence boundary
     repairs, duplicate `site_id` parser collision repair, and the
     conservative runtime worker extractions through the durable artifact
     protocol
@@ -139,11 +140,17 @@ Current active program:
     `FULL_REPO_TASK3_CONFIDENCE` to `0.001614350829892547` after preservation
     locks held.
   - real-OSS thesis pre-registration: pushed in commit
-    `9644b13 Add real OSS thesis pre-registration`. The artifact
+    `9644b13 Add real OSS thesis pre-registration`; hardened in commit
+    `4866225 Remove project-shaped scorer floors`. The artifact
     `evals/real_oss_thesis/PRE_REGISTRATION.md` is pre-result internal thesis
-    evidence only; it is not results and is not a public claim. The next gate
-    is Ryan's explicit decision to accept or revise the frozen repo list and
-    kill/reevaluate criterion before any implementation starts.
+    evidence only; it is not results and is not a public claim. The latest
+    hardening removes the remaining project-shaped scorer floors before any
+    provider outputs, replaces subjective PR-size filtering with mechanical
+    thresholds, and freezes the embedding baseline to Voyage `voyage-code-3`.
+    The next gate is Ryan's explicit decision to accept or revise the revised
+    pre-registration before any implementation starts, including repo list,
+    kill/reevaluate criterion, mechanical size thresholds, embedding model, and
+    any network/API-cost credential approval.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -206,10 +213,23 @@ Current active program:
       commit-gating, local commit, and Ryan-authorized push
   21. real-OSS thesis pre-registration is pushed in commit
       `9644b13 Add real OSS thesis pre-registration`
-- current workspace unit: post-push continuity sync only:
+  22. residual project-shaped scorer-floor removal and real-OSS
+      pre-registration hardening are pushed in commit
+      `4866225 Remove project-shaped scorer floors` after release-unit audit,
+      focused scorer/optimizer/compiler/smoke guard with `114` tests, full
+      regression with `2203` tests, one deterministic Smoke E confidence-only
+      correction to `0.001614353475085192`, commit-gating, local commit, and
+      Ryan-authorized push
+- current workspace unit: post-`4866225` continuity sync only:
   - `PLAN.md`
   - `BUILDLOG.md`
-- pushed real-OSS thesis pre-registration release unit:
+- pushed scorer/pre-registration hardening release unit:
+  - `evals/real_oss_thesis/PRE_REGISTRATION.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- previous real-OSS thesis pre-registration release unit:
   - `evals/real_oss_thesis/PRE_REGISTRATION.md`
 - previous durable artifact protocol release unit:
   - `PLAN.md`
@@ -217,13 +237,13 @@ Current active program:
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: real-OSS thesis pre-registration is pushed to
-  `origin/main` in commit
-  `9644b13 Add real OSS thesis pre-registration`. The pushed artifact
-  `evals/real_oss_thesis/PRE_REGISTRATION.md` is pre-result internal thesis
-  evidence only; it is not results and is not a public claim. This continuity
-  sync changes only `PLAN.md` and `BUILDLOG.md` and is not staged, committed,
-  or pushed.
+- current release state: residual project-shaped scorer-floor removal and
+  real-OSS pre-registration hardening are pushed to `origin/main` in commit
+  `4866225 Remove project-shaped scorer floors`. The pushed artifact
+  `evals/real_oss_thesis/PRE_REGISTRATION.md` remains pre-result internal
+  thesis evidence only; it is not results and is not a public claim. This
+  continuity sync changes only `PLAN.md` and `BUILDLOG.md` and is not staged,
+  committed, or pushed.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -234,12 +254,33 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: route to Ryan's explicit decision on the real-OSS thesis
-  pre-registration gate. Ryan must accept or revise the frozen repo list and
-  kill/reevaluate criterion before implementation. Do not route to
-  implementation until that decision is recorded.
+- next control action: route to Ryan's explicit decision on the revised
+  real-OSS thesis pre-registration gate. Ryan must accept or revise the frozen
+  repo list, kill/reevaluate criterion, mechanical PR-size thresholds, and
+  frozen embedding baseline before implementation. Any `voyage-code-3`
+  network/API-cost credential use also requires explicit Ryan approval. Do not
+  route to implementation until those decisions are recorded.
 
 Latest release unit pushed:
+
+- residual project-shaped scorer-floor removal and real-OSS pre-registration
+  hardening
+- pushed release commit:
+  `4866225 Remove project-shaped scorer floors`
+- release state: pushed to `origin/main`; release-unit audit, focused
+  scorer/optimizer/compiler/smoke guard with `114` tests, full regression with
+  `2203` tests, and commit-gating passed. Smoke E changed only
+  `FULL_REPO_TASK3_CONFIDENCE` to `0.001614353475085192` after preservation
+  locks held. The pre-registration artifact remains pre-result internal thesis
+  evidence only, not results or public claims.
+- release files:
+  - `evals/real_oss_thesis/PRE_REGISTRATION.md`
+  - `src/context_ir/semantic_scorer.py`
+  - `tests/test_semantic_scorer.py`
+  - `tests/test_semantic_compiler.py`
+  - `tests/test_eval_signal_smoke_e.py`
+
+Previous release unit pushed:
 
 - real-OSS thesis pre-registration
 - pushed release commit:
@@ -249,7 +290,7 @@ Latest release unit pushed:
 - release files:
   - `evals/real_oss_thesis/PRE_REGISTRATION.md`
 
-Previous release unit pushed:
+Prior release unit pushed:
 
 - runtime worker durable artifact protocol extraction
 - pushed release commit:
@@ -267,7 +308,7 @@ Previous release unit pushed:
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
 
-Previous release unit pushed:
+Prior release unit pushed:
 
 - runtime worker replay-target protocol extraction
 - pushed release commit:
