@@ -85,12 +85,9 @@ _BODY_SIGNAL_KINDS = frozenset(
     }
 )
 _EVAL_EVIDENCE_SUPPORT_WEIGHT = 0.85
-_EVAL_REPORT_ACCOUNTING_EDIT_FLOOR = 0.34
 _CONTRACT_NAME_EDIT_FLOOR = 0.38
 _LITERAL_IDENTIFIER_SURFACE_EDIT_FLOOR = 0.64
 _LITERAL_OUTPUT_SURFACE_EDIT_FLOOR = 0.34
-_PUBLIC_API_CONTRACT_EDIT_FLOOR = 0.36
-_SEMANTIC_RENDERER_EDIT_FLOOR = 0.41
 _RUNTIME_PROBE_ADMISSION_EDIT_FLOOR = 0.36
 _RUNTIME_PROBE_RESULT_CONTRACT_EDIT_FLOOR = 0.34
 _RUNTIME_PROBE_RESULT_TERMS = ("result", "results")
@@ -613,21 +610,6 @@ def _direct_scores_for_candidates(
                 candidate=candidate,
                 query_terms=query_terms,
             ),
-            _semantic_renderer_edit_score(
-                candidate=candidate,
-                query_terms=query_terms,
-                query_literal_output_surfaces=query_literal_output_surfaces,
-                lexical_cache=lexical_cache,
-            ),
-            _public_api_contract_edit_score(
-                candidate=candidate,
-                query_terms=query_terms,
-            ),
-            _eval_report_accounting_edit_score(
-                candidate=candidate,
-                query_terms=query_terms,
-                lexical_cache=lexical_cache,
-            ),
             _runtime_probe_result_flow_edit_score(
                 candidate=candidate,
                 query_terms=query_terms,
@@ -1124,24 +1106,6 @@ def _literal_output_surface_edit_score(
     return 0.0
 
 
-def _public_api_contract_edit_score(
-    *,
-    candidate: _CandidateProfile,
-    query_terms: tuple[str, ...],
-) -> float:
-    """Return a direct floor for package-root public API contract surfaces."""
-    if candidate.symbol_kind is not ResolvedSymbolKind.MODULE:
-        return 0.0
-    if not _mentions_public_api_contract(query_terms):
-        return 0.0
-    if not (
-        candidate.file_path.startswith("src/")
-        and candidate.file_path.endswith("/__init__.py")
-    ):
-        return 0.0
-    return _PUBLIC_API_CONTRACT_EDIT_FLOOR
-
-
 def _contract_name_edit_score(
     *,
     candidate: _CandidateProfile,
@@ -1161,48 +1125,6 @@ def _contract_name_edit_score(
     if all(term in query_term_set for term in primary_terms):
         return _CONTRACT_NAME_EDIT_FLOOR
     return 0.0
-
-
-def _semantic_renderer_edit_score(
-    *,
-    candidate: _CandidateProfile,
-    query_terms: tuple[str, ...],
-    query_literal_output_surfaces: frozenset[str],
-    lexical_cache: _LexicalCache,
-) -> float:
-    """Return a direct floor for semantic renderer surfaces named by prose."""
-    if candidate.symbol_kind not in {
-        ResolvedSymbolKind.FUNCTION,
-        ResolvedSymbolKind.ASYNC_FUNCTION,
-        ResolvedSymbolKind.METHOD,
-    }:
-        return 0.0
-    if not candidate.file_path.startswith("src/"):
-        return 0.0
-    if candidate.body_text is None or not query_literal_output_surfaces:
-        return 0.0
-
-    query_term_set = frozenset(query_terms)
-    if "semantic" not in query_term_set or not _mentions_rendering(query_term_set):
-        return 0.0
-    candidate_output_surfaces = _extract_literal_output_surfaces(candidate.body_text)
-    if not candidate_output_surfaces & query_literal_output_surfaces:
-        return 0.0
-
-    surface_terms = frozenset(
-        (
-            *lexical_cache.terms(candidate.primary_text),
-            *lexical_cache.terms(candidate.file_path),
-        )
-    )
-    if {"semantic", "renderer"}.issubset(surface_terms):
-        return _SEMANTIC_RENDERER_EDIT_FLOOR
-    return 0.0
-
-
-def _mentions_rendering(query_term_set: frozenset[str]) -> bool:
-    """Return whether query terms ask about render/rendering behavior."""
-    return bool({"render", "renders", "renderer", "rendering"} & query_term_set)
 
 
 def _class_contract_terms(primary_name: str) -> tuple[str, ...]:
@@ -1232,31 +1154,6 @@ def _mentions_public_api_contract(query_terms: tuple[str, ...]) -> bool:
         or "exports" in query_term_set
         or "boundary" in query_term_set
     )
-
-
-def _eval_report_accounting_edit_score(
-    *,
-    candidate: _CandidateProfile,
-    query_terms: tuple[str, ...],
-    lexical_cache: _LexicalCache,
-) -> float:
-    """Return a direct-edit floor for eval ledger summary/report queries."""
-    if candidate.symbol_kind not in {
-        ResolvedSymbolKind.FUNCTION,
-        ResolvedSymbolKind.ASYNC_FUNCTION,
-        ResolvedSymbolKind.METHOD,
-    }:
-        return 0.0
-    query_term_set = frozenset(query_terms)
-    if "eval" not in query_term_set:
-        return 0.0
-    if not {"report", "accounting"} & query_term_set:
-        return 0.0
-
-    primary_terms = lexical_cache.term_set(candidate.primary_text)
-    if {"ledger", "summary"}.issubset(primary_terms):
-        return _EVAL_REPORT_ACCOUNTING_EDIT_FLOOR
-    return 0.0
 
 
 def _runtime_probe_result_flow_edit_score(

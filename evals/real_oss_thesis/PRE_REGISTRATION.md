@@ -68,8 +68,10 @@ A PR is eligible only if all of the following are true:
 - The PR has at least one base-side changed line range in an existing `.py`
   file. Added-only Python PRs are excluded because there is no base-side
   retrieval target.
-- The PR is small enough for human oracle review to confirm changed paths and
-  base-side ranges without ambiguous bulk rewrites.
+- The PR changes at most 5 tracked `.py` files.
+- The PR changes at most 200 total base-side Python lines across all changed
+  `.py` files.
+- No single changed `.py` file has more than 80 base-side changed lines.
 - The PR is not already part of any Context IR fixture, task, run spec, or
   analyzer-derived oracle.
 
@@ -83,6 +85,9 @@ candidate enumeration:
   churn, repository-wide mechanical rewriting, or bulk renaming.
 - It changes no `.py` files.
 - It only adds new `.py` files and has no base-side changed line ranges.
+- It exceeds the frozen size thresholds: more than 5 changed `.py` files, more
+  than 200 total base-side Python changed lines, or more than 80 base-side
+  changed lines in any single `.py` file.
 - Its base or merge/head SHA cannot be resolved.
 - Its metadata cannot be collected without using diffs, review comments,
   changed file lists, Context IR output, or analyzer-derived selectors.
@@ -210,10 +215,18 @@ chunks. Frozen BM25 parameters for v1:
 `embedding_chunks` is an embedding baseline over the same
 analyzer-independent repository chunks used by `bm25_chunks`.
 
-The embedding model must be frozen before provider outputs are generated.
-Embedding model choice may require separate Ryan approval if it adds
-network/API cost. If that approval is required and not granted, implementation
-must hold rather than substitute a model after seeing outputs.
+Frozen embedding provider for v1:
+
+- Provider: Voyage AI embeddings API
+- Model: `voyage-code-3`
+- Output dimensions: default 1024 dimensions
+- Query input type: `query`
+- Chunk input type: `document`
+
+Embedding model substitution after task-manifest freeze is forbidden. If
+`voyage-code-3` cannot be used, the experiment must hold or create a new
+version before provider outputs are generated. Running this provider requires
+separate Ryan approval for network/API cost and credentials.
 
 ## Baseline Chunking
 
@@ -341,8 +354,8 @@ Additional anti-circularity requirements:
 Implementation is blocked on these holds:
 
 - Ryan must accept repo list and kill criterion before implementation.
-- Embedding model choice may require separate approval if it adds
-  network/API cost.
+- `voyage-code-3` network/API cost and credentials require separate Ryan
+  approval before any embedding provider run.
 - Public claims remain blocked until results are run, audited, and
   claim-gated.
 

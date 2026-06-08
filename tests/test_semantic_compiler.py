@@ -560,8 +560,8 @@ def test_compile_semantic_context_discovers_compact_eval_evidence(
     assert result.total_tokens <= 160
 
 
-def test_compile_semantic_context_task_1_selects_direct_contract_waypoints() -> None:
-    """Task 1 keeps direct implementation and contract anchors above helper hubs."""
+def test_compile_semantic_context_task_1_selects_direct_evidence_waypoints() -> None:
+    """Task 1 keeps direct implementation anchors without project-shaped floors."""
     program = context_ir.analyze_repository(REPO_ROOT)
 
     result = compile_semantic_context(program, TASK_1_QUERY, budget=260)
@@ -578,18 +578,10 @@ def test_compile_semantic_context_task_1_selects_direct_contract_waypoints() -> 
             "def:src/context_ir/semantic_types.py:"
             "src.context_ir.semantic_types.SemanticEvalRuntimeEvidence"
         ),
-        (
-            "def:src/context_ir/semantic_renderer.py:"
-            "src.context_ir.semantic_renderer._render_eval_runtime_evidence"
-        ),
         "eval_evidence:oracle_signal_hasattr_probe:hasattr:main.py:2:11",
     }
 
     assert required_unit_ids <= set(selected_unit_ids)
-    assert any(
-        unit_id.startswith("def:src/context_ir/__init__.py:")
-        for unit_id in selected_unit_ids
-    )
     assert "primary=unsupported/opaque" in result.document
     assert "runtime=additive" in result.document
     assert "payload=attribute_present=true" in result.document

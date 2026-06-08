@@ -353,10 +353,10 @@ def test_score_semantic_units_boosts_exact_output_surface_emitters(
     assert result.scores[renderer_id].p_edit > result.scores[field_id].p_edit
 
 
-def test_score_semantic_units_prefers_semantic_renderer_surface_when_named(
+def test_score_semantic_units_does_not_apply_project_named_renderer_floor(
     tmp_path: Path,
 ) -> None:
-    """Semantic renderer prose lifts renderer surfaces over sibling emitters."""
+    """Context IR renderer terms do not add a project-shaped edit floor."""
     package_dir = tmp_path / "src" / "context_ir"
     package_dir.mkdir(parents=True)
     (package_dir / "semantic_renderer.py").write_text(
@@ -392,8 +392,76 @@ def test_score_semantic_units_prefers_semantic_renderer_surface_when_named(
         "Fix semantic renderer so evidence renders runtime=additive",
     )
 
-    assert result.scores[renderer_id].p_edit >= 0.40
-    assert result.scores[renderer_id].p_edit > result.scores[sibling_id].p_edit
+    assert result.scores[renderer_id].p_edit < 0.40
+    assert result.scores[sibling_id].p_edit < 0.40
+
+
+def test_score_semantic_units_does_not_apply_project_public_api_floor(
+    tmp_path: Path,
+) -> None:
+    """Package roots are not edit anchors only because a query says public API."""
+    package_dir = tmp_path / "src" / "context_ir"
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "core.py").write_text(
+        textwrap.dedent(
+            """
+            def configure_exports() -> str:
+                return "configured"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    package_root_id = _definition_id_for(program, "src.context_ir")
+    source_id = _definition_id_for(program, "src.context_ir.core.configure_exports")
+
+    result = score_semantic_units(program, "Fix public API export boundary")
+
+    assert result.scores[package_root_id].p_edit < 0.30
+    assert result.scores[source_id].p_edit >= result.scores[package_root_id].p_edit
+
+
+def test_score_semantic_units_does_not_apply_project_eval_summary_floor(
+    tmp_path: Path,
+) -> None:
+    """Eval/report/accounting terms do not force ledger summary edit relevance."""
+    package_dir = tmp_path / "src" / "context_ir"
+    package_dir.mkdir(parents=True)
+    (package_dir / "eval_summary.py").write_text(
+        textwrap.dedent(
+            """
+            def build_eval_ledger_summary(ledger: object) -> str:
+                return "ready"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+    (package_dir / "eval_report.py").write_text(
+        textwrap.dedent(
+            """
+            def render_eval_report(record: object) -> str:
+                return "ready"
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
+
+    program = _semantic_program(tmp_path)
+    summary_id = _definition_id_for(
+        program,
+        "src.context_ir.eval_summary.build_eval_ledger_summary",
+    )
+    report_id = _definition_id_for(
+        program,
+        "src.context_ir.eval_report.render_eval_report",
+    )
+
+    result = score_semantic_units(program, "Fix eval report accounting")
+
+    assert result.scores[summary_id].p_edit < 0.34
+    assert result.scores[report_id].p_edit >= result.scores[summary_id].p_edit
 
 
 def test_score_semantic_units_boosts_fully_named_class_contract_surfaces(
