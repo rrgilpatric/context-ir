@@ -147,10 +147,13 @@ Current active program:
     hardening removes the remaining project-shaped scorer floors before any
     provider outputs, replaces subjective PR-size filtering with mechanical
     thresholds, and freezes the embedding baseline to Voyage `voyage-code-3`.
-    The next gate is Ryan's explicit decision to accept or revise the revised
-    pre-registration before any implementation starts, including repo list,
-    kill/reevaluate criterion, mechanical size thresholds, embedding model, and
-    any network/API-cost credential approval.
+    The post-`4866225` scorer-gate continuity state is pushed in commit
+    `b789b1e Record scorer gate correction state`. Ryan accepted the revised
+    real-OSS methodology gate after that push, including the repo list,
+    kill/reevaluate criterion, mechanical PR-size thresholds, and frozen
+    embedding baseline. `voyage-code-3` network/API credential execution remains
+    held until the local task-manifest, BM25 baseline, and scoring pipeline are
+    in place and Ryan separately authorizes provider execution.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -220,7 +223,9 @@ Current active program:
       regression with `2203` tests, one deterministic Smoke E confidence-only
       correction to `0.001614353475085192`, commit-gating, local commit, and
       Ryan-authorized push
-- current workspace unit: post-`4866225` continuity sync only:
+  23. post-`4866225` scorer-gate continuity state is pushed in commit
+      `b789b1e Record scorer gate correction state`
+- latest pushed docs-only continuity release unit:
   - `PLAN.md`
   - `BUILDLOG.md`
 - pushed scorer/pre-registration hardening release unit:
@@ -237,13 +242,14 @@ Current active program:
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: residual project-shaped scorer-floor removal and
-  real-OSS pre-registration hardening are pushed to `origin/main` in commit
-  `4866225 Remove project-shaped scorer floors`. The pushed artifact
+- current release state: post-`4866225` scorer-gate continuity state is pushed
+  to `origin/main` in commit
+  `b789b1e Record scorer gate correction state`. That docs-only release records
+  `4866225 Remove project-shaped scorer floors` as pushed. The pushed artifact
   `evals/real_oss_thesis/PRE_REGISTRATION.md` remains pre-result internal
-  thesis evidence only; it is not results and is not a public claim. This
-  continuity sync changes only `PLAN.md` and `BUILDLOG.md` and is not staged,
-  committed, or pushed.
+  thesis evidence only; it is not results and is not a public claim. Ryan has
+  accepted the revised real-OSS methodology gate, superseding the prior active
+  route to a Ryan gate decision.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -254,14 +260,30 @@ Current active program:
     decisive market/north-star experiment
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
-- next control action: route to Ryan's explicit decision on the revised
-  real-OSS thesis pre-registration gate. Ryan must accept or revise the frozen
-  repo list, kill/reevaluate criterion, mechanical PR-size thresholds, and
-  frozen embedding baseline before implementation. Any `voyage-code-3`
-  network/API-cost credential use also requires explicit Ryan approval. Do not
-  route to implementation until those decisions are recorded.
+  - do not use `voyage-code-3` network/API credentials or run external provider
+    execution until the local real-OSS task-manifest, BM25 baseline, and scoring
+    pipeline are in place and Ryan separately authorizes provider execution
+- next control action: issue the first implementation slice for internal
+  real-OSS task-manifest contracts and deterministic selection helpers from
+  pre-collected candidate records. The slice must use local candidate records
+  only and establish the typed contracts and deterministic helpers needed before
+  BM25, scoring, or provider execution. Do not route directly to provider runs,
+  external APIs, repo downloads, embeddings, public claims, or scoring results.
 
 Latest release unit pushed:
+
+- docs-only scorer-gate correction continuity state
+- pushed release commit:
+  `b789b1e Record scorer gate correction state`
+- release state: pushed to `origin/main`; this docs-only release recorded the
+  `4866225` scorer/pre-registration hardening release as pushed. Its prior
+  active route to Ryan's gate decision is superseded by Ryan's accepted
+  methodology gate in the canonical active block above.
+- release files:
+  - `PLAN.md`
+  - `BUILDLOG.md`
+
+Previous release unit pushed:
 
 - residual project-shaped scorer-floor removal and real-OSS pre-registration
   hardening

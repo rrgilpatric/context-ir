@@ -2,6 +2,29 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-09 -- Real OSS Methodology Gate Accepted
+
+- Pushed docs-only continuity release:
+  `b789b1e Record scorer gate correction state`
+- Release state: pushed to `origin/main`; the release recorded
+  `4866225 Remove project-shaped scorer floors` as pushed after the residual
+  scorer-floor correction and real-OSS pre-registration hardening.
+- Supersession: the prior post-`4866225` continuity workspace hold is stale.
+  Current routing is governed by this entry and the canonical active block in
+  `PLAN.md`.
+- Ryan accepted the revised real-OSS methodology gate, including the repo list,
+  kill/reevaluate criterion, mechanical PR-size thresholds, and frozen embedding
+  baseline.
+- `voyage-code-3` network/API credential execution remains held until the local
+  task-manifest, BM25 baseline, and scoring pipeline are in place and Ryan
+  separately authorizes provider execution.
+- Next control action: route to the first implementation slice for internal
+  real-OSS task-manifest contracts and deterministic selection helpers from
+  pre-collected candidate records.
+- Routing boundary: do not route directly to provider runs, external APIs, repo
+  downloads, embeddings, public claims, or scoring results.
+- Acceptance status: first-pass.
+
 ## 2026-06-08 -- Real OSS Scorer Gate Correction Pushed
 
 - Pushed the residual project-shaped scorer-floor removal and real-OSS
@@ -44,8 +67,10 @@ Most recent supersession entries override older architectural decisions when the
   pre-registration decisions before implementation, including repo list,
   kill/reevaluate criterion, mechanical PR-size thresholds, frozen embedding
   baseline, and any `voyage-code-3` network/API-cost credential approval.
-- Current continuity sync: update only `PLAN.md` and `BUILDLOG.md`; do not
-  stage, commit, or push.
+- Superseded continuity sync: the post-`4866225` docs-only sync named here was
+  later committed and pushed as
+  `b789b1e Record scorer gate correction state`. Current routing is governed by
+  the 2026-06-09 supersession entry above.
 - Acceptance status: accepted after one Smoke E confidence-only correction.
 
 ## 2026-06-07 -- Real OSS Thesis Pre-Registration Pushed
