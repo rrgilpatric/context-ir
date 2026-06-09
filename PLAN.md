@@ -153,7 +153,12 @@ Current active program:
     kill/reevaluate criterion, mechanical PR-size thresholds, and frozen
     embedding baseline. `voyage-code-3` network/API credential execution remains
     held until the local task-manifest, BM25 baseline, and scoring pipeline are
-    in place and Ryan separately authorizes provider execution.
+    in place and Ryan separately authorizes provider execution. The internal
+    real-OSS task-manifest contracts and deterministic selection helpers are
+    pushed in commit `49791f8 Add real OSS task manifest contracts`; this
+    establishes the frozen v1 contract from pre-collected candidate records but
+    does not generate the selected task manifest, run providers, download repos,
+    create embeddings, score results, or widen public claims.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -225,7 +230,17 @@ Current active program:
       Ryan-authorized push
   23. post-`4866225` scorer-gate continuity state is pushed in commit
       `b789b1e Record scorer gate correction state`
-- latest pushed docs-only continuity release unit:
+  24. internal real-OSS task-manifest contracts and deterministic selection
+      helpers are pushed in commit
+      `49791f8 Add real OSS task manifest contracts` after one frozen-contract
+      correction, one deterministic Smoke E confidence-only correction to
+      `0.0016070953276650542`, read-only release-unit audit, full regression
+      with `2213` tests, commit-gating, local commit, and Ryan-authorized push
+- latest pushed release unit:
+  - `src/context_ir/real_oss_thesis_manifest.py`
+  - `tests/test_real_oss_thesis_manifest.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- previous pushed docs-only continuity release unit:
   - `PLAN.md`
   - `BUILDLOG.md`
 - pushed scorer/pre-registration hardening release unit:
@@ -242,14 +257,14 @@ Current active program:
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: post-`4866225` scorer-gate continuity state is pushed
-  to `origin/main` in commit
-  `b789b1e Record scorer gate correction state`. That docs-only release records
-  `4866225 Remove project-shaped scorer floors` as pushed. The pushed artifact
+- current release state: internal real-OSS task-manifest contracts and
+  deterministic selection helpers are pushed to `origin/main` in commit
+  `49791f8 Add real OSS task manifest contracts`. The pushed artifact
   `evals/real_oss_thesis/PRE_REGISTRATION.md` remains pre-result internal
-  thesis evidence only; it is not results and is not a public claim. Ryan has
-  accepted the revised real-OSS methodology gate, superseding the prior active
-  route to a Ryan gate decision.
+  thesis evidence only; it is not results and is not a public claim. No selected
+  task manifest has been generated, no provider has run, no repository has been
+  downloaded, no embeddings have been created, no scoring results exist, and no
+  public claim has widened.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -263,14 +278,32 @@ Current active program:
   - do not use `voyage-code-3` network/API credentials or run external provider
     execution until the local real-OSS task-manifest, BM25 baseline, and scoring
     pipeline are in place and Ryan separately authorizes provider execution
-- next control action: issue the first implementation slice for internal
-  real-OSS task-manifest contracts and deterministic selection helpers from
-  pre-collected candidate records. The slice must use local candidate records
-  only and establish the typed contracts and deterministic helpers needed before
-  BM25, scoring, or provider execution. Do not route directly to provider runs,
-  external APIs, repo downloads, embeddings, public claims, or scoring results.
+- next control action: route the next local real-OSS methodology prerequisite
+  slice. The recommended next bounded implementation slice is
+  analyzer-independent BM25 chunking/retrieval contracts over local repository
+  text, with no provider execution, external APIs, repo downloads, embeddings,
+  scoring results, selected task-manifest generation, or public claims.
 
 Latest release unit pushed:
+
+- internal real-OSS task-manifest contracts and deterministic selection helpers
+- pushed release commit:
+  `49791f8 Add real OSS task manifest contracts`
+- release state: pushed to `origin/main`; release-unit audit, full regression
+  with `2213` tests, and commit-gating passed. Smoke E changed only
+  `FULL_REPO_TASK3_CONFIDENCE` to `0.0016070953276650542` after preservation
+  locks held.
+- release files:
+  - `src/context_ir/real_oss_thesis_manifest.py`
+  - `tests/test_real_oss_thesis_manifest.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- preserved boundaries:
+  - no selected task manifest generated
+  - no provider execution, external APIs, repo downloads, Voyage embeddings,
+    scoring results, public claims, public docs, eval tasks, eval fixtures, run
+    specs, package-root exports, BM25 baseline, or scoring pipeline changes
+
+Previous release unit pushed:
 
 - docs-only scorer-gate correction continuity state
 - pushed release commit:

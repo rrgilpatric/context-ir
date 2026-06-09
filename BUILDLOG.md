@@ -2,6 +2,57 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-09 -- Real OSS Task Manifest Contracts Pushed
+
+- Pushed the internal real-OSS task-manifest contract release to `origin/main`.
+- Pushed release commit:
+  `49791f8 Add real OSS task manifest contracts`
+- Release files:
+  - `src/context_ir/real_oss_thesis_manifest.py`
+  - `tests/test_real_oss_thesis_manifest.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and evidence boundary:
+  - added strict internal dataclass contracts for pre-collected real-OSS
+    candidate records, changed Python paths, base-side line ranges, query
+    leakage flags, selected tasks, and frozen v1 task manifests
+  - froze the v1 manifest plan to experiment version `real_oss_thesis_v1`,
+    seed `20260607`, the five accepted repositories in order, `10` tasks per
+    repository, providers `context_ir_static`, `bm25_chunks`, and
+    `embedding_chunks`, budgets `2000`, `4000`, and `8000`, and mechanical
+    thresholds of `5` changed Python files, `200` total base-side Python lines,
+    and `80` base-side lines per file
+  - added deterministic seeded sampling from pre-collected local candidate
+    records after PR-number sorting, excluding ineligible candidates before
+    selection and serializing only task facts into JSON
+  - preserved the boundary that no selected task manifest has been generated,
+    no provider has run, no repository has been downloaded, no Voyage embedding
+    has been created, no scoring result exists, and no public claim has widened
+- Corrections:
+  - first correction fixed the builder and dataclass validation so a v1
+    manifest cannot emit or accept a non-frozen seed, repository set/order, or
+    tasks-per-repository count
+  - second correction updated only `FULL_REPO_TASK3_CONFIDENCE` to
+    `0.0016070953276650542` after Smoke E preservation locks held
+- Validation:
+  - release-unit audit: passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - focused manifest tests: 10 passed
+  - focused Smoke E Task 3 lock: 1 passed, 7 deselected
+  - full regression: 2213 passed
+  - commit-gating: passed
+- Supersession: the prior next action to route the first task-manifest contract
+  implementation slice is complete. Current routing is governed by this entry
+  and the canonical active block in `PLAN.md`.
+- Next control action: route the next local real-OSS methodology prerequisite
+  slice. The recommended next bounded implementation slice is
+  analyzer-independent BM25 chunking/retrieval contracts over local repository
+  text. Do not route provider execution, external APIs, repo downloads,
+  embeddings, selected task-manifest generation, scoring results, or public
+  claims from this state.
+- Acceptance status: accepted after 2 corrections.
+
 ## 2026-06-09 -- Real OSS Methodology Gate Accepted
 
 - Pushed docs-only continuity release:
