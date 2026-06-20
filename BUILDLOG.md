@@ -2,6 +2,53 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-20 -- Real OSS Scoring Contracts Pushed
+
+- Pushed the internal real-OSS scoring contract release to `origin/main`.
+- Pushed release commit:
+  `7750272 Add real OSS scoring contracts`
+- Release files:
+  - `src/context_ir/real_oss_thesis_scoring.py`
+  - `tests/test_real_oss_thesis_scoring.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and evidence boundary:
+  - added internal dataclass contracts for oracle line units, selected context
+    records, provider/budget selections, per-budget task scores, per-provider
+    task scores, and deterministic batch scoring
+  - computes edit-relevant recall, selected tokens, wasted tokens, waste rate,
+    and recall AUC from in-memory provider selections against frozen
+    `RealOssSelectedTask` oracle ranges
+  - preserves the boundary that no selected task manifest has been generated,
+    no provider has run, no repository has been downloaded, no Voyage embedding
+    has been created, no scoring result exists, and no public claim has widened
+  - replaces the brittle full-repo Smoke E exact confidence scalar with a stable
+    invariant: `_confidence` must be called exactly once and return a positive
+    bounded value while selected-output, warning, hash, token, and probe locks
+    remain intact
+- Corrections:
+  - first scoring correction made selected context records require positive
+    token counts and made per-budget scores reject selected-token totals above
+    the frozen budget
+  - full regression then exposed the recurring Smoke E confidence-scalar
+    fragility; Ryan chose the higher-quality test-contract fix rather than
+    another scalar bump
+- Validation:
+  - corrected release-unit audit: no findings
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - full regression: 2232 passed
+  - commit-gating: passed
+- Supersession: the prior next action to route a scoring-pipeline decomposition
+  or contract spike is complete. Current routing is governed by this entry and
+  the canonical active block in `PLAN.md`.
+- Next control action: route a read-only selected-task-manifest generation
+  readiness check. Do not route provider execution, external APIs, repo
+  downloads, Voyage embeddings, scoring-result production, or public claims
+  from this state.
+- Acceptance status: accepted after 2 corrections; pushed after Ryan
+  authorization.
+
 ## 2026-06-20 -- Autonomous Tier 2 Control Run Accepted
 
 - Ryan authorized Autonomous Control Run Tier 2 for the current real-OSS

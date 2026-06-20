@@ -263,7 +263,16 @@ Current active program:
       confidence-only correction to `0.0016028053266739144`, read-only
       release-unit audit, full regression with `2221` tests, commit-gating,
       local commit, and Ryan-authorized push
+  26. internal real-OSS scoring contracts are pushed in commit
+      `7750272 Add real OSS scoring contracts` after one scoring-contract
+      correction, one high-quality Smoke E confidence-contract correction,
+      read-only release-unit audit, full regression with `2232` tests,
+      commit-gating, local commit, and Ryan-authorized push
 - latest pushed release unit:
+  - `src/context_ir/real_oss_thesis_scoring.py`
+  - `tests/test_real_oss_thesis_scoring.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- previous real-OSS BM25 release unit:
   - `src/context_ir/real_oss_thesis_bm25.py`
   - `tests/test_real_oss_thesis_bm25.py`
   - `tests/test_eval_signal_smoke_e.py`
@@ -288,15 +297,15 @@ Current active program:
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: internal real-OSS BM25 baseline contracts are pushed
+- current release state: internal real-OSS scoring contracts are pushed
   to `origin/main` in commit
-  `1ec0c21 Add real OSS BM25 baseline contracts`. The pushed artifact
+  `7750272 Add real OSS scoring contracts`. The pushed artifact
   `evals/real_oss_thesis/PRE_REGISTRATION.md` remains pre-result internal
   thesis evidence only; it is not results and is not a public claim. The local
-  task-manifest contract and BM25 baseline contract are in place. No selected
-  task manifest has been generated, no provider has run, no repository has been
-  downloaded, no embeddings have been created, no scoring pipeline exists, no
-  scoring results exist, and no public claim has widened.
+  task-manifest contract, BM25 baseline contract, and scoring contract are in
+  place. No selected task manifest has been generated, no provider has run, no
+  repository has been downloaded, no embeddings have been created, no scoring
+  results exist, and no public claim has widened.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -308,17 +317,39 @@ Current active program:
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
   - do not use `voyage-code-3` network/API credentials or run external provider
-    execution until the local scoring pipeline exists, selected task-manifest
-    generation is explicitly authorized, and Ryan separately authorizes provider
-    execution; the task-manifest contracts and BM25 baseline contracts being in
-    place are not provider authorization
+    execution until the selected task manifest exists and Ryan separately
+    authorizes provider execution; the task-manifest, BM25, and scoring
+    contracts being in place are not provider authorization
 - next control action: route the next local real-OSS methodology prerequisite.
-  The recommended next lane is a read-only scoring-pipeline decomposition or
-  contract spike before implementation. Do not route provider execution,
-  external APIs, repo downloads, embeddings, selected task-manifest generation,
-  scoring-result production, or public claims from this state.
+  The recommended next lane is a read-only selected-task-manifest generation
+  readiness check: verify whether the pre-collected candidate records needed to
+  generate the frozen selected manifest are present, identify the exact
+  artifact path/scope, and return an implementation prompt only if the inputs
+  are locally available. Do not route provider execution, external APIs, repo
+  downloads, embeddings, scoring-result production, or public claims from this
+  state.
 
 Latest release unit pushed:
+
+- internal real-OSS scoring contracts
+- pushed release commit:
+  `7750272 Add real OSS scoring contracts`
+- release state: pushed to `origin/main`; corrected workspace review,
+  release-unit audit, full regression with `2232` tests, and commit-gating
+  passed. Smoke E no longer exact-locks the full-repo confidence scalar; it
+  verifies `_confidence` is called once and returns a positive bounded value
+  while preserving the stable selected-output locks.
+- release files:
+  - `src/context_ir/real_oss_thesis_scoring.py`
+  - `tests/test_real_oss_thesis_scoring.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- preserved boundaries:
+  - no selected task manifest generated
+  - no provider execution, external APIs, repo downloads, Voyage embeddings,
+    scoring results, public claims, public docs, eval tasks, eval fixtures, run
+    specs, or package-root exports
+
+Previous release unit pushed:
 
 - internal real-OSS BM25 baseline contracts
 - pushed release commit:
@@ -20189,13 +20220,15 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: the real-OSS BM25 baseline contracts are pushed at
-`1ec0c21 Add real OSS BM25 baseline contracts`. Route the next local real-OSS
-methodology prerequisite: a read-only scoring-pipeline decomposition or contract
-spike before implementation. Do not route provider execution, external APIs,
-repo downloads, Voyage embeddings, selected task-manifest generation,
-scoring-result production, public claims, Task 4, composite smoke support,
-runnable demo implementation, or MCP/API expansion from this state.
+Current next route: the real-OSS scoring contracts are pushed at
+`7750272 Add real OSS scoring contracts`. Route the next local real-OSS
+methodology prerequisite: a read-only selected-task-manifest generation
+readiness check to verify whether the pre-collected candidate records are
+locally available and to identify the exact artifact path/scope before any
+manifest-generation implementation prompt is issued. Do not route provider
+execution, external APIs, repo downloads, Voyage embeddings, scoring-result
+production, public claims, Task 4, composite smoke support, runnable demo
+implementation, or MCP/API expansion from this state.
 
 Earlier imported-name dynamic-import/default-provider releases are closed; do
 not route them back to release-unit audit, full regression, commit-gating,
