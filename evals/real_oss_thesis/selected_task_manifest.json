@@ -1,0 +1,2609 @@
+{
+  "budgets": [
+    2000,
+    4000,
+    8000
+  ],
+  "experiment_version": "real_oss_thesis_v1",
+  "provider_names": [
+    "context_ir_static",
+    "bm25_chunks",
+    "embedding_chunks"
+  ],
+  "repository_slugs": [
+    "pallets/flask",
+    "encode/httpx",
+    "psf/black",
+    "scrapy/scrapy",
+    "python-poetry/poetry"
+  ],
+  "selected_tasks": [
+    {
+      "base_sha": "b786eac5574e478d51314333fb6309456bff7b76",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 76,
+              "start_line": 73
+            },
+            {
+              "end_line": 93,
+              "start_line": 93
+            }
+          ],
+          "path": "flask/views.py"
+        }
+      ],
+      "head_sha": "ae1cc7319ab596e721fdf8b7bd9ce6a296952db1",
+      "pr_number": 387,
+      "query": "documentation: minor stylistic adjustments\n\nrewrapped lines (for short paragraphs) - please let me know whether you prefer no rewrapping in the future (cf. #369)",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-387"
+    },
+    {
+      "base_sha": "1b06c8a41119f8c93078e85f6474cb85d7e30b43",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 247,
+              "start_line": 247
+            }
+          ],
+          "path": "docs/conf.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 80,
+              "start_line": 80
+            }
+          ],
+          "path": "flask/_compat.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 665,
+              "start_line": 665
+            }
+          ],
+          "path": "flask/helpers.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 33,
+              "start_line": 33
+            },
+            {
+              "end_line": 55,
+              "start_line": 55
+            },
+            {
+              "end_line": 96,
+              "start_line": 96
+            },
+            {
+              "end_line": 99,
+              "start_line": 98
+            },
+            {
+              "end_line": 130,
+              "start_line": 130
+            },
+            {
+              "end_line": 162,
+              "start_line": 162
+            }
+          ],
+          "path": "flask/run.py"
+        }
+      ],
+      "head_sha": "b25f92dd4ebf1806456da66f9bf98b0dc7a4c5e1",
+      "pr_number": 1030,
+      "query": "Fix typos in docstrings and comments in run.py",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": true,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-1030"
+    },
+    {
+      "base_sha": "96d7cc933ae19133ac3cab535b0ea83c6dfecce4",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 258,
+              "start_line": 258
+            }
+          ],
+          "path": "flask/sessions.py"
+        }
+      ],
+      "head_sha": "05ad436201f8c835ac2a5a317e5cb5fe5e0f3e21",
+      "pr_number": 1162,
+      "query": "typo: \"weather\" -> \"whether\"",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-1162"
+    },
+    {
+      "base_sha": "87222087b333c4f9ccc665e787fdf304cabeba73",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 1972,
+              "start_line": 1966
+            }
+          ],
+          "path": "flask/app.py"
+        }
+      ],
+      "head_sha": "6af9690ae9800f5a6074c70498cba4b26335ec72",
+      "pr_number": 1510,
+      "query": "Remove the deprecated Flask.modules property",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-1510"
+    },
+    {
+      "base_sha": "81ae94a5fd47fab00ce72e0298ef52a2e8274dc5",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 1774,
+              "start_line": 1772
+            }
+          ],
+          "path": "flask/app.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 222,
+              "start_line": 222
+            }
+          ],
+          "path": "flask/helpers.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 1083,
+              "start_line": 1072
+            }
+          ],
+          "path": "tests/test_basic.py"
+        }
+      ],
+      "head_sha": "128bc76af0f6c16ba71b41851be800ccdf354752",
+      "pr_number": 1535,
+      "query": "Revert \"make external_url_handler example py3 compliant\"\n\nSorry, i should have tested this first and not rely on my IDE.\n\nActually in python 2.7 this causes `AttributeError: 'BuildError' object has no attribute 'with_traceback'`\n\nTherefore this has to be reverted.\n\nReverts mitsuhiko/flask#1534",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-1535"
+    },
+    {
+      "base_sha": "e8bd2c92029455abfcbbd3e10b161f9da0d269be",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 43,
+              "start_line": 42
+            },
+            {
+              "end_line": 52,
+              "start_line": 52
+            },
+            {
+              "end_line": 54,
+              "start_line": 54
+            }
+          ],
+          "path": "flask/testing.py"
+        }
+      ],
+      "head_sha": "8011e1de28c82e5ab5c9727d10bcba997e8254ce",
+      "pr_number": 1801,
+      "query": "Fix \"with\" formatting in doc\n\n`with` statement isn't properly formatted in reST in two sections in the `flask.testing.FlaskClient` documentation.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-1801"
+    },
+    {
+      "base_sha": "6478d7bb99ef7dcdda19ce3e58c00500ff72e60b",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 17,
+              "start_line": 17
+            },
+            {
+              "end_line": 1449,
+              "start_line": 1440
+            },
+            {
+              "end_line": 1457,
+              "start_line": 1456
+            }
+          ],
+          "path": "flask/app.py"
+        }
+      ],
+      "head_sha": "de1652467b0584fe9ee4060bc42101e8255838a3",
+      "pr_number": 2072,
+      "query": "Remove busy-work.\n\nIt is entirely sufficient to walk the MRO of the exception class, no need to check for classes re-appearing later on, no need to add the MRO of any superclass.\r\n\r\n* Python refuses point-blank to create a class with a circular MRO.\r\n* All classes in a superclass MRO *already* appear in the MRO of the derived type. Re-adding the contents of a superclass MRO is doing double work.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-2072"
+    },
+    {
+      "base_sha": "06112a555a9398701d3269253355c214791e1eca",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 237,
+              "start_line": 237
+            }
+          ],
+          "path": "docs/conf.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 394,
+              "start_line": 394
+            },
+            {
+              "end_line": 1357,
+              "start_line": 1357
+            }
+          ],
+          "path": "flask/app.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 8,
+              "start_line": 8
+            }
+          ],
+          "path": "scripts/flask-07-upgrade.py"
+        }
+      ],
+      "head_sha": "f5adb61b28f240effbba5a4686647c2af6e85b94",
+      "pr_number": 2201,
+      "query": "docs: Fix typos/grammar",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-2201"
+    },
+    {
+      "base_sha": "9569e8c9562fd6695d5ec83a5e33fa608d5d7166",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 108,
+              "start_line": 107
+            },
+            {
+              "end_line": 112,
+              "start_line": 110
+            },
+            {
+              "end_line": 117,
+              "start_line": 114
+            },
+            {
+              "end_line": 120,
+              "start_line": 119
+            },
+            {
+              "end_line": 129,
+              "start_line": 124
+            },
+            {
+              "end_line": 132,
+              "start_line": 132
+            }
+          ],
+          "path": "flask/views.py"
+        }
+      ],
+      "head_sha": "9b892e2225bb88ab24f839719ba50575e1ce4de0",
+      "pr_number": 2252,
+      "query": "Continue #1936: Add the ability to combine MethodViews\n\nMerge master into #1936. The collection logic is changed to collect all inherited methods, not just ones specified by base class `methods` attrs.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-2252"
+    },
+    {
+      "base_sha": "9da947a279d5ed5958609e0b6ec690160c496480",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 3,
+              "start_line": 1
+            }
+          ],
+          "path": "examples/javascript/setup.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 3,
+              "start_line": 1
+            }
+          ],
+          "path": "examples/tutorial/setup.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 17,
+              "start_line": 1
+            }
+          ],
+          "path": "setup.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 123,
+              "start_line": 123
+            },
+            {
+              "end_line": 125,
+              "start_line": 125
+            },
+            {
+              "end_line": 130,
+              "start_line": 130
+            }
+          ],
+          "path": "tests/test_appctx.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 1475,
+              "start_line": 1475
+            },
+            {
+              "end_line": 1479,
+              "start_line": 1479
+            }
+          ],
+          "path": "tests/test_basic.py"
+        }
+      ],
+      "head_sha": "78b42b9ac288c20c107a3b6779c322acb45be3d4",
+      "pr_number": 4947,
+      "query": "switch to pyproject.toml\n\nSwitch the project, examples, tutorial, and other docs. Still using setuptools and pip-compile-multi, I don't plan to switch to a different project management tool right now.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "pallets/flask",
+      "repository_url": "https://github.com/pallets/flask",
+      "task_id": "real_oss_thesis_v1:pallets__flask:pr-4947"
+    },
+    {
+      "base_sha": "a1179e55e1818261bc928a3284fe18b424e9202a",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 60,
+              "start_line": 50
+            }
+          ],
+          "path": "tests/conftest.py"
+        }
+      ],
+      "head_sha": "fc3df514e81de8ff14d9ef43ee53caab408a50ee",
+      "pr_number": 447,
+      "query": "Don't check trio import in definition of backend fixture params\n\nSmall refactoring based on the observation that trio is always installed during tests.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-447"
+    },
+    {
+      "base_sha": "1ce3cc3269eb73d28a8371906baa80a70cdc8aba",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 3,
+              "start_line": 3
+            }
+          ],
+          "path": "httpx/__version__.py"
+        }
+      ],
+      "head_sha": "a62947826fa337e6e8176aae27ec627a9def25af",
+      "pr_number": 499,
+      "query": "Release 0.7.6\n\nWe mostly have a few tweaks here and there, but it's been some time since 0.7.5 was released so I figured it was time to wipe the slate clean. :-)",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-499"
+    },
+    {
+      "base_sha": "07586f97e85e1cdff1280016f1ee2a1e2ae764b5",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 2,
+              "start_line": 2
+            },
+            {
+              "end_line": 8,
+              "start_line": 8
+            },
+            {
+              "end_line": 108,
+              "start_line": 106
+            },
+            {
+              "end_line": 112,
+              "start_line": 110
+            },
+            {
+              "end_line": 123,
+              "start_line": 114
+            }
+          ],
+          "path": "tests/test_utils.py"
+        }
+      ],
+      "head_sha": "2fcf23bbfe41c5526cb35a65d32dd98dde786988",
+      "pr_number": 506,
+      "query": "Refactor debug and trace log tests\n\nSpun up from #502 to help reduce its scope - simplify how we test debug logs.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-506"
+    },
+    {
+      "base_sha": "ddc4885543ec4f94f6bfa2e4d97cb2407aef90fa",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 170,
+              "start_line": 170
+            }
+          ],
+          "path": "httpx/concurrency/base.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 221,
+              "start_line": 217
+            }
+          ],
+          "path": "httpx/concurrency/trio.py"
+        }
+      ],
+      "head_sha": "df9dc6d5160bad3a8c47d3f7b8f29e131756b1f3",
+      "pr_number": 607,
+      "query": "Cleanup comments on handling MultiError\n\nCleanup for #603",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-607"
+    },
+    {
+      "base_sha": "fc980e779276e46ce2e2aad10a8ced1d50334306",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 21,
+              "start_line": 21
+            },
+            {
+              "end_line": 24,
+              "start_line": 24
+            },
+            {
+              "end_line": 29,
+              "start_line": 29
+            },
+            {
+              "end_line": 225,
+              "start_line": 225
+            }
+          ],
+          "path": "httpx/_content_streams.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 9,
+              "start_line": 9
+            }
+          ],
+          "path": "httpx/_exceptions.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 71,
+              "start_line": 70
+            }
+          ],
+          "path": "httpx/_models.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 32,
+              "start_line": 32
+            },
+            {
+              "end_line": 41,
+              "start_line": 41
+            },
+            {
+              "end_line": 208,
+              "start_line": 207
+            },
+            {
+              "end_line": 304,
+              "start_line": 304
+            }
+          ],
+          "path": "httpx/_utils.py"
+        }
+      ],
+      "head_sha": "d63108d613601791acb0b549ffa93bc12c830ef9",
+      "pr_number": 889,
+      "query": "Fix casing nits\n\nThis PR fixes the remaining places where we refer to this project as \"httpx\" (lowercase) in a prose context, when we should be using \"HTTPX\" (uppercase).",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-889"
+    },
+    {
+      "base_sha": "f4b407a7c44f2b7fdea63c62198a56880acf5977",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 414,
+              "start_line": 414
+            },
+            {
+              "end_line": 416,
+              "start_line": 416
+            },
+            {
+              "end_line": 651,
+              "start_line": 650
+            }
+          ],
+          "path": "httpx/_models.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 8,
+              "start_line": 8
+            }
+          ],
+          "path": "tests/client/test_headers.py"
+        }
+      ],
+      "head_sha": "19515e8a8b7df6e5064047f02df307798c184ef5",
+      "pr_number": 1205,
+      "query": "Fix request auto headers\n\nCloses #1203, resolving an issue that was introduced in #1089.\r\n\r\n`Headers.raw` does *not* return a list that can be mutated in-place. This fixes a piece of code that relied on that expectation.\r\n\r\nNot sure the double representation is such a great idea here, but we can consider that separately. I wouldn't particularly suggest anyone try to dive in there - I'm going to be reviewing all the model classes in detail, in the lead up to a 1.0 release, so I'll cover any changes there.\r\n\r\nIn any case *API is king*, and this gets our behaviour back to correctness with the least footprint necessary.\n\nAuto headers inserted into `headers._list` while not into `headers._dict`\n\n### Checklist\r\n\r\n- [x] The bug is reproducible against the latest release and/or `master`.\r\n- [x] There are no similar issues or pull requests to fix it yet.\r\n\r\n### Describe the bug\r\n`Request.prepare()` insert auto headers into `headers.raw` (ie `headers._list`), but not into the `headers._dict`.\r\nhttps://github.com/encode/httpx/blob/924fa8c9dc19f3a601db54a384158fef56f07c96/httpx/_models.py#L650-L651\r\n\r\n### To reproduce\r\n```python\r\n>>> import httpx\r\n>>> client = httpx.Client()\r\n>>> request = client.build_request(\"GET\", \"https://google.com\")\r\n>>> requests.headers\r\nHeaders({'host': 'google.com', 'user-agent': 'python-httpx/0.14.1', 'accept': '*/*', 'accept-encoding': 'gzip, deflate, br', 'connection': 'keep-alive'})\r\n>>> \"host\" in request.headers\r\nFalse\r\n>>> request.headers.pop(\"host\")\r\nTraceback (most recent call last):\r\n  File \"<stdin>\", line 1, in <module>\r\n  File \"D:\\programs\\anaconda3\\lib\\_collections_abc.py\", line 801, in pop\r\n    del self[key]\r\n  File \"E:\\projects\\pycharm\\httpx\\httpx\\_models.py\", line 536, in __delitem__\r\n    del self._dict[del_key]\r\nKeyError: b'host'\r\n```\r\n\r\n### Environment\r\n\r\n- OS: Windows/macOS\r\n- Python version: 3.7.6\r\n- HTTPX version: 0.14.1",
+      "query_leakage_flags": {
+        "direct_line_number": true,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": true
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-1205"
+    },
+    {
+      "base_sha": "f7a024cee3a161a37710c7b77e7d650f981d142d",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 5,
+              "start_line": 5
+            },
+            {
+              "end_line": 10,
+              "start_line": 10
+            }
+          ],
+          "path": "httpx/_client.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 14,
+              "start_line": 8
+            }
+          ],
+          "path": "httpx/_compat.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 40,
+              "start_line": 40
+            }
+          ],
+          "path": "setup.py"
+        }
+      ],
+      "head_sha": "67c297069f3d6b034069882428e4c1dd303d693c",
+      "pr_number": 2097,
+      "query": "Drop EOL Python 3.6\n\nDiscussion: https://github.com/encode/httpx/discussions/2136\r\n\r\nAlso, now `uvicorn` can be bumped (was pinned to fix Python 3.6 in https://github.com/encode/httpx/pull/1807)",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-2097"
+    },
+    {
+      "base_sha": "1ba3e2ad4c08772d1a826a192410fa0f1e61f171",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 5,
+              "start_line": 5
+            },
+            {
+              "end_line": 11,
+              "start_line": 8
+            },
+            {
+              "end_line": 50,
+              "start_line": 46
+            }
+          ],
+          "path": "httpx/_compat.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 3,
+              "start_line": 3
+            },
+            {
+              "end_line": 31,
+              "start_line": 31
+            }
+          ],
+          "path": "httpx/_transports/mock.py"
+        }
+      ],
+      "head_sha": "75a13a15aa8fea10367b791747a89463a978fa3e",
+      "pr_number": 2466,
+      "query": "Remove typeshed iscoroutine workaround\n\nThis was resolved in typeshed and newer mypy versions have inherited the fix.\r\n\r\npyright reports:\r\n[after.txt](https://github.com/encode/httpx/files/10110416/after.txt)\r\n[before.txt](https://github.com/encode/httpx/files/10110417/before.txt)",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-2466"
+    },
+    {
+      "base_sha": "f0fd91925bc8663b4ec3635c302aa07fe5f8e72e",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 209,
+              "start_line": 198
+            }
+          ],
+          "path": "httpx/_urlparse.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 4,
+              "start_line": 4
+            },
+            {
+              "end_line": 8,
+              "start_line": 8
+            },
+            {
+              "end_line": 12,
+              "start_line": 11
+            },
+            {
+              "end_line": 17,
+              "start_line": 16
+            },
+            {
+              "end_line": 23,
+              "start_line": 23
+            },
+            {
+              "end_line": 26,
+              "start_line": 26
+            },
+            {
+              "end_line": 30,
+              "start_line": 30
+            },
+            {
+              "end_line": 33,
+              "start_line": 33
+            },
+            {
+              "end_line": 40,
+              "start_line": 40
+            },
+            {
+              "end_line": 45,
+              "start_line": 45
+            },
+            {
+              "end_line": 50,
+              "start_line": 50
+            },
+            {
+              "end_line": 56,
+              "start_line": 56
+            },
+            {
+              "end_line": 61,
+              "start_line": 61
+            },
+            {
+              "end_line": 67,
+              "start_line": 67
+            },
+            {
+              "end_line": 73,
+              "start_line": 72
+            },
+            {
+              "end_line": 78,
+              "start_line": 77
+            },
+            {
+              "end_line": 83,
+              "start_line": 83
+            },
+            {
+              "end_line": 91,
+              "start_line": 91
+            },
+            {
+              "end_line": 97,
+              "start_line": 97
+            },
+            {
+              "end_line": 103,
+              "start_line": 103
+            },
+            {
+              "end_line": 111,
+              "start_line": 111
+            },
+            {
+              "end_line": 117,
+              "start_line": 116
+            },
+            {
+              "end_line": 121,
+              "start_line": 121
+            },
+            {
+              "end_line": 126,
+              "start_line": 126
+            },
+            {
+              "end_line": 135,
+              "start_line": 135
+            },
+            {
+              "end_line": 141,
+              "start_line": 141
+            },
+            {
+              "end_line": 147,
+              "start_line": 147
+            },
+            {
+              "end_line": 153,
+              "start_line": 153
+            },
+            {
+              "end_line": 164,
+              "start_line": 164
+            },
+            {
+              "end_line": 167,
+              "start_line": 167
+            },
+            {
+              "end_line": 172,
+              "start_line": 171
+            },
+            {
+              "end_line": 180,
+              "start_line": 179
+            },
+            {
+              "end_line": 185,
+              "start_line": 185
+            },
+            {
+              "end_line": 191,
+              "start_line": 191
+            },
+            {
+              "end_line": 195,
+              "start_line": 195
+            },
+            {
+              "end_line": 202,
+              "start_line": 202
+            },
+            {
+              "end_line": 211,
+              "start_line": 211
+            },
+            {
+              "end_line": 219,
+              "start_line": 219
+            },
+            {
+              "end_line": 228,
+              "start_line": 228
+            }
+          ],
+          "path": "tests/test_urlparse.py"
+        }
+      ],
+      "head_sha": "a934c36a859cd5cf6eac19cd8b76d60aaac7109a",
+      "pr_number": 2572,
+      "query": "Drop private imports from test_urlparse.py\n\nMore towards #2492\r\n\r\nWe still access `._uri_reference`, because the goal of this module is to test our vendored `urlparse()` implementation, but at least we do so from `httpx.URL()`.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-2572"
+    },
+    {
+      "base_sha": "544038155382473ce87b17ef2238c96e48dee700",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 28,
+              "start_line": 15
+            },
+            {
+              "end_line": 622,
+              "start_line": 622
+            }
+          ],
+          "path": "httpx/_urls.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 151,
+              "start_line": 151
+            },
+            {
+              "end_line": 312,
+              "start_line": 312
+            }
+          ],
+          "path": "tests/models/test_url.py"
+        }
+      ],
+      "head_sha": "5dda2aa30692e8529555f57efa7bcd203a7d5ac1",
+      "pr_number": 3376,
+      "query": "Just use default `safe=...` characters for `urlescape`\n\nDon't try to be clever about which `safe=...` characters to use when calling `urlescape()`.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "encode/httpx",
+      "repository_url": "https://github.com/encode/httpx",
+      "task_id": "real_oss_thesis_v1:encode__httpx:pr-3376"
+    },
+    {
+      "base_sha": "b07ca2b7d5d03f5d890c1ce5f19b41065ba815c4",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 190,
+              "start_line": 187
+            },
+            {
+              "end_line": 192,
+              "start_line": 192
+            },
+            {
+              "end_line": 203,
+              "start_line": 203
+            },
+            {
+              "end_line": 211,
+              "start_line": 211
+            },
+            {
+              "end_line": 220,
+              "start_line": 220
+            },
+            {
+              "end_line": 227,
+              "start_line": 227
+            },
+            {
+              "end_line": 273,
+              "start_line": 273
+            }
+          ],
+          "path": "black.py"
+        }
+      ],
+      "head_sha": "5e1e1a1820504b2709a7201800ff042f0abbad2c",
+      "pr_number": 161,
+      "query": "[#149] Make check and diff not mutually exclusive",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-161"
+    },
+    {
+      "base_sha": "fbf59b60d750ace9792a78736f19a4e81a156333",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 1028,
+              "start_line": 1028
+            },
+            {
+              "end_line": 1236,
+              "start_line": 1235
+            },
+            {
+              "end_line": 1257,
+              "start_line": 1242
+            },
+            {
+              "end_line": 1259,
+              "start_line": 1259
+            },
+            {
+              "end_line": 1263,
+              "start_line": 1261
+            },
+            {
+              "end_line": 1271,
+              "start_line": 1267
+            },
+            {
+              "end_line": 1303,
+              "start_line": 1303
+            },
+            {
+              "end_line": 1895,
+              "start_line": 1895
+            },
+            {
+              "end_line": 1909,
+              "start_line": 1909
+            },
+            {
+              "end_line": 2398,
+              "start_line": 2398
+            },
+            {
+              "end_line": 2401,
+              "start_line": 2401
+            },
+            {
+              "end_line": 2444,
+              "start_line": 2444
+            },
+            {
+              "end_line": 2447,
+              "start_line": 2447
+            },
+            {
+              "end_line": 3439,
+              "start_line": 3439
+            }
+          ],
+          "path": "black.py"
+        }
+      ],
+      "head_sha": "e4e59f87a8c4d3844dca9a14b6a4abf544c7a0c8",
+      "pr_number": 606,
+      "query": "Improves performance on large commented logical lines\n\nFixes #509 \r\n\r\n```\r\n> rm -rf ~/Library/Caches/black; time python3 -m black --check profiling/dict_big.py \r\nAll done! ✨ 🍰 ✨\r\n1 file would be left unchanged.\r\n\r\nreal\t0m2.984s\r\nuser\t0m2.916s\r\nsys\t0m0.051s\r\n> sed -i '' '/21233/s/$/  # comment/' profiling/dict_big.py \r\n> git diff | cat\r\ndiff --git a/profiling/dict_big.py b/profiling/dict_big.py\r\nindex f330ac5..27a862d 100644\r\n--- a/profiling/dict_big.py\r\n+++ b/profiling/dict_big.py\r\n@@ -7996,6 +7996,6 @@ config = some.Structure(\r\n         \"21229\": \"AB890X\",\r\n         \"21230\": \"AB890X\",\r\n         \"21231\": \"AB890X\",\r\n-        \"21233\": \"AB890X\",\r\n+        \"21233\": \"AB890X\",  # comment\r\n     }\r\n )\r\n> rm -rf ~/Library/Caches/black; time python3 -m black --check profiling/dict_big.py\r\nAll done! ✨ 🍰 ✨\r\n1 file would be left unchanged.\r\n\r\nreal\t1m17.364s\r\nuser\t1m17.007s\r\nsys\t0m0.144s\r\n> git checkout comment-perf-fix\r\nM\tprofiling/dict_big.py\r\nSwitched to branch 'comment-perf-fix'\r\nYour branch is ahead of 'origin/master' by 1 commit.\r\n  (use \"git push\" to publish your local commits)\r\n> rm -rf ~/Library/Caches/black; time python3 -m black --check profiling/dict_big.py\r\nAll done! ✨ 🍰 ✨\r\n1 file would be left unchanged.\r\n\r\nreal\t0m3.030s\r\nuser\t0m2.958s\r\nsys\t0m0.053s\r\n```\n\nBad performance on huge dictionary\n\nWe have a file that contains a huge (9000-line) configuration dictionary, and it takes about 10 minutes to run Black on that file. Profiling showed that ~80% of the time is spent in the `comments_after` function, currently at https://github.com/ambv/black/blob/master/black.py#L1227. This function contains two loops that loop over all leaves and comments in a logical line, which is presumably leading to quadratic performance on very large logical lines. We could speed it up by adding a dictionary that lets us access the required data in constant rather than linear time.\r\n\r\nWe're running Python 3.6 and Black 18.6b4, but the relevant code isn't different on master.",
+      "query_leakage_flags": {
+        "direct_line_number": true,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-606"
+    },
+    {
+      "base_sha": "b85c345dbc70302610c05cc97fe30f5790fadc79",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 710,
+              "start_line": 710
+            },
+            {
+              "end_line": 733,
+              "start_line": 733
+            },
+            {
+              "end_line": 736,
+              "start_line": 736
+            },
+            {
+              "end_line": 741,
+              "start_line": 740
+            }
+          ],
+          "path": "black.py"
+        }
+      ],
+      "head_sha": "cbe455ad6637897227fb0bb95660d63862f592b0",
+      "pr_number": 858,
+      "query": "minor performance improvement (~2% speedup in unit tests)\n\nI only clocked a 2% improvement in unit tests (meh) but if my understanding is correct this matters more for large files (where performance is most important).\r\n\r\nhttps://stackoverflow.com/questions/39675898/is-python-string-concatenation-bad-practice\r\nhttps://stackoverflow.com/a/3055541\r\n\r\nI don't feel strongly (I was surprised the performance improvement was so small), so I won't mind if you decide to not merge this.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-858"
+    },
+    {
+      "base_sha": "201b331e55948d187fc150101bebf5262e160290",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 449,
+              "start_line": 448
+            },
+            {
+              "end_line": 477,
+              "start_line": 475
+            },
+            {
+              "end_line": 489,
+              "start_line": 488
+            }
+          ],
+          "path": "src/black/__init__.py"
+        }
+      ],
+      "head_sha": "8e0803e7e5acabdd28b80258f15d8aebf11fbb4c",
+      "pr_number": 1916,
+      "query": "Add `black` Dockerfile\n\n- Build a `black` container based on python3-slim\r\n- Test: `docker build --network-host --tag black .`\r\n```console\r\ncooper-mbp1:black cooper$ docker image ls\r\nREPOSITORY                                         TAG            IMAGE ID       CREATED              SIZE\r\nblack                                              latest         0c7636402ac2   4 seconds ago        332MB\r\n```\r\n\r\nAddresses part of #1914",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-1916"
+    },
+    {
+      "base_sha": "f0a99f640279adade284eba592630c67ad374574",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 820,
+              "start_line": 820
+            }
+          ],
+          "path": "src/black/linegen.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 7,
+              "start_line": 7
+            },
+            {
+              "end_line": 264,
+              "start_line": 257
+            }
+          ],
+          "path": "src/black/parsing.py"
+        }
+      ],
+      "head_sha": "ced2d656794568517ba9aa28f781f9151d89de54",
+      "pr_number": 2720,
+      "query": "remove type: ignores in src/black/parsing.py\n\n<!-- Hello! Thanks for submitting a PR. To help make things go a bit more\r\n     smoothly we would appreciate that you go through this template. -->\r\n\r\n### Description\r\n\r\nRemoves the remaining `type: ignore`s in `src/black`, except for those blocked by https://github.com/python/mypy/issues/1424\r\n\r\n<!-- Good things to put here include: reasoning for the change (please link\r\n     any relevant issues!), any noteworthy (or hacky) choices to be aware of,\r\n     or what the problem resolved here looked like ... we won't mind a ranty\r\n     story :) -->\r\n\r\n### Checklist - did you ...\r\n\r\n<!-- If any of the following items aren't relevant for your contribution\r\n     please still tick them so we know you've gone through the checklist.\r\n\r\n    All user-facing changes should get an entry. Otherwise, signal to us\r\n    this should get the magical label to silence the CHANGELOG entry check.\r\n    Tests are required for bugfixes and new features. Documentation changes\r\n    are necessary for formatting and most enhancement changes. -->\r\n\r\n- [ ] Add a CHANGELOG entry if necessary?\r\n- [ ] Add / update tests if necessary?\r\n- [ ] Add new / update outdated documentation?\r\n\r\n<!-- Just as a reminder, everyone in all psf/black spaces including PRs\r\n     must follow the PSF Code of Conduct (link below).\r\n\r\n     Finally, once again thanks for your time and effort. If you have any\r\n     feedback in regards to your experience contributing here, please\r\n     let us know!\r\n\r\n     Helpful links:\r\n\r\n      PSF COC: https://www.python.org/psf/conduct/\r\n      Contributing docs: https://black.readthedocs.io/en/latest/contributing/index.html\r\n      Chat on Python Discord: https://discord.gg/RtVdv86PrH -->",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-2720"
+    },
+    {
+      "base_sha": "a44dc3d59eb46901f9fe893727280903df41fc20",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 523,
+              "start_line": 523
+            }
+          ],
+          "path": "src/black/lines.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 72,
+              "start_line": 72
+            },
+            {
+              "end_line": 202,
+              "start_line": 201
+            },
+            {
+              "end_line": 204,
+              "start_line": 204
+            },
+            {
+              "end_line": 208,
+              "start_line": 208
+            },
+            {
+              "end_line": 249,
+              "start_line": 249
+            },
+            {
+              "end_line": 251,
+              "start_line": 251
+            },
+            {
+              "end_line": 374,
+              "start_line": 374
+            },
+            {
+              "end_line": 378,
+              "start_line": 377
+            },
+            {
+              "end_line": 382,
+              "start_line": 380
+            },
+            {
+              "end_line": 385,
+              "start_line": 384
+            },
+            {
+              "end_line": 387,
+              "start_line": 387
+            },
+            {
+              "end_line": 389,
+              "start_line": 389
+            },
+            {
+              "end_line": 392,
+              "start_line": 392
+            },
+            {
+              "end_line": 397,
+              "start_line": 397
+            },
+            {
+              "end_line": 418,
+              "start_line": 418
+            },
+            {
+              "end_line": 437,
+              "start_line": 432
+            },
+            {
+              "end_line": 440,
+              "start_line": 439
+            },
+            {
+              "end_line": 448,
+              "start_line": 447
+            },
+            {
+              "end_line": 452,
+              "start_line": 452
+            },
+            {
+              "end_line": 455,
+              "start_line": 454
+            },
+            {
+              "end_line": 469,
+              "start_line": 467
+            },
+            {
+              "end_line": 605,
+              "start_line": 593
+            },
+            {
+              "end_line": 607,
+              "start_line": 607
+            },
+            {
+              "end_line": 721,
+              "start_line": 721
+            },
+            {
+              "end_line": 803,
+              "start_line": 803
+            },
+            {
+              "end_line": 807,
+              "start_line": 807
+            },
+            {
+              "end_line": 811,
+              "start_line": 810
+            },
+            {
+              "end_line": 818,
+              "start_line": 813
+            },
+            {
+              "end_line": 822,
+              "start_line": 822
+            },
+            {
+              "end_line": 827,
+              "start_line": 824
+            },
+            {
+              "end_line": 831,
+              "start_line": 829
+            },
+            {
+              "end_line": 833,
+              "start_line": 833
+            },
+            {
+              "end_line": 835,
+              "start_line": 835
+            },
+            {
+              "end_line": 888,
+              "start_line": 888
+            },
+            {
+              "end_line": 1222,
+              "start_line": 1222
+            },
+            {
+              "end_line": 1224,
+              "start_line": 1224
+            },
+            {
+              "end_line": 1713,
+              "start_line": 1713
+            },
+            {
+              "end_line": 1869,
+              "start_line": 1869
+            },
+            {
+              "end_line": 1890,
+              "start_line": 1890
+            }
+          ],
+          "path": "src/black/trans.py"
+        }
+      ],
+      "head_sha": "3feff21eca0eee4b9fe72d12b506ac273cb5bcd0",
+      "pr_number": 3467,
+      "query": "Significantly speedup ESP on large expressions that contain many strings\n\n<!-- Hello! Thanks for submitting a PR. To help make things go a bit more\r\n     smoothly we would appreciate that you go through this template. -->\r\n\r\n### Description\r\n\r\nPreviously, when ESP 1) merges strings in `StringMerger`; 2) strips parens in `StringParenStripper`, it finds and does one transform for one string group. Each transform will create a new `line` with 1) one group of strings merged; 2) one group of strings' parens stripped. This new `line` is then re-checked by those transformers. This is `O(n^2)` complexity.\r\n\r\nSince these transformers won't cause line breaks, the same transforms can be done at one pass, and it only creates one new `line`. The new approach is `O(n)`.\r\n\r\nTested on the example from #3340 (not compiled, since I'm failing to use cibuildwheel to compile with mypyc on my machines):\r\n\r\n1. Before this change, it took ~111 seconds to finish after I increased the recursionlimit to 1M\r\n2. After this change, it took ~3.7s\r\n3. In the stable style without ESP, this file takes ~2.5s. The increase is now sane.\r\n\r\nFixes #3340, since this no longer triggers recursion limit errors.\r\n\r\nHopefully this also solves #2314\r\n\r\n### Checklist - did you ...\r\n\r\n<!-- If any of the following items aren't relevant for your contribution\r\n     please still tick them so we know you've gone through the checklist.\r\n\r\n    All user-facing changes should get an entry. Otherwise, signal to us\r\n    this should get the magical label to silence the CHANGELOG entry check.\r\n    Tests are required for bugfixes and new features. Documentation changes\r\n    are necessary for formatting and most enhancement changes. -->\r\n\r\n- [x] Add an entry in `CHANGES.md` if necessary?\r\n- [x] Add / update tests if necessary?\r\n- [x] Add new / update outdated documentation?\r\n\r\n<!-- Just as a reminder, everyone in all psf/black spaces including PRs\r\n     must follow the PSF Code of Conduct (link below).\r\n\r\n     Finally, once again thanks for your time and effort. If you have any\r\n     feedback in regards to your experience contributing here, please\r\n     let us know!\r\n\r\n     Helpful links:\r\n\r\n      PSF COC: https://www.python.org/psf/conduct/\r\n      Contributing docs: https://black.readthedocs.io/en/latest/contributing/index.html\r\n      Chat on Python Discord: https://discord.gg/RtVdv86PrH -->\n\nmaximum recursion depth exceeded while calling a Python object\n\n**Describe the bug**\r\n\r\nWhen running black using pre-commit against a generated Django migration file, the following error is observed:  \r\n```\r\n➜  backend git:(main) ✗ pre-commit run black --all-files             \r\nblack....................................................................Failed\r\n- hook id: black\r\n- exit code: 123\r\n\r\nerror: cannot format backend/src/black_test.py: maximum recursion depth exceeded while calling a Python object\r\n\r\nOh no! 💥 💔 💥\r\n167 files left unchanged, 1 file failed to reformat.\r\n```\r\n\r\n**To Reproduce**\r\n\r\nHere is a file that can reproduce the above issue: https://gist.github.com/trumpet2012/057e1e6bc381081e06a2eaf9e22db45a\r\n\r\nInstall pre-commit: https://pre-commit.com/index.html#installation\r\n\r\nOur pre-commit config is:\r\n```yaml\r\ndefault_language_version:\r\n  python: python3\r\nexclude: (^|/)\\.idea/\r\nrepos:\r\n  - repo: https://github.com/psf/black\r\n    rev: 22.10.0\r\n    hooks:\r\n      - id: black\r\n        args:\r\n          # enable preview mode to get the new string processing\r\n          - --preview\r\n```\r\n\r\nThen running:\r\n\r\n```sh\r\n$ pre-commit run black --all-files\r\n```\r\n\r\nResults in the above error.\r\n\r\n**Expected behavior**\r\n\r\nBlack should be able to correctly reformat the file.\r\n\r\n**Environment**\r\n\r\n- Black's version: 22.10.0\r\n- OS and Python version: Mac OS Monterey, Python 3.9.14\r\n- pre-commit version: 2.20.0\r\n\r\n**Additional context**\r\nIt works when you run black without the `--preview` flag.\r\n\r\nInterestingly, it also works running black directly (bypassing pre-commit) even with the `--preview` flag enabled.\r\n\r\nAlso when I was generating the example file above, I was going through and replacing our internal column names and help text with fake data and when I replaced the `help_text=` strings with just `Lorem ipsum dolores` it also worked correctly. Increasing the length of the help text strings then caused the issue to reappear.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-3467"
+    },
+    {
+      "base_sha": "f03ee113c9f3dfeb477f2d4247bfb7de2e5f465c",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 81,
+              "start_line": 80
+            },
+            {
+              "end_line": 1514,
+              "start_line": 1514
+            },
+            {
+              "end_line": 1525,
+              "start_line": 1525
+            },
+            {
+              "end_line": 1535,
+              "start_line": 1535
+            }
+          ],
+          "path": "src/black/__init__.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 157,
+              "start_line": 157
+            },
+            {
+              "end_line": 170,
+              "start_line": 170
+            },
+            {
+              "end_line": 182,
+              "start_line": 182
+            },
+            {
+              "end_line": 194,
+              "start_line": 194
+            },
+            {
+              "end_line": 197,
+              "start_line": 197
+            },
+            {
+              "end_line": 200,
+              "start_line": 200
+            },
+            {
+              "end_line": 218,
+              "start_line": 218
+            },
+            {
+              "end_line": 220,
+              "start_line": 220
+            }
+          ],
+          "path": "src/black/parsing.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 1479,
+              "start_line": 1476
+            },
+            {
+              "end_line": 1974,
+              "start_line": 1965
+            }
+          ],
+          "path": "tests/test_black.py"
+        }
+      ],
+      "head_sha": "6af7d1109693c4ad3af08ecbc34649c232b47a6d",
+      "pr_number": 4270,
+      "query": "Fix AST safety check false negative\n\nFixes #4268\r\n\r\nPreviously we would allow whitespace changes in all strings, now\r\nonly in docstrings.\n\nAST safety check fails to catch incorrect f-string change\n\n**Describe the style change**\r\n\r\nI wonder if f-strings should be formatted at all.\r\n\r\n**Examples in the current _Black_ style**\r\n\r\n```python\r\nprint(f\"{\"|\".join(['a','b','c'])}\")\r\n```\r\n\r\n**Desired style**\r\n\r\n```python\r\nprint(f\"{\"|\".join(['a','b','c'])}\")\r\n```\r\n\r\n> [!NOTE]\r\n> There's no change to the input here.\r\n\r\n**Additional context**\r\n\r\nBlack formats the `\"|\"` to become `\" | \"` and that affects the output which cannot be desired.\r\n\r\nBlack formats the snippet like this currently:\r\n\r\n```python\r\nprint(f\"{\" | \".join(['a','b','c'])}\")\r\n```",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-4270"
+    },
+    {
+      "base_sha": "7b5a657285f38126bf28483478bbd9ea928077ec",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 17,
+              "start_line": 17
+            },
+            {
+              "end_line": 64,
+              "start_line": 54
+            }
+          ],
+          "path": "src/black/strings.py"
+        }
+      ],
+      "head_sha": "f00093672628d212b8965a8993cee8bedf5fe9b8",
+      "pr_number": 4278,
+      "query": "Fix catastrophic performance in lines_with_leading_tabs_expanded()",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-4278"
+    },
+    {
+      "base_sha": "ba88fc372eaed34abb33ea02d6860b185388d928",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 501,
+              "start_line": 501
+            },
+            {
+              "end_line": 504,
+              "start_line": 503
+            },
+            {
+              "end_line": 506,
+              "start_line": 506
+            },
+            {
+              "end_line": 545,
+              "start_line": 545
+            },
+            {
+              "end_line": 551,
+              "start_line": 551
+            },
+            {
+              "end_line": 575,
+              "start_line": 575
+            },
+            {
+              "end_line": 597,
+              "start_line": 597
+            },
+            {
+              "end_line": 601,
+              "start_line": 600
+            },
+            {
+              "end_line": 622,
+              "start_line": 622
+            },
+            {
+              "end_line": 690,
+              "start_line": 690
+            },
+            {
+              "end_line": 721,
+              "start_line": 721
+            },
+            {
+              "end_line": 725,
+              "start_line": 724
+            },
+            {
+              "end_line": 728,
+              "start_line": 728
+            },
+            {
+              "end_line": 737,
+              "start_line": 737
+            },
+            {
+              "end_line": 758,
+              "start_line": 757
+            },
+            {
+              "end_line": 761,
+              "start_line": 761
+            },
+            {
+              "end_line": 765,
+              "start_line": 765
+            },
+            {
+              "end_line": 777,
+              "start_line": 777
+            },
+            {
+              "end_line": 794,
+              "start_line": 794
+            },
+            {
+              "end_line": 816,
+              "start_line": 816
+            },
+            {
+              "end_line": 851,
+              "start_line": 851
+            },
+            {
+              "end_line": 855,
+              "start_line": 854
+            },
+            {
+              "end_line": 867,
+              "start_line": 867
+            },
+            {
+              "end_line": 922,
+              "start_line": 922
+            },
+            {
+              "end_line": 943,
+              "start_line": 943
+            },
+            {
+              "end_line": 947,
+              "start_line": 946
+            },
+            {
+              "end_line": 952,
+              "start_line": 952
+            },
+            {
+              "end_line": 1002,
+              "start_line": 1001
+            },
+            {
+              "end_line": 1005,
+              "start_line": 1005
+            },
+            {
+              "end_line": 1013,
+              "start_line": 1007
+            }
+          ],
+          "path": "src/blib2to3/pgen2/tokenize.py"
+        }
+      ],
+      "head_sha": "e4aaa8a9947d951eb1e69979c3c58e197adbe40f",
+      "pr_number": 4332,
+      "query": "Fix incorrect f-string tokenization\n\nFixes #4329 \r\n\r\nI didn't understand how the f-string state machine worked, so I made the state more explicit and now it seems to work. I'll want to try it on more real-world code before merging this though.\n\nBlack cannot parse previously parseable file in 24.4.1\n\n**Describe the bug**\r\n\r\nThe newest version of `black` started failing on our CI due to an error about not being able to parse a line that it used to be able to parse just fine.\r\n\r\n**To Reproduce**\r\n\r\nOn the file [pyomo/contrib/pyros/util.py](https://github.com/Pyomo/pyomo/blob/main/pyomo/contrib/pyros/util.py): `black pyomo/contrib/pyros/util.py`\r\n\r\n\r\nThe resulting error is:\r\n\r\n> error: cannot format pyomo/contrib/pyros/util.py: Cannot parse: 2009:77:             return f\"{attr_val_str:{f'{self._ATTR_FORMAT_LENGTHS[attr_name]}'}}\"\r\n\r\n**Expected behavior**\r\n\r\nIt doesn't just error and fail on that file.\r\n\r\n**Environment**\r\n\r\n- Black's version: 24.4.1\r\n- OS and Python version: MacOS 3.11; Ubuntu 22.04 3.10",
+      "query_leakage_flags": {
+        "direct_line_number": true,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-4332"
+    },
+    {
+      "base_sha": "2b13ea76fa69d4923381df65deb1a5c896ca27ad",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 155,
+              "start_line": 155
+            },
+            {
+              "end_line": 158,
+              "start_line": 158
+            }
+          ],
+          "path": "scripts/release.py"
+        }
+      ],
+      "head_sha": "d2490e24dad33b8f68c77602ee29160de0fea24b",
+      "pr_number": 5131,
+      "query": "Prepare release 26.5.0\n\nI also took the liberty to update a few version examples that aren't updated by release.py. These ones aren't as big a deal because they're more obviously only examples. They're also only the major version, so it should be possible to just remember to change them every January",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "psf/black",
+      "repository_url": "https://github.com/psf/black",
+      "task_id": "real_oss_thesis_v1:psf__black:pr-5131"
+    },
+    {
+      "base_sha": "ed6fd4933f8b611a2fb0cbd2a25a3f754ecffcce",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 10,
+              "start_line": 10
+            },
+            {
+              "end_line": 17,
+              "start_line": 17
+            },
+            {
+              "end_line": 24,
+              "start_line": 24
+            },
+            {
+              "end_line": 49,
+              "start_line": 46
+            },
+            {
+              "end_line": 52,
+              "start_line": 51
+            }
+          ],
+          "path": "scrapy/contrib/downloadermiddleware/ajaxcrawlable.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 21,
+              "start_line": 21
+            },
+            {
+              "end_line": 84,
+              "start_line": 84
+            }
+          ],
+          "path": "scrapy/settings/default_settings.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 3,
+              "start_line": 3
+            },
+            {
+              "end_line": 8,
+              "start_line": 8
+            },
+            {
+              "end_line": 10,
+              "start_line": 10
+            },
+            {
+              "end_line": 14,
+              "start_line": 13
+            },
+            {
+              "end_line": 35,
+              "start_line": 35
+            },
+            {
+              "end_line": 45,
+              "start_line": 45
+            }
+          ],
+          "path": "scrapy/tests/test_downloadermiddleware_ajaxcrawlable.py"
+        }
+      ],
+      "head_sha": "eff55828c4341fa8fcc07356c4200dfa65d32988",
+      "pr_number": 538,
+      "query": "[MRG] Rename AjaxCrawlableMiddleware to AjaxCrawlMiddleware\n\nAs per discussion in https://github.com/scrapy/scrapy/pull/343",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-538"
+    },
+    {
+      "base_sha": "7814cbf3197605a1b125f061a78cde015a934819",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 9,
+              "start_line": 9
+            }
+          ],
+          "path": "scrapy/__init__.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 20,
+              "start_line": 20
+            },
+            {
+              "end_line": 23,
+              "start_line": 23
+            }
+          ],
+          "path": "scrapy/utils/url.py"
+        }
+      ],
+      "head_sha": "b39ddfd5d4131a7ace09b163237b808dff7af6c4",
+      "pr_number": 693,
+      "query": "Support case-insensitive domains in url_is_from_any_domain()",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-693"
+    },
+    {
+      "base_sha": "e8635cd03cfb5aae26c7b324411f63afee45fd07",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 118,
+              "start_line": 110
+            }
+          ],
+          "path": "scrapy/core/downloader/handlers/http11.py"
+        }
+      ],
+      "head_sha": "286a9dd7c7c9a291fd3c8f4e1794da2906c6607e",
+      "pr_number": 1827,
+      "query": "[MRG+1] Extract a function to build CONNECT request; add tests for it.\n\nThis is to prevent regressions like those fixed by GH-1808.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-1827"
+    },
+    {
+      "base_sha": "b8fcb46e6789bd8b1a11acb142e4af6b1b03ffdc",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 33,
+              "start_line": 33
+            }
+          ],
+          "path": "scrapy/linkextractors/__init__.py"
+        }
+      ],
+      "head_sha": "0e288d4a711f061a01a951d2e1d9892f737211e0",
+      "pr_number": 1835,
+      "query": "[MRG+1] Add pps extension to IGNORED_EXTENSIONS\n\nIssue #1834 , extend IGNORED_EXTENSIONS in linkextractors with pps.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-1835"
+    },
+    {
+      "base_sha": "776129a9513e2b6ab6f7e8cda1dd3de66cbbff44",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 23,
+              "start_line": 23
+            }
+          ],
+          "path": "scrapy/cmdline.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 283,
+              "start_line": 282
+            },
+            {
+              "end_line": 295,
+              "start_line": 292
+            },
+            {
+              "end_line": 349,
+              "start_line": 349
+            }
+          ],
+          "path": "scrapy/core/downloader/handlers/http11.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 18,
+              "start_line": 18
+            },
+            {
+              "end_line": 177,
+              "start_line": 177
+            },
+            {
+              "end_line": 202,
+              "start_line": 202
+            }
+          ],
+          "path": "tests/mockserver.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 32,
+              "start_line": 32
+            },
+            {
+              "end_line": 40,
+              "start_line": 40
+            },
+            {
+              "end_line": 187,
+              "start_line": 186
+            }
+          ],
+          "path": "tests/test_downloader_handlers.py"
+        }
+      ],
+      "head_sha": "6c1cacb5d5f0e5523d429cb89808dabfd824dcd5",
+      "pr_number": 2676,
+      "query": "[MRG+1] doc: fix documentation error in link-extractor.rst\n\nThis PR adds the missing word \"from\" that makes up statement \r\n```python\r\nfrom scrapy.linkextractors import LinkExtractor\r\n``` \r\nin link-extractor's documentation.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-2676"
+    },
+    {
+      "base_sha": "214525c2c16cb527a00e31ce47d274266cb5d418",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 84,
+              "start_line": 83
+            }
+          ],
+          "path": "scrapy/downloadermiddlewares/cookies.py"
+        }
+      ],
+      "head_sha": "6c858cec91b013853a73e6215b74c90b609bc2da",
+      "pr_number": 5253,
+      "query": "Cookies: Cast primitive types to str\n\nThis fix #5252 issue. Basically we cast to string all primitive types.\n\nints in Cookies are not getting parsed correctly\n\n<!--\r\n\r\nThanks for taking an interest in Scrapy!\r\n\r\nIf you have a question that starts with \"How to...\", please see the Scrapy Community page: https://scrapy.org/community/.\r\nThe GitHub issue tracker's purpose is to deal with bug reports and feature requests for the project itself.\r\n\r\nKeep in mind that by filing an issue, you are expected to comply with Scrapy's Code of Conduct, including treating everyone with respect: https://github.com/scrapy/scrapy/blob/master/CODE_OF_CONDUCT.md\r\n\r\nThe following is a suggested template to structure your issue, you can find more guidelines at https://doc.scrapy.org/en/latest/contributing.html#reporting-bugs\r\n\r\n-->\r\n\r\n### Description\r\n\r\nUsing an int in a cookie causes the spider to not work. Replacing the int with a str fixes the problem.\r\n\r\n### Steps to Reproduce\r\n\r\nFailing Code Example:\r\n```\r\nrequest = scrapy.Request(\r\n      url = url, \r\n      callback = callback\r\n)\r\nrequest.cookies['some_cookie'] = 1\r\n```\r\n\r\nSuccessful Code Example:\r\n```\r\nrequest = scrapy.Request(\r\n      url = url, \r\n     callback = callback\r\n)\r\nrequest.cookies['some_cookie'] = '1'\r\n```\r\n\r\n**Expected behavior:** I expect that an int should be parsed to a str without me needing to do it myself.\r\n\r\n**Actual behavior:** Get following error:\r\n\r\n```\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\twisted\\internet\\defer.py\", line 1661, in _inlineCallbacks\r\n    result = current_context.run(gen.send, result)\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\core\\downloader\\middleware.py\", line 36, in process_request\r\n    response = yield deferred_from_coro(method(request=request, spider=spider))\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\downloadermiddlewares\\cookies.py\", line 32, in process_request\r\n    for cookie in self._get_request_cookies(jar, request):\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\downloadermiddlewares\\cookies.py\", line 109, in _get_request_cookies\r\n    response = Response(request.url, headers={\"Set-Cookie\": formatted})\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\http\\response\\__init__.py\", line 32, in __init__\r\n    self.headers = Headers(headers or {})\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\http\\headers.py\", line 11, in __init__\r\n    super().__init__(seq)\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\utils\\datatypes.py\", line 20, in __init__\r\n    self.update(seq)\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\utils\\datatypes.py\", line 56, in update\r\n    super().update(iseq)\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\utils\\datatypes.py\", line 55, in <genexpr>\r\n    iseq = ((self.normkey(k), self.normvalue(v)) for k, v in seq)\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\http\\headers.py\", line 26, in normvalue\r\n    return [self._tobytes(x) for x in value]\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\http\\headers.py\", line 26, in <listcomp>\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\downloadermiddlewares\\cookies.py\", line 108, in <genexpr>\r\n    formatted = filter(None, (self._format_cookie(c, request) for c in cookies))\r\n  File \"C:\\Users\\Michael\\AppData\\Local\\Programs\\Python\\Python39\\lib\\site-packages\\scrapy\\downloadermiddlewares\\cookies.py\", line 87, in _format_cookie\r\n    decoded[key] = cookie[key].decode(\"utf8\")\r\nAttributeError: 'int' object has no attribute 'decode'\r\n```\r\n\r\n**Reproduces how often:** [What percentage of the time does it reproduce?]\r\n\r\n### Versions\r\n\r\nScrapy       : 2.5.0\r\nlxml         : 4.6.3.0\r\nlibxml2      : 2.9.5\r\ncssselect    : 1.1.0\r\nparsel       : 1.6.0\r\nw3lib        : 1.22.0\r\nTwisted      : 21.7.0\r\nPython       : 3.9.7 (tags/v3.9.7:1016ef3, Aug 30 2021, 20:19:38) [MSC v.1929 64 bit (AMD64)]\r\npyOpenSSL    : 21.0.0 (OpenSSL 1.1.1l  24 Aug 2021)\r\ncryptography : 35.0.0\r\nPlatform     : Windows-10-10.0.19043-SP0\r\n\r\n### Additional context\r\n\r\nfrom scrapy.http import Request\r\n\r\nFailing Code Example:\r\n```\r\nrequest = scrapy.Request(\r\n      url = url, \r\n      callback = callback\r\n)\r\nrequest.cookies['some_cookie'] = 1\r\n```\r\n\r\nSuccessful Code Example:\r\n```\r\nrequest = scrapy.Request(\r\n      url = url, \r\n     callback = callback\r\n)\r\nrequest.cookies['some_cookie'] = '1'\r\n```\r\n\r\n(edited to add code formatting to the traceback)",
+      "query_leakage_flags": {
+        "direct_line_number": true,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": true
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-5253"
+    },
+    {
+      "base_sha": "cfff79cee6a97528185b7d24e2b660b99c07945f",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 6,
+              "start_line": 6
+            },
+            {
+              "end_line": 8,
+              "start_line": 8
+            }
+          ],
+          "path": "scrapy/utils/defer.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 34,
+              "start_line": 34
+            }
+          ],
+          "path": "tests/test_pipelines.py"
+        }
+      ],
+      "head_sha": "144d1eb8341c427fa1fae109db3e9487f255d3fe",
+      "pr_number": 5288,
+      "query": "Add deferred_to_future helpers and related docs.\n\nThis extracts some code (and some generic docs fixes) from #4978 that is useful in the current Scrapy version too.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-5288"
+    },
+    {
+      "base_sha": "283e1eb302fe80430cc152de57fd9a570d74c6ba",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 231,
+              "start_line": 231
+            }
+          ],
+          "path": "scrapy/pipelines/files.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 604,
+              "start_line": 604
+            }
+          ],
+          "path": "tests/test_pipeline_files.py"
+        }
+      ],
+      "head_sha": "d47c732ae9ebda84c689563048919923ddb17383",
+      "pr_number": 5891,
+      "query": "Replace the raw checksum with b64 decoded checksum for GCS\n\nFixes #5874 \r\n\r\nReplace the raw checksum with b64 decoded checksum for GCS\n\nScrapy does not decode base64 MD5 checksum from GCS\n\n<!--\r\n\r\nThanks for taking an interest in Scrapy!\r\n\r\nIf you have a question that starts with \"How to...\", please see the Scrapy Community page: https://scrapy.org/community/.\r\nThe GitHub issue tracker's purpose is to deal with bug reports and feature requests for the project itself.\r\n\r\nKeep in mind that by filing an issue, you are expected to comply with Scrapy's Code of Conduct, including treating everyone with respect: https://github.com/scrapy/scrapy/blob/master/CODE_OF_CONDUCT.md\r\n\r\nThe following is a suggested template to structure your issue, you can find more guidelines at https://doc.scrapy.org/en/latest/contributing.html#reporting-bugs\r\n\r\n-->\r\n\r\n### Description\r\n\r\nIncorrect GCS Checksum processing\r\n\r\n### Steps to Reproduce\r\n\r\n1. Obtain the checksum for an up-to-date file.\r\n\r\n**Expected behavior:** [What you expect to happen]\r\nmatches the checksum of the file downloaded\r\n**Actual behavior:** [What actually happens]\r\nNOT matches the checksum of the file downloaded\r\n**Reproduces how often:** [What percentage of the time does it reproduce?]\r\nAlways\r\n### Versions\r\ncurrent\r\n\r\n### Additional context\r\n\r\nhttps://cloud.google.com/storage/docs/json_api/v1/objects\r\n> MD5 hash of the data, encoded using [base64](https://datatracker.ietf.org/doc/html/rfc4648#section-4).\r\n\r\nBut, Scrapy dose not decode MD5 from GCS.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-5891"
+    },
+    {
+      "base_sha": "b50c032ee9a75d1c9b42f1126637fdc655b141a8",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 103,
+              "start_line": 103
+            },
+            {
+              "end_line": 107,
+              "start_line": 107
+            }
+          ],
+          "path": "scrapy/http/response/text.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 54,
+              "start_line": 54
+            }
+          ],
+          "path": "scrapy/responsetypes.py"
+        }
+      ],
+      "head_sha": "6a169d44620a935d960ed63f4aa3fca420788404",
+      "pr_number": 5917,
+      "query": "fix: non-UTF-8 content-type headers\n\nResolve #5914\r\n\r\nApplied the proposed solution: https://github.com/scrapy/scrapy/issues/5914#issuecomment-1527319928\r\n\r\n⚠️ Failed tests don't have anything to do with the change.\n\nException with non-UTF-8 Content-Type\n\n<!--\r\n\r\nThanks for taking an interest in Scrapy!\r\n\r\nIf you have a question that starts with \"How to...\", please see the Scrapy Community page: https://scrapy.org/community/.\r\nThe GitHub issue tracker's purpose is to deal with bug reports and feature requests for the project itself.\r\n\r\nKeep in mind that by filing an issue, you are expected to comply with Scrapy's Code of Conduct, including treating everyone with respect: https://github.com/scrapy/scrapy/blob/master/CODE_OF_CONDUCT.md\r\n\r\nThe following is a suggested template to structure your issue, you can find more guidelines at https://doc.scrapy.org/en/latest/contributing.html#reporting-bugs\r\n\r\n-->\r\n\r\n### Description\r\n\r\nI am trying to download a document from the link http://pravo.gov.ru/proxy/ips/?savertf=&link_id=0&nd=128284801&intelsearch=&firstDoc=1&page=all\r\nEverything works fine in the browser, but when I try to automate this process through scrapy, everything break down.\r\n### Steps to Reproduce\r\n\r\n1.Create new spider `scrapy genspider test pravo.gov.ru`\r\n2. Paste code\r\n```\r\nimport scrapy\r\n\r\n\r\nclass TestSpider(scrapy.Spider):\r\n    name = \"test\"\r\n    allowed_domains = [\"pravo.gov.ru\"]\r\n    start_urls = [\"http://pravo.gov.ru/proxy/ips/\"]\r\n\r\n    def parse(self, response):\r\n        yield scrapy.Request(\r\n            self.start_urls[0] + f'?savertf=&link_id=0&nd=128284801&intelsearch=&firstDoc=1&page=all',\r\n            callback=self.test_parse,\r\n            encoding='cp1251') #The same behavior without this line\r\n           \r\n\r\n    def test_parse(self, response):\r\n        pass\r\n```\r\n\r\n4. run\r\n***OR***\r\nrun `scrapy fetch http://pravo.gov.ru/proxy/ips/?savertf=&link_id=0&nd=128284801&intelsearch=&firstDoc=1&page=all\"\"`\r\n**Expected behavior:** The document on the link is downloaded\r\n**Actual behavior:** \r\n2023-04-28 00:07:35 [scrapy.core.scraper] ERROR: Error downloading <GET http://pravo.gov.ru/proxy/ips/?savertf=&link_id=0&nd=128284801&intelsearch=&fir\r\nstDoc=1&page=all>\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\twisted\\internet\\defer.py\", line 1693, in _inlineCallbacks\r\n    result = context.run(\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\twisted\\python\\failure.py\", line 518, in throwExceptionIntoGenerator\r\n    return g.throw(self.type, self.value, self.tb)\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\scrapy\\core\\downloader\\middleware.py\", line 52, in process_request\r\n    return (yield download_func(request=request, spider=spider))\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\twisted\\internet\\defer.py\", line 892, in _runCallbacks\r\n    current.result = callback(  # type: ignore[misc]\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\scrapy\\core\\downloader\\handlers\\http11.py\", line 501, in _cb_bodydone\r\n    respcls = responsetypes.from_args(headers=headers, url=url, body=result[\"body\"])\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\scrapy\\responsetypes.py\", line 113, in from_args\r\n    cls = self.from_headers(headers)\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\scrapy\\responsetypes.py\", line 75, in from_headers\r\n    cls = self.from_content_type(\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\scrapy\\responsetypes.py\", line 55, in from_content_type\r\n    mimetype = to_unicode(content_type).split(\";\")[0].strip().lower()\r\n  File \"C:\\Users\\Admin\\AppData\\Roaming\\Python\\Python310\\site-packages\\scrapy\\utils\\python.py\", line 97, in to_unicode\r\n    return text.decode(encoding, errors)\r\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xcf in position 33: invalid continuation byte\r\n\r\n**Reproduces how often:** 100% runs\r\n\r\n### Versions\r\n\r\nScrapy       : 2.8.0\r\nlxml         : 4.9.2.0\r\nlibxml2      : 2.9.12\r\ncssselect    : 1.2.0\r\nparsel       : 1.8.1\r\nw3lib        : 2.1.1\r\nTwisted      : 22.10.0\r\nPython       : 3.10.9 | packaged by Anaconda, Inc. | (main, Mar  1 2023, 18:18:15) [MSC v.1916 64 bit (AMD64)]\r\npyOpenSSL    : 23.1.1 (OpenSSL 3.1.0 14 Mar 2023)\r\ncryptography : 40.0.2\r\nPlatform     : Windows-10-10.0.19044-SP0\r\n### Additional context\r\n\r\nThese documents are encoded in cp1251 encoding, which is clearly indicated in their headers :  \r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=\"windows-1251\"\r\nThe same behavior when trying to save a file using FilesPipeline",
+      "query_leakage_flags": {
+        "direct_line_number": true,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": true
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-5917"
+    },
+    {
+      "base_sha": "ceedb026f8c8ccb049187baa14202f98b2a3a60c",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 48,
+              "start_line": 48
+            },
+            {
+              "end_line": 52,
+              "start_line": 52
+            }
+          ],
+          "path": "scrapy/extensions/closespider.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 6,
+              "start_line": 6
+            }
+          ],
+          "path": "tests/test_closespider.py"
+        }
+      ],
+      "head_sha": "06f9c289d1c92dbb8e41a837b886e5cadb81a061",
+      "pr_number": 6434,
+      "query": "Feature/closespider pagecount no item\n\nRecently I had a use case where I needed to ensure that the crawler didn't perform too many requests without getting items in return. Even though `CLOSESPIDER_ERRORCOUNT` and `CLOSESPIDER_TIMEOUT_NO_ITEM` exist, they didn't cover all possible cases.\r\n- `CLOSESPIDER_ERRORCOUNT`: Requests that don't raise errors but don't produce items.\r\n- `CLOSESPIDER_TIMEOUT_NO_ITEM`: Maybe requests are slower or faster than expected, especially when rendering pages or performing complex actions. \r\n\r\nWould it be a good idea to add this as a possible setting? \r\n\r\nThe changes add the possibility for a `CLOSESPIDER_PAGECOUNT_NO_ITEM: int` setting. Every `response_received` a counter is incremented and every `item_scraped` it's reset to 0. When the counter reaches or passes the setting value the spider is closed, since it crawled n pages with no items scraped.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "scrapy/scrapy",
+      "repository_url": "https://github.com/scrapy/scrapy",
+      "task_id": "real_oss_thesis_v1:scrapy__scrapy:pr-6434"
+    },
+    {
+      "base_sha": "f84988ab3c59e731b6481031721a1ee19a5acc10",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 352,
+              "start_line": 352
+            },
+            {
+              "end_line": 356,
+              "start_line": 356
+            }
+          ],
+          "path": "poetry/repositories/legacy_repository.py"
+        }
+      ],
+      "head_sha": "a9d6ca08e43da3daf2fe8dcb184e0d2f5a67a8ad",
+      "pr_number": 719,
+      "query": "Fix sonnet handling of single specified pythons\n\nI noticed that sonnet was erroring when given a command like::\r\n\r\n    sonnet -P 3.7\r\n\r\nIt's possible I'm misunderstanding the expected syntax of the command, but I think this commit fixes the issue.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-719"
+    },
+    {
+      "base_sha": "3c7592c2f3d481f5e655a68fc1fa15c5bc024cda",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 226,
+              "start_line": 224
+            }
+          ],
+          "path": "poetry/repositories/pypi_repository.py"
+        }
+      ],
+      "head_sha": "58ba79c997bc3331c0f7a3f2de679b26cfbab761",
+      "pr_number": 1346,
+      "query": "Fix ValueError when finding packages with invalid metadata\n\nSome packages (like `pygame-music-grid`) have unparseable metadata. This resulted in a ValueError. pip ignores packages like these, so it's reasonable to do the same in poetry itself and only display the well-formed ones.\r\n\r\nFixes #1345.\r\n\r\n\r\n# Pull Request Check List\r\n\r\n- [x] Added **tests** for changed code.\r\n- [ ] Updated **documentation** for changed code.\r\n  - n/a: this is a bugfix\n\nSearching for `pygame` results in ValueError\n\n<!--\r\n  Hi there! Thank you for discovering and submitting an issue.\r\n\r\n  Before you submit this; let's make sure of a few things.\r\n  Please make sure the following boxes are ticked if they are correct.\r\n  If not, please try and fulfill these first.\r\n-->\r\n\r\n<!-- Checked checkbox should look like this: [x] -->\r\n- [x] I am on the [latest](https://github.com/sdispater/poetry/releases/latest) Poetry version.\r\n- [x] I have searched the [issues](https://github.com/sdispater/poetry/issues) of this repo and believe that this is not a duplicate.\r\n- [x] If an exception occurs when executing a command, I executed it again in debug mode (`-vvv` option).\r\n\r\n<!--\r\n  Once those are done, if you're able to fill in the following list with your information,\r\n  it'd be very helpful to whoever handles the issue.\r\n-->\r\n\r\n- **OS version and name**: Ubuntu 19.04\r\n- **Poetry version**: 0.12.17\r\n- **Link of a [Gist](https://gist.github.com/) with the contents of your pyproject.toml file**: n/a (the error is not related to pyproject.toml contents and happens even without one)\r\n\r\n## Issue\r\n<!-- Now feel free to write your issue, but please be descriptive! Thanks again 🙌 ❤️ -->\r\n\r\n### Steps\r\n\r\n1. Run `poetry search pygame`\r\n\r\nThe following exception raised:\r\n\r\n```\r\n[ParseVersionError]  \r\nUnable to parse \".9\".             \r\n                                    \r\nException trace:\r\n /home/tamas/.poetry/lib/poetry/_vendor/py3.6/cleo/application.py in run() at line 94\r\n   status_code = self.do_run(input_, output_)\r\n /home/tamas/.poetry/lib/poetry/console/application.py in do_run() at line 88\r\n   return super(Application, self).do_run(i, o)\r\n /home/tamas/.poetry/lib/poetry/_vendor/py3.6/cleo/application.py in do_run() at line 197\r\n   status_code = command.run(input_, output_)\r\n /home/tamas/.poetry/lib/poetry/console/commands/command.py in run() at line 77\r\n   return super(BaseCommand, self).run(i, o)\r\n /home/tamas/.poetry/lib/poetry/_vendor/py3.6/cleo/commands/base_command.py in run() at line 146\r\n   status_code = self.execute(input_, output_)\r\n /home/tamas/.poetry/lib/poetry/_vendor/py3.6/cleo/commands/command.py in execute() at line 107\r\n   return self.handle()\r\n /home/tamas/.poetry/lib/poetry/console/commands/search.py in handle() at line 20\r\n   results = PyPiRepository().search(self.argument(\"tokens\"), flags)\r\n /home/tamas/.poetry/lib/poetry/repositories/pypi_repository.py in search() at line 224\r\n   result = Package(hit[\"name\"], hit[\"version\"], hit[\"version\"])\r\n /home/tamas/.poetry/lib/poetry/packages/package.py in __init__() at line 40\r\n   self._version = Version.parse(version)\r\n /home/tamas/.poetry/lib/poetry/semver/version.py in parse() at line 205\r\n   raise ParseVersionError('Unable to parse \"{}\".'.format(text))\r\n```\r\n\r\nThis issue was reported before, but closed by the author later: https://github.com/sdispater/poetry/issues/432",
+      "query_leakage_flags": {
+        "direct_line_number": true,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-1346"
+    },
+    {
+      "base_sha": "f897294a707ff694289244641955bb9d14d096b0",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 11,
+              "start_line": 11
+            },
+            {
+              "end_line": 296,
+              "start_line": 296
+            }
+          ],
+          "path": "src/poetry/inspection/info.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 11,
+              "start_line": 11
+            },
+            {
+              "end_line": 90,
+              "start_line": 90
+            },
+            {
+              "end_line": 106,
+              "start_line": 106
+            },
+            {
+              "end_line": 235,
+              "start_line": 235
+            }
+          ],
+          "path": "src/poetry/repositories/http.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 19,
+              "start_line": 19
+            },
+            {
+              "end_line": 1836,
+              "start_line": 1836
+            }
+          ],
+          "path": "src/poetry/utils/env.py"
+        }
+      ],
+      "head_sha": "e38c045c2fb93dd79ed660df06e7c0c30ef385ec",
+      "pr_number": 5636,
+      "query": "partially restore temporary_directory()\n\nPer https://github.com/python-poetry/poetry/pull/5522#issuecomment-1129681924, I think that MR was merged prematurely.\r\n\r\nNo need to restore it completely though: one implementation of `temporary_directory()` is enough - so let's use the one from poetry-core",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-5636"
+    },
+    {
+      "base_sha": "e5bbc60496a2a2b9f9a1d70fbbcac4e411885c08",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 5,
+              "start_line": 4
+            },
+            {
+              "end_line": 80,
+              "start_line": 80
+            },
+            {
+              "end_line": 86,
+              "start_line": 86
+            },
+            {
+              "end_line": 93,
+              "start_line": 93
+            }
+          ],
+          "path": "src/poetry/packages/direct_origin.py"
+        }
+      ],
+      "head_sha": "ee567a727934a856e6c60d77cb51c456f44cef32",
+      "pr_number": 7921,
+      "query": "fix: fix url dependency caching when special urlencoded chars\n\nMinor fix over https://github.com/python-poetry/poetry/pull/7693, ideally to be included in [1.5.0](https://github.com/python-poetry/poetry/issues/7853) as well.\r\n\r\nNoticed that the url dependency caching behaviour was broken when special characters (`+` in the example) are part of the url. Taking the usual PyTorch as example (👀):\r\n- We were storing the wheel on filesystem as `torch-2.0.0%2Bcpu-cp39-cp39-linux_x86_64.whl`\r\n- But we were trying to retrieve from cache `torch-2.0.0+cpu-cp39-cp39-linux_x86_64.whl`\r\n\r\nthus rendering the caching mechanism useless.\r\n\r\nThe fix correctly stores the wheel on filesystem as `torch-2.0.0+cpu-cp39-cp39-linux_x86_64.whl`, making the cache great again.\r\n\r\nDidn't mind adding a test as using `Link` should be the general way to go around the codebase instead of using `os` and `urllib` directly.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-7921"
+    },
+    {
+      "base_sha": "f4f1575481b90988d7afb43fe4312bf8aacbb811",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 79,
+              "start_line": 79
+            },
+            {
+              "end_line": 101,
+              "start_line": 101
+            }
+          ],
+          "path": "tests/console/commands/test_check.py"
+        },
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 527,
+              "start_line": 527
+            },
+            {
+              "end_line": 529,
+              "start_line": 529
+            },
+            {
+              "end_line": 533,
+              "start_line": 533
+            },
+            {
+              "end_line": 542,
+              "start_line": 542
+            },
+            {
+              "end_line": 544,
+              "start_line": 544
+            },
+            {
+              "end_line": 547,
+              "start_line": 547
+            }
+          ],
+          "path": "tests/test_factory.py"
+        }
+      ],
+      "head_sha": "2c3d488e398449bbdfb2114fd35d131bf3b08cf1",
+      "pr_number": 8769,
+      "query": "non-package-mode: make tests forward compatible with poetry-core\n\nPrecondition for python-poetry/poetry-core#661 and thereby for #8650",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-8769"
+    },
+    {
+      "base_sha": "4da0f7cb7ab79b91d7a23ce2211213eb416d4cc5",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 203,
+              "start_line": 203
+            }
+          ],
+          "path": "src/poetry/console/commands/install.py"
+        }
+      ],
+      "head_sha": "d1524532e6a2488c418c16bcded8239218730949",
+      "pr_number": 9651,
+      "query": "Improve error message to highlight solution to user configuration err…\n\n…or highlighted in issue 8662\r\n\r\n# Pull Request Check List\r\n\r\nResolves: #8662\r\n\r\nProvides additional help text error message for `Warning: The current project could not be installed`. I know the issue above is closed but I think this is also very helpful for helping people to understand issue. If you don't agree I won't raise a fuss just thought I'd offer to add add the help text to the error message that would have helped me.\r\n\r\n- [N/A] Added **tests** for changed code. \r\n  - Checked for existing code for tests related to this error message\r\n  - No control flow to change just a error message text \r\n  - Tests still pass on local\r\n- [N/A] Updated **documentation** for changed code.\n\nNo file/folder found for package\n\n<!--\r\n    Hi there! Thank you for helping improve our documentation!\r\n\r\n    Before you submit your issue, please make sure you have completed the checklist below.\r\n-->\r\n\r\n<!-- All the below steps should be completed before submitting your issue. Checked checkbox should look like this: [x] -->\r\n- [X] I have searched the [issues](https://github.com/python-poetry/poetry/issues) of this repo and believe that this is not a duplicate.\r\n\r\n## Issue\r\n```Installing the current project: api_meucx (1.2)\r\nThe current project could not be installed: No file/folder found for package api-meucx\r\nIf you do not want to install the current project use --no-root\r\n```\r\n\r\n### how to reproduce:\r\n``` poetry install ```\r\n\r\nthe error may be here:\r\n![image](https://github.com/python-poetry/poetry/assets/91486755/74414306-3fae-49bc-8a26-e9e54a792f99)\r\n\r\n### what i tried to do:\r\n- [X] change the project name in pyproject.toml\n- [X] reinstall poetry\r\n- [x] reinstall project - delete and git clone again.\r\n- [X] change path name.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-9651"
+    },
+    {
+      "base_sha": "2d59bf67351f283d4f7fbd2615d1a8406cba9c6e",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 107,
+              "start_line": 107
+            },
+            {
+              "end_line": 109,
+              "start_line": 109
+            }
+          ],
+          "path": "src/poetry/console/commands/add.py"
+        }
+      ],
+      "head_sha": "3986d76f42aeb49ea98974eb397034faede7ce93",
+      "pr_number": 10173,
+      "query": "Fix: Documentation/help inconsistency.\n\n# Pull Request Check List\r\n\r\nResolves: #6887\r\n\r\n- [ **N/A** ] Added **tests** for changed code.\r\n- [ **N/A** ] Updated **documentation** for changed code.\r\n\r\n# Description\r\n\r\nEnsure that the documentation examples match those printed by the `--help` command.\n\n## Summary by Sourcery\n\nCorrect the help examples for the `add` command to accurately reflect the supported URL formats.\n\nEnhancements:\n- Standardise URL formats in the documentation and help output.\n\nDocumentation:\n- Update documentation examples to align with the corrected help output.\n\nPoetry add help discrepancy\n\n<!--\r\n    Hi there! Thank you for helping improve our documentation!\r\n\r\n    Before you submit your issue, please make sure you have completed the checklist below.\r\n-->\r\n\r\n<!-- All the below steps should be completed before submitting your issue. Checked checkbox should look like this: [x] -->\r\n- [x] I have searched the [issues](https://github.com/python-poetry/poetry/issues) of this repo and believe that this is not a duplicate.\r\n\r\n## Issue\r\n<!-- Now feel free to write your issue, and please be as descriptive as possible! -->\r\n<!-- Thanks again 🙌 ❤ -->\r\nThere is a discrepancy between the documentation when comparing `poetry add --help` and the webpage https://python-poetry.org/docs/cli/#add\r\n\r\nThe discrepancy is for adding a git repo using ssh:\r\n- webpage:\r\n    ```\r\n    poetry add git+ssh://git@github.com/sdispater/pendulum.git\r\n    # or alternatively:\r\n    poetry add git+ssh://git@github.com:sdispater/pendulum.git\r\n    ```\r\n- CLI help:\r\n    ```\r\n     - A git SSH url (git+ssh://github.com/python-poetry/poetry.git)\r\n    ```\r\n\r\nThe CLI help is missing the \"git@\" part.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": true,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-10173"
+    },
+    {
+      "base_sha": "9e1062a6a351aa618cf7d09add9043a36783edd8",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 24,
+              "start_line": 24
+            },
+            {
+              "end_line": 27,
+              "start_line": 27
+            },
+            {
+              "end_line": 37,
+              "start_line": 36
+            },
+            {
+              "end_line": 49,
+              "start_line": 49
+            },
+            {
+              "end_line": 52,
+              "start_line": 52
+            },
+            {
+              "end_line": 56,
+              "start_line": 56
+            }
+          ],
+          "path": "src/poetry/console/commands/cache/clear.py"
+        }
+      ],
+      "head_sha": "99dc7b299c5a5cea24d3c21daaba2259cf247ca6",
+      "pr_number": 10627,
+      "query": "cache clear: make cache name optional to clear all caches\n\nPeople have already used the workaround `poetry cache clear --all .` or `poetry cache clear --all \"\"`\r\nSee https://github.com/python-poetry/poetry/pull/10585#issuecomment-3567005876.\r\n\r\nLet's have an official (and more obvious option): `poetry cache clear --all`\r\n\r\n# Pull Request Check List\r\n\r\n<!-- This is just a reminder about the most common mistakes. Please make sure that you tick all *appropriate* boxes.  But please read our [contribution guide](https://python-poetry.org/docs/contributing/) at least once, it will save you unnecessary review cycles! -->\r\n\r\n- [x] Added **tests** for changed code.\r\n- [x] Updated **documentation** for changed code.\r\n\r\n<!-- If you have *any* questions to *any* of the points above, just **submit and ask**!  This checklist is here to *help* you, not to deter you from contributing! -->\n\n## Summary by Sourcery\n\nAllow clearing Poetry caches without specifying a cache name and align messaging with the broader behavior.\n\nNew Features:\n- Support clearing all caches with `poetry cache clear --all` without requiring a cache name.\n\nEnhancements:\n- Make the cache name argument optional and generalize user-facing messages when clearing caches.\n\nDocumentation:\n- Document the ability to clear all caches at once and clarify examples for clearing specific repositories.\n\nTests:\n- Add coverage for clearing all caches without a cache name and retain tests for clearing a single repository cache.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": false,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-10627"
+    },
+    {
+      "base_sha": "f9a330f39e87999b1d404610c4fce628a4059659",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 159,
+              "start_line": 159
+            }
+          ],
+          "path": "tests/publishing/test_uploader.py"
+        }
+      ],
+      "head_sha": "9c547e4a86303d0adcadb3d40bbbba80891452c2",
+      "pr_number": 10858,
+      "query": "chore: fix typos\n\nCorrect three spelling mistakes.\r\n\r\nThis updates the GitHub Action output description, fixes a mocked error message in a test, and renames a test file whose name misspelled \"exceptions\". These changes are limited to wording and test file naming, with no intended behavior change.\r\n\r\nCloses #10825\r\n\r\nCherry-picked because https://github.com/python-poetry/poetry/pull/10825#pullrequestreview-4095022220",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-10858"
+    },
+    {
+      "base_sha": "1213c05b9172b753970982a7a90efc6cc3167934",
+      "changed_python_paths": [
+        {
+          "base_line_ranges": [
+            {
+              "end_line": 268,
+              "start_line": 268
+            },
+            {
+              "end_line": 273,
+              "start_line": 273
+            },
+            {
+              "end_line": 293,
+              "start_line": 291
+            }
+          ],
+          "path": "src/poetry/plugins/plugin_manager.py"
+        }
+      ],
+      "head_sha": "d83f6c05b70fae6572765015520368db59b7f31c",
+      "pr_number": 10872,
+      "query": "fix mis-named variable\n\nThe packages passed here were `installed_packages` when the caller gathered them up and are used to make an `InstalledRepository`.  `locked_packages` seems like not the right name.",
+      "query_leakage_flags": {
+        "direct_line_number": false,
+        "explicit_file_path": false,
+        "explicit_symbol_name": true,
+        "patch_like_code_block": false,
+        "stack_trace": false
+      },
+      "repository_slug": "python-poetry/poetry",
+      "repository_url": "https://github.com/python-poetry/poetry",
+      "task_id": "real_oss_thesis_v1:python-poetry__poetry:pr-10872"
+    }
+  ],
+  "selection_seed": 20260607,
+  "task_count": 50,
+  "tasks_per_repository": 10
+}
