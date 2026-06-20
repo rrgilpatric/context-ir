@@ -60,6 +60,21 @@ The April 13 frozen spec is retired and superseded. It remains part of the histo
 
 ### Canonical Active Release-State Block
 
+Current autonomous mode:
+
+- Ryan authorized Autonomous Control Run Tier 2 on 2026-06-20.
+- The control lane may create bounded execution/audit lanes, issue in-scope
+  correction prompts, run release-unit audit/full-regression/commit-gating, sync
+  continuity, and stage/create local commits for clean release units after gates
+  pass.
+- Push remains separately Ryan-authorized.
+- The control lane must still hold for Ryan before accepting or advancing past
+  any unresolved finding or risk, expanding scope, adding backlog, changing
+  public claims or external-facing positioning, running provider/network/API
+  work, downloading external repositories, creating Voyage embeddings, producing
+  scoring results, deploying, publishing, deleting, or performing destructive
+  git/file operations.
+
 Current active program:
 
 - adversarial review repair program authorized by Ryan after outside Claude Code
@@ -158,7 +173,13 @@ Current active program:
     pushed in commit `49791f8 Add real OSS task manifest contracts`; this
     establishes the frozen v1 contract from pre-collected candidate records but
     does not generate the selected task manifest, run providers, download repos,
-    create embeddings, score results, or widen public claims.
+    create embeddings, score results, or widen public claims. The internal
+    analyzer-independent real-OSS BM25 baseline contracts are pushed in commit
+    `1ec0c21 Add real OSS BM25 baseline contracts`; this establishes
+    tracked-file-only raw `.py` discovery, frozen chunking, tokenization, BM25
+    scoring, and deterministic retrieval ranking, but does not generate the
+    selected task manifest, run providers, download repos, create embeddings,
+    score results, or widen public claims.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -236,7 +257,17 @@ Current active program:
       correction, one deterministic Smoke E confidence-only correction to
       `0.0016070953276650542`, read-only release-unit audit, full regression
       with `2213` tests, commit-gating, local commit, and Ryan-authorized push
+  25. internal real-OSS BM25 baseline contracts are pushed in commit
+      `1ec0c21 Add real OSS BM25 baseline contracts` after tracked-file-only
+      discovery and cache-exclusion corrections, deterministic Smoke E
+      confidence-only correction to `0.0016028053266739144`, read-only
+      release-unit audit, full regression with `2221` tests, commit-gating,
+      local commit, and Ryan-authorized push
 - latest pushed release unit:
+  - `src/context_ir/real_oss_thesis_bm25.py`
+  - `tests/test_real_oss_thesis_bm25.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- previous real-OSS task-manifest release unit:
   - `src/context_ir/real_oss_thesis_manifest.py`
   - `tests/test_real_oss_thesis_manifest.py`
   - `tests/test_eval_signal_smoke_e.py`
@@ -257,14 +288,15 @@ Current active program:
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: internal real-OSS task-manifest contracts and
-  deterministic selection helpers are pushed to `origin/main` in commit
-  `49791f8 Add real OSS task manifest contracts`. The pushed artifact
+- current release state: internal real-OSS BM25 baseline contracts are pushed
+  to `origin/main` in commit
+  `1ec0c21 Add real OSS BM25 baseline contracts`. The pushed artifact
   `evals/real_oss_thesis/PRE_REGISTRATION.md` remains pre-result internal
-  thesis evidence only; it is not results and is not a public claim. No selected
+  thesis evidence only; it is not results and is not a public claim. The local
+  task-manifest contract and BM25 baseline contract are in place. No selected
   task manifest has been generated, no provider has run, no repository has been
-  downloaded, no embeddings have been created, no scoring results exist, and no
-  public claim has widened.
+  downloaded, no embeddings have been created, no scoring pipeline exists, no
+  scoring results exist, and no public claim has widened.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -276,15 +308,36 @@ Current active program:
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
   - do not use `voyage-code-3` network/API credentials or run external provider
-    execution until the local real-OSS task-manifest, BM25 baseline, and scoring
-    pipeline are in place and Ryan separately authorizes provider execution
-- next control action: route the next local real-OSS methodology prerequisite
-  slice. The recommended next bounded implementation slice is
-  analyzer-independent BM25 chunking/retrieval contracts over local repository
-  text, with no provider execution, external APIs, repo downloads, embeddings,
-  scoring results, selected task-manifest generation, or public claims.
+    execution until the local scoring pipeline exists, selected task-manifest
+    generation is explicitly authorized, and Ryan separately authorizes provider
+    execution; the task-manifest contracts and BM25 baseline contracts being in
+    place are not provider authorization
+- next control action: route the next local real-OSS methodology prerequisite.
+  The recommended next lane is a read-only scoring-pipeline decomposition or
+  contract spike before implementation. Do not route provider execution,
+  external APIs, repo downloads, embeddings, selected task-manifest generation,
+  scoring-result production, or public claims from this state.
 
 Latest release unit pushed:
+
+- internal real-OSS BM25 baseline contracts
+- pushed release commit:
+  `1ec0c21 Add real OSS BM25 baseline contracts`
+- release state: pushed to `origin/main`; corrected release-unit audit, full
+  regression with `2221` tests, and commit-gating passed. Smoke E changed only
+  `FULL_REPO_TASK3_CONFIDENCE` to `0.0016028053266739144` after preservation
+  locks held.
+- release files:
+  - `src/context_ir/real_oss_thesis_bm25.py`
+  - `tests/test_real_oss_thesis_bm25.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- preserved boundaries:
+  - no selected task manifest generated
+  - no provider execution, external APIs, repo downloads, Voyage embeddings,
+    scoring results, public claims, public docs, eval tasks, eval fixtures, run
+    specs, package-root exports, or scoring pipeline changes
+
+Previous release unit pushed:
 
 - internal real-OSS task-manifest contracts and deterministic selection helpers
 - pushed release commit:
@@ -301,7 +354,7 @@ Latest release unit pushed:
   - no selected task manifest generated
   - no provider execution, external APIs, repo downloads, Voyage embeddings,
     scoring results, public claims, public docs, eval tasks, eval fixtures, run
-    specs, package-root exports, BM25 baseline, or scoring pipeline changes
+    specs, package-root exports, or scoring pipeline changes
 
 Previous release unit pushed:
 
@@ -20136,17 +20189,17 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: choose the next bounded planning or implementation tranche
-from the pushed state. The imported-name dynamic-import default-provider release
-is closed at `e73e007`; do not route it back to release-unit audit, full
-regression, commit-gating, staging, local commit, or push absent new findings.
-The exact 13-file imported dynamic-import literal default-provider release is
-closed at `686242f`, and the earlier exact 17-file dynamic-import root-literal
-default-provider release is closed at `ef10b76`; do not route either back to
-release-unit audit, full regression, commit-gating, staging, local commit, or
-push absent new findings. Do not run Task 4, update public/demo claims, widen
-benchmark/latency/production claims, or generalize runtime acquisition without
-an explicit new control decision.
+Current next route: the real-OSS BM25 baseline contracts are pushed at
+`1ec0c21 Add real OSS BM25 baseline contracts`. Route the next local real-OSS
+methodology prerequisite: a read-only scoring-pipeline decomposition or contract
+spike before implementation. Do not route provider execution, external APIs,
+repo downloads, Voyage embeddings, selected task-manifest generation,
+scoring-result production, public claims, Task 4, composite smoke support,
+runnable demo implementation, or MCP/API expansion from this state.
+
+Earlier imported-name dynamic-import/default-provider releases are closed; do
+not route them back to release-unit audit, full regression, commit-gating,
+staging, local commit, or push absent new findings.
 
 Historical closed-route notes retained below must not override the current next
 route above or the canonical active release-state block.

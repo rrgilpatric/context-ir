@@ -74,6 +74,58 @@ The control lane is empowered but quality-bounded. When in doubt about whether t
 
 **When human input is required and the human is unavailable**, the control lane records the hold with context in PLAN.md and halts. No autonomous advancement past a human-required gate.
 
+### Autonomous Control Run Mode
+
+Ryan may explicitly authorize an autonomous control run for a bounded program or
+phase. This mode keeps the same WoW, review standard, release-state discipline,
+and quality bar, but lets the control lane keep the loop moving without asking
+Ryan to approve every routine in-scope correction or local release step.
+
+Autonomous control run mode does not allow the control lane to waive findings.
+If a finding exists, the control lane must either fix it through a bounded
+in-scope correction loop or hold at a human-required gate. There is still no
+silent "accepted with minor risks."
+
+Allowed autonomous actions, when the active PLAN.md state grants them:
+
+- choose the next slice already authorized by current repo-backed continuity
+- write execution and audit prompts for bounded lanes
+- review returned work findings-first
+- issue in-scope correction prompts without waiting for Ryan when the fix is
+  unambiguous and does not expand scope
+- run focused validation, release-unit audits, full regression, and
+  commit-gating
+- update continuity after a clean release step
+- proceed to the next authorized slice after clean acceptance and continuity
+  sync
+
+Human-gated actions remain human-gated unless Ryan explicitly changes the
+authorization in PLAN.md:
+
+- accepting or advancing past any unresolved finding, risk, or waiver
+- scope expansion or contraction
+- new backlog items
+- public claims, README/PUBLIC_CLAIMS positioning, design direction, or
+  external-facing narrative changes
+- provider execution, external APIs, network/API credentials, Voyage embeddings,
+  external repository downloads, or cost-incurring operations
+- destructive file or git operations
+- deploy, publish, delete, or push to remote
+- continuing the same execution lane after two failed correction prompts
+
+Autonomy tiers:
+
+- **Tier 1: autonomous corrections.** The control lane may issue in-scope
+  correction prompts and rerun gates without Ryan approval. Local commit and
+  push remain separately authorized.
+- **Tier 2: autonomous local commits.** Tier 1 plus permission to stage and
+  create local commits for clean release units after release-unit audit, full
+  regression, and commit-gating pass. Push remains separately authorized by
+  Ryan.
+- **Tier 3: autonomous internal pushes.** Tier 2 plus permission to push clean
+  internal-only release units that do not touch human-gated areas. This tier is
+  active only when PLAN.md explicitly grants it.
+
 ---
 
 ## Operating Model

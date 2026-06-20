@@ -2,6 +2,83 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-20 -- Autonomous Tier 2 Control Run Accepted
+
+- Ryan authorized Autonomous Control Run Tier 2 for the current real-OSS
+  north-star program.
+- The control lane may create bounded execution/audit lanes, issue in-scope
+  correction prompts, run release-unit audit/full-regression/commit-gating, sync
+  continuity, and stage/create local commits for clean release units after gates
+  pass.
+- Push remains separately Ryan-authorized.
+- Human-gated boundaries remain in force: no accepting unresolved findings or
+  risks, no scope expansion, no new backlog items, no public-claim or
+  external-facing positioning changes, no provider/network/API execution, no
+  external repository downloads, no Voyage embeddings, no scoring-result
+  production, no deploy/publish/delete, and no destructive git/file operations
+  without explicit Ryan authorization.
+- Alternatives considered:
+  - keep the prior manual gate after every correction and local commit
+  - authorize only Tier 1 autonomous corrections
+  - authorize Tier 3 autonomous internal pushes
+- Reasoning:
+  - Tier 2 removes routine approval waits for obvious in-scope corrections and
+    clean local commits while preserving human control over risk waivers,
+    external execution, public claims, and remote push
+  - this project has enough repo-backed operating discipline to benefit from a
+    self-propelled control loop, but provider execution and public claims remain
+    too high-impact for autonomous advancement
+- Acceptance status: first-pass.
+
+## 2026-06-20 -- Real OSS BM25 Baseline Contracts Pushed
+
+- Pushed the internal real-OSS BM25 baseline contract release to `origin/main`.
+- Pushed release commit:
+  `1ec0c21 Add real OSS BM25 baseline contracts`
+- Release files:
+  - `src/context_ir/real_oss_thesis_bm25.py`
+  - `tests/test_real_oss_thesis_bm25.py`
+  - `tests/test_eval_signal_smoke_e.py`
+- Behavior and evidence boundary:
+  - added internal analyzer-independent contracts for raw baseline file text,
+    overlapping raw-text chunks, BM25 chunk scores, and deterministic retrieval
+    results
+  - discovery uses tracked `.py` files from `git ls-files`, excludes
+    generated, vendored, build, cache, virtualenv, and tool-cache paths, and
+    rejects untracked local Python files
+  - froze the local BM25 contract to 160 target lines, 40 lines overlap,
+    lowercase Unicode `\w+` tokenization, `k1=1.2`, `b=0.75`, and ordering by
+    score descending, path ascending, then start line ascending
+  - preserved the boundary that no selected task manifest has been generated,
+    no provider has run, no repository has been downloaded, no Voyage embedding
+    has been created, no scoring pipeline exists, no scoring result exists, and
+    no public claim has widened
+- Corrections:
+  - first correction replaced filesystem walking with tracked-file-only
+    discovery and updated only `FULL_REPO_TASK3_CONFIDENCE` to
+    `0.0016028053266739144` after Smoke E preservation locks held
+  - release-unit audit found that plain `cache/` paths were not excluded; the
+    second correction added `cache` to the frozen excluded path parts and
+    covered a tracked `cache/ignored.py` regression
+- Validation:
+  - corrected release-unit audit: passed
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - focused BM25 tests: 8 passed
+  - focused Smoke E Task 3 lock: 1 passed, 7 deselected
+  - full regression: 2221 passed
+  - commit-gating: passed
+- Supersession: the prior next action to route analyzer-independent BM25
+  chunking/retrieval contracts is complete. Current routing is governed by this
+  entry and the canonical active block in `PLAN.md`.
+- Next control action: route the next local real-OSS methodology prerequisite.
+  The recommended next lane is a read-only scoring-pipeline decomposition or
+  contract spike before implementation. Do not route provider execution,
+  external APIs, repo downloads, embeddings, selected task-manifest generation,
+  scoring-result production, or public claims from this state.
+- Acceptance status: accepted after 2 corrections.
+
 ## 2026-06-09 -- Real OSS Task Manifest Contracts Pushed
 
 - Pushed the internal real-OSS task-manifest contract release to `origin/main`.
