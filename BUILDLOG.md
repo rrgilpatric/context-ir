@@ -2,6 +2,55 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-20 -- Real OSS Candidate Acquisition Artifacts Pushed
+
+- Pushed the audited real-OSS candidate acquisition artifacts to `origin/main`.
+- Pushed release commit:
+  `084948a Add real OSS candidate acquisition artifacts`
+- Release files:
+  - `evals/real_oss_thesis/candidate_records.json`
+  - `evals/real_oss_thesis/candidate_records_acquisition.json`
+- Behavior and evidence boundary:
+  - records 3,458 eligible PR candidate records for the pre-registered
+    `real_oss_thesis_v1` experiment
+  - records acquisition provenance with cutoff `2026-06-07T23:59:59Z`,
+    branch-lineage interpretation, scanned counts, eligible counts, excluded
+    counts, corrected changed-Python-file counting rule, and
+    no-forbidden-output notes
+  - deterministic manifest construction can select 50 tasks, 10 per frozen
+    repository, from the committed candidate pool
+  - preserves the boundary that no selected task manifest has been generated,
+    no provider has run, no Voyage embedding has been created, no scoring result
+    exists, and no public claim has widened
+- Corrections:
+  - the first acquisition artifact was rejected after audit found ineligible PRs
+    caused by undercounting changed tracked `.py` files and omitted
+    `python-poetry/poetry` base-side changed Python paths/ranges
+  - the correction regenerated the artifacts from cached GraphQL metadata and
+    local bare git repos, counting every changed tracked `.py` file in the PR
+    diff before applying the frozen threshold
+- Validation:
+  - corrected release-unit audit: no findings
+  - strict candidate loader: 3,458 records, no duplicate repository/PR keys
+  - deterministic manifest build: 50 selected tasks, 10 per frozen repository
+  - full git-truth audit over all records: max changed tracked `.py` files `5`,
+    max total base-side changed lines `151`, max single-file base-side changed
+    lines `80`, path/range mismatch count `0`
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - full regression: 2232 passed
+  - commit-gating: passed
+- Supersession: the prior next action to route selected-task-manifest generation
+  readiness is complete because the candidate pool and acquisition provenance
+  are now committed.
+- Next control action: route selected-task-manifest generation from
+  `evals/real_oss_thesis/candidate_records.json`. Do not route provider
+  execution, external APIs, repo downloads, Voyage embeddings,
+  BM25/scoring-result production, or public claims from this state.
+- Acceptance status: accepted after 1 acquisition correction; pushed after Ryan
+  authorization.
+
 ## 2026-06-20 -- Real OSS Scoring Contracts Pushed
 
 - Pushed the internal real-OSS scoring contract release to `origin/main`.
