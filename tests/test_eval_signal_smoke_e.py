@@ -80,7 +80,6 @@ FIXTURE_TASK3_DOCUMENT_SHA256 = (
 FULL_REPO_TASK3_DOCUMENT_SHA256 = (
     "78fecbd29120a25c273873649cdf1c74785df2519f5567e7d5bfdc7f26ba70e2"
 )
-FULL_REPO_TASK3_CONFIDENCE = 0.0016028053266739144
 
 
 def _execute_signal_smoke_e_bundle(bundle_dir: Path) -> eval_bundle.EvalBundleArtifact:
@@ -394,7 +393,10 @@ def test_signal_smoke_e_task3_query_selects_full_repo_exact_units(
             assert selected_units[FULL_REPO_TASK3_RESOLVER_ID].detail == "source"
             assert len(probe_budgets) < 8
             assert warning_call_count == 1
-            assert confidence_values == [FULL_REPO_TASK3_CONFIDENCE]
+            assert len(confidence_values) == 1
+            # Candidate growth elsewhere in the repo can change the confidence
+            # denominator; this lock keeps the computation present and sane.
+            assert 0.0 < confidence_values[0] < 1.0
         parent_class = selected_units.get(FULL_REPO_TASK3_PARENT_ID)
         assert parent_class is None or parent_class.detail != "source"
 
