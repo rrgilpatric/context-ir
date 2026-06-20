@@ -184,8 +184,11 @@ Current active program:
     The audited eligible PR candidate pool and acquisition provenance are pushed
     in commit `084948a Add real OSS candidate acquisition artifacts`; this
     records 3,458 eligible candidate records and the acquisition audit trail,
-    but does not generate the selected task manifest, run providers, create
-    embeddings, score results, or widen public claims.
+    but does not run providers, create embeddings, score results, or widen
+    public claims. The frozen selected task manifest is pushed in commit
+    `3062504 Add real OSS selected task manifest`; this records the 50 selected
+    tasks and git-fact oracle fields before provider execution, embeddings,
+    scoring results, or public claims.
 - repair sequencing:
   1. `src/` layout dependency repair plus optimizer-focus correction is
      pushed in commit `de5d221 Fix source-root dependency proof`
@@ -279,7 +282,13 @@ Current active program:
       acquisition-methodology correction, a fresh independent read-only audit,
       full regression with `2232` tests, commit-gating, local commit, and
       Ryan-authorized push
+  28. frozen real-OSS selected task manifest is pushed in commit
+      `3062504 Add real OSS selected task manifest` after independent read-only
+      audit, full regression with `2232` tests, commit-gating, local commit, and
+      Ryan-authorized push
 - latest pushed release unit:
+  - `evals/real_oss_thesis/selected_task_manifest.json`
+- previous real-OSS candidate acquisition release unit:
   - `evals/real_oss_thesis/candidate_records.json`
   - `evals/real_oss_thesis/candidate_records_acquisition.json`
 - previous real-OSS scoring release unit:
@@ -311,15 +320,15 @@ Current active program:
   - `src/context_ir/runtime_probe_worker.py`
   - `src/context_ir/runtime_probe_worker_artifact_protocol.py`
   - `tests/test_eval_signal_smoke_e.py`
-- current release state: audited real-OSS candidate acquisition artifacts are
-  pushed to `origin/main` in commit
-  `084948a Add real OSS candidate acquisition artifacts`. The pushed artifact
+- current release state: frozen real-OSS selected task manifest is pushed to
+  `origin/main` in commit
+  `3062504 Add real OSS selected task manifest`. The pushed artifact
   `evals/real_oss_thesis/PRE_REGISTRATION.md` remains pre-result internal
   thesis evidence only; it is not results and is not a public claim. The local
   task-manifest contract, BM25 baseline contract, scoring contract, audited
-  eligible candidate pool, and acquisition provenance are in place. No selected
-  task manifest has been generated, no provider has run, no embeddings have
-  been created, no scoring results exist, and no public claim has widened.
+  eligible candidate pool, acquisition provenance, and selected task manifest
+  are in place. No provider has run, no embeddings have been created, no BM25 or
+  scoring result artifacts exist, and no public claim has widened.
 - active holds:
   - do not send the private reviewer note from the current packet until the
     repair program is completed or Ryan explicitly authorizes a caveated send
@@ -331,18 +340,37 @@ Current active program:
   - do not add more probe-only matrices unless they directly improve real
     selected context or close a concrete accepted repair finding
   - do not use `voyage-code-3` network/API credentials or run external provider
-    execution until the selected task manifest exists and Ryan separately
-    authorizes provider execution; the task-manifest, BM25, and scoring
-    contracts being in place are not provider authorization
-- next control action: route the selected-task-manifest generation slice from
-  the committed audited candidate pool. The slice should read
-  `evals/real_oss_thesis/candidate_records.json`, use the frozen
-  `real_oss_thesis_v1` seed and repository order, and write only the selected
-  manifest artifact plus any explicitly scoped provenance needed for audit. Do
-  not route provider execution, external APIs, repo downloads, Voyage
-  embeddings, BM25/scoring-result production, or public claims from this state.
+    execution unless Ryan separately authorizes provider execution; the selected
+    task manifest, BM25 contract, and scoring contract being in place are not
+    provider authorization
+- next control action: route a read-only local real-OSS execution readiness and
+  decomposition lane. It should inspect the selected manifest, committed local
+  contracts, and available local repository cache state; identify the exact next
+  local baseline/materialization slice and any required artifacts. Do not route
+  provider execution, external APIs, repo downloads, Voyage embeddings,
+  BM25/scoring-result production, or public claims from this state.
 
 Latest release unit pushed:
+
+- frozen real-OSS selected task manifest
+- pushed release commit:
+  `3062504 Add real OSS selected task manifest`
+- release state: pushed to `origin/main`; independent read-only audit, full
+  regression with `2232` tests, and commit-gating passed.
+- release files:
+  - `evals/real_oss_thesis/selected_task_manifest.json`
+- accepted facts:
+  - manifest contains 50 selected tasks, 10 per frozen repo
+  - selected PRs were deterministically sampled from the committed audited
+    candidate pool with seed `20260607`
+  - manifest JSON exactly matches `real_oss_task_manifest_to_json(...)` output
+    from the committed candidate records and manifest contracts
+- preserved boundaries:
+  - no provider execution, external APIs, Voyage embeddings, BM25 retrieval
+    outputs, scoring results, public claims, public docs, eval tasks, eval
+    fixtures, run specs, source, tests, or package-root exports
+
+Previous release unit pushed:
 
 - audited real-OSS candidate acquisition artifacts
 - pushed release commit:
@@ -20257,16 +20285,15 @@ supersession entries.
 
 ## What Is Next
 
-Current next route: the audited real-OSS candidate acquisition artifacts are
-pushed at `084948a Add real OSS candidate acquisition artifacts`. Route the
-selected-task-manifest generation slice from the committed audited candidate
-pool. The slice should read `evals/real_oss_thesis/candidate_records.json`, use
-the frozen `real_oss_thesis_v1` seed and repository order, and write only the
-selected manifest artifact plus any explicitly scoped provenance needed for
-audit. Do not route provider execution, external APIs, repo downloads, Voyage
-embeddings, BM25/scoring-result production, public claims, Task 4, composite
-smoke support, runnable demo implementation, or MCP/API expansion from this
-state.
+Current next route: the frozen real-OSS selected task manifest is pushed at
+`3062504 Add real OSS selected task manifest`. Route a read-only local real-OSS
+execution readiness and decomposition lane. It should inspect the selected
+manifest, committed local contracts, and available local repository cache state;
+identify the exact next local baseline/materialization slice and any required
+artifacts. Do not route provider execution, external APIs, repo downloads,
+Voyage embeddings, BM25/scoring-result production, public claims, Task 4,
+composite smoke support, runnable demo implementation, or MCP/API expansion
+from this state.
 
 Earlier imported-name dynamic-import/default-provider releases are closed; do
 not route them back to release-unit audit, full regression, commit-gating,

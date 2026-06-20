@@ -2,6 +2,42 @@
 
 Most recent supersession entries override older architectural decisions when they explicitly say so. Older entries remain intact below as history.
 
+## 2026-06-20 -- Real OSS Selected Task Manifest Pushed
+
+- Pushed the frozen real-OSS selected task manifest to `origin/main`.
+- Pushed release commit:
+  `3062504 Add real OSS selected task manifest`
+- Release file:
+  - `evals/real_oss_thesis/selected_task_manifest.json`
+- Behavior and evidence boundary:
+  - freezes the 50 selected tasks for the pre-registered
+    `real_oss_thesis_v1` experiment
+  - selects 10 PRs per frozen repository from the committed audited candidate
+    pool using seed `20260607`
+  - records selected PR IDs, query text derived from PR/issue fields, and
+    git-fact oracle fields
+  - preserves the boundary that no provider has run, no Voyage embedding has
+    been created, no BM25 or scoring result artifact exists, and no public claim
+    has widened
+- Validation:
+  - independent read-only release-unit audit: no findings
+  - manifest payload exactly matched `real_oss_task_manifest_to_json(...)`
+    rebuilt from the committed candidate pool
+  - selected PRs exactly matched the deterministic expected lists for all five
+    repositories
+  - `ruff check src/ tests/`: passed
+  - `ruff format --check src/ tests/`: passed
+  - `mypy --strict src/`: passed
+  - full regression: 2232 passed
+  - commit-gating: passed
+- Supersession: the prior next action to route selected-task-manifest generation
+  is complete because the manifest is now committed and pushed.
+- Next control action: route a read-only local real-OSS execution readiness and
+  decomposition lane. Do not route provider execution, external APIs, repo
+  downloads, Voyage embeddings, BM25/scoring-result production, or public claims
+  from this state.
+- Acceptance status: first-pass; pushed after Ryan authorization.
+
 ## 2026-06-20 -- Real OSS Candidate Acquisition Artifacts Pushed
 
 - Pushed the audited real-OSS candidate acquisition artifacts to `origin/main`.
